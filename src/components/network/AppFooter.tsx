@@ -25,6 +25,7 @@ interface AppFooterProps {
   showOnboarding: boolean;
   handleRefreshNetwork: () => void;
   setIsEnvironmentPanelOpen: (v: boolean) => void;
+  setShowAboutModal: (v: boolean) => void;
   children?: React.ReactNode;
 }
 
@@ -32,7 +33,7 @@ export function AppFooter({
   t, isDark, language, activeTab, activeDeviceType, activeDeviceId,
   hasUnsavedChanges, lastSaveTime, projectName, totalScore, maxScore,
   topologyDevices, lastTaskEvent, showProjectPicker, showOnboarding,
-  handleRefreshNetwork, setIsEnvironmentPanelOpen, children
+  handleRefreshNetwork, setIsEnvironmentPanelOpen, setShowAboutModal, children
 }: AppFooterProps) {
   const getDeviceCountLabel = (count: number) => (
     language === 'tr' ? t.devicesCount : (count === 1 ? 'device' : 'devices')
@@ -94,9 +95,14 @@ export function AppFooter({
 
               {/* Quick Hints */}
               <div className={`hidden md:flex items-center gap-2 whitespace-nowrap`}>
-                <span className={`text-[11px] font-medium ${isDark ? 'text-secondary-400' : 'text-secondary-600'}`}>
+                <button
+                  type="button"
+                  onClick={() => setShowAboutModal(true)}
+                  aria-label={t.contactTitle}
+                  className={`text-[11px] font-medium transition-transform hover:scale-110 ${isDark ? 'text-secondary-400 hover:text-primary-400' : 'text-secondary-600 hover:text-primary-600'}`}
+                >
                   {t.tips}
-                </span>
+                </button>
                 <span className={`text-[11px] ${isDark ? 'text-secondary-300' : 'text-secondary-700'} whitespace-nowrap`}>
                   {activeTab === 'topology' && (
                     <>

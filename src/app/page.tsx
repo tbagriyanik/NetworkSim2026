@@ -2179,6 +2179,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             showOnboarding={showOnboarding}
             handleRefreshNetwork={handleRefreshNetwork}
             setIsEnvironmentPanelOpen={setIsEnvironmentPanelOpen}
+            setShowAboutModal={setShowAboutModal}
           >
             {isRoomEnabled && (
               <>

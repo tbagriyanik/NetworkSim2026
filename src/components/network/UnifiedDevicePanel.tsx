@@ -26,6 +26,7 @@ const Terminal = dynamic(() => import('./Terminal').then(m => m.Terminal), { ssr
 const PortPanel = dynamic(() => import('./PortPanel').then(m => m.PortPanel), { ssr: false });
 const VlanPanel = dynamic(() => import('./VlanPanel').then(m => m.VlanPanel), { ssr: false });
 const SecurityPanel = dynamic(() => import('./SecurityPanel').then(m => m.SecurityPanel), { ssr: false });
+const MacTablePanel = dynamic(() => import('./MacTablePanel').then(m => m.MacTablePanel), { ssr: false });
 const TaskCard = dynamic(() => import('./TaskCard').then(m => m.TaskCard), { ssr: false });
 const WlcWirelessPanel = dynamic(() => import('./WlcWirelessPanel').then(m => m.WlcWirelessPanel), { ssr: false });
 
@@ -288,6 +289,17 @@ export function UnifiedDevicePanel({
                                                     isDevicePoweredOff={isOffline}
                                                 />
                                             </div>
+
+                                            {hasTaskSystem && (
+                                                <div className="space-y-4 pt-2">
+                                                    <MacTablePanel
+                                                        macTable={state?.macAddressTable || []}
+                                                        isDark={isDark}
+                                                        language={language}
+                                                        deviceName={deviceName}
+                                                    />
+                                                </div>
+                                            )}
                                         </div>
 
                                         {hasTaskSystem && (

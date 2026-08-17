@@ -41,17 +41,54 @@ const toastVariants = cva(
   }
 )
 
+function ToastProgress({ duration }: { duration: number }) {
+  const [progress, setProgress] = React.useState(100)
+
+  React.useEffect(() => {
+    let raf = 0
+    const start = performance.now()
+    const tick = (now: number) => {
+      const elapsed = now - start
+      setProgress(Math.max(0, 100 - (elapsed / duration) * 100))
+      if (elapsed < duration) {
+        raf = requestAnimationFrame(tick)
+      }
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [duration])
+
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] overflow-hidden bg-foreground/10"
+      style={{ marginInlineEnd: 0 }}
+    >
+      <div className="h-full bg-foreground/55" style={{ width: `${progress}%` }} />
+    </div>
+  )
+}
+
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
   VariantProps<typeof toastVariants>
->(({ className, variant, ...props }, ref) => {
+>(({ className, variant, duration, children, ...props }, ref) => {
+  // Timed toasts (finite duration / auto-dismiss) show a shrinking progress bar.
+  // It's rendered as the first child and is absolutely positioned, so the
+  // flex/space layout is unaffected; `marginInlineEnd: 0` neutralizes space-x.
+  const timed = duration !== Infinity
+  const progressDuration = typeof duration === 'number' && isFinite(duration) ? duration : 5000
   return (
     <ToastPrimitives.Root
       ref={ref}
+      {...(typeof duration === 'number' ? { duration } : {})}
       className={cn(toastVariants({ variant }), className)}
       {...props}
-    />
+    >
+      {timed && <ToastProgress duration={progressDuration} />}
+      {children}
+    </ToastPrimitives.Root>
   )
 })
 Toast.displayName = ToastPrimitives.Root.displayName
