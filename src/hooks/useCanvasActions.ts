@@ -136,9 +136,9 @@ export function useCanvasActions({
       type: resolvedType,
       name: generateUniqueHostname(baseName),
       macAddress: generateUniqueMacAddress(allUsedMacs),
-      ip: initialLinkLocalIp,
+      ip: type === 'wlc' ? '192.168.1.1' : initialLinkLocalIp,
       ipv6: initialLinkLocalIpv6,
-      subnet: (type === 'pc' || type === 'iot') ? '255.255.0.0' : undefined,
+      subnet: (type === 'pc' || type === 'iot') ? '255.255.0.0' : type === 'wlc' ? '255.255.255.0' : undefined,
       gateway: (type === 'pc' || type === 'iot') ? '0.0.0.0' : undefined,
       dns: (type === 'pc' || type === 'iot') ? '0.0.0.0' : undefined,
       ipConfigMode: type === 'iot' ? 'dhcp' : undefined,
@@ -162,14 +162,34 @@ export function useCanvasActions({
               : type === 'wlc'
                 ? generateWLCPorts()
                 : generateRouterPorts(),
+      services: type === 'wlc'
+        ? {
+          http: { enabled: true, content: '' },
+          dhcp: {
+            enabled: true,
+            pools: [
+              {
+                poolName: 'WLC-DHCP-POOL',
+                defaultGateway: '192.168.1.1',
+                dnsServer: '8.8.8.8',
+                startIp: '192.168.1.100',
+                subnetMask: '255.255.255.0',
+                maxUsers: 50
+              }
+            ]
+          }
+        }
+        : undefined,
       iot: type === 'iot'
         ? { sensorType: 'temperature', collaborationEnabled: false, dataStore: '' }
         : undefined,
       wifi: type === 'iot'
         ? { enabled: true, ssid: '', security: 'open', password: '', channel: '2.4GHz', mode: 'client' }
-        : (type === 'router' || type === 'wlc' || (type === 'switch' && switchLayer === 'L3'))
-          ? { enabled: false, ssid: 'Network-AP', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
-          : undefined,
+        : type === 'wlc'
+          ? { enabled: true, ssid: 'WLC-WiFi', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
+          : (type === 'router' || (type === 'switch' && switchLayer === 'L3'))
+            ? { enabled: false, ssid: 'Network-AP', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
+            : undefined,
     };
     
     setDevices((prev) => [...prev, newDevice]);

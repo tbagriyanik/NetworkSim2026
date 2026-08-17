@@ -1604,6 +1604,17 @@ function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdm
   const wlanWifi = wlan?.wifi;
   const base = getDefaultWifiConfig(device);
 
+  // If WLC has configured WLANs, synchronize the active WLAN
+  if (device.type === 'wlc' || state?.deviceType === 'wlc') {
+    const wlcWlans = state?.wlcWlans ? Object.values(state.wlcWlans) : [];
+    const activeWlan = wlcWlans.find((w) => w.status === 'enabled') || wlcWlans[0];
+    if (activeWlan) {
+      base.enabled = activeWlan.status === 'enabled';
+      base.ssid = activeWlan.ssid || base.ssid;
+      base.security = (activeWlan.security === 'open' ? 'open' : (activeWlan.security as 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3') || 'open');
+    }
+  }
+
   if (!wlanWifi) return base;
 
   return {
@@ -1625,9 +1636,6 @@ function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdm
  * Generate router/switch/WLC admin page content for HTTP access
  */
 export function generateRouterAdminPage(device: CanvasDevice, language: string, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[], username?: string, password?: string, activeTab?: string): string {
-  if (device.type === 'wlc' || state?.deviceType === 'wlc') {
-    return generateWlcAdminPage(device, language, state);
-  }
 
   const interfaceIp = state?.ports ? Object.values(state.ports).find((p) => p?.ipAddress && !p.shutdown)?.ipAddress : undefined;
   const config: RouterWebConfig = {

@@ -395,12 +395,29 @@ export function isDhcpPoolCompatibleForClient({
   if (!serverDevice) return false;
   if (clientWifi?.enabled && clientWifi.mode === 'client' && clientWifi.ssid) {
     const serverWifi = getDeviceWifiConfig(serverDevice, deviceStates);
-    if (!serverWifi?.enabled || serverWifi.mode !== 'ap' || serverWifi.ssid !== clientWifi.ssid) {
+    const safeStates = deviceStates ? (deviceStates instanceof Map ? deviceStates : new Map(Object.entries(deviceStates)) as Map<string, SwitchState>) : undefined;
+    const resolvedServerState = (serverState || safeStates?.get(serverDevice.id)) as SwitchState | undefined;
+
+    const isMatchingAp = (() => {
+      const targetSsid = clientWifi.ssid.toLowerCase();
+      if (serverWifi?.enabled && serverWifi.mode === 'ap' && serverWifi.ssid?.toLowerCase() === targetSsid) {
+        return true;
+      }
+      if (serverDevice.type === 'wlc' && resolvedServerState?.wlcWlans) {
+        const wlan = Object.values(resolvedServerState.wlcWlans).find(
+          w => w.status === 'enabled' && w.ssid?.toLowerCase() === targetSsid
+        );
+        if (wlan) return true;
+      }
+      return false;
+    })();
+
+    if (!isMatchingAp) {
       return false;
     }
     return getServerPoolVlan({
       serverDevice,
-      serverState,
+      serverState: resolvedServerState,
       poolGateway,
       poolStartIp,
       poolSubnetMask,

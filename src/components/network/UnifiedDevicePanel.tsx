@@ -224,13 +224,18 @@ export function UnifiedDevicePanel({
                                     )}>
                                         <div className={cn(isNarrow ? "" : "lg:col-span-2", "space-y-6")}>
                                             {deviceType === 'wlc' && (
-                                                <WlcWirelessPanel
-                                                    state={state}
-                                                    isDark={isDark}
-                                                    language={language}
-                                                    isDevicePoweredOff={isOffline}
-                                                    onExecuteCommand={handleCommand as (command: string) => Promise<void>}
-                                                />
+                                                <div className="space-y-4">
+                                                    <WlcWirelessPanel
+                                                        state={state}
+                                                        isDark={isDark}
+                                                        language={language}
+                                                        isDevicePoweredOff={isOffline}
+                                                        onExecuteCommand={handleCommand as (command: string) => Promise<void>}
+                                                        topologyDevices={topologyDevices}
+                                                        activeDeviceId={deviceId}
+                                                        deviceStates={deviceStates}
+                                                    />
+                                                </div>
                                             )}
                                             <div className="space-y-4">
                                                 <div className="flex items-center gap-2 text-sm font-semibold text-primary">

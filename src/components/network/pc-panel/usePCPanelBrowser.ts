@@ -208,9 +208,12 @@ export function usePCPanelBrowser({
       const connectedIot = getConnectedIotDevices(httpServer.id);
       const availableIot = getAvailableIotDevices(httpServer.id);
       const adminPage = generateRouterAdminPage(httpServer, language, runtimeState, connectedIot, availableIot);
+      const isWlc = httpServer.type === 'wlc' || runtimeState?.deviceType === 'wlc';
       setHttpAppDeviceId(httpServer.id);
       setHttpAppContent(adminPage);
-      setHttpAppTitle(language === 'tr' ? 'Yönlendirici Yönetimi' : 'Router Management');
+      setHttpAppTitle(isWlc
+        ? (language === 'tr' ? 'Kablosuz Denetleyici Yönetimi' : 'Wireless Controller Management')
+        : (language === 'tr' ? 'Yönlendirici Yönetimi' : 'Router Management'));
       addLocalOutput('success', language === 'tr'
         ? 'HTTP sayfası yeni pencerede açıldı.'
         : 'HTTP page opened in a new window.');

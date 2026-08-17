@@ -267,7 +267,7 @@ export function useNetworkLogic(
     for (const [deviceId_, state] of safeDeviceStates.entries()) {
       if (deviceId_ === pcDevice.id) continue;
       const serverDevice = currentDevices.find((d) => d.id === deviceId_);
-      if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3')) continue;
+      if (!serverDevice || (serverDevice.type !== 'router' && serverDevice.type !== 'switchL2' && serverDevice.type !== 'switchL3' && serverDevice.type !== 'wlc')) continue;
       const cliPools = state.dhcpPools || {};
       for (const poolName in cliPools) {
         const pool = cliPools[poolName];

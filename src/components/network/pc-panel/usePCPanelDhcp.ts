@@ -154,10 +154,10 @@ export function usePCPanelDhcp({
         for (const [deviceId_, state] of safeDeviceStates.entries()) {
           if (deviceId_ === deviceId) continue;
           const device = topologyDevices.find(d => d.id === deviceId_);
-          if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
+          if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3' && device.type !== 'wlc')) continue;
 
-          // Check DHCP pools from both runtime services mirror and raw CLI state.
-          // Some flows may have dhcpPools populated while services mirror is stale.
+          // Check DHCP pools from device object, runtime services mirror, and raw CLI state.
+          const topologyPools = device.services?.dhcp?.pools || [];
           const mirroredPools = state.services?.dhcp?.pools || [];
           const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, { network?: string; subnetMask?: string; startIp?: string; defaultRouter?: string; dnsServer?: string; maxUsers?: number | string }]) => {
             const networkBase = typeof pool?.network === 'string' ? pool.network : '';
@@ -173,8 +173,8 @@ export function usePCPanelDhcp({
               maxUsers: Number(pool?.maxUsers || 50),
             };
           });
-          const dhcpPools = [...mirroredPools];
-          for (const pool of cliPools) {
+          const dhcpPools = [...topologyPools];
+          for (const pool of [...mirroredPools, ...cliPools]) {
             if (!dhcpPools.some((p: DhcpPoolConfig) => p.poolName === pool.poolName)) {
               dhcpPools.push(pool);
             }
@@ -278,11 +278,12 @@ export function usePCPanelDhcp({
       for (const [deviceId_, state] of safeDeviceStates.entries()) {
         if (deviceId_ === deviceId) continue;
         const device = topologyDevices.find(d => d.id === deviceId_);
-        if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
+        if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3' && device.type !== 'wlc')) continue;
 
+        const topologyPools = device.services?.dhcp?.pools || [];
         const mirroredPools = state.services?.dhcp?.pools || [];
         const cliPools = Object.entries(state.dhcpPools || {}).length;
-        if (mirroredPools.length > 0 || cliPools > 0) {
+        if (topologyPools.length > 0 || mirroredPools.length > 0 || cliPools > 0) {
           hasAnyDhcpService = true;
           break;
         }
@@ -326,8 +327,9 @@ export function usePCPanelDhcp({
       for (const [deviceId_, state] of ensureDeviceStatesMap(deviceStates).entries()) {
         if (deviceId_ === deviceId) continue;
         const device = topologyDevices.find(d => d.id === deviceId_);
-        if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3')) continue;
+        if (!device || (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3' && device.type !== 'wlc')) continue;
 
+        const topologyPools = device.services?.dhcp?.pools || [];
         const mirroredPools = state.services?.dhcp?.pools || [];
         const cliPools = Object.entries(state.dhcpPools || {}).map(([poolName, pool]: [string, { network?: string; subnetMask?: string; startIp?: string; defaultRouter?: string; dnsServer?: string; maxUsers?: number | string }]) => {
           const networkBase = typeof pool?.network === 'string' ? pool.network : '';
@@ -343,8 +345,8 @@ export function usePCPanelDhcp({
             maxUsers: Number(pool?.maxUsers || 50),
           };
         });
-        const dhcpPools = [...mirroredPools];
-        for (const pool of cliPools) {
+        const dhcpPools = [...topologyPools];
+        for (const pool of [...mirroredPools, ...cliPools]) {
           if (!dhcpPools.some((p: DhcpPoolConfig) => p.poolName === pool.poolName)) {
             dhcpPools.push(pool);
           }

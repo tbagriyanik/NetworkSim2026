@@ -644,6 +644,18 @@ export function PCPanel({
               }
             }
           });
+          if (device.wifi?.enabled && device.wifi.ssid) {
+            const ssidKey = device.wifi.ssid;
+            if (!addedSSIDs.has(ssidKey)) {
+              addedSSIDs.add(ssidKey);
+              results.push({
+                ssid: device.wifi.ssid,
+                deviceId: device.id,
+                deviceName: device.name,
+                channel: device.wifi.channel || '2.4GHz',
+              });
+            }
+          }
           return;
         }
 
@@ -1593,15 +1605,34 @@ export function PCPanel({
     // DHCP discover can also traverse an implicit Wi-Fi link.
     const sourceWifi = getDeviceWifiConfig(sourceDevice, deviceStates);
     const targetWifi = getDeviceWifiConfig(targetDevice, deviceStates);
+    const safeStates = ensureDeviceStatesMap(deviceStates);
+    const targetState = safeStates.get(targetDeviceId);
+
+    const isTargetApMatching = (() => {
+      if (!sourceWifi?.ssid) return false;
+      const targetSsid = sourceWifi.ssid.toLowerCase();
+
+      // Check standard AP wifi
+      if (targetWifi?.enabled && targetWifi.mode === 'ap' && targetWifi.ssid && targetWifi.ssid.toLowerCase() === targetSsid) {
+        return true;
+      }
+
+      // Check WLC centralized WLANs
+      if (targetDevice.type === 'wlc' && targetState?.wlcWlans) {
+        const wlan = Object.values(targetState.wlcWlans).find(
+          w => w.status === 'enabled' && w.ssid?.toLowerCase() === targetSsid
+        );
+        if (wlan) return true;
+      }
+
+      return false;
+    })();
+
     if (
       sourceDevice.type === 'pc' &&
       sourceWifi?.enabled &&
       (sourceWifi.mode === 'client' || sourceWifi.mode === 'sta') &&
-      sourceWifi.ssid &&
-      targetWifi?.enabled &&
-      targetWifi.mode === 'ap' &&
-      targetWifi.ssid &&
-      sourceWifi.ssid.toLowerCase() === targetWifi.ssid.toLowerCase() &&
+      isTargetApMatching &&
       getWirelessSignalStrength(sourceDevice, topologyDevices, deviceStates) > 0
     ) {
       return true;

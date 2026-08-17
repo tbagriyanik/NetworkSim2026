@@ -557,6 +557,8 @@ function createInitialWLCPorts(baseMac?: string): Record<string, Port> {
       type: 'gigabitethernet',
       macAddress: portMac,
       isRoutedPort: true,
+      ipAddress: i === 0 ? '192.168.1.1' : undefined,
+      subnetMask: i === 0 ? '255.255.255.0' : undefined,
     };
   }
 
@@ -609,7 +611,16 @@ export function createInitialWLCState(
       },
       dhcp: {
         enabled: true,
-        pools: []
+        pools: [
+          {
+            poolName: 'WLC-DHCP-POOL',
+            defaultGateway: '192.168.1.1',
+            dnsServer: '8.8.8.8',
+            startIp: '192.168.1.100',
+            subnetMask: '255.255.255.0',
+            maxUsers: 50
+          }
+        ]
       },
       ntp: {
         enabled: false,
@@ -648,7 +659,16 @@ export function createInitialWLCState(
     macAddressTable: [],
     arpCache: [],
     wlcAps: {},
-    wlcWlans: {},
+    wlcWlans: {
+      '1': {
+        id: 1,
+        name: 'Default-WLAN',
+        ssid: 'WLC-WiFi',
+        status: 'enabled',
+        security: 'open',
+        vlan: 1
+      }
+    },
     vtpRevision: 0
   };
 }
