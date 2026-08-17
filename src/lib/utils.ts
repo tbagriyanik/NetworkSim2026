@@ -19,3 +19,38 @@ export function normalizeMAC(mac: string): string {
   // Format as 00-40-96-99-88-77
   return hex.match(/.{1,2}/g)?.join('-').toLowerCase() || mac.toLowerCase();
 }
+
+export const generateMacAddress = (seed?: number): string => {
+  const chars = '0123456789ABCDEF';
+  let hex = '';
+  for (let i = 0; i < 12; i++) {
+    const idx = seed !== undefined
+      ? (seed + i) % 16
+      : Math.floor(Math.random() * 16);
+    hex += chars[idx];
+  }
+  return `${hex.slice(0, 4)}.${hex.slice(4, 8)}.${hex.slice(8, 12)}`;
+};
+
+export function generateUniqueMacAddress(reservedOrUsedMacs?: Set<string> | string[]): string {
+  const used = new Set<string>();
+  if (reservedOrUsedMacs) {
+    if (reservedOrUsedMacs instanceof Set) {
+      reservedOrUsedMacs.forEach(m => {
+        if (m) used.add(normalizeMAC(m));
+      });
+    } else {
+      reservedOrUsedMacs.forEach(m => {
+        if (m) used.add(normalizeMAC(m));
+      });
+    }
+  }
+
+  for (let attempt = 0; attempt < 1000; attempt++) {
+    const candidate = generateMacAddress();
+    if (!used.has(normalizeMAC(candidate))) {
+      return candidate;
+    }
+  }
+  return generateMacAddress();
+}

@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { CanvasDevice, CanvasNote, ContextMenuState } from '../networkTopology.types';
+import { generateUniqueMacAddress } from '@/lib/utils';
 
 interface CanvasClipboardProps {
   devices: CanvasDevice[];
@@ -70,6 +71,15 @@ export function useCanvasClipboard({
     const reservedIps: string[] = [];
     const reservedIpv6s: string[] = [];
     const reservedHostnames: string[] = [];
+    const reservedMacs: string[] = [];
+
+    // Pre-populate reserved MACs from all currently existing devices and their ports
+    devices.forEach(d => {
+      if (d.macAddress) reservedMacs.push(d.macAddress);
+      d.ports?.forEach(p => {
+        if (p.macAddress) reservedMacs.push(p.macAddress);
+      });
+    });
 
     clipboard.forEach(device => {
       const type = device.type;
@@ -81,6 +91,9 @@ export function useCanvasClipboard({
       const hostname = generateUniqueHostname(baseName, reservedHostnames);
       const generatedIp = type === 'pc' || type === 'iot' ? generateUniqueLinkLocalIp(reservedIps) : '';
       const generatedIpv6 = type === 'pc' || type === 'iot' ? generateUniqueLinkLocalIpv6(reservedIpv6s) : '';
+      
+      const newDeviceMac = generateUniqueMacAddress(reservedMacs);
+      reservedMacs.push(newDeviceMac);
 
       if (generatedIp) {
         reservedIps.push(generatedIp);
@@ -90,17 +103,29 @@ export function useCanvasClipboard({
       }
       reservedHostnames.push(hostname);
 
+      const newPorts = (device.ports || []).map(p => {
+        const portMac = generateUniqueMacAddress(reservedMacs);
+        reservedMacs.push(portMac);
+        return {
+          ...p,
+          status: 'disconnected' as const,
+          macAddress: portMac,
+        };
+      });
+
       newDevices.push({
         ...device,
         id: newId,
         name: hostname,
+        macAddress: newDeviceMac,
         ip: generatedIp,
+        ipv6: generatedIpv6,
         subnet: (type === 'pc' || type === 'iot') ? '255.255.0.0' : device.subnet,
         gateway: (type === 'pc' || type === 'iot') ? '0.0.0.0' : device.gateway,
         dns: (type === 'pc' || type === 'iot') ? '0.0.0.0' : device.dns,
         x: device.x + 30,
         y: device.y + 30,
-        ports: device.ports.map(p => ({ ...p, status: 'disconnected' as const })),
+        ports: newPorts,
       });
     });
 
