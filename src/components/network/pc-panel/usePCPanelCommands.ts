@@ -668,9 +668,20 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             emit('output', 'Usage: arp -a\n       arp -d [*]');
           }
         } else if (cmd === 'tracert' || cmd === 'traceroute') {
-          const target = args[0];
+          // Windows tracert flags: -d (no name resolution), -h max_hops, -w timeout, -4, -6
+          let maxHops = 30;
+          let resolveNames = true;
+          let target: string | undefined;
+          for (let ai = 0; ai < args.length; ai++) {
+            const a = args[ai].toLowerCase();
+            if (a === '-h') { maxHops = parseInt(args[ai + 1], 10) || 30; ai++; }
+            else if (a === '-w') { ai++; } // timeout accepted; not simulated
+            else if (a === '-d') { resolveNames = false; }
+            else if (a === '-4' || a === '-6') { /* address family accepted */ }
+            else if (target === undefined) { target = args[ai]; }
+          }
           if (!target) {
-            emit('output', `Usage: ${cmd} <target_name_or_address>`);
+            emit('output', `Usage: ${cmd} [-d] [-h max_hops] [-w timeout] [-4|-6] <target_name_or_address>`);
           } else {
             let resolvedTarget = target;
             if (!isValidIpv4(target) && !isValidIpv6(target)) {
@@ -684,11 +695,12 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 }
               }
             }
+            const formatHop = (name: string, ip: string) => resolveNames ? `${name} [${ip.toLowerCase()}]` : `[${ip.toLowerCase()}]`;
             if (isLoopbackTarget(resolvedTarget)) {
-              await emitMulti('output', `Tracing route to 127.0.0.1 over a maximum of 30 hops:\n\n  1    <1 ms    <1 ms    <1 ms  localhost [127.0.0.1]\n\nTrace complete.`, 80);
+              await emitMulti('output', `Tracing route to 127.0.0.1 over a maximum of ${maxHops} hops:\n\n  1    <1 ms    <1 ms    <1 ms  localhost [127.0.0.1]\n\nTrace complete.`, 80);
               return;
             }
-            emit('output', `Tracing route to ${target} over a maximum of 30 hops:\n`);
+            emit('output', `Tracing route to ${target} over a maximum of ${maxHops} hops:\n`);
             const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
 
             if (result.success) {
@@ -700,10 +712,11 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 }
               }
               const l3Hops = getL3Hops(deviceId, resolvedTarget, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map());
-              if (l3Hops && l3Hops.length > 0) {
+              const limitedHops = l3Hops && l3Hops.length > 0 ? l3Hops.slice(0, maxHops) : [];
+              if (limitedHops.length > 0) {
                 let hopOutput = '';
-                l3Hops.forEach((hop, index) => {
-                  hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${hop.name} [${hop.ip}]\n`;
+                limitedHops.forEach((hop, index) => {
+                  hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${formatHop(hop.name, hop.ip)}\n`;
                 });
                 await emitMulti('output', hopOutput + '\nTrace complete.', 80);
               } else if (result.targetId) {
@@ -711,7 +724,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 const directTarget = topologyDevices.find(d => d.id === result.targetId);
                 const directIp = directTarget ? (directTarget.ip || directTarget.ipv6 || resolvedTarget) : resolvedTarget;
                 const directName = directTarget?.name || directIp;
-                await emitMulti('output', `  1    <1 ms    <1 ms    <1 ms  ${directName} [${directIp.toLowerCase()}]\n\nTrace complete.`, 80);
+                await emitMulti('output', `  1    <1 ms    <1 ms    <1 ms  ${formatHop(directName, directIp)}\n\nTrace complete.`, 80);
               } else {
                 await emitMulti('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`, 80);
               }
@@ -738,10 +751,30 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           }
           await emitMulti('output', netstatOut, 60);
         } else if (cmd === 'nbtstat') {
-          if (args.includes('-n')) {
+          const has = (f: string) => args.some(a => a === f);
+          if (has('-n')) {
             await emitMulti('output', `\nNetBIOS Local Name Table\n\n       Name               Type         Status\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <00>  UNIQUE      Registered\n    WORKGROUP        <00>  GROUP       Registered\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <20>  UNIQUE      Registered\n`, 80);
+          } else if (has('-RR')) {
+            emit('success', `NetBIOS names released and refreshed successfully for ${internalPcHostname}.`);
+          } else if (has('-R')) {
+            emit('success', 'Successfully purged the NetBIOS name cache and reloaded it from LMHOSTS.');
+          } else if (has('-c')) {
+            await emitMulti('output', `\nWindows IP Configuration\n\nNetBIOS Remote Cache Name Table\n\n       Name               Type         Host Address    Life [sec]\n    ---------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(15)}  <03>  UNIQUE        ${pcIP.padEnd(13)}  900\n`, 80);
+          } else if (has('-r')) {
+            await emitMulti('output', `\nNetBIOS Names Resolution and Registration Statistics\n\n    Resolutions sent/received ...........: 3/3\n    Registrations sent/received .........: 1/1\n    Renewals sent/received ..............: 0/0\n`, 80);
+          } else if (has('-S') || has('-s')) {
+            await emitMulti('output', `\nNetBIOS connection table\n\n    Local Name                  In/Out   Remote Host            Input  Output\n    ------------------------------------------------\n    ${internalPcHostname.toUpperCase().padEnd(18)} <00>  Out     <Unknown>                 0      0\n\n`, 80);
+          } else if (has('-a') || has('-A') || has('-L')) {
+            const flagIdx = args.findIndex(a => a === '-a' || a === '-A' || a === '-L');
+            const param = flagIdx !== -1 && args[flagIdx + 1] ? args[flagIdx + 1] : '';
+            let targetIp = param;
+            if (param && !isValidIpv4(param) && !isValidIpv6(param)) {
+              const namedResult = resolveDeviceNameTargetCallback(param);
+              if (namedResult) targetIp = namedResult.ip;
+            }
+            await emitMulti('output', `\nEthernet Adapter Status\n\n    Host Name ............ : ${internalPcHostname}\n    MAC Address .......... : ${formatMacForArp(pcMAC).toUpperCase()}\n    IP Address ........... : ${pcIP}\n    Subnet Mask .......... : ${pcSubnet}\n    Default Gateway ...... : ${pcGateway}\n    DNS Servers .......... : ${pcDNS}\n    Remote Target ........ : ${targetIp || '(unknown)'}\n`, 80);
           } else {
-            emit('output', 'Usage: nbtstat [-n]');
+            emit('output', 'Usage: nbtstat [-n] [-c] [-r] [-R] [-RR] [-S] [-s] [-a name] [-A ip] [-L name]');
           }
         } else if (cmd === 'getmac') {
           const mac = formatMacForArp(pcMAC).toUpperCase();
