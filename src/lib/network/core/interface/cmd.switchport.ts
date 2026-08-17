@@ -140,7 +140,7 @@ export function cmdSwitchportMode(state: SwitchState, input: string, ctx: Comman
   const requestedMode = match[1].toLowerCase().replace(/\s+/g, '-');
   const normalizedMode = requestedMode as 'access' | 'trunk' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 
-  // L3 switch'te trunk modu i├ğin ├Ânce switchport trunk encapsulation dot1q gereklidir
+  // L3 switch'te trunk modu için önce switchport trunk encapsulation dot1q gereklidir
   if (normalizedMode === 'trunk' && state.switchLayer === 'L3') {
     const targetPorts = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
       ? state.selectedInterfaces
@@ -169,11 +169,11 @@ export function cmdSwitchportMode(state: SwitchState, input: string, ctx: Comman
     newState: myUpdatedState || ({ ports: newPorts } as Partial<SwitchState>),
     deviceStates: allUpdatedStates,
     hint: normalizedMode === 'access' ? {
-      tr: '­şÆí Ger├ğek d├╝nyada: Access portlar genelde PC, IP Telefon veya yaz─▒c─▒ gibi u├ğ cihazlara ba─şlan─▒r.',
-      en: '­şÆí In the real world: Access ports are typically connected to end devices like PCs, IP Phones, or printers.'
+      tr: '💡 Gerçek dünyada: Access portlar genelde PC, IP Telefon veya yazıcı gibi uç cihazlara bağlanır.',
+      en: '💡 In the real world: Access ports are typically connected to end devices like PCs, IP Phones, or printers.'
     } : normalizedMode === 'trunk' ? {
-      tr: '­şÆí Ger├ğek d├╝nyada: Trunk portlar ├╝zerinden birden fazla VLAN trafi─şi ta┼ş─▒nabilir, genelde switchler aras─▒ ba─şlant─▒da kullan─▒l─▒r.',
-      en: '­şÆí In the real world: Trunk ports can carry traffic for multiple VLANs, typically used for inter-switch connections.'
+      tr: '💡 Gerçek dünyada: Trunk portlar üzerinden birden fazla VLAN trafiği taşınabilir, genelde switchler arası bağlantıda kullanılır.',
+      en: '💡 In the real world: Trunk ports can carry traffic for multiple VLANs, typically used for inter-switch connections.'
     } : undefined
   };
 }

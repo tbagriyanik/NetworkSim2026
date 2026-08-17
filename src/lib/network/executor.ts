@@ -189,7 +189,7 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...pfx('enable', ['password', 'secret']),
     ...pfx('errdisable', ['recovery']),
     'errdisable recovery': ['cause'],
-    ...pfx('interface', ['dot11radio', 'range']),
+    'interface': ['dot11radio', 'FastEthernet', 'GigabitEthernet', 'Loopback', 'Range', 'Serial', 'Vlan'],
 
     ...pfx('ip', ['access-list', 'arp', 'default-gateway', 'dhcp', 'domain', 'domain-lookup', 'domain-name', 'host', 'http', 'name-server', 'nat', 'route', 'routing', 'ssh']),
     'ip arp': ['inspection'],

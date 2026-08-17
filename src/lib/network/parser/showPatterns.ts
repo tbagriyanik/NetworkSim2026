@@ -2,7 +2,7 @@
 import type { CommandPattern } from './commandPatterns.types';
 
 export const showPatterns: Record<string, CommandPattern> = {
-  // Show komutlarÄ±
+  // Show komutları
   'show': {
     pattern: /^show\s*$/i,
     modes: ['privileged'],

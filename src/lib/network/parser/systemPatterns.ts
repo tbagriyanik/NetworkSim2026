@@ -2,7 +2,7 @@
 import type { CommandPattern } from './commandPatterns.types';
 
 export const systemPatterns: Record<string, CommandPattern> = {
-  // Kaydetme komutlarÄ±
+  // Kaydetme komutları
   'write memory': {
     pattern: /^(?:wr[ite]*(\s+me[mory]*)?)$/i,
     modes: ['privileged'],
@@ -71,7 +71,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
-  // YardÄ±m
+  // Yardım
   'help': {
     pattern: /^(\?|help)$/i,
     modes: ['user', 'privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'config-std-nacl', 'config-ext-nacl'],
@@ -79,7 +79,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
 
-  // Do komutlarÄ± (config moddan show Ã§alÄ±ÅŸtÄ±rma)
+  // Do komutları (config moddan show çalıştırma)
   'do show': {
     pattern: /^do\s+(sh(?:ow)?\s+.+)$/i,
     modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config', 'dhcp-config', 'config-std-nacl'],

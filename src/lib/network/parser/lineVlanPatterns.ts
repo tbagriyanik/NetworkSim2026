@@ -2,7 +2,7 @@
 import type { CommandPattern } from './commandPatterns.types';
 
 export const lineVlanPatterns: Record<string, CommandPattern> = {
-  // VLAN config komutlarÄ±
+  // VLAN config komutları
   'name': {
     pattern: /^name\s+(.+)$/i,
     modes: ['vlan'],
@@ -22,7 +22,7 @@ export const lineVlanPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
-  // Line komutlarÄ±
+  // Line komutları
   'line console': {
     pattern: /^line\s+console\s+0$/i,
     modes: ['config'],

@@ -2,7 +2,7 @@
 import type { CommandPattern } from './commandPatterns.types';
 
 export const modePatterns: Record<string, CommandPattern> = {
-  // Mode deÄŸiÅŸtirme komutlarÄ±
+  // Mode değiştirme komutları
   'enable': {
     pattern: /^enable$/i,
     modes: ['user'],
@@ -76,7 +76,7 @@ export const modePatterns: Record<string, CommandPattern> = {
     maxArgs: 4
   },
 
-  // Global config komutlarÄ±
+  // Global config komutları
   'hostname': {
     pattern: /^hostname\s+(.+)$/i,
     modes: ['config'],

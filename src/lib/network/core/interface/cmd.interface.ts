@@ -43,13 +43,13 @@ export function cmdInterface(state: SwitchState, input: string, _ctx: CommandCon
     };
   }
 
-  // VLAN interface kontrol├╝ (vlan 10, vlan 20, etc.)
+  // VLAN interface kontrolü (vlan 10, vlan 20, etc.)
   const vlanMatch = interfaceName.match(/^vlan\s+(\d+)$/i);
   if (vlanMatch) {
     const vlanId = parseInt(vlanMatch[1], 10);
     const vlanPortId = `vlan${vlanId}`;
 
-    // VLAN port'u ve VLAN'─▒ olu┼ştur (e─şer yoksa)
+    // VLAN port'u ve VLAN'ı oluştur (eğer yoksa)
     const newPorts = { ...state.ports };
     const newVlans = { ...state.vlans };
     if (!newPorts[vlanPortId]) {
@@ -179,7 +179,7 @@ export function cmdShutdown(state: SwitchState, _input: string, ctx: CommandCont
     return { success: false, error: iosModeError() };
   }
 
-  // VLAN interface'i i├ğin shutdown
+  // VLAN interface'i için shutdown
   if (isVlanInterfaceName(state.currentInterface)) {
     const vlanPortKey = getVlanPortKey(state.currentInterface);
     const newPorts = { ...state.ports };
@@ -222,7 +222,7 @@ export function cmdNoShutdown(state: SwitchState, _input: string, ctx: CommandCo
     return { success: false, error: iosModeError() };
   }
 
-  // VLAN interface'i i├ğin no shutdown
+  // VLAN interface'i için no shutdown
   if (isVlanInterfaceName(state.currentInterface)) {
     const vlanPortKey = getVlanPortKey(state.currentInterface);
     const newPorts = { ...state.ports };
@@ -255,8 +255,8 @@ export function cmdNoShutdown(state: SwitchState, _input: string, ctx: CommandCo
     newState: { ports: finalPorts },
     deviceStates: allUpdatedStates,
     hint: {
-      tr: '­şÆí Ger├ğek d├╝nyada: "no shutdown" komutu aray├╝z├╝ fiziksel olarak aktif hale getirir. Yeni cihazlarda portlar genelde "shutdown" durumundad─▒r.',
-      en: '­şÆí In the real world: The "no shutdown" command physically activates the interface. On new devices, ports are usually in "shutdown" state by default.'
+      tr: '💡 Gerçek dünyada: "no shutdown" komutu arayüzü fiziksel olarak aktif hale getirir. Yeni cihazlarda portlar genelde "shutdown" durumundadır.',
+      en: '💡 In the real world: The "no shutdown" command physically activates the interface. On new devices, ports are usually in "shutdown" state by default.'
     }
   };
 }

@@ -32,7 +32,7 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     capability: 'firewall'
   },
 
-  // Interface komutlarÄ± - interface Ã–NCE gelmeli (daha spesifik)
+  // Interface komutları - interface ÖNCE gelmeli (daha spesifik)
   'interface': {
     pattern: /^interface\s+(?!r(?:ange)?\s)(f(?:a(?:st(?:ethernet)?)?)?|g(?:i(?:g(?:abit(?:ethernet)?)?)?)?|e(?:thernet)?|se(?:rial)?|po(?:\s*port-channel)?|vlan|loopback|lo)?\s*(.+)$/i,
     modes: ['config'],

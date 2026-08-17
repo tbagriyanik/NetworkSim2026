@@ -139,8 +139,8 @@ export function cmdIpAddress(state: SwitchState, input: string, _ctx: CommandCon
     output,
     newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) },
     hint: {
-      tr: '­şÆí Ger├ğek d├╝nyada: Bir aray├╝ze IP verildi─şinde o aray├╝z L3 (katman 3) ├ğal─▒┼şmaya ba┼şlar. Cihazlar aras─▒ y├Ânlendirme i├ğin IP gereklidir.',
-      en: '­şÆí In the real world: When an IP is assigned to an interface, it starts operating at L3 (layer 3). IPs are required for routing between devices.'
+      tr: '💡 Gerçek dünyada: Bir arayüze IP verildiğinde o arayüz L3 (katman 3) çalışmaya başlar. Cihazlar arası yönlendirme için IP gereklidir.',
+      en: '💡 In the real world: When an IP is assigned to an interface, it starts operating at L3 (layer 3). IPs are required for routing between devices.'
     }
   };
 }
@@ -153,7 +153,7 @@ export function cmdNoIpAddress(state: SwitchState, _input: string, _ctx: Command
     return { success: false, error: '% No interface selected' };
   }
 
-  // VLAN interface'i i├ğin IP kald─▒rma
+  // VLAN interface'i için IP kaldırma
   if (isVlanInterfaceName(state.currentInterface)) {
     const vlanPortKey = getVlanPortKey(state.currentInterface);
     const newPorts = { ...state.ports };
@@ -173,7 +173,7 @@ export function cmdNoIpAddress(state: SwitchState, _input: string, _ctx: Command
     };
   }
 
-  // Fiziksel port'tan IP kald─▒rma
+  // Fiziksel port'tan IP kaldırma
   const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
 
   const updatedState = { ...state, ports: newPorts };
