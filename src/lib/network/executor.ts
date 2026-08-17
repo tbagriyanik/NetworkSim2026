@@ -6,7 +6,7 @@ import { getDeviceCapabilities } from './capabilities';
 import { isRouterModel } from './switchModels';
 import { getModePrompt } from './initialState';
 import { ensureDeviceStatesMap } from './networkUtils';
-import { encryptMd5Password, decryptType7Password } from './crypto';
+import { encryptMd5Password, encryptType7Password } from './crypto';
 import { IOS_ERRORS, iosModeError } from './core/iosErrors';
 import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 
@@ -1825,10 +1825,18 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
     // Check enable secret (MD5 encrypted)
     if (state.security.enableSecret) {
       const storedSecret = state.security.enableSecret;
-      // If stored secret is already encrypted (starts with $1$), compare with encrypted input
+      // If stored secret is already encrypted (starts with $1$), re-encrypt with the same salt
+      // so the hashes can be compared deterministically.
       if (storedSecret.startsWith('$1$')) {
-        const encryptedInput = encryptMd5Password(password);
-        validPassword = encryptedInput === storedSecret;
+        const parts = storedSecret.split('$');
+        // Format: $1$<salt>$<hash>
+        const storedSalt = parts[2];
+        if (storedSalt) {
+          validPassword = encryptMd5Password(password, storedSalt) === storedSecret;
+        } else {
+          // Legacy: plain text comparison
+          validPassword = password === storedSecret;
+        }
       } else {
         // Legacy: plain text comparison
         validPassword = password === storedSecret;
@@ -1837,18 +1845,12 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
     // Check enable password (Type 7 encrypted or plain text)
     else if (state.security.enablePassword) {
       const storedPassword = state.security.enablePassword;
-      // If service password encryption is enabled, decrypt and compare
-      if (state.security.servicePasswordEncryption) {
-        try {
-          const decryptedStored = decryptType7Password(storedPassword);
-          validPassword = password === decryptedStored;
-        } catch {
-          // Fallback to plain text comparison if decryption fails
-          validPassword = password === storedPassword;
-        }
-      } else {
-        validPassword = password === storedPassword;
-      }
+      // Compare against plain or Type 7 encrypted forms. Type 7 hashing is
+      // deterministic, so re-encrypting the input matches regardless of whether
+      // the stored value is plaintext or was encrypted by service password-encryption.
+      validPassword =
+        password === storedPassword ||
+        encryptType7Password(password) === storedPassword;
     }
 
     if (validPassword) {
@@ -1882,7 +1884,10 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
   }
 
   if (state.passwordContext === 'console') {
-    const validPassword = password === state.security.consoleLine.password;
+    const storedConsole = state.security.consoleLine.password;
+    const validPassword =
+      password === storedConsole ||
+      encryptType7Password(password) === storedConsole;
     if (validPassword) {
       let output = '';
       if (state.bannerMOTD) {
@@ -1920,7 +1925,7 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
     const matchedUser = configuredUsers.find(user => user.username.toLowerCase() === sshUsername.toLowerCase());
     const validPassword = useLocalLogin
       ? !!matchedUser && String(matchedUser.password || '') === password
-      : password === configuredPassword;
+      : password === configuredPassword || encryptType7Password(password) === configuredPassword;
     if (validPassword) {
       const sessionUser = state.sshLastUser || state.hostname || 'admin';
       const sessionSource = state.sshLastSource || 'vty0';
