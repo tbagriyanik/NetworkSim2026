@@ -641,7 +641,7 @@ export function getL3Hops(
 
     const currentState = deviceStates.get(currentId);
     
-    // Check if targetIp is directly connected
+    // Check if targetIp is directly connected (check state ports AND device-level ip)
     let targetIsDirectlyConnected = false;
     if (currentState) {
       for (const port of Object.values(currentState.ports || {})) {
@@ -658,11 +658,10 @@ export function getL3Hops(
           }
         }
       }
-    } else {
-      if (currentDevice.ip && currentDevice.subnet) {
-        if (isIpInSubnetLocal(currentDevice.ip, targetIp, currentDevice.subnet)) {
-          targetIsDirectlyConnected = true;
-        }
+    }
+    if (!targetIsDirectlyConnected && currentDevice.ip && currentDevice.subnet) {
+      if (isIpInSubnetLocal(currentDevice.ip, targetIp, currentDevice.subnet)) {
+        targetIsDirectlyConnected = true;
       }
     }
 

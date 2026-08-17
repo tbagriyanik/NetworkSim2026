@@ -706,6 +706,12 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                   hopOutput += `  ${index + 1}    <1 ms    <1 ms    <1 ms  ${hop.name} [${hop.ip}]\n`;
                 });
                 await emitMulti('output', hopOutput + '\nTrace complete.', 80);
+              } else if (result.targetId) {
+                // Directly reachable (no L3 hops, e.g. flat LAN): destination is the first hop
+                const directTarget = topologyDevices.find(d => d.id === result.targetId);
+                const directIp = directTarget ? (directTarget.ip || directTarget.ipv6 || resolvedTarget) : resolvedTarget;
+                const directName = directTarget?.name || directIp;
+                await emitMulti('output', `  1    <1 ms    <1 ms    <1 ms  ${directName} [${directIp.toLowerCase()}]\n\nTrace complete.`, 80);
               } else {
                 await emitMulti('output', `  1    *        *        *     Request timed out.\n\nTrace complete.`, 80);
               }
