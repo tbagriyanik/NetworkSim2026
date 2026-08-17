@@ -151,17 +151,17 @@ export function RefreshReportPanel({
                   </div>
                 )}
                 {refreshNetworkReport.stpMessage && (
-                  <div className="text-pink-500 font-medium py-0.5 px-2 bg-pink-500/10 rounded-lg w-fit text-xs">
+                  <div className="text-pink-700 dark:text-pink-300 font-medium py-0.5 px-2 bg-pink-50 dark:bg-pink-950/40 border border-pink-200 dark:border-pink-500/30 rounded-lg w-fit text-xs">
                     {refreshNetworkReport.stpMessage}
                   </div>
                 )}
                 {refreshNetworkReport.portSecurityMessage && (
-                  <div className="text-error-500 font-medium py-0.5 px-2 bg-error-500/10 rounded-lg w-fit text-xs">
+                  <div className="text-red-700 dark:text-red-300 font-medium py-0.5 px-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-lg w-fit text-xs">
                     {refreshNetworkReport.portSecurityMessage}
                   </div>
                 )}
                 {refreshNetworkReport.topologyMessage && (
-                  <div className="text-warning-500 font-medium py-0.5 px-2 bg-warning-500/10 rounded-lg w-fit text-xs">
+                  <div className="text-amber-800 dark:text-amber-300 font-medium py-0.5 px-2 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-500/30 rounded-lg w-fit text-xs">
                     {refreshNetworkReport.topologyMessage}
                   </div>
                 )}
@@ -212,7 +212,7 @@ export function RefreshReportPanel({
                         </div>
                         <div className="space-y-0.5">
                           {refreshNetworkReport.summary.networkWarnings.map((w, i) => (
-                            <div key={i} className="flex items-center gap-1 text-warning-500">
+                            <div key={i} className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
                               <span>⚠</span>
                               <span>{w}</span>
                             </div>

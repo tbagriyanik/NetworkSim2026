@@ -41,11 +41,11 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
     return (
       <g key="ping-error" opacity={0.95}>
         <foreignObject x="20" y="20" width="300" height="auto">
-          <div className={`p-3 rounded-lg shadow-lg border ${isDark ? 'bg-error-500/20 border-error-500/50' : 'bg-error-50 border-error-200'}`}>
-            <div className={`text-sm font-bold ${isDark ? 'text-error-300' : 'text-error-700'}`}>
+          <div className={`p-3 rounded-lg shadow-lg border ${isDark ? 'bg-red-950/80 border-red-500/50' : 'bg-red-50 border-red-200'}`}>
+            <div className={`text-sm font-bold ${isDark ? 'text-red-300' : 'text-red-800'}`}>
               {t.pingFailed}
             </div>
-            <div className={`text-xs mt-1 ${isDark ? 'text-error-200' : 'text-error-600'}`}>
+            <div className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
               {error}
             </div>
           </div>

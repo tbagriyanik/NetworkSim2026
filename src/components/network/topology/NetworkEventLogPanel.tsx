@@ -37,15 +37,15 @@ export function NetworkEventLogPanel({ isOpen, onClose, isDark }: NetworkEventLo
   const getBgColor = (level: string) => {
     if (isDark) {
       switch (level) {
-        case 'error': return 'bg-red-500/10 border-red-500/20';
-        case 'warning': return 'bg-yellow-500/10 border-yellow-500/20';
-        default: return 'bg-blue-500/10 border-blue-500/20';
+        case 'error': return 'bg-red-500/10 border-red-500/30';
+        case 'warning': return 'bg-amber-500/10 border-amber-500/30';
+        default: return 'bg-blue-500/10 border-blue-500/30';
       }
     }
     switch (level) {
-      case 'error': return 'bg-red-50 border-red-100';
-      case 'warning': return 'bg-yellow-50 border-yellow-100';
-      default: return 'bg-blue-50 border-blue-100';
+      case 'error': return 'bg-red-50 border-red-200';
+      case 'warning': return 'bg-amber-50 border-amber-200';
+      default: return 'bg-blue-50 border-blue-200';
     }
   };
 
@@ -141,9 +141,9 @@ export function NetworkEventLogPanel({ isOpen, onClose, isDark }: NetworkEventLo
                 <div className="flex items-center justify-between mb-1 gap-2">
                   <span className={cn(
                     "text-xs font-semibold px-2 py-0.5 rounded",
-                    log.level === 'error' ? (isDark ? "bg-red-500/20 text-red-300" : "bg-red-100 text-red-700") :
-                    log.level === 'warning' ? (isDark ? "bg-yellow-500/20 text-yellow-300" : "bg-yellow-100 text-yellow-700") :
-                    (isDark ? "bg-blue-500/20 text-blue-300" : "bg-blue-100 text-blue-700")
+                    log.level === 'error' ? (isDark ? "bg-red-500/25 text-red-300 border border-red-500/30" : "bg-red-100 text-red-800 border border-red-200") :
+                    log.level === 'warning' ? (isDark ? "bg-amber-500/25 text-amber-300 border border-amber-500/30" : "bg-amber-100 text-amber-900 border border-amber-200") :
+                    (isDark ? "bg-blue-500/25 text-blue-300 border border-blue-500/30" : "bg-blue-100 text-blue-800 border border-blue-200")
                   )}>
                     {log.category}
                   </span>
@@ -162,8 +162,8 @@ export function NetworkEventLogPanel({ isOpen, onClose, isDark }: NetworkEventLo
                 </p>
                 {log.detail && (
                   <p className={cn(
-                    "text-xs mt-1 break-words",
-                    isDark ? "text-slate-400" : "text-slate-600"
+                    "text-xs mt-1 break-words leading-relaxed",
+                    isDark ? "text-slate-300" : "text-slate-700"
                   )}>
                     {log.detail}
                   </p>

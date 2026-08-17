@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Monitor, Network, Laptop } from 'lucide-react';
 import { normalizeMAC } from '@/lib/utils';
@@ -112,7 +112,7 @@ export function DeviceTooltip({ tooltip, deviceMap, isDark, isTR, isDraggingInte
                   <div className="text-[10px] font-bold opacity-50 uppercase tracking-wider mb-1">{t.openServices}</div>
                   <div className="flex flex-wrap gap-1 mb-2">
                     {dev.services.http?.enabled && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-warning-500/20 text-warning-500 text-[9px] font-black tracking-widest border border-warning-500/20">HTTP</span>
+                      <span className="px-1.5 py-0.5 rounded-md bg-amber-500/20 text-amber-300 text-[9px] font-black tracking-widest border border-amber-500/30">HTTP</span>
                     )}
                     {dev.services.dns?.enabled && (
                       <span className="px-1.5 py-0.5 rounded-md bg-primary-500/20 text-primary-500 text-[9px] font-black tracking-widest border border-primary-500/20">DNS</span>
@@ -124,7 +124,7 @@ export function DeviceTooltip({ tooltip, deviceMap, isDark, isTR, isDraggingInte
                       <span className="px-1.5 py-0.5 rounded-md bg-accent-500/20 text-accent-500 text-[9px] font-black tracking-widest border border-accent-500/20">FTP</span>
                     )}
                     {dev.services.mail?.enabled && (
-                      <span className="px-1.5 py-0.5 rounded-md bg-error-500/20 text-error-500 text-[9px] font-black tracking-widest border border-error-500/20">MAIL</span>
+                      <span className="px-1.5 py-0.5 rounded-md bg-red-500/20 text-red-300 text-[9px] font-black tracking-widest border border-red-500/30">MAIL</span>
                     )}
                     {(!dev.services.http?.enabled && !dev.services.dns?.enabled && !dev.services.dhcp?.enabled && !dev.services.ftp?.enabled && !dev.services.mail?.enabled) && (
                       <span className="text-[9px] opacity-40 italic">{isTR ? 'Servis yok' : 'No services'}</span>

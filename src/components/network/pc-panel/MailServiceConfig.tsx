@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { ArrowLeft, Send, Reply, Trash2, Plus } from 'lucide-react';
@@ -151,7 +151,7 @@ export function MailServiceConfig({
               className={`w-full text-xs p-2 rounded border resize-none focus:outline-none focus:ring-1 ${isDark ? 'bg-secondary-800 border-secondary-700 text-secondary-200 focus:ring-accent-500/50' : 'bg-white border-secondary-300 text-secondary-800 focus:ring-accent-500/50'}`}
             />
             {mailError && (
-              <div className="text-[11px] text-error-500 font-bold bg-error-500/10 border border-error-500/30 rounded-lg px-3 py-2">
+              <div className="text-[11px] text-red-800 dark:text-red-200 font-semibold bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">
                 {mailError}
               </div>
             )}
@@ -199,7 +199,7 @@ export function MailServiceConfig({
                   className={`w-full text-xs p-2 rounded border resize-none focus:outline-none focus:ring-1 ${isDark ? 'bg-secondary-800 border-secondary-700 text-secondary-200 focus:ring-accent-500/50' : 'bg-white border-secondary-300 text-secondary-800 focus:ring-accent-500/50'}`}
                 />
                 {mailError && (
-                  <div className="text-[11px] text-error-500 font-bold bg-error-500/10 border border-error-500/30 rounded-lg px-3 py-2">
+                  <div className="text-[11px] text-red-800 dark:text-red-200 font-semibold bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">
                     {mailError}
                   </div>
                 )}
@@ -232,7 +232,7 @@ export function MailServiceConfig({
             </div>
 
             {mailPop3Blocked && (
-              <div className="text-[11px] text-error-500 font-bold bg-error-500/10 border border-error-500/30 rounded-lg px-3 py-2">
+              <div className="text-[11px] text-red-800 dark:text-red-200 font-semibold bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-lg px-3 py-2">
                 {language === 'tr' ? 'POP3 (port 110) engellendi. Posta alınamıyor.' : 'POP3 (port 110) blocked. Cannot receive mail.'}
               </div>
             )}

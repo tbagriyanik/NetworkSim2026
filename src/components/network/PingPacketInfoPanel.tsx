@@ -581,9 +581,13 @@ export function PingPacketInfoPanel({
                     </div>
                     
                     {isPaused && currentInfo?.actionDescription && !isDone && (
-                        <div className="flex-1 mx-4 px-3 py-1 rounded-lg bg-warning-500/10 border border-warning-500/20 text-warning-400 text-[11px] font-bold">
-                            <span className="opacity-60 mr-1">{t.actionLabel}</span>
-                            {currentInfo.actionDescription}
+                        <div className={`flex-1 mx-4 px-3 py-1.5 rounded-lg border text-[11px] font-medium leading-normal ${
+                            isDark 
+                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' 
+                                : 'bg-amber-50 border-amber-200 text-amber-900'
+                        }`}>
+                            <span className={`font-bold mr-1.5 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{t.actionLabel}</span>
+                            <span>{currentInfo.actionDescription}</span>
                         </div>
                     )}
                 </div>
@@ -593,37 +597,45 @@ export function PingPacketInfoPanel({
                     {isDone && (
                         <div className={`px-5 py-3 flex items-start gap-3 border-b ${isSuccess
                             ? isGlass
-                                ? (isDark ? 'bg-success-500/10 border-success-500/20' : 'bg-success-500/10 border-success-500/20')
-                                : (isDark ? 'bg-success-900/40 border-success-800/50' : 'bg-success-50 border-success-100')
+                                ? (isDark ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200')
+                                : (isDark ? 'bg-emerald-950/50 border-emerald-800/60' : 'bg-emerald-50 border-emerald-200')
                             : isGlass
-                                ? (isDark ? 'bg-error-500/10 border-error-500/20' : 'bg-error-500/10 border-error-500/20')
-                                : (isDark ? 'bg-error-900/40 border-error-800/50' : 'bg-error-50 border-error-100')
+                                ? (isDark ? 'bg-red-950/60 border-red-500/30' : 'bg-red-50 border-red-200')
+                                : (isDark ? 'bg-red-950/70 border-red-800/60' : 'bg-red-50 border-red-200')
                             }`}>
                             {isSuccess ? (
-                                <svg className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                 </svg>
                             ) : (
-                                <svg className="w-5 h-5 text-error-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                                <div className="w-5 h-5 rounded-full bg-red-500/20 dark:bg-red-500/30 flex items-center justify-center flex-shrink-0 mt-0.5 border border-red-500/40">
+                                    <svg className="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </div>
                             )}
                             <div className="flex-1 min-w-0">
                                 {isSuccess ? (
                                     <>
-                                        <div className={`text-sm font-bold ${isDark ? 'text-success-300' : 'text-success-700'}`}>{t.successTitle}</div>
-                                        <div className={`text-xs mt-0.5 font-mono ${isDark ? 'text-success-400/80' : 'text-success-600'}`}>
+                                        <div className={`text-sm font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>{t.successTitle}</div>
+                                        <div className={`text-xs mt-0.5 font-mono ${isDark ? 'text-emerald-200/90' : 'text-emerald-700'}`}>
                                             {language === 'tr' ? `${targetIp || targetName}: bayt=32 TTL=${currentInfo?.ttl ?? 64}` : `Reply from ${targetIp || targetName}: bytes=32 TTL=${currentInfo?.ttl ?? 64}`}
                                         </div>
-                                        <div className={`text-xs mt-0.5 ${isDark ? 'text-success-500/70' : 'text-success-600/70'}`}>{sourceName} → {targetName} → {sourceName}</div>
+                                        <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-300/80' : 'text-emerald-600'}`}>{sourceName} → {targetName} → {sourceName}</div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className={`text-sm font-bold ${isDark ? 'text-error-300' : 'text-error-700'}`}>{t.failTitle}</div>
-                                        {errorMessage && <div className={`text-xs mt-0.5 ${isDark ? 'text-error-400/80' : 'text-error-600'}`}>{t.failReason}: {errorMessage}</div>}
+                                        <div className={`text-sm font-bold ${isDark ? 'text-red-300' : 'text-red-800'}`}>{t.failTitle}</div>
+                                        {errorMessage && (
+                                            <div className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                                                <span className={`font-semibold ${isDark ? 'text-red-300' : 'text-red-700'}`}>{t.failReason}:</span>{' '}
+                                                <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{errorMessage}</span>
+                                            </div>
+                                        )}
                                         {currentInfo && (
-                                            <div className={`text-xs mt-0.5 font-mono ${isDark ? 'text-error-500/70' : 'text-error-500/70'}`}>
-                                                {language === 'tr' ? `${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name} adımında başarısız` : `Failed at ${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name}`}
+                                            <div className={`text-xs mt-1 font-mono flex items-center gap-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                                <span>{language === 'tr' ? `${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name} adımında başarısız` : `Failed at ${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name}`}</span>
                                             </div>
                                         )}
                                     </>

@@ -374,7 +374,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                         <div className={cn("px-1 text-[10px] text-right", isDark ? "text-secondary-500" : "text-secondary-400")}>
                           {contactData.name.length}/{CONTACT_NAME_MAX_LENGTH}
                         </div>
-                        {validationErrors.name && <p className="text-[10px] text-error-500 px-1">{validationErrors.name}</p>}
+                        {validationErrors.name && <p className="text-[10px] text-red-600 dark:text-red-400 font-semibold px-1">{validationErrors.name}</p>}
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold opacity-50 px-1">{t.contactEmail}</label>
@@ -397,7 +397,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                         <div className={cn("px-1 text-[10px] text-right", isDark ? "text-secondary-500" : "text-secondary-400")}>
                           {contactData.email.length}/{CONTACT_EMAIL_MAX_LENGTH}
                         </div>
-                        {validationErrors.email && <p className="text-[10px] text-error-500 px-1">{validationErrors.email}</p>}
+                        {validationErrors.email && <p className="text-[10px] text-red-600 dark:text-red-400 font-semibold px-1">{validationErrors.email}</p>}
                       </div>
                     </div>
 
@@ -456,11 +456,11 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
                         <span>{isTR ? 'Maksimum mesaj uzunluğu' : 'Maximum message length'}: {CONTACT_MESSAGE_MAX_LENGTH}</span>
                         <span>{contactData.message.length}/{CONTACT_MESSAGE_MAX_LENGTH}</span>
                       </div>
-                      {validationErrors.message && <p className="text-[10px] text-error-500 px-1">{validationErrors.message}</p>}
+                      {validationErrors.message && <p className="text-[10px] text-red-600 dark:text-red-400 font-semibold px-1">{validationErrors.message}</p>}
                     </div>
 
                     {submitStatus === 'error' && (
-                      <p className="text-xs text-error-500 font-bold px-1">{t.contactErrorDesc}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400 font-bold px-1">{t.contactErrorDesc}</p>
                     )}
 
                   </form>

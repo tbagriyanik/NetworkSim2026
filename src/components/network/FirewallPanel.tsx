@@ -459,7 +459,7 @@ function DraggableRuleItem({
         </button>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${rule.action === 'allow' ? 'bg-success-500/20 text-success-500' : 'bg-error-500/20 text-error-500'}`}>
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${rule.action === 'allow' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : 'bg-red-500/20 text-red-700 dark:text-red-300 border border-red-500/30'}`}>
               {rule.action.toUpperCase()}
             </span>
             <span className="text-[10px] font-bold text-secondary-500 uppercase">{displayName}</span>

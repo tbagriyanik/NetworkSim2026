@@ -459,12 +459,12 @@ export function UnifiedDevicePanel({
                                                                                     <span className={cn(
                                                                                         "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
                                                                                         role === 'root'
-                                                                                            ? "bg-primary-500/10 text-primary-500 border-primary-500/20"
+                                                                                            ? "bg-primary-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30"
                                                                                             : role === 'designated'
-                                                                                            ? "bg-success-500/10 text-success-500 border-success-500/20"
+                                                                                            ? "bg-success-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
                                                                                             : role === 'alternate'
-                                                                                            ? "bg-warning-500/10 text-warning-500 border-warning-500/20"
-                                                                                            : "bg-secondary-500/10 text-secondary-500 border-secondary-500/20"
+                                                                                            ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                                                                                            : "bg-secondary-500/10 text-secondary-600 dark:text-secondary-400 border-secondary-500/20"
                                                                                     )}>
                                                                                         {roleLabels[role] || role}
                                                                                     </span>
@@ -473,10 +473,10 @@ export function UnifiedDevicePanel({
                                                                                     <span className={cn(
                                                                                         "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
                                                                                         state === 'forwarding'
-                                                                                            ? "bg-success-500/10 text-success-500 border border-success-500/20"
+                                                                                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
                                                                                             : state === 'blocking'
-                                                                                            ? "bg-error-500/10 text-error-500 border border-error-500/20 animate-pulse"
-                                                                                            : "bg-secondary-500/10 text-secondary-500 border border-secondary-500/20"
+                                                                                            ? "bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/30 animate-pulse"
+                                                                                            : "bg-secondary-500/10 text-secondary-600 dark:text-secondary-400 border border-secondary-500/20"
                                                                                     )}>
                                                                                         {stateLabels[state] || state}
                                                                                     </span>
