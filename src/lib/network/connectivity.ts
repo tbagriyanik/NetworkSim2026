@@ -344,9 +344,9 @@ export function checkConnectivity(
   // 1.5. Perform ARP resolution if target is in same subnet
   // ARP is needed for L2 communication to resolve IP to MAC
   const sourceDeviceForArp = deviceMap.get(sourceId);
-  if (sourceDeviceForArp && deviceStates && targetDevice?.macAddress) {
-    const sourceState = deviceStates.get(sourceId);
-    if (sourceState) {
+  if (sourceDeviceForArp && targetDevice?.macAddress) {
+    const sourceState = safeDeviceStates.get(sourceId);
+    if (sourceState || safeDeviceStates.size === 0) {
       // Check if source and target are in same subnet
       // BOLT: Use pre-resolved safeDeviceStates
       const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, false, sourceDeviceForArp);
@@ -361,7 +361,7 @@ export function checkConnectivity(
 
         // ARP broadcast only happens when the target MAC is unknown or the cache
         // entry has aged out (getMacFromArpCache cleans expired 2-minute entries).
-        const cachedMac = getMacFromArpCache(sourceId, resolvedTargetIp, deviceStates);
+        const cachedMac = getMacFromArpCache(sourceId, resolvedTargetIp, safeDeviceStates);
 
         // Perform ARP resolution (simulated)
         performArpResolution(
@@ -369,7 +369,7 @@ export function checkConnectivity(
           resolvedTargetIp,
           targetDevice.macAddress,
           interfaceName,
-          deviceStates
+          safeDeviceStates
         );
 
         if (!cachedMac && sourceConn) {

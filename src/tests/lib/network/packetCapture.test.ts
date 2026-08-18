@@ -238,6 +238,21 @@ describe('Packet Capture Backend', () => {
     expect(expired.capturedPackets?.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Reply'))).toBe(true);
   });
 
+  test('right-click device ping captures ARP packets without device state map', () => {
+    const result = checkDeviceConnectivity(
+      'pc-1',
+      'pc-2',
+      devices,
+      connections,
+      undefined,
+      { protocol: 'icmp' }
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.capturedPackets?.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Request'))).toBe(true);
+    expect(result.capturedPackets?.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Reply'))).toBe(true);
+  });
+
   test('switches learn the source MAC on their ingress port from the ARP broadcast', () => {
     const pc1 = devices[0];
     const pc2 = devices[1];

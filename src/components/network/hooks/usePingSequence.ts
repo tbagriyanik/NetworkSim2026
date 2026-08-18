@@ -148,14 +148,29 @@ export function usePingSequence(deps: PingSequenceDeps) {
       return;
     }
 
-    const diagnostics = getPingDiagnostics(sourceId, targetIp, devices, connections, deviceStates, isTR ? 'tr' : 'en', { protocol: 'icmp' });
+    const hadCachedArpEntry = (() => {
+      if (typeof window === 'undefined' || !targetIp) return false;
+      try {
+        const raw = localStorage.getItem(`pc_arp_${sourceId}`);
+        const entries = raw ? JSON.parse(raw) as Array<{ ip?: string; mac?: string }> : [];
+        return entries.some(entry => entry.ip === targetIp && !!entry.mac);
+      } catch {
+        return false;
+      }
+    })();
+
     const connectivity = checkDeviceConnectivity(sourceId, targetId, devices, connections, deviceStates, { protocol: 'icmp' });
 
-    if (connectivity.capturedPackets?.length) {
-      dispatchCapturedPackets(connectivity.capturedPackets);
+    const capturedPackets = hadCachedArpEntry
+      ? connectivity.capturedPackets?.filter(packet => packet.protocol !== 'ARP')
+      : connectivity.capturedPackets;
+
+    if (capturedPackets?.length) {
+      dispatchCapturedPackets(capturedPackets);
     }
 
     if (!connectivity.success) {
+      const diagnostics = getPingDiagnostics(sourceId, targetIp, devices, connections, deviceStates, isTR ? 'tr' : 'en', { protocol: 'icmp' });
       const errorMessage = diagnostics.reasons?.length > 0 ? diagnostics.reasons[0] : (isTR ? 'Ping başarısız' : 'Ping failed');
       const partialPath = connectivity.hopIds?.length >= 1 ? connectivity.hopIds : [sourceId];
       pingPathRef.current = partialPath;
