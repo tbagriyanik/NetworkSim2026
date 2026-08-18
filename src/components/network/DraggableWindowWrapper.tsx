@@ -25,6 +25,7 @@ interface DraggableWindowWrapperProps {
   headerActions?: React.ReactNode;
   collapsible?: boolean;
   disableResize?: boolean;
+  onHeaderDoubleClick?: () => void;
 }
 
 export function DraggableWindowWrapper({
@@ -47,17 +48,18 @@ export function DraggableWindowWrapper({
   headerActions,
   collapsible = true,
   disableResize = false,
+  onHeaderDoubleClick,
 }: DraggableWindowWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  
+
   // Local z-index state initialized from store
   const [zIndex, setZIndex] = useState(100);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { t, language } = useLanguage();
-  
+
   const activeWindowId = useWindowStore(state => state.activeWindowId);
   const setActiveWindow = useWindowStore(state => state.setActiveWindow);
-  
+
   const isActive = activeWindowId === id;
 
   // Bring to front on mount and when opened
@@ -77,46 +79,60 @@ export function DraggableWindowWrapper({
     }
   };
 
+  // Handle escape key
   useEffect(() => {
-    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        onEscapeKeyDown?.();
-        onClose();
+      if (e.key === 'Escape' && isOpen && isActive) {
+        if (onEscapeKeyDown) {
+          onEscapeKeyDown();
+        } else {
+          onClose();
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, onEscapeKeyDown]);
+  }, [isOpen, isActive, onClose, onEscapeKeyDown]);
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   if (!isOpen) return null;
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const isMobileFullScreen = isMobile && mobileFullScreen;
 
+  // Desktop or floating mobile styles
   const wrapperStyle: React.CSSProperties = isMobileFullScreen
     ? {
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999, // Always top on mobile when fullscreen
-      }
+      position: 'fixed',
+      inset: 0,
+      width: '100vw',
+      height: '100vh',
+      zIndex,
+    }
     : {
-        position: 'fixed',
-        left: modalPosition.x,
-        top: modalPosition.y,
-        width: modalSize.width,
-        height: isCollapsed ? 'auto' : modalSize.height,
-        maxWidth: isMobile ? '100vw' : undefined,
-        maxHeight: isMobile ? 'calc(100vh - 40px)' : undefined,
-        zIndex: isMobile ? 9999 : zIndex,
-      };
+      position: 'fixed',
+      left: modalPosition.x,
+      top: modalPosition.y,
+      width: modalSize.width,
+      height: isCollapsed ? 'auto' : modalSize.height,
+      zIndex,
+      touchAction: 'none',
+    };
 
   return (
     <div
       ref={containerRef}
-      id={`window-${id}`}
-      data-draggable-id={id}
+      data-modal-id={id}
       data-modal-content="true"
       style={wrapperStyle}
       className={cn(
@@ -125,8 +141,8 @@ export function DraggableWindowWrapper({
         isDark ? 'bg-secondary-900' : 'bg-white',
         // Green border when active (on desktop or floating on mobile)
         isActive && (!isMobile || !isMobileFullScreen)
-            ? (isDark ? 'border-success-500/70 shadow-success-500/20' : 'border-success-500/80 shadow-success-500/30')
-            : (isDark ? 'border-secondary-700' : 'border-secondary-200'),
+          ? (isDark ? 'border-success-500/70 shadow-success-500/20' : 'border-success-500/80 shadow-success-500/30')
+          : (isDark ? 'border-secondary-700' : 'border-secondary-200'),
         className
       )}
       onPointerDownCapture={handleFocus}
@@ -138,6 +154,15 @@ export function DraggableWindowWrapper({
           const target = e.target as HTMLElement;
           if (target.closest('button, [role="tab"], input, select, textarea, .no-drag')) return;
           handlePointerDown?.(e, id);
+        }}
+        onDoubleClick={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('button, [role="tab"], input, select, textarea, .no-drag')) return;
+          if (onHeaderDoubleClick) {
+            onHeaderDoubleClick();
+          } else if (collapsible && !isMobile) {
+            setIsCollapsed(prev => !prev);
+          }
         }}
         className={cn(
           'flex items-center justify-between px-3 py-2 select-none shrink-0 group',
@@ -167,7 +192,7 @@ export function DraggableWindowWrapper({
             </div>
           )}
         </div>
-        
+
         {headerActions && (
           <div className="flex items-center gap-1 shrink-0 ml-2">
             {headerActions}
@@ -182,8 +207,8 @@ export function DraggableWindowWrapper({
             }}
             className={cn(
               "flex items-center justify-center p-1.5 ml-2 rounded transition-colors shrink-0",
-              isDark 
-                ? "text-secondary-400 hover:text-white hover:bg-secondary-700" 
+              isDark
+                ? "text-secondary-400 hover:text-white hover:bg-secondary-700"
                 : "text-secondary-500 hover:text-secondary-900 hover:bg-secondary-200"
             )}
             aria-expanded={!isCollapsed}
@@ -204,8 +229,8 @@ export function DraggableWindowWrapper({
             }}
             className={cn(
               "flex items-center justify-center p-1.5 ml-2 rounded transition-colors shrink-0",
-              isDark 
-                ? "text-secondary-400 hover:text-white hover:bg-error-500/80" 
+              isDark
+                ? "text-secondary-400 hover:text-white hover:bg-error-500/80"
                 : "text-secondary-500 hover:text-white hover:bg-error-500"
             )}
             aria-label={t.close}

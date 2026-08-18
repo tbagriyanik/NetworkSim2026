@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
+import { type BroadcastAnimTarget } from './hooks/usePingSequence';
 import { cn } from '@/lib/utils';
 
 import { CABLE_COLORS } from './networkTopology.constants';
@@ -51,6 +52,8 @@ interface PingPacketInfoPanelProps {
     targetName?: string;
     sourceIp?: string;
     targetIp?: string;
+    broadcastAnim?: BroadcastAnimTarget[];
+    broadcastProgress?: number;
 }
 const tr = {
     title: 'Paket Analizi',
@@ -372,6 +375,8 @@ export function PingPacketInfoPanel({
     sourceName,
     targetName,
     targetIp,
+    broadcastAnim,
+    broadcastProgress,
 }: PingPacketInfoPanelProps) {
     const t = language === 'tr' ? tr : en;
 
@@ -384,6 +389,29 @@ export function PingPacketInfoPanel({
     });
 
     const isGlass = graphicsQuality === 'high';
+    const hasBroadcastEffect = Boolean(broadcastAnim && broadcastAnim.length > 0 && broadcastProgress !== undefined && broadcastProgress > 0 && broadcastProgress < 1);
+
+    const broadcastSvgData = React.useMemo(() => {
+        if (!broadcastAnim || broadcastAnim.length === 0) return [];
+        const xs = broadcastAnim.flatMap(bt => [bt.fromX, bt.toX]);
+        const ys = broadcastAnim.flatMap(bt => [bt.fromY, bt.toY]);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        const spanX = Math.max(1, maxX - minX);
+        const spanY = Math.max(1, maxY - minY);
+
+        return broadcastAnim.map(bt => {
+            const fromX = 40 + ((bt.fromX - minX) / spanX) * 400;
+            const fromY = 90 - ((bt.fromY - minY) / spanY) * 60;
+            const toX = 40 + ((bt.toX - minX) / spanX) * 400;
+            const toY = 90 - ((bt.toY - minY) / spanY) * 60;
+            const x = fromX + (toX - fromX) * (broadcastProgress ?? 0);
+            const y = fromY + (toY - fromY) * (broadcastProgress ?? 0);
+            return { ...bt, fromX: fromX, fromY: fromY, toX: toX, toY: toY, x, y };
+        });
+    }, [broadcastAnim, broadcastProgress]);
 
     const [isMinimized, setIsMinimized] = React.useState(false);
 
@@ -513,7 +541,7 @@ export function PingPacketInfoPanel({
     );
 
     return (
-<DraggableWindowWrapper
+        <DraggableWindowWrapper
             id="pingPacketInfoPanel"
             title={titleContent}
             icon={<div className="w-5 h-5 flex items-center justify-center" />}
@@ -539,201 +567,230 @@ export function PingPacketInfoPanel({
             headerActions={headerActions}
             collapsible={false}
             disableResize={isMinimized}
+            onHeaderDoubleClick={() => setIsMinimized(prev => !prev)}
         >
             {!isMinimized && (
                 <div className="flex-1 overflow-y-auto min-h-0 flex flex-col" onMouseDown={onFocus}>
-                {/* Play/Pause control bar inside content (since it's no longer in header) */}
-                <div className="flex items-center justify-between p-2 border-b dark:border-secondary-800 bg-secondary-50/50 dark:bg-secondary-950/50">
-                    <div className="flex items-center gap-2">
-                        {!isDone && (
-                            <div className="flex items-center gap-1">
-                                {isPaused ? (
+                    {/* Play/Pause control bar inside content (since it's no longer in header) */}
+                    <div className="flex items-center justify-between p-2 border-b dark:border-secondary-800 bg-secondary-50/50 dark:bg-secondary-950/50">
+                        <div className="flex items-center gap-2">
+                            {!isDone && (
+                                <div className="flex items-center gap-1">
+                                    {isPaused ? (
+                                        <button
+                                            onClick={handlePlay}
+                                            className="p-1 rounded bg-success-500 hover:bg-success-600 text-white transition-colors flex items-center gap-1 px-2.5 py-1 text-xs"
+                                        >
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
+                                            <span>{t.play}</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={onPause}
+                                            className="p-1 rounded bg-warning-500 hover:bg-warning-600 text-white transition-colors flex items-center gap-1 px-2.5 py-1 text-xs"
+                                        >
+                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                                                <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+                                            </svg>
+                                            <span>{t.pause}</span>
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={handlePlay}
-                                        className="p-1 rounded bg-success-500 hover:bg-success-600 text-white transition-colors flex items-center gap-1 px-2.5 py-1 text-xs"
-                                    >
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21" /></svg>
-                                        <span>{t.play}</span>
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={onPause}
-                                        className="p-1 rounded bg-warning-500 hover:bg-warning-600 text-white transition-colors flex items-center gap-1 px-2.5 py-1 text-xs"
+                                        onClick={handleNext}
+                                        disabled={!isPaused}
+                                        className={`p-1 rounded transition-colors flex items-center gap-1 px-2.5 py-1 text-xs ${isPaused ? 'bg-primary-500 hover:bg-primary-600 text-white' : 'bg-secondary-200 dark:bg-secondary-800 text-secondary-400 dark:text-secondary-600 cursor-not-allowed'}`}
                                     >
                                         <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                            <rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" />
+                                            <polygon points="5,3 14,12 5,21" /><rect x="16" y="3" width="3" height="18" />
                                         </svg>
-                                        <span>{t.pause}</span>
+                                        <span>{t.next}</span>
                                     </button>
-                                )}
-                                <button
-                                    onClick={handleNext}
-                                    disabled={!isPaused}
-                                    className={`p-1 rounded transition-colors flex items-center gap-1 px-2.5 py-1 text-xs ${isPaused ? 'bg-primary-500 hover:bg-primary-600 text-white' : 'bg-secondary-200 dark:bg-secondary-800 text-secondary-400 dark:text-secondary-600 cursor-not-allowed'}`}
-                                >
-                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-                                        <polygon points="5,3 14,12 5,21" /><rect x="16" y="3" width="3" height="18" />
-                                    </svg>
-                                    <span>{t.next}</span>
-                                </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {isPaused && currentInfo?.actionDescription && !isDone && (
+                            <div className={`flex-1 mx-4 px-3 py-1.5 rounded-lg border text-[11px] font-medium leading-normal ${isDark
+                                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-200'
+                                    : 'bg-amber-50 border-amber-200 text-amber-900'
+                                }`}>
+                                <span className={`font-bold mr-1.5 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{t.actionLabel}</span>
+                                <span>{currentInfo.actionDescription}</span>
                             </div>
                         )}
                     </div>
-                    
-                    {isPaused && currentInfo?.actionDescription && !isDone && (
-                        <div className={`flex-1 mx-4 px-3 py-1.5 rounded-lg border text-[11px] font-medium leading-normal ${
-                            isDark 
-                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-200' 
-                                : 'bg-amber-50 border-amber-200 text-amber-900'
-                        }`}>
-                            <span className={`font-bold mr-1.5 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>{t.actionLabel}</span>
-                            <span>{currentInfo.actionDescription}</span>
-                        </div>
-                    )}
-                </div>
 
-                <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
-                    {/* Result banner */}
-                    {isDone && (
-                        <div className={`px-5 py-3 flex items-start gap-3 border-b ${isSuccess
-                            ? isGlass
-                                ? (isDark ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200')
-                                : (isDark ? 'bg-emerald-950/50 border-emerald-800/60' : 'bg-emerald-50 border-emerald-200')
-                            : isGlass
-                                ? (isDark ? 'bg-red-950/60 border-red-500/30' : 'bg-red-50 border-red-200')
-                                : (isDark ? 'bg-red-950/70 border-red-800/60' : 'bg-red-50 border-red-200')
-                            }`}>
-                            {isSuccess ? (
-                                <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
+                        {hasBroadcastEffect && (
+                            <div className={`mx-3 mt-3 rounded-xl border ${isDark ? 'border-amber-500/30 bg-amber-500/10' : 'border-amber-200 bg-amber-50'} p-2`}>
+                                <div className={`mb-1.5 flex items-center justify-between gap-2 ${isDark ? 'text-amber-300' : 'text-amber-700'}`}>
+                                    <span className="text-[10px] font-bold uppercase tracking-[0.18em]">{language === 'tr' ? 'ARP Broadcast' : 'ARP Broadcast'}</span>
+                                    <span className="text-[10px] font-mono">ff:ff:ff:ff:ff:ff</span>
+                                </div>
+                                <svg viewBox="0 0 480 120" className="h-24 w-full overflow-visible">
+                                    <defs>
+                                        <filter id="panel-broadcast-glow" x="-50%" y="-50%" width="200%" height="200%">
+                                            <feGaussianBlur stdDeviation="3" result="blur" />
+                                            <feMerge>
+                                                <feMergeNode in="blur" />
+                                                <feMergeNode in="SourceGraphic" />
+                                            </feMerge>
+                                        </filter>
+                                    </defs>
+                                    <rect x="10" y="18" width="460" height="84" rx="18" fill={isDark ? 'rgba(251, 191, 36, 0.06)' : 'rgba(251, 191, 36, 0.08)'} stroke={isDark ? 'rgba(251, 191, 36, 0.35)' : 'rgba(180, 83, 9, 0.28)'} />
+                                    <path d="M 40 60 C 140 30, 180 95, 240 60 S 360 35, 440 60" fill="none" stroke={isDark ? 'rgba(251, 191, 36, 0.28)' : 'rgba(180, 83, 9, 0.22)'} strokeWidth="2" strokeDasharray="7 9" />
+                                    {broadcastSvgData.map((bt, i) => (
+                                        <g key={`${bt.targetId}-${i}`}>
+                                            <line x1={bt.fromX} y1={bt.fromY} x2={bt.x} y2={bt.y} stroke={isDark ? 'rgba(251, 191, 36, 0.85)' : 'rgba(180, 83, 9, 0.85)'} strokeWidth="2" strokeLinecap="round" opacity={0.8} />
+                                            <circle cx={bt.x} cy={bt.y} r="7" fill={isDark ? '#fbbf24' : '#d97706'} filter="url(#panel-broadcast-glow)" opacity={0.9} />
+                                            <rect x={bt.x - 10} y={bt.y - 8} width="20" height="16" rx="3" fill={isDark ? '#fbbf24' : '#d97706'} opacity={0.9} />
+                                            <path d={`M ${bt.x - 7} ${bt.y - 2} L ${bt.x} ${bt.y + 5} L ${bt.x + 7} ${bt.y - 2}`} fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                        </g>
+                                    ))}
                                 </svg>
-                            ) : (
-                                <div className="w-5 h-5 rounded-full bg-red-500/20 dark:bg-red-500/30 flex items-center justify-center flex-shrink-0 mt-0.5 border border-red-500/40">
-                                    <svg className="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                                {isSuccess ? (
-                                    <>
-                                        <div className={`text-sm font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>{t.successTitle}</div>
-                                        <div className={`text-xs mt-0.5 font-mono ${isDark ? 'text-emerald-200/90' : 'text-emerald-700'}`}>
-                                            {language === 'tr' ? `${targetIp || targetName}: bayt=32 TTL=${currentInfo?.ttl ?? 64}` : `Reply from ${targetIp || targetName}: bytes=32 TTL=${currentInfo?.ttl ?? 64}`}
-                                        </div>
-                                        <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-300/80' : 'text-emerald-600'}`}>{sourceName} → {targetName} → {sourceName}</div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className={`text-sm font-bold ${isDark ? 'text-red-300' : 'text-red-800'}`}>{t.failTitle}</div>
-                                        {errorMessage && (
-                                            <div className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
-                                                <span className={`font-semibold ${isDark ? 'text-red-300' : 'text-red-700'}`}>{t.failReason}:</span>{' '}
-                                                <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{errorMessage}</span>
-                                            </div>
-                                        )}
-                                        {currentInfo && (
-                                            <div className={`text-xs mt-1 font-mono flex items-center gap-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                                                <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
-                                                <span>{language === 'tr' ? `${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name} adımında başarısız` : `Failed at ${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name}`}</span>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
                             </div>
-                        </div>
-                    )}
-
-                    {/* Body */}
-                    {currentInfo ? (
-                        <div className={isMobile ? 'px-3 py-2 space-y-2' : 'px-5 py-4 space-y-3'}>
-                            {/* Route bar */}
-                            <div className={`flex items-center gap-2 rounded-xl ${isMobile ? 'px-3 py-2' : 'px-4 py-2.5'} ${isGlass
-                                ? isDark ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/8'
-                                : isDark ? 'bg-secondary-800/80 border border-secondary-700' : 'bg-secondary-100 border border-secondary-200'
+                        )}
+                        {/* Result banner */}
+                        {isDone && (
+                            <div className={`px-5 py-3 flex items-start gap-3 border-b ${isSuccess
+                                ? isGlass
+                                    ? (isDark ? 'bg-emerald-500/15 border-emerald-500/30' : 'bg-emerald-50 border-emerald-200')
+                                    : (isDark ? 'bg-emerald-950/50 border-emerald-800/60' : 'bg-emerald-50 border-emerald-200')
+                                : isGlass
+                                    ? (isDark ? 'bg-red-950/60 border-red-500/30' : 'bg-red-50 border-red-200')
+                                    : (isDark ? 'bg-red-950/70 border-red-800/60' : 'bg-red-50 border-red-200')
                                 }`}>
-                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentInfo.fromDevice.type === 'router' ? 'bg-purple-500' : currentInfo.fromDevice.type.startsWith('switch') ? 'bg-accent-500' : 'bg-primary-500'}`} />
-                                    <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold truncate ${isDark ? 'text-secondary-200' : 'text-secondary-700'}`}>{currentInfo.fromDevice.name}</span>
-                                    {!isMobile && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-white/10 text-secondary-400' : 'bg-black/10 text-secondary-500'}`}>{currentInfo.fromDevice.type}</span>}
-                                </div>
-                                <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                                    <CableIcon cableType={currentInfo.cableType} color={getCableColor(currentInfo.cableType)} isMobile={isMobile} />
-                                    {!isMobile && <span className="text-[10px] font-medium" style={{ color: getCableColor(currentInfo.cableType) }}>{getCableLabel(currentInfo.cableType, t)}</span>}
-                                </div>
-                                <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
-                                    {!isMobile && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-white/10 text-secondary-400' : 'bg-black/10 text-secondary-500'}`}>{currentInfo.toDevice.type}</span>}
-                                    <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold truncate ${isDark ? 'text-secondary-200' : 'text-secondary-700'}`}>{currentInfo.toDevice.name}</span>
-                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentInfo.toDevice.type === 'router' ? 'bg-purple-500' : currentInfo.toDevice.type.startsWith('switch') ? 'bg-accent-500' : 'bg-primary-500'}`} />
-                                </div>
-                                {macChanged && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${isDark ? 'bg-warning-500/20 text-warning-300 border border-warning-500/30' : 'bg-warning-500/15 text-warning-700 border border-warning-500/30'}`}>⚡ {isMobile ? '' : t.macChanged}</span>
+                                {isSuccess ? (
+                                    <svg className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                ) : (
+                                    <div className="w-5 h-5 rounded-full bg-red-500/20 dark:bg-red-500/30 flex items-center justify-center flex-shrink-0 mt-0.5 border border-red-500/40">
+                                        <svg className="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </div>
                                 )}
-                                {ipSame && prevInfo && !isMobile && (
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${isDark ? 'bg-success-500/20 text-success-300 border border-success-500/30' : 'bg-success-500/15 text-success-700 border border-success-500/30'}`}>✓ {t.ipSame}</span>
-                                )}
+                                <div className="flex-1 min-w-0">
+                                    {isSuccess ? (
+                                        <>
+                                            <div className={`text-sm font-bold ${isDark ? 'text-emerald-300' : 'text-emerald-800'}`}>{t.successTitle}</div>
+                                            <div className={`text-xs mt-0.5 font-mono ${isDark ? 'text-emerald-200/90' : 'text-emerald-700'}`}>
+                                                {language === 'tr' ? `${targetIp || targetName}: bayt=32 TTL=${currentInfo?.ttl ?? 64}` : `Reply from ${targetIp || targetName}: bytes=32 TTL=${currentInfo?.ttl ?? 64}`}
+                                            </div>
+                                            <div className={`text-xs mt-0.5 ${isDark ? 'text-emerald-300/80' : 'text-emerald-600'}`}>{sourceName} → {targetName} → {sourceName}</div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className={`text-sm font-bold ${isDark ? 'text-red-300' : 'text-red-800'}`}>{t.failTitle}</div>
+                                            {errorMessage && (
+                                                <div className={`text-xs mt-1 leading-relaxed ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+                                                    <span className={`font-semibold ${isDark ? 'text-red-300' : 'text-red-700'}`}>{t.failReason}:</span>{' '}
+                                                    <span className={`font-medium ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{errorMessage}</span>
+                                                </div>
+                                            )}
+                                            {currentInfo && (
+                                                <div className={`text-xs mt-1 font-mono flex items-center gap-1.5 ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" />
+                                                    <span>{language === 'tr' ? `${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name} adımında başarısız` : `Failed at ${currentInfo.fromDevice.name} → ${currentInfo.toDevice.name}`}</span>
+                                                </div>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
                             </div>
+                        )}
 
-                            {/* Packet tables — 3 col desktop, 1 col mobile (tabs) */}
-                            {showPacketTables && (isMobile ? (
-                                <MobilePacketTables
-                                    currentInfo={currentInfo}
-                                    prevInfo={prevInfo}
-                                    macChanged={macChanged}
-                                    ttlChanged={ttlChanged}
-                                    isDark={isDark}
-                                    isGlass={isGlass}
-                                    t={t}
-                                />
-                            ) : (
-                                <div className="grid grid-cols-3 gap-3">
-                                    <div className={`rounded-xl overflow-hidden border ${isGlass
-                                        ? isDark ? 'border-success-400/20 bg-success-500/10' : 'border-success-400/30 bg-success-500/8'
-                                        : isDark ? 'border-success-900/60 bg-success-950/50' : 'border-success-200 bg-success-50'}`}
-                                        style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
-                                        <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
-                                            ? isDark ? 'bg-success-500/15 border-success-400/20 text-success-400' : 'bg-success-500/10 border-success-400/20 text-success-700'
-                                            : isDark ? 'bg-success-950/60 border-success-900/60 text-success-400' : 'bg-success-100 border-success-200 text-success-700'}`}>{t.layer2}</div>
-                                        <table className="w-full"><tbody>
-                                            <FieldRow label={t.srcMac} value={currentInfo.srcMac} prevValue={prevInfo?.srcMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} badge={macChanged ? t.changed : undefined} badgeColor="var(--color-warning-600)" />
-                                            <FieldRow label={t.dstMac} value={currentInfo.dstMac} prevValue={prevInfo?.dstMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} />
-                                            <FieldRow label={t.etherType} value={currentInfo.etherType} isDark={isDark} />
-                                        </tbody></table>
+                        {/* Body */}
+                        {currentInfo ? (
+                            <div className={isMobile ? 'px-3 py-2 space-y-2' : 'px-5 py-4 space-y-3'}>
+                                {/* Route bar */}
+                                <div className={`flex items-center gap-2 rounded-xl ${isMobile ? 'px-3 py-2' : 'px-4 py-2.5'} ${isGlass
+                                    ? isDark ? 'bg-white/5 border border-white/10' : 'bg-black/5 border border-black/8'
+                                    : isDark ? 'bg-secondary-800/80 border border-secondary-700' : 'bg-secondary-100 border border-secondary-200'
+                                    }`}>
+                                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentInfo.fromDevice.type === 'router' ? 'bg-purple-500' : currentInfo.fromDevice.type.startsWith('switch') ? 'bg-accent-500' : 'bg-primary-500'}`} />
+                                        <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold truncate ${isDark ? 'text-secondary-200' : 'text-secondary-700'}`}>{currentInfo.fromDevice.name}</span>
+                                        {!isMobile && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-white/10 text-secondary-400' : 'bg-black/10 text-secondary-500'}`}>{currentInfo.fromDevice.type}</span>}
                                     </div>
-                                    <div className={`rounded-xl overflow-hidden border ${isGlass
-                                        ? isDark ? 'border-purple-400/20 bg-purple-500/10' : 'border-purple-400/30 bg-purple-500/8'
-                                        : isDark ? 'border-purple-900/60 bg-purple-950/50' : 'border-purple-200 bg-purple-50'}`}
-                                        style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
-                                        <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
-                                            ? isDark ? 'bg-purple-500/15 border-purple-400/20 text-purple-400' : 'bg-purple-500/10 border-purple-400/20 text-purple-700'
-                                            : isDark ? 'bg-purple-950/60 border-purple-900/60 text-purple-400' : 'bg-purple-100 border-purple-200 text-purple-700'}`}>{currentInfo.layer3 === 'IPv6' ? (language === 'tr' ? 'Katman 3 — IPv6 Başlığı' : 'Layer 3 — IPv6 Header') : t.layer3}</div>
-                                        <table className="w-full"><tbody>
-                                            <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.srcIp.replace('IP', 'IPv6')) : t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
-                                            <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.dstIp.replace('IP', 'IPv6')) : t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
-                                            <FieldRow label={currentInfo.layer3 === 'IPv6' ? 'Hop Limit' : t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined} highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark} badge={ttlChanged ? t.ttlDec : undefined} badgeColor="var(--color-warning-600)" />
-                                            <FieldRow label={t.protocol} value={currentInfo.protocol} isDark={isDark} />
-                                        </tbody></table>
+                                    <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                                        <CableIcon cableType={currentInfo.cableType} color={getCableColor(currentInfo.cableType)} isMobile={isMobile} />
+                                        {!isMobile && <span className="text-[10px] font-medium" style={{ color: getCableColor(currentInfo.cableType) }}>{getCableLabel(currentInfo.cableType, t)}</span>}
                                     </div>
-                                    <div className={`rounded-xl overflow-hidden border ${isGlass
-                                        ? isDark ? 'border-primary-400/20 bg-primary-500/10' : 'border-primary-400/30 bg-primary-500/8'
-                                        : isDark ? 'border-primary-900/60 bg-primary-950/50' : 'border-primary-200 bg-primary-50'}`}
-                                        style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
-                                        <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
-                                            ? isDark ? 'bg-primary-500/15 border-primary-400/20 text-primary-400' : 'bg-primary-500/10 border-primary-400/20 text-primary-700'
-                                            : isDark ? 'bg-primary-950/60 border-primary-900/60 text-primary-400' : 'bg-primary-100 border-primary-200 text-primary-700'}`}>{currentInfo.layer4 === 'ICMPv6' ? (language === 'tr' ? 'Katman 4 — ICMPv6' : 'Layer 4 — ICMPv6') : t.layer4}</div>
-                                        <table className="w-full"><tbody>
-                                            <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Type' : t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
-                                            <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Code' : t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
-                                            <FieldRow label={t.icmpSeq} value={String(currentInfo.icmpSeq)} isDark={isDark} />
-                                        </tbody></table>
+                                    <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-end">
+                                        {!isMobile && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium flex-shrink-0 ${isDark ? 'bg-white/10 text-secondary-400' : 'bg-black/10 text-secondary-500'}`}>{currentInfo.toDevice.type}</span>}
+                                        <span className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold truncate ${isDark ? 'text-secondary-200' : 'text-secondary-700'}`}>{currentInfo.toDevice.name}</span>
+                                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${currentInfo.toDevice.type === 'router' ? 'bg-purple-500' : currentInfo.toDevice.type.startsWith('switch') ? 'bg-accent-500' : 'bg-primary-500'}`} />
                                     </div>
+                                    {macChanged && (
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${isDark ? 'bg-warning-500/20 text-warning-300 border border-warning-500/30' : 'bg-warning-500/15 text-warning-700 border border-warning-500/30'}`}>⚡ {isMobile ? '' : t.macChanged}</span>
+                                    )}
+                                    {ipSame && prevInfo && !isMobile && (
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold flex-shrink-0 ${isDark ? 'bg-success-500/20 text-success-300 border border-success-500/30' : 'bg-success-500/15 text-success-700 border border-success-500/30'}`}>✓ {t.ipSame}</span>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className={`px-5 py-8 text-center text-sm ${isDark ? 'text-secondary-500' : 'text-secondary-400'}`}>{t.noHops}</div>
-                    )}
-                </div>
+
+                                {/* Packet tables — 3 col desktop, 1 col mobile (tabs) */}
+                                {showPacketTables && (isMobile ? (
+                                    <MobilePacketTables
+                                        currentInfo={currentInfo}
+                                        prevInfo={prevInfo}
+                                        macChanged={macChanged}
+                                        ttlChanged={ttlChanged}
+                                        isDark={isDark}
+                                        isGlass={isGlass}
+                                        t={t}
+                                    />
+                                ) : (
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className={`rounded-xl overflow-hidden border ${isGlass
+                                            ? isDark ? 'border-success-400/20 bg-success-500/10' : 'border-success-400/30 bg-success-500/8'
+                                            : isDark ? 'border-success-900/60 bg-success-950/50' : 'border-success-200 bg-success-50'}`}
+                                            style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
+                                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
+                                                ? isDark ? 'bg-success-500/15 border-success-400/20 text-success-400' : 'bg-success-500/10 border-success-400/20 text-success-700'
+                                                : isDark ? 'bg-success-950/60 border-success-900/60 text-success-400' : 'bg-success-100 border-success-200 text-success-700'}`}>{t.layer2}</div>
+                                            <table className="w-full"><tbody>
+                                                <FieldRow label={t.srcMac} value={currentInfo.srcMac} prevValue={prevInfo?.srcMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} badge={macChanged ? t.changed : undefined} badgeColor="var(--color-warning-600)" />
+                                                <FieldRow label={t.dstMac} value={currentInfo.dstMac} prevValue={prevInfo?.dstMac} highlight={macChanged ? 'changed' : 'none'} isDark={isDark} />
+                                                <FieldRow label={t.etherType} value={currentInfo.etherType} isDark={isDark} />
+                                            </tbody></table>
+                                        </div>
+                                        <div className={`rounded-xl overflow-hidden border ${isGlass
+                                            ? isDark ? 'border-purple-400/20 bg-purple-500/10' : 'border-purple-400/30 bg-purple-500/8'
+                                            : isDark ? 'border-purple-900/60 bg-purple-950/50' : 'border-purple-200 bg-purple-50'}`}
+                                            style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
+                                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
+                                                ? isDark ? 'bg-purple-500/15 border-purple-400/20 text-purple-400' : 'bg-purple-500/10 border-purple-400/20 text-purple-700'
+                                                : isDark ? 'bg-purple-950/60 border-purple-900/60 text-purple-400' : 'bg-purple-100 border-purple-200 text-purple-700'}`}>{currentInfo.layer3 === 'IPv6' ? (language === 'tr' ? 'Katman 3 — IPv6 Başlığı' : 'Layer 3 — IPv6 Header') : t.layer3}</div>
+                                            <table className="w-full"><tbody>
+                                                <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.srcIp.replace('IP', 'IPv6')) : t.srcIp} value={currentInfo.srcIp} highlight="same" isDark={isDark} />
+                                                <FieldRow label={currentInfo.layer3 === 'IPv6' ? (t.dstIp.replace('IP', 'IPv6')) : t.dstIp} value={currentInfo.dstIp} highlight="same" isDark={isDark} />
+                                                <FieldRow label={currentInfo.layer3 === 'IPv6' ? 'Hop Limit' : t.ttl} value={String(currentInfo.ttl)} prevValue={prevInfo ? String(prevInfo.ttl) : undefined} highlight={ttlChanged ? 'changed' : 'none'} isDark={isDark} badge={ttlChanged ? t.ttlDec : undefined} badgeColor="var(--color-warning-600)" />
+                                                <FieldRow label={t.protocol} value={currentInfo.protocol} isDark={isDark} />
+                                            </tbody></table>
+                                        </div>
+                                        <div className={`rounded-xl overflow-hidden border ${isGlass
+                                            ? isDark ? 'border-primary-400/20 bg-primary-500/10' : 'border-primary-400/30 bg-primary-500/8'
+                                            : isDark ? 'border-primary-900/60 bg-primary-950/50' : 'border-primary-200 bg-primary-50'}`}
+                                            style={isGlass ? { backdropFilter: 'blur(12px) saturate(180%)' } : undefined}>
+                                            <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wide border-b ${isGlass
+                                                ? isDark ? 'bg-primary-500/15 border-primary-400/20 text-primary-400' : 'bg-primary-500/10 border-primary-400/20 text-primary-700'
+                                                : isDark ? 'bg-primary-950/60 border-primary-900/60 text-primary-400' : 'bg-primary-100 border-primary-200 text-primary-700'}`}>{currentInfo.layer4 === 'ICMPv6' ? (language === 'tr' ? 'Katman 4 — ICMPv6' : 'Layer 4 — ICMPv6') : t.layer4}</div>
+                                            <table className="w-full"><tbody>
+                                                <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Type' : t.icmpType} value={currentInfo.icmpType} isDark={isDark} />
+                                                <FieldRow label={currentInfo.layer4 === 'ICMPv6' ? 'ICMPv6 Code' : t.icmpCode} value={String(currentInfo.icmpCode)} isDark={isDark} />
+                                                <FieldRow label={t.icmpSeq} value={String(currentInfo.icmpSeq)} isDark={isDark} />
+                                            </tbody></table>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className={`px-5 py-8 text-center text-sm ${isDark ? 'text-secondary-500' : 'text-secondary-400'}`}>{t.noHops}</div>
+                        )}
+                    </div>
                 </div>
             )}
         </DraggableWindowWrapper>

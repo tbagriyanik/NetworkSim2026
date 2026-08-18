@@ -16,6 +16,109 @@ export interface BroadcastAnimTarget {
   toY: number;
 }
 
+const getPortVlan = (port: { accessVlan?: number | string; vlan?: number | string } | undefined): number => {
+  return Number(port?.accessVlan ?? port?.vlan ?? 1);
+};
+
+const isPortMemberOfVlan = (
+  port: {
+    mode?: string;
+    accessVlan?: number | string;
+    vlan?: number | string;
+    allowedVlans?: number[] | 'all' | string;
+    trunkAllowedVlans?: number[] | 'all' | string;
+  } | undefined,
+  vlanId: number
+): boolean => {
+  if (!port) return false;
+  const mode = port.mode;
+  if (mode === 'trunk' || mode === 'dynamic-auto' || mode === 'dynamic-desirable' || mode === 'dot1q-tunnel') {
+    const allowed = port.allowedVlans ?? port.trunkAllowedVlans;
+    if (!allowed || allowed === 'all') return true;
+    if (Array.isArray(allowed)) return allowed.map(Number).includes(vlanId);
+    if (typeof allowed === 'string') {
+      if (allowed.trim().toLowerCase() === 'all') return true;
+      return allowed.split(',').some(part => {
+        const trimmed = part.trim();
+        if (!trimmed) return false;
+        const [startRaw, endRaw] = trimmed.split('-');
+        const start = Number(startRaw);
+        const end = endRaw ? Number(endRaw) : start;
+        return Number.isFinite(start) && Number.isFinite(end) && vlanId >= start && vlanId <= end;
+      });
+    }
+    return true;
+  }
+  return getPortVlan(port) === vlanId;
+};
+
+export const buildBroadcastAnimTargets = ({
+  switchId,
+  exceptId,
+  deviceMap,
+  connections,
+  deviceStates,
+}: {
+  switchId: string;
+  exceptId?: string;
+  deviceMap: Map<string, CanvasDevice>;
+  connections: CanvasConnection[];
+  deviceStates?: Map<string, import('@/lib/network/types').SwitchState>;
+}): BroadcastAnimTarget[] => {
+  const sw = deviceMap.get(switchId);
+  if (!sw || (sw.type !== 'switchL2' && sw.type !== 'switchL3')) return [];
+
+  const switchState = deviceStates?.get(switchId);
+  const ingressPortId = connections.find(conn =>
+    (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
+    (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
+  ) ? (
+    connections.find(conn =>
+      (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
+      (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
+    )?.sourceDeviceId === switchId
+      ? connections.find(conn =>
+        (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
+        (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
+      )?.sourcePort
+      : connections.find(conn =>
+        (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
+        (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
+      )?.targetPort
+  ) : null;
+
+  const ingressPort = ingressPortId ? switchState?.ports?.[ingressPortId] : undefined;
+  const ingressVlan = ingressPort ? getPortVlan(ingressPort) : 1;
+
+  const result: BroadcastAnimTarget[] = [];
+  for (const conn of connections) {
+    let neighborId: string | null = null;
+    let portId: string | null = null;
+    if (conn.sourceDeviceId === switchId && conn.targetDeviceId !== exceptId) {
+      neighborId = conn.targetDeviceId;
+      portId = conn.sourcePort;
+    } else if (conn.targetDeviceId === switchId && conn.sourceDeviceId !== exceptId) {
+      neighborId = conn.sourceDeviceId;
+      portId = conn.targetPort;
+    }
+    if (!neighborId || !portId) continue;
+    const neighbor = deviceMap.get(neighborId);
+    if (!neighbor || neighbor.status === 'offline') continue;
+    const simPort = switchState?.ports?.[portId];
+    const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
+    if (isSTPBlocked) continue;
+    if (!isPortMemberOfVlan(simPort, ingressVlan)) continue;
+    result.push({
+      targetId: neighborId,
+      fromX: sw.x,
+      fromY: sw.y,
+      toX: neighbor.x,
+      toY: neighbor.y,
+    });
+  }
+  return result;
+};
+
 export type PingAnimationState = {
   sourceId: string;
   targetId: string;
@@ -249,12 +352,12 @@ export function usePingSequence(deps: PingSequenceDeps) {
             startTime = Date.now();
             const shouldPause = pingIsPausedRef.current || pingStepModeRef.current;
             flushSync(() => { setPingAnimation((prev: any) => prev ? { ...prev, currentHopIndex: currentHop, progress: 0, frame: frameCount, isPaused: shouldPause } : null); });
-        if (!shouldPause) {
-          pingAnimationRef.current = requestAnimationFrame(animateFailed);
-        } else {
-          pingIsPausedRef.current = true;
-          pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animateFailed); };
-        }
+            if (!shouldPause) {
+              pingAnimationRef.current = requestAnimationFrame(animateFailed);
+            } else {
+              pingIsPausedRef.current = true;
+              pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animateFailed); };
+            }
             return;
           }
           flushSync(() => { setPingAnimation((prev: any) => prev ? { ...prev, currentHopIndex: currentHop, progress: 1, frame: frameCount, success: false, isPaused: false } : null); });
@@ -318,7 +421,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
       return;
     }
 
-      setHopPacketInfos(buildHopPacketInfosFn(path, devices, connections, 64, targetIp));
+    setHopPacketInfos(buildHopPacketInfosFn(path, devices, connections, 64, targetIp));
     pingIsPausedRef.current = isSimulationMode;
     pingStepModeRef.current = isSimulationMode;
     setPingAnimation({ sourceId, targetId, path, currentHopIndex: 0, progress: 0, success: null, frame: 0, hopCount: 0, isPaused: isSimulationMode, showPacketPanel: true, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 });
@@ -355,35 +458,13 @@ export function usePingSequence(deps: PingSequenceDeps) {
     };
 
     const getBroadcastAnim = (switchId: string, exceptId?: string): BroadcastAnimTarget[] => {
-      const sw = deviceMap.get(switchId);
-      if (!sw || (sw.type !== 'switchL2' && sw.type !== 'switchL3')) return [];
-      const result: BroadcastAnimTarget[] = [];
-      for (const conn of connections) {
-        let neighborId: string | null = null;
-        let portId: string | null = null;
-        if (conn.sourceDeviceId === switchId && conn.targetDeviceId !== exceptId) {
-          neighborId = conn.targetDeviceId;
-          portId = conn.sourcePort;
-        } else if (conn.targetDeviceId === switchId && conn.sourceDeviceId !== exceptId) {
-          neighborId = conn.sourceDeviceId;
-          portId = conn.targetPort;
-        }
-        if (!neighborId || !portId) continue;
-        const neighbor = deviceMap.get(neighborId);
-        if (!neighbor || neighbor.status === 'offline') continue;
-        const state = deviceStates?.get(switchId);
-        const simPort = state?.ports?.[portId];
-        const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
-        if (isSTPBlocked) continue;
-        result.push({
-          targetId: neighborId,
-          fromX: sw.x,
-          fromY: sw.y,
-          toX: neighbor.x,
-          toY: neighbor.y,
-        });
-      }
-      return result;
+      return buildBroadcastAnimTargets({
+        switchId,
+        exceptId,
+        deviceMap,
+        connections,
+        deviceStates,
+      });
     };
 
     const advanceToNextHop = (hopCountIncrement: number) => {

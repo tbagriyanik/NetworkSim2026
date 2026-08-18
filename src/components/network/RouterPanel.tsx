@@ -309,6 +309,7 @@ export function RouterPanel({
       modalSize={modalSize}
       handlePointerDown={handlePointerDown}
       handleResizeStart={handleResizeStart}
+      collapsible
     >
       {/* Tabs */}
       <div className="flex border-b" role="tablist" aria-label={language === 'tr' ? 'Router panel sekmeleri' : 'Router panel tabs'}>

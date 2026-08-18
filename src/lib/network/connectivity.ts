@@ -393,6 +393,29 @@ export function checkConnectivity(
     return Number(port?.accessVlan || port?.vlan || 1);
   };
 
+  const isPortMemberOfVlan = (port: Port | CanvasPort | undefined, vlanId: number): boolean => {
+    if (!port) return false;
+    const mode = (port as Port).mode;
+    if (mode === 'trunk' || mode === 'dynamic-auto' || mode === 'dynamic-desirable' || mode === 'dot1q-tunnel') {
+      const allowed = (port as Port).allowedVlans ?? (port as Port).trunkAllowedVlans;
+      if (!allowed || allowed === 'all') return true;
+      if (Array.isArray(allowed)) return allowed.map(Number).includes(vlanId);
+      if (typeof allowed === 'string') {
+        if (allowed.trim().toLowerCase() === 'all') return true;
+        return allowed.split(',').some(part => {
+          const trimmed = part.trim();
+          if (!trimmed) return false;
+          const [startRaw, endRaw] = trimmed.split('-');
+          const start = Number(startRaw);
+          const end = endRaw ? Number(endRaw) : start;
+          return Number.isFinite(start) && Number.isFinite(end) && vlanId >= start && vlanId <= end;
+        });
+      }
+      return true;
+    }
+    return getPortVlan(port) === vlanId;
+  };
+
   const getDeviceVlan = (device: CanvasDevice, state?: SwitchState): number | null => {
     if (device.type === 'pc' || device.type === 'iot') {
       // BOLT: Use pre-calculated adjList for O(1) connection lookup
@@ -622,6 +645,9 @@ export function checkConnectivity(
       for (const { conn } of neighbors) {
         if (!conn || conn.active === false) continue;
         if (conn.id === incomingConn?.id) continue;
+        const switchPortId = conn.sourceDeviceId === bId ? conn.sourcePort : conn.targetPort;
+        const switchPort = safeDeviceStates.get(bId)?.ports?.[switchPortId];
+        if (!isPortMemberOfVlan(switchPort, sourceVlan)) continue;
         capturedPackets.push({
           connectionId: conn.id,
           sourceIp: arpBroadcast.sourceIp,

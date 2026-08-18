@@ -31,7 +31,7 @@ interface TopologyModalsProps {
   saveDeviceConfig: (deviceId: string, updates: Partial<CanvasDevice>) => void;
   isMobile: boolean;
   isDark: boolean;
-  
+
   pingAnimation: PingAnimationState | null;
   hopPacketInfos: HopPacketInfo[];
   handlePingPlay: () => void;
@@ -42,22 +42,22 @@ interface TopologyModalsProps {
   graphicsQuality: 'high' | 'low';
   onPacketPanelFocus?: () => void;
   packetPanelZIndex?: number;
-  
+
   packetPopupHop: number | null;
   setPacketPopupHop: (hop: number | null) => void;
-  
+
   errorToast: { message: string; details?: string; type?: 'error' | 'success' } | null;
   setErrorToast: (toast: { message: string; details?: string; type?: 'error' | 'success' } | null) => void;
-  
+
   connectionError: string | null;
-  
+
   mobilePaletteOpen: boolean;
   setMobilePaletteOpen: (open: boolean) => void;
   isTR: boolean;
   addDevice: (type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc', layer?: 'L2' | 'L3') => void;
   cableInfo: CableInfo;
   onCableChange: (info: CableInfo) => void;
-  
+
   showPortSelector: boolean;
   devices: CanvasDevice[];
   portSelectorStep: 'source' | 'target';
@@ -68,7 +68,7 @@ interface TopologyModalsProps {
   setConnections: Dispatch<SetStateAction<CanvasConnection[]>>;
   setDevices: Dispatch<SetStateAction<CanvasDevice[]>>;
   connections: CanvasConnection[];
-  
+
   activeCaptureConnectionId: string | null;
   clearCapturedPackets: (connectionId: string) => void;
   clearAllCapturedPackets: () => void;
@@ -84,7 +84,7 @@ export function TopologyModals({
   saveDeviceConfig,
   isMobile,
   isDark,
-  
+
   pingAnimation,
   hopPacketInfos,
   handlePingPlay,
@@ -95,22 +95,22 @@ export function TopologyModals({
   graphicsQuality,
   onPacketPanelFocus,
   packetPanelZIndex,
-  
+
   packetPopupHop,
   setPacketPopupHop,
-  
+
   errorToast,
   setErrorToast,
-  
+
   connectionError,
-  
+
   mobilePaletteOpen,
   setMobilePaletteOpen,
   isTR,
   addDevice,
   cableInfo,
   onCableChange,
-  
+
   showPortSelector,
   devices,
   portSelectorStep,
@@ -121,7 +121,7 @@ export function TopologyModals({
   setConnections,
   setDevices,
   connections,
-  
+
   activeCaptureConnectionId,
   clearCapturedPackets,
   clearAllCapturedPackets,
@@ -171,6 +171,8 @@ export function TopologyModals({
           targetName={deviceMap.get(pingAnimation.targetId)?.name ?? pingAnimation.targetId}
           sourceIp={deviceMap.get(pingAnimation.sourceId)?.ip ?? ''}
           targetIp={deviceMap.get(pingAnimation.targetId)?.ip ?? ''}
+          broadcastAnim={pingAnimation.broadcastAnim}
+          broadcastProgress={pingAnimation.broadcastProgress}
           isFocused={true}
         />
       )}

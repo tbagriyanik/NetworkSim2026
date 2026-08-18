@@ -3,6 +3,7 @@ import { checkConnectivity, checkDeviceConnectivity } from '@/lib/network/connec
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
 import { createInitialState } from '@/lib/network/initialState';
+import { buildBroadcastAnimTargets } from '@/components/network/hooks/usePingSequence';
 
 describe('Packet Capture Backend', () => {
   const devices: CanvasDevice[] = [
@@ -179,6 +180,135 @@ describe('Packet Capture Backend', () => {
     expect(replyConnIds).toContain('c-pc2');
     // The reply does not reach the device that is not on the path
     expect(replyConnIds).not.toContain('c-pc3');
+  });
+
+  test('does not flood ARP requests to access ports in a different VLAN', () => {
+    const pc1 = { ...devices[0], vlan: 10 };
+    const pc2 = { ...devices[1], vlan: 10 };
+    const pc3: CanvasDevice = {
+      id: 'pc-3',
+      type: 'pc',
+      name: 'PC-3',
+      ip: '192.168.1.30',
+      subnet: '255.255.255.0',
+      gateway: '192.168.1.1',
+      vlan: 20,
+      macAddress: '00:00:00:00:00:03',
+      x: 200, y: 100, status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+    const sw: CanvasDevice = {
+      id: 'sw-1',
+      type: 'switchL2',
+      name: 'SW-1',
+      ip: '',
+      x: 50, y: 50, status: 'online',
+      ports: [
+        { id: 'fa0/1', label: 'Fa0/1', status: 'connected' },
+        { id: 'fa0/2', label: 'Fa0/2', status: 'connected' },
+        { id: 'fa0/3', label: 'Fa0/3', status: 'connected' }
+      ]
+    };
+    const switchConns: CanvasConnection[] = [
+      { id: 'c-pc1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'sw-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
+      { id: 'c-pc2', sourceDeviceId: 'sw-1', sourcePort: 'fa0/2', targetDeviceId: 'pc-2', targetPort: 'eth0', cableType: 'straight', active: true },
+      { id: 'c-pc3', sourceDeviceId: 'sw-1', sourcePort: 'fa0/3', targetDeviceId: 'pc-3', targetPort: 'eth0', cableType: 'straight', active: true }
+    ];
+
+    const switchStates = new Map<string, SwitchState>();
+    const mkPcState = (mac: string) => ({
+      hostname: 'PC',
+      macAddress: mac,
+      ports: { 'eth0': { id: 'eth0', label: 'Eth0', status: 'connected', shutdown: false } },
+      arpCache: []
+    } as unknown as SwitchState);
+    const swState = createInitialState();
+    swState.ports['fa0/1'] = { ...swState.ports['fa0/1'], mode: 'access', accessVlan: 10, vlan: 10 };
+    swState.ports['fa0/2'] = { ...swState.ports['fa0/2'], mode: 'access', accessVlan: 10, vlan: 10 };
+    swState.ports['fa0/3'] = { ...swState.ports['fa0/3'], mode: 'access', accessVlan: 20, vlan: 20 };
+    switchStates.set('pc-1', mkPcState('00:00:00:00:00:01'));
+    switchStates.set('pc-2', mkPcState('00:00:00:00:00:02'));
+    switchStates.set('pc-3', mkPcState('00:00:00:00:00:03'));
+    switchStates.set('sw-1', swState);
+
+    const result = checkConnectivity(
+      'pc-1',
+      '192.168.1.20',
+      [pc1, sw, pc2, pc3],
+      switchConns,
+      switchStates,
+      'en',
+      { protocol: 'icmp' }
+    );
+
+    expect(result.success).toBe(true);
+    const requestConnIds = (result.capturedPackets || [])
+      .filter(p => p.protocol === 'ARP' && p.info.startsWith('ARP Request'))
+      .map(p => p.connectionId);
+
+    expect(requestConnIds).toContain('c-pc1');
+    expect(requestConnIds).toContain('c-pc2');
+    expect(requestConnIds).not.toContain('c-pc3');
+  });
+
+  test('ARP broadcast animation only targets devices in the same VLAN', () => {
+    const sw: CanvasDevice = {
+      id: 'sw-1',
+      type: 'switchL2',
+      name: 'SW-1',
+      ip: '',
+      x: 50,
+      y: 50,
+      status: 'online',
+      ports: [
+        { id: 'fa0/1', label: 'Fa0/1', status: 'connected' },
+        { id: 'fa0/2', label: 'Fa0/2', status: 'connected' },
+        { id: 'fa0/3', label: 'Fa0/3', status: 'connected' }
+      ]
+    };
+    const pc1: CanvasDevice = { ...devices[0], id: 'pc-1', vlan: 10, x: 20, y: 140 };
+    const pc2: CanvasDevice = { ...devices[1], id: 'pc-2', vlan: 10, x: 140, y: 140 };
+    const pc3: CanvasDevice = {
+      id: 'pc-3',
+      type: 'pc',
+      name: 'PC-3',
+      ip: '192.168.1.30',
+      subnet: '255.255.255.0',
+      gateway: '192.168.1.1',
+      vlan: 20,
+      macAddress: '00:00:00:00:00:03',
+      x: 260,
+      y: 140,
+      status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+    const connections: CanvasConnection[] = [
+      { id: 'c-pc1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'sw-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
+      { id: 'c-pc2', sourceDeviceId: 'sw-1', sourcePort: 'fa0/2', targetDeviceId: 'pc-2', targetPort: 'eth0', cableType: 'straight', active: true },
+      { id: 'c-pc3', sourceDeviceId: 'sw-1', sourcePort: 'fa0/3', targetDeviceId: 'pc-3', targetPort: 'eth0', cableType: 'straight', active: true }
+    ];
+
+    const switchState = createInitialState();
+    switchState.ports['fa0/1'] = { ...switchState.ports['fa0/1'], mode: 'access', accessVlan: 10, vlan: 10 };
+    switchState.ports['fa0/2'] = { ...switchState.ports['fa0/2'], mode: 'access', accessVlan: 10, vlan: 10 };
+    switchState.ports['fa0/3'] = { ...switchState.ports['fa0/3'], mode: 'access', accessVlan: 20, vlan: 20 };
+
+    const deviceMap = new Map<string, CanvasDevice>([
+      [sw.id, sw],
+      [pc1.id, pc1],
+      [pc2.id, pc2],
+      [pc3.id, pc3],
+    ]);
+
+    const targets = buildBroadcastAnimTargets({
+      switchId: sw.id,
+      exceptId: pc1.id,
+      deviceMap,
+      connections,
+      deviceStates: new Map([[sw.id, switchState]]),
+    });
+
+    expect(targets.map(target => target.targetId)).toEqual(['pc-2']);
   });
 
   test('ARP broadcast only occurs when the MAC is not cached; cached MAC within 2 minutes skips ARP', () => {

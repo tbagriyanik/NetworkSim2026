@@ -96,8 +96,13 @@ export function RefreshReportPanel({
         <div
           className={`flex items-center justify-between px-3 py-2 border-b rounded-t-xl select-none ${!isMobile ? 'cursor-grab active:cursor-grabbing' : ''} ${isDark ? 'bg-white/5 border-success-500/20' : 'bg-black/5 border-success-500/30'}`}
           data-drag-handle={!isMobile ? true : undefined}
+          onDoubleClick={(e) => {
+            const target = e.target as HTMLElement;
+            if (target.closest('button, input, select, textarea, .no-drag')) return;
+            setIsCollapsed(prev => !prev);
+          }}
         >
-          <h3 className="text-sm font-bold flex items-center gap-2">
+          <h3 className="text-sm font-bold flex items-center gap-2 pointer-events-none">
             {refreshNetworkReport.title}
           </h3>
           <div className="flex items-center gap-1">
