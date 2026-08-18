@@ -21,6 +21,9 @@ export function useMobileBack() {
           const panels = document.querySelectorAll('.fixed');
           for (let i = 0; i < panels.length; i++) {
               const panel = panels[i] as HTMLElement;
+              // Skip small floating popups (role="dialog" without Radix data-state) so
+              // closing them does not trigger a history.back() that closes an unrelated window
+              if (panel.getAttribute('role') === 'dialog') continue;
               const classes = panel.className || '';
               if (
                   (classes.includes('z-') || classes.includes('z-[')) &&
