@@ -61,35 +61,20 @@ export function usePageNetworkLogic({
   }, []);
 
   const toggleDevicePower = useCallback((deviceId: string) => {
+    const current = topologyDevices.find(d => d.id === deviceId);
+    const nextStatus: 'online' | 'offline' = current?.status === 'offline' ? 'online' : 'offline';
+
+    // Dispatch so device state is reset on power-on (restore startup-config or defaults)
+    window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', {
+      detail: {
+        deviceId,
+        nextStatus,
+        deviceType: current?.type,
+        switchModel: current?.switchModel
+      }
+    }));
+
     setTopologyDevices((prev) => {
-      const current = prev.find(d => d.id === deviceId);
-      const nextStatus: 'online' | 'offline' = current?.status === 'offline' ? 'online' : 'offline';
-      window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', {
-        detail: {
-          deviceId,
-          nextStatus,
-          deviceType: current?.type,
-          switchModel: current?.switchModel
-        }
-      }));
-
-      // Clear previous outputs/history so fresh boot output is visible
-      setDeviceOutputs(prevOutputs => {
-        const next = new Map(prevOutputs);
-        next.set(deviceId, []);
-        return next;
-      });
-      setPcOutputs(prevOutputs => {
-        const next = new Map(prevOutputs);
-        next.set(deviceId, []);
-        return next;
-      });
-      setPcHistories(prevHistories => {
-        const next = new Map(prevHistories);
-        next.set(deviceId, []);
-        return next;
-      });
-
       const nextDevices = prev.map((d) => (d.id === deviceId ? { ...d, status: nextStatus } : d));
       const byId = new Map(nextDevices.map(d => [d.id, d] as const));
 
@@ -112,7 +97,24 @@ export function usePageNetworkLogic({
 
       return nextDevices;
     });
-  }, [setTopologyDevices, setTopologyConnections, setDeviceOutputs, setPcOutputs, setPcHistories]);
+
+    // Clear previous outputs/history so fresh boot output is visible
+    setDeviceOutputs(prevOutputs => {
+      const next = new Map(prevOutputs);
+      next.set(deviceId, []);
+      return next;
+    });
+    setPcOutputs(prevOutputs => {
+      const next = new Map(prevOutputs);
+      next.set(deviceId, []);
+      return next;
+    });
+    setPcHistories(prevHistories => {
+      const next = new Map(prevHistories);
+      next.set(deviceId, []);
+      return next;
+    });
+  }, [setTopologyDevices, setTopologyConnections, setDeviceOutputs, setPcOutputs, setPcHistories, topologyDevices]);
 
   const updateDeviceConfig = useCallback((deviceId: string, config: Record<string, unknown>) => {
     const c = config as Partial<CanvasDevice>;

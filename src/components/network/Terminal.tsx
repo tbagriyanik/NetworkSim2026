@@ -95,6 +95,7 @@ interface TerminalProps {
   connectionErrorMessage?: string;
   isPoweredOff?: boolean;
   onTogglePower?: (deviceId: string) => void;
+  showPowerButton?: boolean;
   onClose?: () => void;
   onQuickSettings?: () => void;
   t: Translations;
@@ -126,6 +127,7 @@ export function Terminal({
   isConnectionError = false,
   isPoweredOff = false,
   onTogglePower,
+  showPowerButton = true,
   onClose,
   onQuickSettings,
   t,
@@ -1328,15 +1330,19 @@ export function Terminal({
           <Type className="w-4 h-4" aria-hidden="true" />
         </Button>
       </TooltipWrapper>
-      <div className={cn("w-px h-4 mx-1", isDark ? "bg-secondary-600" : "bg-border")} />
-      <TooltipWrapper title={t.power}>
-        <Button variant="ghost" size="icon" onClick={() => onTogglePower?.(deviceId)} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg", isPoweredOff ? "text-error-500" : "text-success-500")}>
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-          </svg>
-        </Button>
-      </TooltipWrapper>
+      {showPowerButton && (
+        <>
+          <div className={cn("w-px h-4 mx-1", isDark ? "bg-secondary-600" : "bg-border")} />
+          <TooltipWrapper title={t.power}>
+            <Button variant="ghost" size="icon" onClick={() => onTogglePower?.(deviceId)} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg", isPoweredOff ? "text-error-500" : "text-success-500")}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+              </svg>
+            </Button>
+          </TooltipWrapper>
+        </>
+      )}
       {isMobile && onQuickSettings && (
         <TooltipWrapper title={t.quickSettingsAndTasks}>
           <Button variant="ghost" size="icon" onClick={onQuickSettings} className={cn("h-9 w-9 rounded-lg text-secondary-600 hover:text-secondary-900", isDark && "text-secondary-300 hover:text-secondary-100")}>

@@ -6,7 +6,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Badge } from '@/components/ui/badge';
 import { Translations } from '@/contexts/LanguageContext';
 import { Database, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { RouterIcon, SwitchIcon } from './PCPanelWidgets';
 
 const getPortVlan = (port: Port): number => Number(port.accessVlan || port.vlan || 1);
@@ -30,7 +29,6 @@ interface PortPanelProps {
   activeDeviceId?: string;
   isDevicePoweredOff?: boolean;
   topologyDevices?: { id: string; status?: string }[];
-  onTogglePower?: (deviceId: string) => void;
   topologyConnections?: TopologyConnection[];
   onClose?: () => void;
 }
@@ -44,7 +42,7 @@ const ledColorClasses: Record<PortLEDColor, string> = {
   red: 'bg-error-500 shadow-[0_0_2px_rgba(239,68,68,0.2)]'
 };
 
-export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDeviceId, isDevicePoweredOff = false, topologyDevices = [], onTogglePower, topologyConnections, onClose }: PortPanelProps) {
+export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDeviceId, isDevicePoweredOff = false, topologyDevices = [], topologyConnections, onClose }: PortPanelProps) {
   const isDark = theme === 'dark';
 
   // Count open/closed ports
@@ -349,28 +347,6 @@ export function PortPanel({ ports, t, theme, deviceName, deviceModel, activeDevi
               <span className={`text-xs ${isDark ? 'text-secondary-400' : 'text-secondary-500'}`}>
                 {openPortsCount}/{totalPortsCount} {t.on.toLowerCase()}
               </span>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => activeDeviceId && onTogglePower?.(activeDeviceId)}
-                    className={`h-8 w-8 rounded-lg transition-all ${isDevicePoweredOff ? 'text-error-500 hover:bg-error-500/10' : 'text-success-500 hover:bg-success-500/10'}`}
-                    aria-label={t.on}
-                    disabled={!activeDeviceId || !onTogglePower}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                    </svg>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent hideArrow side="bottom" className={`${isDark ? 'bg-secondary-900 border-secondary-700 text-white' : 'bg-white border-secondary-200 text-secondary-900'} p-2 text-xs rounded-[25px] shadow-2xl`}>
-                  {t.language === 'tr'
-                    ? `Güç: ${isDevicePoweredOff ? t.off : t.on}`
-                    : `Power: ${isDevicePoweredOff ? t.off : t.on}`}
-                </TooltipContent>
-              </Tooltip>
             </div>
           </div>
         </CardHeader>

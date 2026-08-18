@@ -65,7 +65,20 @@ export function useTopologyDeviceActions({
         return d;
       })
     );
-  }, [setDevices]);
+
+    // Dispatch so device state is reset on power-on (restore startup-config or defaults)
+    devices.forEach((d) => {
+      if (!deviceIds.includes(d.id)) return;
+      window.dispatchEvent(new CustomEvent('trigger-topology-toggle-power', {
+        detail: {
+          deviceId: d.id,
+          nextStatus: d.status === 'online' ? 'offline' : 'online',
+          deviceType: d.type,
+          switchModel: d.switchModel,
+        },
+      }));
+    });
+  }, [setDevices, devices]);
 
   // Handle alignment for multiple selected devices
   const handleAlign = useCallback((type: 'top' | 'bottom' | 'left' | 'right' | 'h-center' | 'v-center') => {

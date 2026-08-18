@@ -19,7 +19,6 @@ interface VlanPanelProps {
   deviceName?: string;
   deviceModel?: string;
   deviceId?: string;
-  onTogglePower?: (deviceId: string) => void;
   onExecuteCommand: (command: string) => Promise<void>;
   t: Translations;
   theme: string;

@@ -42,7 +42,6 @@ interface UnifiedDevicePanelProps {
     topologyConnections: CanvasConnection[];
     handleCommand: (command: string) => Promise<unknown>;
     handleClearTerminal: () => void;
-    toggleDevicePower: (deviceId: string) => void;
     handleUpdateHistory: (deviceId: string, history: string[]) => void;
     confirmDialog: { show: boolean; message?: string; onConfirm: () => void } | null;
     setConfirmDialog: (dialog: { show: boolean; message: string; action: string; onConfirm: () => void } | null) => void;
@@ -77,7 +76,6 @@ export function UnifiedDevicePanel({
     topologyConnections,
     handleCommand,
     handleClearTerminal,
-    toggleDevicePower,
     handleUpdateHistory,
     confirmDialog,
     setConfirmDialog,
@@ -201,7 +199,7 @@ export function UnifiedDevicePanel({
                                     isConnectionError={isOffline}
                                     connectionErrorMessage={t.connectionError}
                                     isPoweredOff={isOffline}
-                                    onTogglePower={() => toggleDevicePower(deviceId)}
+                                    showPowerButton={false}
                                     onClose={() => onOpenChange(false)}
                                     onQuickSettings={() => onTabChange('settings')}
                                     t={t}
@@ -252,7 +250,6 @@ export function UnifiedDevicePanel({
                                                     activeDeviceId={deviceId}
                                                     isDevicePoweredOff={isOffline}
                                                     topologyDevices={topologyDevices}
-                                                    onTogglePower={toggleDevicePower}
                                                     topologyConnections={topologyConnections}
                                                 />
                                             </div>
@@ -268,7 +265,6 @@ export function UnifiedDevicePanel({
                                                     deviceName={deviceName}
                                                     deviceModel={deviceModel}
                                                     deviceId={deviceId}
-                                                    onTogglePower={toggleDevicePower}
                                                     onExecuteCommand={handleCommand as (command: string) => Promise<void>}
                                                     t={t}
                                                     theme={theme}

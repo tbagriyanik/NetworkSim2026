@@ -1858,7 +1858,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             topologyConnections={topologyConnections}
             handleCommand={handleCommand}
             handleClearTerminal={handleClearTerminal}
-            toggleDevicePower={toggleDevicePower}
             handleUpdateHistory={handleUpdateHistory}
             confirmDialog={confirmDialog}
             setConfirmDialog={setConfirmDialog}
