@@ -116,6 +116,12 @@ export const buildBroadcastAnimTargets = ({
       toY: neighbor.y,
     });
   }
+  
+  // If there is only 1 target device for the broadcast, skip the animation
+  if (result.length === 1) {
+    return [];
+  }
+  
   return result;
 };
 
