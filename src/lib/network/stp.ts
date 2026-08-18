@@ -453,11 +453,19 @@ function syncPortStatusVlan1(state: SwitchState, vlanStpState: StpVlanState) {
 
 function isPortVlanMember(port: Port, vlanId: number): boolean {
   if (port.mode === 'trunk' || port.mode === 'dynamic-auto' || port.mode === 'dynamic-desirable' || port.mode === 'dot1q-tunnel') {
-    if (!port.allowedVlans || port.allowedVlans === 'all') return true;
-    if (Array.isArray(port.allowedVlans)) return port.allowedVlans.includes(vlanId);
-    if (typeof port.allowedVlans === 'string') {
-      // Very basic parsing for "1,2,10-20" type strings if needed
-      return true; // Assume included for simplicity in first pass
+    const allowed = port.allowedVlans ?? port.trunkAllowedVlans;
+    if (!allowed || allowed === 'all') return true;
+    if (Array.isArray(allowed)) return allowed.map(Number).includes(vlanId);
+    if (typeof allowed === 'string') {
+      if (allowed.trim().toLowerCase() === 'all') return true;
+      return allowed.split(',').some(part => {
+        const trimmed = part.trim();
+        if (!trimmed) return false;
+        const [startRaw, endRaw] = trimmed.split('-');
+        const start = Number(startRaw);
+        const end = endRaw ? Number(endRaw) : start;
+        return Number.isFinite(start) && Number.isFinite(end) && vlanId >= start && vlanId <= end;
+      });
     }
     return true;
   }

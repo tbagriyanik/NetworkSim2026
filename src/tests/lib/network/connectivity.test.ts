@@ -315,5 +315,49 @@ describe('Connectivity Functions', () => {
     it('should NOT form trunk when both sides are dynamic-auto', () => {
       expect(portsFormTrunk('dynamic-auto', 'dynamic-auto')).toBe(false);
     });
+
+    it('should respect switchport trunk allowed vlan 10,20 filtering', () => {
+      const sw1State = makeSwitch('SW1', {
+        'fa0/1': { mode: 'access', vlan: 10, shutdown: false },
+        'fa0/2': { mode: 'access', vlan: 30, shutdown: false },
+        'gi0/1': { mode: 'trunk', vlan: 1, shutdown: false }
+      });
+      const sw2State = makeSwitch('SW2', {
+        'fa0/1': { mode: 'access', vlan: 10, shutdown: false },
+        'fa0/2': { mode: 'access', vlan: 30, shutdown: false },
+        'gi0/1': { mode: 'trunk', vlan: 1, shutdown: false }
+      });
+
+      // Set allowed VLANs to "10,20" (vlan 30 not allowed)
+      sw1State.ports['gi0/1'].allowedVlans = '10,20' as unknown as number[];
+      sw2State.ports['gi0/1'].allowedVlans = '10,20' as unknown as number[];
+
+      const deviceStates = new Map([['SW1', sw1State], ['SW2', sw2State]]);
+
+      const testDevices: CanvasDevice[] = [
+        { id: 'PC1', name: 'PC1', type: 'pc', ip: '192.168.10.1', vlan: 10, ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }] } as CanvasDevice,
+        { id: 'PC2', name: 'PC2', type: 'pc', ip: '192.168.10.2', vlan: 10, ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }] } as CanvasDevice,
+        { id: 'PC3', name: 'PC3', type: 'pc', ip: '192.168.30.1', vlan: 30, ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }] } as CanvasDevice,
+        { id: 'PC4', name: 'PC4', type: 'pc', ip: '192.168.30.2', vlan: 30, ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }] } as CanvasDevice,
+        { id: 'SW1', name: 'SW1', type: 'switchL2', ip: '192.168.1.1', status: 'online', x: 0, y: 0, ports: [{ id: 'fa0/1', label: 'Fa0/1', status: 'connected' }, { id: 'fa0/2', label: 'Fa0/2', status: 'connected' }, { id: 'gi0/1', label: 'Gi0/1', status: 'connected' }] },
+        { id: 'SW2', name: 'SW2', type: 'switchL2', ip: '192.168.1.2', status: 'online', x: 100, y: 0, ports: [{ id: 'fa0/1', label: 'Fa0/1', status: 'connected' }, { id: 'fa0/2', label: 'Fa0/2', status: 'connected' }, { id: 'gi0/1', label: 'Gi0/1', status: 'connected' }] },
+      ];
+
+      const testConnections: CanvasConnection[] = [
+        { id: 'c1', sourceDeviceId: 'PC1', sourcePort: 'eth0', targetDeviceId: 'SW1', targetPort: 'fa0/1', cableType: 'straight', active: true },
+        { id: 'c2', sourceDeviceId: 'PC2', sourcePort: 'eth0', targetDeviceId: 'SW2', targetPort: 'fa0/1', cableType: 'straight', active: true },
+        { id: 'c3', sourceDeviceId: 'PC3', sourcePort: 'eth0', targetDeviceId: 'SW1', targetPort: 'fa0/2', cableType: 'straight', active: true },
+        { id: 'c4', sourceDeviceId: 'PC4', sourcePort: 'eth0', targetDeviceId: 'SW2', targetPort: 'fa0/2', cableType: 'straight', active: true },
+        { id: 'c5', sourceDeviceId: 'SW1', sourcePort: 'gi0/1', targetDeviceId: 'SW2', targetPort: 'gi0/1', cableType: 'straight', active: true },
+      ];
+
+      // VLAN 10 is allowed across trunk -> success
+      const resultVlan10 = checkConnectivity('PC1', '192.168.10.2', testDevices, testConnections, deviceStates);
+      expect(resultVlan10.success).toBe(true);
+
+      // VLAN 30 is NOT allowed across trunk -> fail
+      const resultVlan30 = checkConnectivity('PC3', '192.168.30.2', testDevices, testConnections, deviceStates);
+      expect(resultVlan30.success).toBe(false);
+    });
   });
 });
