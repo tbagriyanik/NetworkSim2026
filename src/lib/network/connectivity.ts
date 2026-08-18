@@ -461,76 +461,84 @@ export function checkConnectivity(
     return 1;
   };
 
-  // 2. Simple Pathfinding (BFS) to check physical connectivity
-  const queue: string[] = [sourceId];
-  const visited = new Set<string>([sourceId]);
-  const parent = new Map<string, string>();
-
-  // Determine source device VLAN for STP calculation
+  // 2. Pathfinding with Gateway Routing support for inter-subnet communication
   const sourceVlan = getFallbackVlanFromPath(sourceId);
+  const sourceDeviceForSubnet = deviceMap.get(sourceId);
+  const isTargetIpv6 = resolvedTargetIp.includes(':');
+  const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isTargetIpv6);
+  const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates) || sourceDeviceForSubnet?.subnet || '255.255.255.0';
+  const targetSubnet = targetDevice.subnet || '255.255.255.0';
+  const isDirectSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet) && isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
 
-  // Initialize traversal IPs for NAT simulation
-  let currentSourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, resolvedTargetIp.includes(':'));
-  let currentTargetIp = resolvedTargetIp;
+  let path: string[] = [];
 
-  while (queue.length > 0) {
-    const currentId = queue.shift();
-    if (!currentId) break;
-    if (currentId === targetDevice.id) break;
+  // If different subnets and source host has a configured gateway, route via gateway
+  const sourceGatewayIp = sourceDeviceForSubnet?.gateway;
 
-    // BOLT: Use pre-calculated adjacency list for O(1) neighbor lookup
-    const neighbors = adjList.get(currentId) || [];
+  const findPathBetween = (startId: string, endId: string, allowedVlan?: number): string[] | null => {
+    const q: string[] = [startId];
+    const v = new Set<string>([startId]);
+    const p = new Map<string, string>();
 
-    for (const { neighborId, conn } of neighbors) {
-      if (!visited.has(neighborId)) {
-        // Check if port is shutdown or device is powered off on either side
-        if (conn) {
-          // Check source side port
-          const srcPortId = conn.sourceDeviceId === currentId ? conn.sourcePort : conn.targetPort;
+    while (q.length > 0) {
+      const cur = q.shift();
+      if (!cur) break;
+      if (cur === endId) break;
+
+      const neighbors = adjList.get(cur) || [];
+      for (const { neighborId, conn } of neighbors) {
+        if (!v.has(neighborId) && conn) {
+          const srcPortId = conn.sourceDeviceId === cur ? conn.sourcePort : conn.targetPort;
           const dstPortId = conn.sourceDeviceId === neighborId ? conn.sourcePort : conn.targetPort;
+          const srcDev = deviceMap.get(cur);
+          const dstDev = deviceMap.get(neighborId);
 
-          // BOLT: Use pre-calculated deviceMap for O(1) device lookup
-          const srcDevice = deviceMap.get(currentId);
-          const dstDevice = deviceMap.get(neighborId);
-
-          // BOLT: Use pre-resolved safeDeviceStates
-          const isSrcShutdown = isPortShutdown(currentId, srcPortId, devices, safeDeviceStates, srcDevice);
-          const isDstShutdown = isPortShutdown(neighborId, dstPortId, devices, safeDeviceStates, dstDevice);
-          const isSrcPoweredOff = !isDevicePoweredOn(srcDevice);
-          const isDstPoweredOff = !isDevicePoweredOn(dstDevice);
-
-          // Check STP blocking state using VLAN-specific STP calculation
-          // In PVST, each VLAN has its own STP instance with potentially different root bridges
-          // BOLT: Use pre-resolved safeDeviceStates
-          const isSrcSTPBlocking = getVlanSpecificSTPBlocking(currentId, srcPortId, sourceVlan, connections, stpDeviceStates, conn);
-          const isDstSTPBlocking = getVlanSpecificSTPBlocking(neighborId, dstPortId, sourceVlan, connections, stpDeviceStates, conn);
-
-          // Validate cable type for this physical link (e.g. console vs ethernet, straight vs crossover).
-          const isCableOk = isConnectionCableCompatible(conn, srcDevice, dstDevice);
-
-          // Check serial encapsulation match on both ends of a serial link
-          const isSerialEncapOk = checkSerialEncapsulation(currentId, srcPortId, neighborId, dstPortId, safeDeviceStates);
+          const isSrcShutdown = isPortShutdown(cur, srcPortId, devices, safeDeviceStates, srcDev);
+          const isDstShutdown = isPortShutdown(neighborId, dstPortId, devices, safeDeviceStates, dstDev);
+          const isSrcPoweredOff = !isDevicePoweredOn(srcDev);
+          const isDstPoweredOff = !isDevicePoweredOn(dstDev);
+          const isSrcSTPBlocking = allowedVlan ? getVlanSpecificSTPBlocking(cur, srcPortId, allowedVlan, connections, stpDeviceStates, conn) : false;
+          const isDstSTPBlocking = allowedVlan ? getVlanSpecificSTPBlocking(neighborId, dstPortId, allowedVlan, connections, stpDeviceStates, conn) : false;
+          const isCableOk = isConnectionCableCompatible(conn, srcDev, dstDev);
+          const isSerialEncapOk = checkSerialEncapsulation(cur, srcPortId, neighborId, dstPortId, safeDeviceStates);
 
           if (!isSrcShutdown && !isDstShutdown && !isSrcPoweredOff && !isDstPoweredOff && !isSrcSTPBlocking && !isDstSTPBlocking && isCableOk && isSerialEncapOk) {
-            visited.add(neighborId);
-            parent.set(neighborId, currentId);
-            queue.push(neighborId);
+            v.add(neighborId);
+            p.set(neighborId, cur);
+            q.push(neighborId);
           }
         }
       }
     }
+
+    if (!v.has(endId)) return null;
+    const res: string[] = [];
+    let curr: string | undefined = endId;
+    while (curr) {
+      res.unshift(curr);
+      curr = p.get(curr);
+    }
+    return res;
+  };
+
+  if (!isDirectSubnet && sourceGatewayIp && (sourceDeviceForSubnet?.type === 'pc' || sourceDeviceForSubnet?.type === 'iot')) {
+    // Find gateway device ID by gateway IP
+    const gatewayDeviceId = ipMap.get(sourceGatewayIp.toLowerCase());
+    if (gatewayDeviceId && gatewayDeviceId !== targetDevice.id) {
+      const pathToGateway = findPathBetween(sourceId, gatewayDeviceId, sourceVlan);
+      const pathFromGateway = findPathBetween(gatewayDeviceId, targetDevice.id);
+      if (pathToGateway && pathFromGateway) {
+        path = [...pathToGateway, ...pathFromGateway.slice(1)];
+      }
+    }
   }
 
-  if (!visited.has(targetDevice.id)) {
-    return { success: false, hops: [], hopIds: [], error: 'Destination host unreachable.' };
-  }
-
-  // Construct path
-  const path: string[] = [];
-  let curr: string | undefined = targetDevice.id;
-  while (curr) {
-    path.unshift(curr);
-    curr = parent.get(curr);
+  if (path.length === 0) {
+    const directPath = findPathBetween(sourceId, targetDevice.id, sourceVlan);
+    if (!directPath) {
+      return { success: false, hops: [], hopIds: [], error: 'Destination host unreachable.' };
+    }
+    path = directPath;
   }
 
   // BOLT: Pre-calculate path-related connections for O(1) lookup in later stages
@@ -577,16 +585,16 @@ export function checkConnectivity(
       }
 
       // ARP learning on L3 devices (routers, L3 switches) when packet traverses
-      if (aDevice && (aDevice.type === 'router' || aDevice.type === 'switchL3') && sourceMac && currentSourceIp) {
-        performArpResolution(aId, currentSourceIp, sourceMac, srcPortId || 'Vlan1', safeDeviceStates);
+      if (aDevice && (aDevice.type === 'router' || aDevice.type === 'switchL3') && sourceMac && sourceIp) {
+        performArpResolution(aId, sourceIp, sourceMac, srcPortId || 'Vlan1', safeDeviceStates);
       }
-      if (bDevice && (bDevice.type === 'router' || bDevice.type === 'switchL3') && sourceMac && currentSourceIp) {
-        performArpResolution(bId, currentSourceIp, sourceMac, dstPortId || 'Vlan1', safeDeviceStates);
+      if (bDevice && (bDevice.type === 'router' || bDevice.type === 'switchL3') && sourceMac && sourceIp) {
+        performArpResolution(bId, sourceIp, sourceMac, dstPortId || 'Vlan1', safeDeviceStates);
       }
 
       // Learn target ARP on router / L3 switch next to destination
-      if (i === path.length - 2 && (aDevice?.type === 'router' || aDevice?.type === 'switchL3') && targetMac && currentTargetIp) {
-        performArpResolution(aId, currentTargetIp, targetMac, srcPortId || 'Vlan1', safeDeviceStates);
+      if (i === path.length - 2 && (aDevice?.type === 'router' || aDevice?.type === 'switchL3') && targetMac && resolvedTargetIp) {
+        performArpResolution(aId, resolvedTargetIp, targetMac, srcPortId || 'Vlan1', safeDeviceStates);
       }
 
       let packetInfo = options?.protocol === 'icmp' ? 'Echo Request' : 'Data Packet';
@@ -602,8 +610,8 @@ export function checkConnectivity(
       // Track packets for capture
       capturedPackets.push({
         connectionId: conn.id,
-        sourceIp: currentSourceIp,
-        targetIp: currentTargetIp,
+        sourceIp: sourceIp,
+        targetIp: resolvedTargetIp,
         protocol: options?.protocol?.toUpperCase() || 'ICMP',
         length: 74,
         info: packetInfo
@@ -699,11 +707,7 @@ export function checkConnectivity(
   const hopNames = path.map(id => deviceMap.get(id)?.name || id);
 
   // 2.5. Check subnet compatibility (Layer 3)
-  const sourceDeviceForSubnet = deviceMap.get(sourceId);
   if (sourceDeviceForSubnet && targetDevice) {
-    const isTargetIpv6 = resolvedTargetIp.includes(':');
-    // BOLT: Use pre-resolved safeDeviceStates
-    const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isTargetIpv6);
     const isSourceIpv6 = sourceIp.includes(':');
 
     let isInSameSubnet = false;
@@ -1203,6 +1207,10 @@ export function checkConnectivity(
   // Track which router in the path applied NAT (for reverse-path verification)
   let natTranslatedAt: string | null = null;
 
+  // Track packet addresses as they are translated while traversing the path.
+  let currentSourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, resolvedTargetIp.includes(':'));
+  let currentTargetIp = resolvedTargetIp;
+
   // 6.5 DHCP Snooping Enforcement
   // Rogue DHCP server protection: DHCP OFFER/ACK blocked on untrusted ports
   if (deviceStates) {
@@ -1637,8 +1645,12 @@ export function getPingDiagnostics(
     const targetSubnet = targetDevice.subnet || '255.255.255.0';
     isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
     isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
-    if (!isSourceInSameSubnet && !isTargetInSameSubnet) {
-      reasons.push(`Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${resolvedTargetIp}/${targetSubnet}. Router ile routing gerekli.`);
+
+    const hasRouterInTopology = devices.some(d => d.type === 'router' || d.type === 'switchL3');
+    if (!isSourceInSameSubnet && !isTargetInSameSubnet && !hasRouterInTopology) {
+      reasons.push(language === 'tr'
+        ? `Subnet uyumsuzluğu: Kaynak ${sourceIp}/${sourceSubnet}, Hedef ${resolvedTargetIp}/${targetSubnet}. Router ile routing gerekli.`
+        : `Subnet mismatch: Source ${sourceIp}/${sourceSubnet}, Target ${resolvedTargetIp}/${targetSubnet}. Router required for routing.`);
       return { success: false, reasons };
     }
 

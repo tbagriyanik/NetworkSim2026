@@ -129,6 +129,11 @@ export interface Translations {
   consoleShort: string;
   consoleTab: string;
   consoleTerminal: string;
+  cliSummary: string;
+  pcServicesAndSettings: string;
+  recommendedCliCommands: string;
+  activeServicesDetail: string;
+  networkSettings: string;
   contactEmail: string;
   contactErrorDesc: string;
   contactErrorTitle: string;
@@ -878,6 +883,11 @@ const translations: Record<Language, Translations> = {
     consoleShort: 'Konsol',
     consoleTab: 'Konsol',
     consoleTerminal: 'Konsol Terminali',
+    cliSummary: 'CLI Komut Özeti',
+    pcServicesAndSettings: 'PC Aktif Servis ve Ayarları',
+    recommendedCliCommands: 'Önerilen CLI Komutları',
+    activeServicesDetail: 'Aktif Servis Detayları',
+    networkSettings: 'Ağ Ayarları',
     contactEmail: 'E-posta Adresiniz',
     contactErrorDesc: 'Bir ağ hatası oluştu. Lütfen sonra tekrar deneyin.',
     contactErrorTitle: 'Gönderilemedi',
@@ -1623,6 +1633,11 @@ const translations: Record<Language, Translations> = {
     consoleShort: 'Console',
     consoleTab: 'Console',
     consoleTerminal: 'Console Terminal',
+    cliSummary: 'CLI Command Summary',
+    pcServicesAndSettings: 'PC Active Services & Settings',
+    recommendedCliCommands: 'Recommended CLI Commands',
+    activeServicesDetail: 'Active Services Detail',
+    networkSettings: 'Network Settings',
     contactEmail: 'Your Email',
     contactErrorDesc: 'A network error occurred. Please try again later.',
     contactErrorTitle: 'Send Failed',
