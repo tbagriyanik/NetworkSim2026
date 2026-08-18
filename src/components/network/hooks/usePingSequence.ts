@@ -458,6 +458,9 @@ export function usePingSequence(deps: PingSequenceDeps) {
     };
 
     const getBroadcastAnim = (switchId: string, exceptId?: string): BroadcastAnimTarget[] => {
+      // A topology with one device has no peer/segment to receive a broadcast.
+      // Keep the ping animation, but do not render a misleading ARP flood.
+      if (devices.length <= 1) return [];
       return buildBroadcastAnimTargets({
         switchId,
         exceptId,

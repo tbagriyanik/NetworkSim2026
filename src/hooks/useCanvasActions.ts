@@ -4,25 +4,68 @@ import { generateRandomLinkLocalIpv4, generateRandomLinkLocalIpv6 } from '@/lib/
 import { getDeviceWidth, getDeviceHeight } from '../components/network/networkTopology.helpers';
 import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts } from '../components/network/networkTopology.portGenerators';
 import { generateUniqueMacAddress } from '@/lib/utils';
-import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import type { SwitchState } from '@/lib/network/types';
 
-function getSummaryCliCommands(state: SwitchState): string[] {
-  const config = state.runningConfig?.length > 0 ? state.runningConfig : buildRunningConfig(state);
-  const ignoredLines = /^(?:!|version\s|no service pad$|service timestamps\b|! base mac-address\b)/i;
-  const sensitiveLines = /^(?:enable secret|enable password|username\s+\S+\s+.*\bsecret\b|\s+(?:password|secret)\b)/i;
-  const meaningfulLines = config.filter((line) => {
-    const command = line.trim();
-    return command.length > 0 && !ignoredLines.test(command) && !sensitiveLines.test(command);
-  });
+function getTopologyGroup(type: DeviceType): string {
+  if (type === 'pc') return 'PC';
+  if (type === 'switchL2' || type === 'switchL3') return 'SWITCH';
+  if (type === 'router') return 'ROUTER';
+  return 'OTHER';
+}
 
-  return meaningfulLines.filter((line, index, lines) => {
-    const command = line.trim();
-    if (!/^interface\s/i.test(command)) return true;
+function getChangedDeviceSettings(device: CanvasDevice, state?: SwitchState): string[] {
+  const changes: string[] = [];
+  const add = (setting: string, command: string) => changes.push(`${setting} → ${command}`);
+  const services = device.services || state?.services;
+  const activeServices = services
+    ? Object.entries(services).filter(([, value]) => value?.enabled).map(([name]) => name.toUpperCase())
+    : [];
+  if (activeServices.length) {
+    activeServices.forEach(service => add(`service ${service}`, `service ${service.toLowerCase()}`));
+  }
 
-    const nextCommand = lines[index + 1]?.trim() || '';
-    return nextCommand.length > 0 && !/^interface\s/i.test(nextCommand);
-  });
+  const wifi = device.wifi || Object.values(state?.ports || {}).map(port => port.wifi).find(Boolean);
+  if (wifi && wifi.mode !== 'disabled') {
+    add(`Wi-Fi: ${wifi.ssid || 'SSID'} (${wifi.security}, ${wifi.channel})`, `ssid ${wifi.ssid || '<SSID>'}`);
+    if (wifi.hidden) add('Wi-Fi hidden', 'ssid <SSID> hidden');
+  }
+  if (device.ipConfigMode === 'dhcp') add('IP: DHCP', 'ip address dhcp');
+  if (device.ipv6) add(`IPv6: ${device.ipv6}${device.ipv6Prefix ? `/${device.ipv6Prefix}` : ''}`, `ipv6 address ${device.ipv6}/${device.ipv6Prefix || 64}`);
+  if (device.gateway && device.gateway !== '0.0.0.0') add(`GW: ${device.gateway}`, `ip default-gateway ${device.gateway}`);
+  if (device.subnet && device.subnet !== '255.255.255.0') add(`mask: ${device.subnet}`, `ip address <IP> ${device.subnet}`);
+  if (state?.ipRouting) add('IP routing', 'ip routing');
+  if (state?.autoSummary === false) add('no auto-summary', 'no auto-summary');
+  if (state?.spanningTreeMode && state.spanningTreeMode !== 'pvst') add(`STP: ${state.spanningTreeMode}`, `spanning-tree mode ${state.spanningTreeMode}`);
+  if (state?.routingProtocol && state.routingProtocol !== 'none') {
+    const protocol = state.routingProtocol.toUpperCase();
+    const detail = state.routingProtocol === 'eigrp' && state.eigrpAs
+      ? ` AS ${state.eigrpAs}`
+      : state.routingProtocol === 'bgp' && state.bgpAs ? ` AS ${state.bgpAs}` : '';
+    add(`routing: ${protocol}${detail}`, `router ${state.routingProtocol}${state.eigrpAs ? ` ${state.eigrpAs}` : state.bgpAs ? ` ${state.bgpAs}` : ''}`);
+  }
+  if (state?.routerId) add(`router-id: ${state.routerId}`, `router-id ${state.routerId}`);
+  if (state?.staticRoutes?.length) add(`static routes: ${state.staticRoutes.length}`, 'ip route <network> <mask> <next-hop>');
+  if (state?.ipv6StaticRoutes?.length) add(`IPv6 static routes: ${state.ipv6StaticRoutes.length}`, 'ipv6 route <prefix>/<length> <next-hop>');
+  if (state?.dhcpPools && Object.keys(state.dhcpPools).length) {
+    add(`DHCP pools: ${Object.keys(state.dhcpPools).join(', ')}`, 'ip dhcp pool <name>');
+  }
+  if (state?.ntpServers?.length) add(`NTP: ${state.ntpServers.join(', ')}`, 'ntp server <address>');
+  if (state?.vtpDomain) add(`VTP: ${state.vtpDomain}`, `vtp domain ${state.vtpDomain}`);
+  if (state?.dhcpSnoopingEnabled) add('DHCP snooping', 'ip dhcp snooping');
+  if (state?.mlsQosEnabled) add('MLS QoS', 'mls qos');
+
+  if (state && (state.deviceType === 'switchL2' || state.deviceType === 'switchL3')) {
+    const vlans = Object.values(state.vlans || {})
+      .filter(vlan => vlan.id !== 1)
+      .map(vlan => `${vlan.id}${vlan.name && vlan.name !== `VLAN${vlan.id}` ? ` (${vlan.name})` : ''}`);
+    if (vlans.length) add(`VLANs: ${vlans.join(', ')}`, 'vlan <id> ; name <name>');
+
+    const portRoles = Object.values(state.ports || {})
+      .filter(port => port.mode && port.mode !== 'access')
+      .map(port => `${port.id || port.name}: ${port.mode}${port.accessVlan && port.accessVlan !== 1 ? ` vlan ${port.accessVlan}` : ''}`);
+    if (portRoles.length) add(`ports: ${portRoles.join(', ')}`, 'interface <port> ; switchport mode <mode>');
+  }
+  return changes;
 }
 
 export interface UseCanvasActionsProps {
@@ -331,7 +374,12 @@ export function useCanvasActions({
     if (devices.length === 0) {
       summaryText += isTr ? 'Cihaz bulunamadı.' : 'No devices found.';
     } else {
-      devices.forEach(d => {
+      const groups: Record<string, CanvasDevice[]> = { PC: [], SWITCH: [], ROUTER: [], OTHER: [] };
+      devices.forEach(d => groups[getTopologyGroup(d.type)].push(d));
+      Object.entries(groups).forEach(([group, groupedDevices]) => {
+        if (!groupedDevices.length) return;
+        summaryText += `\n[${group}]\n`;
+        groupedDevices.forEach(d => {
         const typeLabel = d.type === 'switchL2' ? 'Switch L2' : d.type === 'switchL3' ? 'Switch L3' : d.type.toUpperCase();
         summaryText += `• ${d.name} [${typeLabel}]\n`;
         if (d.ip) {
@@ -345,12 +393,12 @@ export function useCanvasActions({
         }
         summaryText += `  MAC: ${d.macAddress}\n`;
         const deviceState = deviceStates?.get(d.id) as SwitchState | undefined;
-        const cliCommands = deviceState ? getSummaryCliCommands(deviceState) : [];
-        if (cliCommands.length > 0) {
-          summaryText += isTr ? '  CLI AYARLARI:\n' : '  CLI CONFIGURATION:\n';
-          summaryText += cliCommands.map((command) => `    ${command}`).join('\n') + '\n';
+        const changedSettings = getChangedDeviceSettings(d, deviceState);
+        if (changedSettings.length > 0) {
+          summaryText += changedSettings.map((setting) => `    ${setting}`).join('\n') + '\n';
         }
         summaryText += '------------------------\n';
+        });
       });
     }
 
