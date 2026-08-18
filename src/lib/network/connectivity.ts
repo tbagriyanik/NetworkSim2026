@@ -505,10 +505,10 @@ export function checkConnectivity(
           const isSrcSTPBlocking = getVlanSpecificSTPBlocking(currentId, srcPortId, sourceVlan, connections, stpDeviceStates, conn);
           const isDstSTPBlocking = getVlanSpecificSTPBlocking(neighborId, dstPortId, sourceVlan, connections, stpDeviceStates, conn);
 
-           // Validate cable type for this physical link (e.g. console vs ethernet, straight vs crossover).
+          // Validate cable type for this physical link (e.g. console vs ethernet, straight vs crossover).
           const isCableOk = isConnectionCableCompatible(conn, srcDevice, dstDevice);
 
-           // Check serial encapsulation match on both ends of a serial link
+          // Check serial encapsulation match on both ends of a serial link
           const isSerialEncapOk = checkSerialEncapsulation(currentId, srcPortId, neighborId, dstPortId, safeDeviceStates);
 
           if (!isSrcShutdown && !isDstShutdown && !isSrcPoweredOff && !isDstPoweredOff && !isSrcSTPBlocking && !isDstSTPBlocking && isCableOk && isSerialEncapOk) {
@@ -727,7 +727,7 @@ export function checkConnectivity(
       // BOLT: Use pre-resolved safeDeviceStates
       const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates) || sourceDeviceForSubnet.subnet || '255.255.255.0';
       const targetSubnet = targetDevice.subnet || '255.255.255.0';
-      
+
       const isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
       const isTargetInSameSubnet = isIpInSubnet(resolvedTargetIp, sourceIp, targetSubnet);
 
@@ -986,6 +986,21 @@ export function checkConnectivity(
             : `Trunk failed: both ${a.name} ${aPortId} and ${b.name} ${bPortId} must be in trunk mode.`
         };
       }
+
+      if (aIsTrunk && bIsTrunk) {
+        const activeVlan = getFallbackVlanFromPath(sourceId);
+        if (!isPortMemberOfVlan(aPort, activeVlan) || !isPortMemberOfVlan(bPort, activeVlan)) {
+          return {
+            success: false,
+            hops: hopNames.slice(0, i + 2),
+            hopIds: path.slice(0, i + 2),
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Trunk VLAN filtresi: ${a.name} ${aPortId} ve ${b.name} ${bPortId} üzerinde VLAN ${activeVlan} izinli değil.`
+              : `Trunk VLAN filter: VLAN ${activeVlan} is not allowed on ${a.name} ${aPortId} or ${b.name} ${bPortId}.`
+          };
+        }
+      }
     }
   }
 
@@ -1131,7 +1146,7 @@ export function checkConnectivity(
     // Check if source has routing capability and a route to target
     const isTargetIpv6 = resolvedTargetIp.includes(':');
     const sourceHasRouting = isTargetIpv6 ? (sourceState?.ipv6Enabled || sourceState?.ipRouting) : sourceState?.ipRouting;
-    
+
     if (sourceHasRouting) {
       // BOLT: Use pre-resolved safeDeviceStates
       const sourceRoutes = getRoutingTable(sourceId, safeDeviceStates, devices, connections);
@@ -1175,8 +1190,8 @@ export function checkConnectivity(
         hops: hopNames,
         hopIds: path,
         targetId: targetDevice.id,
-        error: language === 'tr' 
-          ? 'Yönlendirme başarısız: Geçerli bir rota bulunamadı.' 
+        error: language === 'tr'
+          ? 'Yönlendirme başarısız: Geçerli bir rota bulunamadı.'
           : 'Routing failed: No valid route found.'
       };
     }
@@ -1360,7 +1375,7 @@ export function checkConnectivity(
       if (natTranslatedAt === stepDeviceId && state.natStaticTranslations) {
         const hasStaticReverse = state.natStaticTranslations.some(t => t.globalIp === currentSourceIp);
         const hasDynamicNat = state.natDynamicRules && state.natDynamicRules.length > 0;
-        
+
         if (!hasStaticReverse && !hasDynamicNat) {
           return {
             success: false,
@@ -1447,11 +1462,11 @@ export function checkConnectivity(
   }
 
   if (!l2ConnectivityPossible && !l3ConnectivityPossible && !basicConnectivityPossible) {
-      // If we got here and no connectivity was confirmed, double check management IPs
-      // BOLT: Use pre-resolved safeDeviceStates
-      if (!getPrimaryDeviceIp(sourceId, devices, safeDeviceStates) && !isManagementIpSet(sourceId, safeDeviceStates)) {
-        return { success: false, hops: [], hopIds: [], error: 'Source has no IP address.' };
-      }
+    // If we got here and no connectivity was confirmed, double check management IPs
+    // BOLT: Use pre-resolved safeDeviceStates
+    if (!getPrimaryDeviceIp(sourceId, devices, safeDeviceStates) && !isManagementIpSet(sourceId, safeDeviceStates)) {
+      return { success: false, hops: [], hopIds: [], error: 'Source has no IP address.' };
+    }
   }
 
   return {
@@ -1712,7 +1727,7 @@ export function getPingDiagnostics(
         return { success: false, reasons };
       }
     }
-    
+
     // Check if there's a router or L3 switch in path (already calculated in section 9)
     let hasL3RouterInPath = false;
     for (const pathDeviceId of result.hopIds) {

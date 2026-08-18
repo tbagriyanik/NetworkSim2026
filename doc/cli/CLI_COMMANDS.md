@@ -37,6 +37,13 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `Ctrl+L` | Clear terminal |
 | `Double-click Device` | Open device configuration panel |
 
+### Window & Panel Gestures
+| Shortcut / Gesture | Action |
+|--------------------|--------|
+| `Double-click Header` | Toggle collapse / minimize window (PC Window, Router Panel, Packet Analysis, Refresh Report) |
+| `Click Terminal Output / History` | Focus command line input field |
+| `Tab` | Command auto-completion / suggestion completion |
+
 ## Command Overview
 
 ### Desktop Computer Commands
@@ -270,6 +277,14 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `switchport mode dynamic auto` | Set DTP dynamic auto mode |
 | `switchport mode dynamic desirable` | Set DTP dynamic desirable mode |
 | `switchport mode dot1q-tunnel` | Set dot1q tunnel mode |
+| `switchport access vlan <vlan-id>` | Assign access VLAN |
+| `switchport trunk native vlan <vlan-id>` | Set trunk native VLAN |
+| `switchport trunk allowed vlan <vlan-list>` | Set allowed VLAN list (e.g. `10,20` or `10-20,30`) |
+| `switchport trunk allowed vlan all` | Allow all VLANs on trunk |
+| `switchport trunk allowed vlan add <vlan-list>` | Add VLANs to trunk allowed list |
+| `switchport trunk allowed vlan remove <vlan-list>` | Remove VLANs from trunk allowed list |
+| `switchport trunk allowed vlan except <vlan-list>` | Allow all VLANs except specified |
+| `no switchport trunk allowed vlan` | Reset trunk allowed VLANs to default (all) |
 | `no switchport mode` | Reset switchport mode |
 | `no switchport` | Convert to routed port (L3) |
 | `spanning-tree portfast` | Enable PortFast |

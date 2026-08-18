@@ -4671,6 +4671,7 @@ This document provides detailed descriptions of all example projects available i
 - [Basic Level](#basic-level)
 - [Intermediate Level](#intermediate-level)
 - [Advanced Level](#advanced-level)
+- [Troubleshooting Level](#troubleshooting-level)
 
 ---
 
