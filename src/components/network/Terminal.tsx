@@ -1426,8 +1426,9 @@ export function Terminal({
             role="log"
             aria-live="polite"
             aria-label={t.typeCommand}
+            onClick={() => inputRef.current?.focus()}
             className={cn(
-              "flex-1 overflow-y-auto overflow-x-hidden font-geist-mono leading-relaxed custom-scrollbar min-h-0",
+              "flex-1 overflow-y-auto overflow-x-hidden font-geist-mono leading-relaxed custom-scrollbar min-h-0 cursor-text",
               isMobile ? "mobile-scroll p-3 pb-36" : "p-6 pb-32",
               isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-secondary-50")
             )}

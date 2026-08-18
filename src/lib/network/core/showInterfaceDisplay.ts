@@ -3,6 +3,7 @@ import type { CommandContext } from './commandTypes';
 import type { CanvasConnection } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult, Port } from '../types';
 import { normalizePortId } from '../initialState';
+import { portsFormTrunk } from '../connectivity';
 import {
   formatPortName, isPhysicalEthernetPort, getAllowedVlansString, getNativeVlanString,
 } from './showHelpers';
@@ -302,14 +303,13 @@ export function cmdShowInterfaceTrunk(
     return { peerPortId, peerPort };
   };
 
-  // A static trunk is operational only when both connected switch ports are trunk.
+  // A trunk is operational when both connected switch ports form a trunk (explicit or DTP-negotiated).
   const trunkPorts = portIds.filter((portId) => {
     const port = state.ports?.[portId];
-    if (port?.mode !== 'trunk') return false;
 
     const connected = hasActiveConnection(portId);
     const peer = connected ? getPeerPortState(portId) : null;
-    const isActuallyTrunking = connected && peer?.peerPort?.mode === 'trunk';
+    const isActuallyTrunking = connected && peer && portsFormTrunk(port?.mode, peer.peerPort?.mode);
 
     return isActuallyTrunking;
   });
@@ -332,7 +332,7 @@ export function cmdShowInterfaceTrunk(
           port.mode === 'dynamic-desirable' ? 'desirable' :
             'on';
 
-    const status = connected && peer?.peerPort?.mode === 'trunk' ? 'trunking' : 'not-trunking';
+    const status = connected && peer && portsFormTrunk(port.mode, peer.peerPort?.mode) ? 'trunking' : 'not-trunking';
     const nativeVlan = getNativeVlanString(port);
 
     output += `${String(portId).padEnd(11)} ${String(mode).padEnd(12)} ${'802.1q'.padEnd(13)} ${String(status).padEnd(12)} ${nativeVlan}\n`;

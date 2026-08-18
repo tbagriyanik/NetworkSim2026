@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { checkConnectivity } from '@/lib/network/connectivity';
-import type { SwitchState } from '@/lib/network/types';
+import { checkConnectivity, portsFormTrunk } from '@/lib/network/connectivity';
+import type { SwitchState, Port } from '@/lib/network/types';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 
 describe('Connectivity Functions', () => {
@@ -37,13 +37,13 @@ describe('Connectivity Functions', () => {
   const pc1: CanvasDevice = {
     id: 'PC1', name: 'PC1', type: 'pc',
     ip: '192.168.1.10', vlan: 10,
-    ports: [{ id: 'eth0', status: 'connected' as const }],
+    ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }],
   } as CanvasDevice;
 
   const pc2: CanvasDevice = {
     id: 'PC2', name: 'PC2', type: 'pc',
     ip: '192.168.1.20', vlan: 10,
-    ports: [{ id: 'eth0', status: 'connected' as const }],
+    ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }],
   } as CanvasDevice;
 
 
@@ -51,7 +51,7 @@ describe('Connectivity Functions', () => {
   const pc3: CanvasDevice = {
     id: 'PC3', name: 'PC3', type: 'pc',
     ip: '192.168.2.10', vlan: 20,
-    ports: [{ id: 'eth0', status: 'connected' as const }],
+    ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }],
   } as CanvasDevice;
 
   const connections: CanvasConnection[] = [
@@ -205,5 +205,115 @@ describe('Connectivity Functions', () => {
     // PC-2 to PC-1 ping should fail because PC-2 considers PC-1 out of subnet and has no gateway
     const res2 = checkConnectivity('pc-2', '192.168.1.10', [pc1, pc2], directConn);
     expect(res2.success).toBe(false);
+  });
+
+  describe('portsFormTrunk (DTP negotiation)', () => {
+    it('should form trunk when both sides are explicitly trunk', () => {
+      expect(portsFormTrunk('trunk', 'trunk')).toBe(true);
+    });
+
+    it('should form trunk when one side is trunk and other is access', () => {
+      expect(portsFormTrunk('trunk', 'access')).toBe(true);
+      expect(portsFormTrunk('access', 'trunk')).toBe(true);
+    });
+
+    it('should form trunk when both sides are dynamic-desirable', () => {
+      expect(portsFormTrunk('dynamic-desirable', 'dynamic-desirable')).toBe(true);
+    });
+
+    it('should form trunk when one side is dynamic-desirable and other is dynamic-auto', () => {
+      expect(portsFormTrunk('dynamic-desirable', 'dynamic-auto')).toBe(true);
+      expect(portsFormTrunk('dynamic-auto', 'dynamic-desirable')).toBe(true);
+    });
+
+    it('should NOT form trunk when both sides are dynamic-auto', () => {
+      expect(portsFormTrunk('dynamic-auto', 'dynamic-auto')).toBe(false);
+    });
+
+    it('should NOT form trunk when one side is access and other is dynamic', () => {
+      expect(portsFormTrunk('access', 'dynamic-auto')).toBe(false);
+      expect(portsFormTrunk('access', 'dynamic-desirable')).toBe(false);
+      expect(portsFormTrunk('dynamic-auto', 'access')).toBe(false);
+    });
+
+    it('should NOT form trunk for routed ports', () => {
+      expect(portsFormTrunk('routed', 'trunk')).toBe(false);
+      expect(portsFormTrunk('trunk', 'routed')).toBe(false);
+    });
+  });
+
+  describe('Dynamic mode (auto/desirable) connectivity', () => {
+    const makeSwitch = (id: string, ports: Record<string, { mode: Port['mode']; vlan: number; shutdown: boolean }>): SwitchState => {
+      const switchState = {
+        hostname: id,
+        macAddress: '00:00:00:00:00:' + id.charCodeAt(id.length - 1),
+        switchModel: 'WS-C2960-24TT-L',
+        switchLayer: 'L2' as const,
+        ports: {},
+        vlans: { '1': { id: 1, name: 'default', status: 'active', ports: [] }, '10': { id: 10, name: 'VLAN10', status: 'active', ports: [] } },
+        security: { enableSecretEncrypted: false, consoleLine: { login: false, transportInput: [] }, vtyLines: { login: false, transportInput: [] } },
+        runningConfig: [],
+        commandHistory: [],
+        bootTime: Date.now(),
+        version: { nosVersion: '15.0', modelName: id, serialNumber: 'ABC123', uptime: '1 week' },
+        macAddressTable: [],
+        arpCache: [],
+        ipRouting: false,
+      } as unknown as SwitchState;
+
+      for (const [portId, cfg] of Object.entries(ports)) {
+        switchState.ports[portId] = {
+          id: portId,
+          name: portId,
+          status: 'connected' as const,
+          vlan: cfg.vlan,
+          mode: cfg.mode,
+          duplex: 'auto' as const,
+          speed: 'auto' as const,
+          shutdown: cfg.shutdown,
+          type: 'gigabitethernet' as const,
+          allowedVlans: 'all',
+        };
+      }
+      return switchState;
+    };
+
+    it('should allow connectivity between switches with dynamic-desirable on both sides', () => {
+      const sw1 = makeSwitch('SW1', { 'fa0/1': { mode: 'dynamic-desirable', vlan: 10, shutdown: false } });
+      const sw2 = makeSwitch('SW2', { 'fa0/1': { mode: 'dynamic-desirable', vlan: 10, shutdown: false } });
+      const deviceStates = new Map([['SW1', sw1], ['SW2', sw2]]);
+
+      const devices: CanvasDevice[] = [
+        { id: 'SW1', type: 'switchL2', name: 'SW1', ip: '192.168.1.1', status: 'online', x: 0, y: 0, ports: [{ id: 'fa0/1', label: 'Fa0/1', status: 'connected' }] },
+        { id: 'SW2', type: 'switchL2', name: 'SW2', ip: '192.168.1.2', status: 'online', x: 100, y: 0, ports: [{ id: 'fa0/1', label: 'Fa0/1', status: 'connected' }] },
+      ];
+      const connections: CanvasConnection[] = [
+        { id: 'c1', sourceDeviceId: 'SW1', sourcePort: 'fa0/1', targetDeviceId: 'SW2', targetPort: 'fa0/1', cableType: 'straight', active: true },
+      ];
+
+      const result = checkConnectivity('SW1', '192.168.1.2', devices, connections, deviceStates);
+      expect(result.success).toBe(true);
+    });
+
+    it('should allow connectivity when one side is dynamic-desirable and other is dynamic-auto', () => {
+      const sw1 = makeSwitch('SW1', { 'fa0/1': { mode: 'dynamic-desirable', vlan: 10, shutdown: false } });
+      const sw2 = makeSwitch('SW2', { 'fa0/1': { mode: 'dynamic-auto', vlan: 10, shutdown: false } });
+      const deviceStates = new Map([['SW1', sw1], ['SW2', sw2]]);
+
+      const devices: CanvasDevice[] = [
+        { id: 'SW1', type: 'switchL2', name: 'SW1', ip: '192.168.1.1', status: 'online', x: 0, y: 0, ports: [{ id: 'fa0/1', label: 'Fa0/1', status: 'connected' }] },
+        { id: 'SW2', type: 'switchL2', name: 'SW2', ip: '192.168.1.2', status: 'online', x: 100, y: 0, ports: [{ id: 'fa0/1', label: 'Fa0/1', status: 'connected' }] },
+      ];
+      const connections: CanvasConnection[] = [
+        { id: 'c1', sourceDeviceId: 'SW1', sourcePort: 'fa0/1', targetDeviceId: 'SW2', targetPort: 'fa0/1', cableType: 'straight', active: true },
+      ];
+
+      const result = checkConnectivity('SW1', '192.168.1.2', devices, connections, deviceStates);
+      expect(result.success).toBe(true);
+    });
+
+    it('should NOT form trunk when both sides are dynamic-auto', () => {
+      expect(portsFormTrunk('dynamic-auto', 'dynamic-auto')).toBe(false);
+    });
   });
 });

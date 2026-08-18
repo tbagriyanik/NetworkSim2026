@@ -20,6 +20,25 @@ export {
 };
 
 /**
+ * DTP (Dynamic Trunking Protocol) negotiation.
+ * Returns true if two switch ports would establish a trunk.
+ * - Either side explicitly trunk  => trunk
+ * - Both dynamic (auto/desirable) => trunk only if at least one side is desirable
+ * - Otherwise                    => access
+ */
+export function portsFormTrunk(
+  modeA: Port['mode'] | undefined,
+  modeB: Port['mode'] | undefined
+): boolean {
+  if (modeA === 'routed' || modeB === 'routed') return false;
+  if (modeA === 'trunk' || modeB === 'trunk') return true;
+  const aDynamic = modeA === 'dynamic-auto' || modeA === 'dynamic-desirable';
+  const bDynamic = modeB === 'dynamic-auto' || modeB === 'dynamic-desirable';
+  if (aDynamic && bDynamic) return modeA === 'dynamic-desirable' || modeB === 'dynamic-desirable';
+  return false;
+}
+
+/**
  * Calculate STP blocking state for a specific VLAN on a port
  * In PVST, each VLAN has its own STP instance with potentially different root bridges
  * Also updates the port's spanningTree.state to reflect the current VLAN's STP state
@@ -386,7 +405,7 @@ export function checkConnectivity(
         const peerState = deviceStates.get(peerDeviceId);
         const peerPort = peerState?.ports?.[peerPortId];
         if (peerPort) {
-          if (peerPort.mode === 'trunk') return 1;
+          if (portsFormTrunk(undefined, peerPort.mode)) return 1;
           return getPortVlan(peerPort);
         }
       }
@@ -848,8 +867,11 @@ export function checkConnectivity(
         const swVlan = getPortVlan(swPort);
         const pcVlan = Number(pc.vlan || 1);
 
-        // Allow ping if switch port is trunk OR if VLANs match
-        if (swPort?.mode !== 'trunk' && swVlan !== pcVlan) {
+        // Allow ping if switch port forms a trunk (explicit or DTP-negotiated) OR if VLANs match
+        const pcPortId = conn.sourceDeviceId === sw.id ? conn.targetPort : conn.sourcePort;
+        const pcDevice = deviceMap.get(pc.id);
+        const pcPort = pcDevice?.ports?.find(p => p.id === pcPortId);
+        if (!portsFormTrunk(pcPort?.mode, swPort?.mode) && swVlan !== pcVlan) {
           return {
             success: false,
             hops: hopNames.slice(0, i + 2),
@@ -970,8 +992,8 @@ export function checkConnectivity(
 
           // Check for VLAN mismatch on access ports
           if (ingressVlan !== egressVlan) {
-            // Allow if one or both ports are trunks
-            if (ingressPort?.mode !== 'trunk' && egressPort?.mode !== 'trunk') {
+            // Allow if ports form a trunk (explicit or DTP-negotiated)
+            if (!portsFormTrunk(ingressPort?.mode, egressPort?.mode)) {
               // Check if there's a router with ipRouting in the path (L3 routing scenario)
               let hasL3RouterInPath = false;
               for (const pathDeviceId of path) {
