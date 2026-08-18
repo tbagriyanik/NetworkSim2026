@@ -1,7 +1,8 @@
 import { expect, test, describe } from 'vitest';
-import { checkConnectivity } from '@/lib/network/connectivity';
+import { checkConnectivity, checkDeviceConnectivity } from '@/lib/network/connectivity';
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
+import { createInitialState } from '@/lib/network/initialState';
 
 describe('Packet Capture Backend', () => {
   const devices: CanvasDevice[] = [
@@ -104,5 +105,106 @@ describe('Packet Capture Backend', () => {
 
     expect(result.success).toBe(false);
     expect(result.capturedPackets || []).toHaveLength(0);
+  });
+
+  test('records ARP broadcast on every switch flood port except the source cable', () => {
+    const pc1 = devices[0];
+    const pc2 = devices[1];
+    const pc3: CanvasDevice = {
+      id: 'pc-3',
+      type: 'pc',
+      name: 'PC-3',
+      ip: '192.168.1.30',
+      subnet: '255.255.255.0',
+      gateway: '192.168.1.1',
+      macAddress: '00:00:00:00:00:03',
+      x: 200, y: 100, status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+    const sw: CanvasDevice = {
+      id: 'sw-1',
+      type: 'switchL2',
+      name: 'SW-1',
+      ip: '',
+      x: 50, y: 50, status: 'online',
+      ports: [
+        { id: 'fa0/1', label: 'Fa0/1', status: 'connected' },
+        { id: 'fa0/2', label: 'Fa0/2', status: 'connected' },
+        { id: 'fa0/3', label: 'Fa0/3', status: 'connected' }
+      ]
+    };
+
+    const switchConns: CanvasConnection[] = [
+      { id: 'c-pc1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'sw-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
+      { id: 'c-pc2', sourceDeviceId: 'sw-1', sourcePort: 'fa0/2', targetDeviceId: 'pc-2', targetPort: 'eth0', cableType: 'straight', active: true },
+      { id: 'c-pc3', sourceDeviceId: 'sw-1', sourcePort: 'fa0/3', targetDeviceId: 'pc-3', targetPort: 'eth0', cableType: 'straight', active: true }
+    ];
+
+    const switchStates = new Map<string, SwitchState>();
+    const mkPcState = (mac: string) => ({
+      hostname: 'PC',
+      macAddress: mac,
+      ports: { 'eth0': { id: 'eth0', label: 'Eth0', status: 'connected', shutdown: false } },
+      arpCache: []
+    } as unknown as SwitchState);
+    switchStates.set('pc-1', mkPcState('00:00:00:00:00:01'));
+    switchStates.set('pc-2', mkPcState('00:00:00:00:00:02'));
+    switchStates.set('pc-3', mkPcState('00:00:00:00:00:03'));
+    switchStates.set('sw-1', createInitialState());
+
+    const result = checkConnectivity(
+      'pc-1',
+      '192.168.1.20',
+      [pc1, sw, pc2, pc3],
+      switchConns,
+      switchStates,
+      'en',
+      { protocol: 'icmp' }
+    );
+
+    expect(result.success).toBe(true);
+
+    const arpPackets = result.capturedPackets?.filter(p => p.protocol === 'ARP') || [];
+    const arpConnIds = arpPackets.map(p => p.connectionId);
+
+    // Source cable carries the ARP request
+    expect(arpConnIds).toContain('c-pc1');
+    // The broadcast floods to the target device and every other device on the switch
+    expect(arpConnIds).toContain('c-pc2');
+    expect(arpConnIds).toContain('c-pc3');
+
+    // ARP reply traverses every cable on the path back to the source
+    const replyConnIds = arpPackets.filter(p => p.info.startsWith('ARP Reply')).map(p => p.connectionId);
+    expect(replyConnIds).toContain('c-pc1');
+    expect(replyConnIds).toContain('c-pc2');
+    // The reply does not reach the device that is not on the path
+    expect(replyConnIds).not.toContain('c-pc3');
+  });
+
+  test('right-click ping (checkDeviceConnectivity) records ARP even when the MAC is already cached', () => {
+    const states = new Map<string, SwitchState>();
+    const mkPcState = (mac: string) => ({
+      hostname: 'PC',
+      macAddress: mac,
+      ports: { 'eth0': { id: 'eth0', label: 'Eth0', status: 'connected', shutdown: false } },
+      arpCache: []
+    } as unknown as SwitchState);
+    states.set('pc-1', mkPcState('00:00:00:00:00:01'));
+    states.set('pc-2', mkPcState('00:00:00:00:00:02'));
+
+    // First ping populates the source PC's ARP cache
+    checkConnectivity('pc-1', '192.168.1.20', devices, connections, states, 'en', { protocol: 'icmp' });
+    const sourceState = states.get('pc-1');
+    expect(sourceState?.arpCache?.some(e => e.ip === '192.168.1.20')).toBe(true);
+
+    // Right-click ping path (resolve by device id) must still capture ARP + ICMP
+    const result = checkDeviceConnectivity('pc-1', 'pc-2', devices, connections, states, { protocol: 'icmp' });
+
+    expect(result.success).toBe(true);
+    const packets = result.capturedPackets || [];
+    expect(packets.filter(p => p.protocol === 'ARP').length).toBeGreaterThan(0);
+    expect(packets.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Request'))).toBe(true);
+    expect(packets.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Reply'))).toBe(true);
+    expect(packets.some(p => p.protocol === 'ICMP' && p.info.includes('Echo Request'))).toBe(true);
   });
 });

@@ -171,6 +171,7 @@ export function NetworkTopology({
   const setActiveCaptureConnection = useAppStore(state => state.setActiveCaptureConnection);
   const capturedPacketsMap = useAppStore(state => state.topology.capturedPackets);
   const clearCapturedPackets = useAppStore(state => state.clearCapturedPackets);
+  const clearAllCapturedPackets = useAppStore(state => state.clearAllCapturedPackets);
   const networkEventLogs = useNetworkEventLogs();
   const [showLogPanel, setShowLogPanel] = useState(false);
 
@@ -2622,6 +2623,7 @@ export function NetworkTopology({
         connections={connections}
         activeCaptureConnectionId={activeCaptureConnectionId}
         clearCapturedPackets={clearCapturedPackets}
+        clearAllCapturedPackets={clearAllCapturedPackets}
         setActiveCaptureConnection={setActiveCaptureConnection}
         capturedPacketsMap={capturedPacketsMap}
         t={t}

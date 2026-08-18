@@ -218,6 +218,8 @@ export function checkConnectivity(
   const portSecurityViolations: Array<{ deviceId: string; portId: string; action: string; mac: string }> = [];
   const traversedPorts: Array<{ deviceId: string; portId: string; type: 'ingress' | 'egress' }> = [];
   const capturedPackets: Array<{ connectionId: string; sourceIp: string; targetIp: string; protocol: string; length: number; info: string }> = [];
+  // Track the ARP broadcast request so it can be recorded on every switch flood port
+  let arpBroadcast: { sourceIp: string; targetIp: string } | null = null;
 
   // BOLT: Use a device map for O(1) lookups
   const deviceMap = new Map<string, CanvasDevice>();
@@ -338,9 +340,6 @@ export function checkConnectivity(
         const sourceConn = adjList.get(sourceId)?.[0]?.conn;
         const interfaceName = sourceConn ? (sourceConn.sourceDeviceId === sourceId ? sourceConn.sourcePort : sourceConn.targetPort) : 'unknown';
 
-        // Check if ARP is already in cache to avoid redundant capture logs
-        const cachedMac = sourceState.arpCache?.find(e => e.ip === resolvedTargetIp);
-
         // Perform ARP resolution (simulated)
         performArpResolution(
           sourceId,
@@ -350,7 +349,11 @@ export function checkConnectivity(
           deviceStates
         );
 
-        if (!cachedMac && sourceConn) {
+        // Record the ARP exchange on every ping so the capture list and the broadcast
+        // animation stay consistent, regardless of whether the MAC is already cached.
+        if (sourceConn) {
+          // Remember the ARP request so it can be recorded on every switch flood port
+          arpBroadcast = { sourceIp, targetIp: resolvedTargetIp };
           // Record ARP Broadcast Request
           capturedPackets.push({
             connectionId: sourceConn.id,
@@ -359,15 +362,6 @@ export function checkConnectivity(
             protocol: 'ARP',
             length: 42,
             info: `ARP Request: Who has ${resolvedTargetIp}? Tell ${sourceIp}`
-          });
-          // Record ARP Unicast Reply
-          capturedPackets.push({
-            connectionId: sourceConn.id,
-            sourceIp: resolvedTargetIp,
-            targetIp: sourceIp,
-            protocol: 'ARP',
-            length: 42,
-            info: `ARP Reply: ${resolvedTargetIp} is at ${targetDevice.macAddress}`
           });
         }
       }
@@ -570,6 +564,49 @@ export function checkConnectivity(
         length: 74,
         info: packetInfo
       });
+    }
+  }
+
+  // Record the ARP broadcast request on every switch flood port (all ports except the incoming one)
+  // and the ARP reply on every cable of the path, so both also appear in the capture list of
+  // each cable the packets traverse.
+  if (arpBroadcast) {
+    // ARP Reply (unicast) traverses the full path back to the source
+    for (let i = 0; i < path.length - 1; i++) {
+      const aId = path[i];
+      const bId = path[i + 1];
+      const conn = pathConnections.get(`${aId}-${bId}`);
+      if (conn) {
+        capturedPackets.push({
+          connectionId: conn.id,
+          sourceIp: arpBroadcast.targetIp,
+          targetIp: arpBroadcast.sourceIp,
+          protocol: 'ARP',
+          length: 42,
+          info: `ARP Reply: ${arpBroadcast.targetIp} is at ${targetDevice.macAddress}`
+        });
+      }
+    }
+    // ARP Request (broadcast) floods on every switch port except the incoming one
+    for (let i = 0; i < path.length - 1; i++) {
+      const aId = path[i];
+      const bId = path[i + 1];
+      const bDev = deviceMap.get(bId);
+      if (!bDev || !isSwitchDeviceType(bDev.type)) continue;
+      const incomingConn = pathConnections.get(`${aId}-${bId}`);
+      const neighbors = adjList.get(bId) || [];
+      for (const { conn } of neighbors) {
+        if (!conn || conn.active === false) continue;
+        if (conn.id === incomingConn?.id) continue;
+        capturedPackets.push({
+          connectionId: conn.id,
+          sourceIp: arpBroadcast.sourceIp,
+          targetIp: '255.255.255.255',
+          protocol: 'ARP',
+          length: 42,
+          info: `ARP Request: Who has ${arpBroadcast.targetIp}? Tell ${arpBroadcast.sourceIp}`
+        });
+      }
     }
   }
 

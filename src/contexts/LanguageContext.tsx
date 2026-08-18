@@ -432,6 +432,8 @@ export interface Translations {
   ping: string;
   pingFailed: string;
   pingSuccess: string;
+  arpBroadcast: string;
+  broadcastNotification: string;
   pools: string;
   portClickTip: string;
   portInUse: string;
@@ -740,6 +742,7 @@ export interface Translations {
   noPacketsCaptured: string;
 
   clearCapture: string;
+  clearAllCapture: string;
   simulationMode: string;
   exportAsSVG: string;
   exportAsPNG: string;
@@ -1178,6 +1181,8 @@ const translations: Record<Language, Translations> = {
     ping: 'Ping',
     pingFailed: 'Ping başarısız',
     pingSuccess: 'Ping başarılı',
+    arpBroadcast: 'ARP Yayını',
+    broadcastNotification: 'Broadcast paketleri switch\'e bağlı tüm cihazlara iletilir (ff:ff:ff:ff:ff:ff)',
     pools: 'Havuz',
     portClickTip: 'Port LED\'lerine tıklayarak hızlıca interface moduna geçebilirsiniz',
     portInUse: 'Bu port zaten kullanımda!',
@@ -1485,6 +1490,7 @@ const translations: Record<Language, Translations> = {
     capturedPackets: 'Yakalanan Paketler',
     noPacketsCaptured: 'Henüz paket yakalanmadı...',
     clearCapture: 'Temizle',
+    clearAllCapture: 'Tüm Uygulamadaki Paketleri Temizle',
     simulationMode: 'Simülasyon Modu',
     exportAsSVG: 'SVG Olarak Dışa Aktar',
     exportAsPNG: 'PNG Olarak Dışa Aktar',
@@ -1920,6 +1926,8 @@ const translations: Record<Language, Translations> = {
     ping: 'Ping',
     pingFailed: 'Ping failed',
     pingSuccess: 'Ping successful',
+    arpBroadcast: 'ARP Broadcast',
+    broadcastNotification: 'Broadcast packets are flooded to all devices connected to the switch (ff:ff:ff:ff:ff:ff)',
     pools: 'Pools',
     portClickTip: 'Click on port LEDs to quickly switch to interface mode',
     portInUse: 'This port is already in use!',
@@ -2227,6 +2235,7 @@ const translations: Record<Language, Translations> = {
     capturedPackets: 'Captured Packets',
     noPacketsCaptured: 'No packets captured yet...',
     clearCapture: 'Clear',
+    clearAllCapture: 'Clear All Application Packets',
     simulationMode: 'Simulation Mode',
     exportAsSVG: 'Export as SVG',
     exportAsPNG: 'Export as PNG',

@@ -71,6 +71,7 @@ interface TopologyModalsProps {
   
   activeCaptureConnectionId: string | null;
   clearCapturedPackets: (connectionId: string) => void;
+  clearAllCapturedPackets: () => void;
   setActiveCaptureConnection: (id: string | null) => void;
   capturedPacketsMap: Record<string, CapturedPacket[]>;
   t: Record<string, string>;
@@ -123,6 +124,7 @@ export function TopologyModals({
   
   activeCaptureConnectionId,
   clearCapturedPackets,
+  clearAllCapturedPackets,
   setActiveCaptureConnection,
   capturedPacketsMap,
   t
@@ -394,6 +396,7 @@ export function TopologyModals({
         <PacketCapturePanel
           activeCaptureConnectionId={activeCaptureConnectionId}
           clearCapturedPackets={clearCapturedPackets}
+          clearAllCapturedPackets={clearAllCapturedPackets}
           setActiveCaptureConnection={setActiveCaptureConnection}
           capturedPacketsMap={capturedPacketsMap}
           t={t}

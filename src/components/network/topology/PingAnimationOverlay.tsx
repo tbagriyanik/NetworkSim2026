@@ -1,5 +1,6 @@
 import React from 'react';
 import { CanvasDevice, CanvasConnection } from '../networkTopology.types';
+import { BroadcastAnimTarget } from '../hooks/usePingSequence';
 
 export interface PingAnimationOverlayProps {
   pingAnimation: {
@@ -10,6 +11,9 @@ export interface PingAnimationOverlayProps {
     progress: number;
     success: boolean | null;
     error?: string;
+    broadcastTargets?: string[];
+    broadcastAnim?: BroadcastAnimTarget[];
+    broadcastProgress?: number;
   } | null;
   deviceMap: Map<string, CanvasDevice>;
   connections: CanvasConnection[];
@@ -34,7 +38,12 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
 }) => {
   if (!pingAnimation) return null;
 
-  const { path, currentHopIndex, progress, success, error } = pingAnimation;
+  const { path, currentHopIndex, progress, success, error, broadcastAnim = [], broadcastProgress = 0 } = pingAnimation;
+
+  const isBroadcastActive = broadcastAnim.length > 0 && broadcastProgress > 0 && broadcastProgress < 1;
+  const broadcastFrom = broadcastAnim.length > 0 ? broadcastAnim[0] : null;
+  const broadcastLabelX = broadcastFrom ? broadcastFrom.fromX : 0;
+  const broadcastLabelY = broadcastFrom ? broadcastFrom.fromY - 55 : -55;
 
   // Show error message if ping failed
   if (success === false && error) {
@@ -136,6 +145,63 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
 
   return (
     <g key="ping-animation" opacity={0.9}>
+      {/* Broadcast ARP notification packets fanning out from the switch */}
+      {isBroadcastActive && (
+        <g key="arp-broadcast">
+          {/* Label above the switch */}
+          <g transform={`translate(${broadcastLabelX}, ${broadcastLabelY})`}>
+            <rect
+              x="-86"
+              y="-14"
+              width="172"
+              height="28"
+              rx="6"
+              fill={isDark ? 'rgba(245, 158, 11, 0.16)' : 'rgba(245, 158, 11, 0.14)'}
+              stroke="var(--color-warning-500)"
+              strokeWidth="1.2"
+              className="animate-pulse"
+              style={{ pointerEvents: 'none' }}
+            />
+            <text
+              y="-4"
+              textAnchor="middle"
+              fill="var(--color-warning-500)"
+              fontSize="10"
+              fontWeight="bold"
+              fontFamily="monospace"
+              style={{ userSelect: 'none', pointerEvents: 'none' }}
+            >
+              {t.arpBroadcast || 'ARP Broadcast'} — ff:ff:ff:ff:ff:ff
+            </text>
+            <text
+              y="9"
+              textAnchor="middle"
+              fill={isDark ? 'var(--color-warning-300)' : 'var(--color-warning-700)'}
+              fontSize="7.5"
+              style={{ userSelect: 'none', pointerEvents: 'none' }}
+            >
+              {t.broadcastNotification || 'Flooded to all connected devices'}
+            </text>
+          </g>
+
+          {/* Notification packets radiating from the switch to each device */}
+          {broadcastAnim.map((bt, i) => {
+            const bx = bt.fromX + (bt.toX - bt.fromX) * broadcastProgress;
+            const by = bt.fromY + (bt.toY - bt.fromY) * broadcastProgress;
+            return (
+              <g key={`broadcast-packet-${bt.targetId}`} transform={`translate(${bx}, ${by})`}>
+                <circle cx="0" cy="0" r="14" fill="var(--color-warning-500)" opacity="0.16" className="animate-ping-glow" style={{ pointerEvents: 'none' }} />
+                <rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--color-warning-500)" style={{ stroke: 'var(--color-warning-600)', strokeWidth: '1.5' }} />
+                <path d="M-8 -3 L0 4 L8 -3" fill="none" stroke="var(--color-white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                {graphicsQuality === 'high' && i < 3 && (
+                  <circle cx="0" cy="0" r="18" fill="none" stroke="var(--color-warning-400)" strokeWidth="1" opacity={0.5 * (1 - broadcastProgress)} style={{ pointerEvents: 'none' }} />
+                )}
+              </g>
+            );
+          })}
+        </g>
+      )}
+
       {/* Packet trail - fading circles behind envelope in high graphics */}
       {graphicsQuality === 'high' && (
         [0.03, 0.06, 0.09, 0.12, 0.15].map((offset, i) => {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Eraser } from 'lucide-react';
 import { useAppStore } from '@/lib/store/appStore';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CABLE_COLORS } from './networkTopology.constants';
@@ -10,6 +10,7 @@ import { useDrag } from '@/hooks/useDrag';
 interface PacketCapturePanelProps {
   activeCaptureConnectionId: string;
   clearCapturedPackets: (id: string) => void;
+  clearAllCapturedPackets: () => void;
   setActiveCaptureConnection: (id: string | null) => void;
   capturedPacketsMap: Record<string, { id: string; timestamp: number; sourceIp: string; targetIp: string; protocol: string; info: string; }[]>;
   t: Record<string, string>;
@@ -19,6 +20,7 @@ interface PacketCapturePanelProps {
 export const PacketCapturePanel = ({
   activeCaptureConnectionId,
   clearCapturedPackets,
+  clearAllCapturedPackets,
   setActiveCaptureConnection,
   capturedPacketsMap,
   t,
@@ -42,7 +44,7 @@ export const PacketCapturePanel = ({
   const hasError = conn && statusMessage !== 'Bağlantı sorunsuz' && statusMessage !== 'Connection OK';
 
   const [columnOrder, setColumnOrder] = React.useState(['time', 'source', 'dest', 'proto', 'info']);
-  
+
   const dragProps = useDrag({
     storageKey: 'packetCapture',
     defaultPosition: typeof window !== 'undefined' ? { x: Math.max(16, window.innerWidth - 420), y: window.innerHeight - 340 } : { x: 0, y: 0 },
@@ -86,8 +88,8 @@ export const PacketCapturePanel = ({
       title={
         <div className="flex flex-col gap-0.5 pointer-events-none">
           <div className="flex items-center gap-2">
-            <div 
-              className="w-2.5 h-2.5 rounded-full animate-pulse" 
+            <div
+              className="w-2.5 h-2.5 rounded-full animate-pulse"
               style={{ backgroundColor: cableColors[conn?.cableType || 'straight']?.primary || 'var(--color-primary-500)' }}
             />
             <span className="text-xs font-bold">{t.packetAnalysis}</span>
@@ -109,15 +111,26 @@ export const PacketCapturePanel = ({
       handleResizeStart={dragProps.handleResizeStart}
       mobileFullScreen={false}
       headerActions={
-        <button
-          onClick={(e) => { e.stopPropagation(); clearCapturedPackets(activeCaptureConnectionId); }}
-          className="p-1.5 rounded transition-colors flex items-center justify-center hover:bg-secondary-200 dark:hover:bg-secondary-700"
-          title={t.clearCapture}
-          onPointerDown={(e) => e.stopPropagation()}
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <Trash2 className="w-4 h-4 text-error-500" />
-        </button>
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); clearAllCapturedPackets(); }}
+            className="p-1.5 rounded transition-colors flex items-center justify-center hover:bg-secondary-200 dark:hover:bg-secondary-700"
+            title={t.clearAllCapture}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <Eraser className="w-4 h-4 text-error-500" />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); clearCapturedPackets(activeCaptureConnectionId); }}
+            className="p-1.5 rounded transition-colors flex items-center justify-center hover:bg-secondary-200 dark:hover:bg-secondary-700"
+            title={t.clearCapture}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <Trash2 className="w-4 h-4 text-error-500" />
+          </button>
+        </>
       }
     >
       <div className="flex-1 flex flex-col min-h-0 relative">
