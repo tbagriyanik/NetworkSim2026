@@ -1,6 +1,7 @@
 import { iosModeError } from './iosErrors';
 import type { CommandHandler, CommandContext } from './commandTypes';
 import { checkConnectivity, getWirelessDistance } from '../connectivity';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult, Port } from '../types';
 import { clearArpCache } from '../arp';
@@ -164,13 +165,7 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
         }
 
         // Add to global packet capture state
-        if (connectivity.capturedPackets && connectivity.capturedPackets.length > 0) {
-            if (typeof window !== 'undefined') {
-                connectivity.capturedPackets.forEach(pkt => {
-                    window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
-                });
-            }
-        }
+        dispatchCapturedPackets(connectivity.capturedPackets);
 
         if (connectivity.success) {
             let output = `\nType escape sequence to abort.\n`;
@@ -292,6 +287,8 @@ function cmdTelnet(state: SwitchState, input: string, ctx: CommandContext): Comm
             { protocol: 'tcp', port }
         );
 
+        dispatchCapturedPackets(connectivity.capturedPackets);
+
         if (!connectivity.success) {
             return {
                 success: false,
@@ -370,6 +367,8 @@ function cmdSsh(state: SwitchState, input: string, ctx: CommandContext): Command
             ctx.language,
             { protocol: 'tcp', port: '22' }
         );
+
+        dispatchCapturedPackets(connectivity.capturedPackets);
 
         if (!connectivity.success) {
             return {
@@ -711,13 +710,7 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
         }
 
         // Add to global packet capture state
-        if (connectivity.capturedPackets && connectivity.capturedPackets.length > 0) {
-            if (typeof window !== 'undefined') {
-                connectivity.capturedPackets.forEach(pkt => {
-                    window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
-                });
-            }
-        }
+        dispatchCapturedPackets(connectivity.capturedPackets);
 
         if (connectivity.success) {
             let resolvedIp = host;

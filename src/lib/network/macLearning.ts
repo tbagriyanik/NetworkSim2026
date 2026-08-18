@@ -1,5 +1,6 @@
 // MAC Address Learning Simulation
 import { SwitchState } from './types';
+import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 
 export interface MacTableEntry {
   mac: string;
@@ -186,4 +187,36 @@ export function processFrameMacLearning(
 ): void {
   // Learn the source MAC address on the ingress port
   learnMacAddress(switchDeviceId, sourceMac, ingressPort, vlan, deviceStates, 'DYNAMIC');
+}
+
+const isSwitchDeviceType = (type: string): boolean => type === 'switchL2' || type === 'switchL3';
+
+/**
+ * Simulate MAC learning when a new cable connection is created.
+ * Each switch endpoint of the connection immediately learns the peer device's
+ * source MAC on the connecting port (new connection trigger).
+ */
+export function learnMacsOnNewConnection(
+  deviceStates: Map<string, SwitchState>,
+  connection: CanvasConnection,
+  devices: CanvasDevice[]
+): Map<string, SwitchState> {
+  const nextStates = new Map(deviceStates);
+  const byId = new Map(devices.map((d) => [d.id, d]));
+  const source = byId.get(connection.sourceDeviceId);
+  const target = byId.get(connection.targetDeviceId);
+  if (!source || !target) return nextStates;
+
+  const learnPeer = (switchDev: CanvasDevice, peer: CanvasDevice, portId: string) => {
+    if (!peer.macAddress) return;
+    const state = nextStates.get(switchDev.id);
+    const port = state?.ports?.[portId];
+    const vlan = Number(port?.accessVlan || port?.vlan || 1);
+    learnMacAddress(switchDev.id, peer.macAddress, portId, vlan, nextStates, 'DYNAMIC');
+  };
+
+  if (isSwitchDeviceType(source.type)) learnPeer(source, target, connection.sourcePort);
+  if (isSwitchDeviceType(target.type)) learnPeer(target, source, connection.targetPort);
+
+  return nextStates;
 }

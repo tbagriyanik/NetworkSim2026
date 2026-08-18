@@ -5,6 +5,7 @@ import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { OutputLine } from './PCPanel.types';
 import { checkConnectivity } from '@/lib/network/connectivity';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 
 interface UsePCPanelMailOptions {
   language: string;
@@ -98,6 +99,7 @@ export function usePCPanelMail({
           language as 'tr' | 'en',
           { protocol: 'tcp', port: '25' }
         );
+        dispatchCapturedPackets(connectivity.capturedPackets);
         if (!connectivity.success) {
           onError(
             language === 'tr'
@@ -223,6 +225,7 @@ export function usePCPanelMail({
           language as 'tr' | 'en',
           { protocol: 'tcp', port: '25' }
         );
+        dispatchCapturedPackets(connectivity.capturedPackets);
         if (!connectivity.success) {
           onError(
             language === 'tr'

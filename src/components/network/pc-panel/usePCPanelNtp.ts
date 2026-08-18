@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, Dispatch, SetStateAc
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { checkConnectivity } from '@/lib/network/connectivity';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 
 interface UsePCPanelNtpOptions {
   language: string;
@@ -104,6 +105,7 @@ export function usePCPanelNtp({
       language as 'tr' | 'en',
       { protocol: 'any' }
     );
+    dispatchCapturedPackets(canReach.capturedPackets);
     if (!canReach.success) return null;
 
     let serverDate = '';
@@ -205,6 +207,7 @@ export function usePCPanelNtp({
         language as 'tr' | 'en',
         { protocol: 'any' }
       );
+      dispatchCapturedPackets(canReach.capturedPackets);
       if (!canReach.success) return null;
 
       let serverDate = '';

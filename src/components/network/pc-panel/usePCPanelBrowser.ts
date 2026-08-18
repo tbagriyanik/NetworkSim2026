@@ -5,6 +5,7 @@ import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { OutputLine } from './PCPanel.types';
 import { checkConnectivity } from '@/lib/network/connectivity';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { isRouterDevice, generateRouterAdminPage } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
 
@@ -165,6 +166,7 @@ export function usePCPanelBrowser({
 
     // Check firewall for HTTP traffic
     const connectivityResult = checkConnectivity(deviceId, resolvedTargetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
+    dispatchCapturedPackets(connectivityResult.capturedPackets);
     if (!connectivityResult.success && connectivityResult.error?.includes('firewall')) {
       setHttpAppDeviceId(null);
       setHttpAppTitle('Access Denied');

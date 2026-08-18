@@ -1718,6 +1718,11 @@ export function NetworkTopology({
           detail: { topologyDevices: devices, topologyConnections: [...connections, newConnection] }
         }));
 
+        // Trigger immediate MAC learning on the switches (new connection)
+        window.dispatchEvent(new CustomEvent('connection-created', {
+          detail: { connection: newConnection, topologyDevices: devices }
+        }));
+
         // Update cable info
         onCableChange({
           ...cableInfo,

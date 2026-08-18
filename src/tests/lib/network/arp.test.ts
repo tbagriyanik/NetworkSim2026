@@ -98,6 +98,18 @@ describe('ARP Module', () => {
       expect(cache[0].ip).toBe('192.168.1.2');
     });
 
+    it('should keep entries younger than 2 minutes and remove older ones', () => {
+      const state = makeState();
+      state.arpCache = [
+        { ip: '192.168.1.1', mac: 'aa:bb:cc:dd:ee:ff', interface: 'gi0/0', timestamp: Date.now() - 119000 },
+        { ip: '192.168.1.2', mac: '11:22:33:44:55:66', interface: 'gi0/1', timestamp: Date.now() - 121000 },
+      ];
+      cleanExpiredArpEntries(state);
+      const cache = state.arpCache ?? [];
+      expect(cache).toHaveLength(1);
+      expect(cache[0].ip).toBe('192.168.1.1');
+    });
+
     it('should handle empty cache', () => {
       const state = makeState();
       cleanExpiredArpEntries(state);

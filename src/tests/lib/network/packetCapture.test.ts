@@ -181,7 +181,7 @@ describe('Packet Capture Backend', () => {
     expect(replyConnIds).not.toContain('c-pc3');
   });
 
-  test('right-click ping (checkDeviceConnectivity) records ARP even when the MAC is already cached', () => {
+  test('ARP broadcast only occurs when the MAC is not cached; cached MAC within 2 minutes skips ARP', () => {
     const states = new Map<string, SwitchState>();
     const mkPcState = (mac: string) => ({
       hostname: 'PC',
@@ -192,19 +192,105 @@ describe('Packet Capture Backend', () => {
     states.set('pc-1', mkPcState('00:00:00:00:00:01'));
     states.set('pc-2', mkPcState('00:00:00:00:00:02'));
 
-    // First ping populates the source PC's ARP cache
+    // First ping: MAC unknown -> ARP broadcast is captured
+    const first = checkConnectivity('pc-1', '192.168.1.20', devices, connections, states, 'en', { protocol: 'icmp' });
+    expect(first.capturedPackets?.filter(p => p.protocol === 'ARP').length).toBeGreaterThan(0);
+    expect(first.capturedPackets?.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Request'))).toBe(true);
+    expect(first.capturedPackets?.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Reply'))).toBe(true);
+
+    // ARP cache now has the entry
+    const sourceState = states.get('pc-1');
+    expect(sourceState?.arpCache?.some(e => e.ip === '192.168.1.20')).toBe(true);
+
+    // Second ping (right-click path) within 2 minutes: MAC cached -> no ARP broadcast
+    const second = checkDeviceConnectivity('pc-1', 'pc-2', devices, connections, states, { protocol: 'icmp' });
+    expect(second.success).toBe(true);
+    const secondPackets = second.capturedPackets || [];
+    expect(secondPackets.some(p => p.protocol === 'ICMP' && p.info.includes('Echo Request'))).toBe(true);
+    expect(secondPackets.filter(p => p.protocol === 'ARP')).toHaveLength(0);
+  });
+
+  test('ARP broadcast repeats after the 2-minute cache entry expires', () => {
+    const states = new Map<string, SwitchState>();
+    const mkPcState = (mac: string) => ({
+      hostname: 'PC',
+      macAddress: mac,
+      ports: { 'eth0': { id: 'eth0', label: 'Eth0', status: 'connected', shutdown: false } },
+      arpCache: []
+    } as unknown as SwitchState);
+    states.set('pc-1', mkPcState('00:00:00:00:00:01'));
+    states.set('pc-2', mkPcState('00:00:00:00:00:02'));
+
+    // Populate the cache
     checkConnectivity('pc-1', '192.168.1.20', devices, connections, states, 'en', { protocol: 'icmp' });
     const sourceState = states.get('pc-1');
     expect(sourceState?.arpCache?.some(e => e.ip === '192.168.1.20')).toBe(true);
 
-    // Right-click ping path (resolve by device id) must still capture ARP + ICMP
-    const result = checkDeviceConnectivity('pc-1', 'pc-2', devices, connections, states, { protocol: 'icmp' });
+    // Age the entry past the 2-minute (120000ms) lifetime
+    const sourceCache = sourceState?.arpCache || [];
+    if (sourceState) {
+      sourceState.arpCache = sourceCache.map(e => ({ ...e, timestamp: Date.now() - 121000 }));
+    }
 
+    // Next ping: entry expired -> ARP broadcast happens again
+    const expired = checkConnectivity('pc-1', '192.168.1.20', devices, connections, states, 'en', { protocol: 'icmp' });
+    expect(expired.capturedPackets?.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Request'))).toBe(true);
+    expect(expired.capturedPackets?.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Reply'))).toBe(true);
+  });
+
+  test('switches learn the source MAC on their ingress port from the ARP broadcast', () => {
+    const pc1 = devices[0];
+    const pc2 = devices[1];
+    const sw: CanvasDevice = {
+      id: 'sw-1',
+      type: 'switchL2',
+      name: 'SW-1',
+      ip: '',
+      x: 50, y: 50, status: 'online',
+      ports: [
+        { id: 'fa0/1', label: 'Fa0/1', status: 'connected' },
+        { id: 'fa0/2', label: 'Fa0/2', status: 'connected' },
+        { id: 'fa0/3', label: 'Fa0/3', status: 'connected' }
+      ]
+    };
+    const pc3: CanvasDevice = {
+      id: 'pc-3',
+      type: 'pc',
+      name: 'PC-3',
+      ip: '192.168.1.30',
+      subnet: '255.255.255.0',
+      gateway: '192.168.1.1',
+      macAddress: '00:00:00:00:00:03',
+      x: 200, y: 100, status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
+
+    const switchConns: CanvasConnection[] = [
+      { id: 'c-pc1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'sw-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
+      { id: 'c-pc2', sourceDeviceId: 'sw-1', sourcePort: 'fa0/2', targetDeviceId: 'pc-2', targetPort: 'eth0', cableType: 'straight', active: true },
+      { id: 'c-pc3', sourceDeviceId: 'sw-1', sourcePort: 'fa0/3', targetDeviceId: 'pc-3', targetPort: 'eth0', cableType: 'straight', active: true }
+    ];
+
+    const switchStates = new Map<string, SwitchState>();
+    const mkPcState = (mac: string) => ({
+      hostname: 'PC',
+      macAddress: mac,
+      ports: { 'eth0': { id: 'eth0', label: 'Eth0', status: 'connected', shutdown: false } },
+      arpCache: []
+    } as unknown as SwitchState);
+    switchStates.set('pc-1', mkPcState('00:00:00:00:00:01'));
+    switchStates.set('pc-2', mkPcState('00:00:00:00:00:02'));
+    switchStates.set('pc-3', mkPcState('00:00:00:00:00:03'));
+    switchStates.set('sw-1', createInitialState());
+
+    const result = checkConnectivity('pc-1', '192.168.1.20', [pc1, sw, pc2, pc3], switchConns, switchStates, 'en', { protocol: 'icmp' });
     expect(result.success).toBe(true);
-    const packets = result.capturedPackets || [];
-    expect(packets.filter(p => p.protocol === 'ARP').length).toBeGreaterThan(0);
-    expect(packets.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Request'))).toBe(true);
-    expect(packets.some(p => p.protocol === 'ARP' && p.info.startsWith('ARP Reply'))).toBe(true);
-    expect(packets.some(p => p.protocol === 'ICMP' && p.info.includes('Echo Request'))).toBe(true);
+
+    // The switch learned PC-1's MAC (broadcast source) on the ingress port fa0/1
+    const swState = switchStates.get('sw-1');
+    const learned = swState?.macAddressTable?.find(e => e.mac.toLowerCase() === '00:00:00:00:00:01');
+    expect(learned).toBeDefined();
+    expect(learned?.port).toBe('fa0/1');
+    expect(learned?.type).toBe('DYNAMIC');
   });
 });

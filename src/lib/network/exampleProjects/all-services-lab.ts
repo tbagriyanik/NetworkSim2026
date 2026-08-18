@@ -30,8 +30,8 @@ const example = (isTr: boolean): ExampleProject => {
     http: {
       enabled: true,
       content: isTr
-        ? '<h1>Laboratuvar Web Sayfası</h1><p>HTTP servisi çalışıyor!</p>'
-        : '<h1>Lab Web Page</h1><p>HTTP service is running!</p>',
+        ? '<b>Laboratuvar Web Sayfası</b> <u>HTTP servisi çalışıyor!</u>'
+        : '<b>Lab Web Page</b><u>HTTP service is running!</u>',
     }
   };
 

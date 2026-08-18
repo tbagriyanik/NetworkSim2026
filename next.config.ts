@@ -31,9 +31,9 @@ function getLinesOfCode(dir: string): number {
 function getAppVersion(): string {
   try {
     const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), "package.json"), "utf-8"));
-    return pkg.version || "2.3";
+    return pkg.version || "2.4";
   } catch {
-    return "2.3";
+    return "2.4";
   }
 }
 

@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import type { CanvasConnection, CanvasDevice } from '../networkTopology.types';
 import { buildHopPacketInfos as buildHopPacketInfosFn } from '../PingPacketInfoPanel';
 import { checkDeviceConnectivity as checkDeviceConnectivityFn, getPingDiagnostics as getPingDiagnosticsFn, getWirelessDistance as getWirelessDistanceFn } from '@/lib/network/connectivity';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 
 export interface BroadcastAnimTarget {
   targetId: string;
@@ -151,7 +152,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
     const connectivity = checkDeviceConnectivity(sourceId, targetId, devices, connections, deviceStates, { protocol: 'icmp' });
 
     if (connectivity.capturedPackets?.length) {
-      connectivity.capturedPackets.forEach((pkt: unknown) => window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt })));
+      dispatchCapturedPackets(connectivity.capturedPackets);
     }
 
     if (!connectivity.success) {

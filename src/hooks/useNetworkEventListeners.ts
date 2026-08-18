@@ -4,6 +4,7 @@ import type { CanvasDevice, CanvasConnection } from '@/components/network/networ
 import { isSwitchDeviceType } from '@/app/refreshNetworkUtils';
 import type { TabType } from '@/app/page.types';
 import { recalculateStp } from '@/lib/network/stp';
+import { learnMacsOnNewConnection } from '@/lib/network/macLearning';
 
 interface UseNetworkEventListenersParams {
   setDeviceStates: React.Dispatch<React.SetStateAction<Map<string, SwitchState>>>;
@@ -77,6 +78,20 @@ export function useNetworkEventListeners(params: UseNetworkEventListenersParams)
     };
     window.addEventListener('stp-recalculation-needed', handleSTPRecalculation as EventListener);
 
+    // When a cable is plugged in (new connection), switches immediately learn
+    // the peer device's source MAC on the connecting port.
+    const handleConnectionCreated = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        connection: CanvasConnection;
+        topologyDevices: CanvasDevice[];
+      }>).detail;
+      if (!detail?.connection || !detail.topologyDevices) return;
+
+      const nextStates = learnMacsOnNewConnection(deviceStates, detail.connection, detail.topologyDevices);
+      setDeviceStates(nextStates);
+    };
+    window.addEventListener('connection-created', handleConnectionCreated);
+
     const handleBeforePrint = () => {
       if (activeTabRef.current !== 'topology') {
         setActiveTab('topology');
@@ -87,6 +102,7 @@ export function useNetworkEventListeners(params: UseNetworkEventListenersParams)
     return () => {
       window.removeEventListener('vtp-propagation-needed', handleVtpPropagation);
       window.removeEventListener('stp-recalculation-needed', handleSTPRecalculation);
+      window.removeEventListener('connection-created', handleConnectionCreated);
       window.removeEventListener('beforeprint', handleBeforePrint);
     };
   }, [setDeviceStates, deviceStates, activeTabRef, setActiveTab]);

@@ -7,7 +7,7 @@ import { CableInfo, SwitchState } from '@/lib/network/types';
 import { cn } from '@/lib/utils';
 
 import { TerminalOutput } from './Terminal';
-import { OutputLine as PCOutputLine, PCActiveTab } from './pc-panel/PCPanel.types';
+import { OutputLine as PCOutputLine, PCActiveTab, PcOutputsSetter } from './pc-panel/PCPanel.types';
 
 interface PCWindowProps {
   showPCPanel: boolean;
@@ -21,6 +21,7 @@ interface PCWindowProps {
   deviceStates: Map<string, SwitchState>;
   deviceOutputs: Map<string, TerminalOutput[]>;
   pcOutputs: Map<string, PCOutputLine[]>;
+  setPcOutputs: PcOutputsSetter;
   pcHistories: Map<string, string[]>;
   handleUpdatePCHistory: (deviceId: string, history: string[]) => void;
   handleExecuteCommand: (deviceId: string, command: string) => Promise<unknown>;
@@ -50,6 +51,7 @@ export function PCWindow({
   deviceStates,
   deviceOutputs,
   pcOutputs,
+  setPcOutputs,
   pcHistories,
   handleUpdatePCHistory,
   handleExecuteCommand,
@@ -92,6 +94,7 @@ export function PCWindow({
           deviceStates={deviceStates}
           deviceOutputs={deviceOutputs}
           pcOutputs={pcOutputs}
+          setPcOutputs={setPcOutputs}
           pcHistories={pcHistories}
           onUpdatePCHistory={handleUpdatePCHistory}
           onExecuteDeviceCommand={handleExecuteCommand}

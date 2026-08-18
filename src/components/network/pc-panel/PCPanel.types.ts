@@ -53,6 +53,7 @@ export interface PCPanelProps {
   deviceStates?: Map<string, SwitchState>;
   deviceOutputs?: Map<string, TerminalOutput[]>;
   pcOutputs?: Map<string, OutputLine[]>;
+  setPcOutputs?: PcOutputsSetter;
   pcHistories?: Map<string, string[]>;
   onUpdatePCHistory?: (deviceId: string, history: string[]) => void;
   onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<unknown>;
@@ -60,3 +61,5 @@ export interface PCPanelProps {
   onDeleteDevice?: (deviceId: string) => void;
   handleResizeStart?: (e: React.PointerEvent, direction: string, id: string) => void;
 }
+
+export type PcOutputsSetter = React.Dispatch<React.SetStateAction<Map<string, OutputLine[]>>>;

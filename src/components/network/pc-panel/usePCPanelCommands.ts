@@ -5,6 +5,7 @@ import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { OutputLine, FtpSession, PcFile, PCActiveTab } from './PCPanel.types';
 import { checkConnectivity, getWirelessDistance } from '@/lib/network/connectivity';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { getL3Hops } from '@/lib/network/routing';
 import { errorHandler, DHCP_ERRORS, DEVICE_ERRORS } from '@/lib/errors/errorHandler';
 import { formatMacForArp } from './pcPanelHelpers';
@@ -468,11 +469,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 }));
               }
 
-              if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
-                result.capturedPackets.forEach(pkt => {
-                  window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
-                });
-              }
+              dispatchCapturedPackets(result.capturedPackets);
 
               if (result.success) {
                 const targetDevice = result.targetId ? topologyDevices.find(d => d.id === result.targetId) : undefined;
@@ -634,6 +631,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
 
           const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port });
 
+          dispatchCapturedPackets(result.capturedPackets);
+
           if (result.success && result.targetId) {
             const targetDevice = topologyDevices.find(d => d.id === result.targetId);
 
@@ -747,6 +746,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             }
             emit('output', `Tracing route to ${target} over a maximum of ${maxHops} hops:\n`);
             const result = checkConnectivity(deviceId, resolvedTarget, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'icmp' });
+
+            dispatchCapturedPackets(result.capturedPackets);
 
             if (result.success) {
               // ARP güncelle: tracert sırasında hedefle iletişim ARP tablosunu günceller
@@ -882,11 +883,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
 
           const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
 
-          if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
-            result.capturedPackets.forEach(pkt => {
-              window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
-            });
-          }
+          dispatchCapturedPackets(result.capturedPackets);
 
           // ARP güncelle: FTP bağlantısı da ARP tablosunu günceller
           if (result.success && result.targetId) {

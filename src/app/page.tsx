@@ -26,6 +26,7 @@ import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 import { safeParse } from '@/lib/network/serialization';
 import { createInitialState } from '@/lib/network/initialState';
 import type { TerminalOutput } from '@/components/network/Terminal';
+import type { PcOutputsSetter } from '@/components/network/pc-panel/PCPanel.types';
 
 const NetworkTopology = dynamic(
   () => import('@/components/network/NetworkTopology').then((m) => m.NetworkTopology),
@@ -1913,7 +1914,8 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             pcPanelInitialTab={pcPanelInitialTab}
             deviceStates={deviceStates}
             deviceOutputs={deviceOutputs}
-            pcOutputs={pcOutputs}
+pcOutputs={pcOutputs}
+            setPcOutputs={setPcOutputs as PcOutputsSetter}
             pcHistories={pcHistories}
             handleUpdatePCHistory={handleUpdatePCHistory}
             handleExecuteCommand={handleExecuteCommand}
@@ -2131,7 +2133,8 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
               cableInfo={cableInfo}
               pcPanelInitialTab={pcPanelInitialTab}
               deviceOutputs={deviceOutputs}
-              pcOutputs={pcOutputs}
+            pcOutputs={pcOutputs}
+            setPcOutputs={setPcOutputs as PcOutputsSetter}
               pcHistories={pcHistories}
               handleUpdatePCHistory={handleUpdatePCHistory}
               handleExecuteCommand={handleExecuteCommand}

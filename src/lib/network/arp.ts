@@ -8,7 +8,7 @@ export interface ArpEntry {
   timestamp: number;
 }
 
-const ARP_TIMEOUT = 14400000; // 4 hours in milliseconds 
+const ARP_TIMEOUT = 120000; // 2 minutes in milliseconds
 
 /**
  * Get MAC address for an IP from ARP cache

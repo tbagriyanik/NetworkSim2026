@@ -43,7 +43,7 @@ export const PacketCapturePanel = ({
   const statusMessage = conn ? getConnectionStatusMessage(conn, devices, language) : '';
   const hasError = conn && statusMessage !== 'Bağlantı sorunsuz' && statusMessage !== 'Connection OK';
 
-  const [columnOrder, setColumnOrder] = React.useState(['time', 'source', 'dest', 'proto', 'info']);
+  const [columnOrder, setColumnOrder] = React.useState(['time', 'source', 'dest', 'protocol', 'info']);
 
   const dragProps = useDrag({
     storageKey: 'packetCapture',
@@ -64,7 +64,7 @@ export const PacketCapturePanel = ({
   };
 
   const renderHeader = (col: string, idx: number) => {
-    const labelMap: Record<string, string> = { time: t.time, source: t.source, dest: t.dest, proto: t.proto, info: t.info };
+    const labelMap: Record<string, string> = { time: t.time, source: t.source, dest: t.dest, protocol: t.proto, info: t.info };
     return (
       <th
         key={col}
@@ -80,6 +80,23 @@ export const PacketCapturePanel = ({
   };
 
   const cableColors = CABLE_COLORS as Record<string, { primary: string; bg: string; text: string; border: string }>;
+
+  const PROTOCOL_NUMBERS: Record<string, string> = {
+    ICMP: '1',
+    ICMPv6: '58',
+    TCP: '6',
+    UDP: '17',
+    GRE: '47',
+    OSPF: '89',
+    EIGRP: '88',
+    ARP: '0x0806',
+    RARP: '0x8035',
+  };
+
+  const protocolWithNumber = (protocol: string): string => {
+    const num = PROTOCOL_NUMBERS[protocol];
+    return num ? `${protocol} (${num})` : protocol;
+  };
 
   return (
     <DraggableWindowWrapper
@@ -156,8 +173,8 @@ export const PacketCapturePanel = ({
                           return <td className="px-2 py-1 font-mono" key="source">{pkt.sourceIp}</td>;
                         case 'dest':
                           return <td className="px-2 py-1 font-mono" key="dest">{pkt.targetIp}</td>;
-                        case 'proto':
-                          return <td className={`px-2 py-1 font-bold ${pkt.protocol === 'ICMP' ? 'text-primary-500' : 'text-purple-500'}`} key="proto">{pkt.protocol}</td>;
+                        case 'protocol':
+                          return <td className={`px-2 py-1 font-bold ${pkt.protocol === 'ICMP' ? 'text-primary-500' : 'text-purple-500'}`} key="proto">{protocolWithNumber(pkt.protocol)}</td>;
                         case 'info':
                           return <td className="px-2 py-1 italic opacity-80" key="info">{pkt.info}</td>;
                         default:

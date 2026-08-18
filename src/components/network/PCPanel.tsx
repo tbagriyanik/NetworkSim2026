@@ -8,6 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import type { TerminalOutput } from './Terminal';
 import type { CanvasDevice, CanvasConnection } from './networkTopology.types';
 import { checkConnectivity, getWirelessSignalStrength, getDeviceWifiConfig } from '@/lib/network/connectivity';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { Laptop, Terminal as TerminalIcon, Globe, Settings, Wifi, Radio } from 'lucide-react';
 
@@ -70,6 +71,7 @@ export function PCPanel({
   deviceStates,
   deviceOutputs,
   pcOutputs,
+  setPcOutputs,
   pcHistories,
   onUpdatePCHistory,
   onExecuteDeviceCommand,
@@ -1098,6 +1100,15 @@ export function PCPanel({
     }
   }, [deviceId, pcOutputs]);
 
+  // Persist CMD output to the shared pcOutputs map so it survives window close
+  useEffect(() => {
+    if (!setPcOutputs) return;
+    setPcOutputs(prev => {
+      if (prev.get(deviceId) === pcOutput) return prev;
+      return new Map(prev).set(deviceId, pcOutput);
+    });
+  }, [pcOutput, deviceId, setPcOutputs]);
+
   // Disconnect console when PC powers off
   useEffect(() => {
     if (isPcPoweredOff && isConsoleConnected) {
@@ -1424,11 +1435,7 @@ export function PCPanel({
     const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', options);
 
     // Global packet capture integration
-    if (result.capturedPackets && result.capturedPackets.length > 0 && typeof window !== 'undefined') {
-      result.capturedPackets.forEach(pkt => {
-        window.dispatchEvent(new CustomEvent('packet-captured', { detail: pkt }));
-      });
-    }
+    dispatchCapturedPackets(result.capturedPackets);
 
     return result.success;
   }, [deviceId, topologyDevices, topologyConnections, deviceStates, language]);

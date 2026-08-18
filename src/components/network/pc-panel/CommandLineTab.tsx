@@ -82,6 +82,12 @@ export function CommandLineTab({
     inputRef.current?.focus();
   };
 
+  // Focus input immediately on mount (e.g. when CMD window opens at startup)
+  useEffect(() => {
+    const timer = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
       {/* Settings Bar */}

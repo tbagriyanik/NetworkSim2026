@@ -1,7 +1,7 @@
 import { CanvasDevice, CanvasConnection, CanvasPort } from '@/components/network/networkTopology.types';
 import { CableInfo, SwitchState, isCableCompatible, Port } from './types';
 import { findRoute, ipToNumber, getRoutingTable, isIpv6InNetwork } from './routing';
-import { performArpResolution } from './arp';
+import { performArpResolution, getMacFromArpCache } from './arp';
 import { learnMacAddress, findMacPort } from './macLearning';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { recalculateStp } from './stp';
@@ -340,6 +340,10 @@ export function checkConnectivity(
         const sourceConn = adjList.get(sourceId)?.[0]?.conn;
         const interfaceName = sourceConn ? (sourceConn.sourceDeviceId === sourceId ? sourceConn.sourcePort : sourceConn.targetPort) : 'unknown';
 
+        // ARP broadcast only happens when the target MAC is unknown or the cache
+        // entry has aged out (getMacFromArpCache cleans expired 2-minute entries).
+        const cachedMac = getMacFromArpCache(sourceId, resolvedTargetIp, deviceStates);
+
         // Perform ARP resolution (simulated)
         performArpResolution(
           sourceId,
@@ -349,9 +353,7 @@ export function checkConnectivity(
           deviceStates
         );
 
-        // Record the ARP exchange on every ping so the capture list and the broadcast
-        // animation stay consistent, regardless of whether the MAC is already cached.
-        if (sourceConn) {
+        if (!cachedMac && sourceConn) {
           // Remember the ARP request so it can be recorded on every switch flood port
           arpBroadcast = { sourceIp, targetIp: resolvedTargetIp };
           // Record ARP Broadcast Request
@@ -588,6 +590,9 @@ export function checkConnectivity(
       }
     }
     // ARP Request (broadcast) floods on every switch port except the incoming one
+    // and every switch that receives the broadcast learns the source MAC on its
+    // ingress port (switch MAC table update).
+    const sourceMac = deviceMap.get(sourceId)?.macAddress;
     for (let i = 0; i < path.length - 1; i++) {
       const aId = path[i];
       const bId = path[i + 1];
@@ -606,6 +611,13 @@ export function checkConnectivity(
           length: 42,
           info: `ARP Request: Who has ${arpBroadcast.targetIp}? Tell ${arpBroadcast.sourceIp}`
         });
+        // The neighbor switch learns the broadcast source MAC on its ingress port
+        const floodNeighborId = conn.sourceDeviceId === bId ? conn.targetDeviceId : conn.sourceDeviceId;
+        const floodNeighbor = deviceMap.get(floodNeighborId);
+        if (floodNeighbor && isSwitchDeviceType(floodNeighbor.type) && sourceMac) {
+          const ingressPort = conn.sourceDeviceId === floodNeighborId ? conn.sourcePort : conn.targetPort;
+          learnMacAddress(floodNeighborId, sourceMac, ingressPort, sourceVlan, safeDeviceStates);
+        }
       }
     }
   }

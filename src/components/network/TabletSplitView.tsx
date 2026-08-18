@@ -10,7 +10,7 @@ import { CableInfo, SwitchState } from '@/lib/network/types';
 import type { Translations } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { TerminalOutput } from './Terminal';
-import { OutputLine as PCOutputLine, PCActiveTab } from './pc-panel/PCPanel.types';
+import { OutputLine as PCOutputLine, PCActiveTab, PcOutputsSetter } from './pc-panel/PCPanel.types';
 import type { TaskDefinition, TaskContext } from '@/lib/network/taskDefinitions';
 
 interface TabletSplitViewProps {
@@ -50,6 +50,7 @@ interface TabletSplitViewProps {
   pcPanelInitialTab: PCActiveTab;
   deviceOutputs: Map<string, TerminalOutput[]>;
   pcOutputs: Map<string, PCOutputLine[]>;
+  setPcOutputs: PcOutputsSetter;
   pcHistories: Map<string, string[]>;
   handleUpdatePCHistory: (deviceId: string, history: string[]) => void;
   handleExecuteCommand: (deviceId: string, command: string) => Promise<unknown>;
@@ -96,6 +97,7 @@ export function TabletSplitView({
   pcPanelInitialTab,
   deviceOutputs,
   pcOutputs,
+  setPcOutputs,
   pcHistories,
   handleUpdatePCHistory,
   handleExecuteCommand,
@@ -164,6 +166,7 @@ export function TabletSplitView({
             deviceStates={deviceStates}
             deviceOutputs={deviceOutputs}
             pcOutputs={pcOutputs}
+            setPcOutputs={setPcOutputs}
             pcHistories={pcHistories}
             onUpdatePCHistory={handleUpdatePCHistory}
             onExecuteDeviceCommand={handleExecuteCommand}

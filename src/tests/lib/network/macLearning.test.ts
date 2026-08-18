@@ -10,8 +10,10 @@ import {
   removeMacEntry,
   getMacTableForDisplay,
   processFrameMacLearning,
+  learnMacsOnNewConnection,
 } from '@/lib/network/macLearning';
 import type { SwitchState } from '@/lib/network/types';
+import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 
 function makeState(overrides?: Partial<SwitchState>): SwitchState {
   return {
@@ -211,6 +213,50 @@ describe('MAC Learning Module', () => {
       const table6 = state.macAddressTable ?? [];
       expect(table6).toHaveLength(1);
       expect(table6[0].mac).toBe('aa:bb:cc:dd:ee:ff');
+    });
+  });
+
+  describe('learnMacsOnNewConnection', () => {
+    const sw1 = { id: 'SW1', type: 'switchL2', macAddress: '00:00:00:00:00:01', ports: [] } as unknown as CanvasDevice;
+    const sw2 = { id: 'SW2', type: 'switchL2', macAddress: '00:00:00:00:00:02', ports: [] } as unknown as CanvasDevice;
+    const pc = { id: 'PC1', type: 'pc', macAddress: 'aa:bb:cc:dd:ee:ff', ports: [] } as unknown as CanvasDevice;
+
+    it('learns a PC MAC on the switch port when a cable is plugged', () => {
+      const state = makeState();
+      state.ports = { 'fa0/1': { id: 'fa0/1', name: '', vlan: 10, accessVlan: 10, status: 'connected', mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'fastethernet' } };
+      deviceStates.set('SW1', state);
+      const next = learnMacsOnNewConnection(deviceStates, {
+        id: 'conn-1', sourceDeviceId: 'SW1', sourcePort: 'fa0/1',
+        targetDeviceId: 'PC1', targetPort: 'eth0', cableType: 'straight', active: true,
+      } as CanvasConnection, [sw1, pc]);
+
+      const table = (next.get('SW1') as SwitchState).macAddressTable ?? [];
+      expect(table).toHaveLength(1);
+      expect(table[0]).toMatchObject({ mac: 'aa:bb:cc:dd:ee:ff', port: 'fa0/1', vlan: 10, type: 'DYNAMIC' });
+    });
+
+    it('learns the peer switch MAC on a switch-to-switch trunk (both directions)', () => {
+      deviceStates.set('SW1', makeState());
+      deviceStates.set('SW2', makeState());
+      const next = learnMacsOnNewConnection(deviceStates, {
+        id: 'conn-1', sourceDeviceId: 'SW1', sourcePort: 'fa0/24',
+        targetDeviceId: 'SW2', targetPort: 'fa0/24', cableType: 'straight', active: true,
+      } as CanvasConnection, [sw1, sw2]);
+
+      const t1 = (next.get('SW1') as SwitchState).macAddressTable ?? [];
+      const t2 = (next.get('SW2') as SwitchState).macAddressTable ?? [];
+      expect(t1[0].mac).toBe('00:00:00:00:00:02');
+      expect(t1[0].port).toBe('fa0/24');
+      expect(t2[0].mac).toBe('00:00:00:00:00:01');
+      expect(t2[0].port).toBe('fa0/24');
+    });
+
+    it('does not learn when a switch is not involved', () => {
+      const next = learnMacsOnNewConnection(deviceStates, {
+        id: 'conn-1', sourceDeviceId: 'PC1', sourcePort: 'eth0',
+        targetDeviceId: 'PC2', targetPort: 'eth0', cableType: 'straight', active: true,
+      } as CanvasConnection, [pc]);
+      expect(next).toEqual(deviceStates);
     });
   });
 });

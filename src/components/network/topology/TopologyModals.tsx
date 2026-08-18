@@ -386,6 +386,9 @@ export function TopologyModals({
               window.dispatchEvent(new CustomEvent('stp-recalculation-needed', {
                 detail: { topologyDevices: devices, topologyConnections: [...connections, newConnection] }
               }));
+              window.dispatchEvent(new CustomEvent('connection-created', {
+                detail: { connection: newConnection, topologyDevices: devices }
+              }));
             }, 0);
           }
         }}
