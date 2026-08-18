@@ -138,8 +138,25 @@ export function useTopologyDeviceActions({
 
   const toggleConnectionActive = useCallback((connId: string) => {
     saveToHistory();
-    const updatedConnections = connections.map((c) => (c.id === connId ? { ...c, active: !c.active } : c));
+    const connection = connections.find((c) => c.id === connId);
+    if (!connection) return;
+    const nextActive = connection.active === false;
+    const updatedConnections = connections.map((c) => (c.id === connId ? { ...c, active: nextActive } : c));
     setConnections(updatedConnections);
+
+    // Powering a cable off must have the same operational effect as removing
+    // it. This is especially important for EtherChannel member links: a
+    // powered-off member must not remain usable on either switch.
+    setDevices((prev) => prev.map((device) => {
+      if (device.id !== connection.sourceDeviceId && device.id !== connection.targetDeviceId) return device;
+      const portId = device.id === connection.sourceDeviceId ? connection.sourcePort : connection.targetPort;
+      return {
+        ...device,
+        ports: device.ports.map((port) => port.id === portId
+          ? { ...port, status: nextActive ? 'connected' : 'disconnected' as const }
+          : port)
+      };
+    }));
 
     // Trigger STP recalculation for all switches
     window.dispatchEvent(new CustomEvent('stp-recalculation-needed', {

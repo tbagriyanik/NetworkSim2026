@@ -103,9 +103,8 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
 
   const midX = (source.x + target.x) / 2;
   const sameDeviceConnections = connections.filter(
-    c => ((c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
-      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)) &&
-      c.active !== false
+    c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
+      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
   );
   const sameConnIndex = conn ? sameDeviceConnections.findIndex(c => c.id === conn.id) : 0;
   const totalSameConns = sameDeviceConnections.length;
@@ -191,7 +190,7 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
             const bx = bt.fromX + (bt.toX - bt.fromX) * broadcastProgress;
             const by = bt.fromY + (bt.toY - bt.fromY) * broadcastProgress;
             return (
-              <g key={`broadcast-packet-${bt.targetId}`} transform={`translate(${bx}, ${by})`}>
+              <g key={`broadcast-packet-${bt.targetId}-${i}`} transform={`translate(${bx}, ${by})`}>
                 <circle cx="0" cy="0" r="14" fill="var(--color-warning-500)" opacity="0.16" className="animate-ping-glow" style={{ pointerEvents: 'none' }} />
                 <rect x="-10" y="-7" width="20" height="14" rx="2" fill="var(--color-warning-500)" style={{ stroke: 'var(--color-warning-600)', strokeWidth: '1.5' }} />
                 <path d="M-8 -3 L0 4 L8 -3" fill="none" stroke="var(--color-white)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

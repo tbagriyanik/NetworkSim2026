@@ -133,7 +133,7 @@ export function usePingAnimation({
     setHopPacketInfos([]);
     setPingMode(false);
     setErrorToast({
-      message: isTR ? 'Ping başarısız!' : 'Ping failed!',
+      message: isTR ? 'Ping iptal edildi' : 'Ping cancelled',
       details: reasonMessage
     });
   }, [isTR, pingAnimationRef, pingCleanupTimeoutRef, pingIsPausedRef, setPingAnimation, setHopPacketInfos, setPingMode, setErrorToast]);

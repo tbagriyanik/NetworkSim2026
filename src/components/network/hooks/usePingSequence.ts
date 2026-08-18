@@ -69,23 +69,14 @@ export const buildBroadcastAnimTargets = ({
   if (!sw || (sw.type !== 'switchL2' && sw.type !== 'switchL3')) return [];
 
   const switchState = deviceStates?.get(switchId);
-  const ingressPortId = connections.find(conn =>
-    (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
-    (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
-  ) ? (
-    connections.find(conn =>
-      (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
-      (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
-    )?.sourceDeviceId === switchId
-      ? connections.find(conn =>
-        (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
-        (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
-      )?.sourcePort
-      : connections.find(conn =>
-        (conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
-        (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId)
-      )?.targetPort
-  ) : null;
+  const ingressConn = connections.find(conn =>
+    conn.active !== false &&
+    ((conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
+     (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId))
+  );
+  const ingressPortId = ingressConn
+    ? (ingressConn.sourceDeviceId === switchId ? ingressConn.sourcePort : ingressConn.targetPort)
+    : null;
 
   const ingressPort = ingressPortId ? switchState?.ports?.[ingressPortId] : undefined;
   const ingressVlan = ingressPort ? getPortVlan(ingressPort) : 1;
