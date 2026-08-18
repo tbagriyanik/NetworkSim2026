@@ -85,8 +85,9 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
   if (!fromDevice || !toDevice) return null;
 
   const conn = connections.find(
-    c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
-      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
+    c => ((c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
+      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)) &&
+      c.active !== false
   );
 
   let source: { x: number; y: number };
@@ -102,8 +103,9 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
 
   const midX = (source.x + target.x) / 2;
   const sameDeviceConnections = connections.filter(
-    c => (c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
-      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)
+    c => ((c.sourceDeviceId === fromDevice.id && c.targetDeviceId === toDevice.id) ||
+      (c.sourceDeviceId === toDevice.id && c.targetDeviceId === fromDevice.id)) &&
+      c.active !== false
   );
   const sameConnIndex = conn ? sameDeviceConnections.findIndex(c => c.id === conn.id) : 0;
   const totalSameConns = sameDeviceConnections.length;

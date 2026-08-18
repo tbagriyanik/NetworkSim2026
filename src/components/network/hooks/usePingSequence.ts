@@ -102,6 +102,7 @@ export const buildBroadcastAnimTargets = ({
       portId = conn.targetPort;
     }
     if (!neighborId || !portId) continue;
+    if (conn.active === false) continue;
     const neighbor = deviceMap.get(neighborId);
     if (!neighbor || neighbor.status === 'offline') continue;
     const simPort = switchState?.ports?.[portId];
