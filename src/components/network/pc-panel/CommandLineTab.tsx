@@ -65,8 +65,8 @@ export function CommandLineTab({
   handleFontSizeChange,
   isMobile,
   t,
+  outputRef,
 }: CommandLineTabProps) {
-  const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
 

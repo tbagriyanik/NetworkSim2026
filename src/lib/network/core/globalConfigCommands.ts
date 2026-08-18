@@ -98,6 +98,7 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no ipv6 router ospf': cmdNoIpv6RouterOspf,
   'ip ssh authentication-retries': cmdIpSshAuthRetries,
   'crypto key generate rsa': cmdCryptoKeyGenerateRsa,
+  'crypto key zeroize rsa': cmdCryptoKeyZeroizeRsa,
   'ip dhcp pool': cmdIpDhcpPool,
   'no ip dhcp pool': cmdNoIpDhcpPool,
   'ipv6 dhcp pool': cmdIpv6DhcpPool,
@@ -1962,7 +1963,45 @@ function cmdCryptoKeyGenerateRsa(state: SwitchState, input: string, _ctx: Comman
       + `a few minutes.\n\n`
       + `How many bits in the modulus [512]: ${validModulus}\n`
       + `% Generating ${validModulus} bit RSA keys, keys will be non-exportable...\n`
-      + `[OK] (elapsed time was 1 seconds)\n`
+      + `[OK] (elapsed time was 1 seconds)\n`,
+    newState: {
+      rsaKeys: { modulus: validModulus, name: `${hostPart}.${domainPart}` }
+    }
+  };
+}
+
+/**
+ * Crypto Key Zeroize RSA
+ */
+function cmdCryptoKeyZeroizeRsa(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+
+  if (!/^crypto\s+key\s+zeroize\s+rsa$/i.test(input)) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+
+  if (!state.rsaKeys) {
+    return { success: true, output: '% Keys do not exist.\n' };
+  }
+
+  const keyName = state.rsaKeys.name || `${state.hostname || 'Switch'}.${state.domainName || 'local'}`;
+
+  // Confirmation path (skipConfirm is passed from useDeviceManager after dialog confirm)
+  if (ctx?.skipConfirm) {
+    return {
+      success: true,
+      output: `% Keys to be removed are named ${keyName}.\n`
+        + `% RSA key pair has been removed.\n`,
+      newState: { rsaKeys: undefined }
+    };
+  }
+
+  return {
+    success: true,
+    output: '% Are you sure you want to remove all RSA keys? [yes/no]: ',
+    requiresConfirmation: true,
+    confirmationMessage: `All RSA keys (${keyName}) will be removed. Continue?`,
+    confirmationAction: 'crypto-key-zeroize'
   };
 }
 

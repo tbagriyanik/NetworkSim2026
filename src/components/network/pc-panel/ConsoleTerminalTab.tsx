@@ -88,14 +88,14 @@ export function ConsoleTerminalTab({
   setConsolePasswordAttempted,
   showCmdSettings,
   handleFontSizeChange,
+  outputRef,
 }: ConsoleTerminalTabProps) {
-  const outputRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll output area
   useEffect(() => {
-    if (outputRef.current) {
+    if (outputRef?.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
   }, [activeConsoleOutput]);

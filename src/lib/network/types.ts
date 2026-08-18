@@ -360,6 +360,7 @@ export interface SwitchState {
   dnsServer?: string;
   domainLookup?: boolean;
   sshVersion?: 1 | 2;
+  rsaKeys?: { modulus: number; name: string };
   cryptoIsakmpPolicies?: Record<number, { encryption: string; hash: string; group: number; lifetime: number }>;
   cryptoIpsecTransformSets?: Record<string, { espEncryption: string; espAuth: string; mode: string }>;
   cryptoMaps?: Record<string, Record<number, { ipsecIsakmp: boolean; matchAddress?: string; setPeer?: string; setTransformSet?: string; setPfs?: string }>>;

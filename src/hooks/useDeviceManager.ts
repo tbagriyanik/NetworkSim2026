@@ -570,7 +570,8 @@ export function useDeviceManager() {
         topologyDevices ?? undefined,
         topologyConnections ?? undefined,
         deviceStatesRef.current,
-        deviceId
+        deviceId,
+        skipConfirm
       );
 
       const { requiresConfirmation, confirmationMessage, confirmationAction, success, newState, error, triggerPingAnimation, deviceStates: resultDeviceStates, updatedDeviceStates } = result as CommandResult;

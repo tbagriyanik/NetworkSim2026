@@ -517,6 +517,12 @@
   -ms-overflow-style: auto;
 }
 
+/* Active search result mark */
+mark.search-active {
+  outline: 2px solid rgb(99 102 241 / 0.9);
+  outline-offset: 1px;
+}
+
 /* Help panel scrollbar - 5px */
 .help-scrollbar::-webkit-scrollbar {
   width: 5px;

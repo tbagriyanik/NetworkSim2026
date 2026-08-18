@@ -12,6 +12,7 @@ import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { Laptop, Terminal as TerminalIcon, Globe, Settings, Wifi, Radio } from 'lucide-react';
 
 import { toast } from "@/hooks/use-toast";
+import { useOutputSearch } from '@/hooks/useOutputSearch';
 import { cn } from "@/lib/utils";
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -1120,6 +1121,13 @@ export function PCPanel({
 
   const outputRef = useRef<HTMLDivElement>(null);
 
+  const {
+    matchIndex: searchMatchIndex,
+    matchCount: searchMatchCount,
+    goToNext: goToNextMatch,
+    goToPrev: goToPrevMatch,
+  } = useOutputSearch({ searchQuery, containerRef: outputRef });
+
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const prevIpConfigModeRef = useRef(ipConfigMode);
 
@@ -1152,14 +1160,14 @@ export function PCPanel({
     showAutocomplete
   });
 
-  // Auto-focus input when visible, tab changes, or command completes
+  // Auto-focus input when visible, tab changes, command completes, or search closes
   useEffect(() => {
-    if (!isVisible || (activeTab !== 'desktop' && activeTab !== 'terminal')) return;
+    if (!isVisible || searchOpen || (activeTab !== 'desktop' && activeTab !== 'terminal')) return;
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 100);
     return () => clearTimeout(timer);
-  }, [isVisible, activeTab, pcOutput, activeConsoleOutput]);
+  }, [isVisible, searchOpen, activeTab, pcOutput, activeConsoleOutput]);
 
   // Always keep CMD/Console views pinned to the latest output
   useEffect(() => {
@@ -2134,9 +2142,14 @@ export function PCPanel({
                         searchOutputDescription: t.searchOutputDescription,
                         searchPlaceholder: t.searchPlaceholder,
                         close: t.close,
+                        noResultsFound: t.noResultsFound,
                       }}
                       searchQuery={searchQuery}
                       onSearchQueryChange={setSearchQuery}
+                      onNext={goToNextMatch}
+                      onPrev={goToPrevMatch}
+                      matchIndex={searchMatchIndex}
+                      matchCount={searchMatchCount}
                     />
 
                     {/* Navigation Tabs - Hide on mobile, use main app tabs */}
@@ -2239,6 +2252,7 @@ export function PCPanel({
                           setInput={setInput}
                           highlightText={highlightText}
                           consoleDevice={consoleDevice}
+                          outputRef={outputRef}
                           mobileVerticalScrollStyle={mobileVerticalScrollStyle}
                         />
                       )}

@@ -1902,6 +1902,18 @@ export const commandAliases: Record<string, string> = {
   'crypto key generate rs': 'crypto key generate rsa',
   'crypto key generate rsa': 'crypto key generate rsa',
 
+  // Crypto key zeroize
+  'crypto key z': 'crypto key zeroize',
+  'crypto key ze': 'crypto key zeroize',
+  'crypto key zer': 'crypto key zeroize',
+  'crypto key zero': 'crypto key zeroize',
+  'crypto key zeroi': 'crypto key zeroize',
+  'crypto key zeroiz': 'crypto key zeroize',
+  'crypto key zeroize': 'crypto key zeroize',
+  'crypto key zeroize r': 'crypto key zeroize rsa',
+  'crypto key zeroize rs': 'crypto key zeroize rsa',
+  'crypto key zeroize rsa': 'crypto key zeroize rsa',
+
   // Ip domain-name
   'ip dn': 'ip domain-name',
   'ip dom': 'ip domain-name',

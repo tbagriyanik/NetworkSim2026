@@ -305,6 +305,12 @@ export const modePatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 2
   },
+  'crypto key zeroize rsa': {
+    pattern: /^crypto\s+key\s+zeroize\s+rsa$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'show standby': {
     pattern: /^show\s+standby(?:\s+(\S+))?(?:\s+brief)?$/i,
     modes: ['user', 'privileged'],

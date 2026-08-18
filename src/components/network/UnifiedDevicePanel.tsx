@@ -190,333 +190,333 @@ export function UnifiedDevicePanel({
                             className="h-full"
                             deviceId={deviceId}
                             deviceName={deviceName}
-                                    prompt={prompt}
-                                    state={state}
-                                    onCommand={handleCommand}
-                                    onClear={handleClearTerminal}
-                                    output={output}
-                                    isLoading={isExecutingCommand}
-                                    isConnectionError={isOffline}
-                                    connectionErrorMessage={t.connectionError}
-                                    isPoweredOff={isOffline}
-                                    showPowerButton={false}
-                                    onClose={() => onOpenChange(false)}
-                                    onQuickSettings={() => onTabChange('settings')}
-                                    t={t}
-                                    theme={theme}
-                                    language={language}
-                                    helpLevel={helpLevel}
-                                    onUpdateHistory={handleUpdateHistory}
-                                    confirmDialog={confirmDialog}
-                                    setConfirmDialog={setConfirmDialog}
-                                    device={topologyDevices.find(d => d.id === deviceId)}
-                                    devices={topologyDevices}
-                                    deviceStates={deviceStates}
-                                    onRequestFocus={focusActiveTerminalInput}
-                                />
-                            </TabsContent>
-                            <TabsContent value="settings" className="h-full m-0 p-0 overflow-y-auto custom-scrollbar">
-                                <div className="p-4 sm:p-6">
-                                    <div className={cn(
-                                        "grid gap-6",
-                                        isNarrow ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3"
-                                    )}>
-                                        <div className={cn(isNarrow ? "" : "lg:col-span-2", "space-y-6")}>
-                                            {deviceType === 'wlc' && (
-                                                <div className="space-y-4">
-                                                    <WlcWirelessPanel
-                                                        state={state}
-                                                        isDark={isDark}
-                                                        language={language}
-                                                        isDevicePoweredOff={isOffline}
-                                                        onExecuteCommand={handleCommand as (command: string) => Promise<void>}
-                                                        topologyDevices={topologyDevices}
-                                                        activeDeviceId={deviceId}
-                                                        deviceStates={deviceStates}
-                                                    />
-                                                </div>
-                                            )}
-                                            <div className="space-y-4">
-                                                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                                    <Network className="w-4 h-4" />
-                                                    {t.portStatus}
-                                                </div>
-                                                <PortPanel
-                                                    ports={state?.ports || {}}
-                                                    t={t}
-                                                    theme={theme}
-                                                    deviceName={deviceName}
-                                                    deviceModel={deviceModel}
-                                                    activeDeviceId={deviceId}
-                                                    isDevicePoweredOff={isOffline}
-                                                    topologyDevices={topologyDevices}
-                                                    topologyConnections={topologyConnections}
-                                                />
-                                            </div>
+                            prompt={prompt}
+                            state={state}
+                            onCommand={handleCommand}
+                            onClear={handleClearTerminal}
+                            output={output}
+                            isLoading={isExecutingCommand}
+                            isConnectionError={isOffline}
+                            connectionErrorMessage={t.connectionError}
+                            isPoweredOff={isOffline}
+                            showPowerButton={false}
+                            onClose={() => onOpenChange(false)}
+                            onQuickSettings={() => onTabChange('settings')}
+                            t={t}
+                            theme={theme}
+                            language={language}
+                            helpLevel={helpLevel}
+                            onUpdateHistory={handleUpdateHistory}
+                            confirmDialog={confirmDialog}
+                            setConfirmDialog={setConfirmDialog}
+                            device={topologyDevices.find(d => d.id === deviceId)}
+                            devices={topologyDevices}
+                            deviceStates={deviceStates}
+                            onRequestFocus={focusActiveTerminalInput}
+                        />
+                    </TabsContent>
+                    <TabsContent value="settings" className="h-full m-0 p-0 overflow-y-auto custom-scrollbar">
+                        <div className="p-4 sm:p-6">
+                            <div className={cn(
+                                "grid gap-6",
+                                isNarrow ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-3"
+                            )}>
+                                <div className={cn(isNarrow ? "" : "lg:col-span-2", "space-y-6")}>
+                                    {deviceType === 'wlc' && (
+                                        <div className="space-y-4">
+                                            <WlcWirelessPanel
+                                                state={state}
+                                                isDark={isDark}
+                                                language={language}
+                                                isDevicePoweredOff={isOffline}
+                                                onExecuteCommand={handleCommand as (command: string) => Promise<void>}
+                                                topologyDevices={topologyDevices}
+                                                activeDeviceId={deviceId}
+                                                deviceStates={deviceStates}
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                                            <Network className="w-4 h-4" />
+                                            {t.portStatus}
+                                        </div>
+                                        <PortPanel
+                                            ports={state?.ports || {}}
+                                            t={t}
+                                            theme={theme}
+                                            deviceName={deviceName}
+                                            deviceModel={deviceModel}
+                                            activeDeviceId={deviceId}
+                                            isDevicePoweredOff={isOffline}
+                                            topologyDevices={topologyDevices}
+                                            topologyConnections={topologyConnections}
+                                        />
+                                    </div>
 
-                                            <div className="space-y-4 pt-2">
-                                                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                                    <Layers className="w-4 h-4" />
-                                                    {t.vlanManagement}
-                                                </div>
-                                                <VlanPanel
-                                                    vlans={state?.vlans || []}
-                                                    ports={state?.ports || {}}
-                                                    deviceName={deviceName}
-                                                    deviceModel={deviceModel}
-                                                    deviceId={deviceId}
-                                                    onExecuteCommand={handleCommand as (command: string) => Promise<void>}
-                                                    t={t}
-                                                    theme={theme}
-                                                    activeDeviceType={deviceType}
-                                                    isDevicePoweredOff={isOffline}
-                                                />
-                                            </div>
+                                    <div className="space-y-4 pt-2">
+                                        <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                                            <Layers className="w-4 h-4" />
+                                            {t.vlanManagement}
+                                        </div>
+                                        <VlanPanel
+                                            vlans={state?.vlans || []}
+                                            ports={state?.ports || {}}
+                                            deviceName={deviceName}
+                                            deviceModel={deviceModel}
+                                            deviceId={deviceId}
+                                            onExecuteCommand={handleCommand as (command: string) => Promise<void>}
+                                            t={t}
+                                            theme={theme}
+                                            activeDeviceType={deviceType}
+                                            isDevicePoweredOff={isOffline}
+                                        />
+                                    </div>
 
-                                            <div className="space-y-4 pt-2">
-                                                <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                                    <ShieldCheck className="w-4 h-4" />
-                                                    {t.securityAndAcl}
-                                                </div>
-                                                <SecurityPanel
-                                                    security={state?.security || {}}
-                                                    t={t}
-                                                    theme={theme}
-                                                    isDevicePoweredOff={isOffline}
-                                                />
-                                            </div>
+                                    <div className="space-y-4 pt-2">
+                                        <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                                            <ShieldCheck className="w-4 h-4" />
+                                            {t.securityAndAcl}
+                                        </div>
+                                        <SecurityPanel
+                                            security={state?.security || {}}
+                                            t={t}
+                                            theme={theme}
+                                            isDevicePoweredOff={isOffline}
+                                        />
+                                    </div>
 
-                                            {hasTaskSystem && (
-                                                <div className="space-y-4 pt-2">
-                                                    <MacTablePanel
-                                                        macTable={state?.macAddressTable || []}
-                                                        isDark={isDark}
-                                                        language={language}
-                                                        deviceName={deviceName}
-                                                    />
+                                    {hasTaskSystem && (
+                                        <div className="space-y-4 pt-2">
+                                            <MacTablePanel
+                                                macTable={state?.macAddressTable || []}
+                                                isDark={isDark}
+                                                language={language}
+                                                deviceName={deviceName}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {hasTaskSystem && (
+                                    <div className="space-y-6">
+                                        <div className="space-y-4 sticky top-0">
+                                            <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                                                <Cpu className="w-4 h-4" />
+                                                {t.tasksAndScore}
+                                            </div>
+                                            <TaskCard
+                                                tasks={activeDeviceTasks}
+                                                state={state}
+                                                context={taskContext}
+                                                isDark={isDark}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="stp" className="h-full m-0 p-0 overflow-y-auto custom-scrollbar">
+                        <div className="p-4 sm:p-6 space-y-6">
+                            {/* VLAN Selector & STP info */}
+                            {(() => {
+                                const deviceState = deviceStates.get(deviceId);
+                                const stpStateMap = deviceState?.stpState || {};
+                                const vlanIds = Object.keys(stpStateMap).map(Number).sort((a, b) => a - b);
+                                const currentVlan = vlanIds.includes(selectedVlan) ? selectedVlan : (vlanIds[0] || 1);
+                                const stpVlanState = stpStateMap[currentVlan];
+
+                                if (!stpVlanState) {
+                                    return (
+                                        <div className={cn("p-8 rounded-lg border text-center", isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200")}>
+                                            <Layers className="w-12 h-12 mx-auto mb-3 text-muted-foreground animate-pulse" />
+                                            <p className="text-muted-foreground text-sm font-medium">
+                                                {language === 'tr' ? 'Bu cihazda STP aktif değil veya henüz başlatılmadı. Ağı yenileyiniz. (F5 kısayolu)' : 'STP is not active or has not initialized on this device. Refresh the network. (F5 shortcut)'}
+                                            </p>
+                                        </div>
+                                    );
+                                }
+
+                                const localBridgePriority = stpVlanState.bridgeId.split('.')[0];
+                                const localBridgeMac = stpVlanState.bridgeId.split('.').slice(1).join('.');
+
+                                return (
+                                    <div className="space-y-5">
+                                        {/* Header and VLAN Selector */}
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                            <div>
+                                                <h3 className="text-sm font-semibold flex items-center gap-2 text-primary">
+                                                    <Layers className="w-4 h-4 text-warning-500" />
+                                                    {language === 'tr' ? 'Spanning Tree Protokolü (STP)' : 'Spanning Tree Protocol (STP)'}
+                                                </h3>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    {language === 'tr' ? 'Cihazın ve portların Spanning Tree durumlarını inceleyin.' : 'Inspect Spanning Tree states of the device and its ports.'}
+                                                </p>
+                                            </div>
+                                            {vlanIds.length > 1 && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs text-muted-foreground">VLAN:</span>
+                                                    <select
+                                                        value={currentVlan}
+                                                        onChange={(e) => setSelectedVlan(Number(e.target.value))}
+                                                        className={cn(
+                                                            "px-2 py-1 rounded text-xs border outline-none",
+                                                            isDark ? "bg-secondary-900 border-secondary-800 text-white" : "bg-white border-secondary-300 text-secondary-900"
+                                                        )}
+                                                    >
+                                                        {vlanIds.map(vid => (
+                                                            <option key={vid} value={vid}>VLAN {vid}</option>
+                                                        ))}
+                                                    </select>
                                                 </div>
                                             )}
                                         </div>
 
-                                        {hasTaskSystem && (
-                                            <div className="space-y-6">
-                                                <div className="space-y-4 sticky top-0">
-                                                    <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                                                        <Cpu className="w-4 h-4" />
-                                                        {t.tasksAndScore}
-                                                    </div>
-                                                    <TaskCard
-                                                        tasks={activeDeviceTasks}
-                                                        state={state}
-                                                        context={taskContext}
-                                                        isDark={isDark}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            </TabsContent>
-
-                            <TabsContent value="stp" className="h-full m-0 p-0 overflow-y-auto custom-scrollbar">
-                                <div className="p-4 sm:p-6 space-y-6">
-                                    {/* VLAN Selector & STP info */}
-                                    {(() => {
-                                        const deviceState = deviceStates.get(deviceId);
-                                        const stpStateMap = deviceState?.stpState || {};
-                                        const vlanIds = Object.keys(stpStateMap).map(Number).sort((a, b) => a - b);
-                                        const currentVlan = vlanIds.includes(selectedVlan) ? selectedVlan : (vlanIds[0] || 1);
-                                        const stpVlanState = stpStateMap[currentVlan];
-
-                                        if (!stpVlanState) {
-                                            return (
-                                                <div className={cn("p-8 rounded-lg border text-center", isDark ? "bg-secondary-800 border-secondary-700" : "bg-secondary-50 border-secondary-200")}>
-                                                    <Layers className="w-12 h-12 mx-auto mb-3 text-muted-foreground animate-pulse" />
-                                                    <p className="text-muted-foreground text-sm font-medium">
-                                                        {language === 'tr' ? 'Bu cihazda STP aktif değil veya henüz başlatılmadı.' : 'STP is not active or has not initialized on this device.'}
-                                                    </p>
-                                                </div>
-                                            );
-                                        }
-
-                                        const localBridgePriority = stpVlanState.bridgeId.split('.')[0];
-                                        const localBridgeMac = stpVlanState.bridgeId.split('.').slice(1).join('.');
-
-                                        return (
-                                            <div className="space-y-5">
-                                                {/* Header and VLAN Selector */}
-                                                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                                                    <div>
-                                                        <h3 className="text-sm font-semibold flex items-center gap-2 text-primary">
-                                                            <Layers className="w-4 h-4 text-warning-500" />
-                                                            {language === 'tr' ? 'Spanning Tree Protokolü (STP)' : 'Spanning Tree Protocol (STP)'}
-                                                        </h3>
-                                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                                            {language === 'tr' ? 'Cihazın ve portların Spanning Tree durumlarını inceleyin.' : 'Inspect Spanning Tree states of the device and its ports.'}
-                                                        </p>
-                                                    </div>
-                                                    {vlanIds.length > 1 && (
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs text-muted-foreground">VLAN:</span>
-                                                            <select
-                                                                value={currentVlan}
-                                                                onChange={(e) => setSelectedVlan(Number(e.target.value))}
-                                                                className={cn(
-                                                                    "px-2 py-1 rounded text-xs border outline-none",
-                                                                    isDark ? "bg-secondary-900 border-secondary-800 text-white" : "bg-white border-secondary-300 text-secondary-900"
-                                                                )}
-                                                            >
-                                                                {vlanIds.map(vid => (
-                                                                    <option key={vid} value={vid}>VLAN {vid}</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
+                                        {/* Root Bridge Status Card */}
+                                        <div className={cn(
+                                            "p-4 rounded-lg border flex flex-col md:flex-row md:items-center md:justify-between gap-4",
+                                            stpVlanState.isRoot
+                                                ? (isDark ? "bg-warning-950/20 border-warning-500/30 text-warning-200" : "bg-warning-50/70 border-warning-200 text-warning-800")
+                                                : (isDark ? "bg-secondary-900 border-secondary-800/80" : "bg-secondary-50 border-secondary-200")
+                                        )}>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2 font-bold text-sm">
+                                                    {stpVlanState.isRoot ? (
+                                                        <>
+                                                            <span className="text-lg">👑</span>
+                                                            <span>{language === 'tr' ? 'Cihaz Kök Köprü (Root Bridge) Durumunda' : 'This Switch is the Root Bridge'}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span>{language === 'tr' ? 'Kök Köprü Bilgisi' : 'Root Bridge Information'}</span>
                                                     )}
                                                 </div>
-
-                                                {/* Root Bridge Status Card */}
-                                                <div className={cn(
-                                                    "p-4 rounded-lg border flex flex-col md:flex-row md:items-center md:justify-between gap-4",
-                                                    stpVlanState.isRoot
-                                                        ? (isDark ? "bg-warning-950/20 border-warning-500/30 text-warning-200" : "bg-warning-50/70 border-warning-200 text-warning-800")
-                                                        : (isDark ? "bg-secondary-900 border-secondary-800/80" : "bg-secondary-50 border-secondary-200")
-                                                )}>
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-2 font-bold text-sm">
-                                                            {stpVlanState.isRoot ? (
-                                                                <>
-                                                                    <span className="text-lg">👑</span>
-                                                                    <span>{language === 'tr' ? 'Cihaz Kök Köprü (Root Bridge) Durumunda' : 'This Switch is the Root Bridge'}</span>
-                                                                </>
-                                                            ) : (
-                                                                <span>{language === 'tr' ? 'Kök Köprü Bilgisi' : 'Root Bridge Information'}</span>
-                                                            )}
-                                                        </div>
-                                                        <p className="text-xs opacity-80 font-mono">
-                                                            Root Bridge ID: <span className="font-semibold">{stpVlanState.rootBridgeId}</span>
-                                                        </p>
-                                                        {!stpVlanState.isRoot && (
-                                                            <p className="text-xs opacity-80 font-mono">
-                                                                Root Path Cost: <span className="font-semibold text-primary">{stpVlanState.rootCost}</span>
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4 text-xs font-mono border-t md:border-t-0 md:border-l pt-3 md:pt-0 md:pl-6 border-secondary-700/30">
-                                                        <div>
-                                                            <span className="opacity-60">{language === 'tr' ? 'Köprü Önceliği:' : 'Bridge Priority:'}</span>
-                                                            <p className="font-semibold">{localBridgePriority}</p>
-                                                        </div>
-                                                        <div>
-                                                            <span className="opacity-60">Bridge MAC:</span>
-                                                            <p className="font-semibold text-xs leading-none mt-1">{localBridgeMac}</p>
-                                                        </div>
-                                                    </div>
+                                                <p className="text-xs opacity-80 font-mono">
+                                                    Root Bridge ID: <span className="font-semibold">{stpVlanState.rootBridgeId}</span>
+                                                </p>
+                                                {!stpVlanState.isRoot && (
+                                                    <p className="text-xs opacity-80 font-mono">
+                                                        Root Path Cost: <span className="font-semibold text-primary">{stpVlanState.rootCost}</span>
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4 text-xs font-mono border-t md:border-t-0 md:border-l pt-3 md:pt-0 md:pl-6 border-secondary-700/30">
+                                                <div>
+                                                    <span className="opacity-60">{language === 'tr' ? 'Köprü Önceliği:' : 'Bridge Priority:'}</span>
+                                                    <p className="font-semibold">{localBridgePriority}</p>
                                                 </div>
-
-                                                {/* Port STP States Table */}
-                                                <div className={cn("rounded-lg border overflow-hidden", isDark ? "bg-secondary-900 border-secondary-800/80" : "bg-secondary-50 border-secondary-200")}>
-                                                    <div className="px-4 py-2.5 border-b border-secondary-800/80 bg-secondary-100/20 dark:bg-secondary-950/10">
-                                                        <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                                            {language === 'tr' ? 'Port Rol ve Durumları' : 'Port Roles and States'}
-                                                        </h4>
-                                                    </div>
-                                                    <div className="overflow-x-auto">
-                                                        <table className="w-full text-xs text-left">
-                                                            <thead className={cn("border-b text-[10px] uppercase tracking-wider font-semibold", isDark ? "bg-secondary-950 border-secondary-800 text-secondary-400" : "bg-secondary-100 border-secondary-200 text-secondary-600")}>
-                                                                <tr>
-                                                                    <th className="p-3">{language === 'tr' ? 'Arayüz' : 'Interface'}</th>
-                                                                    <th className="p-3">{language === 'tr' ? 'Rol (Role)' : 'Role'}</th>
-                                                                    <th className="p-3">{language === 'tr' ? 'Durum (State)' : 'State'}</th>
-                                                                    <th className="p-3">{language === 'tr' ? 'Maliyet (Cost)' : 'Cost'}</th>
-                                                                    <th className="p-3">{language === 'tr' ? 'Öncelik' : 'Priority'}</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {Object.keys(stpVlanState.ports).length > 0 ? (
-                                                                    Object.entries(stpVlanState.ports).map(([portName, portStp]) => {
-                                                                        const role = portStp.role;
-                                                                        const state = portStp.state;
-
-                                                                        const roleLabels: Record<string, string> = language === 'tr' ? {
-                                                                            root: 'Kök Port (RP)',
-                                                                            designated: 'Atanmış Port (DP)',
-                                                                            alternate: 'Alternatif Port (AP)',
-                                                                            backup: 'Yedek Port (BP)',
-                                                                            disabled: 'Devre Dışı'
-                                                                        } : {
-                                                                            root: 'Root Port (RP)',
-                                                                            designated: 'Designated Port (DP)',
-                                                                            alternate: 'Alternate Port (AP)',
-                                                                            backup: 'Backup Port (BP)',
-                                                                            disabled: 'Disabled'
-                                                                        };
-
-                                                                        const stateLabels: Record<string, string> = language === 'tr' ? {
-                                                                            forwarding: 'İletiyor (FWD)',
-                                                                            blocking: 'Engelliyor (BLK)',
-                                                                            learning: 'Öğreniyor (LRN)',
-                                                                            listening: 'Dinliyor (LIS)',
-                                                                            disabled: 'Devre Dışı'
-                                                                        } : {
-                                                                            forwarding: 'Forwarding (FWD)',
-                                                                            blocking: 'Blocking (BLK)',
-                                                                            learning: 'Learning (LRN)',
-                                                                            listening: 'Listening (LIS)',
-                                                                            disabled: 'Disabled'
-                                                                        };
-
-                                                                        return (
-                                                                            <tr key={portName} className={cn("border-b last:border-0 hover:bg-secondary-800/10 dark:hover:bg-secondary-800/30", isDark ? "border-secondary-800" : "border-secondary-200")}>
-                                                                                <td className="p-3 font-semibold font-mono">{portName}</td>
-                                                                                <td className="p-3">
-                                                                                    <span className={cn(
-                                                                                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                                                                                        role === 'root'
-                                                                                            ? "bg-primary-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30"
-                                                                                            : role === 'designated'
-                                                                                            ? "bg-success-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
-                                                                                            : role === 'alternate'
-                                                                                            ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30"
-                                                                                            : "bg-secondary-500/10 text-secondary-600 dark:text-secondary-400 border-secondary-500/20"
-                                                                                    )}>
-                                                                                        {roleLabels[role] || role}
-                                                                                    </span>
-                                                                                </td>
-                                                                                <td className="p-3">
-                                                                                    <span className={cn(
-                                                                                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                                                                                        state === 'forwarding'
-                                                                                            ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
-                                                                                            : state === 'blocking'
-                                                                                            ? "bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/30 animate-pulse"
-                                                                                            : "bg-secondary-500/10 text-secondary-600 dark:text-secondary-400 border border-secondary-500/20"
-                                                                                    )}>
-                                                                                        {stateLabels[state] || state}
-                                                                                    </span>
-                                                                                </td>
-                                                                                <td className="p-3 font-mono text-muted-foreground">{portStp.cost || 19}</td>
-                                                                                <td className="p-3 font-mono text-muted-foreground">128</td>
-                                                                            </tr>
-                                                                        );
-                                                                    })
-                                                                ) : (
-                                                                    <tr>
-                                                                        <td colSpan={5} className="p-4 text-center text-muted-foreground italic">
-                                                                            {language === 'tr' ? 'Port STP bilgisi yok.' : 'No port STP information.'}
-                                                                        </td>
-                                                                    </tr>
-                                                                )}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
+                                                <div>
+                                                    <span className="opacity-60">Bridge MAC:</span>
+                                                    <p className="font-semibold text-xs leading-none mt-1">{localBridgeMac}</p>
                                                 </div>
                                             </div>
-                                        );
-                                    })()}
-                                </div>
-                            </TabsContent>
-                        </Tabs>
-                    </div>
+                                        </div>
+
+                                        {/* Port STP States Table */}
+                                        <div className={cn("rounded-lg border overflow-hidden", isDark ? "bg-secondary-900 border-secondary-800/80" : "bg-secondary-50 border-secondary-200")}>
+                                            <div className="px-4 py-2.5 border-b border-secondary-800/80 bg-secondary-100/20 dark:bg-secondary-950/10">
+                                                <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                                    {language === 'tr' ? 'Port Rol ve Durumları' : 'Port Roles and States'}
+                                                </h4>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-xs text-left">
+                                                    <thead className={cn("border-b text-[10px] uppercase tracking-wider font-semibold", isDark ? "bg-secondary-950 border-secondary-800 text-secondary-400" : "bg-secondary-100 border-secondary-200 text-secondary-600")}>
+                                                        <tr>
+                                                            <th className="p-3">{language === 'tr' ? 'Arayüz' : 'Interface'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Rol (Role)' : 'Role'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Durum (State)' : 'State'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Maliyet (Cost)' : 'Cost'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Öncelik' : 'Priority'}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {Object.keys(stpVlanState.ports).length > 0 ? (
+                                                            Object.entries(stpVlanState.ports).map(([portName, portStp]) => {
+                                                                const role = portStp.role;
+                                                                const state = portStp.state;
+
+                                                                const roleLabels: Record<string, string> = language === 'tr' ? {
+                                                                    root: 'Kök Port (RP)',
+                                                                    designated: 'Atanmış Port (DP)',
+                                                                    alternate: 'Alternatif Port (AP)',
+                                                                    backup: 'Yedek Port (BP)',
+                                                                    disabled: 'Devre Dışı'
+                                                                } : {
+                                                                    root: 'Root Port (RP)',
+                                                                    designated: 'Designated Port (DP)',
+                                                                    alternate: 'Alternate Port (AP)',
+                                                                    backup: 'Backup Port (BP)',
+                                                                    disabled: 'Disabled'
+                                                                };
+
+                                                                const stateLabels: Record<string, string> = language === 'tr' ? {
+                                                                    forwarding: 'İletiyor (FWD)',
+                                                                    blocking: 'Engelliyor (BLK)',
+                                                                    learning: 'Öğreniyor (LRN)',
+                                                                    listening: 'Dinliyor (LIS)',
+                                                                    disabled: 'Devre Dışı'
+                                                                } : {
+                                                                    forwarding: 'Forwarding (FWD)',
+                                                                    blocking: 'Blocking (BLK)',
+                                                                    learning: 'Learning (LRN)',
+                                                                    listening: 'Listening (LIS)',
+                                                                    disabled: 'Disabled'
+                                                                };
+
+                                                                return (
+                                                                    <tr key={portName} className={cn("border-b last:border-0 hover:bg-secondary-800/10 dark:hover:bg-secondary-800/30", isDark ? "border-secondary-800" : "border-secondary-200")}>
+                                                                        <td className="p-3 font-semibold font-mono">{portName}</td>
+                                                                        <td className="p-3">
+                                                                            <span className={cn(
+                                                                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
+                                                                                role === 'root'
+                                                                                    ? "bg-primary-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30"
+                                                                                    : role === 'designated'
+                                                                                        ? "bg-success-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30"
+                                                                                        : role === 'alternate'
+                                                                                            ? "bg-amber-500/15 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                                                                                            : "bg-secondary-500/10 text-secondary-600 dark:text-secondary-400 border-secondary-500/20"
+                                                                            )}>
+                                                                                {roleLabels[role] || role}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="p-3">
+                                                                            <span className={cn(
+                                                                                "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                                                                                state === 'forwarding'
+                                                                                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30"
+                                                                                    : state === 'blocking'
+                                                                                        ? "bg-red-500/15 text-red-700 dark:text-red-300 border border-red-500/30 animate-pulse"
+                                                                                        : "bg-secondary-500/10 text-secondary-600 dark:text-secondary-400 border border-secondary-500/20"
+                                                                            )}>
+                                                                                {stateLabels[state] || state}
+                                                                            </span>
+                                                                        </td>
+                                                                        <td className="p-3 font-mono text-muted-foreground">{portStp.cost || 19}</td>
+                                                                        <td className="p-3 font-mono text-muted-foreground">128</td>
+                                                                    </tr>
+                                                                );
+                                                            })
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan={5} className="p-4 text-center text-muted-foreground italic">
+                                                                    {language === 'tr' ? 'Port STP bilgisi yok.' : 'No port STP information.'}
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
 
         </DraggableWindowWrapper>
     );

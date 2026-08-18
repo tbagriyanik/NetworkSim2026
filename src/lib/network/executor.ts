@@ -178,8 +178,9 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...pfx('cdp', ['holdtime', 'run', 'timer']),
     ...pfx('clock', ['timezone']),
     ...pfx('crypto', ['key']),
-    'crypto key': ['generate'],
+    'crypto key': ['generate', 'zeroize'],
     'crypto key generate': ['rsa'],
+    'crypto key zeroize': ['rsa'],
     ...pfx('default', ['interface']),
     'ap': [],
     'ap dot11': ['5ghz'],
@@ -1099,7 +1100,8 @@ export function executeCommand(
   devices?: CanvasDevice[],
   connections?: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>,
-  sourceDeviceId?: string
+  sourceDeviceId?: string,
+  skipConfirm = false
 ): CommandResult {
   if (input === '__CANCEL__') {
     // Cancellation token - handled by useDeviceManager
@@ -1260,6 +1262,7 @@ export function executeCommand(
     connections,
     deviceStates: ensureDeviceStatesMap(deviceStates),
     sourceDeviceId,
+    skipConfirm,
   };
 
   const inferredDeviceType = state.deviceType === 'switch'

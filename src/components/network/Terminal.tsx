@@ -5,13 +5,13 @@ import { SwitchState, CommandMode } from '@/lib/network/types';
 import { Translations } from '@/contexts/LanguageContext';
 import { getDeviceWifiConfig, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Laptop, X, CornerDownLeft, Search, Copy, Trash2, Download, Settings, Wifi, Type } from 'lucide-react';
+import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
+import { useOutputSearch } from '@/hooks/useOutputSearch';
 import { commandHelp } from '@/lib/network/executor';
 import { commandPatterns } from '@/lib/network/parser';
 import { ModernPanel } from '@/components/ui/ModernPanel';
@@ -276,6 +276,13 @@ export function Terminal({
   const autocompleteRef = useRef<HTMLDivElement>(null);
   const wasWifiConnectedRef = useRef<boolean>(true);
 
+  const {
+    matchIndex: searchMatchIndex,
+    matchCount: searchMatchCount,
+    goToNext: goToNextMatch,
+    goToPrev: goToPrevMatch,
+  } = useOutputSearch({ searchQuery, containerRef: terminalRef });
+
   const isBooted = useMemo(() => {
     const bootMarkers = output.filter(o => o.content === BOOT_PROGRESS_MARKER);
     return bootMarkers.length === 0 || bootMarkers.every(m => completedBootIds.has(m.id));
@@ -287,6 +294,13 @@ export function Terminal({
       inputRef.current?.focus();
     }
   }, [isBooted]);
+
+  // Restore input focus when the search popup closes so the next ESC can close the terminal
+  useEffect(() => {
+    if (!searchOpen && isBooted && !isInputDisabled) {
+      inputRef.current?.focus();
+    }
+  }, [searchOpen, isBooted, isInputDisabled]);
 
   const commandQueueRef = useRef<string[]>([]);
   const isProcessingQueueRef = useRef(false);
@@ -1679,35 +1693,25 @@ export function Terminal({
         </div>
       </div>
 
-      {/* Dialogs */}
-      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent aria-modal="true">
-          <DialogHeader>
-            <DialogTitle>{t.search}</DialogTitle>
-            <DialogDescription>
-              {t.searchTerminal}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="relative">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.search + "..."}
-              aria-label={t.search}
-              className="pr-9"
-              autoFocus
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 text-secondary-400 hover:text-secondary-600 dark:hover:text-secondary-300 transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Search popup */}
+      <SearchOutputDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        isDark={isDark}
+        labels={{
+          searchOutputTitle: t.search,
+          searchOutputDescription: t.searchTerminal,
+          searchPlaceholder: t.search + '...',
+          close: t.close,
+          noResultsFound: t.noResultsFound,
+        }}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        onNext={goToNextMatch}
+        onPrev={goToPrevMatch}
+        matchIndex={searchMatchIndex}
+        matchCount={searchMatchCount}
+      />
       {/* ... Password and Confirm Dialogs ... */}
     </ModernPanel>
   );
