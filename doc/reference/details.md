@@ -1,6 +1,12 @@
 
 ## Latest Updates
 
+### v2.4.0 (2026-08-18)
+
+| English | Türkçe |
+| --- | --- |
+| **Protocol Number in Packet Analysis**: The protocol column in the packet analysis panel now shows each protocol's port/protocol number in parentheses, e.g. ICMP (1), ICMPv6 (58), TCP (6), UDP (17), GRE (47), OSPF (89), EIGRP (88), ARP (0x0806), RARP (0x8035). | **Paket Analizinde Protokol Numarası**: Paket analizi panelindeki protokol sütununda, her protokolün port/protokol numarası parantez içinde gösteriliyor: ICMP (1), ICMPv6 (58), TCP (6), UDP (17), GRE (47), OSPF (89), EIGRP (88), ARP (0x0806), RARP (0x8035). |
+
 ### v2.2.0 (2026-08-15)
 
 | English | Türkçe |

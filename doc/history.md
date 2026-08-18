@@ -4,6 +4,15 @@ Yeniden eskiye, tarih ve özellik listesi.
 
 ---
 
+## v2.4.0 — 2026-08-18
+
+| Tarih | Özellik |
+|-------|---------|
+| 2026-08-18 | **Sürüm Yükseltmesi (v2.4)** — Uygulama versiyonu 2.4'e yükseltildi. |
+| 2026-08-18 | **Paket Analizinde Protokol Numarası Gösterimi** — Paket analizi panelindeki protokol sütununda, her protokolün port/protokol numarası parantez içinde gösteriliyor: ICMP (1), ICMPv6 (58), TCP (6), UDP (17), GRE (47), OSPF (89), EIGRP (88), ARP (0x0806), RARP (0x8035). |
+
+---
+
 ## v2.2.0 — 2026-08-15
 
 | Tarih | Özellik |

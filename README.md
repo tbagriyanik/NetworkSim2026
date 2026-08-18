@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-2.3-blue)
+![Version](https://img.shields.io/badge/version-2.4-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2.4%20|%20React%2019.2.5%20|%20TypeScript%206.0.3%20|%20Tailwind%204.2.2-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-123,315-lightgrey)
@@ -23,11 +23,9 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
-- **Version 2.2 Sürümü:** Next.js 16.2, React 19.2, TypeScript 6.0 ve Tailwind CSS 4 altyapı güncellemeleri tamamlandı.
-- **Topoloji & Çizim Performansı:** `ConnectionLine` özel memo karşılaştırıcıları, fare etkileşimi, zoom/pan ve canvas rendering optimizasyonları yapıldı.
-- **Ping & PDU Animasyonu:** Ping paketi animasyonu ve hop-by-hop kontrol mekanizması iyileştirildi.
+- **Version 2.4 Sürümü:** Paket analizi panelindeki protokol sütununa her protokolün port/protokol numarası eklendi (ICMP (1), TCP (6), UDP (17), ARP (0x0806), vb.).
 - **Pencere & Panel İyileştirmeleri:** Cihaz pencereleri, PCPanel, Toolbar ve başlık renk geçişleri modernize edildi; bellek sızıntıları giderildi.
-- **Güvenli Yerel Depolama (XOR+Base64):** `localStorage` verileri şifrelendi, XSS filtreleme ve karakter limitleri entegre edildi.
+
  
 ## Stats / İstatistikler
 
