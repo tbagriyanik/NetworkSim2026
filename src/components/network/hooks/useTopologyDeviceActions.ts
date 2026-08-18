@@ -162,6 +162,9 @@ export function useTopologyDeviceActions({
     window.dispatchEvent(new CustomEvent('stp-recalculation-needed', {
       detail: { topologyDevices: devices, topologyConnections: updatedConnections }
     }));
+    window.dispatchEvent(new CustomEvent('topology-connection-power-changed', {
+      detail: { connectionId: connId, active: nextActive }
+    }));
   }, [saveToHistory, setConnections, connections, devices]);
 
   // Delete connection

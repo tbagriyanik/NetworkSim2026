@@ -54,6 +54,10 @@ export function usePingAnimation({
       const current = queue.shift() as { deviceId: string; path: string[] };
 
       for (const conn of connections) {
+        // A powered-off cable is equivalent to a removed cable. This is
+        // essential for EtherChannel failover: skip the failed member so BFS
+        // can discover the remaining active member between the same switches.
+        if (conn.active === false) continue;
         if (conn.cableType !== 'straight' && conn.cableType !== 'crossover' && conn.cableType !== 'wireless' && conn.cableType !== 'serial') continue;
 
         let nextDeviceId: string | null = null;

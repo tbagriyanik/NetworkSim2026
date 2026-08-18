@@ -328,8 +328,11 @@ export function usePingSequence(deps: PingSequenceDeps) {
             setPingMode(false);
             return;
           }
-          const failedSegConn = latestConnectionsRef.current.find(c => (c.sourceDeviceId === fromId && c.targetDeviceId === toId) || (c.sourceDeviceId === toId && c.targetDeviceId === fromId));
-          if ((!failedSegConn || failedSegConn.active === false) && !isWirelessHop(fromId, toId)) {
+          const failedSegConn = latestConnectionsRef.current.find(c =>
+            ((c.sourceDeviceId === fromId && c.targetDeviceId === toId) ||
+              (c.sourceDeviceId === toId && c.targetDeviceId === fromId)) && c.active !== false
+          );
+          if (!failedSegConn && !isWirelessHop(fromId, toId)) {
             cancelPingDueToInterruptionRef.current?.(isTR ? 'Bağlantı koptuğu için ping iptal edildi.' : 'Ping cancelled because a connection was lost.');
             return;
           }

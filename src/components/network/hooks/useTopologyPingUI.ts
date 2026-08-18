@@ -121,6 +121,21 @@ export function useTopologyPingUI({
     return () => window.removeEventListener('trigger-topology-toggle-power', handlePowerToggle as EventListener);
   }, [isTR, pingPathRef, cancelPingDueToInterruptionRef]);
 
+  // If one EtherChannel member is powered off during a ping, restart the
+  // sequence so path discovery can select the remaining active member.
+  useEffect(() => {
+    const handleConnectionPowerChange = (event: Event) => {
+      const { active } = (event as CustomEvent).detail as { active: boolean };
+      const path = pingPathRef.current;
+      if (active || path.length < 2) return;
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
+        detail: { sourceId: path[0], targetId: path[path.length - 1] }
+      })), 100);
+    };
+    window.addEventListener('topology-connection-power-changed', handleConnectionPowerChange);
+    return () => window.removeEventListener('topology-connection-power-changed', handleConnectionPowerChange);
+  }, [pingPathRef]);
+
   return {
     handlePingPause,
     handlePingPlay,
