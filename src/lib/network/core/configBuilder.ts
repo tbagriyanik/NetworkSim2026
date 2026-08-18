@@ -24,6 +24,34 @@ export function buildRunningConfig(state: SwitchState): string[] {
     const modelName = (state.version?.modelName || '').toLowerCase();
     const isRouterLike = state.deviceType === 'router' || modelName.includes('router');
 
+    // Keep the dump useful when it is copied out of the terminal: this is a
+    // compact, derived summary rather than another source of configuration.
+    // Only non-default values are listed so an untouched device stays quiet.
+    const changedSettings: string[] = [];
+    if (state.ipRouting) changedSettings.push('ip routing');
+    if (state.ipv6Enabled) changedSettings.push('IPv6 routing');
+    if (state.spanningTreeMode && state.spanningTreeMode !== 'pvst') {
+        changedSettings.push(`STP ${state.spanningTreeMode}`);
+    }
+    if (state.autoSummary === false) changedSettings.push('no auto-summary');
+    if (Object.values(state.vlans || {}).some(vlan => vlan.id >= 2)) {
+        changedSettings.push(`${Object.values(state.vlans || {}).filter(vlan => vlan.id >= 2).length} VLAN`);
+    }
+    const configuredPorts = Object.values(state.ports || {}).filter(port =>
+        Boolean(port.ipAddress || port.mode === 'trunk' || port.mode === 'routed' || port.shutdown || port.description)
+    ).length;
+    if (configuredPorts > 0) changedSettings.push(`${configuredPorts} port configuration(s)`);
+
+    lines.push('! Topology summary');
+    lines.push(`! Device: ${state.hostname} (${state.deviceType})`);
+    lines.push(`! Interfaces: ${Object.keys(state.ports || {}).length}`);
+    if (changedSettings.length > 0) {
+        lines.push(`! Changed settings: ${changedSettings.join(', ')}`);
+    } else {
+        lines.push('! Changed settings: none');
+    }
+    lines.push('!');
+
     // Header
     lines.push('!');
     lines.push(`! Last configuration change at ${TIMESTAMP}`);

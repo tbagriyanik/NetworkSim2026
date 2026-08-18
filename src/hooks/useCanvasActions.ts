@@ -4,6 +4,26 @@ import { generateRandomLinkLocalIpv4, generateRandomLinkLocalIpv6 } from '@/lib/
 import { getDeviceWidth, getDeviceHeight } from '../components/network/networkTopology.helpers';
 import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts } from '../components/network/networkTopology.portGenerators';
 import { generateUniqueMacAddress } from '@/lib/utils';
+import { buildRunningConfig } from '@/lib/network/core/configBuilder';
+import type { SwitchState } from '@/lib/network/types';
+
+function getSummaryCliCommands(state: SwitchState): string[] {
+  const config = state.runningConfig?.length > 0 ? state.runningConfig : buildRunningConfig(state);
+  const ignoredLines = /^(?:!|version\s|no service pad$|service timestamps\b|! base mac-address\b)/i;
+  const sensitiveLines = /^(?:enable secret|enable password|username\s+\S+\s+.*\bsecret\b|\s+(?:password|secret)\b)/i;
+  const meaningfulLines = config.filter((line) => {
+    const command = line.trim();
+    return command.length > 0 && !ignoredLines.test(command) && !sensitiveLines.test(command);
+  });
+
+  return meaningfulLines.filter((line, index, lines) => {
+    const command = line.trim();
+    if (!/^interface\s/i.test(command)) return true;
+
+    const nextCommand = lines[index + 1]?.trim() || '';
+    return nextCommand.length > 0 && !/^interface\s/i.test(nextCommand);
+  });
+}
 
 export interface UseCanvasActionsProps {
   devices: CanvasDevice[];
@@ -191,7 +211,7 @@ export function useCanvasActions({
             ? { enabled: false, ssid: 'Network-AP', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
             : undefined,
     };
-    
+
     setDevices((prev) => [...prev, newDevice]);
     setSelectedDeviceIds([newDevice.id]);
     onDeviceSelect(resolvedType, newDevice.id, newDevice.switchModel, newDevice.name, true, newDevice);
@@ -324,6 +344,12 @@ export function useCanvasActions({
           summaryText += `  GW: ${d.gateway}\n`;
         }
         summaryText += `  MAC: ${d.macAddress}\n`;
+        const deviceState = deviceStates?.get(d.id) as SwitchState | undefined;
+        const cliCommands = deviceState ? getSummaryCliCommands(deviceState) : [];
+        if (cliCommands.length > 0) {
+          summaryText += isTr ? '  CLI AYARLARI:\n' : '  CLI CONFIGURATION:\n';
+          summaryText += cliCommands.map((command) => `    ${command}`).join('\n') + '\n';
+        }
         summaryText += '------------------------\n';
       });
     }
