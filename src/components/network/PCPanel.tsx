@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { TerminalOutput } from './Terminal';
 import type { CanvasDevice, CanvasConnection } from './networkTopology.types';
-import { checkConnectivity, getWirelessSignalStrength, getDeviceWifiConfig } from '@/lib/network/connectivity';
+import { checkConnectivity, getWirelessSignalStrength, getDeviceWifiConfig, getApActiveSsids } from '@/lib/network/connectivity';
 import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { Laptop, Terminal as TerminalIcon, Globe, Settings, Wifi, Radio } from 'lucide-react';
@@ -572,112 +572,35 @@ export function PCPanel({
   const [iotKind, setIotKind] = useState<'cooler' | 'lamp' | 'heater' | 'sensor'>('sensor');
   const [iotCollaborationEnabled, setIotCollaborationEnabled] = useState(false);
   const [iotDataStore, setIotDataStore] = useState('');
-
-  // Scan for available APs in the network topology dynamically - returns one entry per AP (allows duplicates)
+  // Scan for available APs and SSIDs in the network topology dynamically
   const availableSSIDs = useMemo(() => {
     const results: { ssid: string; deviceId: string; deviceName: string; channel?: string }[] = [];
-    const addedSSIDs = new Set<string>();
+    const addedKeys = new Set<string>();
+    const safeStates = deviceStates ? ensureDeviceStatesMap(deviceStates) : undefined;
 
-    // First check deviceStates (router/switch/wlc runtime state) - only AP mode
-    if (deviceStates) {
-      ensureDeviceStatesMap(deviceStates).forEach((state, stateId) => {
-        if (stateId === deviceId) return; // skip self
-        const stateDevice = topologyDevices.find(d => d.id === stateId);
-        // Only router/switch/wlc can be AP, not PC
-        if (!stateDevice || (stateDevice.type !== 'router' && stateDevice.type !== 'switchL2' && stateDevice.type !== 'switchL3' && stateDevice.type !== 'wlc')) return;
+    topologyDevices.forEach((device) => {
+      if (device.id === deviceId) return; // skip self
+      if (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3' && device.type !== 'wlc') return;
 
-        // WLC broadcasts SSIDs through wlcWlans state
-        if (stateDevice.type === 'wlc' && state.wlcWlans) {
-          Object.values(state.wlcWlans).forEach((wlan) => {
-            if (wlan.status === 'enabled' && wlan.ssid) {
-              const ssidKey = wlan.ssid;
-              if (!addedSSIDs.has(ssidKey)) {
-                addedSSIDs.add(ssidKey);
-                results.push({
-                  ssid: wlan.ssid,
-                  deviceId: stateId,
-                  deviceName: stateDevice?.name || stateId,
-                  channel: '2.4GHz',
-                });
-              }
-            }
+      const state = safeStates?.get(device.id);
+      const apWifi = getDeviceWifiConfig(device, safeStates);
+      if (!apWifi || !apWifi.enabled || (apWifi.mode && apWifi.mode !== 'ap')) return;
+
+      const activeSsids = getApActiveSsids(apWifi, state);
+      activeSsids.forEach(item => {
+        const uniqueKey = `${device.id}:${item.ssid}`;
+        if (!addedKeys.has(uniqueKey)) {
+          addedKeys.add(uniqueKey);
+          results.push({
+            ssid: item.ssid,
+            deviceId: device.id,
+            deviceName: device.name,
+            channel: apWifi.channel || '2.4GHz',
           });
-          return;
-        }
-
-        const wlanPort = state.ports['wlan0'];
-        const wifiMode = (wlanPort?.wifi?.mode || '').toLowerCase();
-        // Only show devices in AP mode
-        if (wlanPort && !wlanPort.shutdown && wifiMode === 'ap' && wlanPort.wifi?.ssid) {
-          const ssidKey = wlanPort.wifi.ssid;
-          if (!addedSSIDs.has(ssidKey)) {
-            addedSSIDs.add(ssidKey);
-            results.push({
-              ssid: wlanPort.wifi.ssid,
-              deviceId: stateId,
-              deviceName: stateDevice?.name || stateId,
-              channel: wlanPort.wifi.channel,
-            });
-          }
         }
       });
-    }
-    // Also check topologyDevices for web-admin saved WiFi settings (router/switch only)
-    if (results.length === 0) {
-      topologyDevices.forEach((device) => {
-        if (device.id === deviceId) return;
-        // Only router/switch can be AP, not PC
-        if (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3' && device.type !== 'wlc') return;
+    });
 
-        // WLC broadcasts SSIDs through wlcWlans state
-        if (device.type === 'wlc') {
-          const wlcState = deviceStates ? ensureDeviceStatesMap(deviceStates).get(device.id) : undefined;
-          const wlans = wlcState?.wlcWlans || {};
-          Object.values(wlans).forEach((wlan) => {
-            if (wlan.status === 'enabled' && wlan.ssid) {
-              const ssidKey = wlan.ssid;
-              if (!addedSSIDs.has(ssidKey)) {
-                addedSSIDs.add(ssidKey);
-                results.push({
-                  ssid: wlan.ssid,
-                  deviceId: device.id,
-                  deviceName: device.name,
-                  channel: '2.4GHz',
-                });
-              }
-            }
-          });
-          if (device.wifi?.enabled && device.wifi.ssid) {
-            const ssidKey = device.wifi.ssid;
-            if (!addedSSIDs.has(ssidKey)) {
-              addedSSIDs.add(ssidKey);
-              results.push({
-                ssid: device.wifi.ssid,
-                deviceId: device.id,
-                deviceName: device.name,
-                channel: device.wifi.channel || '2.4GHz',
-              });
-            }
-          }
-          return;
-        }
-
-        const wifi = device.wifi;
-        // Check if WiFi is enabled and in AP mode
-        if (wifi?.enabled && wifi.mode === 'ap' && wifi.ssid) {
-          const ssidKey = wifi.ssid;
-          if (!addedSSIDs.has(ssidKey)) {
-            addedSSIDs.add(ssidKey);
-            results.push({
-              ssid: wifi.ssid,
-              deviceId: device.id,
-              deviceName: device.name,
-              channel: wifi.channel,
-            });
-          }
-        }
-      });
-    }
     return results;
   }, [deviceStates, deviceId, topologyDevices]);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -1323,22 +1246,59 @@ export function PCPanel({
     }, 0);
   }, [language]);
 
-  // Get connected IoT devices for a router/AP
+  // Get connected wireless & IoT devices for a router/AP
   const getConnectedIotDevices = useCallback((routerId: string) => {
     const routerDevice = topologyDevices.find(d => d.id === routerId);
     if (!routerDevice) return [];
 
-    const routerSsid = routerDevice.wifi?.ssid || '';
-    const routerSecurity = routerDevice.wifi?.security || 'open';
+    const routerSsids = new Map<string, { security: string; password?: string }>();
+    if (routerDevice.wifi?.ssid) {
+      routerSsids.set(routerDevice.wifi.ssid.toLowerCase(), {
+        security: routerDevice.wifi.security || 'open',
+        password: routerDevice.wifi.password,
+      });
+    }
+    if (Array.isArray(routerDevice.wifi?.ssids)) {
+      for (const s of routerDevice.wifi.ssids) {
+        if (s.enabled && s.ssid) {
+          routerSsids.set(s.ssid.toLowerCase(), {
+            security: s.security || 'open',
+            password: s.password,
+          });
+        }
+      }
+    }
+    const routerState = deviceStates?.get(routerId);
+    if (routerState?.wlcWlans) {
+      for (const wlan of Object.values(routerState.wlcWlans)) {
+        if (wlan.status === 'enabled' && wlan.ssid) {
+          routerSsids.set(wlan.ssid.toLowerCase(), {
+            security: wlan.security || 'open',
+            password: wlan.password,
+          });
+        }
+      }
+    }
 
     return topologyDevices
       .filter(d => {
-        if (d.type !== 'iot') return false;
+        if (d.id === routerId) return false;
+        if (d.type !== 'iot' && d.type !== 'pc') return false;
 
         let isWifiConnected = false;
-        if (routerSsid) {
-          isWifiConnected = d.wifi?.bssid === routerId ||
-            (d.wifi?.ssid === routerSsid && d.wifi?.security === routerSecurity);
+        if (d.wifi?.enabled !== false && d.wifi?.ssid) {
+          const clientSsidLower = d.wifi.ssid.toLowerCase();
+          const matchedSsid = routerSsids.get(clientSsidLower);
+          if (matchedSsid) {
+            const clientSec = (d.wifi.security || 'open').toLowerCase();
+            const apSec = (matchedSsid.security || 'open').toLowerCase();
+            if (clientSec === apSec && (apSec === 'open' || matchedSsid.password === d.wifi.password)) {
+              isWifiConnected = true;
+            }
+          }
+        }
+        if (d.wifi?.bssid === routerId) {
+          isWifiConnected = true;
         }
 
         const isWiredConnected = topologyConnections.some(c =>
@@ -1390,16 +1350,20 @@ export function PCPanel({
           }, 0);
         }
 
+        const macAddr = d.macAddress || d.ports?.[0]?.macAddress || `00:11:22:${d.id.slice(-2)}:33:44`;
+
         return {
           id: d.id,
           name: d.name,
-          sensorType: d.iot?.sensorType || 'temperature',
-          connected: !!(isWiredConnected || (d.status === 'online' && d.wifi?.enabled)),
-          ip: deviceIp,
+          sensorType: (d.iot?.sensorType || (d.type === 'pc' ? 'Laptop/PC' : d.type)) as 'temperature' | 'sound' | 'motion' | 'humidity' | 'light',
+          connected: !!(isWiredConnected || (d.status === 'online' && d.wifi?.enabled !== false)),
+          ip: deviceIp || d.ip,
+          mac: macAddr,
+          ssid: d.wifi?.ssid || routerDevice.wifi?.ssid || 'WiFi',
           isWired: isWiredConnected,
         };
       });
-  }, [topologyDevices, topologyConnections]);
+  }, [topologyDevices, topologyConnections, deviceStates]);
 
   // Get available IoT devices that can be connected (not connected to this AP)
   const getAvailableIotDevices = useCallback((routerId: string) => {

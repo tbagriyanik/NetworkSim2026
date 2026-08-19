@@ -6,7 +6,7 @@ import { learnMacAddress, findMacPort } from './macLearning';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { recalculateStp } from './stp';
 import { normalizePortId } from './initialState';
-import { getDeviceWifiConfig, getWirelessSignalStrength, getWirelessDistance, buildImplicitWirelessConnections, type DeviceWifiConfig } from './wireless';
+import { getDeviceWifiConfig, getWirelessSignalStrength, getWirelessDistance, buildImplicitWirelessConnections, getApActiveSsids, type DeviceWifiConfig } from './wireless';
 import { isExternalDomain, resolveHostname } from './dns';
 
 export {
@@ -14,6 +14,7 @@ export {
   getWirelessSignalStrength,
   getWirelessDistance,
   buildImplicitWirelessConnections,
+  getApActiveSsids,
   type DeviceWifiConfig,
   isExternalDomain,
   resolveHostname

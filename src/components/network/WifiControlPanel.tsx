@@ -125,10 +125,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .map(opt => `<option value="${opt.value}" ${wifi.mode === opt.value ? 'selected' : ''}>${opt.label}</option>`)
     .join('');
 
+  const isWepMode = wifi.security === 'wep';
   const passwordField = `
     <div class="form-group">
       <label for="wifi-password">${isTurkish ? 'Kablosuz Ağ Parolası' : 'Wireless Network Password'}</label>
-      <input type="password" id="wifi-password" name="password" value="${safeWifiPassword}" placeholder="${isTurkish ? 'En az 8 karakter girin' : 'Enter at least 8 characters'}" minlength="8" aria-describedby="wifi-password-hint">
+      <input type="password" id="wifi-password" name="password" value="${safeWifiPassword}" placeholder="${isWepMode ? (isTurkish ? 'WEP anahtarı girin' : 'Enter WEP key') : (isTurkish ? 'En az 8 karakter girin' : 'Enter at least 8 characters')}" minlength="${isWepMode ? 5 : 8}" aria-describedby="wifi-password-hint">
       <span class="hint" id="wifi-password-hint">${isTurkish ? 'WPA2/WPA3 güvenliği için güçlü bir parola kullanın' : 'Use a strong password for WPA2/WPA3 security'}</span>
     </div>
   `;
@@ -404,7 +405,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       </form>
 
       <!-- Multi-SSID Section -->
-      <h2 class="panel-title" style="margin-top:32px;">🌐 ${isTurkish ? 'Çoklu SSID & Misafir Ağ Profilleri' : 'Multi-SSID & Guest Network Profiles'}</h2>
+      <h2 class="panel-title" style="margin-top:32px;">🌐 ${isTurkish ? 'Çoklu SSID &amp; Misafir Ağ Profilleri' : 'Multi-SSID &amp; Guest Network Profiles'}</h2>
       <p style="color:var(--color-secondary-500);margin-bottom:16px;font-size:13px;">
         ${isTurkish ? 'Erişim noktası üzerinde ek kablosuz yayınlar (Misafir Ağı, IoT Ağı, 5G Yüksek Hız) oluşturun ve yönetin.' : 'Create and manage additional wireless broadcasts (Guest Network, IoT Network, 5G High Speed) on this Access Point.'}
       </p>
@@ -637,7 +638,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             <span id="mac-list-count" class="status-badge" style="background:var(--color-secondary-700);">${(wifi.macFilterList || []).length} ${isTurkish ? 'adres' : 'items'}</span>
           </div>
 
-          <div id="mac-filter-list-container" style="max-height:200px;overflow-y:auto;background:var(--color-secondary-100);padding:10px;border-radius:8px;border:1px solid var(--color-secondary-200);"></div>
+          <div id="mac-filter-list-container" style="max-height:200px;overflow-y:auto;background:var(--color-secondary-100);padding:10px;border-radius:8px;border:1px solid var(--color-secondary-200);">${(wifi.macFilterList || []).map(mac => `<div class="mac-filter-entry">${mac}</div>`).join('')}</div>
         </div>
       </div>
 
@@ -938,6 +939,17 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     // --- Connected Wireless Clients Table Handler ---
     window.renderConnectedWirelessClients = function() {
       var container = document.getElementById('connected-wireless-clients-container');
+      var countEl = document.getElementById('status-connected-count');
+      var totalBadge = document.getElementById('status-total-badge');
+
+      var totalCount = connectedClientsData ? connectedClientsData.length : 0;
+      if (countEl) {
+        countEl.innerHTML = totalCount + ' ' + (isTurkish ? 'cihaz bağlı' : (totalCount === 1 ? 'device connected' : 'devices connected'));
+      }
+      if (totalBadge) {
+        totalBadge.innerHTML = totalCount + ' ' + (isTurkish ? 'Toplam' : 'Total');
+      }
+
       if (!container) return;
 
       if (!connectedClientsData || connectedClientsData.length === 0) {
@@ -949,9 +961,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       }
 
       container.innerHTML = connectedClientsData.map(function(client) {
-        var icon = client.isWired ? '🔌' : (client.sensorType ? '🛜' : '💻');
+        var isSensor = client.sensorType === 'temperature' || client.sensorType === 'humidity' || client.sensorType === 'motion' || client.sensorType === 'light' || client.sensorType === 'sound';
+        var icon = client.isWired ? '🔌' : (isSensor ? '🛜' : '💻');
         var ipDisplay = client.ip || (isTurkish ? 'Dinamik / DHCP' : 'Dynamic / DHCP');
         var macDisplay = client.mac || 'Auto';
+        var clientSsid = client.ssid || ${jsSsid} || 'WiFi';
         var jsId = JSON.stringify(client.id || '').replace(/"/g, '&quot;');
 
         return '<div class="client-card">' +
@@ -960,7 +974,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             '<div class="client-details">' +
               '<div class="client-title">' +
                 '<span>' + client.name + '</span>' +
-                '<span class="badge badge-primary">SSID: ' + (wifi.ssid || 'WiFi') + '</span>' +
+                '<span class="badge badge-primary">SSID: ' + clientSsid + '</span>' +
               '</div>' +
               '<div class="client-sub">IP: ' + ipDisplay + ' · MAC: ' + macDisplay + '</div>' +
             '</div>' +
@@ -968,8 +982,8 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           '<div class="client-badges">' +
             '<span class="badge badge-success">📶 -45 dBm (%90)</span>' +
             '<span class="badge badge-success">' + (isTurkish ? '● Bağlı' : '● Connected') + '</span>' +
-            '<button type="button" class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="renewIotDevice(' + jsId + ')">🔄</button>' +
-            '<button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="disconnectIotDevice(' + jsId + ')">🔌</button>' +
+            '<button type="button" class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="renewIotDevice(' + jsId + ')" title="' + (isTurkish ? 'IP Yenile' : 'Renew IP') + '">🔄</button>' +
+            '<button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="disconnectIotDevice(' + jsId + ')" title="' + (isTurkish ? 'Bağlantıyı Kes' : 'Disconnect') + '">🔌</button>' +
           '</div>' +
         '</div>';
       }).join('');

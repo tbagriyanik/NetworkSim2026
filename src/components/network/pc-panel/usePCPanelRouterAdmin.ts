@@ -11,10 +11,12 @@ import { logger } from '@/lib/logger';
 interface ConnectedIoTDevice {
   id: string;
   name: string;
-  sensorType: 'temperature' | 'sound' | 'motion' | 'humidity' | 'light';
+  sensorType: 'temperature' | 'sound' | 'motion' | 'humidity' | 'light' | string;
   connected: boolean;
   ip: string;
   isWired: boolean;
+  mac?: string;
+  ssid?: string;
 }
 
 interface AvailableIoTDevice {
