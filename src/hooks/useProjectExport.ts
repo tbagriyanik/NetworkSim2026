@@ -6,6 +6,7 @@ import { TerminalOutput } from '@/components/network/Terminal';
 import { PCOutputLine } from '@/types/pageTypes';
 import type { ExamProject } from '@/lib/network/examMode';
 import type { HistoryEntry } from '@/hooks/useHistory';
+import { encodeHistoryForFile } from '@/lib/network/historySerialization';
 
 interface UseProjectExportProps {
   deviceStates: Map<string, SwitchState>;
@@ -60,6 +61,7 @@ export function useProjectExport({
       topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
     );
     const iotDeviceIds = new Set(topologyDevices.filter(d => d.type === 'iot').map(d => d.id));
+    const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
     const adjustedDeviceOutputs = new Map(deviceOutputs);
     const adjustedPcOutputs = new Map(pcOutputs);
     iotDeviceIds.forEach(iotId => {
@@ -73,23 +75,9 @@ export function useProjectExport({
 
     const syncedDeviceStates = new Map(deviceStates);
     
-    // Serialize history items to include in export
-    const serializedHistoryItems = historyItems.map(item => {
-      // Create a plain object representation of the state for serialization
-      const serializedState = {
-        ...item.state,
-        deviceStates: Array.from(item.state.deviceStates.entries()),
-        deviceOutputs: Array.from(item.state.deviceOutputs.entries()),
-        pcOutputs: Array.from(item.state.pcOutputs.entries()),
-        pcHistories: Array.from(item.state.pcHistories.entries()),
-      };
-      return {
-        ...item,
-        state: serializedState
-      };
-    });
+    // Serialize history as compact deltas (excluding PC/IoT switch states and large derived fields)
+    const serializedHistory = encodeHistoryForFile(historyItems, historyIndex, excludedDeviceIds, topologyDeviceIds);
 
-    const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
     topologyDevices.forEach(device => {
       const state = syncedDeviceStates.get(device.id);
       if (state) {
@@ -132,17 +120,24 @@ export function useProjectExport({
         .filter(([id]) => id && id.trim() !== '')
         .map(([id, history]) => ({ id, history: history.slice(-50) })),
       topology: {
-        devices: topologyDevices.filter(d => d.id && d.id.trim() !== ''),
+        devices: topologyDevices
+          .filter(d => d.id && d.id.trim() !== '')
+          .map(d => {
+            if (d.type === 'pc' || d.type === 'iot') {
+              return {
+                ...d,
+                ports: d.ports.filter(p => p.id === 'eth0' || p.id === 'com1' || p.id === 'wlan0')
+              };
+            }
+            return d;
+          }),
         connections: topologyConnections,
         notes: topologyNotes
       },
       cableInfo: topologyDevices.length > 0 && topologyConnections.length > 0 ? cableInfo : { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
       activeDeviceId: topologyDevices.find(d => d.id === activeDeviceId)?.id || '',
       activeDeviceType,
-      history: {
-        items: serializedHistoryItems,
-        index: historyIndex
-      },
+      history: serializedHistory,
       ...(activeExam ? {
         examData: {
           id: activeExam.id,

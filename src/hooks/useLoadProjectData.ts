@@ -6,6 +6,7 @@ import type { TerminalOutput } from '@/components/network/Terminal';
 import { BOOT_PROGRESS_MARKER } from '@/components/network/Terminal';
 import type { PCOutputLine } from '@/types/pageTypes';
 import type { ProjectState, HistoryEntry, SerializedHistoryEntry } from '@/hooks/useHistory';
+import { decodeHistoryFile } from '@/lib/network/historySerialization';
 import type { ExamProject } from '@/lib/network/examMode';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 import { useToast } from '@/hooks/use-toast';
@@ -383,20 +384,15 @@ export function useLoadProjectData({
       };
 
       if (data.history && typeof data.history === 'object') {
-        const hData = data.history as { items: SerializedHistoryEntry[]; index?: number };
-        if (Array.isArray(hData.items) && hData.items.length > 0) {
+        const hData = data.history as { format?: string; items?: SerializedHistoryEntry[]; index?: number };
+        if (hData.items && hData.items.length > 0 || hData.format) {
           try {
-            const deserializedItems = hData.items.map((item: SerializedHistoryEntry) => ({
-              ...item,
-              state: {
-                ...item.state,
-                deviceStates: new Map(item.state.deviceStates || []),
-                deviceOutputs: new Map(item.state.deviceOutputs || []),
-                pcOutputs: new Map(item.state.pcOutputs || []),
-                pcHistories: new Map(item.state.pcHistories || []),
-              }
-            }));
-            setTimeout(() => loadHistory(deserializedItems, typeof hData.index === 'number' ? hData.index : 0), 100);
+            const deserializedItems = decodeHistoryFile(hData);
+            if (deserializedItems) {
+              setTimeout(() => loadHistory(deserializedItems, typeof hData.index === 'number' ? hData.index : 0), 100);
+            } else {
+              setTimeout(() => resetHistory(newState), 100);
+            }
           } catch (e) {
             logger.warn('Could not deserialize history from project file', e);
             setTimeout(() => resetHistory(newState), 100);
