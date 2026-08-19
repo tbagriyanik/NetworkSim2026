@@ -70,6 +70,7 @@ import {
   cmdSpanningTreeBpduguard,
   cmdSpanningTreeBpduguardDisable,
   cmdSpanningTreeCost,
+  cmdNoSpanningTreeCost,
   cmdSpanningTreePriority,
   cmdNoSpanningTree,
   cmdChannelGroup,
@@ -187,8 +188,12 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   // CDP
   'cdp enable': cmdCdpEnable,
   // Spanning-tree extras
+  'spanning-tree bpduguard enable': cmdSpanningTreeBpduguard,
   'spanning-tree bpduguard disable': cmdSpanningTreeBpduguardDisable,
+  'no spanning-tree bpduguard': cmdSpanningTreeBpduguardDisable,
+  'no spanning-tree bpduguard enable': cmdSpanningTreeBpduguardDisable,
   'spanning-tree cost': cmdSpanningTreeCost,
+  'no spanning-tree cost': cmdNoSpanningTreeCost,
   'spanning-tree priority': cmdSpanningTreePriority,
   'ipv6 address': cmdIpv6Address,
   'ipv6 rip enable': cmdIpv6Rip,

@@ -137,5 +137,46 @@ describe('Executor & Network Utilities', () => {
       expect(result.success).toBe(true);
       expect(result.output).not.toContain('is not supported on this');
     });
+
+    it('should enable spanning-tree bpduguard enable on interface', () => {
+      const baseState = createInitialState();
+      const state = {
+        ...baseState,
+        switchModel: 'WS-C2960-24TT-L',
+        switchLayer: 'L2' as const,
+        deviceType: 'switchL2' as const,
+        currentMode: 'interface' as const,
+        currentInterface: 'FastEthernet0/1',
+      } as SwitchState;
+
+      const result = executeCommand(state, 'spanning-tree bpduguard enable');
+      expect(result.success).toBe(true);
+      expect(result.newState?.ports?.['FastEthernet0/1']?.bpduGuard).toBe(true);
+
+      const disableResult = executeCommand(state, 'no spanning-tree bpduguard enable');
+      expect(disableResult.success).toBe(true);
+      expect(disableResult.newState?.ports?.['FastEthernet0/1']?.bpduGuard).toBe(false);
+    });
+
+    it('should configure spanning-tree cost on interface and reset with no spanning-tree cost', () => {
+      const baseState = createInitialState();
+      const state = {
+        ...baseState,
+        id: 'SW1',
+        switchModel: 'WS-C2960-24TT-L',
+        switchLayer: 'L2' as const,
+        deviceType: 'switchL2' as const,
+        currentMode: 'interface' as const,
+        currentInterface: 'FastEthernet0/1',
+      } as SwitchState;
+
+      const setCostResult = executeCommand(state, 'spanning-tree cost 10');
+      expect(setCostResult.success).toBe(true);
+      expect(setCostResult.newState?.ports?.['FastEthernet0/1']?.stpCost).toBe(10);
+
+      const resetCostResult = executeCommand(state, 'no spanning-tree cost');
+      expect(resetCostResult.success).toBe(true);
+      expect(resetCostResult.newState?.ports?.['FastEthernet0/1']?.stpCost).toBeUndefined();
+    });
   });
 });

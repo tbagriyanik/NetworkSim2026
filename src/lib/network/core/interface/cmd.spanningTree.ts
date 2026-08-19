@@ -18,33 +18,39 @@ export function cmdSpanningTreePortfast(state: SwitchState, _input: string, _ctx
 /**
  * Spanning-Tree BPDU Guard
  */
-export function cmdSpanningTreeBpduguard(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return mutatePortAtInterface(state, (port) => {
-    const spanningTree = port.spanningTree ?? {};
-    return { ...port, spanningTree: { ...spanningTree, bpduguard: true } };
-  });
-}
-
-/**
- * IP Address - Assign IP to routed port or VLAN interface
- */
-export function cmdNoChannelGroup(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state) || !state.currentInterface) {
-    return { success: false, error: '% No interface selected' };
+export function cmdSpanningTreeBpduguard(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) {
+    return { success: false, error: iosModeError() };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
-    ...port,
-    channelGroup: undefined,
-    channelProtocol: undefined
-  }));
+  const match = input.match(/^spanning-tree\s+bpduguard(?:\s+(enable|disable))?$/i);
+  const isDisable = match && match[1]?.toLowerCase() === 'disable';
+  const enableState = !isDisable;
 
-  return { success: true, newState: { ports: newPorts } };
+  const updatePort = (port: Port) => {
+    const spanningTree = port.spanningTree ?? {};
+    return {
+      ...port,
+      bpduGuard: enableState,
+      spanningTree: { ...spanningTree, bpduguard: enableState }
+    };
+  };
+
+  if (state.selectedInterfaces?.length) {
+    return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  }
+
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {} as Port);
+  return {
+    success: true,
+    output: enableState ? 'BPDU guard enabled' : 'BPDU guard disabled',
+    newState: { ports: newPorts }
+  };
 }
 
-/**
- * No UDLD - Disable UDLD on interface
- */
 export function cmdNoSpanningTree(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
@@ -58,9 +64,6 @@ export function cmdNoSpanningTree(state: SwitchState, _input: string, _ctx: Comm
   return { success: true, newState: { ports: newPorts } };
 }
 
-/**
- * Debug - Enable debug
- */
 export function cmdChannelGroup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
@@ -87,15 +90,29 @@ export function cmdChannelGroup(state: SwitchState, input: string, _ctx: Command
   return { success: true, output: `Channel-group ${group} mode ${mode} configured`, newState: { ports: newPorts } };
 }
 
-/**
- * IP Helper-Address - Set DHCP relay address
- */
+export function cmdNoChannelGroup(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) {
+    return { success: false, error: '% No interface selected' };
+  }
+
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({
+    ...port,
+    channelGroup: undefined,
+    channelProtocol: undefined
+  }));
+
+  return { success: true, newState: { ports: newPorts } };
+}
+
 export function cmdSpanningTreeBpduguardDisable(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
 
-  const updatePort = (port: Port) => ({ ...port, bpduguard: false });
+  const updatePort = (port: Port) => {
+    const spanningTree = port.spanningTree ?? {};
+    return { ...port, bpduGuard: false, spanningTree: { ...spanningTree, bpduguard: false } };
+  };
 
   if (state.selectedInterfaces?.length) {
     return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
@@ -104,24 +121,25 @@ export function cmdSpanningTreeBpduguardDisable(state: SwitchState, _input: stri
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
 
   const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {} as Port);
   return { success: true, output: 'BPDU guard disabled', newState: { ports: newPorts } };
 }
 
-/**
- * Spanning-Tree Cost - Set STP path cost
- */
 export function cmdSpanningTreeCost(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
   }
 
-  const match = input.match(/^spanning-tree\s+cost\s+(\d+)$/i);
+  const match = input.match(/^spanning-tree\s+(?:vlan\s+\d+\s+)?cost\s+(\d+)$/i);
   if (!match) {
     return { success: false, error: '% Invalid spanning-tree cost command. Use: spanning-tree cost <1-200000000>' };
   }
 
   const cost = parseInt(match[1]);
+  if (cost < 1 || cost > 200000000) {
+    return { success: false, error: '% Cost must be between 1 and 200000000' };
+  }
+
   const updatePort = (port: Port) => ({ ...port, stpCost: cost });
 
   let newPorts;
@@ -130,25 +148,75 @@ export function cmdSpanningTreeCost(state: SwitchState, input: string, ctx: Comm
   } else {
     if (!state.currentInterface) return { success: false, error: '% No interface selected' };
     newPorts = { ...state.ports };
-    newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+    newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {} as Port);
   }
 
-  const updatedCurrentState = { ...state, ports: newPorts };
-  const pvst = getPvstUpdate(updatedCurrentState, ctx);
-  if ('error' in pvst) return pvst.error;
-  const { allUpdatedStates, myUpdatedState } = pvst;
+  const sourceDevId = ctx?.sourceDeviceId;
+  if (sourceDevId) {
+    const effectiveCtx = { ...ctx, sourceDeviceId: sourceDevId };
+    const updatedCurrentState = { ...state, ports: newPorts };
+    const pvst = getPvstUpdate(updatedCurrentState, effectiveCtx);
+    if (!('error' in pvst)) {
+      const { allUpdatedStates, myUpdatedState } = pvst;
+      return {
+        success: true,
+        output: `STP cost set to ${cost}`,
+        newState: myUpdatedState || ({ ports: newPorts } as Partial<SwitchState>),
+        deviceStates: allUpdatedStates
+      };
+    }
+  }
 
   return {
     success: true,
     output: `STP cost set to ${cost}`,
-    newState: myUpdatedState || ({ ports: newPorts } as Partial<SwitchState>),
-    deviceStates: allUpdatedStates
+    newState: { ports: newPorts }
   };
 }
 
-/**
- * IPv6 Address
- */
+export function cmdNoSpanningTreeCost(state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) {
+    return { success: false, error: iosModeError() };
+  }
+
+  const updatePort = (port: Port) => {
+    const nextPort = { ...port };
+    delete nextPort.stpCost;
+    return nextPort;
+  };
+
+  let newPorts;
+  if (state.selectedInterfaces?.length) {
+    newPorts = applyToSelectedPorts(state, updatePort);
+  } else {
+    if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+    newPorts = { ...state.ports };
+    newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {} as Port);
+  }
+
+  const sourceDevId = ctx?.sourceDeviceId;
+  if (sourceDevId) {
+    const effectiveCtx = { ...ctx, sourceDeviceId: sourceDevId };
+    const updatedCurrentState = { ...state, ports: newPorts };
+    const pvst = getPvstUpdate(updatedCurrentState, effectiveCtx);
+    if (!('error' in pvst)) {
+      const { allUpdatedStates, myUpdatedState } = pvst;
+      return {
+        success: true,
+        output: 'STP cost reset to default',
+        newState: myUpdatedState || ({ ports: newPorts } as Partial<SwitchState>),
+        deviceStates: allUpdatedStates
+      };
+    }
+  }
+
+  return {
+    success: true,
+    output: 'STP cost reset to default',
+    newState: { ports: newPorts }
+  };
+}
+
 export function cmdSpanningTreePriority(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
     return { success: false, error: iosModeError() };
@@ -173,12 +241,6 @@ export function cmdSpanningTreePriority(state: SwitchState, input: string, _ctx:
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
 
   const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {} as Port);
   return { success: true, output: `STP port priority set to ${priority}`, newState: { ports: newPorts } };
 }
-
-
-
-/**
- * Switchport Trunk Encapsulation
- */

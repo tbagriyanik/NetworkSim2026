@@ -1,4 +1,4 @@
-﻿// Kaydetme, do, SSH, debug ve diger komutlar
+// Kaydetme, do, SSH, debug ve diger komutlar
 import type { CommandPattern } from './commandPatterns.types';
 
 export const systemPatterns: Record<string, CommandPattern> = {
@@ -428,12 +428,36 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
 
+  // Spanning-tree bpduguard enable
+  'spanning-tree bpduguard enable': {
+    pattern: /^spanning-tree\s+bpduguard\s+enable$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+
+  // No Spanning-tree bpduguard
+  'no spanning-tree bpduguard': {
+    pattern: /^no\s+spanning-tree\s+bpduguard(\s+enable)?$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+
   // Spanning-tree cost
   'spanning-tree cost': {
-    pattern: /^spanning-tree\s+cost\s+\d+$/i,
+    pattern: /^spanning-tree\s+(?:vlan\s+\d+\s+)?cost\s+\d+$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 1,
-    maxArgs: 1
+    maxArgs: 3
+  },
+
+  // No Spanning-tree cost
+  'no spanning-tree cost': {
+    pattern: /^no\s+spanning-tree\s+(?:vlan\s+\d+\s+)?cost$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 2
   },
 
   // Spanning-tree priority (port priority)
