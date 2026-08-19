@@ -156,7 +156,8 @@ function createInitialFirewallPorts(baseMac?: string): Record<string, Port> {
   }
 
   // Management 1/1
-  const mgmtMac = formatMacFromNumber(parseInt(firewallBaseMac.replace(/\./g, ''), 16) + 8);
+  // Gi1/0/7 uses base + 8, so management must use the next unique address.
+  const mgmtMac = formatMacFromNumber(parseInt(firewallBaseMac.replace(/\./g, ''), 16) + 9);
   ports['mgmt1/1'] = {
     id: 'mgmt1/1',
     name: 'Management',
@@ -331,7 +332,8 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
   for (let i = 0; i <= 3; i++) {
     const portId = `gi0/${i}`;
     // Generate per-port MAC address by incrementing from base MAC
-    const portMacNumber = parseInt(routerBaseMac.replace(/\./g, ''), 16) + i;
+    // Keep every interface MAC distinct from the router base MAC.
+    const portMacNumber = parseInt(routerBaseMac.replace(/\./g, ''), 16) + i + 1;
     const portMac = formatMacFromNumber(portMacNumber);
 
     ports[portId] = {
@@ -379,7 +381,7 @@ function createInitialRouterPorts(baseMac?: string): Record<string, Port> {
   }
 
   // WLAN interface
-  const wlanMac = formatMacFromNumber(parseInt(routerBaseMac.replace(/\./g, ''), 16) + 10);
+  const wlanMac = formatMacFromNumber(parseInt(routerBaseMac.replace(/\./g, ''), 16) + 11);
   ports['wlan0'] = {
     id: 'wlan0',
     name: 'WLAN',
@@ -544,7 +546,7 @@ function createInitialWLCPorts(baseMac?: string): Record<string, Port> {
   // GigabitEthernet 0/0 - 0/3 (WLC management + AP connectivity)
   for (let i = 0; i <= 3; i++) {
     const portId = `gi0/${i}`;
-    const portMacNumber = parseInt(wlcBaseMac.replace(/\./g, ''), 16) + i;
+    const portMacNumber = parseInt(wlcBaseMac.replace(/\./g, ''), 16) + i + 1;
     const portMac = formatMacFromNumber(portMacNumber);
     ports[portId] = {
       id: portId,
@@ -574,7 +576,7 @@ function createInitialWLCPorts(baseMac?: string): Record<string, Port> {
     speed: 'auto',
     shutdown: false,
     type: 'fastethernet',
-    macAddress: formatMacFromNumber(parseInt(wlcBaseMac.replace(/\./g, ''), 16) + 4),
+    macAddress: formatMacFromNumber(parseInt(wlcBaseMac.replace(/\./g, ''), 16) + 5),
   };
 
   return ports;

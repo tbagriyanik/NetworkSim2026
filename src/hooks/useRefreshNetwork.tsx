@@ -386,9 +386,12 @@ export function useRefreshNetwork({
           rememberIdentity(`${deviceName}:${String(port?.id || '')}`, port?.ipAddress, port?.macAddress, port?.ipv6Address);
         });
       });
-      duplicateIpCount = Array.from(ipOwners.values()).filter((owners) => owners.length > 1).length;
-      duplicateMacCount = Array.from(macOwners.values()).filter((owners) => owners.length > 1).length;
-      duplicateIpv6Count = Array.from(ipv6Owners.values()).filter((owners) => owners.length > 1).length;
+      // A device-level address and that same device's interface address are
+      // one identity, not a conflict. Only report duplicates across devices.
+      const hasCrossDeviceConflict = (owners: string[]) => new Set(owners.map((owner) => owner.split(':')[0])).size > 1;
+      duplicateIpCount = Array.from(ipOwners.values()).filter(hasCrossDeviceConflict).length;
+      duplicateMacCount = Array.from(macOwners.values()).filter(hasCrossDeviceConflict).length;
+      duplicateIpv6Count = Array.from(ipv6Owners.values()).filter(hasCrossDeviceConflict).length;
 
       iotProcessedDevices.forEach((device) => {
         if ((device.type !== 'pc' && device.type !== 'iot') || !device.gateway || !isValidIpv4(device.ip) || !isValidIpv4(device.subnet || '')) return;
@@ -414,10 +417,14 @@ export function useRefreshNetwork({
         if (connection.active === false || aDown || bDown) disconnectedLinkCount++;
       });
 
-      const graph = new Map<string, string[]>();
+      // Treat parallel physical links (for example the two members of an
+      // EtherChannel) as one logical edge for loop detection.
+      const graph = new Map<string, Set<string>>();
       const addEdge = (a: string, b: string) => {
-        graph.set(a, [...(graph.get(a) || []), b]);
-        graph.set(b, [...(graph.get(b) || []), a]);
+        if (!graph.has(a)) graph.set(a, new Set<string>());
+        if (!graph.has(b)) graph.set(b, new Set<string>());
+        graph.get(a)?.add(b);
+        graph.get(b)?.add(a);
       };
       sanitizedConnections.forEach((connection) => {
         if (connection.active === false) return;
@@ -504,7 +511,7 @@ export function useRefreshNetwork({
       if (duplicateIpCount > 0) {
         summaryWarnings.push(language === 'tr' ? `IP çakışması: ${duplicateIpCount}` : `IP conflict: ${duplicateIpCount}`);
         const dupIpDesc = Array.from(ipOwners.entries())
-          .filter(([, owners]) => owners.length > 1)
+          .filter(([, owners]) => hasCrossDeviceConflict(owners))
           .map(([ip, owners]) => `${ip}: ${owners.join(', ')}`)
           .join('; ');
         addNetworkEventLog({ level: 'error', category: 'IP Conflict', message: language === 'tr' ? `IP çakışması tespit edildi (${duplicateIpCount})` : `IP conflict detected (${duplicateIpCount})`, detail: dupIpDesc });
@@ -512,14 +519,14 @@ export function useRefreshNetwork({
       if (duplicateMacCount > 0) {
         summaryWarnings.push(language === 'tr' ? `MAC çakışması: ${duplicateMacCount}` : `MAC conflict: ${duplicateMacCount}`);
         const dupMacDesc = Array.from(macOwners.entries())
-          .filter(([, owners]) => owners.length > 1)
+          .filter(([, owners]) => hasCrossDeviceConflict(owners))
           .map(([mac, owners]) => `${mac}: ${owners.join(', ')}`)
           .join('; ');
         addNetworkEventLog({ level: 'error', category: 'MAC Conflict', message: language === 'tr' ? `MAC çakışması tespit edildi (${duplicateMacCount})` : `MAC conflict detected (${duplicateMacCount})`, detail: dupMacDesc });
       }
       if (duplicateIpv6Count > 0) {
         const dupIpv6Desc = Array.from(ipv6Owners.entries())
-          .filter(([, owners]) => owners.length > 1)
+          .filter(([, owners]) => hasCrossDeviceConflict(owners))
           .map(([ipv6, owners]) => `${ipv6}: ${owners.join(', ')}`)
           .join('; ');
         addNetworkEventLog({ level: 'error', category: 'IPv6 Conflict', message: language === 'tr' ? `IPv6 çakışması tespit edildi (${duplicateIpv6Count})` : `IPv6 conflict detected (${duplicateIpv6Count})`, detail: dupIpv6Desc });

@@ -284,19 +284,19 @@ export function NetworkTopology({
     };
   }, [pan.x, pan.y, canvasDimensions.width, canvasDimensions.height, zoom]);
 
-  // Use spatial partitioning for efficient visibility culling
+  // Use spatial partitioning for efficient visibility culling (only in low graphics quality)
   const { visibleDeviceIds, visibleConnectionIds } = useSpatialPartitioning(
     devices,
     connections,
     currentViewport,
-    { cellSize: 256, margin: 100, enabled: true }
+    { cellSize: 256, margin: 100, enabled: graphicsQuality === 'low' }
   );
 
   const { visibleDevices, visibleConnections, visibleNotes } = useMemo(() => {
     // If not active, or no dimensions, return all items to prevent them from disappearing
     // when calculating visibility while the container has 0 width/height.
-    // Also return all items if we are currently exporting to PNG to bypass object culling.
-    if (!isActive || canvasDimensions.width === 0 || isExporting) return { visibleDevices: devices, visibleConnections: connections, visibleNotes: notes };
+    // Also return all items if we are currently exporting to PNG or if graphics quality is not low to bypass object culling.
+    if (!isActive || canvasDimensions.width === 0 || isExporting || graphicsQuality !== 'low') return { visibleDevices: devices, visibleConnections: connections, visibleNotes: notes };
 
     const { width, height } = canvasDimensions;
 
@@ -327,7 +327,7 @@ export function NetworkTopology({
     });
 
     return { visibleDevices: vDevices, visibleConnections: vConnections, visibleNotes: vNotes };
-  }, [devices, connections, notes, zoom, pan, isActive, canvasDimensions, visibleDeviceIds, visibleConnectionIds, isExporting]);
+  }, [devices, connections, notes, zoom, pan, isActive, canvasDimensions, visibleDeviceIds, visibleConnectionIds, isExporting, graphicsQuality]);
 
   useEffect(() => {
     updateCanvasRect();
@@ -1943,6 +1943,8 @@ export function NetworkTopology({
 
     saveToHistory();
     bringNoteToFront(noteId);
+    draggedNoteIdRef.current = noteId;
+    noteDragStartRef.current = { x: e.clientX, y: e.clientY };
     setDraggedNoteId(noteId);
     setNoteDragStart({ x: e.clientX, y: e.clientY });
     setSelectedNoteIds([noteId]);
@@ -1959,6 +1961,8 @@ export function NetworkTopology({
 
     saveToHistory();
     bringNoteToFront(noteId);
+    draggedNoteIdRef.current = noteId;
+    noteDragStartRef.current = { x: touch.clientX, y: touch.clientY };
     setDraggedNoteId(noteId);
     setNoteDragStart({ x: touch.clientX, y: touch.clientY });
     setSelectedNoteIds([noteId]);

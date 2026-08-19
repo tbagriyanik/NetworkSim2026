@@ -151,6 +151,10 @@ export function useNoteDragging({
 
     const handleMouseUp = () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      draggedNoteIdRef.current = null;
+      noteDragStartRef.current = null;
+      resizingNoteIdRef.current = null;
+      noteResizeStartRef.current = null;
       setDraggedNoteId(null);
       setNoteDragStart(null);
       setResizingNoteId(null);
@@ -160,6 +164,10 @@ export function useNoteDragging({
 
     const handleTouchEnd = () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      draggedNoteIdRef.current = null;
+      noteDragStartRef.current = null;
+      resizingNoteIdRef.current = null;
+      noteResizeStartRef.current = null;
       setDraggedNoteId(null);
       setNoteDragStart(null);
       setResizingNoteId(null);

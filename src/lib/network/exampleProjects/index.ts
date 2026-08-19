@@ -44,6 +44,7 @@ import troubleShutdown from './trouble-shutdown';
 import troubleGateway from './trouble-gateway';
 import troubleDuplicate from './trouble-duplicate';
 import troubleAcl from './trouble-acl';
+import realWorldComprehensive from './real-world-comprehensive';
 
 const builders = [
   basicSecure, singleVlan, trunkVtp, roas, legacyRouting,
@@ -57,7 +58,7 @@ const builders = [
   ospfMultiArea1, ospfMultiArea2, eigrpBasic1, ipv6AdvancedLab,
   ipv6MasterLab, allServicesLab,
   troubleIvr, troubleOspfArea, troubleVlan, troubleMask,
-  troubleShutdown, troubleGateway, troubleDuplicate, troubleAcl
+  troubleShutdown, troubleGateway, troubleDuplicate, troubleAcl, realWorldComprehensive
 ];
 
 export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {

@@ -230,7 +230,7 @@ const connectPorts = (
   sourcePort: string,
   targetDeviceId: string,
   targetPort: string,
-  cableType: 'straight' | 'crossover' | 'console' = 'straight'
+  cableType: 'straight' | 'crossover' | 'serial' | 'console' = 'straight'
 ) => {
   connections.push({
     id: `${sourceDeviceId}-${sourcePort}-${targetDeviceId}-${targetPort}`,
