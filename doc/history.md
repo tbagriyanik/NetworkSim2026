@@ -4,12 +4,15 @@ Yeniden eskiye, tarih ve özellik listesi.
 
 ---
 
-## v2.4.0 — 2026-08-18
+## v2.4.0 — 2026-08-19
 
 | Tarih | Özellik |
 |-------|---------|
+| 2026-08-19 | **Arka Plan Ağ Hareketliliği Yakalama** — İstemci DHCP IP alma adımları (`DHCP Discover`, `DHCP Offer`, `DHCP Request`, `DHCP ACK`), `STP BPDU` döngü engelleme paketleri, periyodik `CDP`, `OSPF Hello`, `RIP`, `EIGRP` ve `WLAN Beacon` paketleri canlı Paket Yakalama paneline bağlandı. |
+| 2026-08-19 | **Paket Yakalama Arama ve Sayfalama Desteği** — Paket yakalama paneline canlı IP/protokol/içerik arama çubuğu ve sayfa başına 10 paket gösteren gezinti (pagination) sistemi eklendi. |
+| 2026-08-19 | **Paket Yakalamada Çoklu Dışlama Filtresi (Multi-term Exclude)** — Dışlama alanına virgül/boşluk ile ayrılmış çoklu terimler (`cdp, stp, arp` vb.) girilerek istenmeyen paketlerin anlık gizlenebilmesi sağlandı. |
 | 2026-08-18 | **Sürüm Yükseltmesi (v2.4)** — Uygulama versiyonu 2.4'e yükseltildi. |
-| 2026-08-18 | **Paket Analizinde Protokol Numarası Gösterimi** — Paket analizi panelindeki protokol sütununda, her protokolün port/protokol numarası parantez içinde gösteriliyor: ICMP (1), ICMPv6 (58), TCP (6), UDP (17), GRE (47), OSPF (89), EIGRP (88), ARP (0x0806), RARP (0x8035). |
+| 2026-08-18 | **Paket Analizinde Protokol Numarası Gösterimi** — Paket analizi panelindeki protokol sütununda, her protokolün port/protokol numarası parantez içinde gösteriliyor: ICMP (1), ICMPv6 (58), TCP (6), UDP (17), GRE (47), OSPF (89), EIGRP (88), ARP (0x0806), RARP (0x8035), STP (0x4242). |
 | 2026-08-18 | **Pencere Başlığı Çift Tıklama ile Daraltma/Genişletme (Toggle Collapse)** — PC Paneli, Router Bilgi Paneli, Paket Analizi / Yakalama ve Ağ Yenileme Raporu pencerelerinin başlık çubuğuna çift tıklandığında pencereyi hızlıca küçültme/büyütme desteği eklendi. |
 | 2026-08-18 | **CLI Geçmiş Paneli Tıklama Odaklanması** — Terminal ve PC CMD ekranlarında çıktı / geçmiş alanına tıklandığında komut yazma kutusunun (input) otomatik olarak odaklanması (`focus`) sağlandı. |
 | 2026-08-18 | **Trunk İzinli VLAN Desteği (`switchport trunk allowed vlan`)** — `switchport trunk allowed vlan 10,20`, `10-20`, `add`, `remove`, `except` ve `all` sözdizimleri ile VLAN filtreleme, simülasyon ve PVST Spanning Tree hesaplamalarına entegre edildi. |

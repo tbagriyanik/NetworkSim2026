@@ -7,7 +7,8 @@
 2. [Kullanım Kılavuzu ve Kısayollar](#network-simulator---usage-guide--kullanım-kılavuzu)
 3. [CLI Komut Referansı](#-network-cli-commands-reference)
 4. [Rehberli Dersler ve CLI Eğitimi](#-network-simulator---rehberli-dersler)
-5. [Örnek Proje ve Adım Adım Yapılışları](#network-simulator---example-projects)
+5. [Gelişmiş Paket Yakalama ve Protokol Analizi (Wireshark-Lite)](#-gelişmiş-paket-yakalama-ve-protokol-analizi-wireshark-lite)
+6. [Örnek Proje ve Adım Adım Yapılışları](#network-simulator---example-projects)
 
 <div style="page-break-after: always;"></div>
 
@@ -19,10 +20,12 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 ---
 
-## Latest Updates (v2.2 & v2.0)
+## Latest Updates (v2.4 & v2.2)
 
 | English | Türkçe |
 | --- | --- |
+| **Advanced Packet Capture & Analysis**: Real-time search filter, multi-term exclude filter (`cdp, stp, arp`), pagination (10 pkts/page), and protocol number mappings `STP (0x4242)`. | **Gelişmiş Paket Yakalama & Analiz**: Canlı arama filtresi, virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp`), sayfalama (sayfa başı 10 paket) ve protokol numaraları gösterimi `STP (0x4242)`. |
+| **Automated Background Protocol Capture**: Full DHCP DORA sequence (`Discover/Offer/Request/ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` updates, and `WLAN Beacon` frame capturing. | **Otomatik Arka Plan Paket Kaydı**: DHCP DORA akışı (`Discover/Offer/Request/ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketlerinin canlı paket analizine otomatik kaydı. |
 | **Ping & Packet Animation Fixes**: Hop-by-hop ping packet animation analysis, synchronised play/pause, and packet progress enhancements. | **Ping ve Paket Animasyonu İyileştirmeleri**: Adım adım ping paket analizi oynatma ve duraklatma senkronizasyon mekanizması geliştirildi. |
 | **Topology Rendering Optimization**: Added custom memo comparator for `ConnectionLine` and optimized canvas interaction loops for high FPS. | **Topoloji Çizim Optimizasyonu**: `ConnectionLine` için özel memo karşılaştırıcı eklendi ve yüksek cihaz sayılarında tuval performansı optimize edildi. |
 | **UI & Theme Polish**: Modernized header styles, responsive toolbar, smooth window dragging/resizing, and header gradient themes. | **Arayüz ve Tema İyileştirmeleri**: Başlık stilleri, duyarlı araç çubuğu, pürüzsüz pencere sürükleme/boyutlandırma ve başlık gradyan temaları modernize edildi. |
@@ -6565,6 +6568,28 @@ R1# show ipv6 route
 R1# show ipv6 interface brief
 PC-1# ping 2001:db8:2::10 (PC-2'nin IPv6 adresi)
 ```
+
+---
+
+## 🔍 Gelişmiş Paket Yakalama ve Protokol Analizi (Wireshark-Lite)
+
+Network Simulator v2.4 ile birlikte tuval üzerindeki tüm ağ kablolarında canlı paket yakalama ve derinlemesine paket inceleme modülü sunulmaktadır.
+
+### 1. Temel Özellikler
+- **Canlı Paket Takibi:** Herhangi bir kablo bağlantısına sağ tıklayıp veya paket yakalama butonuna basılarak ilgili kablodan geçen veri akışı gerçek zamanlı olarak izlenebilir.
+- **Port ve Protokol Numaraları:** Protokol sütununda standart protokol ve port numaraları açıkça görüntülenir:
+  - `ICMP (1)`, `ICMPv6 (58)`, `TCP (6)`, `UDP (17)`, `GRE (47)`, `OSPF (89)`, `EIGRP (88)`, `ARP (0x0806)`, `RARP (0x8035)`, `STP (0x4242)`
+- **Canlı Arama (Search Bar):** Kaynak IP, Hedef IP, Protokol veya Paket İçeriğine (`info`) göre anlık arama yapılabilir.
+- **Çoklu Dışlama Filtresi (Multi-term Exclude):** İstenmeyen arka plan paketlerini (örneğin periyodik CDP veya STP yayınlarını) gizlemek için virgül veya boşluk ile ayrılmış terimler (`cdp, stp, arp` vb.) kullanılabilir.
+- **Sayfalama (Pagination):** Yakalanan paketler sayfa başına 10 paket olacak şekilde sayfalandırılır ve alt gezinti çubuğundan sayfalar arası geçiş sağlanır.
+
+### 2. Otomatik Yakalanan Protokol Paketleri
+1. **DHCP Akışı (Full DORA):** İstemci IP alma sürecindeki `DHCP Discover`, `DHCP Offer`, `DHCP Request` ve `DHCP ACK` paketleri.
+2. **STP BPDU Paketleri:** Switch'ler arası döngü önleme algoritması periyodik `STP BPDU` (`01:80:C2:00:00:00`) paketleri.
+3. **Yönlendirme Protokolleri:** `OSPF Hello` (`224.0.0.5`), `RIPv2 Update` (`224.0.0.9`) ve `EIGRP Hello` (`224.0.0.10`) paketleri.
+4. **Komşu Tespiti (CDP):** Switch ve Router'ların periyodik olarak yayınladığı `CDP Announcement` (`01:00:0C:CC:CC:CC`) paketleri.
+5. **WLAN Beacon:** Access Point (AP) ve WLC cihazlarının yayınladığı periyodik `WLAN Beacon` kablosuz yayın paketleri.
+6. **ARP ve ICMP:** IP-MAC adresi eşleme yayınları (`ARP Request/Reply`) ve Ping kontrolü paketleri (`Echo Request/Reply`).
 
 ---
 

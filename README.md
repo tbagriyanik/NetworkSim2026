@@ -23,8 +23,9 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
-- **Version 2.4 Sürümü:** Paket analizi panelindeki protokol sütununa her protokolün port/protokol numarası eklendi (ICMP (1), TCP (6), UDP (17), ARP (0x0806), vb.).
-- **Pencere & Panel İyileştirmeleri:** Cihaz pencereleri, PCPanel, Toolbar ve başlık renk geçişleri modernize edildi; bellek sızıntıları giderildi.
+- **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
+- **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.
+- **Version 2.4 Sürümü:** Paket analizi panelindeki protokol sütununa her protokolün port/protokol numarası eklendi (ICMP (1), TCP (6), UDP (17), ARP (0x0806), STP (0x4242), vb.).
 
  
 ## Stats / İstatistikler
