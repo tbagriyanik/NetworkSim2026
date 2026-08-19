@@ -1,4 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { executeCommand } from '@/lib/network/executor';
+import { createInitialState } from '@/lib/network/initialState';
+import type { SwitchState } from '@/lib/network/types';
 
 describe('Executor & Network Utilities', () => {
   describe('Cable Compatibility', () => {
@@ -101,6 +104,38 @@ describe('Executor & Network Utilities', () => {
     it('should detect router config mode', () => {
       const prompt = 'Router(config-router)#';
       expect(prompt.includes('(config-router)')).toBe(true);
+    });
+  });
+
+  describe('Switch Model Command Execution', () => {
+    it('should allow show spanning-tree on 3560 switch model', () => {
+      const baseState = createInitialState();
+      const state = {
+        ...baseState,
+        switchModel: 'WS-C3650-24PS',
+        switchLayer: 'L3' as const,
+        deviceType: 'switchL3' as const,
+        currentMode: 'privileged' as const,
+      } as SwitchState;
+
+      const result = executeCommand(state, 'sh spanning-tree');
+      expect(result.success).toBe(true);
+      expect(result.output).not.toContain('is not supported on this');
+    });
+
+    it('should allow show spanning-tree on 2960 switch model', () => {
+      const baseState = createInitialState();
+      const state = {
+        ...baseState,
+        switchModel: 'WS-C2960-24TT-L',
+        switchLayer: 'L2' as const,
+        deviceType: 'switchL2' as const,
+        currentMode: 'privileged' as const,
+      } as SwitchState;
+
+      const result = executeCommand(state, 'sh spanning-tree');
+      expect(result.success).toBe(true);
+      expect(result.output).not.toContain('is not supported on this');
     });
   });
 });

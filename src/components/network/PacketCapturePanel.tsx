@@ -33,8 +33,8 @@ export const PacketCapturePanel = ({
   const { language } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [excludeQuery, setExcludeQuery] = useState('');
-  const [showExclude, setShowExclude] = useState(false);
+  const [excludeQuery, setExcludeQuery] = useState('cdp');
+  const [showExclude, setShowExclude] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
 
   const conn = connections.find(c => c.id === activeCaptureConnectionId);
@@ -242,8 +242,8 @@ export const PacketCapturePanel = ({
               onClick={() => setShowExclude(!showExclude)}
               className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${
                 showExclude || excludeQuery
-                  ? 'border-error-500 text-error-500 bg-error-500/10'
-                  : isDark ? 'border-secondary-700 opacity-60 hover:opacity-100' : 'border-secondary-300 opacity-60 hover:opacity-100'
+                  ? isDark ? 'border-amber-500/60 text-amber-300 bg-amber-500/10' : 'border-amber-500 text-amber-800 bg-amber-50'
+                  : isDark ? 'border-secondary-700 text-secondary-300 opacity-60 hover:opacity-100' : 'border-secondary-300 text-secondary-700 opacity-60 hover:opacity-100'
               }`}
               title={language === 'tr' ? 'Dışlama filtresini aç/kapat' : 'Toggle exclude filter'}
             >
@@ -252,8 +252,8 @@ export const PacketCapturePanel = ({
           </div>
 
           {(showExclude || excludeQuery) && (
-            <div className={`flex items-center gap-1.5 px-1.5 py-1 rounded border ${isDark ? 'border-error-900/50 bg-error-950/20' : 'border-error-200 bg-error-50/40'}`}>
-              <span className="text-[10px] font-bold text-error-500 shrink-0">
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded border shadow-sm ${isDark ? 'border-secondary-700 bg-secondary-800/80' : 'border-secondary-300 bg-white'}`}>
+              <span className={`text-[10px] font-bold shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
                 {language === 'tr' ? 'Dışlanacak:' : 'Exclude:'}
               </span>
               <input
@@ -261,12 +261,12 @@ export const PacketCapturePanel = ({
                 value={excludeQuery}
                 onChange={(e) => setExcludeQuery(e.target.value)}
                 placeholder={language === 'tr' ? 'cdp, arp, stp (virgül veya boşluk ile)...' : 'cdp, arp, stp (comma or space separated)...'}
-                className={`w-full bg-transparent outline-none text-xs text-error-500 placeholder:text-error-400/50`}
+                className={`w-full bg-transparent outline-none text-xs ${isDark ? 'text-slate-100 placeholder:text-secondary-500' : 'text-slate-900 placeholder:text-slate-400'}`}
               />
               {excludeQuery && (
                 <button
                   onClick={() => setExcludeQuery('')}
-                  className="p-0.5 rounded-full hover:bg-error-500/20 text-error-500"
+                  className="p-0.5 rounded-full hover:bg-secondary-200 dark:hover:bg-secondary-700 opacity-60 hover:opacity-100"
                 >
                   <X className="w-3 h-3" />
                 </button>

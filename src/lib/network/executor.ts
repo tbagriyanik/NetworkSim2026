@@ -1290,9 +1290,19 @@ export function executeCommand(
   const needsFirewall = requiresFirewall.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));
 
   const isFirewall = state.deviceType === 'firewall' || state.switchLayer === 'FW' || (state.version?.modelName || '').includes('ASA');
-  const isL3Switch = state.switchModel === 'WS-C3650-24PS';
-  const isL2Switch = state.switchModel === 'WS-C2960-24TT-L';
-  const isRouter = state.deviceType === 'router' || (!isFirewall && !state.deviceType?.startsWith('switch') && capabilities.routing);
+  const isL3Switch = state.switchModel === 'WS-C3650-24PS' ||
+    (state.switchModel && (state.switchModel.includes('3650') || state.switchModel.includes('3560') || state.switchModel.includes('3750'))) ||
+    state.deviceType === 'switchL3' ||
+    state.switchLayer === 'L3';
+  const isL2Switch = !isL3Switch && (
+    state.switchModel === 'WS-C2960-24TT-L' ||
+    (state.switchModel && (state.switchModel.includes('2960') || state.switchModel.includes('2950') || state.switchModel.includes('2900'))) ||
+    state.deviceType === 'switch' ||
+    state.deviceType === 'switchL2' ||
+    state.switchLayer === 'L2' ||
+    capabilities.switching
+  );
+  const isRouter = state.deviceType === 'router' || (!isFirewall && !isL2Switch && !isL3Switch && capabilities.routing);
   const isWLC = state.deviceType === 'wlc' || state.switchModel === 'AIR-CT2504-K9';
 
   const l3OnlyCommands = [
