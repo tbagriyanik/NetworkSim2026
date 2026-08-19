@@ -33,6 +33,8 @@ export const PacketCapturePanel = ({
   const { language } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [excludeQuery, setExcludeQuery] = useState('');
+  const [showExclude, setShowExclude] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
   const conn = connections.find(c => c.id === activeCaptureConnectionId);
@@ -53,31 +55,63 @@ export const PacketCapturePanel = ({
   const dragProps = useDrag({
     storageKey: 'packetCapture',
     defaultPosition: typeof window !== 'undefined' ? { x: Math.max(16, window.innerWidth - 420), y: window.innerHeight - 340 } : { x: 0, y: 0 },
-    defaultSize: { width: 420, height: 320 },
+    defaultSize: { width: 440, height: 340 },
     minSize: { width: 280, height: 160 },
     mode: 'drag-resize'
   });
 
   const rawPackets = capturedPacketsMap[activeCaptureConnectionId] || [];
 
-  // Reset page when connection or search query changes (adjust state during render)
-  const [prevResetKey, setPrevResetKey] = useState(`${activeCaptureConnectionId}|${searchQuery}`);
-  if (prevResetKey !== `${activeCaptureConnectionId}|${searchQuery}`) {
-    setPrevResetKey(`${activeCaptureConnectionId}|${searchQuery}`);
+  // Reset page when connection or search/exclude query changes (adjust state during render)
+  const resetKey = `${activeCaptureConnectionId}|${searchQuery}|${excludeQuery}`;
+  const [prevResetKey, setPrevResetKey] = useState(resetKey);
+  if (prevResetKey !== resetKey) {
+    setPrevResetKey(resetKey);
     setCurrentPage(1);
   }
 
   const filteredPackets = useMemo(() => {
-    const reversed = [...rawPackets].reverse();
-    if (!searchQuery.trim()) return reversed;
-    const q = searchQuery.toLowerCase().trim();
-    return reversed.filter(pkt =>
-      pkt.sourceIp.toLowerCase().includes(q) ||
-      pkt.targetIp.toLowerCase().includes(q) ||
-      pkt.protocol.toLowerCase().includes(q) ||
-      pkt.info.toLowerCase().includes(q)
-    );
-  }, [rawPackets, searchQuery]);
+    let list = [...rawPackets].reverse();
+
+    // Positive search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(pkt =>
+        pkt.sourceIp.toLowerCase().includes(q) ||
+        pkt.targetIp.toLowerCase().includes(q) ||
+        pkt.protocol.toLowerCase().includes(q) ||
+        pkt.info.toLowerCase().includes(q)
+      );
+    }
+
+    // Multi-term Exclude filter (e.g. "cdp, arp, stp" or "cdp arp 192.168.1.1")
+    if (excludeQuery.trim()) {
+      const terms = excludeQuery
+        .toLowerCase()
+        .split(/[,;\s]+/)
+        .map(t => t.trim())
+        .filter(Boolean);
+
+      if (terms.length > 0) {
+        list = list.filter(pkt => {
+          const src = pkt.sourceIp.toLowerCase();
+          const tgt = pkt.targetIp.toLowerCase();
+          const proto = pkt.protocol.toLowerCase();
+          const info = pkt.info.toLowerCase();
+
+          // Exclude if packet matches ANY of the exclude terms
+          return !terms.some(term =>
+            src.includes(term) ||
+            tgt.includes(term) ||
+            proto.includes(term) ||
+            info.includes(term)
+          );
+        });
+      }
+    }
+
+    return list;
+  }, [rawPackets, searchQuery, excludeQuery]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPackets.length / ITEMS_PER_PAGE));
   const paginatedPackets = useMemo(() => {
@@ -185,23 +219,59 @@ export const PacketCapturePanel = ({
       }
     >
       <div className="flex-1 flex flex-col min-h-0 relative">
-        {/* Search Bar */}
-        <div className={`p-1.5 border-b flex items-center gap-1.5 text-[11px] ${isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50/60'}`}>
-          <Search className="w-3.5 h-3.5 opacity-50 shrink-0" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={language === 'tr' ? 'IP, protokol veya içerik ara...' : 'Search IP, protocol or info...'}
-            className={`w-full bg-transparent outline-none text-xs placeholder:opacity-40 ${isDark ? 'text-white' : 'text-slate-900'}`}
-          />
-          {searchQuery && (
+        {/* Search & Filter Bar */}
+        <div className={`p-1.5 border-b flex flex-col gap-1.5 text-[11px] ${isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50/60'}`}>
+          <div className="flex items-center gap-1.5 w-full">
+            <Search className="w-3.5 h-3.5 opacity-50 shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={language === 'tr' ? 'IP, protokol veya içerik ara...' : 'Search IP, protocol or info...'}
+              className={`flex-1 bg-transparent outline-none text-xs placeholder:opacity-40 ${isDark ? 'text-white' : 'text-slate-900'}`}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="p-0.5 rounded-full hover:bg-secondary-200 dark:hover:bg-secondary-700 opacity-60 hover:opacity-100"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
             <button
-              onClick={() => setSearchQuery('')}
-              className="p-0.5 rounded-full hover:bg-secondary-200 dark:hover:bg-secondary-700 opacity-60 hover:opacity-100"
+              onClick={() => setShowExclude(!showExclude)}
+              className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${
+                showExclude || excludeQuery
+                  ? 'border-error-500 text-error-500 bg-error-500/10'
+                  : isDark ? 'border-secondary-700 opacity-60 hover:opacity-100' : 'border-secondary-300 opacity-60 hover:opacity-100'
+              }`}
+              title={language === 'tr' ? 'Dışlama filtresini aç/kapat' : 'Toggle exclude filter'}
             >
-              <X className="w-3 h-3" />
+              {language === 'tr' ? 'Dışla' : 'Exclude'}
             </button>
+          </div>
+
+          {(showExclude || excludeQuery) && (
+            <div className={`flex items-center gap-1.5 px-1.5 py-1 rounded border ${isDark ? 'border-error-900/50 bg-error-950/20' : 'border-error-200 bg-error-50/40'}`}>
+              <span className="text-[10px] font-bold text-error-500 shrink-0">
+                {language === 'tr' ? 'Dışlanacak:' : 'Exclude:'}
+              </span>
+              <input
+                type="text"
+                value={excludeQuery}
+                onChange={(e) => setExcludeQuery(e.target.value)}
+                placeholder={language === 'tr' ? 'cdp, arp, stp (virgül veya boşluk ile)...' : 'cdp, arp, stp (comma or space separated)...'}
+                className={`w-full bg-transparent outline-none text-xs text-error-500 placeholder:text-error-400/50`}
+              />
+              {excludeQuery && (
+                <button
+                  onClick={() => setExcludeQuery('')}
+                  className="p-0.5 rounded-full hover:bg-error-500/20 text-error-500"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
           )}
         </div>
 
