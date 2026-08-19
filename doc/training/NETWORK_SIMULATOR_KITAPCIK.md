@@ -167,8 +167,8 @@ npm install && npm run dev
 | [examples.md](doc/reference/examples.md) | Example projects with step-by-step guides / Adım adım örnek projeler |
 | [INSTALL.md](INSTALL.md) | Installation & build instructions / Kurulum & derleme talimatları |
 | [USAGE.md](doc/getting-started/USAGE.md) | Usage guide & keyboard shortcuts (TR/EN) / Kullanım kılavuzu & klavye kısayolları |
-| [CLI_GUIDED_TUTORIAL.md](doc/cli/CLI_GUIDED_TUTORIAL.md) | 30-lesson CLI guided tutorial / 30 derslik CLI rehberli eğitim |
-| [CLI_COMMANDS.md](doc/cli/CLI_COMMANDS.md) | 450+ CLI commands reference / 450+ CLI komut referansı |
+| [CLI_GUIDED_TUTORIAL.md](doc/cli/CLI_GUIDED_TUTORIAL.md) | CLI guided tutorial / CLI rehberli eğitim |
+| [CLI_COMMANDS.md](doc/cli/CLI_COMMANDS.md) | CLI commands reference / CLI komut referansı |
 | [QUICK_REFERENCE.md](doc/getting-started/QUICK_REFERENCE.md) | Quick reference & code snippets / Hızlı referans & kod parçacıkları |
 | [WIRELESS_CONFIGURATION_GUIDE.md](doc/network/WIRELESS_CONFIGURATION_GUIDE.md) | Wireless network configuration / Kablosuz ağ yapılandırma |
 | [L3_SWITCH_CONFIGURATION.md](doc/network/L3_SWITCH_CONFIGURATION.md) | Layer 3 switching guide / L3 anahtarlama rehberi |

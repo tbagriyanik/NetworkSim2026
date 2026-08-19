@@ -549,11 +549,11 @@ export function AdvancedForm() {
 
 ## 🔗 İlgili Dosyalar
 
-- Validasyon: `src/lib/validation/formValidation.ts`
-- Bildirimler: `src/lib/notifications/notificationManager.ts`
-- API İstemcisi: `src/lib/api/apiClient.ts`
+- Validasyon: `src/lib/security/sanitizer.ts`
+- Bildirimler: `src/components/ui/toast.tsx`
+- API hata yönetimi: `src/lib/api/withErrorHandling.ts`
 - Form Input: `src/components/ui/FormInput.tsx`
-- Onay Dialog: `src/components/ui/ConfirmationDialog.tsx`
+- Onay Dialog: `src/components/ui/alert-dialog.tsx`
 - Hata Boundary: `src/components/ui/AppErrorBoundary.tsx`
 
 ---

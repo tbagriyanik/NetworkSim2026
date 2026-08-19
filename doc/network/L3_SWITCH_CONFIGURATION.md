@@ -30,7 +30,7 @@ Physical ports on a  Layer 3 switch default to Layer 2 (switchport) mode. To use
 
 **Command**: `no switchport`
 
-**Location**: [interfaceCommands.ts](src/lib/network/core/interfaceCommands.ts) - `cmdNoSwitchport()`
+**Location**: [interfaceCommands.ts](../../src/lib/network/core/interfaceCommands.ts) - `cmdNoSwitchport()`
 
 **Validation**:
 - ✅ Checks device is L3 switch (not L2)
@@ -75,7 +75,7 @@ For an L3 switch to route packets between VLANs, the `ip routing` command must b
 
 **Command**: `ip routing`
 
-**Location**: [globalConfigCommands.ts](src/lib/network/core/globalConfigCommands.ts) - `cmdIpRouting()`
+**Location**: [globalConfigCommands.ts](../../src/lib/network/core/globalConfigCommands.ts) - `cmdIpRouting()`
 
 **Validation**:
 - ✅ Checks command issued in config mode
@@ -128,7 +128,7 @@ A Switched Virtual Interface (SVI) - created with `interface vlan X` - becomes "
 
 ### Implementation in NetworkSim
 
-**Validation Function**: [L3Validation.ts](src/lib/network/core/L3Validation.ts) - `validateSviStatus()`
+**Validation Function**: [L3Validation.ts](../../src/lib/network/core/L3Validation.ts) - `validateSviStatus()`
 
 **Used By**: `ip address` command on VLAN interfaces
 
@@ -186,7 +186,7 @@ On some  switches, the memory must be configured for the routing table before en
 
 **Command**: `sdm prefer <template>`
 
-**Location**: [globalConfigCommands.ts](src/lib/network/core/globalConfigCommands.ts) - `cmdSdmPrefer()`
+**Location**: [globalConfigCommands.ts](../../src/lib/network/core/globalConfigCommands.ts) - `cmdSdmPrefer()`
 
 **Validation**:
 - ✅ Validates template name
@@ -241,7 +241,7 @@ The purpose of an IP address differs based on the device type:
 
 ### Implementation in NetworkSim
 
-**Validation Function**: [L3Validation.ts](src/lib/network/core/L3Validation.ts) - `getIpAddressPurpose()`
+**Validation Function**: [L3Validation.ts](../../src/lib/network/core/L3Validation.ts) - `getIpAddressPurpose()`
 
 **Used By**: `ip address` command
 
@@ -281,7 +281,7 @@ Interface Gi0/1 configured with IP 10.0.0.1 255.255.255.0
 
 ## Validation Helper Functions
 
-All validations are provided in [L3Validation.ts](src/lib/network/core/L3Validation.ts):
+All validations are provided in [L3Validation.ts](../../src/lib/network/core/L3Validation.ts):
 
 ### Public Functions
 
@@ -394,9 +394,9 @@ Switch(config-if)# exit
 
 ## Related Files
 
-- [L3Validation.ts](src/lib/network/core/L3Validation.ts) - Validation functions
-- [globalConfigCommands.ts](src/lib/network/core/globalConfigCommands.ts) - `ip routing` and `sdm prefer` commands
-- [interfaceCommands.ts](src/lib/network/core/interfaceCommands.ts) - `no switchport` and `ip address` commands
+- [L3Validation.ts](../../src/lib/network/core/L3Validation.ts) - Validation functions
+- [globalConfigCommands.ts](../../src/lib/network/core/globalConfigCommands.ts) - `ip routing` and `sdm prefer` commands
+- [interfaceCommands.ts](../../src/lib/network/core/interfaceCommands.ts) - `no switchport` and `ip address` commands
 - [switchModels.ts](src/lib/network/switchModels.ts) - Device type definitions
 - [capabilities.ts](src/lib/network/capabilities.ts) - Device capability queries
 

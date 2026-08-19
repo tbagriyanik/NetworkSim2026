@@ -215,7 +215,9 @@ Yeniden eskiye, tarih ve özellik listesi.
 
 ---
 
-## İstatistikler (v2.0.0)
+## İstatistikler (arşivlenmiş v2.0.0 özeti)
+
+> Aşağıdaki değerler v2.0.0 dönemine aittir; güncel proje sayıları için README ve kaynak ağacını esas alın.
 
 | Metrik | Değer |
 |--------|-------|

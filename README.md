@@ -3,7 +3,6 @@
 ![Version](https://img.shields.io/badge/version-2.4-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2.4%20|%20React%2019.2.5%20|%20TypeScript%206.0.3%20|%20Tailwind%204.2.2-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-126,274-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -32,13 +31,12 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır (src/) | 126,274 |
-| Source Files / Kaynak Dosya | 492 |
+| Source Files / Kaynak Dosya | TypeScript/TSX kaynakları |
 | Documentation Files / Dokümantasyon Dosya | 23 |
-| Example Projects / Örnek Proje | 45 |
-| Guided Lessons / Rehberli Ders | 19 |
-| Exams / Sınavlar | 6 |
-| CLI Commands / CLI Komutları | 386+ |
+| Example Projects / Örnek Proje | Uygulama içindeki örnek projeler |
+| Guided Lessons / Rehberli Ders | Uygulama içindeki rehberli dersler |
+| Exams / Sınavlar | Sınav modu desteği |
+| CLI Commands / CLI Komutları | CLI referansında listelenen komutlar |
 
 ## Documentation / Dokümantasyon
 
@@ -152,7 +150,7 @@ C4Container
 ```
 src/
 ├── app/                  # Next.js App Router — pages & layouts
-│   ├── api/             # API routes (contact, etc.)
+│   ├── api/             # API routes (contact, rooms, certificates)
 │   ├── [id]/            # Dynamic routes
 │   ├── layout.tsx       # Root layout
 │   ├── page.tsx         # Home page
@@ -167,12 +165,13 @@ src/
 │   ├── store/          # Zustand state management (appStore.ts)
 │   ├── network/         # Network simulation engine
 │   │   ├── core/        # CLI command implementations
-│   │   └── examples/    # Example project JSON files
+│   │   ├── parser/      # CLI command parsers and patterns
+│   │   └── exampleProjects.ts # Example project definitions
 │   ├── security/        # Security utilities (sanitization, rate limiting)
 │   ├── performance/     # Performance optimization (spatial partitioning)
 │   └── storage/         # Storage utilities (window position management)
 ├── utils/               # Utilities (achievement records tracking)
-└── tests/               # Unit & integration tests (Vitest, 552 tests)
+└── tests/               # Unit, integration, accessibility and performance tests (Vitest)
 ```
 
 ## Tech Stack / Teknoloji

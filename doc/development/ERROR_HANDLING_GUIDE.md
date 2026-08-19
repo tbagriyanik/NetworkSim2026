@@ -17,7 +17,7 @@ This guide documents the comprehensive error handling and UI/UX improvements imp
   - Tracks error count to detect unstable states
 
 ### 2. **Form Validation System** ✅
-- **File**: `src/lib/validation/formValidation.ts`
+- **File**: `src/lib/security/sanitizer.ts`
 - **Features**:
   - Email validation
   - Password validation (configurable length)
@@ -57,7 +57,7 @@ if (!result.isValid) {
 ```
 
 ### 3. **Notification Manager** ✅
-- **File**: `src/lib/notifications/notificationManager.ts`
+- **File**: `src/components/ui/toast.tsx`
 - **Features**:
   - Centralized notification system
   - Support for success, error, warning, info notifications
@@ -104,7 +104,7 @@ function MyComponent() {
 ```
 
 ### 4. **API Client with Error Handling** ✅
-- **File**: `src/lib/api/apiClient.ts`
+- **File**: `src/lib/api/withErrorHandling.ts`
 - **Features**:
   - Automatic retry logic with exponential backoff
   - Request timeout handling
@@ -180,7 +180,7 @@ function ContactForm() {
 ```
 
 ### 6. **Confirmation Dialog Component** ✅
-- **File**: `src/components/ui/ConfirmationDialog.tsx`
+- **File**: `src/components/ui/alert-dialog.tsx`
 - **Features**:
   - Multiple variants (default, warning, danger, info)
   - Async confirmation support

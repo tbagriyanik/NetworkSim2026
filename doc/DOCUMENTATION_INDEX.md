@@ -467,14 +467,13 @@ doc/
 - cli/CLI_COMMANDS.md - Komut referansı
 
 ### Proje Dosyaları
-- `src/lib/validation/formValidation.ts` - Validasyon fonksiyonları
-- `src/lib/notifications/notificationManager.ts` - Bildirim yönetimi
+- `src/lib/security/sanitizer.ts` - Girdi temizleme ve güvenlik yardımcıları
 - `src/lib/api/apiClient.ts` - API istemcisi
+- `src/lib/network/executor.ts` - Ağ komutlarının yürütülmesi
 - `src/components/ui/FormInput.tsx` - Form input bileşeni
-- `src/components/ui/ConfirmationDialog.tsx` - Onay dialog bileşeni
-- `src/lib/network/core/wirelessCommands.ts` - Kablosuz komutları
-- `src/lib/network/core/interfaceCommands.ts` - Arayüz komutları
-- `src/lib/network/core/globalConfigCommands.ts` - Global yapılandırma
+- `src/components/ui/AppErrorBoundary.tsx` - Uygulama hata sınırı
+- `src/lib/network/core/` - CLI komut uygulamaları
+- `src/lib/network/parser/` - CLI komut ayrıştırıcıları ve desenleri
 
 ### Harici Kaynaklar
 - [React Error Boundaries](https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)

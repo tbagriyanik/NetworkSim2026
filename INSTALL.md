@@ -18,8 +18,8 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 
 ## 📋 Sistem Gereksinimleri
 
-- **Node.js**: 18.0 veya üzeri
-- **npm**: 9.0 veya üzeri (veya bun)
+- **Node.js**: 20.9 veya üzeri (Next.js 16 gereksinimi)
+- **npm**: 10 veya üzeri (veya pnpm)
 - **Tarayıcı**: Modern tarayıcı (Chrome, Firefox, Safari, Edge)
 
 ## 📦 Yüklü Paketler
@@ -53,7 +53,7 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 
 ### TypeScript
 ```bash
-npm run tsc --noEmit
+npx tsc --noEmit
 ```
 
 ### Linting
@@ -116,7 +116,7 @@ src/
 ├── hooks/            # Custom React hooks
 ├── lib/              # Core logic (network/, security/, store/, etc.)
 ├── utils/            # Utilities (achievements, etc.)
-└── tests/            # Unit & integration tests (Vitest, 552+ tests)
+└── tests/            # Unit, integration, accessibility and performance tests (Vitest)
 
 public/              # Static files (icons, device images)
 doc/                 # Project documentation (23 files)
@@ -191,8 +191,8 @@ Detaylı belgelendirme `doc/` klasöründe bulunur:
 
 - **README.md** - Dokümantasyon giriş sayfası
 - **USAGE.md** - Kullanım kılavuzu ve klavye kısayolları (TR/EN)
-- **CLI_GUIDED_TUTORIAL.md** - 30 derslik CLI rehberli eğitim (ACL, NAT, OSPF, EIGRP dahil)
-- **CLI_COMMANDS.md** - 450+ CLI komut referansı
+- **CLI_GUIDED_TUTORIAL.md** - CLI rehberli eğitim (ACL, NAT, OSPF, EIGRP dahil)
+- **CLI_COMMANDS.md** - CLI komut referansı
 - **L3_SWITCH_CONFIGURATION.md** - L3 Switch yapılandırma rehberi
 - **QUICK_REFERENCE.md** - Hızlı referans ve kod parçacıkları
 - **WIRELESS_CONFIGURATION_GUIDE.md** - Kablosuz ağ yapılandırma rehberi
@@ -215,14 +215,14 @@ vercel deploy
 ### Docker ile Deploy
 
 ```dockerfile
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
 RUN npm run build
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["npm", "run", "start"]
 ```
 
 ## 📞 Destek

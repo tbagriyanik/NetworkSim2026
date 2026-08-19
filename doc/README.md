@@ -52,7 +52,7 @@ doc/
 
 | Dosya | Açıklama | Süre |
 |-------|----------|------|
-| [CLI_COMMANDS.md](cli/CLI_COMMANDS.md) | 450+ CLI komut referansı | 15 dk |
+| [CLI_COMMANDS.md](cli/CLI_COMMANDS.md) | CLI komut referansı | 15 dk |
 | [CLI_GUIDED_TUTORIAL.md](cli/CLI_GUIDED_TUTORIAL.md) | 30 pratik rehberli ders | 2-3 saat |
 
 ### 📡 Ağ Yapılandırma (network/)
@@ -154,7 +154,7 @@ Kaynak kodları inceleyin
 | **Dokümantasyon Sayfaları** | 19 (6 kategoride) |
 | **Toplam Okuma Süresi** | ~350 dakika |
 | **Toplam Kaynak Satırı** | 111.140 |
-| **Test Sayısı** | 552 (52 dosya) |
+| **Testler** | Vitest ile unit, integration, accessibility, performance ve E2E senaryoları |
 
 ---
 
