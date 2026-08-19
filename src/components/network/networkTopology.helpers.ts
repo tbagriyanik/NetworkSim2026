@@ -73,6 +73,12 @@ export const getDeviceCenter = (device: CanvasDevice) => {
 };
 
 export const getPortPosition = (device: CanvasDevice, portId: string) => {
+  // IoT wireless links terminate at the visible Wi-Fi indicator, not at a
+  // second physical port circle.
+  if (device.type === 'iot' && portId.toLowerCase() === 'wlan0') {
+    const deviceWidth = getDeviceWidth(device.type);
+    return { x: device.x + deviceWidth - 15, y: device.y + 14 };
+  }
   const portIndex = device.ports.findIndex(p => p.id === portId);
   if (portIndex === -1) return getDeviceCenter(device);
 

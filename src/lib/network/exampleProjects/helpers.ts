@@ -174,6 +174,7 @@ const createIotDevice = (id: string, name: string, x: number, y: number, sensorT
     mode: 'client'
   },
   ports: [
+    { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
     { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, wifi: { ssid: '', security: 'open', channel: '2.4GHz', mode: 'client' } }
   ]
 });

@@ -91,14 +91,12 @@ const ConnectionHandle = memo(function ConnectionHandle({
               onDelete(connection.id);
             }}
           >
-            <rect
-              x="-18"
-              y="-8"
-              width="15"
-              height="15"
-              rx="5"
+            <circle
+              cx="-10.5"
+              cy="-0.5"
+              r="9"
               fill={isDark ? STUB_BG_DARK : STUB_BG}
-              opacity="0.92"
+              opacity="0.72"
               className="drop-shadow-sm group-hover:fill-error-500/10 transition-colors"
             />
             <Trash2
@@ -117,14 +115,12 @@ const ConnectionHandle = memo(function ConnectionHandle({
               onToggleActive?.(connection.id);
             }}
           >
-            <rect
-              x="2"
-              y="-8"
-              width="15"
-              height="15"
-              rx="5"
+            <circle
+              cx="9.5"
+              cy="-0.5"
+              r="9"
               fill={isDark ? STUB_BG_DARK : STUB_BG}
-              opacity="0.92"
+              opacity="0.72"
               className="drop-shadow-sm group-hover:fill-warning-500/10 transition-colors"
             />
             {connection.active ? (

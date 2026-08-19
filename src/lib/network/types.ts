@@ -739,8 +739,14 @@ function isConsolePort(portId: string | undefined): boolean {
 export function isCableCompatible(cable: CableInfo): boolean {
   if (!cable.connected) return false;
 
-  // Wireless bağlantılar her zaman geçerli (fiziksel kablo yok)
-  if (cable.cableType === 'wireless') return true;
+  const sourceIsWireless = cable.sourcePort?.toLowerCase() === 'wlan0';
+  const targetIsWireless = cable.targetPort?.toLowerCase() === 'wlan0';
+
+  // Wireless links must terminate on WLAN ports at both ends.
+  if (cable.cableType === 'wireless') return sourceIsWireless && targetIsWireless;
+
+  // Physical cables cannot be plugged into a WLAN port.
+  if (sourceIsWireless || targetIsWireless) return false;
 
   // Console portu bağlantıları için özel kontrol
   // Console kablosu: PC COM1 <-> Switch Console portu

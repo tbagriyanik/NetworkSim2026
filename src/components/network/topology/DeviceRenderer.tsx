@@ -811,10 +811,11 @@ export function DeviceRenderer({
 
       {/* Ports rendering */}
       {isPcLike ? (
-        device.ports.map((port, idx) => {
+        (device.type === 'iot' ? device.ports.filter((port) => port.id !== 'wlan0') : device.ports).map((port, idx) => {
           const portSpacing = 18;
           const portX = deviceWidth - 8;
-          const startY = deviceHeight / 2 - ((device.ports.length - 1) * portSpacing) / 2;
+          const visiblePortCount = device.type === 'iot' ? device.ports.filter((item) => item.id !== 'wlan0').length : device.ports.length;
+          const startY = deviceHeight / 2 - ((visiblePortCount - 1) * portSpacing) / 2;
           const portY = startY + idx * portSpacing;
           const isConnected = port.status === 'connected';
           const isShutdown = port.shutdown;
@@ -822,7 +823,8 @@ export function DeviceRenderer({
           const isStartPort = isDrawingConnection && connectionStart?.deviceId === device.id && connectionStart?.portId === port.id;
           const isTargetPort = isTargetingThisDevice && !isConnected;
           const hasProblem = isShutdown || isDeviceOffline || (isConnected && !isPortConnectionHealthy(port.id));
-          const portLabel = port.id.toLowerCase().startsWith('com') ? 'C' : 'E';
+          const isWirelessPort = port.id.toLowerCase().startsWith('wlan');
+          const portLabel = port.id.toLowerCase().startsWith('com') ? 'C' : isWirelessPort ? '' : 'E';
 
           const portColor = isStartPort ? 'var(--color-success-500)' :
             isTargetPort ? 'var(--color-warning-500)' :
@@ -866,7 +868,7 @@ export function DeviceRenderer({
                 opacity={hasProblem && !isTargetPort ? 0.45 : 1}
                 style={{ pointerEvents: 'none' }}
               />
-              <text y={1} fill="var(--color-background)" fontSize="7" textAnchor="middle" dominantBaseline="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
+              <text y={1} fill="var(--color-background)" fontSize="7" fontWeight="700" textAnchor="middle" dominantBaseline="middle" style={{ userSelect: 'none', pointerEvents: 'none' }}>
                 {portLabel}
               </text>
             </g>

@@ -882,6 +882,31 @@ export function NetworkTopology({
     setContextMenu: setContextMenu as React.Dispatch<React.SetStateAction<ContextMenuState | null>>,
   });
 
+  const deleteVisualConnection = useCallback((connectionId: string) => {
+    if (topologyConnections.some((connection) => connection.id === connectionId)) {
+      deleteConnection(connectionId);
+      return;
+    }
+
+    const connection = visualConnections.find((item) => item.id === connectionId);
+    if (!connection || connection.cableType !== 'wireless') return;
+
+    // Implicit wireless links are derived from the client Wi-Fi settings.
+    // Deleting their handle disconnects the client instead of persisting a
+    // temporary, auto-generated connection into the topology store.
+    saveToHistory();
+    setDevicesState((previous) => previous.map((device) => {
+      if (device.id !== connection.sourceDeviceId) return device;
+      return {
+        ...device,
+        wifi: device.wifi ? { ...device.wifi, enabled: false, ssid: '' } : device.wifi,
+        ports: device.ports.map((port) => port.id === 'wlan0'
+          ? { ...port, status: 'disconnected' as const, wifi: port.wifi ? { ...port.wifi, ssid: '' } : port.wifi }
+          : port)
+      };
+    }));
+  }, [deleteConnection, saveToHistory, setDevicesState, topologyConnections, visualConnections]);
+
 
 
 
@@ -1754,6 +1779,17 @@ export function NetworkTopology({
     } else {
       // Start connection - calculate port position inline
       const portIndex = device.ports.findIndex(p => p.id === portId);
+      const normalizedPortId = portId.toLowerCase();
+      const inferredCableType = normalizedPortId === 'wlan0'
+        ? 'wireless'
+        : (normalizedPortId === 'com1' || normalizedPortId === 'console' ? 'console' : 'straight');
+      onCableChange({
+        ...cableInfo,
+        cableType: inferredCableType,
+        connected: false,
+        sourceDevice: device.type,
+        targetDevice: device.type,
+      });
       const portsPerRow = (device.type === 'pc' || device.type === 'iot') ? 2 : 8;
       const col = portIndex % portsPerRow;
       const row = Math.floor(portIndex / portsPerRow);
@@ -2392,7 +2428,7 @@ export function NetworkTopology({
             handleConnectionMouseEnter={handleConnectionMouseEnter}
             handleConnectionMouseLeave={handleConnectionMouseLeave}
             handleConnectionClick={handleConnectionClick}
-            onDeleteConnection={deleteConnection}
+            onDeleteConnection={deleteVisualConnection}
             onToggleConnectionActive={toggleConnectionActive}
             pingAnimation={pingAnimation}
             handleEnvelopeClick={handleEnvelopeClick}
