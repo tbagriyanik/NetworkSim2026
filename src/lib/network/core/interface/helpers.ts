@@ -86,6 +86,18 @@ export function expandInterfaceRange(rangeSpec: string, state: SwitchState): str
       continue;
     }
 
+    // Try Port-channel interface range: po1-2 or port-channel1-2
+    const poMatch = part.match(/^(?:port-channel|po)(\d+)(?:-(\d+))?$/);
+    if (poMatch) {
+      const startPo = parseInt(poMatch[1], 10);
+      const endPo = poMatch[2] ? parseInt(poMatch[2], 10) : startPo;
+      for (let pid = startPo; pid <= endPo; pid++) {
+        const poId = `po${pid}`;
+        if (!allPorts.includes(poId)) allPorts.push(poId);
+      }
+      continue;
+    }
+
     const match = part.match(/^(fastethernet|gigabitethernet|gigabit|fa|gig|gi)(\d+(?:\/\d+)*)\/(\d+)(?:-(\d+))?$/);
     if (!match) continue;
 

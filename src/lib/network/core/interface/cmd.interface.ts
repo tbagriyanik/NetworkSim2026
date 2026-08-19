@@ -117,6 +117,45 @@ export function cmdInterface(state: SwitchState, input: string, _ctx: CommandCon
     };
   }
 
+  // Port-channel interface (port-channel 1, po 1, etc.)
+  const poMatch = interfaceName.match(/^(?:port-channel|po)\s*(\d+)$/i);
+  if (poMatch) {
+    const groupId = parseInt(poMatch[1], 10);
+    const poPortId = `po${groupId}`;
+
+    const memberPorts = Object.keys(state.ports || {}).filter(
+      pId => state.ports[pId]?.channelGroup === groupId
+    );
+
+    const newPorts = { ...state.ports };
+    if (!newPorts[poPortId]) {
+      newPorts[poPortId] = {
+        id: poPortId,
+        name: `Port-channel${groupId}`,
+        type: 'gigabitethernet',
+        vlan: 1,
+        status: memberPorts.length > 0 ? 'connected' : 'notconnect',
+        shutdown: false,
+        mode: 'trunk',
+        duplex: 'auto',
+        speed: 'auto',
+        channelGroup: groupId
+      } as Port;
+    }
+
+    const selectedInterfaces = [poPortId, ...memberPorts];
+
+    return {
+      success: true,
+      newState: {
+        currentMode: 'interface',
+        currentInterface: poPortId,
+        selectedInterfaces,
+        ports: newPorts
+      }
+    };
+  }
+
   // Validate interface exists or create subinterface
   const normalized = normalizePortId(interfaceName) || interfaceName.toLowerCase();
 
@@ -436,7 +475,3 @@ export function cmdNoDescription(state: SwitchState, _input: string, _ctx: Comma
 
   return { success: true, newState: { ports: newPorts } };
 }
-
-/**
- * No Switchport Mode - Reset switchport mode
- */

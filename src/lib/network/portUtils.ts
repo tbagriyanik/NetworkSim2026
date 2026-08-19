@@ -19,6 +19,10 @@ export function normalizePortId(input: string): string | null {
 
   const loopback = lower.match(/^(?:loopback|lo)\s*(\d+)$/);
   if (loopback) return `loopback${loopback[1]}`;
+
+  const portChannel = lower.match(/^(?:port-channel|portchannel|po)\s*(\d+)$/);
+  if (portChannel) return `po${portChannel[1]}`;
+
   if (lower === 'wlan0') return 'wlan0';
   return null;
 }
