@@ -2030,22 +2030,24 @@ export function NetworkTopology({
     if (!onTopologyChange) return;
     if (topologyChangeTimerRef.current) clearTimeout(topologyChangeTimerRef.current);
     topologyChangeTimerRef.current = setTimeout(() => {
-      const currentState = JSON.stringify({ devices, connections, notes });
+      const currentState = JSON.stringify({ devices, connections: topologyConnections, notes });
       if (currentState !== lastStateRef.current) {
         lastStateRef.current = currentState;
-        onTopologyChange(devices, connections, notes);
+        onTopologyChange(devices, topologyConnections, notes);
       }
       topologyChangeTimerRef.current = null;
     }, 150);
     return () => {
       if (topologyChangeTimerRef.current) clearTimeout(topologyChangeTimerRef.current);
     };
-  }, [devices, connections, notes, onTopologyChange]);
+  }, [devices, topologyConnections, notes, onTopologyChange]);
 
 
   useTopologySync({
     deviceStates,
-    connections,
+    // Only persisted topology links participate in state synchronization.
+    // Implicit wireless links are render-only and must not trigger setDevices.
+    connections: topologyConnections,
     setDevices,
     devices,
     getCounterKey,

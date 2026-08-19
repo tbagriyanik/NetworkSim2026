@@ -143,11 +143,13 @@ export function useTopologySync({
 
             const peerState = deviceStates.get(peerDeviceId);
             const peerPort = peerState?.ports?.[peerPortId];
-            const peerVlan = Number(peerPort?.accessVlan || peerPort?.vlan || 1);
+            if (peerPort) {
+              const peerVlan = Number(peerPort.accessVlan || peerPort.vlan || 1);
 
-            if (Number(baseDevice.vlan || 1) !== peerVlan) {
-              hasChanges = true;
-              return { ...baseDevice, vlan: peerVlan };
+              if (Number(baseDevice.vlan || 1) !== peerVlan) {
+                hasChanges = true;
+                return { ...baseDevice, vlan: peerVlan };
+              }
             }
           }
         }
