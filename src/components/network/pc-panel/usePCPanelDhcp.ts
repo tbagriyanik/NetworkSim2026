@@ -7,6 +7,7 @@ import type { DhcpPoolConfig } from './PCPanel.types';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { errorHandler, DHCP_ERRORS } from '@/lib/errors/errorHandler';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 
 interface UsePCPanelDhcpOptions {
   language: string;
@@ -86,7 +87,7 @@ export function usePCPanelDhcp({
     return `${a}.${b}.${c}.${d}`;
   }, []);
 
-  const getDhcpLease = useCallback((): { ip: string; subnetMask: string; gateway: string; dns: string; serverName: string; poolName: string } | null => {
+  const getDhcpLease = useCallback((): { ip: string; subnetMask: string; gateway: string; dns: string; serverName: string; serverIp: string; poolName: string } | null => {
     try {
       const usedIps = new Set(
         topologyDevices
@@ -140,6 +141,7 @@ export function usePCPanelDhcp({
                 gateway: pool.defaultGateway,
                 dns: pool.dnsServer,
                 serverName: server.name,
+                serverIp: server.ip || pool.defaultGateway,
                 poolName: pool.poolName,
               };
             }
@@ -235,6 +237,7 @@ export function usePCPanelDhcp({
                   gateway: pool.defaultGateway,
                   dns: pool.dnsServer,
                   serverName: device.name || state.hostname || deviceId_,
+                  serverIp: deviceIp || pool.defaultGateway,
                   poolName: pool.poolName,
                 };
               }
@@ -419,6 +422,25 @@ export function usePCPanelDhcp({
         serverName: 'link-local',
         poolName: 'APIPA',
       };
+
+      // Dispatch DHCP Discover broadcast packet to capture panel for connected cable
+      const pcDevice = topologyDevices.find(d => d.id === deviceId);
+      const activeConn = topologyConnections.find(c =>
+        c.active !== false && (c.sourceDeviceId === deviceId || c.targetDeviceId === deviceId)
+      );
+      if (activeConn) {
+        const connId = (activeConn as { id?: string }).id || `${activeConn.sourceDeviceId}-${activeConn.targetDeviceId}`;
+        const clientMac = pcDevice?.macAddress || deviceId;
+        dispatchCapturedPackets([{
+          connectionId: connId,
+          sourceIp: '0.0.0.0',
+          targetIp: '255.255.255.255',
+          protocol: 'UDP',
+          length: 328,
+          info: `DHCP Discover: Client ${clientMac} broadcasting for IP assignment`
+        }]);
+      }
+
       if (!force &&
         linkLocalLease.ip === currentPcIP &&
         linkLocalLease.subnetMask === currentPcSubnet &&
@@ -446,6 +468,52 @@ export function usePCPanelDhcp({
       }));
       return linkLocalLease;
     }
+
+    // Dispatch full DHCP DORA sequence (Discover, Offer, Request, ACK) to capture panel
+    const pcDevice = topologyDevices.find(d => d.id === deviceId);
+    const activeConn = topologyConnections.find(c =>
+      c.active !== false && (c.sourceDeviceId === deviceId || c.targetDeviceId === deviceId)
+    );
+    if (activeConn) {
+      const connId = (activeConn as { id?: string }).id || `${activeConn.sourceDeviceId}-${activeConn.targetDeviceId}`;
+      const clientMac = pcDevice?.macAddress || deviceId;
+      const srvIp = lease.serverIp || lease.gateway || '192.168.1.1';
+      dispatchCapturedPackets([
+        {
+          connectionId: connId,
+          sourceIp: '0.0.0.0',
+          targetIp: '255.255.255.255',
+          protocol: 'UDP',
+          length: 328,
+          info: `DHCP Discover: Client ${clientMac} broadcasting for IP assignment`
+        },
+        {
+          connectionId: connId,
+          sourceIp: srvIp,
+          targetIp: '255.255.255.255',
+          protocol: 'UDP',
+          length: 328,
+          info: `DHCP Offer: Server ${lease.serverName} offering IP ${lease.ip}`
+        },
+        {
+          connectionId: connId,
+          sourceIp: '0.0.0.0',
+          targetIp: '255.255.255.255',
+          protocol: 'UDP',
+          length: 328,
+          info: `DHCP Request: Client ${clientMac} requesting IP ${lease.ip} from ${lease.serverName}`
+        },
+        {
+          connectionId: connId,
+          sourceIp: srvIp,
+          targetIp: lease.ip,
+          protocol: 'UDP',
+          length: 328,
+          info: `DHCP ACK: Server ${lease.serverName} acknowledging IP ${lease.ip} lease`
+        }
+      ]);
+    }
+
     if (!force &&
       lease.ip === currentPcIP &&
       lease.subnetMask === currentPcSubnet &&

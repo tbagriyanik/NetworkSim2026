@@ -1,5 +1,5 @@
-import React from 'react';
-import { Trash2, Eraser } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Trash2, Eraser, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useAppStore } from '@/lib/store/appStore';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CABLE_COLORS } from './networkTopology.constants';
@@ -17,6 +17,8 @@ interface PacketCapturePanelProps {
   isDark: boolean;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export const PacketCapturePanel = ({
   activeCaptureConnectionId,
   clearCapturedPackets,
@@ -29,6 +31,9 @@ export const PacketCapturePanel = ({
   const devices = useAppStore(state => state.topology.devices);
   const connections = useAppStore(state => state.topology.connections);
   const { language } = useLanguage();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const conn = connections.find(c => c.id === activeCaptureConnectionId);
   let connectionLabel = activeCaptureConnectionId;
@@ -43,15 +48,42 @@ export const PacketCapturePanel = ({
   const statusMessage = conn ? getConnectionStatusMessage(conn, devices, language) : '';
   const hasError = conn && statusMessage !== 'Bağlantı sorunsuz' && statusMessage !== 'Connection OK';
 
-  const [columnOrder, setColumnOrder] = React.useState(['time', 'source', 'dest', 'protocol', 'info']);
+  const [columnOrder, setColumnOrder] = useState(['time', 'source', 'dest', 'protocol', 'info']);
 
   const dragProps = useDrag({
     storageKey: 'packetCapture',
     defaultPosition: typeof window !== 'undefined' ? { x: Math.max(16, window.innerWidth - 420), y: window.innerHeight - 340 } : { x: 0, y: 0 },
-    defaultSize: { width: 384, height: 260 },
-    minSize: { width: 200, height: 120 },
+    defaultSize: { width: 420, height: 320 },
+    minSize: { width: 280, height: 160 },
     mode: 'drag-resize'
   });
+
+  const rawPackets = capturedPacketsMap[activeCaptureConnectionId] || [];
+
+  // Reset page when connection or search query changes (adjust state during render)
+  const [prevResetKey, setPrevResetKey] = useState(`${activeCaptureConnectionId}|${searchQuery}`);
+  if (prevResetKey !== `${activeCaptureConnectionId}|${searchQuery}`) {
+    setPrevResetKey(`${activeCaptureConnectionId}|${searchQuery}`);
+    setCurrentPage(1);
+  }
+
+  const filteredPackets = useMemo(() => {
+    const reversed = [...rawPackets].reverse();
+    if (!searchQuery.trim()) return reversed;
+    const q = searchQuery.toLowerCase().trim();
+    return reversed.filter(pkt =>
+      pkt.sourceIp.toLowerCase().includes(q) ||
+      pkt.targetIp.toLowerCase().includes(q) ||
+      pkt.protocol.toLowerCase().includes(q) ||
+      pkt.info.toLowerCase().includes(q)
+    );
+  }, [rawPackets, searchQuery]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPackets.length / ITEMS_PER_PAGE));
+  const paginatedPackets = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredPackets.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredPackets, currentPage]);
 
   const onDragStart = (e: React.DragEvent, idx: number) => { e.dataTransfer.setData('text/plain', idx.toString()); };
   const onDrop = (e: React.DragEvent, targetIdx: number) => {
@@ -91,6 +123,7 @@ export const PacketCapturePanel = ({
     EIGRP: '88',
     ARP: '0x0806',
     RARP: '0x8035',
+    STP: '0x4242',
   };
 
   const protocolWithNumber = (protocol: string): string => {
@@ -152,6 +185,27 @@ export const PacketCapturePanel = ({
       }
     >
       <div className="flex-1 flex flex-col min-h-0 relative">
+        {/* Search Bar */}
+        <div className={`p-1.5 border-b flex items-center gap-1.5 text-[11px] ${isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50/60'}`}>
+          <Search className="w-3.5 h-3.5 opacity-50 shrink-0" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={language === 'tr' ? 'IP, protokol veya içerik ara...' : 'Search IP, protocol or info...'}
+            className={`w-full bg-transparent outline-none text-xs placeholder:opacity-40 ${isDark ? 'text-white' : 'text-slate-900'}`}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="p-0.5 rounded-full hover:bg-secondary-200 dark:hover:bg-secondary-700 opacity-60 hover:opacity-100"
+            >
+              <X className="w-3 h-3" />
+            </button>
+          )}
+        </div>
+
+        {/* Table View */}
         <div className="custom-scrollbar p-0 bg-transparent flex-1 overflow-auto w-full">
           <table className="w-full text-[10px] text-left border-collapse">
             <thead className={`sticky top-0 z-10 ${isDark ? 'bg-secondary-950/80' : 'bg-secondary-100/80'} backdrop-blur-sm`}>
@@ -160,8 +214,8 @@ export const PacketCapturePanel = ({
               </tr>
             </thead>
             <tbody>
-              {capturedPacketsMap[activeCaptureConnectionId]?.length ? (
-                [...capturedPacketsMap[activeCaptureConnectionId]].reverse().map((pkt: { id: string; timestamp: number; sourceIp: string; targetIp: string; protocol: string; info: string; }) => (
+              {paginatedPackets.length ? (
+                paginatedPackets.map((pkt: { id: string; timestamp: number; sourceIp: string; targetIp: string; protocol: string; info: string; }) => (
                   <tr key={pkt.id} className={`border-b last:border-0 ${isDark ? 'border-secondary-800/40 hover:bg-secondary-800/35' : 'border-secondary-100/30 hover:bg-secondary-50/40'}`}>
                     {columnOrder.map(col => {
                       switch (col) {
@@ -175,7 +229,7 @@ export const PacketCapturePanel = ({
                         case 'dest':
                           return <td className="px-2 py-1 font-mono" key="dest">{pkt.targetIp}</td>;
                         case 'protocol':
-                          return <td className={`px-2 py-1 font-bold ${pkt.protocol === 'ICMP' ? 'text-primary-500' : 'text-purple-500'}`} key="proto">{protocolWithNumber(pkt.protocol)}</td>;
+                          return <td className={`px-2 py-1 font-bold ${pkt.protocol === 'ICMP' ? 'text-primary-500' : pkt.protocol === 'ARP' ? 'text-amber-500' : pkt.protocol === 'STP' ? 'text-emerald-500' : 'text-purple-500'}`} key="proto">{protocolWithNumber(pkt.protocol)}</td>;
                         case 'info':
                           return <td className="px-2 py-1 italic opacity-80" key="info">{pkt.info}</td>;
                         default:
@@ -186,13 +240,46 @@ export const PacketCapturePanel = ({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={columnOrder.length} className="px-4 py-8 text-center opacity-40 italic">{t.noPacketsCaptured}</td>
+                  <td colSpan={columnOrder.length} className="px-4 py-8 text-center opacity-40 italic">
+                    {searchQuery ? (language === 'tr' ? 'Aramayla eşleşen paket bulunamadı.' : 'No packets matching search query.') : t.noPacketsCaptured}
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Bar */}
+        {filteredPackets.length > 0 && (
+          <div className={`px-2 py-1.5 border-t flex items-center justify-between text-[10px] select-none ${isDark ? 'border-secondary-800 bg-secondary-950/60' : 'border-secondary-200 bg-secondary-100/60'}`}>
+            <span className="opacity-60">
+              {language === 'tr'
+                ? `Toplam ${filteredPackets.length} paket (Sayfa ${currentPage} / ${totalPages})`
+                : `Total ${filteredPackets.length} packets (Page ${currentPage} of ${totalPages})`}
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="p-1 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                title={language === 'tr' ? 'Önceki Sayfa' : 'Previous Page'}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="px-1.5 font-bold font-mono text-[11px]">{currentPage}</span>
+              <button
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="p-1 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                title={language === 'tr' ? 'Sonraki Sayfa' : 'Next Page'}
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </DraggableWindowWrapper>
   );
 };
+

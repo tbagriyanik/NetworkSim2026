@@ -43,8 +43,9 @@ import { useDeviceDrag } from './hooks/useDeviceDrag';
 import { useCanvasSelection } from './hooks/useCanvasSelection';
 import { useNoteEditing } from './hooks/useNoteEditing';
 import { useNoteDragging } from './hooks/useNoteDragging';
-import { useTopologySync } from './hooks/useTopologySync';
 import { useIotSensorDetection } from './hooks/useIotSensorDetection';
+import { usePeriodicNetworkPackets } from './hooks/usePeriodicNetworkPackets';
+import { useTopologySync } from './hooks/useTopologySync';
 import { useConnectionDrawing } from './hooks/useConnectionDrawing';
 import { useTopologyDeviceActions } from './hooks/useTopologyDeviceActions';
 import { usePingAnimation } from './hooks/usePingAnimation';
@@ -210,6 +211,12 @@ export function NetworkTopology({
   useIotSensorDetection({
     setDevices,
     mousePosRef,
+  });
+
+  usePeriodicNetworkPackets({
+    devices,
+    connections,
+    deviceStates,
   });
 
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);

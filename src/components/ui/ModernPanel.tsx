@@ -2,7 +2,7 @@
 
 import React, { ReactNode, useEffect, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { X } from 'lucide-react';
+import { X, ChevronUp, ChevronDown } from 'lucide-react';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -36,7 +36,7 @@ export function ModernPanel({
     children,
     onClose,
     resizable = true,
-    collapsible: _collapsible = true,
+    collapsible = true,
     defaultWidth = 400,
     defaultHeight = 600,
     minWidth = 250,
@@ -54,12 +54,13 @@ export function ModernPanel({
 }: ModernPanelProps) {
     const { panelLayout } = useLayout();
     const { theme } = useTheme();
-    const { t } = useLanguage();
+    const { t, language } = useLanguage();
     const isDark = theme === 'dark';
     const [width, setWidth] = useState(defaultWidth);
     const [height, setHeight] = useState(defaultHeight);
     const [isMobile, setIsMobile] = useState(false);
     const [isDragging, setIsDragging] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     useEffect(() => {
         if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -311,6 +312,11 @@ export function ModernPanel({
             {(!hideHeader || (isMobile && showHeaderOnMobile)) && (
                 <div
                     data-drag-header
+                    onDoubleClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest('button')) return;
+                        if (collapsible) setIsCollapsed(prev => !prev);
+                    }}
                     className={cn(
                         "flex items-center justify-between gap-1.5 p-2 border-b select-none",
                         isDark ? "bg-secondary-900 border-success-500/30" : "bg-secondary-50 border-success-500/50",
@@ -331,6 +337,23 @@ export function ModernPanel({
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
                         {headerAction}
+                        {collapsible && (
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); setIsCollapsed(prev => !prev); }}
+                                className={cn(
+                                    "p-1.5 rounded-md transition-colors",
+                                    isDark
+                                        ? "hover:bg-secondary-800 text-secondary-400 hover:text-secondary-100"
+                                        : "hover:bg-secondary-200 text-secondary-500 hover:text-secondary-900"
+                                )}
+                                aria-expanded={!isCollapsed}
+                                aria-label={isCollapsed ? t.expand : (language === 'tr' ? 'Küçült' : 'Collapse')}
+                                title={isCollapsed ? t.expand : (language === 'tr' ? 'Küçült' : 'Collapse')}
+                            >
+                                {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+                            </button>
+                        )}
                         {onClose && (!mobileOnlyClose || isMobile) && (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onClose(); }}
@@ -350,13 +373,15 @@ export function ModernPanel({
             )}
 
             {/* Content - No extra effects */}
-            <div className={cn(
-                "flex-1 overflow-auto",
-                !noPadding && "p-4",
-                isMobile && !noPadding && "p-3"
-            )}>
-                {children}
-            </div>
+            {!isCollapsed && (
+                <div className={cn(
+                    "flex-1 overflow-auto",
+                    !noPadding && "p-4",
+                    isMobile && !noPadding && "p-3"
+                )}>
+                    {children}
+                </div>
+            )}
 
             {/* Footer - Optional */}
             {footer && (

@@ -2117,7 +2117,7 @@ export function PCPanel({
                   id={deviceId}
                   title={internalPcHostname}
                   onClose={onClose}
-                  collapsible={false}
+                  collapsible={!isMobile}
                   hideTitle={(activeTab === 'desktop' || activeTab === 'terminal') ? false : true}
                   hideHeader={(activeTab === 'desktop' || activeTab === 'terminal') ? false : true}
                   headerAction={<PCPanelTerminalToolbar

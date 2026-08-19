@@ -282,22 +282,39 @@ describe('Packet Capture Backend', () => {
       status: 'online',
       ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
     };
+    const pc4: CanvasDevice = {
+      id: 'pc-4',
+      type: 'pc',
+      name: 'PC-4',
+      ip: '192.168.1.40',
+      subnet: '255.255.255.0',
+      gateway: '192.168.1.1',
+      vlan: 10,
+      macAddress: '00:00:00:00:00:04',
+      x: 380,
+      y: 140,
+      status: 'online',
+      ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }]
+    };
     const connections: CanvasConnection[] = [
       { id: 'c-pc1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'sw-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
       { id: 'c-pc2', sourceDeviceId: 'sw-1', sourcePort: 'fa0/2', targetDeviceId: 'pc-2', targetPort: 'eth0', cableType: 'straight', active: true },
-      { id: 'c-pc3', sourceDeviceId: 'sw-1', sourcePort: 'fa0/3', targetDeviceId: 'pc-3', targetPort: 'eth0', cableType: 'straight', active: true }
+      { id: 'c-pc3', sourceDeviceId: 'sw-1', sourcePort: 'fa0/3', targetDeviceId: 'pc-3', targetPort: 'eth0', cableType: 'straight', active: true },
+      { id: 'c-pc4', sourceDeviceId: 'sw-1', sourcePort: 'fa0/4', targetDeviceId: 'pc-4', targetPort: 'eth0', cableType: 'straight', active: true }
     ];
 
     const switchState = createInitialState();
     switchState.ports['fa0/1'] = { ...switchState.ports['fa0/1'], mode: 'access', accessVlan: 10, vlan: 10 };
     switchState.ports['fa0/2'] = { ...switchState.ports['fa0/2'], mode: 'access', accessVlan: 10, vlan: 10 };
     switchState.ports['fa0/3'] = { ...switchState.ports['fa0/3'], mode: 'access', accessVlan: 20, vlan: 20 };
+    switchState.ports['fa0/4'] = { ...switchState.ports['fa0/4'], mode: 'access', accessVlan: 10, vlan: 10 };
 
     const deviceMap = new Map<string, CanvasDevice>([
       [sw.id, sw],
       [pc1.id, pc1],
       [pc2.id, pc2],
       [pc3.id, pc3],
+      [pc4.id, pc4],
     ]);
 
     const targets = buildBroadcastAnimTargets({
@@ -308,7 +325,8 @@ describe('Packet Capture Backend', () => {
       deviceStates: new Map([[sw.id, switchState]]),
     });
 
-    expect(targets.map(target => target.targetId)).toEqual(['pc-2']);
+    // pc-1 (kaynak) hariç, VLAN 10'daki pc-2 ve pc-4 hedeflenir; VLAN 20'deki pc-3 hariç tutulur.
+    expect(targets.map(target => target.targetId)).toEqual(['pc-2', 'pc-4']);
   });
 
   test('ARP broadcast only occurs when the MAC is not cached; cached MAC within 2 minutes skips ARP', () => {

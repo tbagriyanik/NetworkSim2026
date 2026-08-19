@@ -1,5 +1,6 @@
 import type { SwitchState, StpVlanState, Port } from './types';
 import type { CanvasConnection } from '@/components/network/networkTopology.types';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 
 /**
  * Spanning Tree Protocol Bridge Protocol Data Unit (BPDU)
@@ -401,6 +402,19 @@ function runStpForVlan(
             vlanStpState.ports[portId] = { role: 'designated', state: 'forwarding', cost: getPortCost(port) };
           } else {
             vlanStpState.ports[portId] = { role: 'alternate', state: 'blocking', cost: getPortCost(port) };
+          }
+
+          // Dispatch STP BPDU packet to packet capture panel
+          if (typeof window !== 'undefined') {
+            const connId = conn.id || `${conn.sourceDeviceId}-${conn.targetDeviceId}`;
+            dispatchCapturedPackets([{
+              connectionId: connId,
+              sourceIp: state.hostname || deviceId,
+              targetIp: '01:80:C2:00:00:00',
+              protocol: 'STP',
+              length: 60,
+              info: `STP BPDU: Root ${bestBp.rootBridgeId.split('.').slice(-2).join('.')} Cost ${bestBp.rootPathCost} Sender ${vlanStpState.bridgeId.split('.').slice(-2).join('.')}`
+            }]);
           }
         }
       }
