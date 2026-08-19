@@ -478,56 +478,37 @@ export function useCanvasActions({
         summaryText += `\n${groupHeader}\n`;
 
         groupedDevices.forEach(d => {
-          summaryText += `• ${d.name}:\n`;
-
           const deviceState = deviceStates?.get(d.id) as SwitchState | undefined;
           const subnetMask = d.subnet || '255.255.255.0';
 
-          if (d.ip) {
-            summaryText += `  IP: ${d.ip}/${subnetMask}\n`;
-          }
+          let devHeader = `• ${d.name}`;
+          const details: string[] = [];
 
-          if (d.macAddress) {
-            summaryText += `  MAC: ${d.macAddress}\n`;
+          if (d.ip) details.push(`IP: ${d.ip}/${subnetMask}`);
+          if (d.macAddress) details.push(`MAC: ${d.macAddress}`);
+          if (d.gateway && d.gateway !== '0.0.0.0') details.push(`GW: ${d.gateway}`);
+          if (d.dns && d.dns !== '0.0.0.0') details.push(`DNS: ${d.dns}`);
+          if (d.ipv6) details.push(`IPv6: ${d.ipv6}`);
+
+          if (details.length > 0) {
+            devHeader += ` (${details.join(' | ')})`;
           }
+          summaryText += `${devHeader}\n`;
 
           const connectedPorts = getConnectedPortsForDevice(d.id, connections);
           if (connectedPorts.length > 0) {
-            summaryText += `  Bağlı Portlar:\n`;
-            connectedPorts.forEach(port => {
-              summaryText += `    - ${port}\n`;
-            });
-          }
-
-          if (d.dns && d.dns !== '0.0.0.0') {
-            summaryText += `  DNS: ${d.dns}\n`;
-          }
-
-          if (d.gateway && d.gateway !== '0.0.0.0') {
-            summaryText += `  GW: ${d.gateway}\n`;
-          }
-
-          if (d.ipv6) {
-            summaryText += `  IPv6: ${d.ipv6}\n`;
+            summaryText += `  ${isTr ? 'Portlar' : 'Ports'}: ${connectedPorts.join(', ')}\n`;
           }
 
           const activeServices = getActiveServicesForDevice(d, deviceState);
           if (activeServices.length > 0) {
-            summaryText += `  Etkin Servisler:\n`;
-            activeServices.forEach(svc => {
-              summaryText += `    - ${svc}\n`;
-            });
+            summaryText += `  ${isTr ? 'Servisler' : 'Services'}: ${activeServices.join(', ')}\n`;
           }
 
           const cliCmds = getCliCommandsForDevice(deviceState);
           if (cliCmds.length > 0) {
-            summaryText += `\n  [CLI Komutları]:\n`;
-            cliCmds.forEach(cmd => {
-              summaryText += `    ${cmd}\n`;
-            });
+            summaryText += `  CLI: ${cliCmds.join('; ')}\n`;
           }
-
-          summaryText += '\n------------------------\n';
         });
       });
     }
@@ -536,12 +517,12 @@ export function useCanvasActions({
       id: getNextNoteId(),
       x: 150 + Math.random() * 50,
       y: 150 + Math.random() * 50,
-      width: 280,
-      height: Math.max(140, 60 + devices.length * 90),
+      width: 440,
+      height: Math.min(380, Math.max(160, 60 + devices.length * 40)),
       text: summaryText.trim(),
       color: 'var(--color-success-200)',
       font: 'Courier New',
-      fontSize: 10,
+      fontSize: 12,
       opacity: 1,
     };
     setNotes((prev) => [...prev, newNote]);

@@ -1,6 +1,7 @@
 import type { SwitchState, StpVlanState, Port } from './types';
 import type { CanvasConnection } from '@/components/network/networkTopology.types';
 import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { detectEtherChannelBundles } from './etherchannel';
 
 /**
  * Spanning Tree Protocol Bridge Protocol Data Unit (BPDU)
@@ -340,6 +341,8 @@ function runStpForVlan(
       ports: {}
     };
 
+    const activeBundles = detectEtherChannelBundles(connections, deviceStates).filter(b => b.bundled);
+
     Object.keys(state.ports).forEach(portId => {
       const port = state.ports[portId];
       if (portId.startsWith('vlan') || portId.startsWith('console')) return;
@@ -347,6 +350,27 @@ function runStpForVlan(
 
       if (port.shutdown) {
         vlanStpState.ports[portId] = { role: 'disabled', state: 'disabled', cost: getPortCost(port) };
+        return;
+      }
+
+      // Check if this port is part of an active bundled EtherChannel
+      const portBundle = port.channelGroup !== undefined ? activeBundles.find(b =>
+        (b.sourceDeviceId === deviceId && b.memberConnections.some(c => c.sourcePort === portId)) ||
+        (b.targetDeviceId === deviceId && b.memberConnections.some(c => c.targetPort === portId))
+      ) : undefined;
+
+      const isRootChannel = !!(portBundle && rootPortId && portBundle.memberConnections.some(c =>
+        (c.sourceDeviceId === deviceId && c.sourcePort === rootPortId) ||
+        (c.targetDeviceId === deviceId && c.targetPort === rootPortId)
+      ));
+
+      if (isRootChannel) {
+        vlanStpState.ports[portId] = { role: 'root', state: 'forwarding', cost: getPortCost(port) };
+        return;
+      }
+
+      if (portBundle && isRoot) {
+        vlanStpState.ports[portId] = { role: 'designated', state: 'forwarding', cost: getPortCost(port) };
         return;
       }
 
@@ -398,7 +422,7 @@ function runStpForVlan(
             }
           }
 
-          if (isDesignated) {
+          if (isDesignated || portBundle) {
             vlanStpState.ports[portId] = { role: 'designated', state: 'forwarding', cost: getPortCost(port) };
           } else {
             vlanStpState.ports[portId] = { role: 'alternate', state: 'blocking', cost: getPortCost(port) };
