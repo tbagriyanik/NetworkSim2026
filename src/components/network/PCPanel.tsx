@@ -22,7 +22,7 @@ import { generateRouterAdminPage, isRouterDevice } from '@/components/network/Wi
 import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
-import { HiddenNavigationTabs } from './pc-panel/HiddenNavigationTabs';
+import { PCPanelNavigation } from './pc-panel/PCPanelNavigation';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
 import { HttpBrowserWindow } from './pc-panel/HttpBrowserWindow';
 import { HomeLauncher } from './pc-panel/HomeLauncher';
@@ -2160,7 +2160,7 @@ export function PCPanel({
                     />
 
                     {/* Navigation Tabs - Hide on mobile, use main app tabs */}
-                    <HiddenNavigationTabs
+                    <PCPanelNavigation
                       activeTab={activeTab}
                       setActiveTab={setActiveTab}
                       isMobile={isMobile}

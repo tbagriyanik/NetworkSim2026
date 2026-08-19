@@ -13,12 +13,10 @@ import { useNetworkRefreshWithPositions } from '@/hooks/useNetworkRefreshWithPos
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { toast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipWrapper } from "@/components/ui/TooltipWrapper";
 import { ShortcutBadge } from "@/components/ui/ShortcutBadge";
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, ContextMenuState, ContextMenuMode, NetworkTopologyProps } from './networkTopology.types';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
-import { X } from "lucide-react";
 
 
 import {
@@ -54,7 +52,7 @@ import { usePingSequence, type PingAnimationState, type BroadcastAnimTarget } fr
 import { useTopologyIot } from './hooks/useTopologyIot';
 import { useTopologyTooltipHandlers } from './hooks/useTopologyTooltipHandlers';
 import { CanvasToolbar } from './topology/CanvasToolbar';
-import { DeviceRenderer } from './topology/DeviceRenderer';
+import { TopologyDeviceRenderer } from './topology/TopologyDeviceRenderer';
 
 import { TopologyPrintPreview } from './topology/TopologyPrintPreview';
 import { TopologyPaletteSheet } from './topology/TopologyPaletteSheet';
@@ -64,6 +62,7 @@ import { TopologyModals } from './topology/TopologyModals';
 import { DEVICE_ICONS } from './topology/DeviceIcons';
 import { TopologySelectionToolbar } from './topology/TopologySelectionToolbar';
 import { TopologyCanvasLayer } from './topology/TopologyCanvasLayer';
+import { TopologyFullscreenButton } from './topology/TopologyFullscreenButton';
 
 
 
@@ -2166,11 +2165,11 @@ export function NetworkTopology({
   // Render device
   const renderDevice = (device: CanvasDevice, isDragging: boolean = false) => {
     return (
-      <DeviceRenderer
+      <TopologyDeviceRenderer
         device={device}
         topologyDevices={devices}
         isDragging={isDragging}
-        isSelected={selectedDeviceSet.has(device.id)}
+        selectedDeviceIds={selectedDeviceSet}
         isDark={isDark}
         language={language}
         t={t}
@@ -2265,17 +2264,7 @@ export function NetworkTopology({
         }`}
     >
       {isFullscreen && (
-        <TooltipWrapper title={t.exit}>
-          <button
-            onClick={toggleFullscreen}
-            className={`fixed top-4 right-4 z-[10000] flex items-center justify-center w-8 h-8 rounded-full shadow-lg transition-colors ${isDark
-              ? 'bg-secondary-800/90 hover:bg-error-500/30 text-secondary-300 hover:text-error-400 border border-secondary-600'
-              : 'bg-white/90 hover:bg-error-500/30 text-secondary-600 hover:text-error-600 border border-secondary-300'
-              }`}
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </TooltipWrapper>
+        <TopologyFullscreenButton isDark={isDark} label={t.exit} onClick={toggleFullscreen} />
       )}
       <div className="flex flex-1 overflow-hidden">
         {/* Canvas Area */}

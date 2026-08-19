@@ -15,7 +15,7 @@ import {
   SELECTION_HIGHLIGHT_COLOR
 } from '../networkTopology.constants';
 
-interface DeviceRendererProps {
+export interface DeviceRendererProps {
   device: CanvasDevice;
   topologyDevices: CanvasDevice[];
   isDragging?: boolean;
