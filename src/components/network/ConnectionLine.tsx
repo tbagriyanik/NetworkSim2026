@@ -188,14 +188,14 @@ export const ConnectionLine = memo(function ConnectionLine({
       <path
         d={pathD}
         stroke={isCompatible && connection.active !== false ? color : 'var(--color-error-500)'}
-        strokeWidth={isHovered ? 6 : 3}
+        strokeWidth={isHovered ? 7 : (isWireless ? 4 : 3)}
         fill="none"
         strokeDasharray={isCompatible && connection.active !== false ? 'none' : '6,3'}
         className="pointer-events-none"
         vectorEffect="non-scaling-stroke"
         style={{
           // Inactive cables (powered off / shutdown) get higher opacity so they're visible in dark mode
-          opacity: isHovered ? 0.72 : (isEffectivelyActive ? 0.4 : 0.65),
+          opacity: isHovered ? 0.9 : (isEffectivelyActive ? (isWireless ? 0.82 : 0.4) : 0.65),
           filter: isHovered || (graphicsQuality === 'high' && isEffectivelyActive) ?
             'drop-shadow(0 0 0.5px ' + color + ') drop-shadow(0 0 1px ' + color + ')' :
             'none',

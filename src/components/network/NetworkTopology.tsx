@@ -63,6 +63,7 @@ import { DEVICE_ICONS } from './topology/DeviceIcons';
 import { TopologySelectionToolbar } from './topology/TopologySelectionToolbar';
 import { TopologyCanvasLayer } from './topology/TopologyCanvasLayer';
 import { TopologyFullscreenButton } from './topology/TopologyFullscreenButton';
+import { buildImplicitWirelessConnections } from '@/lib/network/wireless';
 
 
 
@@ -109,17 +110,27 @@ export function NetworkTopology({
   }, [topologyDevices]);
 
   const topologyConnections = useTopologyConnections();
+  // Wireless clients are implicit in the topology model, but they must also
+  // be rendered so every example shows the same wave-shaped wireless link.
+  const visualConnections = useMemo(() => {
+    const existing = new Set(topologyConnections.map((connection) =>
+      `${connection.sourceDeviceId}:${connection.sourcePort}-${connection.targetDeviceId}:${connection.targetPort}`
+    ));
+    const implicitWireless = buildImplicitWirelessConnections(topologyDevices, deviceStates, 'visual-wireless')
+      .filter((connection) => !existing.has(`${connection.sourceDeviceId}:${connection.sourcePort}-${connection.targetDeviceId}:${connection.targetPort}`));
+    return [...topologyConnections, ...implicitWireless];
+  }, [topologyConnections, topologyDevices, deviceStates]);
   // BOLT: Memoize connection map for O(1) lookups during culling
   const connectionMap = useMemo(() => {
     const map = new Map<string, CanvasConnection>();
-    topologyConnections.forEach(c => map.set(c.id, c));
+    visualConnections.forEach(c => map.set(c.id, c));
     return map;
-  }, [topologyConnections]);
+  }, [visualConnections]);
 
   // BOLT: Memoize map of device ID to its connections for O(1) lookups in renderDevice
   const deviceToConnectionsMap = useMemo(() => {
     const map = new Map<string, CanvasConnection[]>();
-    topologyConnections.forEach(conn => {
+    visualConnections.forEach(conn => {
       const addConn = (deviceId: string) => {
         const list = map.get(deviceId);
         if (list) {
@@ -136,7 +147,7 @@ export function NetworkTopology({
       }
     });
     return map;
-  }, [topologyConnections]);
+  }, [visualConnections]);
 
   // BOLT: Pre-calculate connection metadata (total and index for parallel cables)
   // This reduces O(C^2) operations in the render loop to O(C) pre-calculation + O(1) lookups.
@@ -145,7 +156,7 @@ export function NetworkTopology({
     const groupMap = new Map<string, string[]>();
 
     // Group connections by endpoint pairs (agnostic of direction)
-    topologyConnections.forEach(conn => {
+    visualConnections.forEach(conn => {
       const pair = [conn.sourceDeviceId, conn.targetDeviceId].sort().join(':');
       if (!groupMap.has(pair)) groupMap.set(pair, []);
       groupMap.get(pair)?.push(conn.id);
@@ -160,7 +171,7 @@ export function NetworkTopology({
     });
 
     return meta;
-  }, [topologyConnections]);
+  }, [visualConnections]);
   const topologyNotes = useTopologyNotes();
   const setDevices = useAppStore(state => state.setDevices);
   const setConnections = useAppStore(state => state.setConnections);
@@ -176,7 +187,7 @@ export function NetworkTopology({
   const [showLogPanel, setShowLogPanel] = useState(false);
 
   const devices = topologyDevices;
-  const connections = topologyConnections;
+  const connections = visualConnections;
   const notes = topologyNotes;
 
   // Sync state functions for local component logic
