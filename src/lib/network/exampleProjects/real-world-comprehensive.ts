@@ -216,13 +216,17 @@ const example = (isTr: boolean): ExampleProject => {
 
   const hqRouterState = createInitialRouterState('00:50:00:00:70:01');
   hqRouterState.hostname = 'R-HQ';
-  hqRouterState.ports['gi0/2'] = { ...hqRouterState.ports['gi0/2'], status: 'connected', ipAddress: '10.70.10.1', subnetMask: '255.255.255.0', shutdown: false };
-  hqRouterState.ports['gi0/3'] = { ...hqRouterState.ports['gi0/3'], status: 'connected', ipAddress: '10.70.10.254', subnetMask: '255.255.255.0', shutdown: false };
+  hqRouterState.ports['gi0/0'] = { ...hqRouterState.ports['gi0/0'], status: 'connected', adminStatus: 'up', operStatus: 'up', shutdown: false };
+  hqRouterState.ports['s0/0/0'] = { ...hqRouterState.ports['s0/0/0'], status: 'connected', adminStatus: 'up', operStatus: 'up', shutdown: false };
+  hqRouterState.ports['gi0/2'] = { ...hqRouterState.ports['gi0/2'], status: 'connected', adminStatus: 'up', operStatus: 'up', ipAddress: '10.70.10.1', subnetMask: '255.255.255.0', shutdown: false };
+  hqRouterState.ports['gi0/3'] = { ...hqRouterState.ports['gi0/3'], status: 'connected', adminStatus: 'up', operStatus: 'up', ipAddress: '10.70.10.254', subnetMask: '255.255.255.0', shutdown: false };
 
   const floorRouterState = createInitialRouterState('00:50:00:00:50:01');
   floorRouterState.hostname = 'R-FLOOR-2';
-  floorRouterState.ports['gi0/2'] = { ...floorRouterState.ports['gi0/2'], status: 'connected', ipAddress: '10.50.10.1', subnetMask: '255.255.255.0', shutdown: false };
-  floorRouterState.ports['gi0/3'] = { ...floorRouterState.ports['gi0/3'], status: 'connected', ipAddress: '10.50.10.254', subnetMask: '255.255.255.0', shutdown: false };
+  floorRouterState.ports['s0/0/0'] = { ...floorRouterState.ports['s0/0/0'], status: 'connected', adminStatus: 'up', operStatus: 'up', shutdown: false };
+  floorRouterState.ports['gi0/0'] = { ...floorRouterState.ports['gi0/0'], status: 'connected', adminStatus: 'up', operStatus: 'up', shutdown: false };
+  floorRouterState.ports['gi0/2'] = { ...floorRouterState.ports['gi0/2'], status: 'connected', adminStatus: 'up', operStatus: 'up', ipAddress: '10.50.10.1', subnetMask: '255.255.255.0', shutdown: false };
+  floorRouterState.ports['gi0/3'] = { ...floorRouterState.ports['gi0/3'], status: 'connected', adminStatus: 'up', operStatus: 'up', ipAddress: '10.50.10.254', subnetMask: '255.255.255.0', shutdown: false };
 
   const accessState = createInitialState('00:50:00:00:10:02', 'WS-C2960-24TT-L');
   accessState.hostname = 'SW-ACCESS';
