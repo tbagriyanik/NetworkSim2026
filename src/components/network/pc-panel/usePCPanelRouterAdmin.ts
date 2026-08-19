@@ -178,6 +178,7 @@ export function usePCPanelRouterAdmin({
           macFilterEnabled: Boolean(payload.macFilterEnabled),
           macFilterMode: (payload.macFilterMode === 'deny' ? 'deny' : 'allow') as 'allow' | 'deny',
           macFilterList: Array.isArray(payload.macFilterList) ? payload.macFilterList : [],
+          ssids: Array.isArray(payload.ssids) ? payload.ssids : (device?.wifi?.ssids || []),
           bssid: device?.wifi?.bssid || '',
         };
 

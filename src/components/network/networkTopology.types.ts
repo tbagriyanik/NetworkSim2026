@@ -1,5 +1,6 @@
 import type { CableInfo, SwitchState } from '@/lib/network/types';
 import type { CableType } from '@/lib/network/types';
+import type { DeviceWifiSsidProfile } from '@/lib/network/wireless';
 
 export type DeviceType = 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc';
 export type CanvasPortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
@@ -36,6 +37,7 @@ export interface CanvasPort {
     macFilterEnabled?: boolean;
     macFilterMode?: 'allow' | 'deny';
     macFilterList?: string[];
+    ssids?: DeviceWifiSsidProfile[];
   };
   spanningTree?: {
     role?: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';
@@ -182,6 +184,7 @@ export interface CanvasDevice {
     macFilterEnabled?: boolean;
     macFilterMode?: 'allow' | 'deny';
     macFilterList?: string[];
+    ssids?: DeviceWifiSsidProfile[];
   };
   iot?: {
     sensorType: 'temperature' | 'sound' | 'motion' | 'humidity' | 'light';

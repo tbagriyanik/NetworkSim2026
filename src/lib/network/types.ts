@@ -1,6 +1,7 @@
 // Network Simulator Types
 
 import type { SwitchModel } from './switchModels';
+import type { DeviceWifiSsidProfile } from './wireless';
 
 export type CommandMode =
   | 'user'           // Switch>
@@ -98,6 +99,7 @@ export interface Port {
     macFilterEnabled?: boolean;
     macFilterMode?: 'allow' | 'deny';
     macFilterList?: string[];
+    ssids?: DeviceWifiSsidProfile[];
   };
   spanningTree?: {
     role?: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';
@@ -140,6 +142,18 @@ export interface Port {
   stpPriority?: number;
   dhcpSnoopingTrust?: boolean;
   dhcpSnoopingLimitRate?: number; // DHCP rate limit (packets per second) on untrusted ports
+  arpInspectionTrust?: boolean;
+  carrierDelay?: number;
+  loadInterval?: number;
+  directedBroadcast?: boolean;
+  powerInline?: {
+    auto?: boolean;
+    static?: boolean;
+    never?: boolean;
+    maxMilliwatts?: number;
+    enabled?: boolean;
+    consumption?: number;
+  };
   nonegotiate?: boolean;
   ipVerifySource?: boolean;
   ipVerifySourcePortSecurity?: boolean;
@@ -511,6 +525,7 @@ export interface SwitchState {
   dhcpOption82?: boolean;
   dhcpSnoopingVlans?: string[];
   dhcpSnoopingBindings?: DhcpSnoopingBinding[];
+  arpInspectionVlans?: string[];
   accessLists?: Record<string, string[]>;
   namedAclTypes?: Record<string, 'standard' | 'extended'>;  // Track named ACL types for display
   currentNamedAcl?: string;  // Current named standard ACL being configured

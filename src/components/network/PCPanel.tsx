@@ -1717,6 +1717,16 @@ export function PCPanel({
     } catch { /* ignore */ }
   }, [deviceId]);
 
+  const removePcArpEntry = useCallback((targetIp: string) => {
+    setPcArpTable((prev) => {
+      const updated = prev.filter((entry) => entry.ip !== targetIp);
+      try {
+        localStorage.setItem(`pc_arp_${deviceId}`, JSON.stringify(updated));
+      } catch { /* ignore */ }
+      return updated;
+    });
+  }, [deviceId]);
+
   // Listen for ARP update events from right-click ping or other global ping actions
   useEffect(() => {
     const handleArpUpdate = (e: CustomEvent<{ sourceId: string; targetIp: string; targetMac: string; isIot?: boolean }>) => {
@@ -1914,6 +1924,7 @@ export function PCPanel({
     normalizeLookupTargetCallback,
     buildArpTableOutput,
     addPcArpEntry,
+    removePcArpEntry,
     clearPcArpTable,
     openWebPage,
     setPcHostname,

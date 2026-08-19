@@ -3,8 +3,14 @@ import { cmdInterface } from '@/lib/network/core/interface/cmd.interface';
 import { cmdChannelGroup } from '@/lib/network/core/interface/cmd.spanningTree';
 import { SwitchState, Port, SwitchModel, SwitchLayer, Vlan, SecurityConfig } from '@/lib/network/types';
 import { normalizePortId } from '@/lib/network/portUtils';
+import type { CommandContext } from '@/lib/network/core/commandTypes';
 
 describe('Port-channel Interface Command Support', () => {
+  const commandContext: CommandContext = {
+    language: 'en',
+    deviceStates: new Map(),
+  };
+
   const createMockState = (): SwitchState => ({
     hostname: 'Switch',
     macAddress: '00:11:22:33:44:55',
@@ -36,7 +42,7 @@ describe('Port-channel Interface Command Support', () => {
 
   it('enters interface configuration for port-channel 1', () => {
     const state = createMockState();
-    const res = cmdInterface(state, 'interface port-channel 1', {} as any);
+    const res = cmdInterface(state, 'interface port-channel 1', commandContext);
     expect(res.success).toBe(true);
     expect(res.newState?.currentMode).toBe('interface');
     expect(res.newState?.currentInterface).toBe('po1');
@@ -50,11 +56,15 @@ describe('Port-channel Interface Command Support', () => {
     state.currentMode = 'interface';
     state.currentInterface = 'gi0/1';
     state.selectedInterfaces = ['gi0/1', 'gi0/2'];
-    const cgRes = cmdChannelGroup(state, 'channel-group 1 mode active', {} as any);
+    const cgRes = cmdChannelGroup(state, 'channel-group 1 mode active', commandContext);
     expect(cgRes.success).toBe(true);
 
-    const updatedState = { ...state, ports: cgRes.newState!.ports!, currentMode: 'config' as const };
-    const res = cmdInterface(updatedState, 'interface po 1', {} as any);
+    if (!cgRes.newState?.ports) {
+      throw new Error('channel-group command did not return updated ports');
+    }
+
+    const updatedState = { ...state, ports: cgRes.newState.ports, currentMode: 'config' as const };
+    const res = cmdInterface(updatedState, 'interface po 1', commandContext);
     expect(res.success).toBe(true);
     expect(res.newState?.currentInterface).toBe('po1');
     expect(res.newState?.selectedInterfaces).toEqual(['po1', 'gi0/1', 'gi0/2']);

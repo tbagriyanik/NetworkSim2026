@@ -44,6 +44,17 @@ export const ALL_WIRELESS_CHANNELS: WirelessChannelOption[] = [
   ...WIRELESS_CHANNELS_5GHZ,
 ];
 
+export interface DeviceWifiSsidProfile {
+  id: string;
+  name: string;
+  ssid: string;
+  security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
+  password?: string;
+  band?: '2.4GHz' | '5GHz' | 'both';
+  enabled: boolean;
+  hidden?: boolean;
+}
+
 export interface DeviceWifiConfig {
   enabled: boolean;
   ssid: string;
@@ -57,6 +68,7 @@ export interface DeviceWifiConfig {
   macFilterEnabled?: boolean;
   macFilterMode?: 'allow' | 'deny';
   macFilterList?: string[];
+  ssids?: DeviceWifiSsidProfile[];
 }
 
 const normalizeWifiMode = (mode: string | undefined, fallback: WifiMode): WifiMode => {
@@ -366,10 +378,46 @@ function getApMaxClients(apWifi: DeviceWifiConfig | undefined): number {
   return Math.floor(value);
 }
 
-function wifiSecurityMatches(apWifi: DeviceWifiConfig, clientWifi: DeviceWifiConfig): boolean {
-  const apSecurity = (apWifi.security || 'open').toLowerCase();
-  const clientSecurity = (clientWifi.security || 'open').toLowerCase();
-  return apSecurity === clientSecurity && (apSecurity === 'open' || apWifi.password === clientWifi.password);
+export function getApActiveSsids(
+  apWifi: DeviceWifiConfig | undefined,
+  state?: SwitchState
+): Array<{ ssid: string; security: string; password?: string }> {
+  if (!apWifi || !apWifi.enabled) return [];
+  const list: Array<{ ssid: string; security: string; password?: string }> = [];
+
+  if (apWifi.ssid) {
+    list.push({
+      ssid: apWifi.ssid,
+      security: apWifi.security || 'open',
+      password: apWifi.password,
+    });
+  }
+
+  if (Array.isArray(apWifi.ssids)) {
+    for (const item of apWifi.ssids) {
+      if (item.enabled && item.ssid) {
+        list.push({
+          ssid: item.ssid,
+          security: item.security || 'open',
+          password: item.password,
+        });
+      }
+    }
+  }
+
+  if (state?.wlcWlans) {
+    for (const wlan of Object.values(state.wlcWlans)) {
+      if (wlan.status === 'enabled' && wlan.ssid) {
+        list.push({
+          ssid: wlan.ssid,
+          security: wlan.security || 'open',
+          password: wlan.password,
+        });
+      }
+    }
+  }
+
+  return list;
 }
 
 export function buildImplicitWirelessConnections(
@@ -387,16 +435,26 @@ export function buildImplicitWirelessConnections(
   const candidatesByAp = new Map<string, Array<{ client: CanvasDevice; dist: number }>>();
 
   for (const ap of apDevices) {
+    const apState = safeDeviceStates?.get(ap.id);
     const apWifi = getDeviceWifiConfig(ap, safeDeviceStates);
-    if (!apWifi || !apWifi.enabled || apWifi.mode !== 'ap' || !apWifi.ssid) continue;
+    if (!apWifi || !apWifi.enabled || apWifi.mode !== 'ap') continue;
 
-    const apSsid = apWifi.ssid.toLowerCase();
+    const activeSsids = getApActiveSsids(apWifi, apState);
+    if (activeSsids.length === 0) continue;
+
     for (const client of clientDevices) {
       const clientWifi = getDeviceWifiConfig(client, safeDeviceStates);
       if (!clientWifi || !clientWifi.enabled || !clientWifi.ssid) continue;
       if (clientWifi.bssid && clientWifi.bssid !== ap.id) continue;
-      if (clientWifi.ssid.toLowerCase() !== apSsid) continue;
-      if (!wifiSecurityMatches(apWifi, clientWifi)) continue;
+
+      const matchingSsid = activeSsids.find(s => s.ssid.toLowerCase() === clientWifi.ssid.toLowerCase());
+      if (!matchingSsid) continue;
+
+      const clientSec = (clientWifi.security || 'open').toLowerCase();
+      const apSec = (matchingSsid.security || 'open').toLowerCase();
+      if (clientSec !== apSec) continue;
+      if (apSec !== 'open' && matchingSsid.password !== clientWifi.password) continue;
+
       if (!wifiChannelMatches(apWifi, clientWifi)) continue;
       if (!wifiMacFilterMatches(apWifi, client, safeDeviceStates)) continue;
 

@@ -895,3 +895,76 @@ export function cmdUdldEnable(state: SwitchState, _input: string, _ctx: CommandC
   newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
   return { success: true, output: 'UDLD enabled', newState: { ports: newPorts } };
 }
+
+/** Configure EtherChannel negotiation protocol on the selected interface(s). */
+export function cmdChannelProtocol(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^channel-protocol\s+(lacp|pagp)$/i);
+  if (!match) return { success: false, error: '% Invalid channel-protocol command' };
+  const protocol = match[1].toLowerCase() as 'lacp' | 'pagp';
+  const updatePort = (port: Port) => ({ ...port, channelProtocol: protocol });
+  const ports = state.selectedInterfaces?.length
+    ? applyToSelectedPorts(state, updatePort)
+    : state.currentInterface
+      ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) }
+      : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, output: `Channel protocol set to ${protocol.toUpperCase()}`, newState: { ports } };
+}
+
+/** Enable or disable directed broadcasts on the selected interface(s). */
+export function cmdDirectedBroadcast(state: SwitchState, _input: string, enabled: boolean): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, directedBroadcast: enabled });
+  const ports = state.selectedInterfaces?.length
+    ? applyToSelectedPorts(state, updatePort)
+    : state.currentInterface
+      ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) }
+      : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, output: `IP directed-broadcast ${enabled ? 'enabled' : 'disabled'}`, newState: { ports } };
+}
+
+export function cmdCarrierDelay(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^carrier-delay\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid carrier-delay command' };
+  const delay = Number(match[1]);
+  const updatePort = (port: Port) => ({ ...port, carrierDelay: delay });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, newState: { ports } };
+}
+
+export function cmdLoadInterval(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^load-interval\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid load-interval command' };
+  const interval = Number(match[1]);
+  if (interval < 30 || interval > 600) return { success: false, error: '% Load interval must be between 30 and 600 seconds' };
+  const updatePort = (port: Port) => ({ ...port, loadInterval: interval });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, newState: { ports } };
+}
+
+export function cmdPowerInline(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^power\s+inline$/i);
+  if (!match) return { success: false, error: '% Invalid power inline command' };
+  const updatePort = (port: Port) => ({ ...port, powerInline: { ...(port.powerInline || {}), enabled: true } });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, output: 'Power inline enabled', newState: { ports } };
+}
+
+export function cmdPowerInlineConsumption(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^power\s+inline\s+consumption\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid power inline consumption command' };
+  const consumption = Number(match[1]);
+  const updatePort = (port: Port) => ({ ...port, powerInline: { enabled: true, consumption } });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, newState: { ports } };
+}

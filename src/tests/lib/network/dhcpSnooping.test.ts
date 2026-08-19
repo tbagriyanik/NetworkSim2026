@@ -1,0 +1,48 @@
+import { describe, it, expect } from 'vitest';
+import { cmdIpDhcpSnoopingTrust, cmdNoIpDhcpSnoopingTrust } from '@/lib/network/core/interface/cmd.ipAddress';
+import { SwitchState, Port, SwitchModel, SwitchLayer, Vlan, SecurityConfig } from '@/lib/network/types';
+import type { CommandContext } from '@/lib/network/core/commandTypes';
+
+describe('DHCP Snooping Trust Command Support', () => {
+  const commandContext: CommandContext = {
+    language: 'en',
+    deviceStates: new Map(),
+  };
+
+  const createMockState = (): SwitchState => ({
+    hostname: 'Switch-1',
+    macAddress: '00:11:22:33:44:55',
+    switchModel: 'WS-C2960-24TT-L' as SwitchModel,
+    switchLayer: 'L2' as SwitchLayer,
+    currentMode: 'interface',
+    currentInterface: 'gi0/1',
+    commandHistory: [],
+    ports: {
+      'gi0/1': { id: 'gi0/1', name: 'Gi0/1', status: 'connected', type: 'gigabitethernet' } as Port,
+    },
+    vlans: {} as Record<string, Vlan>,
+    security: {} as SecurityConfig,
+    runningConfig: [],
+    historyIndex: 0,
+    bootTime: Date.now(),
+    ipRouting: false,
+    macAddressTable: [],
+    arpCache: [],
+    version: { nosVersion: '', modelName: '', serialNumber: '', uptime: '' },
+  });
+
+  it('configures ip dhcp snooping trust on interface', () => {
+    const state = createMockState();
+    const res = cmdIpDhcpSnoopingTrust(state, 'ip dhcp snooping trust', commandContext);
+    expect(res.success).toBe(true);
+    expect(res.newState?.ports?.['gi0/1']?.dhcpSnoopingTrust).toBe(true);
+  });
+
+  it('removes ip dhcp snooping trust with no ip dhcp snooping trust', () => {
+    const state = createMockState();
+    state.ports['gi0/1'].dhcpSnoopingTrust = true;
+    const res = cmdNoIpDhcpSnoopingTrust(state, 'no ip dhcp snooping trust', commandContext);
+    expect(res.success).toBe(true);
+    expect(res.newState?.ports?.['gi0/1']?.dhcpSnoopingTrust).toBe(false);
+  });
+});

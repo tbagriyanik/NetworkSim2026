@@ -8,6 +8,7 @@ import {
   WIRELESS_CHANNELS_5GHZ,
   formatChannelDisplay,
   normalizeChannel,
+  type DeviceWifiSsidProfile,
 } from '@/lib/network/wireless';
 
 interface WifiAdminConfig {
@@ -22,6 +23,7 @@ interface WifiAdminConfig {
   macFilterEnabled?: boolean;
   macFilterMode?: 'allow' | 'deny';
   macFilterList?: string[];
+  ssids?: DeviceWifiSsidProfile[];
 }
 
 export interface ConnectedIoTDevice {
@@ -43,7 +45,6 @@ export interface AvailableIoTDevice {
 interface RouterWebConfig {
   wifi: WifiAdminConfig;
   deviceName: string;
-
   deviceIp: string;
   deviceId?: string;
   adminPassword?: string;
@@ -77,6 +78,13 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   const jsChannel = safeJSONForHTML(wifi.channel || '');
   const jsSecurity = safeJSONForHTML(wifi.security || '');
 
+  const defaultSsidsList = wifi.ssids || [
+    { id: 'ssid-1', name: isTurkish ? 'Ana Ağ (Primary)' : 'Primary Network', ssid: wifi.ssid || 'WiFi_Network', security: wifi.security || 'wpa2', password: wifi.password || 'password123', band: 'both', enabled: true },
+    { id: 'ssid-2', name: isTurkish ? 'Misafir Ağ (Guest)' : 'Guest Network', ssid: (wifi.ssid || 'WiFi') + '_Guest', security: 'open', band: '2.4GHz', enabled: false }
+  ];
+  const jsCurrentSsidList = safeJSONForHTML(defaultSsidsList);
+  const jsConnectedClientsData = safeJSONForHTML(connectedIotDevices || []);
+
   const securityOptions = [
     { value: 'open', label: isTurkish ? 'Açık (Güvenlik Yok)' : 'Open (No Security)' },
     { value: 'wep', label: isTurkish ? 'WEP (Wired Equivalent Privacy)' : 'WEP (Wired Equivalent Privacy)' },
@@ -101,39 +109,27 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   `;
 
   const optgroup5 = `
-    <optgroup label="${isTurkish ? '5 GHz Bandı (Yüksek Hız)' : '5 GHz Band (High Speed)'}">
-      <option value="5GHz" ${wifi.channel === '5GHz' ? 'selected' : ''}>${isTurkish ? '5 GHz (Varsayılan)' : '5 GHz (Default)'}</option>
+    <optgroup label="${isTurkish ? '5 GHz Bandı (Kanal 36 - 165)' : '5 GHz Band (Channels 36 - 165)'}">
+      <option value="5GHz" ${wifi.channel === '5GHz' ? 'selected' : ''}>${isTurkish ? '5 GHz (Yüksek Hız)' : '5 GHz (High Speed)'}</option>
       ${WIRELESS_CHANNELS_5GHZ.map(opt => `<option value="${opt.value}" ${currentNormalizedChannel === opt.value ? 'selected' : ''}>${isTurkish ? opt.labelTr : opt.labelEn}</option>`).join('')}
     </optgroup>
   `;
 
-  const channelSelect = autoOption + optgroup24 + optgroup5;
+  const channelSelect = `${autoOption}${optgroup24}${optgroup5}`;
 
-  const securitySelect = securityOptions.map(opt =>
-    `<option value="${opt.value}" ${wifi.security === opt.value ? 'selected' : ''}>${opt.label}</option>`
-  ).join('');
+  const securitySelect = securityOptions
+    .map(opt => `<option value="${opt.value}" ${wifi.security === opt.value ? 'selected' : ''}>${opt.label}</option>`)
+    .join('');
 
-  const modeSelect = modeOptions.map(opt =>
-    `<option value="${opt.value}" ${wifi.mode === opt.value ? 'selected' : ''}>${opt.label}</option>`
-  ).join('');
-
-  const isWepMode = wifi.security === 'wep';
-  const passwordPlaceholder = isWepMode
-    ? (isTurkish ? 'WEP anahtarı girin (en az 5 karakter veya 10/26 hex hane)' : 'Enter WEP key (min 5 chars or 10/26 hex digits)')
-    : (isTurkish ? 'Parola girin (en az 8 karakter)' : 'Enter password (min 8 characters)');
-  const passwordHint = isWepMode
-    ? (isTurkish ? 'En az 5 karakter gereklidir (veya 10/26 hex hane)' : 'Minimum 5 characters required (or 10/26 hex digits)')
-    : (isTurkish ? 'En az 8 karakter gereklidir' : 'Minimum 8 characters required');
-  const passwordMinLength = isWepMode ? 5 : 8;
+  const modeSelect = modeOptions
+    .map(opt => `<option value="${opt.value}" ${wifi.mode === opt.value ? 'selected' : ''}>${opt.label}</option>`)
+    .join('');
 
   const passwordField = `
     <div class="form-group">
-      <label for="wifi-password">${isTurkish ? 'WiFi Parolası / Güvenlik Anahtarı' : 'WiFi Password / Security Key'}</label>
-      <div style="position:relative;display:flex;align-items:center;">
-        <input type="password" id="wifi-password" name="password" value="${safeWifiPassword}" placeholder="${passwordPlaceholder}" minlength="${passwordMinLength}" aria-describedby="wifi-password-hint" style="padding-right:2.2rem;width:100%;border:1px solid var(--color-secondary-300);border-radius:8px;box-sizing:border-box;">
-        <button type="button" onclick="(function(btn){var inp=document.getElementById('wifi-password');if(inp.type==='password'){inp.type='text';btn.innerHTML='👁️';}else{inp.type='password';btn.innerHTML='👁';}})(this)" tabindex="-1" style="position:absolute;right:0.5rem;background:none;border:none;cursor:pointer;font-size:1rem;color:var(--color-secondary-500);padding:0;line-height:1;" title="${isTurkish ? 'Parolayı Göster/Gizle' : 'Show/Hide password'}">👁</button>
-      </div>
-      <span class="hint" id="wifi-password-hint">${passwordHint}</span>
+      <label for="wifi-password">${isTurkish ? 'Kablosuz Ağ Parolası' : 'Wireless Network Password'}</label>
+      <input type="password" id="wifi-password" name="password" value="${safeWifiPassword}" placeholder="${isTurkish ? 'En az 8 karakter girin' : 'Enter at least 8 characters'}" minlength="8" aria-describedby="wifi-password-hint">
+      <span class="hint" id="wifi-password-hint">${isTurkish ? 'WPA2/WPA3 güvenliği için güçlü bir parola kullanın' : 'Use a strong password for WPA2/WPA3 security'}</span>
     </div>
   `;
 
@@ -141,480 +137,181 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     <div class="form-group checkbox-group">
       <label class="checkbox-label">
         <input type="checkbox" id="wifi-hidden" name="hidden" ${wifi.hidden ? 'checked' : ''}>
-        <span class="checkmark"></span>
-        <span class="label-text">${isTurkish ? 'SSID\'yi Gizle (Ağ adını yayınlama)' : 'Hide SSID (Don\'t broadcast network name)'}</span>
+        <span>${isTurkish ? 'SSID Gizle (Gizli Ağ)' : 'Hide SSID (Hidden Network)'}</span>
       </label>
+      <span class="hint">${isTurkish ? 'Gizli ağlar istemci aramasında taranmaz' : 'Hidden networks are not visible in client scans'}</span>
     </div>
   `;
 
   const maxClientsField = `
     <div class="form-group">
-      <label for="max-clients">${isTurkish ? 'Maksimum Bağlı İstemci' : 'Maximum Connected Clients'}</label>
-      <input type="number" id="max-clients" name="maxClients" value="${wifi.maxClients || 32}" min="1" max="128">
-      <span class="hint">${isTurkish ? 'Aralık: 1-128 istemci' : 'Range: 1-128 clients'}</span>
+      <label for="max-clients">${isTurkish ? 'Maksimum Bağlı İstemci Sayısı' : 'Maximum Connected Clients'}</label>
+      <input type="number" id="max-clients" name="maxClients" value="${wifi.maxClients ?? 32}" min="1" max="128" step="1">
+      <span class="hint">${isTurkish ? 'Ağa aynı anda bağlanabilecek istemci sayısı' : 'Number of clients that can connect simultaneously'}</span>
     </div>
   `;
 
-  const loginFormHTML = username && password ? `
-    <div id="login-form" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-purple-500) 100%); padding: 20px;">
-      <div style="background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 40px; width: 100%; max-width: 400px;">
-        <div style="text-align: center; margin-bottom: 30px;">
-          <h1 style="font-size: 24px; font-weight: 600; color: var(--color-secondary-900); margin-bottom: 10px;">${safeDeviceName}</h1>
-          <p style="color: var(--color-muted-foreground); font-size: 14px;">${isTurkish ? 'IoT Cihaz Yönetimi' : 'IoT Device Management'}</p>
+  const loginFormHTML = `
+    <div id="login-form" class="login-overlay" style="${(username || password) ? 'display:flex;' : 'display:none;'}">
+      <div class="login-card">
+        <div class="login-header">
+          <div class="login-icon">🔒</div>
+          <h2>${safeDeviceName}</h2>
+          <p>${isTurkish ? 'Yönetici Paneli Girişi' : 'Admin Panel Login'}</p>
         </div>
-        <form id="auth-form" onsubmit="window.handleLogin(event); return false;">
-          <div style="margin-bottom: 20px;">
-            <label style="display: block; font-size: 13px; font-weight: 500; color: var(--color-secondary-900); margin-bottom: 8px;">${isTurkish ? 'Kullanıcı Adı' : 'Username'}</label>
-          <input type="text" id="login-username" maxlength="255" required style="width: 100%; padding: 12px; border: 1px solid var(--color-secondary-300); border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+        <form onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="login-username">${isTurkish ? 'Kullanıcı Adı' : 'Username'}</label>
+
+            <input type="text" id="login-username" placeholder="${isTurkish ? 'Kullanıcı adını girin' : 'Enter username'}" required>
           </div>
-          <div style="margin-bottom: 25px;">
-            <label style="display: block; font-size: 13px; font-weight: 500; color: var(--color-secondary-900); margin-bottom: 8px;">${isTurkish ? 'Parola' : 'Password'}</label>
-            <input type="password" id="login-password" maxlength="255" required style="width: 100%; padding: 12px; border: 1px solid var(--color-secondary-300); border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+          <div class="form-group">
+            <label for="login-password">${isTurkish ? 'Şifre' : 'Password'}</label>
+            <input type="password" id="login-password" placeholder="${isTurkish ? 'Şifrenizi girin' : 'Enter password'}" required>
           </div>
-          <button type="submit" style="width: 100%; padding: 14px; background: linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-800) 100%); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;">
-            ${isTurkish ? 'Giriş Yap' : 'Login'}
-          </button>
-          <p id="login-error" style="color: var(--color-error-500); font-size: 13px; text-align: center; margin-top: 15px; display: none;">${isTurkish ? 'Hatalı kullanıcı adı veya parola' : 'Invalid username or password'}</p>
+          <div id="login-error" class="error-message" style="display:none;">
+            ❌ ${isTurkish ? 'Hatalı kullanıcı adı veya şifre!' : 'Invalid username or password!'}
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">🔓 ${isTurkish ? 'Giriş Yap' : 'Login'}</button>
         </form>
       </div>
     </div>
-  ` : '';
-
-  const mainContent = `
-    <div id="main-content" style="display: ${username && password ? 'none' : 'block'};">
   `;
 
-  const contentEnd = `
-    </div>
+  const mainContent = `
+    <div id="main-content" style="${(username || password) ? 'display:none;' : 'display:block;'}">
   `;
 
   return `
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${safeDeviceName} - ${isTurkish ? 'Kablosuz Ayarları' : 'Wireless Settings'}</title>
   <style>
     :root {
-      --color-primary-500: #6366f1;
-      --color-purple-500: #a855f7;
-      --color-primary-800: #3730a3;
-      --color-primary-900: #312e81;
+      --color-primary-500: #3b82f6;
+      --color-primary-600: #2563eb;
+      --color-primary-700: #1d4ed8;
+      --color-primary-100: #dbeafe;
+      --color-secondary-100: #f1f5f9;
       --color-secondary-200: #e2e8f0;
       --color-secondary-300: #cbd5e1;
+      --color-secondary-400: #94a3b8;
       --color-secondary-500: #64748b;
-      --color-secondary-600: #475569;
+      --color-secondary-700: #334155;
       --color-secondary-900: #0f172a;
-      --color-muted-foreground: #64748b;
-      --color-error-500: #ef4444;
-      --color-success-700: #15803d;
-      --color-warning-400: #fbbf24;
-      --color-warning-500: #f59e0b;
-      --color-warning-600: #d97706;
-      --color-warning-700: #b45309;
-      --color-warning-100: #fef3c7;
       --color-success-500: #22c55e;
       --color-success-600: #16a34a;
+      --color-warning-500: #eab308;
+      --color-warning-600: #ca8a04;
+      --color-error-500: #ef4444;
       --color-error-600: #dc2626;
-      --color-accent-500: #06b6d4;
-      --color-accent-600: #0891b2;
-      --color-secondary-400: #94a3b8;
-      --color-primary-700: #4338ca;
-      --color-primary-100: #eef2ff;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+      --color-accent-600: #0d9488;
     }
     
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-purple-500) 100%);
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f8fafc;
+      color: var(--color-secondary-900);
+      line-height: 1.5;
       padding: 20px;
+      font-size: 14px;
     }
     
     .container {
-      max-width: 800px;
+      max-width: 900px;
       margin: 0 auto;
-      background: #fff;
+      background: #ffffff;
       border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       overflow: hidden;
     }
     
     .header {
-      background: linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-800) 100%);
-      color: white;
-      padding: 30px;
-      text-align: center;
+      background: linear-gradient(135deg, var(--color-secondary-900) 0%, #1e293b 100%);
+      color: #ffffff;
+      padding: 24px;
     }
     
-    .header h1 {
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
+    .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .header .subtitle { color: var(--color-secondary-400); font-size: 13px; }
+    .header .device-info { display: flex; gap: 16px; margin-top: 12px; font-size: 12px; color: var(--color-secondary-300); }
     
-    .header .subtitle {
-      font-size: 14px;
-      opacity: 0.9;
-    }
+    .nav-tabs { display: flex; background: var(--color-secondary-100); border-bottom: 1px solid var(--color-secondary-200); padding: 0 16px; overflow-x: auto; }
+    .nav-tab { padding: 14px 20px; font-weight: 600; font-size: 13px; color: var(--color-secondary-500); cursor: pointer; border: none; background: none; border-bottom: 2px solid transparent; transition: all 0.2s; white-space: nowrap; }
+    .nav-tab:hover { color: var(--color-primary-600); }
+    .nav-tab.active { color: var(--color-primary-600); border-bottom-color: var(--color-primary-600); }
     
-    .header .device-info {
-      margin-top: 15px;
-      padding-top: 15px;
-      border-top: 1px solid rgba(255,255,255,0.2);
-      font-size: 13px;
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-    }
+    .content { padding: 24px; }
+    .panel-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--color-secondary-900); display: flex; align-items: center; justify-content: space-between; }
     
-    .nav-tabs {
-      display: flex;
-      background: #f8f9fa;
-      border-bottom: 1px solid var(--color-secondary-200);
-    }
+    .status-card { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .status-card.disabled { background: var(--color-secondary-100); border-color: var(--color-secondary-200); }
+    .status-info h3 { font-size: 14px; font-weight: 600; }
+    .status-info p { font-size: 12px; color: var(--color-secondary-500); }
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: var(--color-success-500); color: #fff; }
+    .status-card.disabled .status-badge { background: var(--color-secondary-400); }
     
-    .nav-tab {
-      flex: 1;
-      padding: 16px 20px;
-      text-align: center;
-      color: var(--color-secondary-500);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      border-bottom: 3px solid transparent;
-      transition: all 0.3s;
+    .form-group { margin-bottom: 18px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; }
+    .form-group input[type="text"], .form-group input[type="password"], .form-group input[type="number"], .form-group select {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--color-secondary-300); border-radius: 6px; font-size: 13px; transition: border-color 0.2s;
     }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--color-primary-500); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .hint { display: block; font-size: 11px; color: var(--color-secondary-500); margin-top: 4px; }
     
-    .nav-tab:hover {
-      color: var(--color-primary-800);
-      background: rgba(99, 102, 241, 0.05);
-    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     
-    .nav-tab.active {
-      color: var(--color-primary-800);
-      border-bottom-color: var(--color-primary-800);
-      background: #fff;
-    }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; font-size: 13px; }
+    .btn-primary { background: var(--color-primary-600); color: #fff; }
+    .btn-primary:hover { background: var(--color-primary-700); }
+    .btn-secondary { background: var(--color-secondary-200); color: var(--color-secondary-700); }
+    .btn-secondary:hover { background: var(--color-secondary-300); }
+    .btn-danger { background: var(--color-error-500); color: #fff; }
+    .btn-danger:hover { background: var(--color-error-600); }
+    .btn-block { width: 100%; }
     
-    .content {
-      padding: 30px;
-    }
+    .actions { display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-secondary-200); }
     
-    .panel-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--color-secondary-900);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .toggle-switch { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--color-secondary-200); margin-bottom: 20px; }
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--color-secondary-300); transition: .3s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--color-success-500); }
+    input:checked + .slider:before { transform: translateX(20px); }
     
-    .panel-title::before {
-      content: '📶';
-      font-size: 24px;
-    }
-    
-    .status-card {
-      background: var(--color-secondary-200);
-      border: 1px solid var(--color-secondary-300);
-      color: var(--color-secondary-900);
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 25px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 8px rgba(99, 102, 241, 0.15);
-    }
-    
-    .status-card.disabled {
-      background: var(--color-secondary-200);
-      border: 1px solid var(--color-secondary-300);
-      color: var(--color-secondary-600);
-      box-shadow: none;
-    }
-    
-    .status-info h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 5px;
-      color: var(--color-secondary-900);
-    }
-    
-    .status-info p {
-      font-size: 13px;
-      color: var(--color-secondary-600);
-    }
-    
-    .status-badge {
-      background: var(--color-primary-800);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    
-    .form-group {
-      margin-bottom: 20px;
-    }
-    
-    .form-group label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--color-secondary-600);
-      margin-bottom: 8px;
-    }
-    
-    .form-group input[type="text"],
-    .form-group input[type="password"],
-    .form-group input[type="number"],
-    .form-group select {
-      width: 100%;
-      padding: 12px 15px;
-      border: 2px solid var(--color-secondary-200);
-      border-radius: 8px;
-      font-size: 14px;
-      transition: all 0.3s;
-      background: #fff;
-    }
-    
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: var(--color-primary-800);
-      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-    }
-    
-    .form-group .hint {
-      display: block;
-      font-size: 12px;
-      color: var(--color-secondary-500);
-      margin-top: 5px;
-    }
-    
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-    }
-    
-    .checkbox-label {
-      display: flex !important;
-      align-items: center;
-      cursor: pointer;
-      flex-direction: row !important;
-      gap: 12px;
-    }
-    
-    .checkbox-label input {
-      display: none;
-    }
-    
-    .checkmark {
-      width: 22px;
-      height: 22px;
-      border: 2px solid var(--color-secondary-300);
-      border-radius: 5px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      flex-shrink: 0;
-    }
-    
-    .checkbox-label input:checked + .checkmark {
-      background: var(--color-primary-800);
-      border-color: var(--color-primary-800);
-    }
-    
-    .checkbox-label input:checked + .checkmark::after {
-      content: '✓';
-      color: white;
-      font-size: 14px;
-      font-weight: bold;
-    }
-    
-    .label-text {
-      font-size: 14px !important;
-      font-weight: 500 !important;
-      color: var(--color-secondary-600);
-    }
-    
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    
-    .actions {
-      display: flex;
-      gap: 15px;
-      margin-top: 30px;
-      padding-top: 25px;
-      border-top: 1px solid var(--color-secondary-200);
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 14px 24px;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .btn-primary {
-      background: linear-gradient(135deg, var(--color-primary-900) 0%, var(--color-primary-800) 100%);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
-    }
-    
-    .btn-secondary {
-      background: #f8f9fa;
-      color: var(--color-secondary-500);
-      border: 2px solid var(--color-secondary-200);
-    }
-    
-    .btn-secondary:hover {
-      background: var(--color-secondary-200);
-      color: var(--color-secondary-600);
-    }
-    
-    .toggle-switch {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px;
-      background: #f8f9fa;
-      border-radius: 10px;
-      margin-bottom: 25px;
-    }
-    
-    .toggle-switch h3 {
-      font-size: 16px;
-      color: var(--color-secondary-900);
-    }
-    
-    .toggle-switch p {
-      font-size: 13px;
-      color: var(--color-secondary-500);
-      margin-top: 4px;
-    }
-    
-    .switch {
-      position: relative;
-      width: 60px;
-      height: 34px;
-    }
-    
-    .switch input {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-      margin: 0;
-      cursor: pointer;
-      z-index: 2;
-    }
-    
-    .slider {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: var(--color-secondary-300);
-      transition: .4s;
-      border-radius: 34px;
-      z-index: 1;
-    }
-    
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 26px;
-      width: 26px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    
-    input:checked + .slider {
-      background-color: var(--color-accent-600);
-    }
-    
-    input:checked + .slider:before {
-      transform: translateX(26px);
-    }
-    
-    .footer {
-      background: #f8f9fa;
-      padding: 20px 30px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--color-secondary-500);
-      border-top: 1px solid var(--color-secondary-200);
-    }
-    
-    @media (max-width: 600px) {
-      .grid-2 {
-        grid-template-columns: 1fr;
-      }
-      
-      .actions {
-        flex-direction: column;
-      }
-      
-      .device-info {
-        flex-direction: column;
-        gap: 10px !important;
-      }
-      
-      .nav-tabs {
-        flex-wrap: wrap;
-      }
-      
-      .nav-tab {
-        flex: 1 1 50%;
-        padding: 12px 10px;
-        font-size: 13px;
-      }
-    }
+    .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .login-card { background: #ffffff; border-radius: 12px; width: 100%; max-width: 400px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .login-header { text-align: center; margin-bottom: 24px; }
+    .login-icon { font-size: 40px; margin-bottom: 8px; }
+    .error-message { background: #fef2f2; border: 1px solid #fecaca; color: var(--color-error-600); padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; text-align: center; }
 
-    /* Custom Confirm Modal */
-    .custom-confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; backdrop-filter: blur(4px); }
-    .custom-confirm-overlay.active { display: flex; }
-    .custom-confirm-box { background: white; border-radius: 12px; padding: 24px; max-width: 400px; width: 90%; box-shadow: 0 8px 30px rgba(0,0,0,0.12); text-align: center; }
-    .custom-confirm-box h3 { margin: 0 0 12px 0; font-size: 16px; color: var(--color-secondary-900); }
-    .custom-confirm-box p { margin: 0 0 20px 0; font-size: 14px; color: var(--color-muted-foreground); }
-    .custom-confirm-actions { display: flex; gap: 10px; justify-content: center; }
-    .custom-confirm-actions button { padding: 8px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .confirm-cancel-btn { background: var(--color-secondary-200); color: var(--color-secondary-600); }
-    .confirm-cancel-btn:hover { background: var(--color-secondary-200); }
-    .confirm-ok-btn { background: linear-gradient(135deg, var(--color-error-500) 0%, var(--color-error-600) 100%); color: white; }
-    .confirm-ok-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2); }
+    /* Client list table styles */
+    .client-card { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border: 1px solid var(--color-secondary-200); border-radius: 8px; margin-bottom: 8px; transition: all 0.2s; }
+    .client-card:hover { border-color: var(--color-primary-500); background: #ffffff; }
+    .client-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--color-primary-100); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--color-primary-600); shrink: 0; }
+    .client-details { display: flex; flex-direction: column; min-width: 0; }
+    .client-title { font-weight: 600; color: var(--color-secondary-900); font-size: 13px; display: flex; align-items: center; gap: 8px; }
+    .client-sub { font-size: 11px; color: var(--color-secondary-500); font-family: monospace; }
+    .client-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: var(--color-secondary-100); color: var(--color-secondary-700); }
+    .badge-primary { background: #dbeafe; color: #1d4ed8; }
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-warning { background: #fef9c3; color: #a16207; }
+
+    @media (max-width: 600px) {
+      body { padding: 10px; }
+      .grid-2 { grid-template-columns: 1fr; gap: 0; }
+      .actions { flex-direction: column; }
+      .btn { width: 100%; }
+      .status-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .client-card { flex-direction: column; align-items: flex-start; gap: 10px; }
+    }
   </style>
 </head>
 <body>
@@ -623,7 +320,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   <div class="container">
     <div class="header">
       <h1>🔧 ${safeDeviceName}</h1>
-      <div class="subtitle">${isTurkish ? 'Kablosuz Ağ Yönetimi' : 'Wireless Network Administration'}</div>
+      <div class="subtitle">${isTurkish ? 'Kablosuz Ağ Yönetimi & Çoklu SSID Portalı' : 'Wireless Network Administration & Multi-SSID Portal'}</div>
       <div class="device-info">
         <span>📍 IP: ${safeDeviceIp}</span>
         <span>📡 WLAN Interface: wlan0</span>
@@ -631,9 +328,9 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     </div>
     
     <div class="nav-tabs">
-      <button type="button" class="nav-tab${activeTab === 'wireless' ? ' active' : ''}" data-tab="wireless">📶 ${isTurkish ? 'Kablosuz' : 'Wireless'}</button>
+      <button type="button" class="nav-tab${activeTab === 'wireless' ? ' active' : ''}" data-tab="wireless">📶 ${isTurkish ? 'Kablosuz & Çoklu SSID' : 'Wireless & Multi-SSID'}</button>
       <button type="button" class="nav-tab${activeTab === 'iot' ? ' active' : ''}" data-tab="iot">🛜 ${isTurkish ? 'IoT Cihazları' : 'IoT Devices'}</button>
-      <button type="button" class="nav-tab${activeTab === 'status' ? ' active' : ''}" data-tab="status">📊 ${isTurkish ? 'Durum' : 'Status'}</button>
+      <button type="button" class="nav-tab${activeTab === 'status' ? ' active' : ''}" data-tab="status">📊 ${isTurkish ? 'Durum & Bağlı Cihazlar' : 'Status & Connected Clients'}</button>
       <button type="button" class="nav-tab${activeTab === 'advanced' ? ' active' : ''}" data-tab="advanced">⚙️ ${isTurkish ? 'Gelişmiş' : 'Advanced'}</button>
     </div>
     
@@ -641,8 +338,8 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     <div id="wireless-tab" class="content" style="display:${activeTab === 'wireless' ? 'block' : 'none'};">
       <div class="toggle-switch">
         <div>
-          <h3>${isTurkish ? 'Kablosuz Radyo' : 'Wireless Radio'}</h3>
-          <p>${isTurkish ? 'Kablosuz erişim noktasını etkinleştirin veya devre dışı bırakın' : 'Enable or disable the wireless access point'}</p>
+          <h3>${isTurkish ? 'Kablosuz Radyo (Master Switch)' : 'Wireless Radio (Master Switch)'}</h3>
+          <p>${isTurkish ? 'Kablosuz erişim noktasını genel olarak etkinleştirin veya devre dışı bırakın' : 'Enable or disable the wireless access point globally'}</p>
         </div>
         <label class="switch">
           <input type="checkbox" id="wifi-enabled" ${wifi.enabled ? 'checked' : ''}>
@@ -653,18 +350,18 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       <div class="status-card ${wifi.enabled ? '' : 'disabled'}">
         <div class="status-info">
           <h3>${isTurkish ? 'Mevcut Durum' : 'Current Status'}</h3>
-          <p>${wifi.enabled ? (isTurkish ? 'WiFi aktif ve yayın yapıyor' : 'WiFi is active and broadcasting') : (isTurkish ? 'WiFi şu anda devre dışı' : 'WiFi is currently disabled')}</p>
+          <p>${wifi.enabled ? (isTurkish ? 'WiFi aktif ve çoklu SSID yayınları açık' : 'WiFi is active and multi-SSID broadcasting is live') : (isTurkish ? 'WiFi şu anda devre dışı' : 'WiFi is currently disabled')}</p>
         </div>
         <span class="status-badge">${wifi.enabled ? (isTurkish ? '● Çevrimiçi' : '● Online') : (isTurkish ? '○ Çevrimdışı' : '○ Offline')}</span>
       </div>
       
-      <h2 class="panel-title">${isTurkish ? 'Temel Kablosuz Ayarları' : 'Basic Wireless Settings'}</h2>
+      <h2 class="panel-title">${isTurkish ? 'Temel Kablosuz Ayarları (Ana SSID)' : 'Basic Wireless Settings (Primary SSID)'}</h2>
       
       <form id="wifi-form">
         <div class="form-group">
-          <label for="wifi-ssid">${isTurkish ? 'Ağ Adı (SSID)' : 'Network Name (SSID)'}</label>
+          <label for="wifi-ssid">${isTurkish ? 'Ana Ağ Adı (Primary SSID)' : 'Primary Network Name (SSID)'}</label>
           <input type="text" id="wifi-ssid" name="ssid" value="${safeSsid}" placeholder="${isTurkish ? 'WiFi ağ adınızı girin' : 'Enter your WiFi network name'}" maxlength="32" aria-describedby="wifi-ssid-hint">
-          <span class="hint" id="wifi-ssid-hint">${isTurkish ? 'Bu ad kablosuz istemciler tarafından görülecektir (gizlenmediği sürece)' : 'This name will be visible to wireless clients (unless hidden)'}</span>
+          <span class="hint" id="wifi-ssid-hint">${isTurkish ? 'Bu ad ana kablosuz yayın olarak görülecektir' : 'This name will be visible as primary wireless broadcast'}</span>
         </div>
         
         <div class="grid-2">
@@ -701,336 +398,315 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         </div>
         
         <div class="actions">
-          <button type="submit" class="btn btn-primary">💾 ${isTurkish ? 'Ayarları Kaydet' : 'Save Settings'}</button>
-          <button type="button" class="btn btn-secondary" onclick="location.reload()">↺ ${isTurkish ? 'Değişiklikleri Sıfırla' : 'Reset Changes'}</button>
+          <button type="submit" class="btn btn-primary">💾 ${isTurkish ? 'Ana Ayarları Kaydet' : 'Save Primary Settings'}</button>
+          <button type="button" class="btn btn-secondary" onclick="location.reload()">↺ ${isTurkish ? 'Sıfırla' : 'Reset'}</button>
         </div>
       </form>
+
+      <!-- Multi-SSID Section -->
+      <h2 class="panel-title" style="margin-top:32px;">🌐 ${isTurkish ? 'Çoklu SSID & Misafir Ağ Profilleri' : 'Multi-SSID & Guest Network Profiles'}</h2>
+      <p style="color:var(--color-secondary-500);margin-bottom:16px;font-size:13px;">
+        ${isTurkish ? 'Erişim noktası üzerinde ek kablosuz yayınlar (Misafir Ağı, IoT Ağı, 5G Yüksek Hız) oluşturun ve yönetin.' : 'Create and manage additional wireless broadcasts (Guest Network, IoT Network, 5G High Speed) on this Access Point.'}
+      </p>
+
+      <div id="ssid-profiles-container" style="margin-bottom:20px;"></div>
+
+      <div style="background:#f8fafc;padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);margin-bottom:25px;">
+        <h3 style="margin:0 0 12px 0;font-size:14px;color:var(--color-secondary-900);" id="ssid-form-title">
+          ➕ ${isTurkish ? 'Yeni SSID Profili Ekle' : 'Add New SSID Profile'}
+        </h3>
+        <input type="hidden" id="edit-ssid-id" value="">
+        
+        <div class="grid-2" style="margin-bottom:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="profile-name">${isTurkish ? 'Profil Adı' : 'Profile Name'}</label>
+            <input type="text" id="profile-name" placeholder="${isTurkish ? 'örn. Misafir Ağı, IoT Ağı' : 'e.g. Guest WiFi, IoT Network'}">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="profile-ssid">${isTurkish ? 'Ağ Adı (SSID)' : 'Network Name (SSID)'}</label>
+            <input type="text" id="profile-ssid" placeholder="${isTurkish ? 'örn. Guest-WiFi' : 'e.g. Guest-WiFi'}">
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="profile-band">${isTurkish ? 'Frekans / Bant' : 'Frequency / Band'}</label>
+            <select id="profile-band">
+              <option value="both">${isTurkish ? 'Çift Bant (2.4 GHz & 5 GHz)' : 'Dual Band (2.4 GHz & 5 GHz)'}</option>
+              <option value="2.4GHz">2.4 GHz</option>
+              <option value="5GHz">5 GHz</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="profile-security">${isTurkish ? 'Güvenlik Türü' : 'Security Type'}</label>
+            <select id="profile-security" onchange="var pWrap = document.getElementById('profile-password-wrap'); if(pWrap) pWrap.style.display = this.value === 'open' ? 'none' : 'block';">
+              <option value="wpa2">WPA2-PSK (Kişisel / Personal)</option>
+              <option value="wpa3">WPA3-SAE (Yüksek Güvenlik)</option>
+              <option value="open">${isTurkish ? 'Açık (Şifresiz)' : 'Open (No password)'}</option>
+              <option value="wep">WEP</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" id="profile-password-wrap" style="margin-bottom:12px;">
+          <label for="profile-password">${isTurkish ? 'Wi-Fi Parolası' : 'Wi-Fi Password'}</label>
+          <input type="password" id="profile-password" placeholder="${isTurkish ? 'En az 8 karakter' : 'Minimum 8 characters'}" value="guestpass123">
+        </div>
+
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--color-secondary-700);">
+            <input type="checkbox" id="profile-enabled" checked>
+            ${isTurkish ? 'Yayın Etkin (Aktif)' : 'Broadcast Enabled (Active)'}
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--color-secondary-700);">
+            <input type="checkbox" id="profile-hidden">
+            ${isTurkish ? 'Gizli SSID (SSID Gizle)' : 'Hidden SSID (Hide SSID)'}
+          </label>
+        </div>
+
+        <div style="display:flex;gap:10px;">
+          <button type="button" class="btn btn-primary" onclick="saveSsidProfile()" id="btn-save-ssid-profile">
+            💾 ${isTurkish ? 'SSID Profilini Kaydet' : 'Save SSID Profile'}
+          </button>
+          <button type="button" class="btn btn-secondary" onclick="resetSsidForm()">
+            ↺ ${isTurkish ? 'Formu Temizle' : 'Clear Form'}
+          </button>
+        </div>
+      </div>
     </div>
       
     <!-- IoT Devices Tab -->
-      <div id="iot-tab" class="content" style="display:${activeTab === 'iot' ? 'block' : 'none'};">
-        <h2 class="panel-title" style="margin-bottom:20px;">🛜 ${isTurkish ? 'Bağlı IoT Cihazları' : 'Connected IoT Devices'}</h2>
-        
-        <div class="status-card" style="margin-bottom:20px;">
+    <div id="iot-tab" class="content" style="display:${activeTab === 'iot' ? 'block' : 'none'};">
+      <h2 class="panel-title" style="margin-bottom:20px;">🛜 ${isTurkish ? 'Bağlı IoT Cihazları' : 'Connected IoT Devices'}</h2>
+      
+      <div class="status-card" style="margin-bottom:20px;">
+        <div class="status-info">
+          <h3>${isTurkish ? 'IoT Ağı' : 'IoT Network'}</h3>
+          <p>${connectedIotDevices.length} ${isTurkish ? "cihaz bu AP'ye bağlı" : pluralize(connectedIotDevices.length, 'device connected to this AP', 'devices connected to this AP')}</p>
+        </div>
+        <span class="status-badge">${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'Aktif' : 'Active'}</span>
+      </div>
+      
+      ${connectedIotDevices.length > 0 ? `
+      <div class="iot-device-list" style="margin-bottom:25px;">
+        <p style="color:var(--color-secondary-500);margin-bottom:15px;font-size:13px;">${isTurkish ? 'Bağlı IoT cihazlarını yönetin:' : 'Manage connected IoT devices:'}</p>
+        ${connectedIotDevices.map(device => {
+          const safeIotName = sanitizeHTML(device.name);
+          const safeIotId = sanitizeHTML(device.id);
+          const safeIotIp = sanitizeHTML(device.ip || '');
+          const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
+          return `
+          <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid var(--color-secondary-200);cursor:pointer;">
+            <div style="display:flex;align-items:center;gap:12px;">               
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? 'var(--color-success-500) 0%, var(--color-success-600) 100%' : 'var(--color-warning-400) 0%, var(--color-warning-600) 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
+                ${device.isWired ? '🔌' : '🛜'}
+              </div>
+              <div>
+                <div style="font-weight:600;color:var(--color-secondary-900);">${safeIotName}</div>
+                <div style="font-size:12px;color:var(--color-secondary-500);">
+                  ${isTurkish ? 'Sensör' : 'Sensor'}: ${sanitizeHTML(device.sensorType)}
+                  ${device.ip ? `<span style="margin-left:8px;padding:2px 6px;background:var(--color-primary-100);border-radius:4px;color:var(--color-primary-700);font-family:monospace;">${safeIotIp}</span>` : ''}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? '#dcfce7' : 'var(--color-warning-100)'};color:${device.connected ? 'var(--color-success-700)' : 'var(--color-warning-700)'};">
+                ${device.connected ? (isTurkish ? '● Bağlı' : '● Connected') : (isTurkish ? '○ Bağlı Değil' : '○ Disconnected')}
+              </span>
+              <button type="button" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:none;border-radius:6px;background:var(--color-primary-500);color:white;cursor:pointer;" onclick="event.stopPropagation();renewIotDevice(${jsIotId})" title="${isTurkish ? 'IP Yenile' : 'IP Renew'}" aria-label="${isTurkish ? 'IP Yenile' : 'IP Renew'}">
+                🔄
+              </button>
+              <button type="button" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:none; border-radius:6px; background:var(--color-error-500); color:white; cursor:pointer;" onclick="event.stopPropagation();disconnectIotDevice(${jsIotId})" title="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}" aria-label="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}">
+                🔌
+              </button>               
+            </div>
+          </div>
+        `;
+        }).join('')}
+      </div>
+      ` : ''}
+      ${availableIotDevices.length > 0 ? `
+      <h3 class="panel-title" style="margin-top:24px;">📡 ${isTurkish ? 'Bağlanabilir IoT Cihazları' : 'Available IoT Devices'}</h3>
+      <div class="available-iot-list" style="margin-bottom:20px;">
+        ${availableIotDevices.map(device => {
+          const safeIotName = sanitizeHTML(device.name);
+          const safeIotId = sanitizeHTML(device.id);
+          const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
+          return `
+          <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border:1px solid var(--color-secondary-200);cursor:pointer;" onclick="toggleIotDeviceSelection(${jsIotId})">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}">
+              <span style="font-weight:600;">${safeIotName}</span>
+            </div>
+            <span class="badge">${sanitizeHTML(device.sensorType)}</span>
+          </div>
+        `;
+        }).join('')}
+        <div style="margin-top:12px;">
+          <button type="button" class="btn btn-primary" id="save-iot-btn" onclick="saveSelectedIotDevices()">
+            💾 ${isTurkish ? 'Seçili IoT Cihazlarını Bağla' : 'Connect Selected IoT Devices'}
+          </button>
+        </div>
+      </div>
+      ` : ''}
+    </div>
+      
+    <!-- Status Tab -->
+    <div id="status-tab" class="content" style="display:${activeTab === 'status' ? 'block' : 'none'};">
+      <h2 class="panel-title">${isTurkish ? 'Ağ Durumu & Bağlı Cihazlar' : 'Network Status & Connected Devices'}</h2>
+      
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="status-card">
           <div class="status-info">
-            <h3>${isTurkish ? 'IoT Ağı' : 'IoT Network'}</h3>
-            <p>${connectedIotDevices.length} ${isTurkish ? "cihaz bu AP'ye bağlı" : pluralize(connectedIotDevices.length, 'device connected to this AP', 'devices connected to this AP')}</p>
+            <h3>${isTurkish ? 'WiFi Durumu' : 'WiFi Status'}</h3>
+            <p>${wifi.enabled ? (isTurkish ? 'Aktif ve Yayın Yapıyor' : 'Active and Broadcasting') : (isTurkish ? 'Devre Dışı' : 'Disabled')}</p>
           </div>
-          <span class="status-badge">${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'Aktif' : 'Active'}</span>
+          <span class="status-badge">${wifi.enabled ? (isTurkish ? '● Çevrimiçi' : '● Online') : (isTurkish ? '○ Çevrimdışı' : '○ Offline')}</span>
         </div>
-        
-        ${connectedIotDevices.length > 0 ? `
-        <div class="iot-device-list" style="margin-bottom:25px;">
-          <p style="color:var(--color-secondary-500);margin-bottom:15px;font-size:13px;">${isTurkish ? 'Bağlı IoT cihazlarını yönetin:' : 'Manage connected IoT devices:'}</p>
-          ${connectedIotDevices.map(device => {
-    const safeIotName = sanitizeHTML(device.name);
-    const safeIotId = sanitizeHTML(device.id);
-    const safeIotIp = sanitizeHTML(device.ip || '');
-    const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
-    return `
-            <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid var(--color-secondary-200);cursor:pointer;">
-              <div style="display:flex;align-items:center;gap:12px;">               
-                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? 'var(--color-success-500) 0%, var(--color-success-600) 100%' : 'var(--color-warning-400) 0%, var(--color-warning-600) 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
-                  ${device.isWired ? '🔌' : '🛜'}
-                </div>
-                <div>
-                  <div style="font-weight:600;color:var(--color-secondary-900);">${safeIotName}</div>
-                  <div style="font-size:12px;color:var(--color-secondary-500);">
-                    ${isTurkish ? 'Sensör' : 'Sensor'}: ${sanitizeHTML(device.sensorType)}
-                    ${device.ip ? `<span style="margin-left:8px;padding:2px 6px;background:var(--color-primary-100);border-radius:4px;color:var(--color-primary-700);font-family:monospace;">${safeIotIp}</span>` : ''}
-                  </div>
-                </div>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? '#dcfce7' : 'var(--color-warning-100)'};color:${device.connected ? 'var(--color-success-700)' : 'var(--color-warning-700)'};">
-                  ${device.connected ? (isTurkish ? '● Bağlı' : '● Connected') : (isTurkish ? '○ Bağlı Değil' : '○ Disconnected')}
-                </span>
-                <button type="button" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:none;border-radius:6px;background:var(--color-primary-500);color:white;cursor:pointer;transition:all 0.2s;" onclick="event.stopPropagation();renewIotDevice(${jsIotId})" title="${isTurkish ? 'IP Yenile' : 'IP Renew'}" aria-label="${isTurkish ? 'IP Yenile' : 'IP Renew'}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.36L3 21"></path><path d="M3 12a9 9 0 0 1 15.5-6.36L21 3"></path><path d="M3 21v-6h6"></path><path d="M21 3v6h-6"></path></svg>
-                </button>
-                <button type="button" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:none; border-radius:6px; background:var(--color-error-500); color:white; cursor:pointer; transition:all 0.2s;" onclick="event.stopPropagation();disconnectIotDevice(${jsIotId})" title="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}" aria-label="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
-                </button>               
-              </div>
-            </div>
-          `;
-  }).join('')}
-        </div>
-        ` : `
-        <div style="text-align:center;padding:30px;color:var(--color-secondary-500);">
-          <div style="font-size:48px;margin-bottom:15px;">📡</div>
-          <p>${isTurkish ? 'Henüz bağlı IoT cihazı yok' : 'No IoT devices connected yet'}</p>
-          <p style="font-size:12px;">${isTurkish ? 'Başlamak için aşağıdan yeni bir IoT cihazı ekleyin' : 'Add a new IoT device below to get started'}</p>
-        </div>
-        `}
-        
-        <h2 class="panel-title">${isTurkish ? 'IoT Cihazlarını Bağla' : 'Connect IoT Devices'}</h2>
-        
-        ${availableIotDevices.filter(d => !d.currentSsid).length > 0 ? `
-        <div class="available-iot-list" style="margin-bottom:25px;">
-          <p style="color:var(--color-secondary-500);margin-bottom:15px;font-size:13px;"><strong>${isTurkish ? 'Bağlı Olmayan Cihazlar:' : 'Unconnected Devices:'}</strong> ${isTurkish ? 'Bu ağa bağlanmak için seçin:' : 'Select to connect to this network:'}</p>
-          ${availableIotDevices.filter(d => !d.currentSsid).map(device => {
-    const safeIotName = sanitizeHTML(device.name);
-    const safeIotId = sanitizeHTML(device.id);
-    const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
-    return `
-            <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid var(--color-secondary-200);cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
-                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, var(--color-secondary-400) 0%, var(--color-secondary-500) 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
-                  🛜
-                </div>
-                <div>
-                  <div style="font-weight:600;color:var(--color-secondary-900);">${safeIotName}</div>
-                  <div style="font-size:12px;color:var(--color-secondary-500);">${isTurkish ? 'Sensör' : 'Sensor'}: ${sanitizeHTML(device.sensorType)} • <strong>${isTurkish ? 'Bağlı Değil' : 'Unconnected'}</strong></div>
-                </div>
-              </div>
-            </div>
-          `;
-  }).join('')}
-        </div>
-        ` : ''}
-        
-        ${availableIotDevices.filter(d => d.currentSsid && d.currentSsid !== wifi.ssid).length > 0 ? `
-        <div class="available-iot-list" style="margin-bottom:25px;">
-          <p style="color:var(--color-secondary-500);margin-bottom:15px;font-size:13px;"><strong>${isTurkish ? 'Diğer Ağlarda:' : 'On Other Networks:'}</strong> ${isTurkish ? 'Bu ağa geçmek için seçin:' : 'Select to switch to this network:'}</p>
-          ${availableIotDevices.filter(d => d.currentSsid && d.currentSsid !== wifi.ssid).map(device => {
-    const safeIotName = sanitizeHTML(device.name);
-    const safeIotId = sanitizeHTML(device.id);
-    const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
-    return `
-            <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:2px solid var(--color-secondary-200);cursor:pointer;transition:all 0.3s;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
-              <div style="display:flex;align-items:center;gap:12px;">
-                <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}" style="width:20px;height:20px;cursor:pointer;" onclick="event.stopPropagation(); toggleIotDeviceSelection(${jsIotId})">
-                <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, var(--color-warning-400) 0%, var(--color-warning-600) 100%);display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
-                  🛜
-                </div>
-                <div>
-                  <div style="font-weight:600;color:var(--color-secondary-900);">${safeIotName}</div>
-                  <div style="font-size:12px;color:var(--color-secondary-500);">${isTurkish ? 'Sensör' : 'Sensor'}: ${sanitizeHTML(device.sensorType)} • ${isTurkish ? 'Ağ' : 'On'}: ${sanitizeHTML(device.currentSsid || '')}</div>
-                </div>
-              </div>
-            </div>
-          `;
-  }).join('')}
-        </div>
-        ` : ''}
-        
-        ${(availableIotDevices.filter(d => !d.currentSsid).length > 0 || availableIotDevices.filter(d => d.currentSsid && d.currentSsid !== wifi.ssid).length > 0) ? `
-        <div class="actions" style="margin-top:20px;">
-          <button type="button" class="btn btn-primary" onclick="saveSelectedIotDevices()" id="save-iot-btn">
-            💾 ${isTurkish ? 'Seçili Cihazları Bağla' : 'Connect Selected Devices'}
-          </button>
-          <button type="button" class="btn btn-secondary" onclick="clearIotSelection()">
-            ↺ ${isTurkish ? 'Seçimi Temizle' : 'Clear Selection'}
-          </button>
-        </div>
-        ` : `
-        <div style="text-align:center;padding:30px;color:var(--color-secondary-500);background:#f8f9fa;border-radius:10px;margin-bottom:20px;">
-          <div style="font-size:48px;margin-bottom:15px;">📡</div>
-          <p>${isTurkish ? 'Topolojide uygun IoT cihazı yok' : 'No available IoT devices in topology'}</p>
-          <p style="font-size:12px;">${isTurkish ? 'Önce topolojiye IoT cihazları ekleyin, ardından buradan bağlayın' : 'Add IoT devices to the topology first, then connect them here'}</p>
-        </div>
-        `}
-      </div>
-      
-      <!-- Status Tab -->
-      <div id="status-tab" class="content" style="display:${activeTab === 'status' ? 'block' : 'none'};">
-        <h2 class="panel-title">${isTurkish ? 'Ağ Durumu' : 'Network Status'}</h2>
-        <div class="grid-2" style="margin-bottom:20px;">
-          <div class="status-card">
-            <div class="status-info">
-              <h3>${isTurkish ? 'WiFi Durumu' : 'WiFi Status'}</h3>
-              <p>${wifi.enabled ? (isTurkish ? 'Aktif ve Yayın Yapıyor' : 'Active and Broadcasting') : (isTurkish ? 'Devre Dışı' : 'Disabled')}</p>
-            </div>
-            <span class="status-badge">${wifi.enabled ? (isTurkish ? '● Çevrimiçi' : '● Online') : (isTurkish ? '○ Çevrimdışı' : '○ Offline')}</span>
+        <div class="status-card">
+          <div class="status-info">
+            <h3>${isTurkish ? 'Bağlı Cihazlar (Toplam)' : 'Connected Clients (Total)'}</h3>
+            <p id="status-connected-count">${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'cihaz bağlı' : pluralize(connectedIotDevices.filter(d => d.connected).length, 'device connected', 'devices connected')}</p>
           </div>
-          <div class="status-card">
-            <div class="status-info">
-              <h3>${isTurkish ? 'Bağlı İstemciler' : 'Connected Clients'}</h3>
-              <p>${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'IoT cihazı' : pluralize(connectedIotDevices.filter(d => d.connected).length, 'IoT device', 'IoT devices')}</p>
-            </div>
-            <span class="status-badge">${connectedIotDevices.length} ${isTurkish ? 'Toplam' : 'Total'}</span>
-          </div>
-        </div>
-        <div style="background:#f8f9fa;padding:20px;border-radius:10px;">
-          <h3 style="margin-bottom:15px;font-size:16px;color:var(--color-secondary-900);">${isTurkish ? 'Ağ Bilgisi' : 'Network Information'}</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-            <div><strong>SSID:</strong> ${safeSsid || (isTurkish ? 'Yapılandırılmadı' : 'Not configured')}</div>
-            <div><strong>${isTurkish ? 'Güvenlik' : 'Security'}:</strong> ${wifi.security.toUpperCase()}</div>
-            <div><strong>${isTurkish ? 'Kanal' : 'Channel'}:</strong> ${sanitizeHTML(formatChannelDisplay(wifi.channel, language))}</div>
-            <div><strong>${isTurkish ? 'Mod' : 'Mode'}:</strong> ${sanitizeHTML(wifi.mode.toUpperCase())}</div>
-            <div style="grid-column: 1 / -1;"><strong>${isTurkish ? 'MAC Filtresi' : 'MAC Filter'}:</strong> ${wifi.macFilterEnabled ? (wifi.macFilterMode === 'deny' ? (isTurkish ? '● Etkin (Engelleme: ' + (wifi.macFilterList?.length || 0) + ' adres)' : '● Enabled (Deny: ' + (wifi.macFilterList?.length || 0) + ' items)') : (isTurkish ? '● Etkin (Erişim: ' + (wifi.macFilterList?.length || 0) + ' adres)' : '● Enabled (Allow: ' + (wifi.macFilterList?.length || 0) + ' items)')) : (isTurkish ? '○ Devre Dışı' : '○ Disabled')}</div>
-          </div>
+          <span class="status-badge" id="status-total-badge">${connectedIotDevices.length} ${isTurkish ? 'Toplam' : 'Total'}</span>
         </div>
       </div>
-      
-      <!-- Advanced Tab -->
-      <div id="advanced-tab" class="content" style="display:${activeTab === 'advanced' ? 'block' : 'none'};">
-        <h2 class="panel-title">${isTurkish ? 'Gelişmiş Kablosuz Ayarları' : 'Advanced Wireless Settings'}</h2>
-        <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'Kablosuz MAC adresi filtreleme ve güvenlik kurallarını yapılandırın.' : 'Configure wireless MAC address filtering and security rules.'}</p>
-        
-        <div style="background:#ffffff;border:1px solid var(--color-secondary-200);border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:15px;padding-bottom:12px;border-bottom:1px solid var(--color-secondary-200);">
-            <div>
-              <h3 style="margin:0 0 4px 0;font-size:16px;color:var(--color-secondary-900);">🛡️ ${isTurkish ? 'Kablosuz MAC Adresi Filtreleme' : 'Wireless MAC Address Filtering'}</h3>
-              <p style="margin:0;font-size:13px;color:var(--color-secondary-500);">${isTurkish ? 'Kablosuz ağa yalnızca izin verilen cihazların erişmesini sağlayın veya belirli cihazları engelleyin.' : 'Allow only permitted devices to access the wireless network or block specific devices.'}</p>
-            </div>
-            <label class="switch">
-              <input type="checkbox" id="mac-filter-enabled" ${wifi.macFilterEnabled ? 'checked' : ''} onchange="toggleMacFilterSection()">
-              <span class="slider"></span>
-            </label>
-          </div>
 
-          <div id="mac-filter-body" style="${wifi.macFilterEnabled ? '' : 'display:none;'}">
-            <div class="form-group" style="margin-bottom:20px;">
-              <label style="font-weight:600;margin-bottom:8px;display:block;">${isTurkish ? 'Filtreleme Kuralı / Modu' : 'Filtering Rule / Mode'}</label>
-              <div style="display:flex;flex-direction:column;gap:10px;background:#f8f9fa;padding:12px;border-radius:8px;border:1px solid var(--color-secondary-200);">
-                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;">
-                  <input type="radio" name="macFilterMode" value="allow" ${wifi.macFilterMode !== 'deny' ? 'checked' : ''} style="margin-top:2px;">
-                  <div>
-                    <span style="font-weight:600;color:var(--color-success-700);">🟢 ${isTurkish ? 'Erişim Ver (Allow / Whitelist)' : 'Allow / Whitelist'}</span>
-                    <div style="font-size:12px;color:var(--color-secondary-500);">${isTurkish ? 'Yalnızca listedeki MAC adreslerine sahip cihazların bağlanmasına izin ver (Diğer tüm cihazlar engellenir).' : 'Allow only listed MAC addresses to connect (All other devices are blocked).'}</div>
-                  </div>
-                </label>
-                <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:13px;">
-                  <input type="radio" name="macFilterMode" value="deny" ${wifi.macFilterMode === 'deny' ? 'checked' : ''} style="margin-top:2px;">
-                  <div>
-                    <span style="font-weight:600;color:var(--color-error-600);">🔴 ${isTurkish ? 'Engelle (Deny / Blacklist)' : 'Deny / Blacklist'}</span>
-                    <div style="font-size:12px;color:var(--color-secondary-500);">${isTurkish ? 'Listedeki MAC adreslerine sahip cihazların bağlanmasını engelle (Listede olmayan tüm cihazlar bağlanabilir).' : 'Block listed MAC addresses from connecting (All other devices can connect).'}</div>
-                  </div>
-                </label>
-              </div>
-            </div>
+      <!-- Connected Wireless Clients List Section -->
+      <h3 style="margin-bottom:12px;font-size:15px;color:var(--color-secondary-900);">${isTurkish ? '📶 Bağlı Kablosuz İstemciler Listesi' : '📶 Connected Wireless Clients List'}</h3>
+      <p style="color:var(--color-secondary-500);margin-bottom:16px;font-size:13px;">
+        ${isTurkish ? 'Bu erişim noktasına (AP/Router) bağlı tüm kablosuz istemcilerin (PC, Laptop, Akıllı Cihaz, Sensör) canlı listesi:' : 'Live list of all wireless clients (PC, Laptop, Smart Device, Sensor) currently connected to this Access Point:'}
+      </p>
 
-            <div style="margin-bottom:20px;">
-              <label style="font-weight:600;margin-bottom:8px;display:block;">${isTurkish ? 'Yeni MAC Adresi Ekle' : 'Add New MAC Address'}</label>
-              <div style="display:flex;gap:10px;align-items:center;">
-                <input type="text" id="manual-mac-input" placeholder="00:11:22:33:44:55" maxlength="17" style="flex:1;padding:10px 12px;border:1px solid var(--color-secondary-300);border-radius:8px;font-family:monospace;font-size:14px;box-sizing:border-box;">
-                <button type="button" class="btn btn-secondary" onclick="addManualMac()" style="white-space:nowrap;padding:10px 16px;">
-                  ➕ ${isTurkish ? 'Ekle' : 'Add'}
-                </button>
-              </div>
-              <span class="hint" style="font-size:11px;color:var(--color-secondary-500);margin-top:4px;display:block;">${isTurkish ? 'Format: 00:11:22:33:44:55 veya 0011.2233.4455' : 'Format: 00:11:22:33:44:55 or 0011.2233.4455'}</span>
-            </div>
+      <div id="connected-wireless-clients-container" style="margin-bottom:24px;"></div>
 
-            <div>
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                <label style="font-weight:600;margin:0;">${isTurkish ? 'Filtre Listesi' : 'Filter List'}</label>
-                <span id="mac-list-count" style="font-size:12px;color:var(--color-secondary-500);">${(wifi.macFilterList || []).length} ${isTurkish ? 'adres' : 'items'}</span>
-              </div>
-              <div id="mac-filter-list-container" style="max-height:220px;overflow-y:auto;border:1px solid var(--color-secondary-200);border-radius:8px;background:#f8f9fa;padding:8px;">
-                <!-- Dynamically rendered -->
-              </div>
-            </div>
-          </div>
-
-          <div class="actions" style="margin-top:20px;">
-            <button type="button" class="btn btn-primary" id="save-advanced-btn" onclick="saveMacFilterSettings()">💾 ${isTurkish ? 'Gelişmiş Ayarları Kaydet' : 'Save Advanced Settings'}</button>
-          </div>
-        </div>
-
-        <div style="background:var(--color-warning-100);padding:15px;border-radius:10px;border:1px solid var(--color-warning-500);">
-          <strong>⚠️ ${isTurkish ? 'Uyarı' : 'Warning'}</strong>
-          <p style="margin:6px 0 0 0;font-size:13px;">${isTurkish ? 'Erişim Ver (Allow) modunu seçtiğinizde, listede olmayan istemciler doğru şifreye sahip olsalar bile ağa bağlanamayacaktır.' : 'When selecting Allow mode, clients not in the list will not be able to connect even if they have the correct password.'}</p>
+      <div style="background:#f8fafc;padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);">
+        <h3 style="margin-bottom:15px;font-size:15px;color:var(--color-secondary-900);">${isTurkish ? 'Ağ & Yayın Bilgileri' : 'Network & Broadcast Information'}</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
+          <div><strong>SSID (Ana):</strong> ${safeSsid || (isTurkish ? 'Yapılandırılmadı' : 'Not configured')}</div>
+          <div><strong>${isTurkish ? 'Güvenlik' : 'Security'}:</strong> ${wifi.security.toUpperCase()}</div>
+          <div><strong>${isTurkish ? 'Kanal' : 'Channel'}:</strong> ${sanitizeHTML(formatChannelDisplay(wifi.channel, language))}</div>
+          <div><strong>${isTurkish ? 'Mod' : 'Mode'}:</strong> ${sanitizeHTML(wifi.mode.toUpperCase())}</div>
+          <div style="grid-column: 1 / -1;"><strong>${isTurkish ? 'MAC Filtresi' : 'MAC Filter'}:</strong> ${wifi.macFilterEnabled ? (wifi.macFilterMode === 'deny' ? (isTurkish ? '● Etkin (Engelleme: ' + (wifi.macFilterList?.length || 0) + ' adres)' : '● Enabled (Deny: ' + (wifi.macFilterList?.length || 0) + ' items)') : (isTurkish ? '● Etkin (Erişim: ' + (wifi.macFilterList?.length || 0) + ' adres)' : '● Enabled (Allow: ' + (wifi.macFilterList?.length || 0) + ' items)')) : (isTurkish ? '○ Devre Dışı' : '○ Disabled')}</div>
         </div>
       </div>
+    </div>
     
-    <div class="footer">
-      © Network Simulator Router Administration | Model: ${deviceName} | Firmware: v1.0.0
+    <!-- Advanced Tab -->
+    <div id="advanced-tab" class="content" style="display:${activeTab === 'advanced' ? 'block' : 'none'};">
+      <h2 class="panel-title">${isTurkish ? 'Gelişmiş Kablosuz Ayarları' : 'Advanced Wireless Settings'}</h2>
+      <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'Kablosuz MAC adresi filtreleme ve güvenlik kurallarını yapılandırın.' : 'Configure wireless MAC address filtering and security rules.'}</p>
+      
+      <div style="background:#f8fafc;border:1px solid var(--color-secondary-200);border-radius:10px;padding:20px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0 0 4px 0;font-size:16px;color:var(--color-secondary-900);">🛡️ ${isTurkish ? 'Kablosuz MAC Adresi Filtreleme' : 'Wireless MAC Address Filtering'}</h3>
+            <p style="margin:0;font-size:13px;color:var(--color-secondary-500);">${isTurkish ? 'Kablosuz ağa yalnızca izin verilen cihazların erişmesini sağlayın veya belirli cihazları engelleyin.' : 'Allow only permitted devices to access the wireless network or block specific devices.'}</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="mac-filter-enabled" ${wifi.macFilterEnabled ? 'checked' : ''} onchange="toggleMacFilterSection()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div id="mac-filter-body" style="display:${wifi.macFilterEnabled ? 'block' : 'none'};">
+          <div style="margin-bottom:16px;padding:12px;background:white;border-radius:8px;border:1px solid var(--color-secondary-200);">
+            <label style="display:block;font-weight:600;font-size:13px;margin-bottom:8px;">${isTurkish ? 'Filtreleme Modu:' : 'Filtering Mode:'}</label>
+            <div style="display:flex;gap:20px;">
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                <input type="radio" name="macFilterMode" value="allow" ${wifi.macFilterMode !== 'deny' ? 'checked' : ''}>
+                <span>✅ ${isTurkish ? 'İzin Ver (Yalnızca listedeki MAC adreslerine izin ver)' : 'Allow (Allow only MAC addresses in list)'}</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;">
+                <input type="radio" name="macFilterMode" value="deny" ${wifi.macFilterMode === 'deny' ? 'checked' : ''}>
+                <span>🚫 ${isTurkish ? 'Engelle (Listede olan MAC adreslerini engelle)' : 'Deny (Block MAC addresses in list)'}</span>
+              </label>
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">${isTurkish ? 'MAC Adresi Ekle:' : 'Add MAC Address:'}</label>
+            <div style="display:flex;gap:8px;">
+              <input type="text" id="manual-mac-input" placeholder="00:11:22:33:44:55" style="font-family:monospace;">
+              <button type="button" class="btn btn-secondary" onclick="addManualMac()">➕ ${isTurkish ? 'Ekle' : 'Add'}</button>
+            </div>
+          </div>
+
+          <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-weight:600;font-size:13px;">${isTurkish ? 'Filtrelenen MAC Adresleri:' : 'Filtered MAC Addresses:'}</span>
+            <span id="mac-list-count" class="status-badge" style="background:var(--color-secondary-700);">${(wifi.macFilterList || []).length} ${isTurkish ? 'adres' : 'items'}</span>
+          </div>
+
+          <div id="mac-filter-list-container" style="max-height:200px;overflow-y:auto;background:var(--color-secondary-100);padding:10px;border-radius:8px;border:1px solid var(--color-secondary-200);"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" id="save-advanced-btn" onclick="saveMacFilterSettings()">💾 ${isTurkish ? 'Gelişmiş Ayarları Kaydet' : 'Save Advanced Settings'}</button>
+      </div>
     </div>
   </div>
-  
-  <script>
-    // Language flag (resolved from server side)
-    var isTurkish = ${isTurkish};
-    var selectedIotDevices = new Set();
 
-    // Define all window-level functions first to guarantee they are globally available immediately
-    function showTab(tabName) {
+  <script>
+    var isTurkish = ${isTurkish ? 'true' : 'false'};
+    var selectedIotDevices = new Set();
+    var currentSsidList = ${jsCurrentSsidList};
+    window.currentSsidList = currentSsidList;
+
+    var connectedClientsData = ${jsConnectedClientsData};
+
+    function showTab(tabId) {
       const tabs = ['wireless', 'iot', 'status', 'advanced'];
-      tabs.forEach(tab => {
-        const tabEl = document.getElementById(tab + '-tab');
-        if (tabEl) tabEl.style.display = tab === tabName ? 'block' : 'none';
+      tabs.forEach(id => {
+        const el = document.getElementById(id + '-tab');
+        if (el) el.style.display = id === tabId ? 'block' : 'none';
       });
-      // Update nav-tab active state
-      document.querySelectorAll('.nav-tab').forEach((el, idx) => {
-        const tabIds = ['wireless', 'iot', 'status', 'advanced'];
-        if (tabIds[idx] === tabName) {
-          el.classList.add('active');
+      document.querySelectorAll('.nav-tab').forEach(tab => {
+        if (tab.getAttribute('data-tab') === tabId) {
+          tab.classList.add('active');
         } else {
-          el.classList.remove('active');
+          tab.classList.remove('active');
         }
       });
-      // Notify parent to remember active tab on refresh
-      try { window.parent.postMessage({ type: 'router-admin-tab-change', tab: tabName }, '*'); } catch(_e) {}
+      try { window.parent.postMessage({ type: 'router-admin-tab-change', tab: tabId }, '*'); } catch(_e) {}
     }
-    window.showTab = showTab;
 
-    // Bind events explicitly instead of relying on inline onclick handlers. This is
-    // more reliable in the sandboxed browser iframe, particularly on touch devices.
-    document.querySelectorAll('.nav-tab[data-tab]').forEach(function(tab) {
+    document.querySelectorAll('.nav-tab').forEach(tab => {
       tab.addEventListener('click', function() {
-        showTab(tab.getAttribute('data-tab') || 'wireless');
+        showTab(this.getAttribute('data-tab') || 'wireless');
       });
     });
 
     window.toggleIotDeviceSelection = function(deviceId) {
       const checkbox = document.querySelector('.iot-checkbox[data-device-id="' + deviceId + '"]');
       const card = document.querySelector('.iot-device-card[data-device-id="' + deviceId + '"]');
-
-      const isChecked = checkbox ? checkbox.checked : false;
-
-      if (isChecked) {
-        selectedIotDevices.add(deviceId);
-        if (card) {
-          card.style.borderColor = 'var(--color-primary-800)';
-          card.style.background = 'var(--color-primary-100)';
-        }
-      } else {
+      if (selectedIotDevices.has(deviceId)) {
         selectedIotDevices.delete(deviceId);
+        if (checkbox) checkbox.checked = false;
         if (card) {
           card.style.borderColor = 'var(--color-secondary-200)';
-          card.style.background = '#f8f9fa';
+          card.style.background = '#f8fafc';
         }
-      }
-
-      // Update button text
-      const saveBtn = document.getElementById('save-iot-btn');
-      if (saveBtn) {
-        const count = selectedIotDevices.size;
-        saveBtn.innerHTML = count > 0 ? '💾 ${isTurkish ? 'Bağla' : 'Connect'} ' + count : '💾 ${isTurkish ? 'Seçili Cihazları Bağla' : 'Connect Selected Devices'}';
-      }
-    };
-
-    window.focusDeviceInTopology = function(deviceId) {
-      try {
-        window.parent.postMessage({
-          type: 'router-admin-focus-device',
-          deviceId: deviceId
-        }, '*');
-      } catch (err) {
-        console.warn('Could not send focus device message:', err);
+      } else {
+        selectedIotDevices.add(deviceId);
+        if (checkbox) checkbox.checked = true;
+        if (card) {
+          card.style.borderColor = 'var(--color-primary-500)';
+          card.style.background = '#f0f9ff';
+        }
       }
     };
 
     window.disconnectIotDevice = function(deviceId) {
-      if (!confirm('\u26a0\ufe0f ${isTurkish ? 'Bu IoT cihazının bağlantısını kesmek istediğinizden emin misiniz?' : 'Are you sure you want to disconnect this IoT device from the wireless network?'}')) return;
-      
+      if (!confirm('⚠️ ' + (isTurkish ? 'Bu cihazın kablosuz bağlantısını kesmek istediğinizden emin misiniz?' : 'Are you sure you want to disconnect this device from the network?'))) return;
       try {
         window.parent.postMessage({
           type: 'router-admin-disconnect-iot',
-          deviceId: deviceId,
-          payload: {
-            iotDeviceId: deviceId
-          }
+          deviceId: ${jsDeviceId},
+          payload: { iotDeviceId: deviceId }
         }, '*');
-      } catch (err) {
-        console.warn('Could not disconnect IoT device:', err);
-        var errorMessage = isTurkish
-          ? 'Cihaz bağlantısı kesilemedi: ' + (err && err.message ? err.message : String(err))
-          : 'Failed to disconnect device: ' + (err && err.message ? err.message : String(err));
-        window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*');
+      } catch(err) {
+        console.warn('Could not disconnect device:', err);
       }
     };
 
@@ -1038,14 +714,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       try {
         window.parent.postMessage({
           type: 'router-admin-renew-iot',
-          deviceId: deviceId,
-          payload: {
-            iotDeviceId: deviceId
-          }
+          deviceId: ${jsDeviceId},
+          payload: { iotDeviceId: deviceId }
         }, '*');
-      } catch (err) {
-        console.warn('Could not renew IoT device IP:', err);
-        alert('❌ ${isTurkish ? 'IP yenilenemedi' : 'Failed to renew IoT device IP'}');
+      } catch(err) {
+        console.warn('Could not renew device IP:', err);
       }
     };
 
@@ -1054,26 +727,23 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       document.querySelectorAll('.iot-checkbox').forEach(cb => cb.checked = false);
       document.querySelectorAll('.iot-device-card.available').forEach(card => {
         card.style.borderColor = 'var(--color-secondary-200)';
-        card.style.background = '#f8f9fa';
+        card.style.background = '#f8fafc';
       });
-      const saveBtn = document.getElementById('save-iot-btn');
-      if (saveBtn) saveBtn.innerHTML = '💾 ${isTurkish ? 'Seçili Cihazları Bağla' : 'Connect Selected Devices'}';
     };
 
     window.saveSelectedIotDevices = function() {
       const deviceIds = Array.from(selectedIotDevices);
       if (deviceIds.length === 0) {
-        alert('❌ ${isTurkish ? 'Lütfen en az bir IoT cihazı seçin' : 'Please select at least one IoT device'}');
+        alert('❌ ' + (isTurkish ? 'Lütfen en az bir cihaz seçin' : 'Please select at least one device'));
         return;
       }
       
       const btn = document.getElementById('save-iot-btn');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '💾 ${isTurkish ? 'Bağlanıyor...' : 'Connecting...'}';
-      btn.disabled = true;
-      
-      let successCount = 0;
-      
+      if (btn) {
+        btn.innerHTML = '💾 ' + (isTurkish ? 'Bağlanıyor...' : 'Connecting...');
+        btn.disabled = true;
+      }
+
       deviceIds.forEach((deviceId, index) => {
         setTimeout(() => {
           try {
@@ -1088,24 +758,9 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
                 channel: ${jsChannel}
               }
             }, '*');
-            successCount++;
-          } catch (err) {
-            console.warn('Could not connect IoT device ' + deviceId + ':', err);
-          }
+          } catch (err) {}
         }, index * 100);
       });
-      
-      setTimeout(() => {
-        btn.innerHTML = '✓ ' + successCount + '!';
-        btn.style.background = 'linear-gradient(135deg, var(--color-accent-600) 0%, var(--color-success-500) 100%)';
-        setTimeout(() => {
-          btn.innerHTML = '💾 ${isTurkish ? 'Seçili Cihazları Bağla' : 'Connect Selected Devices'}';
-          btn.style.background = '';
-          btn.disabled = false;
-          clearIotSelection();
-          alert('✅ ' + successCount + ${isTurkish ? "' IoT cihazı ağa bağlandı!'" : "(successCount === 1 ? ' IoT device connected to the network!' : ' IoT devices connected to the network!')"});
-        }, 1500);
-      }, deviceIds.length * 100 + 500);
     };
 
     window.handleLogin = function(event) {
@@ -1119,117 +774,208 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         const loginError = get('login-error');
         const usernameInput = usernameEl ? (usernameEl.value || '') : '';
         const passwordInput = passwordEl ? (passwordEl.value || '') : '';
-        const expectedUsername = ${jsUsername};
-        const expectedPassword = ${jsPassword};
 
-        if (usernameInput === expectedUsername && passwordInput === expectedPassword) {
+        if (usernameInput === ${jsUsername} && passwordInput === ${jsPassword}) {
           if (loginForm) loginForm.style.display = 'none';
           if (mainContent) mainContent.style.display = 'block';
         } else {
           if (loginError) loginError.style.display = 'block';
         }
-      } catch (err) {
-        console.warn('Wifi panel: handleLogin failed', err);
-      }
+      } catch (err) {}
     };
 
-    // Hide tooltips on mobile devices
-    function hideTooltipsOnMobile() {
-      if (window.innerWidth <= 600) {
-        document.querySelectorAll('[title]').forEach(el => {
-          el.setAttribute('data-title', el.getAttribute('title'));
-          el.removeAttribute('title');
-        });
-      }
-    }
-    hideTooltipsOnMobile();
-    try { window.addEventListener('resize', hideTooltipsOnMobile); } catch (_) {}
-
-    // MAC Address Filtering JS Handlers
-    var currentMacFilterList = ${JSON.stringify(wifi.macFilterList || [])};
-    window.currentMacFilterList = currentMacFilterList;
-
-    window.toggleMacFilterSection = function() {
-      var enabled = !!document.getElementById('mac-filter-enabled')?.checked;
-      var body = document.getElementById('mac-filter-body');
-      if (body) body.style.display = enabled ? 'block' : 'none';
-    };
-
-    window.renderMacFilterList = function() {
-      var container = document.getElementById('mac-filter-list-container');
-      var countEl = document.getElementById('mac-list-count');
+    // --- Multi-SSID Management Functions ---
+    window.renderSsidList = function() {
+      var container = document.getElementById('ssid-profiles-container');
       if (!container) return;
 
-      if (countEl) {
-        countEl.innerHTML = currentMacFilterList.length + (isTurkish ? ' adres' : ' items');
-      }
-
-      if (currentMacFilterList.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--color-secondary-400);font-size:13px;">' +
-          (isTurkish ? 'Henüz filtrelenen MAC adresi eklenmedi.' : 'No filtered MAC addresses added yet.') + '</div>';
+      if (!currentSsidList || currentSsidList.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:16px;color:var(--color-secondary-400);">' +
+          (isTurkish ? 'Yapılandırılmış ek SSID profili yok.' : 'No configured SSID profiles.') + '</div>';
         return;
       }
 
-      container.innerHTML = currentMacFilterList.map(function(mac, idx) {
-        return '<div style="display:flex;align-items:center;justify-content:space-between;background:white;padding:8px 12px;border-radius:6px;margin-bottom:6px;border:1px solid var(--color-secondary-200);">' +
-          '<div style="display:flex;align-items:center;gap:8px;">' +
-            '<span style="font-size:14px;">🏷️</span>' +
-            '<span style="font-family:monospace;font-weight:600;font-size:13px;color:var(--color-secondary-900);">' + mac + '</span>' +
+      container.innerHTML = currentSsidList.map(function(item, idx) {
+        var isPrimary = idx === 0;
+        var bandText = item.band === '5GHz' ? '5 GHz' : (item.band === '2.4GHz' ? '2.4 GHz' : (isTurkish ? 'Çift Bant' : 'Dual Band'));
+        var secText = (item.security || 'open').toUpperCase();
+        var statusBadge = item.enabled
+          ? '<span class="status-badge" style="background:var(--color-success-500);">' + (isTurkish ? '● Etkin' : '● Active') + '</span>'
+          : '<span class="status-badge" style="background:var(--color-secondary-400);">' + (isTurkish ? '○ Pasif' : '○ Disabled') + '</span>';
+
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#ffffff;border:1px solid var(--color-secondary-200);border-radius:8px;margin-bottom:8px;gap:12px;">' +
+          '<div style="min-w-0;">' +
+            '<div style="font-weight:600;font-size:14px;color:var(--color-secondary-900);display:flex;align-items:center;gap:8px;">' +
+              '<span>📶 ' + (item.name || item.ssid) + '</span>' +
+              (isPrimary ? '<span class="badge badge-primary">' + (isTurkish ? 'Ana Yayın' : 'Primary') + '</span>' : '') +
+              (item.hidden ? '<span class="badge badge-warning">🙈 ' + (isTurkish ? 'Gizli' : 'Hidden') + '</span>' : '') +
+            '</div>' +
+            '<div style="font-size:12px;color:var(--color-secondary-500);margin-top:2px;">' +
+              'SSID: <strong style="color:var(--color-primary-600);">' + item.ssid + '</strong> · ' +
+              (isTurkish ? 'Güvenlik' : 'Security') + ': <strong>' + secText + '</strong> · ' +
+              (isTurkish ? 'Bant' : 'Band') + ': <strong>' + bandText + '</strong>' +
+            '</div>' +
           '</div>' +
-          '<button type="button" onclick="removeMacFilter(' + idx + ')" style="background:var(--color-error-100);color:var(--color-error-600);border:none;border-radius:4px;padding:4px 8px;font-size:12px;cursor:pointer;font-weight:600;" title="' + (isTurkish ? 'Kaldır' : 'Remove') + '">🗑️ ' + (isTurkish ? 'Kaldır' : 'Remove') + '</button>' +
+          '<div style="display:flex;align-items:center;gap:6px;shrink:0;">' +
+            statusBadge +
+            '<button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="editSsidProfile(' + idx + ')">✏️ ' + (isTurkish ? 'Düzenle' : 'Edit') + '</button>' +
+            '<button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:12px;" onclick="toggleSsidProfile(' + idx + ')">⚡</button>' +
+            (!isPrimary ? '<button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px;" onclick="deleteSsidProfile(' + idx + ')">🗑️</button>' : '') +
+          '</div>' +
         '</div>';
       }).join('');
     };
 
-    window.isValidMacFormat = function(mac) {
-      if (!mac) return false;
-      var clean = mac.trim();
-      return /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(clean) ||
-             /^([0-9A-Fa-f]{4}[.]){2}[0-9A-Fa-f]{4}$/.test(clean) ||
-             /^[0-9A-Fa-f]{12}$/.test(clean);
-    };
+    window.saveSsidProfile = function() {
+      var editId = document.getElementById('edit-ssid-id').value;
+      var name = (document.getElementById('profile-name').value || '').trim();
+      var ssid = (document.getElementById('profile-ssid').value || '').trim();
+      var band = document.getElementById('profile-band').value || 'both';
+      var security = document.getElementById('profile-security').value || 'wpa2';
+      var password = (document.getElementById('profile-password').value || '').trim();
+      var enabled = !!document.getElementById('profile-enabled').checked;
+      var hidden = !!document.getElementById('profile-hidden').checked;
 
-    window.formatMacAddress = function(mac) {
-      var clean = mac.replace(/[^0-9A-Fa-f]/g, '').toUpperCase();
-      if (clean.length === 12) {
-        return clean.match(/.{1,2}/g).join(':');
-      }
-      return mac.trim().toUpperCase();
-    };
-
-    window.addManualMac = function() {
-      var input = document.getElementById('manual-mac-input');
-      if (!input) return;
-      var val = (input.value || '').trim();
-      if (!val) {
-        try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: isTurkish ? 'Lütfen bir MAC adresi girin' : 'Please enter a MAC address' } }, '*'); } catch(_){}
+      if (!name || !ssid) {
+        alert('❌ ' + (isTurkish ? 'Lütfen Profil Adı ve SSID girin' : 'Please enter Profile Name and SSID'));
         return;
       }
-      if (!isValidMacFormat(val)) {
-        try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: isTurkish ? 'Geçersiz MAC adresi formatı! (Örn: 00:11:22:33:44:55)' : 'Invalid MAC address format! (e.g., 00:11:22:33:44:55)' } }, '*'); } catch(_){}
+
+      if (security !== 'open' && password.length < 8) {
+        alert('❌ ' + (isTurkish ? 'Şifre en az 8 karakter olmalıdır' : 'Password must be at least 8 characters'));
         return;
       }
-      var formatted = formatMacAddress(val);
-      var exists = currentMacFilterList.some(function(m) {
-        return formatMacAddress(m) === formatted;
-      });
-      if (exists) {
-        try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: isTurkish ? 'Bu MAC adresi zaten listede var!' : 'This MAC address is already in the list!' } }, '*'); } catch(_){}
+
+      if (editId !== '') {
+        var idx = parseInt(editId, 10);
+        if (!isNaN(idx) && currentSsidList[idx]) {
+          currentSsidList[idx] = {
+            id: currentSsidList[idx].id,
+            name: name,
+            ssid: ssid,
+            security: security,
+            password: password,
+            band: band,
+            enabled: enabled,
+            hidden: hidden
+          };
+        }
+      } else {
+        var newProfile = {
+          id: 'ssid-' + (Date.now()),
+          name: name,
+          ssid: ssid,
+          security: security,
+          password: password,
+          band: band,
+          enabled: enabled,
+          hidden: hidden
+        };
+        currentSsidList.push(newProfile);
+      }
+
+      // If primary SSID (idx 0) was updated, reflect on main form
+      if (currentSsidList[0]) {
+        var mainSsidEl = document.getElementById('wifi-ssid');
+        if (mainSsidEl) mainSsidEl.value = currentSsidList[0].ssid;
+      }
+
+      resetSsidForm();
+      renderSsidList();
+      saveAllWifiSettings();
+    };
+
+    window.editSsidProfile = function(idx) {
+      var profile = currentSsidList[idx];
+      if (!profile) return;
+      document.getElementById('edit-ssid-id').value = idx;
+      document.getElementById('profile-name').value = profile.name || '';
+      document.getElementById('profile-ssid').value = profile.ssid || '';
+      document.getElementById('profile-band').value = profile.band || 'both';
+      document.getElementById('profile-security').value = profile.security || 'wpa2';
+      document.getElementById('profile-password').value = profile.password || '';
+      document.getElementById('profile-enabled').checked = profile.enabled !== false;
+      document.getElementById('profile-hidden').checked = !!profile.hidden;
+
+      var pWrap = document.getElementById('profile-password-wrap');
+      if (pWrap) pWrap.style.display = profile.security === 'open' ? 'none' : 'block';
+
+      document.getElementById('ssid-form-title').innerHTML = '✏️ ' + (isTurkish ? 'SSID Profilini Düzenle' : 'Edit SSID Profile');
+    };
+
+    window.toggleSsidProfile = function(idx) {
+      if (currentSsidList[idx]) {
+        currentSsidList[idx].enabled = !currentSsidList[idx].enabled;
+        renderSsidList();
+        saveAllWifiSettings();
+      }
+    };
+
+    window.deleteSsidProfile = function(idx) {
+      if (idx === 0) {
+        alert('❌ ' + (isTurkish ? 'Ana SSID profili silinemez' : 'Primary SSID profile cannot be deleted'));
         return;
       }
-      currentMacFilterList.push(formatted);
-      input.value = '';
-      renderMacFilterList();
-    };
-
-    window.removeMacFilter = function(index) {
-      if (index >= 0 && index < currentMacFilterList.length) {
-        currentMacFilterList.splice(index, 1);
-        renderMacFilterList();
+      if (confirm('⚠️ ' + (isTurkish ? 'Bu SSID profilini silmek istediğinizden emin misiniz?' : 'Are you sure you want to delete this SSID profile?'))) {
+        currentSsidList.splice(idx, 1);
+        renderSsidList();
+        saveAllWifiSettings();
       }
     };
 
-    window.saveMacFilterSettings = function() {
+    window.resetSsidForm = function() {
+      document.getElementById('edit-ssid-id').value = '';
+      document.getElementById('profile-name').value = '';
+      document.getElementById('profile-ssid').value = '';
+      document.getElementById('profile-band').value = 'both';
+      document.getElementById('profile-security').value = 'wpa2';
+      document.getElementById('profile-password').value = 'password123';
+      document.getElementById('profile-enabled').checked = true;
+      document.getElementById('profile-hidden').checked = false;
+      document.getElementById('ssid-form-title').innerHTML = '➕ ' + (isTurkish ? 'Yeni SSID Profili Ekle' : 'Add New SSID Profile');
+    };
+
+    // --- Connected Wireless Clients Table Handler ---
+    window.renderConnectedWirelessClients = function() {
+      var container = document.getElementById('connected-wireless-clients-container');
+      if (!container) return;
+
+      if (!connectedClientsData || connectedClientsData.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:24px;background:#f8fafc;border-radius:8px;border:1px solid var(--color-secondary-200);color:var(--color-secondary-500);">' +
+          '<div style="font-size:36px;margin-bottom:8px;">📶</div>' +
+          '<div>' + (isTurkish ? 'Şu anda bu erişim noktasına bağlı aktif kablosuz istemci yok.' : 'No active wireless clients currently connected to this AP.') + '</div>' +
+        '</div>';
+        return;
+      }
+
+      container.innerHTML = connectedClientsData.map(function(client) {
+        var icon = client.isWired ? '🔌' : (client.sensorType ? '🛜' : '💻');
+        var ipDisplay = client.ip || (isTurkish ? 'Dinamik / DHCP' : 'Dynamic / DHCP');
+        var macDisplay = client.mac || 'Auto';
+        var jsId = JSON.stringify(client.id || '').replace(/"/g, '&quot;');
+
+        return '<div class="client-card">' +
+          '<div style="display:flex;align-items:center;gap:12px;min-width:0;">' +
+            '<div class="client-icon">' + icon + '</div>' +
+            '<div class="client-details">' +
+              '<div class="client-title">' +
+                '<span>' + client.name + '</span>' +
+                '<span class="badge badge-primary">SSID: ' + (wifi.ssid || 'WiFi') + '</span>' +
+              '</div>' +
+              '<div class="client-sub">IP: ' + ipDisplay + ' · MAC: ' + macDisplay + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="client-badges">' +
+            '<span class="badge badge-success">📶 -45 dBm (%90)</span>' +
+            '<span class="badge badge-success">' + (isTurkish ? '● Bağlı' : '● Connected') + '</span>' +
+            '<button type="button" class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="renewIotDevice(' + jsId + ')">🔄</button>' +
+            '<button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="disconnectIotDevice(' + jsId + ')">🔌</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    };
+
+    function saveAllWifiSettings() {
       var enabled = !!document.getElementById('wifi-enabled')?.checked;
       var ssid = document.getElementById('wifi-ssid') ? (document.getElementById('wifi-ssid').value || '') : '';
       var security = document.getElementById('wifi-security') ? (document.getElementById('wifi-security').value || '') : '';
@@ -1241,16 +987,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
       var macFilterEnabled = !!document.getElementById('mac-filter-enabled')?.checked;
       var macFilterMode = document.querySelector('input[name="macFilterMode"]:checked')?.value || 'allow';
-      var macFilterList = currentMacFilterList.slice();
-
-      var btn = document.getElementById('save-advanced-btn');
-      if (btn) {
-        var originalText = btn.innerHTML;
-        btn.innerHTML = (isTurkish ? '✓ Kaydedildi!' : '✓ Saved!');
-        setTimeout(function() {
-          btn.innerHTML = originalText;
-        }, 1000);
-      }
+      var macFilterList = Array.isArray(window.currentMacFilterList) ? window.currentMacFilterList.slice() : [];
 
       try {
         window.parent.postMessage({
@@ -1267,323 +1004,50 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             password: password,
             macFilterEnabled: macFilterEnabled,
             macFilterMode: macFilterMode,
-            macFilterList: macFilterList
+            macFilterList: macFilterList,
+            ssids: currentSsidList
           }
         }, '*');
-        window.parent.postMessage({
-          type: 'router-admin-toast',
-          payload: {
-            type: 'success',
-            message: isTurkish ? 'Gelişmiş ayarlar ve MAC filtreleme başarıyla kaydedildi!' : 'Advanced settings and MAC filtering saved successfully!'
-          }
-        }, '*');
-      } catch(err) {
-        console.warn('Could not save advanced settings:', err);
-      }
-    };
-
-    renderMacFilterList();
-
-    // Form handling simulation (guarded)
-    (function(){
-      try {
-        const get = (id) => document.getElementById(id);
-        const form = get('wifi-form');
-        if (!form) return;
-
-        form.addEventListener('submit', function(e) {
-          e.preventDefault();
-
-          const enabled = !!get('wifi-enabled')?.checked;
-          const ssid = get('wifi-ssid') ? (get('wifi-ssid').value || '') : '';
-          const security = get('wifi-security') ? (get('wifi-security').value || '') : '';
-          const channel = get('wifi-channel') ? (get('wifi-channel').value || '') : '';
-          const mode = get('wifi-mode') ? (get('wifi-mode').value || '') : '';
-          const hidden = get('wifi-hidden') ? !!get('wifi-hidden').checked : false;
-          const maxClients = get('max-clients') ? (get('max-clients').value || 32) : 32;
-          const password = get('wifi-password') ? (get('wifi-password').value || '') : '';
-          const macFilterEnabled = !!get('mac-filter-enabled')?.checked;
-          const macFilterMode = document.querySelector('input[name="macFilterMode"]:checked')?.value || 'allow';
-          const macFilterList = Array.isArray(window.currentMacFilterList) ? window.currentMacFilterList.slice() : [];
-
-          if (!ssid) {
-            const errorMessage = isTurkish ? 'Lütfen bir ağ adı (SSID) girin' : 'Please enter a network name (SSID)';
-            try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*'); } catch(_){}
-            return;
-          }
-
-          if (security === 'wep' && password.length < 5) {
-            const errorMessage = isTurkish ? 'WEP anahtarı en az 5 karakter olmalıdır (veya 10/26 hex hane)' : 'WEP key must be at least 5 characters (or 10/26 hex digits)';
-            try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*'); } catch(_){}
-            return;
-          }
-
-          if (security !== 'open' && security !== 'wep' && password.length < 8) {
-            const errorMessage = isTurkish ? 'Parola en az 8 karakter olmalıdır' : 'Password must be at least 8 characters';
-            try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'error', message: errorMessage } }, '*'); } catch(_){}
-            return;
-          }
-
-          // Show success message (simulated)
-          const btn = document.querySelector('.btn-primary');
-          if (btn) {
-            const originalText = btn.innerHTML;
-            btn.innerHTML = (isTurkish ? '✓ Kaydedildi!' : '✓ Saved!');
-            btn.style.background = 'linear-gradient(135deg, var(--color-accent-600) 0%, var(--color-success-500) 100%)';
-
-            setTimeout(() => {
-              btn.innerHTML = originalText;
-              btn.style.background = '';
-              try { window.parent.postMessage({ type: 'router-admin-toast', payload: { type: 'success', message: isTurkish ? 'Wi-Fi ayarları başarıyla kaydedildi!' : 'Wi-Fi settings saved successfully!' } }, '*'); } catch(_){}
-            }, 1000);
-          }
-
-          try {
-            window.parent.postMessage({
-              type: 'router-admin-save-wifi',
-              deviceId: ${jsDeviceId},
-              payload: {
-                enabled,
-                ssid,
-                security,
-                channel,
-                mode,
-                hidden,
-                maxClients: Number(maxClients),
-                password,
-                macFilterEnabled,
-                macFilterMode,
-                macFilterList
-              }
-            }, '*');
-          } catch (err) {
-            console.warn('Could not sync router settings to parent:', err);
-          }
-        });
-
-        // Toggle switch handler
-        const wifiEnabledEl = get('wifi-enabled');
-        if (wifiEnabledEl) {
-          wifiEnabledEl.addEventListener('change', function() {
-            try {
-              const statusCard = document.querySelector('.status-card');
-              const statusBadge = document.querySelector('.status-badge');
-              const statusInfoP = document.querySelector('.status-info p');
-
-              if (this.checked) {
-                statusCard?.classList.remove('disabled');
-                if (statusBadge) statusBadge.textContent = '${isTurkish ? '● Çevrimiçi' : '● Online'}';
-                if (statusInfoP) statusInfoP.textContent = '${isTurkish ? 'WiFi aktif ve yayın yapıyor' : 'WiFi is active and broadcasting'}';
-              } else {
-                statusCard?.classList.add('disabled');
-                if (statusBadge) statusBadge.textContent = '${isTurkish ? '○ Çevrimdışı' : '○ Offline'}';
-                if (statusInfoP) statusInfoP.textContent = '${isTurkish ? 'WiFi şu anda devre dışı' : 'WiFi is currently disabled'}';
-              }
-            } catch (_) {}
-          });
-        }
-        // Security type change handler
-        const wifiSecurityEl = get('wifi-security');
-        if (wifiSecurityEl) {
-          wifiSecurityEl.addEventListener('change', function() {
-            const passwordWrap = document.getElementById('wifi-password-wrap');
-            const passwordInput = document.getElementById('wifi-password');
-            const passwordHint = document.getElementById('wifi-password-hint');
-            const isWep = this.value === 'wep';
-            const isOpen = this.value === 'open';
-            if (passwordWrap) {
-              passwordWrap.style.display = isOpen ? 'none' : 'block';
-            }
-            if (passwordInput) {
-              passwordInput.minLength = isWep ? 5 : 8;
-              passwordInput.placeholder = isWep
-                ? '${isTurkish ? 'WEP anahtarı girin (en az 5 karakter veya 10/26 hex hane)' : 'Enter WEP key (min 5 chars or 10/26 hex digits)'}'
-                : '${isTurkish ? 'Parola girin (en az 8 karakter)' : 'Enter password (min 8 characters)'}';
-            }
-            if (passwordHint) {
-              passwordHint.textContent = isWep
-                ? '${isTurkish ? 'En az 5 karakter gereklidir (veya 10/26 hex hane)' : 'Minimum 5 characters required (or 10/26 hex digits)'}'
-                : '${isTurkish ? 'En az 8 karakter gereklidir' : 'Minimum 8 characters required'}';
-            }
-          });
-        }
-      } catch (err) {
-        console.warn('Wifi panel: failed to initialize form handlers', err);
-      }
-    })();
-  </script>
-${contentEnd}
-</body>
-</html>
-  `.trim();
-}
-
-/**
- * Check if a device is a router/switch/WLC that should show WiFi admin panel
- */
-export function isRouterDevice(device: CanvasDevice): boolean {
-  return device.type === 'router' || device.type === 'switchL2' || device.type === 'switchL3' || device.type === 'wlc';
-}
-
-/**
- * Generate WLC Web Admin Panel HTML
- */
-export function generateWlcAdminPage(device: CanvasDevice, language: string, state?: SwitchState): string {
-  const isTr = language === 'tr';
-  const safeName = sanitizeHTML(device.name || 'Wireless LAN Controller');
-  const safeIp = sanitizeHTML(device.ip || '192.168.1.10');
-  const wlans = state?.wlcWlans ? Object.values(state.wlcWlans) : [];
-  const aps = state?.wlcAps ? Object.values(state.wlcAps) : [];
-
-  const wlanRows = wlans.length > 0 ? wlans.map(w => `
-    <tr style="border-bottom: 1px solid var(--color-secondary-200);">
-      <td style="padding: 10px 12px; font-weight: 600;">${sanitizeHTML(String(w.id))}</td>
-      <td style="padding: 10px 12px;">${sanitizeHTML(w.name)}</td>
-      <td style="padding: 10px 12px; font-weight: 600; color: var(--color-primary-600);">${sanitizeHTML(w.ssid)}</td>
-      <td style="padding: 10px 12px;"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:${w.status === 'enabled' ? '#dcfce7;color:#15803d' : '#fee2e2;color:#b91c1c'};">${w.status === 'enabled' ? (isTr ? 'Aktif' : 'Enabled') : (isTr ? 'Devre Dışı' : 'Disabled')}</span></td>
-      <td style="padding: 10px 12px; text-transform: uppercase;">${sanitizeHTML(w.security || 'open')}</td>
-      <td style="padding: 10px 12px; font-weight: 600;">${w.vlan || 1}</td>
-    </tr>
-  `).join('') : `
-    <tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--color-secondary-500);">${isTr ? 'Tanımlı WLAN bulunamadı' : 'No WLANs configured'}</td></tr>
-  `;
-
-  const apRows = aps.length > 0 ? aps.map(a => `
-    <tr style="border-bottom: 1px solid var(--color-secondary-200);">
-      <td style="padding: 10px 12px; font-weight: 600;">${sanitizeHTML(a.name)}</td>
-      <td style="padding: 10px 12px; font-family: monospace; font-size: 12px;">${sanitizeHTML(a.macAddress)}</td>
-      <td style="padding: 10px 12px; font-family: monospace; font-size: 12px;">${sanitizeHTML(a.ipAddress || '-')}</td>
-      <td style="padding: 10px 12px;"><span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#dcfce7;color:#15803d;">${sanitizeHTML(a.status || 'Joined')}</span></td>
-      <td style="padding: 10px 12px;">${sanitizeHTML(a.model || 'AIR-AP1852I')}</td>
-      <td style="padding: 10px 12px;">Ch ${a.rfChannel || 1} (${a.rfChannel && a.rfChannel > 14 ? '5 GHz' : '2.4 GHz'})</td>
-    </tr>
-  `).join('') : `
-    <tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--color-secondary-500);">${isTr ? 'Kayıtlı AP bulunamadı' : 'No Access Points joined'}</td></tr>
-  `;
-
-  return `
-<!DOCTYPE html>
-<html lang="${language}">
-<head>
-  <meta charset="utf-8">
-  <title>Wireless Controller - ${safeName}</title>
-  <style>
-    :root {
-      --color-primary-800: #0f3e6d;
-      --color-primary-600: #1d72b8;
-      --color-primary-500: #0284c7;
-      --color-secondary-900: #0f172a;
-      --color-secondary-700: #334155;
-      --color-secondary-200: #e2e8f0;
-      --color-secondary-100: #f1f5f9;
-      --color-secondary-50: #f8fafc;
+      } catch(err) {}
     }
-    body { margin: 0; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #1e293b; }
-    .wlc-header { background: linear-gradient(135deg, #0b2d52 0%, #1e4d7b 100%); color: #fff; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
-    .wlc-logo { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-    .wlc-badge { background: #0284c7; font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
-    .wlc-container { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: flex; flex-direction: column; gap: 20px; }
-    .wlc-card { background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
-    .wlc-card-header { background: #f1f5f9; padding: 12px 16px; font-size: 14px; font-weight: 700; color: #0f3e6d; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
-    .wlc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 16px; }
-    .wlc-stat-item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; }
-    .wlc-stat-label { font-size: 12px; color: #64748b; font-weight: 500; }
-    .wlc-stat-value { font-size: 18px; color: #0f3e6d; font-weight: 700; margin-top: 4px; }
-    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-    th { background: #f8fafc; padding: 10px 12px; font-weight: 600; color: #475569; border-bottom: 1px solid #e2e8f0; font-size: 12px; }
-  </style>
-</head>
-<body>
-  <header class="wlc-header">
-    <div class="wlc-logo">
-      <span>📡</span> Wireless LAN Controller
-      <span class="wlc-badge">AIR-CT2504</span>
-    </div>
-    <div style="font-size: 13px; opacity: 0.9;">
-      <strong>${safeName}</strong> | IP: ${safeIp}
-    </div>
-  </header>
 
-  <main class="wlc-container">
-    <!-- Controller Summary -->
-    <section class="wlc-card">
-      <div class="wlc-card-header">
-        <span>📊 ${isTr ? 'Denetleyici Özeti (Controller Summary)' : 'Controller Summary'}</span>
-        <span style="font-size: 12px; font-weight: normal; color: #64748b;">Software: 8.5.105.0</span>
-      </div>
-      <div class="wlc-stats">
-        <div class="wlc-stat-item">
-          <div class="wlc-stat-label">${isTr ? 'Toplam WLAN Sayısı' : 'Configured WLANs'}</div>
-          <div class="wlc-stat-value">${wlans.length}</div>
-        </div>
-        <div class="wlc-stat-item">
-          <div class="wlc-stat-label">${isTr ? 'Bağlı Access Pointler' : 'Joined Access Points'}</div>
-          <div class="wlc-stat-value">${aps.length}</div>
-        </div>
-        <div class="wlc-stat-item">
-          <div class="wlc-stat-label">${isTr ? 'Yönetim Arayüzü IP' : 'Management IP'}</div>
-          <div class="wlc-stat-value">${safeIp}</div>
-        </div>
-        <div class="wlc-stat-item">
-          <div class="wlc-stat-label">${isTr ? 'Sistem Durumu' : 'System Status'}</div>
-          <div class="wlc-stat-value" style="color: #16a34a;">${isTr ? 'Çalışıyor (Operational)' : 'Operational'}</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- WLANs Table -->
-    <section class="wlc-card">
-      <div class="wlc-card-header">
-        <span>📶 ${isTr ? 'Kablosuz Ağlar (WLANs)' : 'Wireless LANs (WLANs)'}</span>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>WLAN ID</th>
-            <th>${isTr ? 'Profil Adı' : 'Profile Name'}</th>
-            <th>SSID</th>
-            <th>${isTr ? 'Durum' : 'Status'}</th>
-            <th>${isTr ? 'Güvenlik' : 'Security'}</th>
-            <th>VLAN</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${wlanRows}
-        </tbody>
-      </table>
-    </section>
-
-    <!-- Access Points Table -->
-    <section class="wlc-card">
-      <div class="wlc-card-header">
-        <span>📍 ${isTr ? 'Erişim Noktaları (Access Points)' : 'Access Points (APs)'}</span>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>${isTr ? 'AP Adı' : 'AP Name'}</th>
-            <th>MAC Address</th>
-            <th>IP Address</th>
-            <th>${isTr ? 'Durum' : 'Status'}</th>
-            <th>${isTr ? 'Model' : 'Model'}</th>
-            <th>${isTr ? 'Radyo / Kanal' : 'Radio / Channel'}</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${apRows}
-        </tbody>
-      </table>
-    </section>
-  </main>
+    // Initialize lists on document ready
+    renderSsidList();
+    renderConnectedWirelessClients();
+  </script>
 </body>
 </html>
-  `.trim();
+  `;
 }
 
 /**
  * Get default WiFi configuration for a router
  */
 function getDefaultWifiConfig(device: CanvasDevice): WifiAdminConfig {
+  const defaultSsids: DeviceWifiSsidProfile[] = Array.isArray(device.wifi?.ssids) && device.wifi.ssids.length > 0
+    ? device.wifi.ssids
+    : [
+        {
+          id: 'ssid-1',
+          name: 'Ana Ağ (Primary)',
+          ssid: device.wifi?.ssid || `${device.name}_WiFi`,
+          security: device.wifi?.security || 'wpa2',
+          password: device.wifi?.password || 'password123',
+          band: 'both',
+          enabled: true,
+          hidden: device.wifi?.hidden ?? false,
+        },
+        {
+          id: 'ssid-2',
+          name: 'Misafir Ağ (Guest)',
+          ssid: `${device.name}_Guest`,
+          security: 'open',
+          band: '2.4GHz',
+          enabled: false,
+          hidden: false,
+        },
+      ];
+
   return {
     enabled: device.wifi?.enabled ?? false,
     ssid: device.wifi?.ssid || `${device.name}_WiFi`,
@@ -1596,6 +1060,7 @@ function getDefaultWifiConfig(device: CanvasDevice): WifiAdminConfig {
     macFilterEnabled: device.wifi?.macFilterEnabled ?? false,
     macFilterMode: device.wifi?.macFilterMode || 'allow',
     macFilterList: device.wifi?.macFilterList || [],
+    ssids: defaultSsids,
   };
 }
 
@@ -1629,14 +1094,23 @@ function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdm
     macFilterEnabled: wlanWifi.macFilterEnabled ?? base.macFilterEnabled,
     macFilterMode: wlanWifi.macFilterMode || base.macFilterMode,
     macFilterList: wlanWifi.macFilterList || base.macFilterList,
+    ssids: Array.isArray(wlanWifi.ssids) && wlanWifi.ssids.length > 0 ? wlanWifi.ssids : base.ssids,
   };
 }
 
 /**
  * Generate router/switch/WLC admin page content for HTTP access
  */
-export function generateRouterAdminPage(device: CanvasDevice, language: string, state?: SwitchState, connectedIotDevices?: ConnectedIoTDevice[], availableIotDevices?: AvailableIoTDevice[], username?: string, password?: string, activeTab?: string): string {
-
+export function generateRouterAdminPage(
+  device: CanvasDevice,
+  language: string,
+  state?: SwitchState,
+  connectedIotDevices?: ConnectedIoTDevice[],
+  availableIotDevices?: AvailableIoTDevice[],
+  username?: string,
+  password?: string,
+  activeTab?: string
+): string {
   const interfaceIp = state?.ports ? Object.values(state.ports).find((p) => p?.ipAddress && !p.shutdown)?.ipAddress : undefined;
   const config: RouterWebConfig = {
     wifi: getRouterWifiConfig(device, state),
@@ -1652,4 +1126,8 @@ export function generateRouterAdminPage(device: CanvasDevice, language: string, 
   };
 
   return generateWifiControlPanelHTML(config, activeTab);
+}
+
+export function isRouterDevice(device: CanvasDevice): boolean {
+  return device.type === 'router' || device.type === 'wlc' || device.type === 'switchL3';
 }

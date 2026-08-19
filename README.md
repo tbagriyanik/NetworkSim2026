@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-2.4-blue)
+![Version](https://img.shields.io/badge/version-2.5-blue)
 ![Stack](https://img.shields.io/badge/stack-Next.js%2016.2.4%20|%20React%2019.2.5%20|%20TypeScript%206.0.3%20|%20Tailwind%204.2.2-green)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 
@@ -24,7 +24,7 @@ npm install && npm run dev
 
 - **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
 - **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.
-- **Version 2.4 Sürümü:** Paket analizi panelindeki protokol sütununa her protokolün port/protokol numarası eklendi (ICMP (1), TCP (6), UDP (17), ARP (0x0806), STP (0x4242), vb.).
+- **Version 2.5 Sürümü:** Switch/router arayüz komutları ve PC CMD ARP yönetimi iyileştirildi; derleme ve tip kontrolleri temizlendi.
 
  
 ## Stats / İstatistikler

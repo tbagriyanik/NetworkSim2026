@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Radio, Laptop, Trash2, Power } from 'lucide-react';
+import { Radio, Laptop, Trash2, Power, Edit3 } from 'lucide-react';
 import type { SwitchState } from '@/lib/network/types';
 import type { CanvasDevice } from './networkTopology.types';
 import { getDeviceWifiConfig } from '@/lib/network/wireless';
@@ -173,6 +173,21 @@ export function WlcWirelessPanel({
                                         <Badge variant={wlan.status === 'enabled' ? 'outline' : 'secondary'} className={wlan.status === 'enabled' ? 'bg-success-500 text-white border-transparent' : ''}>
                                             {wlan.status === 'enabled' ? tr('Enabled', 'Etkin') : tr('Disabled', 'Devre Dışı')}
                                         </Badge>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-7 w-7 p-0 text-primary-500 hover:text-primary-600"
+                                            title={tr('Edit SSID', 'SSID Düzenle')}
+                                            disabled={isDevicePoweredOff || busy}
+                                            onClick={() => {
+                                                setWlanName(wlan.name);
+                                                setWlanId(String(wlan.id));
+                                                setWlanSsid(wlan.ssid);
+                                                setWlanSecurity(wlan.security === 'open' ? 'open' : 'wpa2');
+                                            }}
+                                        >
+                                            <Edit3 className="w-3.5 h-3.5" />
+                                        </Button>
                                         <Button
                                             variant="ghost"
                                             size="sm"

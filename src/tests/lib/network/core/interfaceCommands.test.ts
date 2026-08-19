@@ -93,3 +93,38 @@ describe('interfaceHandlers - WLAN commands', () => {
     });
   });
 });
+
+describe('interfaceHandlers - previously stubbed interface commands', () => {
+  const stateWithInterface = () => makeBaseState({
+    currentMode: 'interface' as const,
+    currentInterface: 'gi0/1',
+    ports: {
+      'gi0/1': {
+        id: 'gi0/1', name: 'Gi0/1', status: 'connected' as const,
+        vlan: 1, mode: 'access' as const, duplex: 'auto' as const,
+        speed: 'auto' as const, shutdown: false, type: 'gigabitethernet' as const,
+      },
+    },
+  });
+
+  it('persists EtherChannel protocol and interface timing settings', () => {
+    const state = stateWithInterface();
+    const protocol = interfaceHandlers['channel-protocol'](state, 'channel-protocol lacp', mockCtx);
+    expect(protocol.newState?.ports?.['gi0/1'].channelProtocol).toBe('lacp');
+
+    const carrier = interfaceHandlers['carrier-delay'](state, 'carrier-delay 20', mockCtx);
+    expect(carrier.newState?.ports?.['gi0/1'].carrierDelay).toBe(20);
+
+    const interval = interfaceHandlers['load-interval'](state, 'load-interval 60', mockCtx);
+    expect(interval.newState?.ports?.['gi0/1'].loadInterval).toBe(60);
+  });
+
+  it('persists directed-broadcast and PoE configuration', () => {
+    const state = stateWithInterface();
+    const broadcast = interfaceHandlers['ip directed-broadcast'](state, 'ip directed-broadcast', mockCtx);
+    expect(broadcast.newState?.ports?.['gi0/1'].directedBroadcast).toBe(true);
+
+    const power = interfaceHandlers['power inline consumption'](state, 'power inline consumption 15400', mockCtx);
+    expect(power.newState?.ports?.['gi0/1'].powerInline).toEqual({ enabled: true, consumption: 15400 });
+  });
+});

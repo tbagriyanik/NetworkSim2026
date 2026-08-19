@@ -78,6 +78,7 @@ export interface UsePCPanelCommandsParams {
   normalizeLookupTargetCallback: (raw: string) => string;
   buildArpTableOutput: () => string;
   addPcArpEntry?: (targetIp: string, targetMac: string, isIot?: boolean) => void;
+  removePcArpEntry?: (targetIp: string) => void;
   clearPcArpTable?: () => void;
   openWebPage: (url: string, target?: string) => void;
   setPcHostname: (hostname: string) => void;
@@ -178,6 +179,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     normalizeLookupTargetCallback,
     buildArpTableOutput,
     addPcArpEntry,
+    removePcArpEntry,
     clearPcArpTable,
     openWebPage,
     setPcHostname,
@@ -691,13 +693,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           const flag = args[0]?.toLowerCase();
           if (args.length === 0 || flag === '-a' || flag === '-g' || flag === '-v') {
             emit('output', buildArpTableOutput());
-          } else if (flag === '-d') {
-            const delTarget = args[1];
-            if (!delTarget || delTarget === '*') {
-              clearPcArpTable?.();
-              emit('success', 'The ARP entry was deleted successfully.');
-            } else {
-              emit('success', `The ARP entry ${delTarget} was deleted successfully.`);
+            } else if (flag === '-d') {
+              const delTarget = args[1];
+              if (!delTarget || delTarget === '*') {
+                clearPcArpTable?.();
+                emit('success', 'The ARP entry was deleted successfully.');
+              } else {
+                removePcArpEntry?.(delTarget);
+                emit('success', `The ARP entry ${delTarget} was deleted successfully.`);
             }
           } else if (flag === '-s') {
             const targetIp = args[1];
@@ -1062,7 +1065,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     hasGatewayForTargetCallback, isLoopbackTarget,
     isValidIpv4, isValidIpv6, canReachTargetIp,
     normalizeLookupTargetCallback, buildArpTableOutput,
-    addPcArpEntry, clearPcArpTable,
+    addPcArpEntry, removePcArpEntry, clearPcArpTable,
     openWebPage, setPcHostname, executeFtpPut, handleFtpSessionCommand,
   ]);
 

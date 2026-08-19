@@ -4,6 +4,14 @@ Yeniden eskiye, tarih ve özellik listesi.
 
 ---
 
+## v2.5.0 — 2026-08-19
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-19 | Switch/router arayüz komutları ve PC CMD ARP yönetimi iyileştirildi; kullanılmayan wireless kodu temizlendi ve type-check düzeltildi. |
+
+---
+
 ## v2.4.0 — 2026-08-19
 
 | Tarih | Özellik |

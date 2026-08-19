@@ -1494,14 +1494,33 @@ function cmdIpDhcpSnoopingVlan(state: SwitchState, input: string, _ctx: CommandC
 /**
  * IP ARP Inspection VLAN
  */
-function cmdIpArpInspection(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+function cmdIpArpInspection(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^ip\s+arp\s+inspection\s+vlan\s+(.+)$/i);
+  if (match) {
+    const vlans = match[1].split(',').map((v: string) => v.trim());
+    return {
+      success: true,
+      output: `ARP inspection enabled on VLAN(s): ${vlans.join(', ')}`,
+      newState: { arpInspectionEnabled: true, arpInspectionVlans: vlans }
+    };
+  }
   return { success: true, output: 'ARP inspection configured', newState: { arpInspectionEnabled: true } };
 }
 
-function cmdNoIpArpInspection(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+function cmdNoIpArpInspection(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
-  return { success: true, output: 'ARP inspection disabled', newState: { arpInspectionEnabled: false } };
+  const match = input.match(/^no\s+ip\s+arp\s+inspection\s+vlan\s+(.+)$/i);
+  if (match && state.arpInspectionVlans) {
+    const removeVlans = match[1].split(',').map((v: string) => v.trim());
+    const remaining = state.arpInspectionVlans.filter(v => !removeVlans.includes(v));
+    return {
+      success: true,
+      output: remaining.length > 0 ? `ARP inspection remaining VLAN(s): ${remaining.join(', ')}` : 'ARP inspection disabled',
+      newState: { arpInspectionVlans: remaining.length > 0 ? remaining : undefined, arpInspectionEnabled: remaining.length > 0 }
+    };
+  }
+  return { success: true, output: 'ARP inspection disabled', newState: { arpInspectionEnabled: false, arpInspectionVlans: undefined } };
 }
 
 /**

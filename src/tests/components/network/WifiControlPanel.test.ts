@@ -199,5 +199,49 @@ describe('WifiControlPanel', () => {
 
     expect(htmlDisabled).toContain('○ Devre Dışı');
   });
+
+  it('renders multi-SSID management section and default profiles', () => {
+    const html = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'MultiSsidWiFi',
+        security: 'wpa2',
+        password: 'password123',
+        channel: '2.4GHz',
+        mode: 'ap',
+        ssids: [
+          { id: 'ssid-1', name: 'Ana Ağ (Primary)', ssid: 'Primary_SSID', security: 'wpa2', password: 'pass1', band: 'both', enabled: true },
+          { id: 'ssid-2', name: 'Misafir Ağ (Guest)', ssid: 'Guest_SSID', security: 'open', band: '2.4GHz', enabled: true },
+        ],
+      },
+    }, 'tr');
+
+    expect(html).toContain('Çoklu SSID &amp; Misafir Ağ Profilleri');
+    expect(html).toContain('ssid-profiles-container');
+    expect(html).toContain('profile-ssid');
+    expect(html).toContain('profile-band');
+    expect(html).toContain('btn-save-ssid-profile');
+  });
+
+  it('renders connected wireless devices list container in status tab', () => {
+    const html = generateRouterAdminPage({
+      ...baseDevice,
+      wifi: {
+        enabled: true,
+        ssid: 'StatusTestWiFi',
+        security: 'wpa2',
+        password: 'password123',
+        channel: '5GHz',
+        mode: 'ap',
+      },
+    }, 'tr', undefined, [
+      { id: 'iot-1', name: 'Smart Plug 1', sensorType: 'light', connected: true, ip: '192.168.1.105' },
+    ]);
+
+    expect(html).toContain('Bağlı Kablosuz İstemciler Listesi');
+    expect(html).toContain('connected-wireless-clients-container');
+    expect(html).toContain('Smart Plug 1');
+  });
 });
 
