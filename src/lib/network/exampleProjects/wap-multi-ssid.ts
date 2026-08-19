@@ -149,6 +149,11 @@ const example = (isTr: boolean): ExampleProject => {
   iotDevice.gateway = '192.168.20.1';
   iotDevice.ports = [
     {
+      id: 'eth0',
+      label: 'Eth0',
+      status: 'disconnected' as const
+    },
+    {
       id: 'wlan0',
       label: 'WLAN0',
       status: 'connected',

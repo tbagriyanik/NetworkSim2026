@@ -302,6 +302,12 @@ export function useCanvasActions({
         type === 'pc' || type === 'iot'
           ? [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) },
+            ...(type === 'iot' ? [{
+              id: 'wlan0',
+              label: 'WLAN0',
+              status: 'disconnected' as const,
+              wifi: { ssid: '', security: 'open' as const, channel: '2.4GHz' as const, mode: 'client' as const },
+            }] : []),
             ...(type === 'pc' ? [{ id: 'com1', label: 'COM1', status: 'disconnected' as const }] : []),
           ]
           : type === 'switch'

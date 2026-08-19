@@ -831,7 +831,9 @@ export function DeviceRenderer({
             (isShutdown || isDeviceOffline) ? STATUS_COLORS.offline :
             port.id.toLowerCase().startsWith('com')
               ? (isConnected ? PORT_COLORS.console.connected : PORT_COLORS.console.disconnected)
-              : (isConnected ? PORT_COLORS.ethernet.connected : PORT_COLORS.ethernet.disconnected);
+              : device.type === 'iot'
+                ? PORT_COLORS.ethernet.connected
+                : (isConnected ? PORT_COLORS.ethernet.connected : PORT_COLORS.ethernet.disconnected);
 
           return (
             <g

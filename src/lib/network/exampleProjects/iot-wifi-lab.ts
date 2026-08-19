@@ -64,10 +64,8 @@ const example = (isTr: boolean): ExampleProject => {
   iotWifiDevices[2].ip = '0.0.0.0';
   iotWifiDevices[2].subnet = '255.255.255.0';
   iotWifiDevices[2].gateway = '192.168.1.1';
-  iotWifiDevices[2].ports[0].status = 'connected';
-  iotWifiDevices[2].ports[0].ipAddress = '0.0.0.0';
-  iotWifiDevices[2].ports[0].subnetMask = '255.255.255.0';
-  iotWifiDevices[2].ports[0].wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' };
+  const iot2Wifi = iotWifiDevices[2].ports.find(port => port.id === 'wlan0');
+  if (iot2Wifi) { iot2Wifi.status = 'connected'; iot2Wifi.ipAddress = '0.0.0.0'; iot2Wifi.subnetMask = '255.255.255.0'; iot2Wifi.wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' }; }
 
   iotWifiDevices[3].wifi = {
     enabled: true,
@@ -81,10 +79,8 @@ const example = (isTr: boolean): ExampleProject => {
   iotWifiDevices[3].ip = '0.0.0.0';
   iotWifiDevices[3].subnet = '255.255.255.0';
   iotWifiDevices[3].gateway = '192.168.1.1';
-  iotWifiDevices[3].ports[0].status = 'connected';
-  iotWifiDevices[3].ports[0].ipAddress = '0.0.0.0';
-  iotWifiDevices[3].ports[0].subnetMask = '255.255.255.0';
-  iotWifiDevices[3].ports[0].wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' };
+  const iot3Wifi = iotWifiDevices[3].ports.find(port => port.id === 'wlan0');
+  if (iot3Wifi) { iot3Wifi.status = 'connected'; iot3Wifi.ipAddress = '0.0.0.0'; iot3Wifi.subnetMask = '255.255.255.0'; iot3Wifi.wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' }; }
 
   iotWifiDevices[4].wifi = {
     enabled: true,
@@ -98,10 +94,8 @@ const example = (isTr: boolean): ExampleProject => {
   iotWifiDevices[4].ip = '0.0.0.0';
   iotWifiDevices[4].subnet = '255.255.255.0';
   iotWifiDevices[4].gateway = '192.168.1.1';
-  iotWifiDevices[4].ports[0].status = 'connected';
-  iotWifiDevices[4].ports[0].ipAddress = '0.0.0.0';
-  iotWifiDevices[4].ports[0].subnetMask = '255.255.255.0';
-  iotWifiDevices[4].ports[0].wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' };
+  const iot4Wifi = iotWifiDevices[4].ports.find(port => port.id === 'wlan0');
+  if (iot4Wifi) { iot4Wifi.status = 'connected'; iot4Wifi.ipAddress = '0.0.0.0'; iot4Wifi.subnetMask = '255.255.255.0'; iot4Wifi.wifi = { ssid: 'IoT-Network', security: 'open', channel: '2.4GHz', mode: 'client' }; }
 
   const iotWifiConnections: CanvasConnection[] = [];
   const iotWifiNotes: CanvasNote[] = [

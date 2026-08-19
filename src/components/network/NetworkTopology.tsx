@@ -1663,7 +1663,11 @@ export function NetworkTopology({
     if (!port) return;
 
     // Check if port is already connected
-    if (port.status === 'connected') {
+    const hasPersistedPortConnection = topologyConnections.some((connection) =>
+      (connection.sourceDeviceId === deviceId && connection.sourcePort === portId) ||
+      (connection.targetDeviceId === deviceId && connection.targetPort === portId)
+    );
+    if (port.status === 'connected' && hasPersistedPortConnection) {
       // Port is already in use - cannot connect
       if (isDrawingConnection) {
         setConnectionError(t.portInUse);
