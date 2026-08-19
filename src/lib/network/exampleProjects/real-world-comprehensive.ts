@@ -9,7 +9,7 @@ import {
   createSwitchDevice,
   createWlcDevice
 } from './helpers';
-import { createInitialState, createInitialWLCState } from '../initialState';
+import { createInitialRouterState, createInitialState, createInitialWLCState } from '../initialState';
 import type { CanvasConnection, CanvasDevice, CanvasNote } from '@/components/network/networkTopology.types';
 import type { ExampleProject } from './types';
 
@@ -62,6 +62,17 @@ const example = (isTr: boolean): ExampleProject => {
   connectPorts(devices, connections, 'floor-router', 'gi0/3', 'floor-router-pc-2', 'eth0', 'straight');
   connectPorts(devices, connections, 'floor-l3-switch', 'gi1/0/2', 'floor-l3-pc-1', 'eth0', 'straight');
   connectPorts(devices, connections, 'floor-l3-switch', 'gi1/0/3', 'floor-l3-pc-2', 'eth0', 'straight');
+  ['temperature-sensor', 'humidity-sensor', 'motion-sensor', 'smart-light'].forEach((iotId) => {
+    connections.push({
+      id: `wireless-${iotId}-wlc-hq`,
+      sourceDeviceId: iotId,
+      sourcePort: 'wlan0',
+      targetDeviceId: 'wireless-controller',
+      targetPort: 'wlan0',
+      cableType: 'wireless',
+      active: true
+    });
+  });
 
   const tempSensor = devices.find(d => d.id === 'temperature-sensor');
   if (tempSensor) {
@@ -77,6 +88,10 @@ const example = (isTr: boolean): ExampleProject => {
   });
   const wlc = devices.find(d => d.id === 'wireless-controller');
   if (wlc) {
+    // Use the IoT WLAN interface as the WLC's primary topology address so
+    // WLC-HQ and its wireless clients can communicate on 10.80.10.0/24.
+    wlc.ip = '10.80.10.1';
+    wlc.subnet = '255.255.255.0';
     wlc.wifi = { enabled: true, ssid: 'HQ-IoT', security: 'wpa2', password: 'IoT-Only-2026', channel: '2.4GHz', mode: 'ap' };
     const guestInterface = wlc.ports.find(port => port.id === 'gi0/1');
     if (guestInterface) {
@@ -90,6 +105,9 @@ const example = (isTr: boolean): ExampleProject => {
     const wlcRadio = wlc.ports.find(port => port.id === 'wlan0');
     if (wlcRadio) {
       wlcRadio.status = 'connected';
+      wlcRadio.ipAddress = '10.80.10.1';
+      wlcRadio.subnetMask = '255.255.255.0';
+      wlcRadio.vlan = 80;
       wlcRadio.wifi = { ssid: 'HQ-IoT', security: 'wpa2', password: 'IoT-Only-2026', channel: '2.4GHz', mode: 'ap' };
     }
   }
@@ -121,6 +139,20 @@ const example = (isTr: boolean): ExampleProject => {
   const core = devices.find(d => d.id === 'core-switch');
   const access = devices.find(d => d.id === 'access-switch');
   const floorCore = devices.find(d => d.id === 'floor-l3-switch');
+  const hqRouter = devices.find(d => d.id === 'hq-router');
+  const floorRouter = devices.find(d => d.id === 'floor-router');
+  if (hqRouter) {
+    hqRouter.ip = '10.70.10.1';
+    hqRouter.subnet = '255.255.255.0';
+  }
+  if (floorRouter) {
+    floorRouter.ip = '10.50.10.1';
+    floorRouter.subnet = '255.255.255.0';
+  }
+  if (core) {
+    core.ip = '10.40.40.1';
+    core.subnet = '255.255.255.0';
+  }
   const mark = (device: CanvasDevice | undefined, portId: string, values: Record<string, unknown>) => {
     if (!device) return;
     const port = device.ports.find(p => p.id === portId);
@@ -132,10 +164,15 @@ const example = (isTr: boolean): ExampleProject => {
   mark(access, 'gi0/1', { mode: 'trunk', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp', allowedVlans: [10, 20, 30, 40], nativeVlan: 99, spanningTree: { role: 'root', state: 'forwarding' } });
   mark(core, 'gi1/0/6', { mode: 'trunk', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp', allowedVlans: [10, 20, 30, 40] });
   mark(core, 'gi1/0/7', { mode: 'trunk', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp', allowedVlans: [10, 20, 30, 40] });
+  mark(core, 'gi1/0/4', { mode: 'access', accessVlan: 40, vlan: 40 });
+  mark(core, 'gi1/0/5', { mode: 'access', accessVlan: 40, vlan: 40 });
   mark(access, 'gi0/2', { mode: 'trunk', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp', allowedVlans: [10, 20, 30, 40] });
   mark(access, 'fa0/1', { mode: 'access', accessVlan: 10, vlan: 10, portSecurity: { enabled: true, maxAddresses: 2, violationAction: 'restrict', sticky: true } });
+  mark(access, 'fa0/2', { mode: 'access', accessVlan: 20, vlan: 20 });
   mark(access, 'fa0/3', { mode: 'access', accessVlan: 10, vlan: 10 });
   mark(floorCore, 'gi1/0/1', { mode: 'routed', ipAddress: '10.50.0.2', subnetMask: '255.255.255.252', ipv6Address: '2001:db8:50::2', ipv6Prefix: 64 });
+  mark(floorCore, 'gi1/0/2', { mode: 'access', accessVlan: 60, vlan: 60 });
+  mark(floorCore, 'gi1/0/3', { mode: 'access', accessVlan: 60, vlan: 60 });
   mark(floorCore, 'gi1/0/4', { mode: 'trunk', allowedVlans: [50, 60, 80], nativeVlan: 99 });
   const notes: CanvasNote[] = [
     { id: 'architecture-note', text: isTr ? 'Kapsamlı Proje: Merkez ofis ağı\n\nR-HQ: İnternet/ISP sınırı\nFW-EDGE: Güvenlik duvarı\nSW-CORE: VLAN yönlendirme\nSW-ACCESS: Kullanıcı ve sunucu erişimi\nWLC: Kablosuz ağ yönetimi' : 'COMPREHENSIVE PROJECT: Headquarters network\n\nR-HQ: Internet/ISP boundary\nFW-EDGE: Security perimeter\nSW-CORE: VLAN routing\nSW-ACCESS: User and server access\nWLC: Wireless management', x: 400, y: 80, width: 370, height: 220, color: 'var(--color-primary-500)', font: 'verdana', fontSize: 16, opacity: 0.75, bold: true },
@@ -144,6 +181,49 @@ const example = (isTr: boolean): ExampleProject => {
     ,{ id: 'services-note', text: isTr ? 'İLERİ DÜZEY LAB\n\nSunucu: DNS + DHCP + HTTP + FTP + MAIL\nYönetim: SSH (22) güvenli, TELNET (23) yalnızca lab/test\n\nSW-CORE: L3 SVI routing + IPv6\nSW-CORE ↔ SW-ACCESS: 802.1Q trunk, VTP domain HQ-LAB\nSTP: root SW-CORE\nPort-channel: Gi1/0/6-7 (LACP)\nGüvenlik: enable secret, console/vty parola, port-security.' : 'ADVANCED LAB\n\nServer: DNS + DHCP + HTTP + FTP + MAIL\nManagement: SSH (22) secure, TELNET (23) lab/test only\n\nSW-CORE: L3 SVI routing + IPv6\nSW-CORE ↔ SW-ACCESS: 802.1Q trunk, VTP domain HQ-LAB\nSTP: SW-CORE is root\nPort-channel: Gi1/0/6-7 (LACP)\nSecurity: enable secret, console/vty password, port-security.', x: 50, y: 300, width: 540, height: 250, color: 'var(--color-error-500)', font: 'verdana', fontSize: 12, opacity: 0.75 },
     { id: 'iot-ip-note', text: isTr ? 'WLC + IoT BAĞLANTISI\n\nWLC SSID: HQ-IoT\nGüvenlik: WPA2 / IoT-Only-2026\nAğ: 10.80.10.0/24\nAğ geçidi: 10.80.10.1\n\nIoT-TEMP      10.80.10.10\nIoT-HUMIDITY  10.80.10.11\nIoT-MOTION    10.80.10.12\nIoT-LIGHT     10.80.10.13\n\nIoT cihazları kablosuz olarak WLC’nin HQ-IoT WLAN’ına katılır. WLC, SSID ve erişim politikasını merkezi olarak yönetir.' : 'WLC + IoT CONNECTION\n\nWLC SSID: HQ-IoT\nSecurity: WPA2 / IoT-Only-2026\nNetwork: 10.80.10.0/24\nGateway: 10.80.10.1\n\nIoT-TEMP      10.80.10.10\nIoT-HUMIDITY  10.80.10.11\nIoT-MOTION    10.80.10.12\nIoT-LIGHT     10.80.10.13\n\nIoT devices join the WLC HQ-IoT WLAN wirelessly. The WLC centrally manages the SSID and access policy.', x: 1450, y: 1680, width: 600, height: 260, color: 'var(--color-success-500)', font: 'verdana', fontSize: 12, opacity: 0.75 }
   ];
+  const floorState = createInitialState('00:50:00:00:60:02', 'WS-C3650-24PS');
+  floorState.hostname = 'SW-FLOOR-2';
+  floorState.switchModel = 'WS-C3650-24PS';
+  floorState.switchLayer = 'L3';
+  floorState.ipRouting = true;
+  floorState.vlans[60] = { id: 60, name: 'FLOOR-USERS', status: 'active', ports: ['gi1/0/2', 'gi1/0/3'] };
+  floorState.ports['vlan60'] = {
+    id: 'vlan60', name: 'VLAN60', status: 'connected', vlan: 60, mode: 'access',
+    duplex: 'auto', speed: 'auto', shutdown: false, type: 'vlan',
+    ipAddress: '10.60.10.1', subnetMask: '255.255.255.0'
+  };
+  floorState.ports['gi1/0/1'] = { ...floorState.ports['gi1/0/1'], status: 'connected', mode: 'routed', ipAddress: '10.50.0.2', subnetMask: '255.255.255.252', shutdown: false };
+  floorState.ports['gi1/0/2'] = { ...floorState.ports['gi1/0/2'], status: 'connected', vlan: 60, accessVlan: 60, mode: 'access', shutdown: false };
+  floorState.ports['gi1/0/3'] = { ...floorState.ports['gi1/0/3'], status: 'connected', vlan: 60, accessVlan: 60, mode: 'access', shutdown: false };
+
+  const coreState = createInitialState('00:50:00:00:40:02', 'WS-C3650-24PS');
+  coreState.hostname = 'SW-CORE';
+  coreState.switchModel = 'WS-C3650-24PS';
+  coreState.switchLayer = 'L3';
+  coreState.ipRouting = true;
+  [10, 20, 40].forEach((vlan) => {
+    coreState.vlans[vlan] = { id: vlan, name: `VLAN-${vlan}`, status: 'active', ports: [] };
+    coreState.ports[`vlan${vlan}`] = {
+      id: `vlan${vlan}`, name: `VLAN${vlan}`, status: 'connected', vlan, mode: 'access',
+      duplex: 'auto', speed: 'auto', shutdown: false, type: 'vlan',
+      ipAddress: ({ 10: '10.10.10.1', 20: '10.10.20.1', 30: '10.30.30.1', 40: '10.40.40.1' } as Record<number, string>)[vlan], subnetMask: '255.255.255.0'
+    };
+  });
+  coreState.ports['gi1/0/4'] = { ...coreState.ports['gi1/0/4'], status: 'connected', vlan: 40, accessVlan: 40, mode: 'access', shutdown: false };
+  coreState.ports['gi1/0/5'] = { ...coreState.ports['gi1/0/5'], status: 'connected', vlan: 40, accessVlan: 40, mode: 'access', shutdown: false };
+  coreState.ports['gi1/0/6'] = { ...coreState.ports['gi1/0/6'], status: 'connected', mode: 'trunk', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp', allowedVlans: [10, 20, 30, 40], shutdown: false };
+  coreState.ports['gi1/0/7'] = { ...coreState.ports['gi1/0/7'], status: 'connected', mode: 'trunk', channelGroup: 1, channelMode: 'active', channelProtocol: 'lacp', allowedVlans: [10, 20, 30, 40], shutdown: false };
+
+  const hqRouterState = createInitialRouterState('00:50:00:00:70:01');
+  hqRouterState.hostname = 'R-HQ';
+  hqRouterState.ports['gi0/2'] = { ...hqRouterState.ports['gi0/2'], status: 'connected', ipAddress: '10.70.10.1', subnetMask: '255.255.255.0', shutdown: false };
+  hqRouterState.ports['gi0/3'] = { ...hqRouterState.ports['gi0/3'], status: 'connected', ipAddress: '10.70.10.254', subnetMask: '255.255.255.0', shutdown: false };
+
+  const floorRouterState = createInitialRouterState('00:50:00:00:50:01');
+  floorRouterState.hostname = 'R-FLOOR-2';
+  floorRouterState.ports['gi0/2'] = { ...floorRouterState.ports['gi0/2'], status: 'connected', ipAddress: '10.50.10.1', subnetMask: '255.255.255.0', shutdown: false };
+  floorRouterState.ports['gi0/3'] = { ...floorRouterState.ports['gi0/3'], status: 'connected', ipAddress: '10.50.10.254', subnetMask: '255.255.255.0', shutdown: false };
+
   const accessState = createInitialState('00:50:00:00:10:02', 'WS-C2960-24TT-L');
   accessState.hostname = 'SW-ACCESS';
   accessState.switchModel = 'WS-C2960-24TT-L';
@@ -164,8 +244,9 @@ const example = (isTr: boolean): ExampleProject => {
   wlcState.hostname = 'WLC-HQ';
   wlcState.ports['gi0/0'] = { ...wlcState.ports['gi0/0'], status: 'connected', ipAddress: '10.20.20.2', subnetMask: '255.255.255.0', shutdown: false };
   wlcState.ports['gi0/1'] = { ...wlcState.ports['gi0/1'], status: 'connected', ipAddress: '10.30.30.1', subnetMask: '255.255.255.0', shutdown: false, vlan: 30 };
+  wlcState.ports['wlan0'] = { ...wlcState.ports['wlan0'], status: 'connected', ipAddress: '10.80.10.1', subnetMask: '255.255.255.0', shutdown: false, vlan: 80, mode: 'routed' };
   wlcState.wlcWlans = { '10': { id: 10, name: 'HQ-IoT-WLAN', ssid: 'HQ-IoT', status: 'enabled', security: 'wpa2', vlan: 80 } };
-  return { id: 'real-world-comprehensive', tag: isTr ? 'KAPSAMLI' : 'COMPREHENSIVE', title: isTr ? 'Kapsamlı Proje: Ofis Ağı' : 'Comprehensive Project: Office Network', description: isTr ? 'Tüm cihaz tiplerini, güvenlik duvarını, VLAN’ları, kablolu ve kablosuz istemcileri içeren okunabilir kampüs/ofis ağı.' : 'Readable office network containing every device type, firewall, VLANs, wired and wireless clients.', detail: isTr ? 'R-HQ → FW-EDGE → SW-CORE → SW-ACCESS/WLC; VLAN 10/20/30 ve IoT.' : 'R-HQ → FW-EDGE → SW-CORE → SW-ACCESS/WLC; VLAN 10/20/30 and IoT.', level: 'advanced', data: baseProjectData(devices, connections, notes.filter(note => note.id !== 'selection-note'), [{ id: 'access-switch', state: accessState }, { id: 'wireless-controller', state: wlcState }]) };
+  return { id: 'real-world-comprehensive', tag: isTr ? 'KAPSAMLI' : 'COMPREHENSIVE', title: isTr ? 'Kapsamlı Proje: Ofis Ağı' : 'Comprehensive Project: Office Network', description: isTr ? 'Tüm cihaz tiplerini, güvenlik duvarını, VLAN’ları, kablolu ve kablosuz istemcileri içeren okunabilir kampüs/ofis ağı.' : 'Readable office network containing every device type, firewall, VLANs, wired and wireless clients.', detail: isTr ? 'R-HQ → FW-EDGE → SW-CORE → SW-ACCESS/WLC; VLAN 10/20/30 ve IoT.' : 'R-HQ → FW-EDGE → SW-CORE → SW-ACCESS/WLC; VLAN 10/20/30 and IoT.', level: 'advanced', data: baseProjectData(devices, connections, notes.filter(note => note.id !== 'selection-note'), [{ id: 'hq-router', state: hqRouterState }, { id: 'floor-router', state: floorRouterState }, { id: 'access-switch', state: accessState }, { id: 'core-switch', state: coreState }, { id: 'floor-l3-switch', state: floorState }, { id: 'wireless-controller', state: wlcState }]) };
 };
 
 export default example;
