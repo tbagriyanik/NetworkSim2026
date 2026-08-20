@@ -156,6 +156,54 @@ export function cmdInterface(state: SwitchState, input: string, _ctx: CommandCon
     };
   }
 
+  // Dot11Radio interface (Dot11Radio 0, Dot11Radio 1, dot11radio 0, etc.)
+  const dot11Match = interfaceName.match(/^(?:dot11radio)\s*(\d+)$/i);
+  if (dot11Match) {
+    const radioId = dot11Match[1];
+    const normalizedRadio = `dot11radio${radioId}`;
+    const newPorts = { ...state.ports };
+    if (!newPorts[normalizedRadio]) {
+      newPorts[normalizedRadio] = {
+        id: normalizedRadio,
+        name: `Dot11Radio${radioId}`,
+        type: 'gigabitethernet',
+        vlan: 1,
+        status: 'connected',
+        shutdown: false,
+        mode: 'routed',
+        duplex: 'auto',
+        speed: 'auto',
+        isWirelessPort: true
+      } as Port;
+    }
+
+    const newWirelessRadios = { ...(state.wirelessRadios || {}) };
+    if (!newWirelessRadios[radioId]) {
+      newWirelessRadios[radioId] = {
+        id: radioId,
+        frequency: radioId === '0' ? '2.4GHz' : '5GHz',
+        channel: radioId === '0' ? 6 : 36,
+        power: 'full',
+        ssid: '',
+        encryption: 'none',
+        stationRole: 'root' as const,
+        shutdown: false,
+      };
+    }
+
+    return {
+      success: true,
+      newState: {
+        currentMode: 'dot11-config',
+        currentInterface: normalizedRadio,
+        currentRadio: radioId,
+        selectedInterfaces: [normalizedRadio],
+        ports: newPorts,
+        wirelessRadios: newWirelessRadios
+      }
+    };
+  }
+
   // Validate interface exists or create subinterface
   const normalized = normalizePortId(interfaceName) || interfaceName.toLowerCase();
 

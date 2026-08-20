@@ -76,8 +76,8 @@ export const cliGuidedLessons: GuidedStep[] = [
     id: 'cli-lesson-2-1b',
     order: 7,
     title: { tr: 'Banner Ayarla', en: 'Set Banner' },
-    description: { tr: 'Banner komutunu kullanın', en: 'Use banner command' },
-    hint: { tr: 'switch-1: banner motd yazın', en: 'switch-1: Type banner motd' },
+    description: { tr: 'Giriş karşılama mesajı (MOTD) tanımlayın', en: 'Set a message of the day (MOTD) banner' },
+    hint: { tr: 'switch-1: banner motd #Welcome# yazın', en: 'switch-1: Type banner motd #Welcome#' },
     checkType: 'command',
     checkParams: { commandPattern: 'banner motd' },
     completed: false,
@@ -195,21 +195,10 @@ export const cliGuidedLessons: GuidedStep[] = [
     completed: false,
     points: 10
   },
-  {
-    id: 'cli-lesson-3-2',
-    order: 18,
-    title: { tr: 'Arayüz Aralığı', en: 'Interface Range' },
-    description: { tr: 'Birden fazla arayüzü aynı anda seçin', en: 'Select multiple interfaces at once' },
-    hint: { tr: 'switch-1: interface range gi1/0/1 - 5 yazın', en: 'switch-1: Type interface range gi1/0/1 - 5' },
-    checkType: 'command',
-    checkParams: { commandPattern: 'interface range' },
-    completed: false,
-    points: 15
-  },
   // Bölüm 4: VLAN Yönetimi (Switch)
   {
     id: 'cli-lesson-4-1a',
-    order: 19,
+    order: 18,
     sectionTitle: { tr: 'Bölüm 4: VLAN Yönetimi (Switch)', en: 'Section 4: VLAN Management (Switch)' },
     title: { tr: 'VLAN Oluştur', en: 'Create VLAN' },
     description: { tr: 'VLAN 10 oluşturun', en: 'Create VLAN 10' },
@@ -221,7 +210,7 @@ export const cliGuidedLessons: GuidedStep[] = [
   },
   {
     id: 'cli-lesson-4-1b',
-    order: 20,
+    order: 19,
     title: { tr: 'VLAN İsimlendir', en: 'Name VLAN' },
     description: { tr: 'VLAN\'a SALES ismini verin', en: 'Give the VLAN the name SALES' },
     hint: { tr: 'switch-1: name SALES yazın', en: 'switch-1: Type name SALES' },
@@ -229,6 +218,17 @@ export const cliGuidedLessons: GuidedStep[] = [
     checkParams: { commandPattern: 'name SALES' },
     completed: false,
     points: 10
+  },
+  {
+    id: 'cli-lesson-3-2',
+    order: 20,
+    title: { tr: 'Arayüz Aralığı', en: 'Interface Range' },
+    description: { tr: 'Birden fazla arayüzü aynı anda seçin', en: 'Select multiple interfaces at once' },
+    hint: { tr: 'switch-1: interface range gi1/0/1 - 5 yazın', en: 'switch-1: Type interface range gi1/0/1 - 5' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'interface range' },
+    completed: false,
+    points: 15
   },
   {
     id: 'cli-lesson-4-2',
@@ -242,8 +242,19 @@ export const cliGuidedLessons: GuidedStep[] = [
     points: 15
   },
   {
-    id: 'cli-lesson-4-3',
+    id: 'cli-lesson-4-2b',
     order: 22,
+    title: { tr: 'Trunk Kapsülleme', en: 'Trunk Encapsulation' },
+    description: { tr: 'gi1/0/24 için Trunk kapsülleme protokolünü 802.1Q olarak ayarlayın', en: 'Set trunk encapsulation to 802.1Q for gi1/0/24' },
+    hint: { tr: 'switch-1: switchport trunk encapsulation dot1q yazın', en: 'switch-1: Type switchport trunk encapsulation dot1q' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'switchport trunk encapsulation' },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'cli-lesson-4-3',
+    order: 23,
     title: { tr: 'Trunk Portu', en: 'Trunk Port' },
     description: { tr: 'gi1/0/24 için Trunk portu yapılandırın', en: 'Configure trunk port for gi1/0/24' },
     hint: { tr: 'switch-1: switchport mode trunk yazın', en: 'switch-1: Type switchport mode trunk' },
@@ -254,7 +265,7 @@ export const cliGuidedLessons: GuidedStep[] = [
   },
   {
     id: 'cli-lesson-4-4',
-    order: 23,
+    order: 24,
     title: { tr: 'Trunk İzinli VLAN', en: 'Trunk Allowed VLAN' },
     description: { tr: 'Trunk üzerinde izinli VLAN\'ları belirleyin', en: 'Set allowed VLANs on trunk' },
     hint: { tr: 'switch-1: switchport trunk allowed vlan 10,20 yazın', en: 'switch-1: Type switchport trunk allowed vlan 10,20' },
@@ -265,7 +276,7 @@ export const cliGuidedLessons: GuidedStep[] = [
   },
   {
     id: 'cli-lesson-4-5',
-    order: 24,
+    order: 25,
     title: { tr: 'Native VLAN', en: 'Native VLAN' },
     description: { tr: 'Trunk için native VLAN ayarlayın', en: 'Set native VLAN for trunk' },
     hint: { tr: 'switch-1: switchport trunk native vlan 99 yazın', en: 'switch-1: Type switchport trunk native vlan 99' },

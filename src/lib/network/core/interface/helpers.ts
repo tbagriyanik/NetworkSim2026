@@ -3,7 +3,7 @@ import type { SwitchState, Port, CommandResult } from '../../types';
 
 // Helper function to check if in interface mode (single or range)
 export function isInInterfaceMode(state: SwitchState): boolean {
-  return state.currentMode === 'interface' || state.currentMode === 'config-if-range';
+  return state.currentMode === 'interface' || state.currentMode === 'config-if-range' || state.currentMode === 'dot11-config';
 }
 
 export function isVlanInterfaceName(interfaceName: string | undefined): boolean {

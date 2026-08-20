@@ -108,6 +108,8 @@ export function GuidedModePanel({
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [usedShowMeStepIds, setUsedShowMeStepIds] = React.useState<Set<string>>(new Set());
+
   // Save hint state to localStorage when it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -736,26 +738,47 @@ export function GuidedModePanel({
                     <Lightbulb className="w-3 h-3 inline mr-1" />
                     {currentStep.hint[language]}
                   </div>
-                  {(currentStep.checkType === 'command' || currentStep.checkType === 'ping') && (
-                    <button
-                      onClick={() => {
-                        window.dispatchEvent(new CustomEvent('request-show-me', {
-                          detail: {
-                            stepId: currentStep.id,
-                            checkType: currentStep.checkType,
-                            commandPattern: currentStep.checkParams?.commandPattern,
-                            toIp: currentStep.checkParams?.toIp,
-                            targetDeviceId: currentStep.checkParams?.targetDeviceId || currentStep.checkParams?.fromDevice,
-                            hintCommand: currentStep.hint.en || currentStep.hint.tr
-                          }
-                        }));
-                      }}
-                      className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-warning-500 hover:bg-warning-600 text-white rounded-md font-bold transition-all shadow-sm w-full mt-1"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      {language === 'tr' ? 'Bana Göster' : 'Show Me'}
-                    </button>
-                  )}
+                  {(currentStep.checkType === 'command' || currentStep.checkType === 'ping') && (() => {
+                    const isUsed = usedShowMeStepIds.has(currentStep.id);
+                    return (
+                      <button
+                        disabled={isUsed}
+                        onClick={() => {
+                          if (isUsed) return;
+                          setUsedShowMeStepIds(prev => new Set(prev).add(currentStep.id));
+                          // Auto-release after 2.5s to allow re-trying if command failed with error
+                          setTimeout(() => {
+                            setUsedShowMeStepIds(prev => {
+                              const next = new Set(prev);
+                              next.delete(currentStep.id);
+                              return next;
+                            });
+                          }, 2500);
+                          window.dispatchEvent(new CustomEvent('request-show-me', {
+                            detail: {
+                              stepId: currentStep.id,
+                              checkType: currentStep.checkType,
+                              commandPattern: currentStep.checkParams?.commandPattern,
+                              toIp: currentStep.checkParams?.toIp,
+                              targetDeviceId: currentStep.checkParams?.targetDeviceId || currentStep.checkParams?.fromDevice,
+                              hintCommand: currentStep.hint.en || currentStep.hint.tr
+                            }
+                          }));
+                        }}
+                        className={cn(
+                          "flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md font-bold transition-all shadow-sm w-full mt-1",
+                          isUsed
+                            ? "bg-secondary-300 dark:bg-secondary-700 text-secondary-500 dark:text-secondary-400 cursor-not-allowed opacity-60"
+                            : "bg-warning-500 hover:bg-warning-600 text-white"
+                        )}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        {isUsed
+                          ? (language === 'tr' ? 'Gösterildi' : 'Shown')
+                          : (language === 'tr' ? 'Bana Göster' : 'Show Me')}
+                      </button>
+                    );
+                  })()}
                 </div>
               </CollapsibleContent>
             </Collapsible>

@@ -65,13 +65,13 @@ export const interfacePatterns: Record<string, CommandPattern> = {
   },
   'no shutdown': {
     pattern: /^no\s+shutdown$/i,
-    modes: ['interface', 'config-if-range'],
+    modes: ['interface', 'config-if-range', 'dot11-config'],
     minArgs: 0,
     maxArgs: 0
   },
   'shutdown': {
     pattern: /^shutdown$/i,
-    modes: ['interface', 'config-if-range'],
+    modes: ['interface', 'config-if-range', 'dot11-config'],
     minArgs: 0,
     maxArgs: 0
   },

@@ -120,14 +120,10 @@ export function usePageGlobalEvents({
         }
       }
 
-      // Clean command prefixes from prompts or instructional hints.
-      if (cleanCommand.includes('>')) {
-        cleanCommand = cleanCommand.split('>').pop() || '';
-      } else if (cleanCommand.includes('#')) {
-        cleanCommand = cleanCommand.split('#').pop() || '';
-      }
+      // Clean device prefixes (e.g. "switch-1: ...") and prompt prefixes (e.g. "Switch# ", "Switch(config)# ", "Switch> ")
       cleanCommand = cleanCommand
         .replace(/^[^:]{1,40}:\s*/i, '')
+        .replace(/^[a-zA-Z0-9_-]+(\([^)]+\))?[>#]\s*/, '')
         .replace(/^type\s+/i, '')
         .replace(/\s+(yazın|yazin)\.?$/i, '')
         .replace(/\s+(and press enter|press enter)\.?$/i, '');

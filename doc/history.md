@@ -2,6 +2,12 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v2.6.0 — 2026-08-20
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-20 | **Sürüm Yükseltmesi (v2.6.0)** — Uygulama versiyonu v2.6.0 olarak güncellendi, derleme ve test doğrulamaları yapıldı. |
+
 ---
 
 ## v2.5.0 — 2026-08-19

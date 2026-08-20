@@ -589,18 +589,22 @@ export const checkStepCompletion = (
 
       // Do NOT complete step if command execution resulted in an error output
       if (context.lastOutput) {
-        const out = context.lastOutput.toLowerCase();
+        const out = context.lastOutput.toLowerCase().trim();
+        // Specifically catch CLI errors while allowing Cisco syslogs (%LINK-3-UPDOWN, %LINEPROTO-5-UPDOWN, %SYS-5-CONFIG_I)
         if (
+          out.includes('% invalid') ||
+          out.includes('% ambiguous') ||
+          out.includes('% incomplete') ||
+          out.includes('% unknown') ||
+          out.includes('% bad') ||
+          out.includes('% error') ||
           out.includes('invalid input') ||
           out.includes('ambiguous command') ||
           out.includes('incomplete command') ||
           out.includes('unknown command') ||
           out.includes('not supported') ||
-          out.includes('bad ip') ||
           out.includes('tahmini öneriler') ||
-          out.includes('did you mean') ||
-          out.includes('% error') ||
-          out.includes('% invalid')
+          out.includes('did you mean')
         ) {
           return false;
         }

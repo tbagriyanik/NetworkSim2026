@@ -281,6 +281,36 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
     };
   }
 
+  // Support CLI-configured Dot11Radio / Wireless config on Router / Switch devices
+  if (state?.wirelessRadios && Object.keys(state.wirelessRadios).length > 0) {
+    const radio = Object.values(state.wirelessRadios).find(r => !r.shutdown && r.ssid) || Object.values(state.wirelessRadios)[0];
+    if (radio && radio.ssid) {
+      const config = state.wirelessConfig?.[radio.ssid];
+      return {
+        enabled: !radio.shutdown,
+        ssid: radio.ssid,
+        password: config?.presharedKey,
+        security: normalizeSecurity(config?.authentication || radio.encryption),
+        channel: normalizeChannel(radio.channel),
+        mode: defaultMode,
+      };
+    }
+  }
+
+  if (state?.wirelessConfig && Object.keys(state.wirelessConfig).length > 0) {
+    const firstConfig = Object.values(state.wirelessConfig)[0];
+    if (firstConfig && firstConfig.name) {
+      return {
+        enabled: true,
+        ssid: firstConfig.name,
+        password: firstConfig.presharedKey,
+        security: normalizeSecurity(firstConfig.authentication),
+        channel: '2.4GHz',
+        mode: defaultMode,
+      };
+    }
+  }
+
   return undefined;
 }
 
@@ -382,25 +412,26 @@ export function getApActiveSsids(
   apWifi: DeviceWifiConfig | undefined,
   state?: SwitchState
 ): Array<{ ssid: string; security: string; password?: string }> {
-  if (!apWifi || !apWifi.enabled) return [];
   const list: Array<{ ssid: string; security: string; password?: string }> = [];
 
-  if (apWifi.ssid) {
-    list.push({
-      ssid: apWifi.ssid,
-      security: apWifi.security || 'open',
-      password: apWifi.password,
-    });
-  }
+  if (apWifi && apWifi.enabled) {
+    if (apWifi.ssid) {
+      list.push({
+        ssid: apWifi.ssid,
+        security: apWifi.security || 'open',
+        password: apWifi.password,
+      });
+    }
 
-  if (Array.isArray(apWifi.ssids)) {
-    for (const item of apWifi.ssids) {
-      if (item.enabled && item.ssid) {
-        list.push({
-          ssid: item.ssid,
-          security: item.security || 'open',
-          password: item.password,
-        });
+    if (Array.isArray(apWifi.ssids)) {
+      for (const item of apWifi.ssids) {
+        if (item.enabled && item.ssid) {
+          list.push({
+            ssid: item.ssid,
+            security: item.security || 'open',
+            password: item.password,
+          });
+        }
       }
     }
   }
@@ -417,7 +448,38 @@ export function getApActiveSsids(
     }
   }
 
-  return list;
+  if (state?.wirelessRadios) {
+    for (const radio of Object.values(state.wirelessRadios)) {
+      if (!radio.shutdown && radio.ssid) {
+        const config = state.wirelessConfig?.[radio.ssid];
+        list.push({
+          ssid: radio.ssid,
+          security: config?.authentication || radio.encryption || 'open',
+          password: config?.presharedKey,
+        });
+      }
+    }
+  }
+
+  if (state?.wirelessConfig) {
+    for (const config of Object.values(state.wirelessConfig)) {
+      if (config.name) {
+        list.push({
+          ssid: config.name,
+          security: config.authentication || 'open',
+          password: config.presharedKey,
+        });
+      }
+    }
+  }
+
+  const seen = new Set<string>();
+  return list.filter(item => {
+    const key = item.ssid.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function buildImplicitWirelessConnections(

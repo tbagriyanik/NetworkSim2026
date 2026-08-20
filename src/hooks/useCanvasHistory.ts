@@ -71,17 +71,38 @@ export function useCanvasHistory({
     }, [latestDevicesRef, latestConnectionsRef, latestNotesRef, maxHistory]);
 
     const handleUndo = useCallback(() => {
-        if (historyIndexRef.current > 0) {
-            historyIndexRef.current -= 1;
-            const state = historyRef.current[historyIndexRef.current];
-            if (state) {
-                setDevices(structuredClone(state.devices));
-                setConnections(structuredClone(state.connections));
-                setNotes(structuredClone(state.notes));
-                setHistoryIndex(historyIndexRef.current);
+        if (historyIndexRef.current >= 0) {
+            // If at the tip of history, capture current live state first so the latest state is not lost for Redo
+            if (historyIndexRef.current === historyRef.current.length - 1) {
+                const currentSnapshot: HistorySnapshot = {
+                    devices: structuredClone(latestDevicesRef.current),
+                    connections: structuredClone(latestConnectionsRef.current),
+                    notes: structuredClone(latestNotesRef.current),
+                };
+                const last = historyRef.current[historyRef.current.length - 1];
+                if (
+                    !last ||
+                    JSON.stringify(last.devices) !== JSON.stringify(currentSnapshot.devices) ||
+                    JSON.stringify(last.connections) !== JSON.stringify(currentSnapshot.connections) ||
+                    JSON.stringify(last.notes) !== JSON.stringify(currentSnapshot.notes)
+                ) {
+                    historyRef.current.push(currentSnapshot);
+                    setHistoryLength(historyRef.current.length);
+                }
+            }
+
+            if (historyIndexRef.current > 0) {
+                historyIndexRef.current -= 1;
+                const state = historyRef.current[historyIndexRef.current];
+                if (state) {
+                    setDevices(structuredClone(state.devices));
+                    setConnections(structuredClone(state.connections));
+                    setNotes(structuredClone(state.notes));
+                    setHistoryIndex(historyIndexRef.current);
+                }
             }
         }
-    }, [setDevices, setConnections, setNotes]);
+    }, [setDevices, setConnections, setNotes, latestDevicesRef, latestConnectionsRef, latestNotesRef]);
 
     const handleRedo = useCallback(() => {
         if (historyIndexRef.current < historyRef.current.length - 1) {

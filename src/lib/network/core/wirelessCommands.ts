@@ -251,11 +251,21 @@ const cmdSsidBinding: CommandHandler = (state, input, _ctx) => {
 
     const ssidName = match[1];
 
-    // Check if SSID exists
-    if (!state.wirelessConfig || !state.wirelessConfig[ssidName]) {
-        return {
-            success: false,
-            error: `Error: SSID '${ssidName}' is not defined`,
+    // Initialize wirelessConfig if not exists
+    if (!state.wirelessConfig) {
+        state.wirelessConfig = {};
+    }
+
+    // Auto-create SSID configuration if not pre-defined globally
+    if (!state.wirelessConfig[ssidName]) {
+        state.wirelessConfig[ssidName] = {
+            name: ssidName,
+            authentication: 'open',
+            keyManagement: 'none',
+            wpaVersion: 2,
+            presharedKey: '',
+            encryption: 'none',
+            guestMode: false,
         };
     }
 

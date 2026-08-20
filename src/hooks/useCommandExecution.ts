@@ -69,7 +69,9 @@ export function useCommandExecution({
       topologyConnections
     ) as CommandResult;
 
-    const currentOutput = (result && typeof result === 'object' && 'output' in result) ? String(result.output) : '';
+    const currentOutput = (result && typeof result === 'object')
+      ? String(result.output || result.error || '')
+      : '';
 
     setLastCommand(command);
     setLastOutput(currentOutput);
@@ -124,7 +126,9 @@ export function useCommandExecution({
       topologyConnections
     ) as CommandResult;
 
-    const currentOutput = (result && typeof result === 'object' && 'output' in result) ? String(result.output) : '';
+    const currentOutput = (result && typeof result === 'object')
+      ? String(result.output || result.error || '')
+      : '';
 
     setLastCommand(command);
     setLastOutput(currentOutput);
