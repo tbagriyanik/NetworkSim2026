@@ -1,7 +1,10 @@
 # Network Simulator
 
 ![Version](https://img.shields.io/badge/version-2.6.0-blue)
-![Stack](https://img.shields.io/badge/stack-Next.js%2016.2.4%20|%20React%2019.2.5%20|%20TypeScript%206.0.3%20|%20Tailwind%204.2.2-green)
+![Next.js](https://img.shields.io/badge/Next.js-16.2.4-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19.2.5-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?logo=typescript&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.2.2-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
