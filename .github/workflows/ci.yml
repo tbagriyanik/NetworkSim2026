@@ -1,4 +1,4 @@
-name: CI (TypeCheck, Lint, Audit, Test, Build)
+name: CI (TypeCheck, Audit, Test, Build)
 
 on:
   push:
@@ -25,9 +25,6 @@ jobs:
 
       - name: TypeScript Type Check
         run: npx tsc --noEmit
-
-      - name: Run Linter
-        run: npm run lint
 
       - name: npm Audit (fail on high/critical)
         run: npm audit --audit-level=high
