@@ -186,9 +186,21 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
         handleDeviceDoubleClick(device);
       }}
       onMouseLeave={handleDeviceMouseLeave}
-      onTouchStart={(e) => handleDeviceTouchStart(e, device.id)}
-      onTouchMove={handleDeviceTouchMove}
-      onTouchEnd={handleDeviceTouchEnd}
+      // Modern mobile browsers dispatch both pointer and touch events. The
+      // pointer path owns dragging there; running the legacy touch path too
+      // races its refs/state and makes a drag intermittently stop.
+      onTouchStart={(e) => {
+        if (typeof window !== 'undefined' && 'PointerEvent' in window) return;
+        handleDeviceTouchStart(e, device.id);
+      }}
+      onTouchMove={(e) => {
+        if (typeof window !== 'undefined' && 'PointerEvent' in window) return;
+        handleDeviceTouchMove(e);
+      }}
+      onTouchEnd={(e) => {
+        if (typeof window !== 'undefined' && 'PointerEvent' in window) return;
+        handleDeviceTouchEnd(e);
+      }}
     >
       {/* Selection glow effect */}
       {isSelected && (
