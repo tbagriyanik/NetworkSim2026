@@ -3,7 +3,7 @@
 ![Version](https://img.shields.io/badge/version-2.6.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.1-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?logo=typescript&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-126,378-lightgrey)
@@ -182,7 +182,7 @@ src/
 
 ## Tech Stack / Teknoloji
 
-Next.js 16.2, React 19, TypeScript 6.0, Tailwind CSS 4, Radix UI, Zustand 5.0
+Next.js 16.3, React 19, TypeScript 7.0, Tailwind CSS 4, Radix UI, Zustand 5.0
 
 ## License / Lisans
 

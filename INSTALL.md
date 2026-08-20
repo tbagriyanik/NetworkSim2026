@@ -27,7 +27,7 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 ### Core Dependencies
 - **Next.js 16.2** - React framework
 - **React 19** - UI library
-- **TypeScript 6.0** - Type safety
+- **TypeScript 7.0** - Type safety
 - **Tailwind CSS 4** - Styling
 - **jspdf** - PDF generation
 
@@ -54,11 +54,6 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 ### TypeScript
 ```bash
 npx tsc --noEmit
-```
-
-### Linting
-```bash
-npm run lint
 ```
 
 ### Build
