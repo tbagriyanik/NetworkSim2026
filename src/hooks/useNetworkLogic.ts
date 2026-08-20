@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useMemo } from 'react';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { getDeviceWifiConfig } from '@/lib/network/connectivity';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
@@ -21,6 +21,29 @@ export function useNetworkLogic(
   useEffect(() => { deviceStatesRef.current = deviceStates; }, [deviceStates]);
   useEffect(() => { topologyConnectionsRef.current = topologyConnections; }, [topologyConnections]);
   useEffect(() => { environmentRef.current = environment; }, [environment]);
+
+  const connectionByEndpoint = useMemo(() => {
+    const index = new Map<string, CanvasConnection[]>();
+    topologyConnections.forEach((connection) => {
+      if (connection.active === false) return;
+      for (const key of [`${connection.sourceDeviceId}:${connection.sourcePort}`, `${connection.targetDeviceId}:${connection.targetPort}`]) {
+        const list = index.get(key);
+        if (list) list.push(connection); else index.set(key, [connection]);
+      }
+    });
+    return index;
+  }, [topologyConnections]);
+  const connectionByDevice = useMemo(() => {
+    const index = new Map<string, CanvasConnection[]>();
+    topologyConnections.forEach((connection) => {
+      if (connection.active === false) return;
+      for (const id of [connection.sourceDeviceId, connection.targetDeviceId]) {
+        const list = index.get(id);
+        if (list) list.push(connection); else index.set(id, [connection]);
+      }
+    });
+    return index;
+  }, [topologyConnections]);
 
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
@@ -51,15 +74,8 @@ export function useNetworkLogic(
   }, []);
 
   const getPeerPortVlan = useCallback((ownerDeviceId: string, ownerPortId: string, _devices: CanvasDevice[]): number | null => {
-    const conns = topologyConnectionsRef.current;
     const dStates = deviceStatesRef.current;
-    const connection = conns.find((conn) =>
-      conn.active !== false &&
-      (
-        (conn.sourceDeviceId === ownerDeviceId && conn.sourcePort === ownerPortId) ||
-        (conn.targetDeviceId === ownerDeviceId && conn.targetPort === ownerPortId)
-      )
-    );
+    const connection = connectionByEndpoint.get(`${ownerDeviceId}:${ownerPortId}`)?.[0];
     if (!connection) return null;
 
     const peerDeviceId = connection.sourceDeviceId === ownerDeviceId ? connection.targetDeviceId : connection.sourceDeviceId;
@@ -68,11 +84,10 @@ export function useNetworkLogic(
     if (!peerPort) return null;
     if (peerPort.mode === 'trunk') return 1;
     return getPortAccessVlan(peerPort);
-  }, []);
+  }, [connectionByEndpoint, getPortAccessVlan]);
 
   const inferEndpointVlan = useCallback((device: CanvasDevice, devices: CanvasDevice[]): number => {
     const dStates = deviceStatesRef.current;
-    const conns = topologyConnectionsRef.current;
 
     if (device.wifi?.enabled && device.wifi?.mode === 'client' && device.wifi?.bssid) {
       const ap = devices.find(d => d.id === device.wifi?.bssid);
@@ -82,10 +97,7 @@ export function useNetworkLogic(
       }
     }
 
-    const connection = conns.find((conn) =>
-      conn.active !== false &&
-      (conn.sourceDeviceId === device.id || conn.targetDeviceId === device.id)
-    );
+    const connection = connectionByDevice.get(device.id)?.[0];
     if (!connection) return Number(device.vlan || 1);
 
     const peerDeviceId = connection.sourceDeviceId === device.id ? connection.targetDeviceId : connection.sourceDeviceId;
@@ -94,7 +106,7 @@ export function useNetworkLogic(
     if (!peerPort) return Number(device.vlan || 1);
     if (peerPort.mode === 'trunk') return 1;
     return getPortAccessVlan(peerPort);
-  }, []);
+  }, [connectionByEndpoint, connectionByDevice]);
 
   const getServerPoolVlan = useCallback((
     serverDevice: CanvasDevice,
@@ -158,12 +170,25 @@ export function useNetworkLogic(
 
     const visited = new Set<string>([sourceDeviceId]);
     const queue = [sourceDeviceId];
-    const activeConnections = [...(connectionsOverride ?? conns)];
+    const activeConnections = connectionsOverride ?? conns;
+    const adjacency = new Map<string, CanvasConnection[]>();
+    activeConnections.forEach((connection) => {
+      if (connection.active === false) return;
+      for (const id of [connection.sourceDeviceId, connection.targetDeviceId]) {
+        const list = adjacency.get(id);
+        if (list) list.push(connection); else adjacency.set(id, [connection]);
+      }
+    });
 
+    const apsBySsid = new Map<string, CanvasDevice[]>();
+    devices.forEach((ap) => {
+      const wifi = getDeviceWifiConfig(ap, activeStates);
+      if (wifi?.enabled && wifi.mode === 'ap' && wifi.ssid) apsBySsid.set(wifi.ssid, [...(apsBySsid.get(wifi.ssid) ?? []), ap]);
+    });
     devices.forEach(pc => {
       const pcWifi = getDeviceWifiConfig(pc, activeStates);
       if (pcWifi?.enabled && (pcWifi.mode === 'client' || pcWifi.mode === 'sta') && pcWifi.ssid) {
-        devices.forEach(ap => {
+        (apsBySsid.get(pcWifi.ssid) ?? []).forEach(ap => {
           if (ap.id === pc.id) return;
           const apWifi = getDeviceWifiConfig(ap, activeStates);
           if (apWifi?.enabled && apWifi.mode === 'ap' && apWifi.ssid === pcWifi.ssid) {
@@ -189,7 +214,7 @@ export function useNetworkLogic(
       if (!currentId) continue;
       if (currentId === targetDeviceId) return true;
 
-      for (const connection of activeConnections) {
+      for (const connection of adjacency.get(currentId) ?? []) {
         if (connection.active === false) continue;
         const isSourceSide = connection.sourceDeviceId === currentId;
         const isTargetSide = connection.targetDeviceId === currentId;
@@ -318,11 +343,14 @@ export function useNetworkLogic(
     if (!devices.some((device) => device.type === 'iot' && device.iot?.rules?.some((rule) => rule.enabled !== false))) return devices;
     let nextDevices = devices;
     let didUpdate = false;
+    const devicesById = new Map(devices.map((device) => [device.id, device]));
     processIotRules(devices, env, (deviceId, updates) => {
       didUpdate = true;
-      nextDevices = nextDevices.map((device) =>
-        device.id === deviceId ? { ...device, ...updates, iot: updates.iot ? { ...device.iot, ...updates.iot } : device.iot } : device
-      );
+      const device = devicesById.get(deviceId);
+      if (!device) return;
+      if (nextDevices === devices) nextDevices = [...devices];
+      const index = nextDevices.findIndex((item) => item.id === deviceId);
+      if (index >= 0) nextDevices[index] = { ...device, ...updates, iot: updates.iot ? { ...device.iot, ...updates.iot } : device.iot };
     });
     return didUpdate ? nextDevices : devices;
   }, []);

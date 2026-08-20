@@ -167,6 +167,16 @@ export function TopologyCanvasLayer({
     tForPing,
 }: TopologyCanvasLayerProps) {
     const canvasSize = getCanvasDimensions();
+    const connectionGroups = React.useMemo(() => {
+        const groups = new Map<string, string[]>();
+        connections.forEach((item) => {
+            const pair = [item.sourceDeviceId, item.targetDeviceId].sort().join(':');
+            const ids = groups.get(pair);
+            if (ids) ids.push(item.id);
+            else groups.set(pair, [item.id]);
+        });
+        return groups;
+    }, [connections]);
 
     return (
         <div
@@ -234,14 +244,7 @@ export function TopologyCanvasLayer({
                             const targetDevice = deviceMap.get(conn.targetDeviceId);
                             if (!sourceDevice || !targetDevice) return null;
 
-                            const groupMap = new Map<string, string[]>();
-                            connections.forEach((item) => {
-                                const pair = [item.sourceDeviceId, item.targetDeviceId].sort().join(':');
-                                if (!groupMap.has(pair)) groupMap.set(pair, []);
-                                groupMap.get(pair)?.push(item.id);
-                            });
-
-                            const ids = groupMap.get([conn.sourceDeviceId, conn.targetDeviceId].sort().join(':')) ?? [];
+                            const ids = connectionGroups.get([conn.sourceDeviceId, conn.targetDeviceId].sort().join(':')) ?? [];
                             const index = ids.indexOf(conn.id);
                             const pairMeta = { index: index >= 0 ? index : 0, total: ids.length || 1 };
 

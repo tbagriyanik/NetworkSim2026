@@ -61,6 +61,10 @@ export function useNetworkSimulation(
         if (!shouldAdvanceNtp) return changed ? devices : previousDevices;
 
         const ntpUpdates = new Map<string, Partial<CanvasDevice>>();
+        const devicesByIp = new Map<string, CanvasDevice>();
+        devices.forEach((candidate) => {
+          if (candidate.ip) devicesByIp.set(candidate.ip, candidate);
+        });
         devices.forEach((device) => {
           const ntp = device.services?.ntp;
           const stateNtp = deviceStatesRef.current.get(device.id)?.services?.ntp;
@@ -69,9 +73,9 @@ export function useNetworkSimulation(
 
           const serverIp = effectiveNtp.server?.trim();
           const upstreamDevice = serverIp && isValidIpv4Address(serverIp)
-            ? devices.find((candidate) => candidate.ip === serverIp && candidate.services?.ntp?.enabled)
+            ? devicesByIp.get(serverIp)
             : undefined;
-          const upstreamNtp = upstreamDevice?.services?.ntp;
+          const upstreamNtp = upstreamDevice?.services?.ntp?.enabled ? upstreamDevice.services.ntp : undefined;
           const nextNtp = upstreamNtp?.enabled
             ? { ...effectiveNtp, enabled: true, date: upstreamNtp.date || formatLocalDate(new Date()), time: upstreamNtp.time || new Date().toTimeString().slice(0, 8) }
             : (() => {
