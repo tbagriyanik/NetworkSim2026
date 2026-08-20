@@ -8,6 +8,7 @@ import { recalculateStp } from './stp';
 import { normalizePortId } from './initialState';
 import { getDeviceWifiConfig, getWirelessSignalStrength, getWirelessDistance, buildImplicitWirelessConnections, getApActiveSsids, type DeviceWifiConfig } from './wireless';
 import { isExternalDomain, resolveHostname } from './dns';
+import { buildConnectionIndex } from './connectionIndex';
 
 export {
   getDeviceWifiConfig,
@@ -253,19 +254,10 @@ export function checkConnectivity(
     ...buildImplicitWirelessConnections(devices, safeDeviceStates, 'wireless'),
   ];
 
-  // BOLT: Pre-calculate adjacency list for O(V + C) BFS
-  const adjList = new Map<string, Array<{ neighborId: string, conn: CanvasConnection }>>();
-  for (const conn of connections) {
-    if (conn.active === false) continue;
-
-    const srcList = adjList.get(conn.sourceDeviceId);
-    if (srcList) srcList.push({ neighborId: conn.targetDeviceId, conn });
-    else adjList.set(conn.sourceDeviceId, [{ neighborId: conn.targetDeviceId, conn }]);
-
-    const tgtList = adjList.get(conn.targetDeviceId);
-    if (tgtList) tgtList.push({ neighborId: conn.sourceDeviceId, conn });
-    else adjList.set(conn.targetDeviceId, [{ neighborId: conn.sourceDeviceId, conn }]);
-  }
+  // Build all connection indexes once for this connectivity evaluation. BFS,
+  // device-neighbor checks and path lookups reuse the same adjacency map.
+  const connectionIndex = buildConnectionIndex(connections);
+  const adjList = connectionIndex.adjacency;
 
   // 0. Resolve hostname to IP if necessary
   let resolvedTargetIp = targetIp;
@@ -357,7 +349,7 @@ export function checkConnectivity(
         // Same subnet - perform ARP resolution
         // Find the interface through which we'll send the ARP
         // BOLT: Use pre-calculated adjList for O(1) connection lookup
-        const sourceConn = adjList.get(sourceId)?.[0]?.conn;
+        const sourceConn = adjList.get(sourceId)?.[0]?.connection;
         const interfaceName = sourceConn ? (sourceConn.sourceDeviceId === sourceId ? sourceConn.sourcePort : sourceConn.targetPort) : 'unknown';
 
         // ARP broadcast only happens when the target MAC is unknown or the cache
@@ -421,7 +413,7 @@ export function checkConnectivity(
     if (device.type === 'pc' || device.type === 'iot') {
       // BOLT: Use pre-calculated adjList for O(1) connection lookup
       const neighbors = adjList.get(device.id);
-      const connectedConn = neighbors?.[0]?.conn;
+      const connectedConn = neighbors?.[0]?.connection;
 
       if (connectedConn && deviceStates) {
         const peerDeviceId = connectedConn.sourceDeviceId === device.id ? connectedConn.targetDeviceId : connectedConn.sourceDeviceId;
@@ -487,7 +479,7 @@ export function checkConnectivity(
       if (cur === endId) break;
 
       const neighbors = adjList.get(cur) || [];
-      for (const { neighborId, conn } of neighbors) {
+      for (const { neighborId, connection: conn } of neighbors) {
         if (!v.has(neighborId) && conn) {
           const srcPortId = conn.sourceDeviceId === cur ? conn.sourcePort : conn.targetPort;
           const dstPortId = conn.sourceDeviceId === neighborId ? conn.sourcePort : conn.targetPort;
@@ -549,7 +541,7 @@ export function checkConnectivity(
   for (let i = 0; i < path.length - 1; i++) {
     const aId = path[i];
     const bId = path[i + 1];
-    const conn = adjList.get(aId)?.find(n => n.neighborId === bId)?.conn;
+    const conn = adjList.get(aId)?.find(n => n.neighborId === bId)?.connection;
     if (conn) {
       pathConnections.set(`${aId}-${bId}`, conn);
 
@@ -651,7 +643,7 @@ export function checkConnectivity(
       if (!bDev || !isSwitchDeviceType(bDev.type)) continue;
       const incomingConn = pathConnections.get(`${aId}-${bId}`);
       const neighbors = adjList.get(bId) || [];
-      for (const { conn } of neighbors) {
+      for (const { connection: conn } of neighbors) {
         if (!conn || conn.active === false) continue;
         if (conn.id === incomingConn?.id) continue;
         const switchPortId = conn.sourceDeviceId === bId ? conn.sourcePort : conn.targetPort;
@@ -846,7 +838,7 @@ export function checkConnectivity(
 
             // Check if router is connected to any device in the path
             for (const pathDeviceId of path) {
-              const conn = adjList.get(router.id)?.find(n => n.neighborId === pathDeviceId)?.conn;
+              const conn = adjList.get(router.id)?.find(n => n.neighborId === pathDeviceId)?.connection;
               if (conn) {
                 hasL3Gateway = true;
                 // Add router to path (insert before the connected device)

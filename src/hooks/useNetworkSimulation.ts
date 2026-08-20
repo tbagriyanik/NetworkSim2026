@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
+import { updateChangedDevices } from '@/lib/simulation/partialDeviceUpdates';
 
 export function useNetworkSimulation(
   deviceStates: Map<string, SwitchState>,
@@ -38,67 +39,61 @@ export function useNetworkSimulation(
     };
   }, [formatLocalDate]);
 
-  // IoT Automation Pass
+  // Single simulation clock. Fast work runs on each tick; slower work uses
+  // the elapsed-time accumulator so there is only one browser interval.
   useEffect(() => {
     if (!networkLogic?.applyIotAutomationPass) return;
+
+    let lastTick = performance.now();
+    let ntpAccumulator = 0;
     const interval = window.setInterval(() => {
-      setTopologyDevices((prev) => networkLogic.applyIotAutomationPass(prev));
-    }, 250);
+      const now = performance.now();
+      const elapsed = Math.min(now - lastTick, 1000);
+      lastTick = now;
+      ntpAccumulator += elapsed;
+      const shouldAdvanceNtp = ntpAccumulator >= 1000;
+      if (shouldAdvanceNtp) ntpAccumulator %= 1000;
 
-    return () => window.clearInterval(interval);
-  }, [networkLogic, setTopologyDevices]);
+      setTopologyDevices((previousDevices) => {
+        let devices = networkLogic.applyIotAutomationPass(previousDevices);
+        let changed = devices !== previousDevices;
 
-  // NTP Time Simulation
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setTopologyDevices((prevDevices) => {
-        const devices = prevDevices.map((device) => {
-          const devState = deviceStatesRef.current.get(device.id);
-          if (devState?.services?.ntp?.enabled && !device.services?.ntp?.enabled) {
-            return { ...device, services: { ...device.services, ntp: devState.services.ntp } };
-          }
-          return { ...device };
-        });
+        if (!shouldAdvanceNtp) return changed ? devices : previousDevices;
 
-        for (const device of devices) {
+        const ntpUpdates = new Map<string, Partial<CanvasDevice>>();
+        devices.forEach((device) => {
           const ntp = device.services?.ntp;
-          if (!ntp?.enabled) continue;
+          const stateNtp = deviceStatesRef.current.get(device.id)?.services?.ntp;
+          const effectiveNtp = ntp?.enabled ? ntp : stateNtp?.enabled ? stateNtp : undefined;
+          if (!effectiveNtp?.enabled) return;
 
-          const serverIp = ntp.server?.trim();
+          const serverIp = effectiveNtp.server?.trim();
           const upstreamDevice = serverIp && isValidIpv4Address(serverIp)
             ? devices.find((candidate) => candidate.ip === serverIp && candidate.services?.ntp?.enabled)
             : undefined;
           const upstreamNtp = upstreamDevice?.services?.ntp;
+          const nextNtp = upstreamNtp?.enabled
+            ? { ...effectiveNtp, enabled: true, date: upstreamNtp.date || formatLocalDate(new Date()), time: upstreamNtp.time || new Date().toTimeString().slice(0, 8) }
+            : (() => {
+                const nextTime = advanceNtpDateTime(effectiveNtp.date, effectiveNtp.time);
+                return { ...effectiveNtp, enabled: true, date: nextTime.date, time: nextTime.time };
+              })();
 
-          if (upstreamNtp?.enabled) {
-            device.services = {
-              ...(device.services || {}),
-              ntp: {
-                ...ntp,
-                enabled: true,
-                date: upstreamNtp.date || formatLocalDate(new Date()),
-                time: upstreamNtp.time || new Date().toTimeString().slice(0, 8),
-              },
-            };
-            continue;
-          }
+          const currentNtp = device.services?.ntp;
+          if (currentNtp?.date === nextNtp.date && currentNtp?.time === nextNtp.time && currentNtp?.enabled) return;
+          ntpUpdates.set(device.id, {
+            services: { ...(device.services || {}), ntp: nextNtp }
+          });
+        });
 
-          const nextTime = advanceNtpDateTime(ntp.date, ntp.time);
-          device.services = {
-            ...(device.services || {}),
-            ntp: {
-              ...ntp,
-              enabled: true,
-              date: nextTime.date,
-              time: nextTime.time,
-            },
-          };
+        if (ntpUpdates.size > 0) {
+          devices = updateChangedDevices(devices, ntpUpdates).devices;
+          changed = true;
         }
-
-        return devices;
+        return changed ? devices : previousDevices;
       });
-    }, 1000);
+    }, 250);
 
     return () => window.clearInterval(interval);
-  }, [advanceNtpDateTime, formatLocalDate, isValidIpv4Address, setTopologyDevices]);
+  }, [advanceNtpDateTime, formatLocalDate, isValidIpv4Address, networkLogic, setTopologyDevices]);
 }

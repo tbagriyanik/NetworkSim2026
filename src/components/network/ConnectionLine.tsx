@@ -188,7 +188,7 @@ export const ConnectionLine = memo(function ConnectionLine({
       <path
         d={pathD}
         stroke={isCompatible && connection.active !== false ? color : 'var(--color-error-500)'}
-        strokeWidth={isHovered ? 7 : (isWireless ? 4 : 3)}
+        strokeWidth={isHovered ? 7 : 3}
         fill="none"
         strokeDasharray={isCompatible && connection.active !== false ? 'none' : '6,3'}
         className="pointer-events-none"
@@ -196,7 +196,7 @@ export const ConnectionLine = memo(function ConnectionLine({
         style={{
           // Inactive cables (powered off / shutdown) get higher opacity so they're visible in dark mode
           opacity: isHovered ? 0.9 : (isEffectivelyActive ? (isWireless ? 0.82 : 0.4) : 0.65),
-          filter: isHovered || (graphicsQuality === 'high' && isEffectivelyActive) ?
+          filter: isHovered || (graphicsQuality === 'high' && isEffectivelyActive && !isWireless) ?
             'drop-shadow(0 0 0.5px ' + color + ') drop-shadow(0 0 1px ' + color + ')' :
             'none',
           transition: isDragging ? 'none' : 'stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease, filter 0.2s ease'
@@ -204,7 +204,7 @@ export const ConnectionLine = memo(function ConnectionLine({
       />
 
       {/* Ambient glow for active connections in high graphics mode */}
-      {graphicsQuality === 'high' && isEffectivelyActive && !isHovered && (
+      {graphicsQuality === 'high' && isEffectivelyActive && !isHovered && !isWireless && (
         <path
           d={pathD}
           stroke={color}
@@ -220,7 +220,7 @@ export const ConnectionLine = memo(function ConnectionLine({
       )}
 
       {/* Animated data flow - only for compatible cables and NOT during dragging */}
-      {showAnimation && isEffectivelyActive && !isDragging && (
+      {showAnimation && graphicsQuality === 'high' && isEffectivelyActive && !isDragging && (
         <>
           <circle r={Math.max(2, 4 / zoom)} fill={color} opacity={0.25}>
             <animateMotion

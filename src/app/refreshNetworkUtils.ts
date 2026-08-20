@@ -103,11 +103,15 @@ export const validateTopologyConnections = (
   const sanitizedConnections = connections.map((connection) => {
     const sourceDevice = byId.get(connection.sourceDeviceId);
     const targetDevice = byId.get(connection.targetDeviceId);
+    const isWirelessConnection = connection.cableType === 'wireless';
     const sourcePortExists = !!sourceDevice?.ports?.some((port) => port.id === connection.sourcePort);
     const targetPortExists = !!targetDevice?.ports?.some((port) => port.id === connection.targetPort);
     const sourceKey = `${connection.sourceDeviceId}:${connection.sourcePort}`;
     const targetKey = `${connection.targetDeviceId}:${connection.targetPort}`;
-    const duplicatePort = usedPorts.has(sourceKey) || usedPorts.has(targetKey);
+    // A wireless AP/WLC radio is a shared medium: multiple clients are
+    // expected to use the same target wlan0 port. Client-side ports remain
+    // exclusive, while the shared AP side must not invalidate later clients.
+    const duplicatePort = usedPorts.has(sourceKey) || (!isWirelessConnection && usedPorts.has(targetKey));
     const invalid = !sourceDevice ||
       !targetDevice ||
       !sourcePortExists ||
@@ -120,7 +124,7 @@ export const validateTopologyConnections = (
         invalidCount++;
       } else {
         usedPorts.add(sourceKey);
-        usedPorts.add(targetKey);
+        if (!isWirelessConnection) usedPorts.add(targetKey);
       }
     }
 
@@ -140,6 +144,23 @@ export const releaseDisconnectedPorts = (
     if (connection.active === false) return;
     activePortKeys.add(`${connection.sourceDeviceId}:${connection.sourcePort}`);
     activePortKeys.add(`${connection.targetDeviceId}:${connection.targetPort}`);
+  });
+
+  // Wireless links are implicit: they are intentionally not stored in the
+  // physical topology connection list. Keep their WLAN ports connected during
+  // refresh, otherwise every Wi-Fi client (including IoT devices) is treated
+  // as disconnected before the wireless matching pass runs.
+  const wirelessAccessPoints = devices.filter((device) =>
+    (device.type === 'router' || isSwitchDeviceType(device.type)) &&
+    device.wifi?.enabled && device.wifi.mode === 'ap' && !!device.wifi.ssid
+  );
+  devices.forEach((device) => {
+    if (device.type !== 'pc' && device.type !== 'iot') return;
+    if (!device.wifi?.enabled || device.wifi.mode !== 'client' || !device.wifi.ssid) return;
+    if (!wirelessAccessPoints.some((accessPoint) => isWirelessMatch(device, accessPoint))) return;
+    activePortKeys.add(`${device.id}:wlan0`);
+    const accessPoint = wirelessAccessPoints.find((candidate) => isWirelessMatch(device, candidate));
+    if (accessPoint) activePortKeys.add(`${accessPoint.id}:wlan0`);
   });
 
   const nextDevices = devices.map((device) => ({

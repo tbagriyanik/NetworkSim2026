@@ -65,7 +65,7 @@ const wifiBarRects = [
 ];
 
 
-export function DeviceRenderer({
+export const DeviceRenderer = React.memo(function DeviceRenderer({
   device,
   topologyDevices,
   isDragging = false,
@@ -1189,4 +1189,39 @@ export function DeviceRenderer({
       )}
     </g>
   );
-}
+}, (prev, next) => {
+  // Device objects are structurally shared by the simulation. This lets an
+  // unrelated device update skip the expensive SVG subtree while still
+  // refreshing a Wi-Fi device when the topology used for signal strength changes.
+  const wifiContextChanged = prev.device.wifi?.enabled || next.device.wifi?.enabled
+    ? prev.topologyDevices !== next.topologyDevices
+    : false;
+  return prev.device === next.device &&
+    prev.isDragging === next.isDragging &&
+    prev.isSelected === next.isSelected &&
+    prev.isDark === next.isDark &&
+    prev.language === next.language &&
+    prev.t === next.t &&
+    prev.deviceStates === next.deviceStates &&
+    prev.deviceToConnectionsMap === next.deviceToConnectionsMap &&
+    prev.graphicsQuality === next.graphicsQuality &&
+    prev.isDraggingInteractionDisabled === next.isDraggingInteractionDisabled &&
+    prev.getLiveDeviceVlan === next.getLiveDeviceVlan &&
+    prev.getIotMeasuredValue === next.getIotMeasuredValue &&
+    prev.handlePortHover === next.handlePortHover &&
+    prev.handlePortMouseLeave === next.handlePortMouseLeave &&
+    prev.handlePortClick === next.handlePortClick &&
+    prev.handleDeviceMouseDown === next.handleDeviceMouseDown &&
+    prev.handleDevicePointerDown === next.handleDevicePointerDown &&
+    prev.handleDeviceClick === next.handleDeviceClick &&
+    prev.handleDeviceKeyDown === next.handleDeviceKeyDown &&
+    prev.handleDeviceDoubleClick === next.handleDeviceDoubleClick &&
+    prev.handleDeviceMouseLeave === next.handleDeviceMouseLeave &&
+    prev.handleDeviceTouchStart === next.handleDeviceTouchStart &&
+    prev.handleDeviceTouchMove === next.handleDeviceTouchMove &&
+    prev.handleDeviceTouchEnd === next.handleDeviceTouchEnd &&
+    prev.isDrawingConnection === next.isDrawingConnection &&
+    prev.connectionStart === next.connectionStart &&
+    prev._mousePosRef === next._mousePosRef &&
+    !wifiContextChanged;
+});
