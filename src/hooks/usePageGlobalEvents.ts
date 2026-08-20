@@ -100,10 +100,24 @@ export function usePageGlobalEvents({
       let cleanCommand = '';
       if (checkType === 'ping' && toIp) {
         cleanCommand = `ping ${toIp}`;
+      } else if (hintCommand) {
+        cleanCommand = String(hintCommand);
       } else if (commandPattern) {
         cleanCommand = String(commandPattern).split('|')[0];
-      } else {
-        cleanCommand = hintCommand || '';
+      }
+
+      // Try resolving target device from hint prefix (e.g. "router-1: ...") if not specified
+      if (!deviceId && hintCommand) {
+        const colonMatch = String(hintCommand).match(/^([^:]{1,40}):\s*/);
+        if (colonMatch) {
+          const targetName = colonMatch[1].trim().toLowerCase();
+          const found = topologyDevices.find(
+            d => d.name.toLowerCase() === targetName || d.id.toLowerCase() === targetName
+          );
+          if (found) {
+            deviceId = found.id;
+          }
+        }
       }
 
       // Clean command prefixes from prompts or instructional hints.

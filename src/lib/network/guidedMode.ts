@@ -1,5 +1,5 @@
 // Rehberli Ders (Guided Lesson) - Adım adım öğrenme sistemi
-import { generateSwitchPorts, generateRouterPorts } from '@/components/network/networkTopology.portGenerators';
+import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts } from '@/components/network/networkTopology.portGenerators';
 import type { CanvasConnection, CanvasDevice } from '@/components/network/networkTopology.types';
 import type { SwitchState, Route, Port } from './types';
 import type { GuidedStep, GuidedProject } from './guidedMode.types';
@@ -468,18 +468,18 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'switch-1', type: 'switchL2', name: 'SW-Lab', x: 300, y: 200, ip: '', status: 'online', ports: generateSwitchPorts() },
+            { id: 'switch-1', type: 'switchL3', name: 'SW-Lab', switchModel: 'WS-C3650-24PS', x: 300, y: 200, ip: '', status: 'online', ports: generateL3SwitchPorts() },
             { id: 'router-1', type: 'router', name: 'R-Lab', x: 600, y: 200, ip: '', status: 'online', ports: generateRouterPorts() },
             { id: 'pc-1', type: 'pc', name: 'PC-Lab', x: 100, y: 200, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] }
           ],
           connections: [
-            { id: 'c1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'switch-1', targetPort: 'fa0/1', cableType: 'straight', active: true },
-            { id: 'c2', sourceDeviceId: 'switch-1', sourcePort: 'fa0/24', targetDeviceId: 'router-1', targetPort: 'gi0/0', cableType: 'crossover', active: true }
+            { id: 'c1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'switch-1', targetPort: 'gi1/0/1', cableType: 'straight', active: true },
+            { id: 'c2', sourceDeviceId: 'switch-1', sourcePort: 'gi1/0/24', targetDeviceId: 'router-1', targetPort: 'gi0/0', cableType: 'crossover', active: true }
           ],
           notes: []
         },
-        cableInfo: { connected: true, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
-        activeDeviceId: 'switch-1', activeDeviceType: 'switchL2', activeTab: 'topology', zoom: 1, pan: { x: 0, y: 0 }
+        cableInfo: { connected: true, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL3' },
+        activeDeviceId: 'switch-1', activeDeviceType: 'switchL3', activeTab: 'topology', zoom: 1, pan: { x: 0, y: 0 }
       },
       level: 'advanced', isGuided: true, steps: cliGuidedLessons, estimatedTimeMinutes: 240, difficulty: 'intermediate',
       totalPoints: cliGuidedLessons.reduce((acc, s) => acc + (s.points || 0), 0)
@@ -586,6 +586,25 @@ export const checkStepCompletion = (
 
     case 'command': {
       if (!step.checkParams?.commandPattern || !context.lastCommand) return false;
+
+      // Do NOT complete step if command execution resulted in an error output
+      if (context.lastOutput) {
+        const out = context.lastOutput.toLowerCase();
+        if (
+          out.includes('invalid input') ||
+          out.includes('ambiguous command') ||
+          out.includes('incomplete command') ||
+          out.includes('unknown command') ||
+          out.includes('not supported') ||
+          out.includes('bad ip') ||
+          out.includes('tahmini öneriler') ||
+          out.includes('did you mean') ||
+          out.includes('% error') ||
+          out.includes('% invalid')
+        ) {
+          return false;
+        }
+      }
 
       // If targetDeviceId is specified, verify it matches the device being accessed
       if (step.checkParams.targetDeviceId && context.deviceAccessedId !== step.checkParams.targetDeviceId) {
