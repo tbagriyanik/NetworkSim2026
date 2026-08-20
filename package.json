@@ -7,7 +7,8 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "cross-env NODE_ENV=production bun .next/standalone/server.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check": "tsc --noEmit && vitest run && next build"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
