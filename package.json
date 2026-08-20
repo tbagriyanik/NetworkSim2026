@@ -58,5 +58,8 @@
       "sharp",
       "unrs-resolver"
     ]
+  },
+  "allowScripts": {
+    "core-js@3.50.0": true
   }
 }
