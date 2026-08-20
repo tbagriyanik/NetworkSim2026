@@ -6,15 +6,15 @@ import type { CanvasConnection, CanvasNote } from '@/components/network/networkT
 
 const example = (isTr: boolean): ExampleProject => {
   const routerDhcpDevices = [
-    createPcDevice('pc-1', 'PC-1', 110, 140, '0.0.0.0', 1),
-    createPcDevice('pc-2', 'PC-2', 110, 290, '0.0.0.0', 1),
+    createPcDevice('pc-1', 'PC-1', 110, 140, '192.168.10.10', 1, '192.168.10.1'),
+    createPcDevice('pc-2', 'PC-2', 110, 290, '192.168.10.11', 1, '192.168.10.1'),
     createSwitchDevice('switch-1', 'SW1', 280, 215, '192.168.10.2'),
     createRouterDevice('router-1', 'R1', 450, 215, '192.168.10.1')
   ];
-  routerDhcpDevices[0].ipConfigMode = 'dhcp';
-  routerDhcpDevices[1].ipConfigMode = 'dhcp';
   routerDhcpDevices[2].ipConfigMode = 'static';
   routerDhcpDevices[3].ipConfigMode = 'static';
+  routerDhcpDevices[0].ipConfigMode = 'static';
+  routerDhcpDevices[1].ipConfigMode = 'static';
 
   const routerDhcpConnections: CanvasConnection[] = [];
   connectPorts(routerDhcpDevices, routerDhcpConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
@@ -38,8 +38,28 @@ const example = (isTr: boolean): ExampleProject => {
     }
   ];
 
-  const routerDhcpR1 = createInitialRouterState('00:50:00:00:00:07');
+  routerDhcpNotes[0].text = isTr
+    ? 'Amaç: Router üzerinde inside ve outside arayüzleriyle statik NAT yapılandırmak.\n\nR1 gi0/0 iç ağdadır (192.168.10.1), gi0/1 dış ağdadır. PC-1 (192.168.10.10) adresi 203.0.113.10 adresine birebir çevrilir. PC-2 (192.168.10.11) iç ağda kalır.\n\nDoğrulama: show ip nat translations'
+    : 'Goal: Configure static NAT with inside and outside interfaces.\n\nR1 gi0/0 is inside (192.168.10.1), gi0/1 is outside. PC-1 (192.168.10.10) is translated one-to-one to 203.0.113.10. PC-2 (192.168.10.11) remains on the inside LAN.\n\nVerify with: show ip nat translations';
+
+  const routerDhcpR1 = createInitialRouterState(routerDhcpDevices[3].macAddress);
   routerDhcpR1.hostname = 'R1';
+  routerDhcpR1.natStaticTranslations = [{ localIp: '192.168.10.10', globalIp: '203.0.113.10' }];
+  routerDhcpR1.ports['gi0/0'] = { ...routerDhcpR1.ports['gi0/0'], natSide: 'inside' };
+  routerDhcpR1.ports['gi0/1'] = { ...routerDhcpR1.ports['gi0/1'], natSide: 'outside' };
+  routerDhcpR1.services = { ...routerDhcpR1.services, dhcp: { enabled: false, pools: [] } };
+  routerDhcpR1.dhcpPools = {};
+  routerDhcpR1.runningConfig = [
+    'hostname R1',
+    'interface gi0/0',
+    ' ip address 192.168.10.1 255.255.255.0',
+    ' ip nat inside',
+    ' no shutdown',
+    'interface gi0/1',
+    ' ip nat outside',
+    ' no shutdown',
+    'ip nat inside source static 192.168.10.10 203.0.113.10'
+  ];
   routerDhcpR1.ports['gi0/0'] = {
     ...routerDhcpR1.ports['gi0/0'],
     ipAddress: '192.168.10.1',
@@ -93,7 +113,7 @@ const example = (isTr: boolean): ExampleProject => {
     'end'
   ];
 
-  const routerDhcpSw1 = createInitialState('00:1A:2B:3C:4D:70');
+  const routerDhcpSw1 = createInitialState(routerDhcpDevices[2].macAddress);
   routerDhcpSw1.hostname = 'SW1';
   routerDhcpSw1.ports['fa0/1'] = { ...routerDhcpSw1.ports['fa0/1'], status: 'connected' };
   routerDhcpSw1.ports['fa0/2'] = { ...routerDhcpSw1.ports['fa0/2'], status: 'connected' };
@@ -114,7 +134,7 @@ const example = (isTr: boolean): ExampleProject => {
     tag: 'NAT',
     title: isTr ? 'NAT Static' : 'NAT Static',
     description: isTr ? 'Static NAT ile birebir adres eşlemesi.' : 'One-to-one address mapping with static NAT.',
-    detail: 'ip nat inside source static 192.168.1.10 203.0.113.10',
+    detail: 'ip nat inside source static 192.168.10.10 203.0.113.10',
     level: 'intermediate',
     data: baseProjectData(routerDhcpDevices, routerDhcpConnections, routerDhcpNotes, [
       { id: 'router-1', state: routerDhcpR1 },

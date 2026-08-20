@@ -30,7 +30,7 @@ describe('Switch Models Module', () => {
     it('should return info for known models', () => {
       const info = getSwitchInfo('WS-C2960-24TT-L');
       expect(info).toBeDefined();
-      expect(info?.name).toContain('Catalyst 2960');
+      expect(info?.name).toContain('Layer 2 Switch');
     });
 
     it('should return undefined for unknown models', () => {

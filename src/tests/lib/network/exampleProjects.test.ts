@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { exampleProjects } from '@/lib/network/exampleProjects';
+import { exampleProjects, validateExampleProject } from '@/lib/network/exampleProjects';
 
 describe('exampleProjects', () => {
   describe('exampleProjects function', () => {
@@ -141,6 +141,12 @@ describe('exampleProjects', () => {
       for (let i = 0; i < projects1.length; i++) {
         expect(projects1[i].id).toBe(projects2[i].id);
         expect(projects1[i].data.topology.devices.length).toBe(projects2[i].data.topology.devices.length);
+      }
+    });
+
+    it('should keep topology, device state, and connection ports consistent', () => {
+      for (const project of exampleProjects('en')) {
+        expect(validateExampleProject(project), project.id).toEqual([]);
       }
     });
 

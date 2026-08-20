@@ -70,7 +70,7 @@ const example = (isTr: boolean): ExampleProject => {
       opacity: 0.75
     }
   ];
-  const wifiR1State = createInitialRouterState('00:50:00:00:00:08');
+  const wifiR1State = createInitialRouterState(wifiDevices[1].macAddress);
   wifiR1State.hostname = 'R1';
   wifiR1State.ports['wlan0'] = {
     ...wifiR1State.ports['wlan0'],

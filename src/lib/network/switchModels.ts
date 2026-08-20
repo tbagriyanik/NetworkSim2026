@@ -15,7 +15,7 @@ export interface SwitchModelInfo {
 export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
     'WS-C2960-24TT-L': {
         model: 'WS-C2960-24TT-L',
-        name: 'Catalyst 2960 24-Port',
+        name: 'Layer 2 Switch (24-Port)',
         layer: 'L2',
         ports: 26,
         description: 'Layer 2 Switch - 24 FastEthernet + 2 GigabitEthernet ports',
@@ -29,7 +29,7 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
     },
     'WS-C3650-24PS': {
         model: 'WS-C3650-24PS',
-        name: 'Catalyst 3650 24-Port PoE',
+        name: 'Layer 3 Switch (24-Port PoE)',
         layer: 'L3',
         ports: 29,
         description: 'Layer 3 Switch - 24 GigabitEthernet1/0/x + 4 GigabitEthernet1/1/x + 1 Wireless ports',
@@ -46,7 +46,7 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
     },
     'ASA-5506-X': {
         model: 'ASA-5506-X',
-        name: 'ASA 5506-X with FirePOWER',
+        name: 'Next-Generation Firewall',
         layer: 'FW',
         ports: 9, // 8 GE + 1 Console
         description: 'Next-Generation Firewall - 8 GigabitEthernet ports',
@@ -60,7 +60,7 @@ export const SWITCH_MODELS: Record<SwitchModel, SwitchModelInfo> = {
     },
     'AIR-CT2504-K9': {
         model: 'AIR-CT2504-K9',
-        name: 'AIR-CT2504 Wireless LAN Controller',
+        name: 'Wireless LAN Controller',
         layer: 'WLC',
         ports: 5, // 4 GE + 1 Console + 1 Service
         description: 'Wireless LAN Controller - 4 GigabitEthernet ports, supports up to 75 APs',

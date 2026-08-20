@@ -66,4 +66,49 @@ export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   return builders.map(build => build(isTr));
 };
 
+/** Structural and semantic checks shared by the catalog and import flows. */
+export function validateExampleProject(project: ExampleProject): string[] {
+  const errors: string[] = [];
+  const devices = project.data.topology.devices;
+  const deviceIds = new Set(devices.map((device) => device.id));
+  const canonicalMac = (value?: string) => value?.replace(/[^0-9a-f]/gi, '').toLowerCase();
+
+  for (const device of devices) {
+    if (!device.id) errors.push('device without id');
+  }
+  for (const state of project.data.devices) {
+    if (!deviceIds.has(state.id)) errors.push(`orphan state ${state.id}`);
+    const device = devices.find((item) => item.id === state.id);
+    if (device?.macAddress && state.state.macAddress && canonicalMac(device.macAddress) !== canonicalMac(state.state.macAddress)) {
+      errors.push(`MAC mismatch for ${state.id}`);
+    }
+    const statePorts = Object.values(state.state.ports ?? {});
+    for (const port of statePorts) {
+      if (!port.ipAddress || !port.subnetMask) continue;
+      const ip = port.ipAddress.split('.').map(Number);
+      const mask = port.subnetMask.split('.').map(Number);
+      if (ip.length !== 4 || mask.length !== 4 || ip.some((part) => !Number.isInteger(part) || part < 0 || part > 255) || mask.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) {
+        errors.push(`invalid interface address on ${state.id}`);
+      }
+    }
+    const dhcpPools = state.state.services?.dhcp?.pools ?? [];
+    for (const pool of dhcpPools) {
+      if (!pool.startIp || !pool.subnetMask || !pool.defaultGateway) errors.push(`incomplete DHCP pool on ${state.id}`);
+      if (pool.defaultGateway === '0.0.0.0') errors.push(`invalid DHCP gateway on ${state.id}`);
+    }
+    if (device?.ipConfigMode === 'static' && device.ip === '0.0.0.0') errors.push(`static device without address ${device.id}`);
+  }
+  for (const connection of project.data.topology.connections) {
+    if (!deviceIds.has(connection.sourceDeviceId) || !deviceIds.has(connection.targetDeviceId)) {
+      errors.push(`connection ${connection.id} references a missing device`);
+      continue;
+    }
+    const source = devices.find((device) => device.id === connection.sourceDeviceId);
+    const target = devices.find((device) => device.id === connection.targetDeviceId);
+    if (!source?.ports.some((port) => port.id === connection.sourcePort)) errors.push(`invalid source port ${connection.sourcePort}`);
+    if (!target?.ports.some((port) => port.id === connection.targetPort)) errors.push(`invalid target port ${connection.targetPort}`);
+  }
+  return errors;
+}
+
 export type { ExampleProject, ExampleProjectLevel };

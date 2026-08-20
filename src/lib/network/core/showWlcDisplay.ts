@@ -110,7 +110,7 @@ export const cmdShowApSummary: CommandHandler = (
     if (specificAp && ap.name !== specificAp && apId !== specificAp) return;
     apCount++;
     const status = ap.status.padEnd(14);
-    const model = (ap.model || 'AIR-AP1852I').padEnd(15);
+    const model = (ap.model ? 'Wireless Access Point' : 'Wireless Access Point').padEnd(15);
     const wlanCount = ap.wlans?.length ? ap.wlans.join(',') : '-';
     output += `${ap.name.padEnd(17)}  ${ap.macAddress.padEnd(16)}  ${(ap.ipAddress || '-').padEnd(16)}  ${status}${model}${wlanCount}\n`;
   });
@@ -158,7 +158,7 @@ export const cmdShowApConfig: CommandHandler = (
     output += `MAC Address      : ${ap.macAddress}\n`;
     output += `IP Address       : ${ap.ipAddress || 'Not assigned'}\n`;
     output += `Status           : ${ap.status}\n`;
-    output += `Model            : ${ap.model || 'AIR-AP1852I'}\n`;
+    output += 'Model            : Wireless Access Point\n';
     output += `AP Group         : ${ap.apGroup || 'default'}\n`;
     const ap5ghz = ap.dot11?.['5ghz'];
     output += `RF Channel       : ${ap5ghz?.rfChannel ?? ap.rfChannel ?? 'Auto'}\n`;

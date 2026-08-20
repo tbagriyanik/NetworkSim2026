@@ -115,6 +115,7 @@ const createPcDevice = (id: string, name: string, x: number, y: number, ip: stri
   y,
   ip,
   vlan,
+  subnet: '255.255.255.0',
   gateway,
   ipv6: ipv6 || deterministicIpv6(id, vlan),
   macAddress: deterministicMac(id),
@@ -256,7 +257,14 @@ const connectPorts = (
 const baseProjectData = (devices: CanvasDevice[], connections: CanvasConnection[], notes: CanvasNote[], deviceStates: { id: string; state: SwitchState }[]): ProjectData => ({
   version: '1.0',
   timestamp: new Date().toISOString(),
-  devices: deviceStates,
+  // The topology is the identity source. State records retain their config,
+  // but always use the same hardware identity as the rendered device.
+  devices: deviceStates.map((entry) => {
+    const topologyDevice = devices.find((device) => device.id === entry.id);
+    return topologyDevice?.macAddress
+      ? { ...entry, state: { ...entry.state, macAddress: topologyDevice.macAddress } }
+      : entry;
+  }),
   deviceOutputs: [],
   pcOutputs: [],
   pcHistories: [],

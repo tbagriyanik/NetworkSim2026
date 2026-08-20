@@ -43,7 +43,7 @@ export function getSwitchDisplayProfile(state: SwitchState) {
   if (isFirewall) {
     const reportedGiCount = 2;
     return {
-      switchModel: 'ASA 5506-X',
+      switchModel: 'Firewall',
       isL3: false,
       isRouter: false,
       bootImage: 'asa-software.bin',
@@ -51,7 +51,7 @@ export function getSwitchDisplayProfile(state: SwitchState) {
       rom: 'ASA boot loader',
       bootldr: 'ASA Boot Loader',
       systemImage: 'flash:asa-software.bin',
-      processor: 'ASA 5506-X (revision 01) with 8192K bytes of memory',
+      processor: 'Firewall processor (revision 01) with 8192K bytes of memory',
       reportedFeCount: 0,
       reportedGiCount,
     };
@@ -82,7 +82,7 @@ export function getSwitchDisplayProfile(state: SwitchState) {
     rom: isL3 ? 'L3 Switch boot loader' : 'L2 Switch boot loader',
     bootldr: isL3 ? 'L3 Switch Boot Loader' : 'L2 Switch Boot Loader',
     systemImage: isL3 ? 'flash:l3switch-software.bin' : 'flash:l2switch-software.bin',
-    processor: isL3 ? 'WS-C3650-24PS (PowerPC405) processor (revision 01) with 131072K bytes of memory' : 'WS-C2960-24TT-L (PowerPC405) processor (revision C0) with 65536K bytes of memory',
+    processor: isL3 ? 'Layer 3 switch processor (revision 01) with 131072K bytes of memory' : 'Layer 2 switch processor (revision C0) with 65536K bytes of memory',
     reportedFeCount: isL3 ? 0 : 24,
     reportedGiCount: isL3 ? 28 : 2,
   };

@@ -38,7 +38,7 @@ const example = (isTr: boolean): ExampleProject => {
     }
   ];
 
-  const routerDhcpR1 = createInitialRouterState('00:50:00:00:00:07');
+  const routerDhcpR1 = createInitialRouterState(routerDhcpDevices[3].macAddress);
   routerDhcpR1.hostname = 'R1';
   routerDhcpR1.ports['gi0/0'] = {
     ...routerDhcpR1.ports['gi0/0'],
@@ -93,7 +93,7 @@ const example = (isTr: boolean): ExampleProject => {
     'end'
   ];
 
-  const routerDhcpSw1 = createInitialState('00:1A:2B:3C:4D:70');
+  const routerDhcpSw1 = createInitialState(routerDhcpDevices[2].macAddress);
   routerDhcpSw1.hostname = 'SW1';
   routerDhcpSw1.ports['fa0/1'] = { ...routerDhcpSw1.ports['fa0/1'], status: 'connected' };
   routerDhcpSw1.ports['fa0/2'] = { ...routerDhcpSw1.ports['fa0/2'], status: 'connected' };
@@ -117,8 +117,8 @@ const example = (isTr: boolean): ExampleProject => {
       ? 'Router DHCP havuzu üzerinden iki PCye otomatik IP dağıtımı.'
       : 'Automatic IP assignment to two PCs via router DHCP pool.',
     detail: isTr
-      ? 'R1: ip dhcp pool LAN, network 192.168.1.0 255.255.255.0, default-router 192.168.1.1'
-      : 'R1: ip dhcp pool LAN, network 192.168.1.0 255.255.255.0, default-router 192.168.1.1',
+      ? 'R1: ip dhcp pool LAN, network 192.168.10.0 255.255.255.0, default-router 192.168.10.1'
+      : 'R1: ip dhcp pool LAN, network 192.168.10.0 255.255.255.0, default-router 192.168.10.1',
     level: 'basic',
     data: baseProjectData(routerDhcpDevices, routerDhcpConnections, routerDhcpNotes, [
       { id: 'router-1', state: routerDhcpR1 },
