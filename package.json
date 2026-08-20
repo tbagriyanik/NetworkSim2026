@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 3000",
-    "build": "next build && shx cp -r .next/static .next/standalone/ && shx cp -r public .next/standalone/",
+    "build": "next build",
     "start": "cross-env NODE_ENV=production bun .next/standalone/server.js",
     "test": "vitest run"
   },

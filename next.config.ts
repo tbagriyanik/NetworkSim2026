@@ -86,7 +86,9 @@ const config = async () => {
   const version = getAppVersion();
 
   const nextConfig: NextConfig = {
-    output: "standalone",
+    // Vercel kendi Next.js runtime'ını kullanır; standalone çıktısı Vercel'in
+    // build çıktısı analizini bozabiliyor. Diğer ortamlarda Docker için korunur.
+    output: process.env.VERCEL ? undefined : "standalone",
     productionBrowserSourceMaps: false,
     experimental: {
       optimizePackageImports: ["lucide-react"],
