@@ -1,17 +1,17 @@
 # Network Simulator
 
 ![Version](https://img.shields.io/badge/version-2.6.0-blue)
-![Next.js](https://img.shields.io/badge/Next.js-16.2.4-black?logo=next.js)
-![React](https://img.shields.io/badge/React-19.2.5-61DAFB?logo=react&logoColor=black)
+![Next.js](https://img.shields.io/badge/Next.js-16.3.1-black?logo=next.js)
+![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?logo=typescript&logoColor=white)
-![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.2.2-06B6D4?logo=tailwindcss&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-126,378-lightgrey)
 ![Source Files](https://img.shields.io/badge/source--files-494-informational)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
-**Live app:** [network2026.vercel.app](https://network2026.vercel.app)
+**Live app:** [network2026.vercel.app](https://network2026.vercel.app) · **Alternatif:** [tuzlanet.vercel.app](https://tuzlanet.vercel.app)
 
 ### Demo & Videos / Tanıtım Videoları
 - 📺 **Tanıtım 1:** [https://www.youtube.com/watch?v=2Xo-ZP5qgXI](https://www.youtube.com/watch?v=2Xo-ZP5qgXI)

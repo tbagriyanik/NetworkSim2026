@@ -176,7 +176,8 @@ examples/            # Feature demo docs
 - ✅ Dark/Light mode
 - ✅ Turkish/English support
 - ✅ Offline storage
-- ✅ Canlı uygulama: network2026.vercel.app
+- ✅ Canlı uygulama: [network2026.vercel.app](https://network2026.vercel.app)
+- ✅ Alternatif canlı uygulama: [tuzlanet.vercel.app](https://tuzlanet.vercel.app)
 - ✅ Oda takip sistemi (öğrenci oturum takibi)
 - ✅ Google Sheets entegrasyonu
 - ✅ OSPF Multi-Area (Area 0/10/20)
