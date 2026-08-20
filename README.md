@@ -6,6 +6,8 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0.3-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.2.2-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
+![Total Lines](https://img.shields.io/badge/total--lines-114,824-lightgrey)
+![Source Files](https://img.shields.io/badge/source--files-494-informational)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -34,10 +36,11 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Source Files / Kaynak Dosya | TypeScript/TSX kaynakları |
+| Total Lines / Toplam Satır (src/) | 114,824 |
+| Source Files / Kaynak Dosya | 494 |
 | Documentation Files / Dokümantasyon Dosya | 23 |
-| Example Projects / Örnek Proje | Uygulama içindeki örnek projeler |
-| Guided Lessons / Rehberli Ders | Uygulama içindeki rehberli dersler |
+| Example Projects / Örnek Proje | 45 |
+| Guided Lessons / Rehberli Ders | 19 |
 | Exams / Sınavlar | Sınav modu desteği |
 | CLI Commands / CLI Komutları | CLI referansında listelenen komutlar |
 
