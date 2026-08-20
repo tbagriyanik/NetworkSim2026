@@ -205,6 +205,23 @@ function cmdExit(
           currentDhcpPool: undefined
         }
       };
+    case 'dot11-config':
+      return {
+        success: true,
+        newState: {
+          currentMode: 'config',
+          currentInterface: undefined,
+          currentRadio: undefined
+        }
+      };
+    case 'ssid-config':
+      return {
+        success: true,
+        newState: {
+          currentMode: 'config',
+          currentSsid: undefined
+        }
+      };
     case 'privileged':
     case 'user':
       return {
@@ -234,10 +251,15 @@ function cmdEnd(
     case 'router-config':
     case 'config-std-nacl':
     case 'config-ext-nacl':
+    case 'dot11-config':
+    case 'ssid-config':
       return {
         success: true,
         newState: {
           currentMode: 'privileged',
+          currentInterface: undefined,
+          currentRadio: undefined,
+          currentSsid: undefined,
           currentNamedAcl: undefined,
           currentExtendedAcl: undefined
         }

@@ -614,9 +614,23 @@ function cmdDebug(state: SwitchState, input: string, _ctx: CommandContext): Comm
         output += `OSPF: Nbr 10.0.0.1 has state 0x8 (FULL), neighbor state changed\n`;
         output += `ip ospf adj debugging is on\n`;
     } else if (lower === 'ip packet') {
-        output += `\nIP: s=10.0.0.1 (gi0/1) d=192.168.1.100 (gi0/0) len 100, rcvd 3\n`;
-        output += `IP: s=192.168.1.100 (gi0/0) d=8.8.8.8 (gi0/1) len 40, forward\n`;
-        output += `IP: s=10.0.0.2 (gi0/0) d=192.168.1.101 (gi0/0) len 64, rcvd 3\n`;
+        const configuredPorts = Object.values(state.ports || {}).filter(p => p.ipAddress && !p.shutdown);
+        if (configuredPorts.length >= 2) {
+            const p1 = configuredPorts[0];
+            const p2 = configuredPorts[1];
+            const net1 = p1.ipAddress?.replace(/\.\d+$/, '.100');
+            const net2 = p2.ipAddress?.replace(/\.\d+$/, '.50');
+            output += `\nIP: s=${net1} (${p1.name || p1.id}) d=${p2.ipAddress} (${p2.name || p2.id}) len 100, rcvd 3\n`;
+            output += `IP: s=${p1.ipAddress} (${p1.name || p1.id}) d=${net2} (${p2.name || p2.id}) len 40, forward\n`;
+        } else if (configuredPorts.length === 1) {
+            const p1 = configuredPorts[0];
+            const net1 = p1.ipAddress?.replace(/\.\d+$/, '.100');
+            output += `\nIP: s=${net1} (${p1.name || p1.id}) d=${p1.ipAddress} (${p1.name || p1.id}) len 84, rcvd 3\n`;
+            output += `IP: s=${p1.ipAddress} (${p1.name || p1.id}) d=8.8.8.8 (${p1.name || p1.id}) len 40, forward\n`;
+        } else {
+            output += `\nIP: s=10.0.0.1 (gi0/1) d=192.168.1.100 (gi0/0) len 100, rcvd 3\n`;
+            output += `IP: s=192.168.1.100 (gi0/0) d=8.8.8.8 (gi0/1) len 40, forward\n`;
+        }
         output += `ip packet debugging is on\n`;
     }
 

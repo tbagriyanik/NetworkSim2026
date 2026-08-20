@@ -1,4 +1,4 @@
-﻿// Mode degistirme ve global config komutlari
+// Mode degistirme ve global config komutlari
 import type { CommandPattern } from './commandPatterns.types';
 
 export const modePatterns: Record<string, CommandPattern> = {
@@ -59,13 +59,13 @@ export const modePatterns: Record<string, CommandPattern> = {
   },
   'exit': {
     pattern: /^exit$/i,
-    modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config', 'dot11-config', 'ssid-config'],
     minArgs: 0,
     maxArgs: 0
   },
   'end': {
     pattern: /^end$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config', 'dot11-config', 'ssid-config'],
     minArgs: 0,
     maxArgs: 0
   },
