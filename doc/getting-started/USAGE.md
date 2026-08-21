@@ -17,6 +17,7 @@
 | **Zoom / Yakınlaştır** | Mouse wheel / Fare tekerleği OR / VEYA Ctrl + Scroll |
 | **Context menu / Bağlam menüsü** | Right-click device / Cihaza sağ tık |
 | **Open device / Cihaz aç** | Double-click device / Cihaza çift tık |
+| **Mobile cable draw / Mobil kablo çiz** | Tap source port → tap destination port (tap-tap) / Kaynak porta tık → hedef porta tık |
 
 ### Cable Types / Kablo Tipleri
 | Cable / Kablo | Use / Kullanım |
@@ -24,6 +25,8 @@
 | **Straight-through / Düz** | PC ↔ Switch, Router ↔ Switch |
 | **Crossover / Çapraz** | Switch ↔ Switch, Router ↔ Router, PC ↔ PC, PC ↔ Router |
 | **Console** | PC COM → Switch/Router Console port |
+| **Serial** | Router ↔ Router (WAN, PPP/HDLC, clock rate) |
+| **Wireless** | Otomatik — SSID eşleşmesi + güvenlik + mesafeye göre |
 
 ---
 
@@ -80,6 +83,13 @@
 | `Page Down` | Scroll canvas down | Canvas'ı aşağı kaydır |
 | `Double-click (Empty Space)` | Reset topology view | Topoloji görünümünü sıfırla |
 | `Double-click (Device)` | Open collapsible device panel | Daraltılabilir cihaz panelini aç |
+| `Double-click (Window Title)` | Collapse / expand floating panel | Yüzen pencereyi daralt / genişlet |
+| `Ctrl + S` | Save project | Projeyi kaydet |
+| `Ctrl + O` | Open project file | Proje dosyasını aç |
+| `Ctrl + N` / `Alt + N` | New project | Yeni proje |
+| `Ctrl + P` | Print topology | Topolojiyi yazdır |
+| `Ctrl + F` | Toggle fullscreen | Tam ekrana geç / çık |
+| `Alt + R` | Reset zoom/pan view | Görünümü sıfırla |
 
 ### Ping Packet Analysis / Ping Paket Analizi
 | Shortcut / Kısayol | EN | TR |
@@ -122,6 +132,33 @@
 
 ---
 
+## EN: Advanced UI Features / TR: Gelişmiş Arayüz Özellikleri
+
+### Window Management / Pencere Yönetimi
+| Feature / Özellik | How / Nasıl |
+|---|---|
+| **Collapse panel / Paneli daralt** | Başlık çubuğuna çift tıkla / Double-click title bar |
+| **Drag panel / Panel taşı** | Başlık çubuğunu sürükle / Drag title bar |
+| **Reset window positions / Pencere konumlarını sıfırla** | Yenile (F5) / Refresh (F5) |
+
+### Graphics Quality / Grafik Kalitesi
+- Üst menüden **Grafik Kalitesi** seçeneğiyle **Yüksek / Düşük** mod arasında geçiş yapabilirsiniz.
+- Düşük kalite, 50+ cihazlı büyük topolojilerde akıcılığı artırır.
+- High/Low quality toggle is available in the top menu to improve performance on large topologies.
+
+### Topology Generator / Topoloji Üretici
+- **"Topoloji Üret"** butonu ile 40+ hazır senaryodan ağ topolojisi oluşturun.
+- Arama kutusuna senaryo adı yazarak filtreleme yapabilirsiniz (`ospf`, `vlan`, `nat`, `iot`).
+- Detaylı bilgi için → [TOPOLOGY_GENERATOR.md](TOPOLOGY_GENERATOR.md)
+
+### Packet Capture / Paket Yakalama
+- **Paket Yakalama Paneli** ile ağ trafiğini gerçek zamanlı izleyin.
+- Çoklu dışlama filtresi: `cdp, stp, arp` gibi virgülle ayrılmış terimler girin.
+- Arka plan trafik (DHCP DORA, STP BPDU, CDP, OSPF Hello vb.) otomatik yakalanır.
+- Detaylı bilgi için → [PACKET_CAPTURE_GUIDE.md](../network/PACKET_CAPTURE_GUIDE.md)
+
+---
+
 ## EN: Tips / TR: İpuçları
 
 - **F1** anywhere toggles the help panel / Her yerde F1 yardım panelini açar
@@ -131,10 +168,12 @@
 - **Tab** auto-completes commands / `Tab` komutları tamamlar
 - **Ctrl + Drag** snaps devices to 16px grid / `Ctrl + Drag` cihazları ızgaraya yapıştırır
 - **Double-click** any device to open its panel / Cihaza çift tık paneli açar
+- **Double-click title bar** of any floating window to collapse it / Yüzen pencerenin başlığına çift tıklayarak daraltabilirsiniz
 - **Space + Drag** pans the canvas when zoomed in / `Boşluk + Sürükle` yakınlaştırınca tuvali kaydırır
 - **Arrow Keys** move selected devices on topology / `Ok Tuşları` topolojide seçili cihazları taşır
 - **Shift + Arrow Keys** moves selected devices faster / `Shift + Ok Tuşları` daha hızlı taşır
 - **P** and **N** control ping packet animation playback / `P` ve `N` ping animasyonunu kontrol eder
 - **F5** refreshes the network topology / `F5` topolojiyi yeniler
 - Config panel shows live `running-config` / Config paneli canlı `running-config` gösterir
-- Windows are auto-positioned and restored on refresh / Pencereler otomatik konumlanır ve yenilemede geri yüklenir; Ağ Yenilendi Paneli'nin daraltılmış/genişletilmiş durumu da korunur
+- Windows are auto-positioned and restored on refresh / Pencereler otomatik konumlanır ve yenilemede geri yüklenir
+- For PC CMD parameters → [PC_CMD_REFERENCE.md](PC_CMD_REFERENCE.md)

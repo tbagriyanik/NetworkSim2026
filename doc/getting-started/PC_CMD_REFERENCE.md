@@ -1,0 +1,228 @@
+# 💻 PC CMD Komut Referansı / PC CMD Command Reference
+
+PC panelindeki **CMD (Komut İstemi)** sekmesinde kullanılabilen tüm komutlar ve parametreleri.
+
+> **Not:** Bu komutlar PC cihazının CMD terminalinde çalışır. Router/Switch CLI komutlarından farklıdır.
+
+---
+
+## 📡 ping
+
+ICMP Echo istekleri ile bağlantı testi.
+
+```
+ping <hedef-ip> [parametreler]
+ping <hostname> [parametreler]
+```
+
+| Parametre | Açıklama |
+|---|---|
+| `-n <sayı>` | Gönderilecek paket sayısı (varsayılan: 4) |
+| `-l <bayt>` | Paket boyutu (byte) |
+| `-w <ms>` | Zaman aşımı (milisaniye) |
+| `-a` | IP adresini hostname'e çevir (PTR sorgusu) |
+| `-t` | Ctrl+C ile durdurana kadar sürekli ping |
+| `-4` | IPv4 kullan |
+| `-6` | IPv6 kullan |
+
+**Örnekler:**
+```
+ping 192.168.1.1
+ping 192.168.1.1 -n 10
+ping 192.168.1.1 -t
+ping 192.168.1.1 -l 1400 -n 5
+ping google.com -a
+```
+
+---
+
+## 🗺️ tracert / traceroute
+
+Ağ paketinin geçtiği yolu (hop-by-hop) gösterir.
+
+```
+tracert <hedef-ip>
+tracert <hostname>
+```
+
+| Parametre | Açıklama |
+|---|---|
+| `-d` | DNS çözümlemesini atla (sadece IP göster) |
+| `-h <max-hop>` | Maksimum hop sayısı |
+| `-w <ms>` | Her hop için zaman aşımı |
+| `-4` | IPv4 kullan |
+| `-6` | IPv6 kullan |
+
+**Örnekler:**
+```
+tracert 8.8.8.8
+tracert 192.168.1.1 -d
+tracert 192.168.1.1 -h 10
+```
+
+---
+
+## 🔍 nslookup
+
+DNS isim çözümleme ve sorgu aracı.
+
+```
+nslookup <hostname>
+nslookup <ip-adresi>
+nslookup
+```
+
+| Parametre / Sözdizimi | Açıklama |
+|---|---|
+| `nslookup <hostname>` | Hostname'den IP'ye çözümleme |
+| `nslookup <ip>` | Ters DNS (PTR) çözümleme |
+| `-type=<tür>` | Kayıt tipi (A, AAAA, MX, NS, PTR, CNAME, SOA) |
+| `server <dns-ip>` | Kullanılacak DNS sunucusunu belirt |
+
+**Örnekler:**
+```
+nslookup google.com
+nslookup 192.168.1.1
+nslookup google.com -type=MX
+nslookup google.com server 8.8.8.8
+```
+
+---
+
+## 🧮 arp
+
+ARP önbelleğini görüntüle ve yönet.
+
+```
+arp [parametreler]
+```
+
+| Parametre | Açıklama |
+|---|---|
+| `-a` / `-g` | Tüm ARP önbelleğini listele |
+| `-v` | Ayrıntılı çıktı |
+| `-d <ip>` | Belirtilen IP için ARP girdisini sil |
+| `-s <ip> <mac>` | Statik ARP girdisi ekle |
+
+**Örnekler:**
+```
+arp -a
+arp -d 192.168.1.1
+arp -s 192.168.1.100 00-11-22-33-44-55
+```
+
+---
+
+## 📊 netstat
+
+Aktif ağ bağlantılarını ve istatistikleri gösterir.
+
+```
+netstat [parametreler]
+```
+
+| Parametre | Açıklama |
+|---|---|
+| `-a` | Tüm bağlantıları ve dinleme portlarını göster |
+| `-n` | Adresleri sayısal olarak göster (DNS çözümlemesi yapma) |
+| `-o` | İlgili işlem ID'sini (PID) göster |
+| `-p <protokol>` | Belirtilen protokolün bağlantılarını göster (TCP, UDP) |
+| `-r` | Yönlendirme tablosunu göster |
+| `-s` | Her protokol için istatistikleri göster |
+| `-e` | Ethernet istatistiklerini göster |
+
+**Örnekler:**
+```
+netstat -a
+netstat -an
+netstat -r
+netstat -s
+```
+
+---
+
+## 📡 nbtstat
+
+NetBIOS over TCP/IP istatistikleri ve isim tablosu.
+
+```
+nbtstat [parametreler]
+```
+
+| Parametre | Açıklama |
+|---|---|
+| `-n` | Yerel NetBIOS isim tablosu |
+| `-c` | NetBIOS isim önbelleği |
+| `-r` | NetBIOS isim çözümleme istatistikleri |
+| `-R` | NetBIOS isim önbelleğini yenile |
+| `-RR` | NetBIOS adlarını WINS sunucusuna yeniden kaydet |
+| `-S` | Bağlantı ve sunucu istatistikleri |
+| `-s` | Bağlantı istatistikleri |
+| `-a <hostname>` | Belirtilen hostname için NetBIOS isim tablosu |
+| `-A <ip>` | Belirtilen IP için NetBIOS isim tablosu |
+| `-L` | NetBIOS lisans durumu |
+
+**Örnekler:**
+```
+nbtstat -n
+nbtstat -c
+nbtstat -a PC1
+```
+
+---
+
+## 🌐 ipconfig
+
+PC'nin IP yapılandırmasını görüntüler ve yönetir.
+
+```
+ipconfig
+ipconfig /all
+ipconfig /release
+ipconfig /renew
+ipconfig /flushdns
+ipconfig /displaydns
+```
+
+| Komut | Açıklama |
+|---|---|
+| `ipconfig` | Temel IP adresi, subnet mask, gateway |
+| `ipconfig /all` | Tam ayrıntı (MAC, DNS, DHCP sunucu) |
+| `ipconfig /release` | DHCP kirasını bırak |
+| `ipconfig /renew` | DHCP kirası yenile |
+| `ipconfig /flushdns` | DNS önbelleğini temizle |
+| `ipconfig /displaydns` | DNS önbelleğini göster |
+
+---
+
+## 📁 Diğer Komutlar
+
+| Komut | Açıklama |
+|---|---|
+| `ping6 <ipv6-adresi>` | IPv6 ping |
+| `curl <url>` | HTTP GET isteği (PC HTTP browser simülasyonu) |
+| `wget <url>` | Dosya veya web sayfası indir (IoT Web Panel erişimi için) |
+| `cls` / `clear` | Terminali temizle |
+| `help` | Komut yardımını listele |
+| `exit` | CMD penceresini kapat |
+
+---
+
+## 🔧 Bağlantı Sorunlarını Giderme Akışı
+
+```
+1. ipconfig /all            → IP adresi ve gateway doğrula
+2. ping <gateway-ip>        → Gateway erişimini kontrol et
+3. ping <hedef-ip>          → Uç noktaya erişimi kontrol et
+4. tracert <hedef-ip>       → Paket yolunu göster
+5. arp -a                   → ARP önbelleğini kontrol et
+6. nslookup <hostname>      → DNS çözümlemesini kontrol et
+```
+
+---
+
+## 📘 İlgili Dokümanlar
+
+- [USAGE.md](USAGE.md) — Genel kullanım kılavuzu
+- [CLI_COMMANDS.md](../cli/CLI_COMMANDS.md) — Router/Switch CLI komutları
+- [CLI_GUIDED_TUTORIAL.md](../cli/CLI_GUIDED_TUTORIAL.md) — Rehberli CLI dersleri

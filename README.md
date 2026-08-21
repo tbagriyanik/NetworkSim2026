@@ -48,13 +48,20 @@ npm install && npm run dev
 
 | Document / Doküman | Description / Açıklama |
 | --- | --- |
-| [INSTALL.md](INSTALL.md) | Installation & build instructions / Kurulum & derleme talimatları |
-| [USAGE.md](doc/getting-started/USAGE.md) | Usage guide & keyboard shortcuts (TR/EN) / Kullanım kılavuzu & klavye kısayolları |
-| [NETWORK_SIMULATOR_KITAPCIK.md](doc/training/NETWORK_SIMULATOR_KITAPCIK.md) | Comprehensive Turkish training booklet / Kapsamlı Türkçe eğitim kitapçığı |
-| [history.md](doc/history.md) | Full changelog newest-to-oldest / Yeniden eskiye tam değişiklik geçmişi |
-| [DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Documentation index & reading map / Diğer tüm belgeler için indeks |
-| [ProjeOzellikleri.md](doc/training/ProjeOzellikleri.md) | Full features inventory (TR/EN) / Tüm özellikler envanteri (TR/EN) |
-| [CONTRIBUTING.md](doc/development/CONTRIBUTING.md) | Dev agent conventions, version bump & rollback + contribution guide |
+| [INSTALL.md](INSTALL.md) | Kurulum & derleme / Installation & build |
+| [USAGE.md](doc/getting-started/USAGE.md) | Kullanım kılavuzu & klavye kısayolları / Usage guide & shortcuts |
+| [PC_CMD_REFERENCE.md](doc/getting-started/PC_CMD_REFERENCE.md) | PC CMD komut parametreleri / PC CMD command parameters |
+| [TOPOLOGY_GENERATOR.md](doc/getting-started/TOPOLOGY_GENERATOR.md) | Topoloji üretici sihirbazı / Topology generator guide |
+| [CLI_COMMANDS.md](doc/cli/CLI_COMMANDS.md) | CLI komut referansı / CLI command reference |
+| [CLI_GUIDED_TUTORIAL.md](doc/cli/CLI_GUIDED_TUTORIAL.md) | Rehberli CLI dersleri / Guided CLI lessons |
+| [WIRELESS_CONFIGURATION_GUIDE.md](doc/network/WIRELESS_CONFIGURATION_GUIDE.md) | Kablosuz ağ yapılandırma / Wireless configuration |
+| [L3_SWITCH_CONFIGURATION.md](doc/network/L3_SWITCH_CONFIGURATION.md) | L3 switch yapılandırma / L3 switch configuration |
+| [PACKET_CAPTURE_GUIDE.md](doc/network/PACKET_CAPTURE_GUIDE.md) | Paket yakalama paneli / Packet capture guide |
+| [ProjeOzellikleri.md](doc/training/ProjeOzellikleri.md) | Tüm özellikler envanteri / Full features inventory (TR/EN) |
+| [NETWORK_SIMULATOR_KITAPCIK.md](doc/training/NETWORK_SIMULATOR_KITAPCIK.md) | Türkçe eğitim kitapçığı / Turkish training booklet |
+| [history.md](doc/history.md) | Sürüm geçmişi / Full changelog |
+| [DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Tüm belgeler için indeks / Full documentation index |
+| [CONTRIBUTING.md](doc/development/CONTRIBUTING.md) | Katkı rehberi & agent konvansiyonları / Contribution guide |
 
 ## Keyboard Shortcuts / Klavye Kısayolları
 
@@ -115,70 +122,6 @@ Simülatör kontrollerine hızlıca göz atmak için aşağıdaki listeyi geniş
 
 </details>
 
-## Architecture / Mimari
-
-### C4 Architecture Diagrams
-
-**1. System Context Diagram**
-```mermaid
-C4Context
-    title System Context Diagram for Network Simulator
-    
-    Person(user, "User", "Student, Instructor, or Network Enthusiast")
-    System(netsim, "Network Simulator", "Browser-based interactive network simulator for learning switching, routing, wireless, and IoT.")
-    
-    Rel(user, netsim, "Uses", "Web Browser")
-```
-
-**2. Container Diagram**
-```mermaid
-C4Container
-    title Container Diagram for Network Simulator 
-
-    Person(user, "User", "Student, Instructor, or Network Enthusiast")
-
-    System_Boundary(netsim_system, "Network Simulator") {
-        Container(web_app, "Web Application", "Next.js, React, Tailwind CSS", "Delivers the SPA, renders the interactive topology canvas, CLI panels, and UI modals.")
-        Container(sim_engine, "Simulation Engine", "TypeScript", "Core logic handling OSI layers, CLI parsing, packet forwarding, STP, ARP, and dynamic routing.")
-        Container(state_store, "State Management", "Zustand", "Centralized store holding global application state and topology configurations.")
-        ContainerDb(local_storage, "Local Storage", "Browser LocalStorage & IndexedDB", "Persists saved topologies, custom settings, and achievement records locally.")
-    }
-
-    Rel(user, web_app, "Interacts with", "Web Browser")
-    Rel(web_app, state_store, "Reads/Updates state", "Zustand hooks")
-    Rel(web_app, sim_engine, "Triggers network events", "Function calls")
-    Rel(sim_engine, state_store, "Calculates & mutates state", "Direct modifications")
-    Rel(state_store, local_storage, "Persists state", "Browser APIs")
-```
-
-### Directory Structure
-
-```
-src/
-├── app/                  # Next.js App Router — pages & layouts
-│   ├── api/             # API routes (contact, rooms, certificates)
-│   ├── [id]/            # Dynamic routes
-│   ├── layout.tsx       # Root layout
-│   ├── page.tsx         # Home page
-│   └── globals.css      # Global styles & design tokens
-├── components/           # React components
-│   ├── ui/              # Reusable UI (cards, dialogs, panels, inputs)
-│   └── network/         # Network-specific (Terminal, Topology, PCPanel)
-├── contexts/            # React contexts (theme, mode, language)
-├── hooks/               # Custom React hooks
-├── lib/
-│   ├── design-tokens/  # Design tokens (colors, typography, spacing, animations)
-│   ├── store/          # Zustand state management (appStore.ts)
-│   ├── network/         # Network simulation engine
-│   │   ├── core/        # CLI command implementations
-│   │   ├── parser/      # CLI command parsers and patterns
-│   │   └── exampleProjects.ts # Example project definitions
-│   ├── security/        # Security utilities (sanitization, rate limiting)
-│   ├── performance/     # Performance optimization (spatial partitioning)
-│   └── storage/         # Storage utilities (window position management)
-├── utils/               # Utilities (achievement records tracking)
-└── tests/               # Unit, integration, accessibility and performance tests (Vitest)
-```
 
 ## Tech Stack / Teknoloji
 
