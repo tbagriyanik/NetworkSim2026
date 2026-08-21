@@ -298,8 +298,8 @@ graph TB
     end
 
     subgraph "Veri Merkezi"
-        DC_FW["🛡️ DC Firewall<br/>Palo Alto"]
-        DC_SW["🔀 DC Core<br/>Nexus 9K"]
+        DC_FW["🛡️ DC Firewall<br/>Güvenlik Duvarı"]
+        DC_SW["🔀 DC Core<br/>Omurga Anahtar"]
         SRV_WEB["🌐 Web Server<br/>10.10.1.10"]
         SRV_DB["🗄️ Database<br/>10.10.1.20"]
         SRV_APP["⚙️ App Server<br/>10.10.1.30"]

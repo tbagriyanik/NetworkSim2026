@@ -6,56 +6,156 @@
     <title>Network Simulator - Ağ Topolojisi Görsel Örnekleri</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0e27; color: #fff; min-height: 100vh; }
-        .header { text-align: center; padding: 40px 20px; background: linear-gradient(135deg, #1a1f4e 0%, #0d1233 100%); border-bottom: 3px solid #00d4ff; }
-        .header h1 { font-size: 2.5em; background: linear-gradient(90deg, #00d4ff, #7c3aed, #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .header p { color: #94a3b8; margin-top: 10px; font-size: 1.1em; }
-        .tabs { display: flex; justify-content: center; gap: 10px; padding: 20px; flex-wrap: wrap; }
-        .tab { padding: 12px 24px; border: 2px solid #334155; border-radius: 12px; cursor: pointer; transition: all 0.3s; background: #1e293b; color: #94a3b8; font-size: 0.95em; }
-        .tab:hover { border-color: #00d4ff; color: #fff; }
-        .tab.active { background: linear-gradient(135deg, #00d4ff, #7c3aed); color: #fff; border-color: transparent; }
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: #060913; 
+            color: #f8fafc; 
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+        }
+        
+        .header { 
+            text-align: center; 
+            padding: 40px 20px; 
+            background: rgba(13, 18, 43, 0.7); 
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2); 
+        }
+        .header h1 { 
+            font-size: 2.2em; 
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #38bdf8, #818cf8, #f472b6); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+        }
+        .header p { color: #94a3b8; margin-top: 8px; font-size: 1.05em; }
+        
+        .tabs { display: flex; justify-content: center; gap: 10px; padding: 25px 20px 10px; flex-wrap: wrap; }
+        .tab { 
+            padding: 10px 20px; 
+            border: 1px solid rgba(51, 65, 85, 0.8); 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); 
+            background: rgba(30, 41, 59, 0.4); 
+            color: #94a3b8; 
+            font-size: 0.9em; 
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+        }
+        .tab:hover { 
+            border-color: #00d4ff; 
+            color: #f8fafc;
+            background: rgba(30, 41, 59, 0.7);
+        }
+        .tab.active { 
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(124, 58, 237, 0.2)); 
+            color: #38bdf8; 
+            border-color: #00d4ff; 
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.15);
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .topology { display: none; }
         .topology.active { display: block; }
 
-        /* SVG Styles */
-        svg { width: 100%; height: auto; }
-        .device { cursor: pointer; transition: filter 0.3s ease; }
-        .device:hover { filter: drop-shadow(0 0 15px rgba(0, 212, 255, 0.7)) brightness(1.15); }
-        .connection { stroke-width: 2.5; fill: none; }
-        .label { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #fff; text-anchor: middle; }
-        .label-small { font-size: 9px; fill: #94a3b8; }
-        .title-text { font-size: 16px; font-weight: bold; fill: #00d4ff; }
-        .subtitle { font-size: 12px; fill: #7c3aed; }
+        /* SVG & Canvas Styles */
+        svg { 
+            width: 100%; 
+            height: auto; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            background: #090d16;
+        }
+        
+        /* Glassmorphic Device Nodes matching the actual app */
+        .device { cursor: pointer; }
+        .device .device-card {
+            stroke-width: 1.5;
+            transition: all 0.2s ease-in-out;
+        }
+        .device:hover .device-card {
+            filter: brightness(1.2) drop-shadow(0 0 8px currentColor);
+        }
+        
+        /* Device Theme Colors */
+        .device.pc .device-card { stroke: #3b82f6; fill: rgba(59, 130, 246, 0.08); color: #3b82f6; }
+        .device.server .device-card { stroke: #6366f1; fill: rgba(99, 102, 241, 0.08); color: #6366f1; }
+        .device.switchL2 .device-card { stroke: #06b6d4; fill: rgba(6, 182, 212, 0.08); color: #06b6d4; }
+        .device.switchL3 .device-card { stroke: #a855f7; fill: rgba(168, 85, 247, 0.08); color: #a855f7; }
+        .device.router .device-card { stroke: #a855f7; fill: rgba(168, 85, 247, 0.08); color: #a855f7; }
+        .device.wlc .device-card { stroke: #eab308; fill: rgba(234, 179, 8, 0.08); color: #eab308; }
+        .device.ap .device-card { stroke: #fbbf24; fill: rgba(251, 191, 36, 0.08); color: #fbbf24; }
+        .device.firewall .device-card { stroke: #ef4444; fill: rgba(239, 68, 68, 0.08); color: #ef4444; }
+        .device.iot .device-card { stroke: #f59e0b; fill: rgba(245, 158, 11, 0.08); color: #f59e0b; }
+        .device.medical .device-card { stroke: #ec4899; fill: rgba(236, 72, 153, 0.08); color: #ec4899; }
+        .device.phone .device-card { stroke: #6366f1; fill: rgba(99, 102, 241, 0.08); color: #6366f1; }
 
-        /* Connection Colors */
-        .copper { stroke: #fbbf24; stroke-linecap: round; }
-        .fiber { stroke: #00ff88; stroke-linecap: round; }
-        .wireless { stroke: #00d4ff; stroke-dasharray: 8,4; stroke-linecap: round; animation: pulse 2s ease-in-out infinite; }
-        .serial { stroke: #f43f5e; stroke-linecap: round; }
-        .trunk { stroke: #a78bfa; stroke-width: 3.5; stroke-linecap: round; }
+        /* SVG Device Icons styling */
+        .device-icon {
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .device.pc .device-icon { stroke: #93c5fd; }
+        .device.server .device-icon { stroke: #a5b4fc; }
+        .device.switchL2 .device-icon { stroke: #67e8f9; }
+        .device.switchL3 .device-icon { stroke: #c084fc; }
+        .device.router .device-icon { stroke: #c084fc; }
+        .device.wlc .device-icon { stroke: #fef08a; }
+        .device.ap .device-icon { stroke: #fde047; }
+        .device.firewall .device-icon { stroke: #fca5a5; }
+        .device.iot .device-icon { stroke: #fde047; }
+        .device.medical .device-icon { stroke: #fbcfe8; }
+        .device.phone .device-icon { stroke: #a5b4fc; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        /* General Connection Line Styles */
+        .connection { stroke-width: 2.2; fill: none; }
+        .copper { stroke: #fbbf24; }
+        .fiber { stroke: #10b981; }
+        .wireless { stroke: #06b6d4; stroke-dasharray: 6,4; animation: wifiPulse 2s linear infinite; }
+        .serial { stroke: #ef4444; }
+        .trunk { stroke: #a855f7; stroke-width: 3.2; }
+
+        @keyframes wifiPulse {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -20; }
         }
 
-        /* Info Panel */
-        .info-panel { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-top: 20px; }
-        .info-panel h3 { color: #00d4ff; margin-bottom: 15px; }
-        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .info-item { background: #0f172a; padding: 15px; border-radius: 8px; border-left: 4px solid #7c3aed; }
-        .info-item .label { color: #94a3b8; font-size: 0.85em; }
-        .info-item .value { color: #fff; font-size: 1.1em; font-weight: bold; margin-top: 5px; }
+        /* Typography */
+        .device-label { font-family: 'Segoe UI', sans-serif; font-size: 10px; font-weight: bold; fill: #f1f5f9; text-anchor: middle; }
+        .device-sublabel { font-family: 'Consolas', 'Courier New', monospace; font-size: 8.5px; fill: #94a3b8; text-anchor: middle; }
+        .title-text { font-family: 'Segoe UI', sans-serif; font-size: 16px; font-weight: 800; fill: #38bdf8; }
+        .subtitle { font-family: 'Segoe UI', sans-serif; font-size: 11px; fill: #818cf8; font-weight: 500; }
+        .zone-label { font-family: 'Segoe UI', sans-serif; font-size: 11px; font-weight: bold; }
+        .port-label { font-family: 'Consolas', monospace; font-size: 8px; fill: #64748b; }
 
-        .legend { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin: 20px 0; }
-        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9em; color: #94a3b8; }
-        .legend-color { width: 16px; height: 16px; border-radius: 4px; }
+        /* Switch Ports preview styling */
+        .port-dot { fill: #1e293b; stroke: #334155; stroke-width: 1; }
+        .port-dot.active { fill: #22c55e; stroke: #4ade80; }
+
+        /* Legend */
+        .legend { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; margin: 25px 0 15px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.85em; color: #94a3b8; }
+        .legend-color { width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid currentColor; background: rgba(255,255,255,0.02); }
+
+        /* Info Panel */
+        .info-panel { background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 22px; margin-top: 20px; }
+        .info-panel h3 { color: #38bdf8; margin-bottom: 15px; font-weight: 700; font-size: 1.1em; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .info-item { background: rgba(15, 23, 42, 0.6); padding: 15px; border-radius: 8px; border-left: 3px solid #818cf8; }
+        .info-item .label { color: #64748b; font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.05em; font-weight: bold; }
+        .info-item .value { color: #e2e8f0; font-size: 1.05em; font-weight: 600; margin-top: 4px; }
 
         /* Tooltip */
-        .tooltip { position: absolute; background: #1e293b; border: 1px solid #00d4ff; border-radius: 8px; padding: 12px; pointer-events: none; z-index: 1000; display: none; max-width: 300px; }
-        .tooltip h4 { color: #00d4ff; margin-bottom: 8px; }
-        .tooltip p { color: #94a3b8; font-size: 0.9em; line-height: 1.4; }
+        .tooltip { position: absolute; background: rgba(15, 23, 42, 0.95); border: 1px solid #38bdf8; border-radius: 8px; padding: 12px; pointer-events: none; z-index: 1000; display: none; max-width: 300px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px); }
+        .tooltip h4 { color: #38bdf8; font-size: 0.95em; margin-bottom: 5px; font-weight: bold; }
+        .tooltip p { color: #cbd5e1; font-size: 0.85em; line-height: 1.4; white-space: pre-line; }
     </style>
 </head>
 <body>
@@ -69,189 +169,182 @@
         <div class="tab" onclick="showTopology(1)">Statik Yönlendirme</div>
         <div class="tab" onclick="showTopology(2)">OSPF & Kablosuz</div>
         <div class="tab" onclick="showTopology(3)">Hastane Ağı</div>
-        <div class="tab" onclick="showTopology(4)">IoT Yeşil Serası</div>
+        <div class="tab" onclick="showTopology(4)">Akıllı Sera IoT</div>
     </div>
 
     <div class="container">
         <!-- Legend -->
         <div class="legend">
-            <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8)"></div>PC/Bilgisayar</div>
-            <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #06b6d4, #0891b2)"></div>Switch L2</div>
-            <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed)"></div>Switch L3</div>
-            <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #a855f7, #9333ea)"></div>Router</div>
-            <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #ef4444, #dc2626)"></div>Firewall</div>
-            <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #f59e0b, #d97706)"></div>IoT</div>
-            <div class="legend-item"><div class="legend-color" style="background: linear-gradient(135deg, #eab308, #ca8a04)"></div>WLC</div>
+            <div class="legend-item"><div class="legend-color" style="color: #3b82f6;"></div>Bilgisayar / PC</div>
+            <div class="legend-item"><div class="legend-color" style="color: #6366f1;"></div>Sunucu / Server</div>
+            <div class="legend-item"><div class="legend-color" style="color: #06b6d4;"></div>Switch L2</div>
+            <div class="legend-item"><div class="legend-color" style="color: #a855f7;"></div>Switch L3 / Router</div>
+            <div class="legend-item"><div class="legend-color" style="color: #ef4444;"></div>Güvenlik Duvarı</div>
+            <div class="legend-item"><div class="legend-color" style="color: #fbbf24;"></div>Wireless AP / WLC</div>
+            <div class="legend-item"><div class="legend-color" style="color: #f59e0b;"></div>IoT Sensörler</div>
         </div>
+
+        <!-- Shared Defs for Grid and Icons -->
+        <svg style="display: none;">
+            <defs>
+                <pattern id="gridPattern" width="16" height="16" patternUnits="userSpaceOnUse">
+                    <circle cx="8" cy="8" r="0.8" fill="#334155" opacity="0.6" />
+                </pattern>
+                
+                <!-- SVG Icon Symbols matching the App's DeviceIcons -->
+                <g id="icon-pc">
+                    <path d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
+                </g>
+                <g id="icon-server">
+                    <rect x="2" y="2" width="20" height="6" rx="1" />
+                    <rect x="2" y="9" width="20" height="6" rx="1" />
+                    <rect x="2" y="16" width="20" height="6" rx="1" />
+                    <circle cx="6" cy="5" r="0.8" fill="#22c55e"/>
+                    <circle cx="6" cy="12" r="0.8" fill="#22c55e"/>
+                    <circle cx="6" cy="19" r="0.8" fill="#fbbf24"/>
+                </g>
+                <g id="icon-switch">
+                    <path d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
+                </g>
+                <g id="icon-router">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l-2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+                </g>
+                <g id="icon-wlc">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l-2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
+                </g>
+                <g id="icon-ap">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 21V12M12 12a4 4 0 0 1 0-8M12 12a7 7 0 0 1 0-14" />
+                    <circle cx="12" cy="12" r="2.5" fill="currentColor" />
+                </g>
+                <g id="icon-firewall">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    <path d="m9 12 2 2 4-4" />
+                </g>
+                <g id="icon-iot">
+                    <path d="M16.247 7.761a6 6 0 0 1 0 8.478" />
+                    <path d="M19.075 4.933a10 10 0 0 1 0 14.134" />
+                    <path d="M4.925 19.067a10 10 0 0 1 0-14.134" />
+                    <path d="M7.753 16.239a6 6 0 0 1 0-8.478" />
+                    <circle cx="12" cy="12" r="2" />
+                </g>
+                <g id="icon-medical">
+                    <path d="M19 5h-2V3c0-1.1-.9-2-2-2H9c-1.1 0-2 .9-2 2v2H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-5 0h-4V3h4v2zm-1 8h-2v2H9v-2H7v-2h2V9h2v2h2v2z"/>
+                </g>
+                <g id="icon-phone">
+                    <path d="M20 15.5c-1.25 0-2.45-.2-3.57-.57a1.02 1.02 0 0 0-1.02.24l-2.2 2.2a15.08 15.08 0 0 1-6.59-6.59l2.2-2.2a1 1 0 0 0 .25-1.02A11.36 11.36 0 0 1 8.5 4c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1 0 9.39 7.61 17 17 17 .55 0 1-.45 1-1v-3.5c0-.55-.45-1-1-1z" />
+                </g>
+            </defs>
+        </svg>
 
         <!-- Topology 0: Basic VLAN -->
         <div class="topology active" id="topo0">
             <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#1a1f4e"/>
-                        <stop offset="100%" style="stop-color:#0d1233"/>
-                    </linearGradient>
-                    <!-- PC Gradient (Blue) -->
-                    <linearGradient id="pcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6"/>
-                        <stop offset="100%" style="stop-color:#1d4ed8"/>
-                    </linearGradient>
-                    <!-- Switch L2 Gradient (Cyan) -->
-                    <linearGradient id="switchGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#06b6d4"/>
-                        <stop offset="100%" style="stop-color:#0891b2"/>
-                    </linearGradient>
-                    <!-- Router Gradient (Purple) -->
-                    <linearGradient id="routerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#a855f7"/>
-                        <stop offset="100%" style="stop-color:#9333ea"/>
-                    </linearGradient>
-                    <!-- Server Gradient (Indigo) -->
-                    <linearGradient id="serverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#6366f1"/>
-                        <stop offset="100%" style="stop-color:#4f46e5"/>
-                    </linearGradient>
-                    <!-- Filters -->
-                    <filter id="deviceShadow" x="-20%" y="-20%" width="140%" height="140%">
-                        <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
-                    </filter>
-                </defs>
-                <rect width="900" height="520" fill="url(#bgGrad)" rx="12"/>
+                <!-- Dot Grid Background -->
+                <rect width="900" height="520" fill="url(#gridPattern)" />
 
                 <!-- Title -->
-                <text x="450" y="35" class="title-text" text-anchor="middle">Temel VLAN Topolojisi - Router-on-a-Stick</text>
-                <text x="450" y="55" class="subtitle" text-anchor="middle">Tek Router ile Inter-VLAN Yönlendirme</text>
+                <text x="450" y="32" class="title-text" text-anchor="middle">Temel VLAN Topolojisi - Router-on-a-Stick</text>
+                <text x="450" y="48" class="subtitle" text-anchor="middle">Tek Router ile Inter-VLAN Yönlendirme</text>
 
                 <!-- VLAN Zones -->
-                <rect x="30" y="80" width="250" height="400" rx="8" fill="#3b82f610" stroke="#3b82f6" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="155" y="105" fill="#3b82f6" text-anchor="middle" font-size="12" font-weight="bold">VLAN 10 - Yönetim</text>
+                <rect x="30" y="70" width="250" height="420" rx="10" fill="rgba(59, 130, 246, 0.03)" stroke="rgba(59, 130, 246, 0.25)" stroke-dasharray="4,4"/>
+                <text x="155" y="92" class="zone-label" fill="#60a5fa" text-anchor="middle">VLAN 10 - Yönetim</text>
 
-                <rect x="320" y="80" width="260" height="400" rx="8" fill="#8b5cf610" stroke="#8b5cf6" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="450" y="105" fill="#8b5cf6" text-anchor="middle" font-size="12" font-weight="bold">VLAN 20 - Kullanıcı</text>
+                <rect x="320" y="70" width="260" height="420" rx="10" fill="rgba(168, 85, 247, 0.03)" stroke="rgba(168, 85, 247, 0.25)" stroke-dasharray="4,4"/>
+                <text x="450" y="92" class="zone-label" fill="#c084fc" text-anchor="middle">VLAN 20 - Kullanıcı</text>
 
-                <rect x="620" y="80" width="250" height="400" rx="8" fill="#f9731610" stroke="#f97316" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="745" y="105" fill="#f97316" text-anchor="middle" font-size="12" font-weight="bold">VLAN 30 - Sunucular</text>
+                <rect x="620" y="70" width="250" height="420" rx="10" fill="rgba(99, 102, 241, 0.03)" stroke="rgba(99, 102, 241, 0.25)" stroke-dasharray="4,4"/>
+                <text x="745" y="92" class="zone-label" fill="#818cf8" text-anchor="middle">VLAN 30 - Sunucular</text>
 
-                <!-- Connections (draw first so devices are on top) -->
-                <path d="M 155 260 Q 280 290 450 360" class="connection copper"/>
-                <path d="M 450 230 Q 475 290 450 360" class="connection copper"/>
-                <path d="M 450 290 Q 425 320 450 360" class="connection copper"/>
-                <path d="M 745 260 Q 620 290 450 360" class="connection copper"/>
-                <path d="M 450 365 Q 450 400 450 440" class="connection trunk"/>
+                <!-- Connections -->
+                <path d="M 155 245 Q 280 290 450 355" class="connection copper"/>
+                <path d="M 450 220 Q 475 290 450 355" class="connection copper"/>
+                <path d="M 450 290 Q 425 320 450 355" class="connection copper"/>
+                <path d="M 745 245 Q 620 290 450 355" class="connection copper"/>
+                <path d="M 450 360 L 450 440" class="connection trunk"/>
 
                 <!-- Port Labels -->
-                <text x="270" y="300" class="label label-small">Fa0/1</text>
-                <text x="475" y="295" class="label label-small">Fa0/2</text>
-                <text x="430" y="330" class="label label-small">Fa0/3</text>
-                <text x="620" y="300" class="label label-small">Fa0/4</text>
-                <text x="465" y="405" class="label label-small">Gi0/1 Trunk</text>
+                <text x="270" y="300" class="port-label">Fa0/1</text>
+                <text x="475" y="295" class="port-label">Fa0/2</text>
+                <text x="430" y="330" class="port-label">Fa0/3</text>
+                <text x="620" y="300" class="port-label">Fa0/4</text>
+                <text x="465" y="405" class="port-label">Gi0/1 Trunk</text>
 
                 <!-- PC-1 (VLAN 10) -->
-                <g class="device" transform="translate(105, 170)">
-                    <rect x="0" y="0" width="100" height="80" rx="10" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <!-- Monitor -->
-                    <rect x="15" y="10" width="70" height="42" rx="4" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="18" y="13" width="64" height="36" rx="2" fill="#1e293b"/>
-                    <!-- Screen content -->
-                    <rect x="22" y="17" width="30" height="3" rx="1" fill="#3b82f6" opacity="0.6"/>
-                    <rect x="22" y="23" width="20" height="3" rx="1" fill="#22c55e" opacity="0.6"/>
-                    <rect x="22" y="29" width="25" height="3" rx="1" fill="#f59e0b" opacity="0.6"/>
-                    <!-- Stand -->
-                    <rect x="35" y="52" width="30" height="8" rx="2" fill="#1e3a5f"/>
-                    <rect x="25" y="60" width="50" height="6" rx="3" fill="#1e3a5f"/>
-                    <!-- Power LED -->
-                    <circle cx="80" cy="65" r="3" fill="#22c55e"/>
-                    <text x="50" y="90" class="label" font-weight="bold">PC-1</text>
-                    <text x="50" y="105" class="label label-small">192.168.10.10</text>
+                <g class="device pc" transform="translate(105, 170)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">PC-1</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.10.10</text>
                 </g>
 
                 <!-- PC-2 (VLAN 20) -->
-                <g class="device" transform="translate(400, 145)">
-                    <rect x="0" y="0" width="100" height="80" rx="10" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="15" y="10" width="70" height="42" rx="4" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="18" y="13" width="64" height="36" rx="2" fill="#1e293b"/>
-                    <rect x="22" y="17" width="25" height="3" rx="1" fill="#3b82f6" opacity="0.6"/>
-                    <rect x="22" y="23" width="35" height="3" rx="1" fill="#ef4444" opacity="0.6"/>
-                    <rect x="22" y="29" width="15" height="3" rx="1" fill="#22c55e" opacity="0.6"/>
-                    <rect x="35" y="52" width="30" height="8" rx="2" fill="#1e3a5f"/>
-                    <rect x="25" y="60" width="50" height="6" rx="3" fill="#1e3a5f"/>
-                    <circle cx="80" cy="65" r="3" fill="#22c55e"/>
-                    <text x="50" y="90" class="label" font-weight="bold">PC-2</text>
-                    <text x="50" y="105" class="label label-small">192.168.20.10</text>
+                <g class="device pc" transform="translate(400, 145)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">PC-2</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.20.10</text>
                 </g>
 
                 <!-- PC-3 (VLAN 20) -->
-                <g class="device" transform="translate(400, 215)">
-                    <rect x="0" y="0" width="100" height="80" rx="10" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="15" y="10" width="70" height="42" rx="4" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="18" y="13" width="64" height="36" rx="2" fill="#1e293b"/>
-                    <rect x="22" y="17" width="20" height="3" rx="1" fill="#f59e0b" opacity="0.6"/>
-                    <rect x="22" y="23" width="30" height="3" rx="1" fill="#8b5cf6" opacity="0.6"/>
-                    <rect x="35" y="52" width="30" height="8" rx="2" fill="#1e3a5f"/>
-                    <rect x="25" y="60" width="50" height="6" rx="3" fill="#1e3a5f"/>
-                    <circle cx="80" cy="65" r="3" fill="#22c55e"/>
-                    <text x="50" y="90" class="label" font-weight="bold">PC-3</text>
-                    <text x="50" y="105" class="label label-small">192.168.20.11</text>
+                <g class="device pc" transform="translate(400, 215)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">PC-3</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.20.11</text>
                 </g>
 
                 <!-- Server (VLAN 30) -->
-                <g class="device" transform="translate(695, 175)">
-                    <rect x="0" y="0" width="100" height="80" rx="10" fill="url(#serverGrad)" stroke="#4338ca" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <!-- Server rack slots -->
-                    <rect x="15" y="10" width="70" height="14" rx="3" fill="#0f172a" stroke="#312e81" stroke-width="1"/>
-                    <rect x="15" y="28" width="70" height="14" rx="3" fill="#0f172a" stroke="#312e81" stroke-width="1"/>
-                    <rect x="15" y="46" width="70" height="14" rx="3" fill="#0f172a" stroke="#312e81" stroke-width="1"/>
-                    <!-- LEDs -->
-                    <circle cx="25" cy="17" r="2.5" fill="#22c55e"/>
-                    <circle cx="25" cy="35" r="2.5" fill="#22c55e"/>
-                    <circle cx="25" cy="53" r="2.5" fill="#f59e0b"/>
-                    <!-- Drive bays -->
-                    <rect x="55" y="14" width="20" height="6" rx="1" fill="#1e1b4b"/>
-                    <rect x="55" y="32" width="20" height="6" rx="1" fill="#1e1b4b"/>
-                    <rect x="55" y="50" width="20" height="6" rx="1" fill="#1e1b4b"/>
-                    <text x="50" y="90" class="label" font-weight="bold">Sunucu</text>
-                    <text x="50" y="105" class="label label-small">192.168.30.10</text>
+                <g class="device server" transform="translate(695, 175)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-server" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">Sunucu</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.30.10</text>
                 </g>
 
-                <!-- Switch L2 (WS-C2960) -->
-                <g class="device" transform="translate(385, 340)">
-                    <rect x="0" y="0" width="130" height="55" rx="8" fill="url(#switchGrad)" stroke="#0e7490" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <!-- Port LEDs row 1 -->
-                    <circle cx="18" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="18" r="4" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-                    <circle cx="90" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="108" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <!-- Port LEDs row 2 -->
-                    <circle cx="18" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="35" r="4" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
-                    <circle cx="54" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="90" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="108" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <text x="65" y="70" class="label" font-weight="bold">SW1</text>
-                    <text x="65" y="83" class="label label-small">WS-C2960-24TT-L</text>
+                <!-- Switch L2 -->
+                <g class="device switchL2" transform="translate(385, 340)">
+                    <path class="device-card" d="M 0 0 L 130 0 L 130 67 Q 130 75 122 75 L 8 75 Q 0 75 0 67 L 0 0 Z" />
+                    <g transform="translate(49, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-switch" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <!-- Ports indicator dots -->
+                    <circle cx="20" cy="55" r="2.5" class="port-dot active" />
+                    <circle cx="35" cy="55" r="2.5" class="port-dot active" />
+                    <circle cx="50" cy="55" r="2.5" class="port-dot active" />
+                    <circle cx="65" cy="55" r="2.5" class="port-dot active" />
+                    <circle cx="80" cy="55" r="2.5" class="port-dot active" />
+                    <circle cx="95" cy="55" r="2.5" class="port-dot" />
+                    <circle cx="110" cy="55" r="2.5" class="port-dot" />
+                    <text x="65" y="68" class="device-label" font-size="9">SW1</text>
                 </g>
 
-                <!-- Router (NOS Style) -->
-                <g class="device" transform="translate(400, 430)">
-                    <rect x="0" y="0" width="100" height="60" rx="10" fill="url(#routerGrad)" stroke="#7e22ce" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <!-- Router icon (compass rose) -->
-                    <circle cx="50" cy="22" r="16" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="50" y1="8" x2="50" y2="36" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="36" y1="22" x2="64" y2="22" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="40" y1="12" x2="60" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <line x1="60" y1="12" x2="40" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <circle cx="50" cy="22" r="3" fill="#c084fc"/>
-                    <!-- Status LEDs -->
-                    <circle cx="15" cy="50" r="3" fill="#22c55e"/>
-                    <circle cx="30" cy="50" r="3" fill="#22c55e"/>
-                    <circle cx="45" cy="50" r="3" fill="#f59e0b"/>
-                    <circle cx="60" cy="50" r="3" fill="#22c55e"/>
-                    <text x="50" y="80" class="label" font-weight="bold">R1</text>
-                    <text x="50" y="93" class="label label-small">Gi0/0.10 .20 .30</text>
+                <!-- Router -->
+                <g class="device router" transform="translate(400, 430)">
+                    <path class="device-card" d="M 20 0 L 80 0 Q 100 0 100 20 L 100 75 L 0 75 L 0 20 Q 0 0 20 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-router" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">R1</text>
+                    <text x="50" y="67" class="device-sublabel">Gi0/0.10 .20 .30</text>
                 </g>
             </svg>
 
@@ -274,14 +367,6 @@
                         <div class="label">Yönlendirme</div>
                         <div class="value">Router-on-a-Stick (802.1Q)</div>
                     </div>
-                    <div class="info-item">
-                        <div class="label">Toplam Cihaz</div>
-                        <div class="value">6 Cihaz</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="label">Zorluk Seviyesi</div>
-                        <div class="value">Orta</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -289,148 +374,100 @@
         <!-- Topology 1: Static Routing -->
         <div class="topology" id="topo1">
             <svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="pcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6"/>
-                        <stop offset="100%" style="stop-color:#1d4ed8"/>
-                    </linearGradient>
-                    <linearGradient id="switchGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#06b6d4"/>
-                        <stop offset="100%" style="stop-color:#0891b2"/>
-                    </linearGradient>
-                    <linearGradient id="routerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#a855f7"/>
-                        <stop offset="100%" style="stop-color:#9333ea"/>
-                    </linearGradient>
-                </defs>
-                <rect width="900" height="520" fill="url(#bgGrad)" rx="12"/>
-                <text x="450" y="35" class="title-text" text-anchor="middle">Statik Yönlendirme Topolojisi</text>
-                <text x="450" y="55" class="subtitle" text-anchor="middle">İki Router Arası Static Route</text>
+                <rect width="900" height="520" fill="url(#gridPattern)" />
+                <text x="450" y="32" class="title-text" text-anchor="middle">Statik Yönlendirme Topolojisi</text>
+                <text x="450" y="48" class="subtitle" text-anchor="middle">İki Router Arası Static Route</text>
 
                 <!-- LAN Zones -->
-                <rect x="30" y="80" width="250" height="400" rx="8" fill="#3b82f610" stroke="#3b82f6" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="155" y="105" fill="#3b82f6" text-anchor="middle" font-size="12">Yerel Ağ 1 - 192.168.10.0/24</text>
+                <rect x="30" y="70" width="250" height="420" rx="10" fill="rgba(59, 130, 246, 0.03)" stroke="rgba(59, 130, 246, 0.25)" stroke-dasharray="4,4"/>
+                <text x="155" y="92" class="zone-label" fill="#60a5fa" text-anchor="middle">Yerel Ağ 1 - 192.168.10.0/24</text>
 
-                <rect x="620" y="80" width="250" height="400" rx="8" fill="#8b5cf610" stroke="#8b5cf6" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="745" y="105" fill="#8b5cf6" text-anchor="middle" font-size="12">Yerel Ağ 2 - 192.168.20.0/24</text>
+                <rect x="620" y="70" width="250" height="420" rx="10" fill="rgba(168, 85, 247, 0.03)" stroke="rgba(168, 85, 247, 0.25)" stroke-dasharray="4,4"/>
+                <text x="745" y="92" class="zone-label" fill="#c084fc" text-anchor="middle">Yerel Ağ 2 - 192.168.20.0/24</text>
 
-                <rect x="310" y="80" width="280" height="400" rx="8" fill="#ef444410" stroke="#ef4444" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="450" y="105" fill="#ef4444" text-anchor="middle" font-size="12">WAN - 10.0.0.0/8</text>
+                <rect x="310" y="70" width="280" height="420" rx="10" fill="rgba(239, 68, 68, 0.03)" stroke="rgba(239, 68, 68, 0.25)" stroke-dasharray="4,4"/>
+                <text x="450" y="92" class="zone-label" fill="#f87171" text-anchor="middle">WAN - 10.0.0.0/8</text>
 
                 <!-- Connections -->
-                <path d="M 155 230 Q 250 215 350 230" class="connection copper"/>
+                <path d="M 155 225 Q 250 215 350 230" class="connection copper"/>
                 <path d="M 155 310 Q 250 325 350 310" class="connection copper"/>
-                <path d="M 450 230 Q 500 215 550 230" class="connection serial"/>
-                <path d="M 650 230 Q 695 215 745 230" class="connection copper"/>
+                <path d="M 435 230 L 550 230" class="connection serial"/>
+                <path d="M 650 230 Q 695 215 745 225" class="connection copper"/>
                 <path d="M 650 310 Q 695 325 745 310" class="connection copper"/>
 
                 <!-- Port Labels -->
-                <text x="250" y="220" class="label label-small">Fa0/1</text>
-                <text x="250" y="300" class="label label-small">Gi0/1</text>
-                <text x="500" y="220" class="label label-small">S0/0/0</text>
-                <text x="650" y="220" class="label label-small">Fa0/1</text>
-                <text x="650" y="300" class="label label-small">Gi0/1</text>
+                <text x="250" y="220" class="port-label">Fa0/1</text>
+                <text x="250" y="300" class="port-label">Gi0/1</text>
+                <text x="490" y="220" class="port-label">S0/0/0</text>
+                <text x="650" y="220" class="port-label">Fa0/1</text>
+                <text x="650" y="300" class="port-label">Gi0/1</text>
 
                 <!-- PC-1 -->
-                <g class="device" transform="translate(105, 190)">
-                    <rect x="0" y="0" width="100" height="80" rx="10" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="15" y="10" width="70" height="42" rx="4" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="18" y="13" width="64" height="36" rx="2" fill="#1e293b"/>
-                    <rect x="22" y="17" width="30" height="3" rx="1" fill="#3b82f6" opacity="0.6"/>
-                    <rect x="22" y="23" width="20" height="3" rx="1" fill="#22c55e" opacity="0.6"/>
-                    <rect x="35" y="52" width="30" height="8" rx="2" fill="#1e3a5f"/>
-                    <rect x="25" y="60" width="50" height="6" rx="3" fill="#1e3a5f"/>
-                    <circle cx="80" cy="65" r="3" fill="#22c55e"/>
-                    <text x="50" y="90" class="label" font-weight="bold">PC-1</text>
-                    <text x="50" y="105" class="label label-small">192.168.10.10</text>
+                <g class="device pc" transform="translate(105, 190)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">PC-1</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.10.10</text>
                 </g>
 
                 <!-- SW1 -->
-                <g class="device" transform="translate(105, 275)">
-                    <rect x="0" y="0" width="100" height="50" rx="8" fill="url(#switchGrad)" stroke="#0e7490" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="18" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="18" r="4" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-                    <circle cx="90" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="18" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="35" r="4" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
-                    <circle cx="54" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="90" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <text x="50" y="65" class="label" font-weight="bold">SW1</text>
+                <g class="device switchL2" transform="translate(105, 275)">
+                    <path class="device-card" d="M 0 0 L 100 0 L 100 67 Q 100 75 92 75 L 8 75 Q 0 75 0 67 L 0 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-switch" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="60" class="device-label">SW1</text>
                 </g>
 
                 <!-- Router 1 -->
-                <g class="device" transform="translate(385, 195)">
-                    <rect x="0" y="0" width="130" height="70" rx="10" fill="url(#routerGrad)" stroke="#7e22ce" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="65" cy="25" r="18" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="65" y1="9" x2="65" y2="41" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="49" y1="25" x2="81" y2="25" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="53" y1="13" x2="77" y2="37" stroke="#c084fc" stroke-width="1"/>
-                    <line x1="77" y1="13" x2="53" y2="37" stroke="#c084fc" stroke-width="1"/>
-                    <circle cx="65" cy="25" r="4" fill="#c084fc"/>
-                    <circle cx="20" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="38" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="56" cy="58" r="3" fill="#f59e0b"/>
-                    <circle cx="74" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="92" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="110" cy="58" r="3" fill="#ef4444"/>
-                    <text x="65" y="85" class="label" font-weight="bold">R1</text>
-                    <text x="65" y="98" class="label label-small">Gi0/0: 10.0.0.1</text>
+                <g class="device router" transform="translate(350, 195)">
+                    <path class="device-card" d="M 20 0 L 80 0 Q 100 0 100 20 L 100 75 L 0 75 L 0 20 Q 0 0 20 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-router" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">R1</text>
+                    <text x="50" y="67" class="device-sublabel">Gi0/0: 10.0.0.1</text>
                 </g>
 
                 <!-- Router 2 -->
-                <g class="device" transform="translate(485, 195)">
-                    <rect x="0" y="0" width="130" height="70" rx="10" fill="url(#routerGrad)" stroke="#7e22ce" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="65" cy="25" r="18" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="65" y1="9" x2="65" y2="41" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="49" y1="25" x2="81" y2="25" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="53" y1="13" x2="77" y2="37" stroke="#c084fc" stroke-width="1"/>
-                    <line x1="77" y1="13" x2="53" y2="37" stroke="#c084fc" stroke-width="1"/>
-                    <circle cx="65" cy="25" r="4" fill="#c084fc"/>
-                    <circle cx="20" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="38" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="56" cy="58" r="3" fill="#f59e0b"/>
-                    <circle cx="74" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="92" cy="58" r="3" fill="#22c55e"/>
-                    <circle cx="110" cy="58" r="3" fill="#ef4444"/>
-                    <text x="65" y="85" class="label" font-weight="bold">R2</text>
-                    <text x="65" y="98" class="label label-small">Gi0/0: 10.0.0.2</text>
+                <g class="device router" transform="translate(550, 195)">
+                    <path class="device-card" d="M 20 0 L 80 0 Q 100 0 100 20 L 100 75 L 0 75 L 0 20 Q 0 0 20 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-router" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">R2</text>
+                    <text x="50" y="67" class="device-sublabel">Gi0/0: 10.0.0.2</text>
                 </g>
 
                 <!-- Serial Link Badge -->
-                <rect x="435" y="238" width="90" height="22" rx="6" fill="#ef4444" opacity="0.9"/>
-                <text x="480" y="253" class="label" font-size="9" font-weight="bold">Serial HDLC</text>
+                <rect x="455" y="220" width="90" height="20" rx="6" fill="#ef4444" opacity="0.9"/>
+                <text x="500" y="233" class="device-label" font-size="9">HDLC Serial</text>
 
                 <!-- PC-2 -->
-                <g class="device" transform="translate(695, 190)">
-                    <rect x="0" y="0" width="100" height="80" rx="10" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="15" y="10" width="70" height="42" rx="4" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="18" y="13" width="64" height="36" rx="2" fill="#1e293b"/>
-                    <rect x="22" y="17" width="25" height="3" rx="1" fill="#3b82f6" opacity="0.6"/>
-                    <rect x="22" y="23" width="35" height="3" rx="1" fill="#ef4444" opacity="0.6"/>
-                    <rect x="35" y="52" width="30" height="8" rx="2" fill="#1e3a5f"/>
-                    <rect x="25" y="60" width="50" height="6" rx="3" fill="#1e3a5f"/>
-                    <circle cx="80" cy="65" r="3" fill="#22c55e"/>
-                    <text x="50" y="90" class="label" font-weight="bold">PC-2</text>
-                    <text x="50" y="105" class="label label-small">192.168.20.10</text>
+                <g class="device pc" transform="translate(695, 190)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">PC-2</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.20.10</text>
                 </g>
 
                 <!-- SW2 -->
-                <g class="device" transform="translate(695, 275)">
-                    <rect x="0" y="0" width="100" height="50" rx="8" fill="url(#switchGrad)" stroke="#0e7490" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="18" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="18" r="4" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-                    <circle cx="90" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="18" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="35" r="4" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
-                    <circle cx="72" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="90" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <text x="50" y="65" class="label" font-weight="bold">SW2</text>
+                <g class="device switchL2" transform="translate(695, 275)">
+                    <path class="device-card" d="M 0 0 L 100 0 L 100 67 Q 100 75 92 75 L 8 75 Q 0 75 0 67 L 0 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-switch" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="60" class="device-label">SW2</text>
                 </g>
             </svg>
 
@@ -439,7 +476,7 @@
                 <div class="info-grid">
                     <div class="info-item">
                         <div class="label">Yönlendirme Protokolü</div>
-                        <div class="value">Statik Route</div>
+                        <div class="value">Statik Route (Static Route)</div>
                     </div>
                     <div class="info-item">
                         <div class="label">WAN Bağlantısı</div>
@@ -449,10 +486,6 @@
                         <div class="label">Toplam Ağ</div>
                         <div class="value">3 (192.168.10, 20, 10.0.0)</div>
                     </div>
-                    <div class="info-item">
-                        <div class="label">Zorluk Seviyesi</div>
-                        <div class="value">Orta-İleri</div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -460,236 +493,195 @@
         <!-- Topology 2: OSPF & Wireless -->
         <div class="topology" id="topo2">
             <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="pcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6"/>
-                        <stop offset="100%" style="stop-color:#1d4ed8"/>
-                    </linearGradient>
-                    <linearGradient id="switchGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#06b6d4"/>
-                        <stop offset="100%" style="stop-color:#0891b2"/>
-                    </linearGradient>
-                    <linearGradient id="switchL3Grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#8b5cf6"/>
-                        <stop offset="100%" style="stop-color:#7c3aed"/>
-                    </linearGradient>
-                    <linearGradient id="routerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#a855f7"/>
-                        <stop offset="100%" style="stop-color:#9333ea"/>
-                    </linearGradient>
-                    <linearGradient id="iotGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#f59e0b"/>
-                        <stop offset="100%" style="stop-color:#d97706"/>
-                    </linearGradient>
-                    <linearGradient id="wlcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#eab308"/>
-                        <stop offset="100%" style="stop-color:#ca8a04"/>
-                    </linearGradient>
-                </defs>
-                <rect width="900" height="620" fill="url(#bgGrad)" rx="12"/>
-                <text x="450" y="35" class="title-text" text-anchor="middle">OSPF Çoklu Bölge & Kablosuz Ağ</text>
-                <text x="450" y="55" class="subtitle" text-anchor="middle">Area 0 Backbone + Area 1,2 + WiFi + IoT</text>
+                <rect width="900" height="620" fill="url(#gridPattern)" />
+                <text x="450" y="32" class="title-text" text-anchor="middle">OSPF Çoklu Bölge & Kablosuz Ağ</text>
+                <text x="450" y="48" class="subtitle" text-anchor="middle">Area 0 Backbone + Area 1,2 + WiFi + IoT</text>
 
                 <!-- Area Zones -->
-                <rect x="250" y="75" width="400" height="120" rx="8" fill="#ef444410" stroke="#ef4444" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="450" y="95" fill="#ef4444" text-anchor="middle" font-size="12" font-weight="bold">OSPF Area 0 - Backbone</text>
+                <rect x="250" y="70" width="400" height="120" rx="10" fill="rgba(239, 68, 68, 0.03)" stroke="rgba(239, 68, 68, 0.25)" stroke-dasharray="4,4"/>
+                <text x="450" y="88" class="zone-label" fill="#f87171" text-anchor="middle">OSPF Area 0 - Backbone</text>
 
-                <rect x="30" y="210" width="350" height="230" rx="8" fill="#8b5cf610" stroke="#8b5cf6" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="205" y="230" fill="#8b5cf6" text-anchor="middle" font-size="12" font-weight="bold">OSPF Area 1 - 192.168.10.0/24</text>
+                <rect x="30" y="200" width="350" height="240" rx="10" fill="rgba(168, 85, 247, 0.03)" stroke="rgba(168, 85, 247, 0.25)" stroke-dasharray="4,4"/>
+                <text x="205" y="218" class="zone-label" fill="#c084fc" text-anchor="middle">OSPF Area 1 - 192.168.10.0/24</text>
 
-                <rect x="520" y="210" width="350" height="230" rx="8" fill="#06b6d410" stroke="#06b6d4" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="695" y="230" fill="#06b6d4" text-anchor="middle" font-size="12" font-weight="bold">OSPF Area 2 - 192.168.40.0/24</text>
+                <rect x="520" y="200" width="350" height="240" rx="10" fill="rgba(6, 182, 212, 0.03)" stroke="rgba(6, 182, 212, 0.25)" stroke-dasharray="4,4"/>
+                <text x="695" y="218" class="zone-label" fill="#22d3ee" text-anchor="middle">OSPF Area 2 - 192.168.40.0/24</text>
 
-                <rect x="30" y="460" width="350" height="140" rx="8" fill="#eab30810" stroke="#eab308" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="205" y="480" fill="#eab308" text-anchor="middle" font-size="12" font-weight="bold">Kablosuz Ağ - VLAN 100</text>
+                <rect x="30" y="455" width="350" height="145" rx="10" fill="rgba(234, 179, 8, 0.03)" stroke="rgba(234, 179, 8, 0.25)" stroke-dasharray="4,4"/>
+                <text x="205" y="473" class="zone-label" fill="#facc15" text-anchor="middle">Kablosuz Ağ - VLAN 100</text>
 
-                <rect x="520" y="460" width="350" height="140" rx="8" fill="#f59e0b10" stroke="#f59e0b" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="695" y="480" fill="#f59e0b" text-anchor="middle" font-size="12" font-weight="bold">IoT Sensör Ağı</text>
+                <rect x="520" y="455" width="350" height="145" rx="10" fill="rgba(245, 158, 11, 0.03)" stroke="rgba(245, 158, 11, 0.25)" stroke-dasharray="4,4"/>
+                <text x="695" y="473" class="zone-label" fill="#fb923c" text-anchor="middle">IoT Sensör Ağı</text>
 
                 <!-- Connections -->
-                <path d="M 340 150 Q 450 130 560 150" class="connection serial"/>
-                <path d="M 340 150 Q 250 200 205 290" class="connection fiber"/>
-                <path d="M 560 150 Q 650 200 695 290" class="connection fiber"/>
-                <path d="M 150 310 Q 135 325 150 350" class="connection copper"/>
-                <path d="M 250 310 Q 265 325 250 350" class="connection copper"/>
-                <path d="M 650 310 Q 635 325 650 350" class="connection copper"/>
-                <path d="M 750 310 Q 765 325 750 350" class="connection copper"/>
-                <path d="M 205 390 Q 220 435 205 500" class="connection wireless"/>
-                <path d="M 695 390 Q 680 435 695 500" class="connection wireless"/>
+                <path d="M 340 145 H 560" class="connection serial"/>
+                <path d="M 340 150 Q 250 200 205 285" class="connection fiber"/>
+                <path d="M 560 150 Q 650 200 695 285" class="connection fiber"/>
+                <path d="M 145 300 L 145 320" class="connection copper"/>
+                <path d="M 245 300 L 245 320" class="connection copper"/>
+                <path d="M 645 300 L 645 320" class="connection copper"/>
+                <path d="M 745 300 L 745 320" class="connection copper"/>
+                <path d="M 205 385 Q 220 435 205 495" class="connection wireless"/>
+                <path d="M 695 385 Q 680 435 695 495" class="connection wireless"/>
 
                 <!-- Router 1 (ABR) -->
-                <g class="device" transform="translate(290, 115)">
-                    <rect x="0" y="0" width="100" height="65" rx="10" fill="url(#routerGrad)" stroke="#7e22ce" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="50" cy="22" r="16" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="50" y1="8" x2="50" y2="36" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="36" y1="22" x2="64" y2="22" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="40" y1="12" x2="60" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <line x1="60" y1="12" x2="40" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <circle cx="50" cy="22" r="3" fill="#c084fc"/>
-                    <circle cx="15" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="30" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="45" cy="52" r="3" fill="#f59e0b"/>
-                    <circle cx="60" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="75" cy="52" r="3" fill="#22c55e"/>
-                    <text x="50" y="80" class="label" font-weight="bold">R1-ABR</text>
-                    <text x="50" y="93" class="label label-small">Area 0,1 • ID: 1.1.1.1</text>
+                <g class="device router" transform="translate(290, 110)">
+                    <path class="device-card" d="M 20 0 L 80 0 Q 100 0 100 20 L 100 75 L 0 75 L 0 20 Q 0 0 20 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-router" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">R1-ABR</text>
+                    <text x="50" y="67" class="device-sublabel">Area 0,1 • 1.1.1.1</text>
                 </g>
 
                 <!-- Router 2 (ABR) -->
-                <g class="device" transform="translate(510, 115)">
-                    <rect x="0" y="0" width="100" height="65" rx="10" fill="url(#routerGrad)" stroke="#7e22ce" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="50" cy="22" r="16" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="50" y1="8" x2="50" y2="36" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="36" y1="22" x2="64" y2="22" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="40" y1="12" x2="60" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <line x1="60" y1="12" x2="40" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <circle cx="50" cy="22" r="3" fill="#c084fc"/>
-                    <circle cx="15" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="30" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="45" cy="52" r="3" fill="#f59e0b"/>
-                    <circle cx="60" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="75" cy="52" r="3" fill="#22c55e"/>
-                    <text x="50" y="80" class="label" font-weight="bold">R2-ABR</text>
-                    <text x="50" y="93" class="label label-small">Area 0,2 • ID: 2.2.2.2</text>
+                <g class="device router" transform="translate(510, 110)">
+                    <path class="device-card" d="M 20 0 L 80 0 Q 100 0 100 20 L 100 75 L 0 75 L 0 20 Q 0 0 20 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-router" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">R2-ABR</text>
+                    <text x="50" y="67" class="device-sublabel">Area 0,2 • 2.2.2.2</text>
                 </g>
 
                 <!-- L3 Switch Area 1 -->
-                <g class="device" transform="translate(155, 265)">
-                    <rect x="0" y="0" width="100" height="55" rx="8" fill="url(#switchL3Grad)" stroke="#6d28d9" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="18" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="18" r="4" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-                    <circle cx="90" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="18" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="35" r="4" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
-                    <circle cx="72" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="90" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <text x="50" y="70" class="label" font-weight="bold">SW-L3-1</text>
-                    <text x="50" y="83" class="label label-small">WS-C3650</text>
+                <g class="device switchL3" transform="translate(155, 260)">
+                    <path class="device-card" d="M 0 0 L 100 0 L 100 67 Q 100 75 92 75 L 8 75 Q 0 75 0 67 L 0 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-switch" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="58" class="device-label">SW-L3-1</text>
+                    <text x="50" y="68" class="device-sublabel">WS-C3650</text>
                 </g>
 
                 <!-- L3 Switch Area 2 -->
-                <g class="device" transform="translate(645, 265)">
-                    <rect x="0" y="0" width="100" height="55" rx="8" fill="url(#switchL3Grad)" stroke="#6d28d9" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="18" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="18" r="4" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-                    <circle cx="90" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="18" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="35" r="4" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
-                    <circle cx="72" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="90" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <text x="50" y="70" class="label" font-weight="bold">SW-L3-2</text>
-                    <text x="50" y="83" class="label label-small">WS-C3650</text>
+                <g class="device switchL3" transform="translate(645, 260)">
+                    <path class="device-card" d="M 0 0 L 100 0 L 100 67 Q 100 75 92 75 L 8 75 Q 0 75 0 67 L 0 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-switch" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="58" class="device-label">SW-L3-2</text>
+                    <text x="50" y="68" class="device-sublabel">WS-C3650</text>
                 </g>
 
                 <!-- PCs Area 1 -->
-                <g class="device" transform="translate(105, 310)">
-                    <rect x="0" y="0" width="80" height="60" rx="8" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="10" y="8" width="60" height="32" rx="3" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="25" y="40" width="30" height="6" rx="2" fill="#1e3a5f"/>
-                    <rect x="18" y="46" width="44" height="5" rx="2" fill="#1e3a5f"/>
-                    <circle cx="68" cy="50" r="2.5" fill="#22c55e"/>
-                    <text x="40" y="72" class="label" font-weight="bold">PC-1</text>
-                    <text x="40" y="84" class="label label-small">VLAN 10</text>
+                <g class="device pc" transform="translate(105, 320)">
+                    <rect class="device-card" x="0" y="0" width="80" height="65" rx="8"/>
+                    <g transform="translate(24, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="48" class="device-label" font-size="9">PC-1</text>
+                    <text x="40" y="58" class="device-sublabel" font-size="7.5">VLAN 10</text>
                 </g>
-                <g class="device" transform="translate(205, 310)">
-                    <rect x="0" y="0" width="80" height="60" rx="8" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="10" y="8" width="60" height="32" rx="3" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="25" y="40" width="30" height="6" rx="2" fill="#1e3a5f"/>
-                    <rect x="18" y="46" width="44" height="5" rx="2" fill="#1e3a5f"/>
-                    <circle cx="68" cy="50" r="2.5" fill="#22c55e"/>
-                    <text x="40" y="72" class="label" font-weight="bold">PC-2</text>
-                    <text x="40" y="84" class="label label-small">VLAN 20</text>
+                <g class="device pc" transform="translate(205, 320)">
+                    <rect class="device-card" x="0" y="0" width="80" height="65" rx="8"/>
+                    <g transform="translate(24, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="48" class="device-label" font-size="9">PC-2</text>
+                    <text x="40" y="58" class="device-sublabel" font-size="7.5">VLAN 20</text>
                 </g>
 
                 <!-- PCs Area 2 -->
-                <g class="device" transform="translate(605, 310)">
-                    <rect x="0" y="0" width="80" height="60" rx="8" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="10" y="8" width="60" height="32" rx="3" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="25" y="40" width="30" height="6" rx="2" fill="#1e3a5f"/>
-                    <rect x="18" y="46" width="44" height="5" rx="2" fill="#1e3a5f"/>
-                    <circle cx="68" cy="50" r="2.5" fill="#22c55e"/>
-                    <text x="40" y="72" class="label" font-weight="bold">PC-3</text>
-                    <text x="40" y="84" class="label label-small">VLAN 40</text>
+                <g class="device pc" transform="translate(605, 320)">
+                    <rect class="device-card" x="0" y="0" width="80" height="65" rx="8"/>
+                    <g transform="translate(24, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="48" class="device-label" font-size="9">PC-3</text>
+                    <text x="40" y="58" class="device-sublabel" font-size="7.5">VLAN 40</text>
                 </g>
-                <g class="device" transform="translate(705, 310)">
-                    <rect x="0" y="0" width="80" height="60" rx="8" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="10" y="8" width="60" height="32" rx="3" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="25" y="40" width="30" height="6" rx="2" fill="#1e3a5f"/>
-                    <rect x="18" y="46" width="44" height="5" rx="2" fill="#1e3a5f"/>
-                    <circle cx="68" cy="50" r="2.5" fill="#22c55e"/>
-                    <text x="40" y="72" class="label" font-weight="bold">PC-4</text>
-                    <text x="40" y="84" class="label label-small">VLAN 50</text>
+                <g class="device pc" transform="translate(705, 320)">
+                    <rect class="device-card" x="0" y="0" width="80" height="65" rx="8"/>
+                    <g transform="translate(24, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="48" class="device-label" font-size="9">PC-4</text>
+                    <text x="40" y="58" class="device-sublabel" font-size="7.5">VLAN 50</text>
                 </g>
 
                 <!-- WLC -->
-                <g class="device" transform="translate(155, 500)">
-                    <rect x="0" y="0" width="100" height="45" rx="8" fill="url(#wlcGrad)" stroke="#a16207" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="50" cy="18" r="12" fill="none" stroke="#fef08a" stroke-width="1.5"/>
-                    <line x1="50" y1="8" x2="50" y2="28" stroke="#fef08a" stroke-width="1.5"/>
-                    <line x1="40" y1="18" x2="60" y2="18" stroke="#fef08a" stroke-width="1.5"/>
-                    <circle cx="50" cy="18" r="3" fill="#fef08a"/>
-                    <circle cx="15" cy="36" r="2.5" fill="#22c55e"/>
-                    <circle cx="28" cy="36" r="2.5" fill="#22c55e"/>
-                    <circle cx="41" cy="36" r="2.5" fill="#f59e0b"/>
-                    <text x="50" y="60" class="label" font-weight="bold">WLC</text>
+                <g class="device wlc" transform="translate(155, 495)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-wlc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">WLC</text>
+                    <text x="50" y="67" class="device-sublabel">AP Manager</text>
                 </g>
 
                 <!-- AP -->
-                <g class="device" transform="translate(265, 500)">
-                    <rect x="0" y="0" width="80" height="45" rx="8" fill="url(#iotGrad)" stroke="#b45309" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <!-- WiFi arcs -->
-                    <path d="M 25 20 Q 40 5 55 20" fill="none" stroke="#fef08a" stroke-width="2"/>
-                    <path d="M 30 24 Q 40 12 50 24" fill="none" stroke="#fef08a" stroke-width="1.5"/>
-                    <circle cx="40" cy="28" r="3" fill="#fef08a"/>
-                    <text x="40" y="60" class="label" font-weight="bold">AP-1</text>
-                    <text x="40" y="73" class="label label-small">5GHz WPA3</text>
+                <g class="device ap" transform="translate(265, 495)">
+                    <rect class="device-card" x="0" y="0" width="80" height="70" rx="8"/>
+                    <g transform="translate(24, 8)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-ap" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="50" class="device-label" font-size="9">AP-1</text>
+                    <text x="40" y="61" class="device-sublabel" font-size="7.5">5GHz WPA3</text>
                 </g>
 
                 <!-- IoT Gateway -->
-                <g class="device" transform="translate(575, 500)">
-                    <rect x="0" y="0" width="80" height="45" rx="8" fill="url(#iotGrad)" stroke="#b45309" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="40" cy="18" r="12" fill="none" stroke="#fef08a" stroke-width="1.5"/>
-                    <path d="M 32 18 L 40 10 L 48 18" fill="none" stroke="#fef08a" stroke-width="1.5"/>
-                    <line x1="40" y1="10" x2="40" y2="26" stroke="#fef08a" stroke-width="1.5"/>
-                    <text x="40" y="60" class="label" font-weight="bold">IoT-GW</text>
-                    <text x="40" y="73" class="label label-small">MQTT</text>
+                <g class="device ap" transform="translate(575, 495)">
+                    <rect class="device-card" x="0" y="0" width="80" height="70" rx="8"/>
+                    <g transform="translate(24, 8)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-ap" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="50" class="device-label" font-size="9">IoT-GW</text>
+                    <text x="40" y="61" class="device-sublabel" font-size="7.5">MQTT/Zigbee</text>
                 </g>
 
                 <!-- IoT Sensors -->
-                <g class="device" transform="translate(665, 500)">
-                    <circle cx="20" cy="18" r="16" fill="#22c55e" stroke="#16a34a" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="20" y="22" class="label" font-size="10">T</text>
-                    <text x="20" y="45" class="label label-small">24.5°C</text>
+                <g class="device iot" transform="translate(665, 495)">
+                    <path class="device-card" d="M 0 0 L 32 0 Q 40 0 40 8 L 40 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(10, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="20" y="32" class="device-label" font-size="8.5">24.5°C</text>
+                    <text x="20" y="42" class="device-sublabel" font-size="7">Sıcaklık</text>
                 </g>
-                <g class="device" transform="translate(710, 500)">
-                    <circle cx="20" cy="18" r="16" fill="#3b82f6" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="20" y="22" class="label" font-size="10">H</text>
-                    <text x="20" y="45" class="label label-small">%65</text>
+                <g class="device iot" transform="translate(710, 495)">
+                    <path class="device-card" d="M 0 0 L 32 0 Q 40 0 40 8 L 40 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(10, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="20" y="32" class="device-label" font-size="8.5">%65</text>
+                    <text x="20" y="42" class="device-sublabel" font-size="7">Nem</text>
                 </g>
-                <g class="device" transform="translate(755, 500)">
-                    <circle cx="20" cy="18" r="16" fill="#f59e0b" stroke="#d97706" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="20" y="22" class="label" font-size="10">L</text>
-                    <text x="20" y="45" class="label label-small">450lx</text>
+                <g class="device iot" transform="translate(755, 495)">
+                    <path class="device-card" d="M 0 0 L 32 0 Q 40 0 40 8 L 40 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(10, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="20" y="32" class="device-label" font-size="8.5">450lx</text>
+                    <text x="20" y="42" class="device-sublabel" font-size="7">Işık</text>
                 </g>
-                <g class="device" transform="translate(800, 500)">
-                    <circle cx="20" cy="18" r="16" fill="#ef4444" stroke="#dc2626" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="20" y="22" class="label" font-size="10">M</text>
-                    <text x="20" y="45" class="label label-small">Hareket</text>
+                <g class="device iot" transform="translate(800, 495)">
+                    <path class="device-card" d="M 0 0 L 32 0 Q 40 0 40 8 L 40 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(10, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="20" y="32" class="device-label" font-size="8.5">Aktif</text>
+                    <text x="20" y="42" class="device-sublabel" font-size="7">Hareket</text>
                 </g>
 
-                <!-- OSPF Labels -->
-                <rect x="380" y="160" width="85" height="22" rx="6" fill="#ef4444" opacity="0.9"/>
-                <text x="422" y="175" class="label" font-size="9" font-weight="bold">OSPF Area 0</text>
-                <rect x="215" y="215" width="85" height="18" rx="5" fill="#8b5cf6" opacity="0.9"/>
-                <text x="257" y="228" class="label" font-size="8" font-weight="bold">OSPF Area 1</text>
-                <rect x="655" y="215" width="85" height="18" rx="5" fill="#06b6d4" opacity="0.9"/>
-                <text x="697" y="228" class="label" font-size="8" font-weight="bold">OSPF Area 2</text>
+                <!-- OSPF Badges -->
+                <rect x="380" y="150" width="85" height="18" rx="5" fill="#ef4444" opacity="0.9"/>
+                <text x="422" y="162" class="device-label" font-size="8.5">OSPF Area 0</text>
+                <rect x="215" y="212" width="85" height="18" rx="5" fill="#8b5cf6" opacity="0.9"/>
+                <text x="257" y="224" class="device-label" font-size="8">OSPF Area 1</text>
+                <rect x="655" y="212" width="85" height="18" rx="5" fill="#06b6d4" opacity="0.9"/>
+                <text x="697" y="224" class="device-label" font-size="8">OSPF Area 2</text>
             </svg>
 
             <div class="info-panel">
@@ -700,211 +692,202 @@
                         <div class="value">OSPF (Multi-Area)</div>
                     </div>
                     <div class="info-item">
-                        <div class="label">OSPF Bölgeleri</div>
-                        <div class="value">Area 0, 1, 2</div>
-                    </div>
-                    <div class="info-item">
                         <div class="label">Kablosuz</div>
                         <div class="value">WPA3-Enterprise 5GHz</div>
                     </div>
                     <div class="info-item">
-                        <div class="label">IoT Protokolü</div>
-                        <div class="value">MQTT + Zigbee 3.0</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="label">Toplam Cihaz</div>
-                        <div class="value">15+ Cihaz</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="label">Zorluk Seviyesi</div>
-                        <div class="value">İleri</div>
+                        <div class="label">IoT Standardı</div>
+                        <div class="value">Zigbee 3.0 & MQTT</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Topology 3: Hospital (abbreviated for space - keeping original structure but with new device styles) -->
+        <!-- Topology 3: Hospital -->
         <div class="topology" id="topo3">
             <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="pcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6"/><stop offset="100%" style="stop-color:#1d4ed8"/>
-                    </linearGradient>
-                    <linearGradient id="firewallGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#ef4444"/><stop offset="100%" style="stop-color:#dc2626"/>
-                    </linearGradient>
-                    <linearGradient id="serverGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#6366f1"/><stop offset="100%" style="stop-color:#4f46e5"/>
-                    </linearGradient>
-                    <linearGradient id="medicalGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#ec4899"/><stop offset="100%" style="stop-color:#db2777"/>
-                    </linearGradient>
-                    <linearGradient id="phoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#6366f1"/><stop offset="100%" style="stop-color:#4f46e5"/>
-                    </linearGradient>
-                </defs>
-                <rect width="900" height="620" fill="url(#bgGrad)" rx="12"/>
-                <text x="450" y="35" class="title-text" text-anchor="middle">Hastane Ağı - Gerçek Dünya Senaryosu</text>
-                <text x="450" y="55" class="subtitle" text-anchor="middle">Güvenlik Duvarı, DMZ, VLAN Segmentasyonu</text>
+                <rect width="900" height="620" fill="url(#gridPattern)" />
+                <text x="450" y="32" class="title-text" text-anchor="middle">Hastane Ağı - Gerçek Dünya Senaryosu</text>
+                <text x="450" y="48" class="subtitle" text-anchor="middle">Güvenlik Duvarı, DMZ, VLAN Segmentasyonu</text>
 
                 <!-- Zone Labels -->
-                <rect x="30" y="75" width="180" height="80" rx="8" fill="#47556915" stroke="#475569" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="120" y="100" fill="#94a3b8" text-anchor="middle" font-size="11" font-weight="bold">Internet / WAN</text>
+                <rect x="30" y="70" width="180" height="85" rx="8" fill="rgba(71, 85, 105, 0.03)" stroke="rgba(71, 85, 105, 0.25)" stroke-dasharray="4,4"/>
+                <text x="120" y="88" class="zone-label" fill="#94a3b8" text-anchor="middle">Internet / WAN</text>
 
-                <rect x="280" y="75" width="180" height="80" rx="8" fill="#ef444415" stroke="#ef4444" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="370" y="100" fill="#ef4444" text-anchor="middle" font-size="11" font-weight="bold">Güvenlik Katmanı</text>
+                <rect x="280" y="70" width="180" height="85" rx="8" fill="rgba(239, 68, 68, 0.03)" stroke="rgba(239, 68, 68, 0.25)" stroke-dasharray="4,4"/>
+                <text x="370" y="88" class="zone-label" fill="#f87171" text-anchor="middle">Güvenlik Katmanı</text>
 
-                <rect x="530" y="75" width="180" height="80" rx="8" fill="#6366f115" stroke="#6366f1" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="620" y="100" fill="#6366f1" text-anchor="middle" font-size="11" font-weight="bold">DMZ</text>
+                <rect x="530" y="70" width="180" height="85" rx="8" fill="rgba(99, 102, 241, 0.03)" stroke="rgba(99, 102, 241, 0.25)" stroke-dasharray="4,4"/>
+                <text x="620" y="88" class="zone-label" fill="#818cf8" text-anchor="middle">DMZ Katmanı</text>
 
-                <rect x="30" y="180" width="430" height="200" rx="8" fill="#ec489910" stroke="#ec4899" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="245" y="200" fill="#ec4899" text-anchor="middle" font-size="11" font-weight="bold">Tıbbi Cihaz Ağı - VLAN 20</text>
+                <rect x="30" y="175" width="430" height="210" rx="10" fill="rgba(236, 72, 153, 0.03)" stroke="rgba(236, 72, 153, 0.2)" stroke-dasharray="4,4"/>
+                <text x="245" y="195" class="zone-label" fill="#f472b6" text-anchor="middle">Tıbbi Cihaz Ağı - VLAN 20</text>
 
-                <rect x="500" y="180" width="370" height="200" rx="8" fill="#3b82f610" stroke="#3b82f6" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="685" y="200" fill="#3b82f6" text-anchor="middle" font-size="11" font-weight="bold">Personel Ağı - VLAN 40</text>
+                <rect x="500" y="175" width="370" height="210" rx="10" fill="rgba(59, 130, 246, 0.03)" stroke="rgba(59, 130, 246, 0.2)" stroke-dasharray="4,4"/>
+                <text x="685" y="195" class="zone-label" fill="#60a5fa" text-anchor="middle">Personel Ağı - VLAN 40</text>
 
-                <rect x="30" y="400" width="430" height="200" rx="8" fill="#06b6d410" stroke="#06b6d4" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="245" y="420" fill="#06b6d4" text-anchor="middle" font-size="11" font-weight="bold">Hasta WiFi - VLAN 30</text>
+                <rect x="30" y="395" width="430" height="210" rx="10" fill="rgba(6, 182, 212, 0.03)" stroke="rgba(6, 182, 212, 0.2)" stroke-dasharray="4,4"/>
+                <text x="245" y="415" class="zone-label" fill="#22d3ee" text-anchor="middle">Hasta WiFi - VLAN 30</text>
 
-                <rect x="500" y="400" width="370" height="200" rx="8" fill="#8b5cf610" stroke="#8b5cf6" stroke-dasharray="5,5" stroke-opacity="0.4"/>
-                <text x="685" y="420" fill="#8b5cf6" text-anchor="middle" font-size="11" font-weight="bold">IP Telefon - VLAN 50</text>
+                <rect x="500" y="395" width="370" height="210" rx="10" fill="rgba(139, 92, 246, 0.03)" stroke="rgba(139, 92, 246, 0.2)" stroke-dasharray="4,4"/>
+                <text x="685" y="415" class="zone-label" fill="#a78bfa" text-anchor="middle">IP Telefon / PBX - VLAN 50</text>
 
                 <!-- Connections -->
-                <path d="M 120 115 Q 245 100 370 115" class="connection copper"/>
-                <path d="M 370 115 Q 495 100 620 115" class="connection fiber"/>
-                <path d="M 370 155 Q 385 185 370 220" class="connection trunk"/>
-                <path d="M 620 155 Q 605 185 620 220" class="connection trunk"/>
-                <path d="M 150 270 Q 165 285 150 310" class="connection copper"/>
-                <path d="M 250 270 Q 235 285 250 310" class="connection copper"/>
-                <path d="M 350 270 Q 365 285 350 310" class="connection copper"/>
-                <path d="M 600 270 Q 615 285 600 310" class="connection copper"/>
-                <path d="M 700 270 Q 685 285 700 310" class="connection copper"/>
-                <path d="M 800 270 Q 785 285 800 310" class="connection copper"/>
-                <path d="M 245 390 Q 260 420 245 450" class="connection wireless"/>
-                <path d="M 685 390 Q 670 420 685 450" class="connection copper"/>
+                <path d="M 120 115 H 320" class="connection copper"/>
+                <path d="M 420 115 H 560" class="connection fiber"/>
+                <path d="M 370 165 V 220" class="connection trunk"/>
+                <path d="M 620 165 V 220" class="connection trunk"/>
+                <path d="M 150 255 V 270" class="connection copper"/>
+                <path d="M 250 255 V 270" class="connection copper"/>
+                <path d="M 350 255 V 270" class="connection copper"/>
+                <path d="M 600 255 V 270" class="connection copper"/>
+                <path d="M 700 255 V 270" class="connection copper"/>
+                <path d="M 800 255 V 270" class="connection copper"/>
+                <path d="M 245 375 Q 260 415 245 445" class="connection wireless"/>
+                <path d="M 685 375 V 445" class="connection copper"/>
 
                 <!-- Internet Cloud -->
-                <g class="device" transform="translate(70, 95)">
-                    <ellipse cx="50" cy="20" rx="50" ry="22" fill="#475569" stroke="#64748b" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="50" y="24" class="label" font-weight="bold">Internet</text>
+                <g class="device pc" transform="translate(70, 85)">
+                    <rect class="device-card" x="0" y="0" width="100" height="60" rx="8"/>
+                    <text x="50" y="34" class="device-label" font-size="11">🌍 Internet</text>
                 </g>
 
-                <!-- Firewall (Shield shape) -->
-                <g class="device" transform="translate(320, 90)">
-                    <path d="M 50 5 L 95 20 L 95 50 Q 95 75 50 90 Q 5 75 5 50 L 5 20 Z" fill="url(#firewallGrad)" stroke="#b91c1c" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <path d="M 50 25 L 50 55 M 35 40 L 65 40" stroke="#fecaca" stroke-width="3" stroke-linecap="round"/>
-                    <circle cx="50" cy="75" r="4" fill="#fecaca"/>
-                    <text x="50" y="105" class="label" font-weight="bold">FW - ASA</text>
+                <!-- Firewall (Shield Card) -->
+                <g class="device firewall" transform="translate(320, 80)">
+                    <path class="device-card" d="M 10 0 L 90 0 Q 100 0 100 10 L 100 65 L 50 85 L 0 65 L 0 10 Q 0 0 10 0 Z" />
+                    <g transform="translate(34, 15)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-firewall" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="62" class="device-label">FW - ASA</text>
                 </g>
 
                 <!-- DMZ Servers -->
-                <g class="device" transform="translate(560, 95)">
-                    <rect x="0" y="0" width="60" height="40" rx="6" fill="url(#serverGrad)" stroke="#4338ca" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="8" y="6" width="44" height="10" rx="2" fill="#0f172a"/>
-                    <rect x="8" y="20" width="44" height="10" rx="2" fill="#0f172a"/>
-                    <circle cx="14" cy="11" r="2" fill="#22c55e"/>
-                    <circle cx="14" cy="25" r="2" fill="#22c55e"/>
-                    <text x="30" y="55" class="label label-small">Web</text>
+                <g class="device server" transform="translate(560, 85)">
+                    <rect class="device-card" x="0" y="0" width="60" height="55" rx="6"/>
+                    <g transform="translate(18, 6)">
+                        <svg width="24" height="24" viewBox="0 0 24 24"><use href="#icon-server" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="44" class="device-label" font-size="8">Web</text>
                 </g>
-                <g class="device" transform="translate(635, 95)">
-                    <rect x="0" y="0" width="60" height="40" rx="6" fill="url(#serverGrad)" stroke="#4338ca" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="8" y="6" width="44" height="10" rx="2" fill="#0f172a"/>
-                    <rect x="8" y="20" width="44" height="10" rx="2" fill="#0f172a"/>
-                    <circle cx="14" cy="11" r="2" fill="#22c55e"/>
-                    <circle cx="14" cy="25" r="2" fill="#f59e0b"/>
-                    <text x="30" y="55" class="label label-small">Mail</text>
-                </g>
-                <g class="device" transform="translate(560, 145)">
-                    <rect x="0" y="0" width="60" height="40" rx="6" fill="url(#serverGrad)" stroke="#4338ca" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="8" y="6" width="44" height="10" rx="2" fill="#0f172a"/>
-                    <rect x="8" y="20" width="44" height="10" rx="2" fill="#0f172a"/>
-                    <circle cx="14" cy="11" r="2" fill="#22c55e"/>
-                    <circle cx="14" cy="25" r="2" fill="#22c55e"/>
-                    <text x="30" y="55" class="label label-small">DNS</text>
+                <g class="device server" transform="translate(635, 85)">
+                    <rect class="device-card" x="0" y="0" width="60" height="55" rx="6"/>
+                    <g transform="translate(18, 6)">
+                        <svg width="24" height="24" viewBox="0 0 24 24"><use href="#icon-server" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="44" class="device-label" font-size="8">DNS</text>
                 </g>
 
                 <!-- Medical Devices -->
-                <g class="device" transform="translate(100, 270)">
-                    <rect x="0" y="0" width="80" height="45" rx="8" fill="url(#medicalGrad)" stroke="#9d174d" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="40" y="20" class="label" font-size="10">🏥 MRI</text>
-                    <text x="40" y="35" class="label label-small">DICOM</text>
+                <g class="device medical" transform="translate(100, 270)">
+                    <rect class="device-card" x="0" y="0" width="80" height="65" rx="8"/>
+                    <g transform="translate(24, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-medical" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="46" class="device-label" font-size="9">🏥 MRI</text>
+                    <text x="40" y="56" class="device-sublabel" font-size="7.5">DICOM</text>
                 </g>
-                <g class="device" transform="translate(200, 270)">
-                    <rect x="0" y="0" width="80" height="45" rx="8" fill="url(#medicalGrad)" stroke="#9d174d" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="40" y="20" class="label" font-size="10">🏥 CT</text>
-                    <text x="40" y="35" class="label label-small">HL7 FHIR</text>
+                <g class="device medical" transform="translate(200, 270)">
+                    <rect class="device-card" x="0" y="0" width="80" height="65" rx="8"/>
+                    <g transform="translate(24, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-medical" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="46" class="device-label" font-size="9">🏥 CT</text>
+                    <text x="40" y="56" class="device-sublabel" font-size="7.5">HL7 FHIR</text>
                 </g>
-                <g class="device" transform="translate(300, 270)">
-                    <rect x="0" y="0" width="80" height="45" rx="8" fill="url(#medicalGrad)" stroke="#9d174d" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="40" y="20" class="label" font-size="10">🏥 Monitor</text>
-                    <text x="40" y="35" class="label label-small">Real-time</text>
+                <g class="device medical" transform="translate(300, 270)">
+                    <rect class="device-card" x="0" y="0" width="80" height="65" rx="8"/>
+                    <g transform="translate(24, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-medical" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="40" y="46" class="device-label" font-size="9">🏥 Monitör</text>
+                    <text x="40" y="56" class="device-sublabel" font-size="7.5">Kritik Veri</text>
                 </g>
 
                 <!-- Staff PCs -->
-                <g class="device" transform="translate(560, 270)">
-                    <rect x="0" y="0" width="70" height="50" rx="8" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="8" y="6" width="54" height="28" rx="3" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="20" y="34" width="30" height="5" rx="2" fill="#1e3a5f"/>
-                    <rect x="15" y="39" width="40" height="4" rx="2" fill="#1e3a5f"/>
-                    <circle cx="58" cy="42" r="2" fill="#22c55e"/>
-                    <text x="35" y="62" class="label" font-size="9" font-weight="bold">Doktor</text>
+                <g class="device pc" transform="translate(560, 270)">
+                    <rect class="device-card" x="0" y="0" width="70" height="65" rx="8"/>
+                    <g transform="translate(19, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="35" y="46" class="device-label" font-size="9">Doktor</text>
+                    <text x="35" y="56" class="device-sublabel" font-size="7.5">192.168.40.2</text>
                 </g>
-                <g class="device" transform="translate(650, 270)">
-                    <rect x="0" y="0" width="70" height="50" rx="8" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="8" y="6" width="54" height="28" rx="3" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="20" y="34" width="30" height="5" rx="2" fill="#1e3a5f"/>
-                    <rect x="15" y="39" width="40" height="4" rx="2" fill="#1e3a5f"/>
-                    <circle cx="58" cy="42" r="2" fill="#22c55e"/>
-                    <text x="35" y="62" class="label" font-size="9" font-weight="bold">Hemşire</text>
+                <g class="device pc" transform="translate(650, 270)">
+                    <rect class="device-card" x="0" y="0" width="70" height="65" rx="8"/>
+                    <g transform="translate(19, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="35" y="46" class="device-label" font-size="9">Hemşire</text>
+                    <text x="35" y="56" class="device-sublabel" font-size="7.5">192.168.40.3</text>
                 </g>
-                <g class="device" transform="translate(740, 270)">
-                    <rect x="0" y="0" width="70" height="50" rx="8" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="8" y="6" width="54" height="28" rx="3" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="20" y="34" width="30" height="5" rx="2" fill="#1e3a5f"/>
-                    <rect x="15" y="39" width="40" height="4" rx="2" fill="#1e3a5f"/>
-                    <circle cx="58" cy="42" r="2" fill="#22c55e"/>
-                    <text x="35" y="62" class="label" font-size="9" font-weight="bold">Yönetim</text>
+                <g class="device pc" transform="translate(740, 270)">
+                    <rect class="device-card" x="0" y="0" width="70" height="65" rx="8"/>
+                    <g transform="translate(19, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="35" y="46" class="device-label" font-size="9">Yönetim</text>
+                    <text x="35" y="56" class="device-sublabel" font-size="7.5">192.168.40.4</text>
                 </g>
 
-                <!-- WiFi AP -->
-                <g class="device" transform="translate(200, 450)">
-                    <rect x="0" y="0" width="90" height="45" rx="8" fill="#06b6d4" stroke="#0891b2" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <path d="M 25 18 Q 45 2 65 18" fill="none" stroke="#cffafe" stroke-width="2"/>
-                    <path d="M 32 22 Q 45 10 58 22" fill="none" stroke="#cffafe" stroke-width="1.5"/>
-                    <circle cx="45" cy="28" r="3" fill="#cffafe"/>
-                    <text x="45" y="60" class="label" font-weight="bold">AP</text>
-                    <text x="45" y="73" class="label label-small">HASTANE-MISAFIR</text>
+                <!-- AP -->
+                <g class="device ap" transform="translate(200, 445)">
+                    <rect class="device-card" x="0" y="0" width="90" height="70" rx="8"/>
+                    <g transform="translate(29, 8)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-ap" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="45" y="50" class="device-label" font-size="9">AP</text>
+                    <text x="45" y="61" class="device-sublabel" font-size="7.5">HASTANE-MISAFIR</text>
                 </g>
 
                 <!-- Patient Devices -->
-                <g class="device" transform="translate(50, 490)">
-                    <rect x="0" y="0" width="55" height="38" rx="6" fill="#f59e0b" stroke="#d97706" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="28" y="24" class="label" font-size="14">📱</text>
+                <g class="device pc" transform="translate(50, 490)">
+                    <rect class="device-card" x="0" y="0" width="55" height="45" rx="6"/>
+                    <text x="27" y="28" class="device-label" font-size="16">📱</text>
                 </g>
-                <g class="device" transform="translate(115, 490)">
-                    <rect x="0" y="0" width="55" height="38" rx="6" fill="#f59e0b" stroke="#d97706" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="28" y="24" class="label" font-size="14">📱</text>
+                <g class="device pc" transform="translate(115, 490)">
+                    <rect class="device-card" x="0" y="0" width="55" height="45" rx="6"/>
+                    <text x="27" y="28" class="device-label" font-size="16">📱</text>
                 </g>
-                <g class="device" transform="translate(180, 490)">
-                    <rect x="0" y="0" width="55" height="38" rx="6" fill="#f59e0b" stroke="#d97706" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="28" y="24" class="label" font-size="14">💻</text>
+                <g class="device pc" transform="translate(180, 490)">
+                    <rect class="device-card" x="0" y="0" width="55" height="45" rx="6"/>
+                    <text x="27" y="28" class="device-label" font-size="16">💻</text>
                 </g>
 
                 <!-- IP Phones -->
-                <g class="device" transform="translate(560, 450)">
-                    <rect x="0" y="0" width="70" height="45" rx="8" fill="url(#phoneGrad)" stroke="#4338ca" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="35" y="18" class="label" font-size="12">📞</text>
-                    <text x="35" y="33" class="label" font-size="9" font-weight="bold">Ext: 1001</text>
+                <g class="device phone" transform="translate(560, 445)">
+                    <rect class="device-card" x="0" y="0" width="70" height="65" rx="8"/>
+                    <g transform="translate(19, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-phone" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="35" y="46" class="device-label" font-size="9">Dahili</text>
+                    <text x="35" y="56" class="device-sublabel" font-size="7.5">Ext: 1001</text>
                 </g>
-                <g class="device" transform="translate(650, 450)">
-                    <rect x="0" y="0" width="70" height="45" rx="8" fill="url(#phoneGrad)" stroke="#4338ca" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="35" y="18" class="label" font-size="12">📞</text>
-                    <text x="35" y="33" class="label" font-size="9" font-weight="bold">Ext: 1002</text>
+                <g class="device phone" transform="translate(650, 445)">
+                    <rect class="device-card" x="0" y="0" width="70" height="65" rx="8"/>
+                    <g transform="translate(19, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-phone" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="35" y="46" class="device-label" font-size="9">Dahili</text>
+                    <text x="35" y="56" class="device-sublabel" font-size="7.5">Ext: 1002</text>
                 </g>
-                <g class="device" transform="translate(740, 450)">
-                    <rect x="0" y="0" width="70" height="45" rx="8" fill="url(#phoneGrad)" stroke="#4338ca" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="35" y="18" class="label" font-size="12">🎙️</text>
-                    <text x="35" y="33" class="label" font-size="9" font-weight="bold">PBX</text>
+                <g class="device phone" transform="translate(740, 445)">
+                    <rect class="device-card" x="0" y="0" width="70" height="65" rx="8"/>
+                    <g transform="translate(19, 6)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-phone" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3" fill="#22c55e" />
+                    <text x="35" y="46" class="device-label" font-size="9">PBX</text>
+                    <text x="35" y="56" class="device-sublabel" font-size="7.5">VLAN 50</text>
                 </g>
             </svg>
 
@@ -912,9 +895,8 @@
                 <h3>Hastane Ağı Özellikleri</h3>
                 <div class="info-grid">
                     <div class="info-item"><div class="label">Güvenlik</div><div class="value">ASA Firewall + NAT + ACL</div></div>
-                    <div class="info-item"><div class="label">VLAN Segmentasyonu</div><div class="value">5 VLAN</div></div>
-                    <div class="info-item"><div class="label">Tıbbi Protokoller</div><div class="value">DICOM, HL7 FHIR</div></div>
-                    <div class="info-item"><div class="label">Zorluk Seviyesi</div><div class="value">İleri (Gerçek Dünya)</div></div>
+                    <div class="info-item"><div class="label">VLAN Segmentasyonu</div><div class="value">5 VLAN (Yönetim, Personel, Tıbbi, Telefon, Misafir)</div></div>
+                    <div class="info-item"><div class="label">Tıbbi Entegrasyonlar</div><div class="value">DICOM Imaging & HL7 FHIR</div></div>
                 </div>
             </div>
         </div>
@@ -922,167 +904,146 @@
         <!-- Topology 4: IoT Greenhouse -->
         <div class="topology" id="topo4">
             <svg viewBox="0 0 900 620" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="pcGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#3b82f6"/><stop offset="100%" style="stop-color:#1d4ed8"/>
-                    </linearGradient>
-                    <linearGradient id="switchGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#06b6d4"/><stop offset="100%" style="stop-color:#0891b2"/>
-                    </linearGradient>
-                    <linearGradient id="routerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#a855f7"/><stop offset="100%" style="stop-color:#9333ea"/>
-                    </linearGradient>
-                    <linearGradient id="iotGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" style="stop-color:#f59e0b"/><stop offset="100%" style="stop-color:#d97706"/>
-                    </linearGradient>
-                    <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:#64748b"/><stop offset="100%" style="stop-color:#475569"/>
-                    </linearGradient>
-                </defs>
-                <rect width="900" height="620" fill="url(#bgGrad)" rx="12"/>
-                <text x="450" y="35" class="title-text" text-anchor="middle">Akıllı Yeşil sera IoT Topolojisi</text>
-                <text x="450" y="55" class="subtitle" text-anchor="middle">Sensörler, Aktuatörler, Zigbee & MQTT</text>
+                <rect width="900" height="620" fill="url(#gridPattern)" />
+                <text x="450" y="32" class="title-text" text-anchor="middle">Akıllı Yeşil Sera IoT Topolojisi</text>
+                <text x="450" y="48" class="subtitle" text-anchor="middle">Sensörler, Aktuatörler, Zigbee & MQTT</text>
 
                 <!-- Cloud -->
-                <g class="device" transform="translate(350, 75)">
-                    <ellipse cx="100" cy="25" rx="100" ry="28" fill="url(#cloudGrad)" stroke="#94a3b8" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="100" y="22" class="label" font-weight="bold">☁️ AWS IoT Core</text>
-                    <text x="100" y="38" class="label label-small">MQTT Broker + Grafana</text>
+                <g class="device pc" transform="translate(350, 75)">
+                    <ellipse cx="100" cy="25" rx="100" ry="28" fill="rgba(71, 85, 105, 0.15)" stroke="#94a3b8" stroke-width="1.5"/>
+                    <text x="100" y="22" class="device-label" font-size="11">☁️ AWS IoT Core</text>
+                    <text x="100" y="36" class="device-sublabel" font-size="8">MQTT Broker + Grafana</text>
                 </g>
 
                 <!-- Router -->
-                <g class="device" transform="translate(400, 170)">
-                    <rect x="0" y="0" width="100" height="65" rx="10" fill="url(#routerGrad)" stroke="#7e22ce" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="50" cy="22" r="16" fill="none" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="50" y1="8" x2="50" y2="36" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="36" y1="22" x2="64" y2="22" stroke="#c084fc" stroke-width="1.5"/>
-                    <line x1="40" y1="12" x2="60" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <line x1="60" y1="12" x2="40" y2="32" stroke="#c084fc" stroke-width="1"/>
-                    <circle cx="50" cy="22" r="3" fill="#c084fc"/>
-                    <circle cx="15" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="30" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="45" cy="52" r="3" fill="#f59e0b"/>
-                    <circle cx="60" cy="52" r="3" fill="#22c55e"/>
-                    <circle cx="75" cy="52" r="3" fill="#22c55e"/>
-                    <text x="50" y="80" class="label" font-weight="bold">Router</text>
-                    <text x="50" y="93" class="label label-small">192.168.1.1 • DHCP+NAT</text>
+                <g class="device router" transform="translate(400, 160)">
+                    <path class="device-card" d="M 20 0 L 80 0 Q 100 0 100 20 L 100 75 L 0 75 L 0 20 Q 0 0 20 0 Z" />
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-router" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">Router</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.1.1</text>
                 </g>
 
                 <!-- Switch -->
-                <g class="device" transform="translate(200, 280)">
-                    <rect x="0" y="0" width="130" height="55" rx="8" fill="url(#switchGrad)" stroke="#0e7490" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="18" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="54" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="18" r="4" fill="#f59e0b" stroke="#d97706" stroke-width="1"/>
-                    <circle cx="90" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="108" cy="18" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="18" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="36" cy="35" r="4" fill="#ef4444" stroke="#dc2626" stroke-width="1"/>
-                    <circle cx="54" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="72" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="90" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <circle cx="108" cy="35" r="4" fill="#22c55e" stroke="#16a34a" stroke-width="1"/>
-                    <text x="65" y="70" class="label" font-weight="bold">L2 Switch</text>
+                <g class="device switchL2" transform="translate(200, 275)">
+                    <path class="device-card" d="M 0 0 L 110 0 L 110 67 Q 110 75 102 75 L 8 75 Q 0 75 0 67 L 0 0 Z" />
+                    <g transform="translate(39, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-switch" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="55" y="60" class="device-label">L2 Switch</text>
                 </g>
 
                 <!-- PC -->
-                <g class="device" transform="translate(50, 280)">
-                    <rect x="0" y="0" width="90" height="65" rx="10" fill="url(#pcGrad)" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <rect x="12" y="8" width="66" height="35" rx="4" fill="#0f172a" stroke="#1e3a5f" stroke-width="1"/>
-                    <rect x="15" y="11" width="60" height="29" rx="2" fill="#1e293b"/>
-                    <rect x="28" y="43" width="34" height="6" rx="2" fill="#1e3a5f"/>
-                    <rect x="20" y="49" width="50" height="5" rx="2" fill="#1e3a5f"/>
-                    <circle cx="75" cy="52" r="2.5" fill="#22c55e"/>
-                    <text x="45" y="78" class="label" font-weight="bold">Yönetim PC</text>
-                    <text x="45" y="91" class="label label-small">192.168.1.100</text>
+                <g class="device pc" transform="translate(50, 275)">
+                    <rect class="device-card" x="0" y="0" width="100" height="75" rx="8"/>
+                    <g transform="translate(34, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-pc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="50" y="56" class="device-label">Yönetim PC</text>
+                    <text x="50" y="67" class="device-sublabel">192.168.1.100</text>
                 </g>
 
                 <!-- IoT Gateway -->
-                <g class="device" transform="translate(400, 310)">
-                    <rect x="0" y="0" width="120" height="50" rx="8" fill="url(#iotGrad)" stroke="#b45309" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <circle cx="60" cy="20" r="14" fill="none" stroke="#fef08a" stroke-width="1.5"/>
-                    <path d="M 50 20 L 60 10 L 70 20" fill="none" stroke="#fef08a" stroke-width="1.5"/>
-                    <line x1="60" y1="10" x2="60" y2="30" stroke="#fef08a" stroke-width="1.5"/>
-                    <text x="60" y="65" class="label" font-weight="bold">🔌 IoT Gateway</text>
-                    <text x="60" y="78" class="label label-small">Zigbee ↔ WiFi • MQTT</text>
+                <g class="device ap" transform="translate(400, 290)">
+                    <rect class="device-card" x="0" y="0" width="120" height="75" rx="8"/>
+                    <g transform="translate(44, 10)">
+                        <svg width="32" height="32" viewBox="0 0 24 24"><use href="#icon-wlc" class="device-icon" /></svg>
+                    </g>
+                    <circle cx="8" cy="8" r="3.5" fill="#22c55e" />
+                    <text x="60" y="56" class="device-label">IoT Gateway</text>
+                    <text x="60" y="67" class="device-sublabel">Zigbee MQTT</text>
                 </g>
 
                 <!-- Sensors -->
-                <g class="device" transform="translate(50, 440)">
-                    <circle cx="30" cy="25" r="25" fill="#22c55e" stroke="#16a34a" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="30" y="22" class="label" font-size="12">🌡️</text>
-                    <text x="30" y="36" class="label" font-size="8" font-weight="bold">24.5°C</text>
-                    <text x="30" y="60" class="label label-small">Sıcaklık</text>
+                <g class="device iot" transform="translate(50, 440)">
+                    <path class="device-card" d="M 0 0 L 52 0 Q 60 0 60 8 L 60 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(20, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="32" class="device-label" font-size="9">24.5°C</text>
+                    <text x="30" y="43" class="device-sublabel" font-size="7.5">Sıcaklık</text>
                 </g>
-                <g class="device" transform="translate(120, 440)">
-                    <circle cx="30" cy="25" r="25" fill="#3b82f6" stroke="#2563eb" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="30" y="22" class="label" font-size="12">💧</text>
-                    <text x="30" y="36" class="label" font-size="8" font-weight="bold">%65</text>
-                    <text x="30" y="60" class="label label-small">Nem</text>
+                <g class="device iot" transform="translate(120, 440)">
+                    <path class="device-card" d="M 0 0 L 52 0 Q 60 0 60 8 L 60 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(20, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="32" class="device-label" font-size="9">%65</text>
+                    <text x="30" y="43" class="device-sublabel" font-size="7.5">Nem</text>
                 </g>
-                <g class="device" transform="translate(190, 440)">
-                    <circle cx="30" cy="25" r="25" fill="#f59e0b" stroke="#d97706" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="30" y="22" class="label" font-size="12">☀️</text>
-                    <text x="30" y="36" class="label" font-size="8" font-weight="bold">450 lx</text>
-                    <text x="30" y="60" class="label label-small">Işık</text>
+                <g class="device iot" transform="translate(190, 440)">
+                    <path class="device-card" d="M 0 0 L 52 0 Q 60 0 60 8 L 60 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(20, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="32" class="device-label" font-size="9">450lx</text>
+                    <text x="30" y="43" class="device-sublabel" font-size="7.5">Işık</text>
                 </g>
-                <g class="device" transform="translate(260, 440)">
-                    <circle cx="30" cy="25" r="25" fill="#78716c" stroke="#57534e" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="30" y="22" class="label" font-size="12">🌱</text>
-                    <text x="30" y="36" class="label" font-size="8" font-weight="bold">%42</text>
-                    <text x="30" y="60" class="label label-small">Toprak</text>
+                <g class="device iot" transform="translate(260, 440)">
+                    <path class="device-card" d="M 0 0 L 52 0 Q 60 0 60 8 L 60 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(20, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="32" class="device-label" font-size="9">%42</text>
+                    <text x="30" y="43" class="device-sublabel" font-size="7.5">Toprak</text>
                 </g>
-                <g class="device" transform="translate(330, 440)">
-                    <circle cx="30" cy="25" r="25" fill="#a1a1aa" stroke="#71717a" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="30" y="22" class="label" font-size="12">💨</text>
-                    <text x="30" y="36" class="label" font-size="8" font-weight="bold">420ppm</text>
-                    <text x="30" y="60" class="label label-small">CO2</text>
+                <g class="device iot" transform="translate(330, 440)">
+                    <path class="device-card" d="M 0 0 L 52 0 Q 60 0 60 8 L 60 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(20, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="32" class="device-label" font-size="9">420ppm</text>
+                    <text x="30" y="43" class="device-sublabel" font-size="7.5">CO2</text>
                 </g>
-                <g class="device" transform="translate(400, 440)">
-                    <circle cx="30" cy="25" r="25" fill="#06b6d4" stroke="#0891b2" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="30" y="22" class="label" font-size="12">🔔</text>
-                    <text x="30" y="36" class="label" font-size="8" font-weight="bold">1013hPa</text>
-                    <text x="30" y="60" class="label label-small">Basınç</text>
+                <g class="device iot" transform="translate(400, 440)">
+                    <path class="device-card" d="M 0 0 L 52 0 Q 60 0 60 8 L 60 50 L 8 50 Q 0 50 0 42 Z" />
+                    <g transform="translate(20, 4)">
+                        <svg width="20" height="20" viewBox="0 0 24 24"><use href="#icon-iot" class="device-icon" /></svg>
+                    </g>
+                    <text x="30" y="32" class="device-label" font-size="9">1013hPa</text>
+                    <text x="30" y="43" class="device-sublabel" font-size="7.5">Basınç</text>
                 </g>
 
-                <!-- Actuators -->
-                <g class="device" transform="translate(540, 440)">
-                    <rect x="0" y="0" width="70" height="50" rx="8" fill="#ec4899" stroke="#db2777" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="35" y="20" class="label" font-size="14">🚿</text>
-                    <text x="35" y="38" class="label" font-size="9" font-weight="bold">Sulama</text>
-                    <circle cx="60" cy="8" r="4" fill="#22c55e"/>
+                <!-- Actuators (drawn as rounded rects with custom details) -->
+                <g class="device medical" transform="translate(540, 440)">
+                    <rect class="device-card" x="0" y="0" width="70" height="60" rx="8"/>
+                    <text x="35" y="24" class="device-label" font-size="16">🚿</text>
+                    <text x="35" y="44" class="device-label" font-size="9">Sulama</text>
+                    <circle cx="60" cy="8" r="3.5" fill="#22c55e"/>
                 </g>
-                <g class="device" transform="translate(620, 440)">
-                    <rect x="0" y="0" width="70" height="50" rx="8" fill="#ec4899" stroke="#db2777" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="35" y="20" class="label" font-size="14">💨</text>
-                    <text x="35" y="38" class="label" font-size="9" font-weight="bold">Fan %40</text>
-                    <circle cx="60" cy="8" r="4" fill="#22c55e"/>
+                <g class="device medical" transform="translate(620, 440)">
+                    <rect class="device-card" x="0" y="0" width="70" height="60" rx="8"/>
+                    <text x="35" y="24" class="device-label" font-size="16">💨</text>
+                    <text x="35" y="44" class="device-label" font-size="9">Fan %40</text>
+                    <circle cx="60" cy="8" r="3.5" fill="#22c55e"/>
                 </g>
-                <g class="device" transform="translate(700, 440)">
-                    <rect x="0" y="0" width="70" height="50" rx="8" fill="#ec4899" stroke="#db2777" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="35" y="20" class="label" font-size="14">💡</text>
-                    <text x="35" y="38" class="label" font-size="9" font-weight="bold">LED %75</text>
-                    <circle cx="60" cy="8" r="4" fill="#f59e0b"/>
+                <g class="device medical" transform="translate(700, 440)">
+                    <rect class="device-card" x="0" y="0" width="70" height="60" rx="8"/>
+                    <text x="35" y="24" class="device-label" font-size="16">💡</text>
+                    <text x="35" y="44" class="device-label" font-size="9">LED %75</text>
+                    <circle cx="60" cy="8" r="3.5" fill="#eab308"/>
                 </g>
-                <g class="device" transform="translate(780, 440)">
-                    <rect x="0" y="0" width="70" height="50" rx="8" fill="#ec4899" stroke="#db2777" stroke-width="2" filter="url(#deviceShadow)"/>
-                    <text x="35" y="20" class="label" font-size="14">🔥</text>
-                    <text x="35" y="38" class="label" font-size="9" font-weight="bold">Isıtıcı</text>
-                    <circle cx="60" cy="8" r="4" fill="#ef4444"/>
+                <g class="device medical" transform="translate(780, 440)">
+                    <rect class="device-card" x="0" y="0" width="70" height="60" rx="8"/>
+                    <text x="35" y="24" class="device-label" font-size="16">🔥</text>
+                    <text x="35" y="44" class="device-label" font-size="9">Isıtıcı</text>
+                    <circle cx="60" cy="8" r="3.5" fill="#ef4444"/>
                 </g>
 
                 <!-- Connections -->
-                <path d="M 450 135 Q 435 152 450 170" class="connection fiber"/>
-                <path d="M 450 235 Q 380 255 330 280" class="connection trunk"/>
-                <path d="M 265 280 Q 195 265 140 280" class="connection copper"/>
-                <path d="M 460 310 Q 475 330 460 355" class="connection copper"/>
-                <path d="M 460 360 Q 400 395 350 440" class="connection wireless"/>
-                <path d="M 460 360 Q 520 395 575 440" class="connection wireless"/>
+                <path d="M 450 135 Q 435 152 450 160" class="connection fiber"/>
+                <path d="M 450 235 L 450 290" class="connection trunk"/>
+                <path d="M 255 275 Q 195 265 150 275" class="connection copper"/>
+                <path d="M 460 365 Q 400 395 350 440" class="connection wireless"/>
+                <path d="M 460 365 Q 520 395 575 440" class="connection wireless"/>
 
                 <!-- Zigbee Label -->
-                <rect x="460" y="385" width="80" height="22" rx="6" fill="#06b6d4" opacity="0.9"/>
-                <text x="500" y="400" class="label" font-size="9" font-weight="bold">Zigbee 3.0</text>
+                <rect x="460" y="385" width="80" height="20" rx="6" fill="#06b6d4" opacity="0.9"/>
+                <text x="500" y="398" class="device-label" font-size="9">Zigbee 3.0</text>
             </svg>
 
             <div class="info-panel">
@@ -1090,8 +1051,7 @@
                 <div class="info-grid">
                     <div class="info-item"><div class="label">Sensör Sayısı</div><div class="value">6 (Sıcaklık, Nem, Işık, Toprak, CO2, Basınç)</div></div>
                     <div class="info-item"><div class="label">Aktuatör Sayısı</div><div class="value">4 (Sulama, Fan, LED, Isıtıcı)</div></div>
-                    <div class="info-item"><div class="label">İletişim Protokolü</div><div class="value">Zigbee 3.0 → MQTT</div></div>
-                    <div class="info-item"><div class="label">Bulut Servisi</div><div class="value">AWS IoT Core + Grafana</div></div>
+                    <div class="info-item"><div class="label">İletişim Protokolü</div><div class="value">Zigbee 3.0 ↔ WiFi ↔ MQTT</div></div>
                 </div>
             </div>
         </div>
@@ -1112,14 +1072,34 @@
             'PC-1': 'Bilgisayar - IP: 192.168.10.10/24\nGateway: 192.168.10.1\nDNS: 8.8.8.8',
             'PC-2': 'Bilgisayar - IP: 192.168.20.10/24\nGateway: 192.168.20.1',
             'PC-3': 'Bilgisayar - IP: 192.168.20.11/24\nGateway: 192.168.20.1',
+            'PC-4': 'Bilgisayar - IP: 192.168.40.10/24\nGateway: 192.168.40.1',
             'SW1': 'WS-C2960-24TT-L\n24x FastEthernet + 2x Gigabit\nYönetilebilir L2 Switch',
+            'SW2': 'WS-C2960-24TT-L\nYönetilebilir L2 Switch',
+            'SW-L3-1': 'WS-C3650\nMulti-Layer L3 Switch\nYönlendirme + VLAN Tanımlama',
+            'SW-L3-2': 'WS-C3650\nMulti-Layer L3 Switch',
             'R1': 'Router\n4x GigabitEthernet\n3x Serial Port\nOSPF, RIP, EIGRP, BGP',
-            'FW - ASA': 'ASA Firewall\nStateful Inspection\nNAT, ACL, VPN\nIDS/IPS'
+            'R2': 'Router\n4x GigabitEthernet\nStatik Yönlendirme Desteği',
+            'R1-ABR': 'Area Border Router\nArea 0 ve Area 1 arasında yönlendirme yapar',
+            'R2-ABR': 'Area Border Router\nArea 0 ve Area 2 arasında yönlendirme yapar',
+            'WLC': 'Wireless LAN Controller\nKablosuz AP yönetimi ve istemci yetkilendirmesi',
+            'AP-1': 'Access Point\n5GHz 802.11ax WiFi Sinyal Yayını',
+            'IoT-GW': 'IoT Gateway\nFarklı haberleşme ağlarını (Zigbee/MQTT/Wi-Fi) birbirine bağlar',
+            'FW - ASA': 'ASA Firewall\nStateful Inspection\nNAT, ACL, VPN\nIDS/IPS',
+            'Sunucu': 'DMZ Sunucu Grubu\nWeb / Mail / DNS / FTP Servisleri',
+            'Doktor': 'Personel Bilgisayarı\nHastane ağına bağlıdır',
+            'Hemşire': 'Personel Bilgisayarı\nHastane ağına bağlıdır',
+            'Yönetim': 'Yönetim Departmanı Bilgisayarı\nHastane ağına bağlıdır',
+            'Yönetim PC': 'IoT Yönetim Konsolu ve İzleme Bilgisayarı',
+            'AP': 'Access Point\nHastane Misafir WiFi Servisi',
+            'Sulama': 'Aktuatör (Output)\nToprak nemi düştüğünde otomatik sulama yapar',
+            'Fan %40': 'Aktuatör (Output)\nSera sıcaklığı arttığında otomatik çalışır',
+            'LED %75': 'Aktuatör (Output)\nIşık seviyesi düştüğünde yapay aydınlatma sağlar',
+            'Isıtıcı': 'Aktuatör (Output)\nSoğuk havalarda sera sıcaklığını korur'
         };
 
         document.querySelectorAll('.device').forEach(device => {
             device.addEventListener('mouseenter', (e) => {
-                const label = device.querySelector('.label')?.textContent;
+                const label = device.querySelector('.device-label')?.textContent;
                 if (label && deviceInfo[label]) {
                     tooltip.innerHTML = `<h4>${label}</h4><p>${deviceInfo[label].replace(/\n/g, '<br>')}</p>`;
                     tooltip.style.display = 'block';

@@ -1,6 +1,6 @@
 # 📦 Paket Yakalama Kılavuzu / Packet Capture Guide
 
-Network Simulator'ın **Paket Yakalama Paneli**, ağ trafiğini Wireshark benzeri bir arayüzde gerçek zamanlı izlemenizi sağlar.
+Network Simulator'ın **Paket Yakalama Paneli**, ağ trafiğini gelişmiş bir analizör arayüzünde gerçek zamanlı izlemenizi sağlar.
 
 ---
 

@@ -7,7 +7,7 @@
 2. [Kullanım Kılavuzu ve Kısayollar](#network-simulator---usage-guide--kullanım-kılavuzu)
 3. [CLI Komut Referansı](#-network-cli-commands-reference)
 4. [Rehberli Dersler ve CLI Eğitimi](#-network-simulator---rehberli-dersler)
-5. [Gelişmiş Paket Yakalama ve Protokol Analizi (Wireshark-Lite)](#-gelişmiş-paket-yakalama-ve-protokol-analizi-wireshark-lite)
+5. [Gelişmiş Paket Yakalama ve Protokol Analizi](#-gelişmiş-paket-yakalama-ve-protokol-analizi)
 6. [Örnek Proje ve Adım Adım Yapılışları](#network-simulator---example-projects)
 
 <div style="page-break-after: always;"></div>
@@ -108,7 +108,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Window Collapse**: Double-click any floating window title bar to collapse/expand instantly | **Pencere Daraltma**: Herhangi bir yüzen pencere başlığına çift tık ile anında daralt/genişlet |
 | **CLI Terminal**: Syntax-highlighted NOS-style terminal with tab-complete and ? help | **CLI Terminali**: Tab tamamlama ve ? yardım ile sözdizimi vurgulu NOS tarzı terminal |
 | **PC CMD**: Windows-style CMD (ping/tracert/arp/netstat/nbtstat/nslookup with full parameters) | **PC CMD**: Windows tarzı CMD (ping/tracert/arp/netstat/nbtstat/nslookup tam parametrelerle) |
-| **Packet Capture Panel**: Wireshark-lite style capture with multi-term filter, pagination, protocol numbers | **Paket Yakalama Paneli**: Wireshark-lite stil yakalama: çoklu filtre, sayfalama, protokol numaraları |
+| **Packet Capture Panel**: Advanced capture with multi-term filter, pagination, protocol numbers | **Paket Yakalama Paneli**: Gelişmiş paket yakalama: çoklu filtre, sayfalama, protokol numaraları |
 | **Ping Animation**: Hop-by-hop PDU playback with P (play/pause) and N (next hop) key control | **Ping Animasyonu**: P (oynat/duraklat) ve N (sonraki hop) tuşu ile hop-by-hop PDU oynatma |
 | **Context Menu**: Right-click device/cable for quick actions | **Bağlam Menüsü**: Cihaz/kabloya sağ tık ile hızlı işlemler |
 | **Graphics Quality Toggle**: High/Low graphics mode for large topologies (50+ devices) | **Grafik Kalite Seçici**: Büyük topolojilerde performans için Yüksek/Düşük grafik modu |
@@ -6595,7 +6595,7 @@ PC-1# ping 2001:db8:2::10 (PC-2'nin IPv6 adresi)
 
 ---
 
-## 🔍 Gelişmiş Paket Yakalama ve Protokol Analizi (Wireshark-Lite)
+## 🔍 Gelişmiş Paket Yakalama ve Protokol Analizi
 
 Network Simulator v2.4 ile birlikte tuval üzerindeki tüm ağ kablolarında canlı paket yakalama ve derinlemesine paket inceleme modülü sunulmaktadır.
 
@@ -6664,7 +6664,7 @@ Yeni eklenen meydan okuma modları ile ağ hatalarını teşhis etme ve düzeltm
 
 Bu bölümde, simülatörün en son sürümünde uygulanan ancak daha önce dokümantasyonda derinlemesine açıklanmamış gelişmiş mimari, UI, ağ protokolleri ve güvenlik yetenekleri yer almaktadır.
 
-### 1. Gelişmiş Paket Yakalama Paneli (Wireshark-lite)
+### 1. Gelişmiş Paket Yakalama Paneli
 Paket yakalama panelinde sunulan gelişmiş filtreleme ve izleme özellikleri:
 - **Çoklu Dışlama Filtresi (Exclude Filter):** Arayüzde yer alan dışlama kutusuna virgül veya boşluk ile ayrılmış terimler (`cdp, stp, arp` vb.) girilerek ilgili paketlerin listede görünmesi engellenir. Bu işlem büyük/küçük harfe duyarsızdır (case-insensitive).
 - **Sayfalama (Pagination):** Yakalanan tüm paketler sayfa başına 10 paket olacak şekilde listelenir. Bu sayede tarayıcı performansı korunur. Sayfalar arasında `◀ Önceki` ve `Sonraki ▶` butonları ile geçiş yapılır.

@@ -59,7 +59,7 @@
 
 ### 🔍 Tanılama ve Görselleştirme
 - Protokol Durum Paneli (canlı OSPF/STP/HSRP/EIGRP özeti).
-- Paket Yakalama Paneli (Wireshark-lite mantığında gelişmiş paket izleme: canlı arama/filtreleme, virgül/boşluk ile çoklu dışlama (`cdp, stp, arp`), sayfalama, protokol numaraları gösterimi `STP (0x4242)`).
+- Paket Yakalama Paneli (Gelişmiş paket yakalama ve analizör arayüzü: canlı arama/filtreleme, virgül/boşluk ile çoklu dışlama (`cdp, stp, arp`), sayfalama, protokol numaraları gösterimi `STP (0x4242)`).
 - Arka Plan Ağ Hareketliliği Yakalama (DHCP DORA `Discover/Offer/Request/ACK`, STP BPDU, CDP, OSPF Hello, RIP/EIGRP güncellemeleri ve WLAN Beacon paketlerinin otomatik kaydı).
 - Ping animasyonu ve detaylı PDU inceleme paneli (hop-by-hop kontrol, P/N tuş kontrolü).
 - Zaman Çizelgesi (Timeline) paneli ile geçmiş işlem takibi.
@@ -150,7 +150,7 @@
 
 ### 🔍 Diagnostics & Visualization
 - Protocol Status Panel (live OSPF/STP/HSRP/EIGRP overview).
-- Packet Capture Panel (Wireshark-lite style: real-time search/filtering, multi-term exclusion (`cdp, stp, arp`), pagination, protocol numbers `STP (0x4242)`).
+- Packet Capture Panel (Advanced packet capture and analyzer: real-time search/filtering, multi-term exclusion (`cdp, stp, arp`), pagination, protocol numbers `STP (0x4242)`).
 - Background Network Activity Capture (automated capture of DHCP DORA `Discover/Offer/Request/ACK`, STP BPDU, CDP, OSPF Hello, RIP/EIGRP updates, and WLAN Beacons).
 - Packet animation and comprehensive PDU inspect panels (hop-by-hop playback, P/N key control).
 - Timeline Panel for past action logs and activity tracking.
