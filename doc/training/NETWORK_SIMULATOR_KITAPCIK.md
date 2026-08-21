@@ -2717,7 +2717,7 @@ ICMP echo reply received from 192.168.1.2
 
 ## 📁 Örnek Projeler
 
-Network Simulator, farklı zorluk seviyelerinde **43 hazır örnek proje** ile birlikte gelir. Her proje önceden yapılandırılmış cihazlar ve bağlantılarla birlikte yüklenir.
+Network Simulator, farklı zorluk seviyelerinde **46 hazır örnek proje** ile birlikte gelir. Her proje önceden yapılandırılmış cihazlar ve bağlantılarla birlikte yüklenir.
 
 | # | Proje | Etiket | Seviye | Açıklama |
 |---|-------|--------|--------|----------|
@@ -6741,7 +6741,7 @@ Router'lar arasında varsayılan ağ geçidi yedekliliği:
 - `show vrrp`: VRRP gruplarını ve durumlarını listeler.
 
 ### 15. QoS (Quality of Service) Stub Komutları
-- Cisco IOS uyumluluğu açısından eklenen `mls qos`, `policy-map <name>`, `class-map <name>` komutları CLI parser tarafından tanınmakta ve konfigürasyona eklenebilmektedir (Simülasyon düzeyinde stub olarak çalışırlar).
+- IOS uyumluluğu açısından eklenen `mls qos`, `policy-map <name>`, `class-map <name>` komutları CLI parser tarafından tanınmakta ve konfigürasyona eklenebilmektedir (Simülasyon düzeyinde stub olarak çalışırlar).
 
 ### 16. Spatial Partitioning (Uzamsal Bölümleme)
 - Topolojide 100+ cihaz ve kablo olduğunda render performansının düşmesini engellemek için, tuval alanı sanal karelere bölünür (spatial hashing). Sadece ekranda görünür olan (viewport) cihazlar ve kablolar çizilerek yüksek FPS korunur.
@@ -6750,7 +6750,7 @@ Router'lar arasında varsayılan ağ geçidi yedekliliği:
 Kabloları mantıksal tek bir hatta birleştirme:
 - `channel-group <number> mode {active | passive | desirable | auto | on}`:
   - `active/passive`: LACP (802.3ad) protokolü ile otomatik EtherChannel kurma.
-  - `desirable/auto`: PAgP (Cisco) protokolü ile otomatik EtherChannel kurma.
+  - `desirable/auto`: PAgP protokolü ile otomatik EtherChannel kurma.
   - `on`: Statik EtherChannel.
 - `show etherchannel summary`: Port-channel gruplarını ve üye portların durumlarını gösterir.
 

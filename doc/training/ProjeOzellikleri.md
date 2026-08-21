@@ -44,7 +44,7 @@
 
 ### 📚 Eğitim Modülleri
 - 19 Rehberli ders (Guided Mode) — adım adım yönergeler ve otomatik doğrulama; "Bana Öğret" modülü dahil.
-- 43 Hazır örnek uygulama projesi ve sektörel senaryolar (SOHO, Kampüs, Hastane, E-Ticaret).
+- 46 Hazır örnek uygulama projesi ve sektörel senaryolar (SOHO, Kampüs, Hastane, E-Ticaret).
 - 6 Sınav Modülü ve Öğretmenler için sınav editörü + otomatik puanlama.
 - 3 seviyeli akıllı yardım sistemi (Başlangıç, Orta, Sınav).
 - Ses sentezleyici ders anlatımı (Metin okuma - TTS).
@@ -135,7 +135,7 @@
 
 ### 📚 Education & Training
 - 19 Guided Lessons — step-by-step instructions and automated verification, including "Teach Me" tracks.
-- 43 pre-built example training labs and industry scenarios (SOHO, Campus, Hospital, E-Commerce).
+- 46 pre-built example training labs and industry scenarios (SOHO, Campus, Hospital, E-Commerce).
 - 6 Exam Modules and custom exam builder for instructors + automated grading.
 - 3-tier intelligent help system (Beginner, Intermediate, Exam).
 - Built-in Text-to-Speech (TTS) narration for guided lessons.
@@ -178,7 +178,7 @@
 - Automated README statistics updater.
 
 ### 📄 Documentation (23 files)
-- Comprehensive resources including CLI reference guides, guided lesson manuals, error handling logs, integration guides, L3 switch configurations, wireless guides, room tracking setups, user guides, and the Turkish Training Booklet containing walkthroughs for 43 labs.
+- Comprehensive resources including CLI reference guides, guided lesson manuals, error handling logs, integration guides, L3 switch configurations, wireless guides, room tracking setups, user guides, and the Turkish Training Booklet containing walkthroughs for 46 labs.
 
 ## Architecture / Mimari
 

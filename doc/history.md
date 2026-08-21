@@ -223,7 +223,7 @@ Yeniden eskiye, tarih ve özellik listesi.
 | **Klavye Kısayolları** — Tüm işlemler için tam klavye desteği |
 | **ARIA / Erişilebilirlik** — ARIA etiketleri, ekran okuyucu desteği, yüksek kontrast modu |
 | **Responsive Tasarım** — Mobil uyumlu düzen, adaptif kırılım noktaları |
-| **Örnek Projeler** — Kılavuzlarla birlikte 43 önceden oluşturulmuş örnek proje |
+| **Örnek Projeler** — Kılavuzlarla birlikte 46 önceden oluşturulmuş örnek proje |
 | **Geri Alma / İleri Alma** — Tuval geçmişi takibi ile undo/redo |
 | **Proje Kalıcılığı** — Tarayıcı depolama ile kaydet/yükle |
 
@@ -238,7 +238,7 @@ Yeniden eskiye, tarih ve özellik listesi.
 | Toplam Kaynak Satırı (src/) | 103.245 |
 | Kaynak Dosya | 286 |
 | Dokümantasyon Dosyası | 16 |
-| Örnek Proje | 43 |
+| Örnek Proje | 46 |
 | Rehberli Ders | 19 |
 | Sınav | 6 |
 | CLI Komutu | 450+ |
