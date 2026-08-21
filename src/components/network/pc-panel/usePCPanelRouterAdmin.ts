@@ -7,6 +7,7 @@ import type { OutputLine } from './PCPanel.types';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
 import { logger } from '@/lib/logger';
+import { useAppStore } from '@/lib/store/appStore';
 
 interface ConnectedIoTDevice {
   id: string;
@@ -199,6 +200,13 @@ export function usePCPanelRouterAdmin({
             ? `${device?.name || 'Cihaz'} WiFi ayarları uygulandı.`
             : `${device?.name || 'Device'} WiFi settings applied.`
         );
+
+        useAppStore.getState().addNetworkEventLog({
+          level: 'info',
+          category: 'Wireless',
+          message: language === 'tr' ? `${device?.name || 'Cihaz'} WiFi ayarları güncellendi` : `${device?.name || 'Device'} WiFi settings updated`,
+          detail: `SSID: ${nextWifi.ssid || '(yok)'}, Security: ${nextWifi.security}, Mode: ${nextWifi.mode}`,
+        });
       }
 
       // Handle IoT device connect (existing device)

@@ -82,10 +82,12 @@ export interface UseTopologyMouseProps {
   
   pingMode: boolean;
   pingSource: CanvasDevice | null;
+  language?: string;
 }
 
 export function useTopologyMouse(props: UseTopologyMouseProps) {
   const {
+    language = 'tr',
     canvasRef,
     canvasRectRef,
     panRef,
@@ -299,9 +301,14 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
           
           const counterEl = document.getElementById('selection-counter');
           if (counterEl) {
-            counterEl.textContent = `${selectedIds.length} ${selectedIds.length === 1 ? 'device' : 'devices'}`;
-            counterEl.setAttribute('x', (Math.min(newBox.start.x, newBox.current.x) + 10).toString());
-            counterEl.setAttribute('y', (Math.min(newBox.start.y, newBox.current.y) - 10).toString());
+            if (selectedIds.length > 0) {
+              const deviceLabel = language === 'tr' ? 'Cihaz' : (selectedIds.length === 1 ? 'device' : 'devices');
+              counterEl.textContent = `${selectedIds.length} ${deviceLabel}`;
+              counterEl.setAttribute('x', (Math.min(newBox.start.x, newBox.current.x) + 10).toString());
+              counterEl.setAttribute('y', (Math.min(newBox.start.y, newBox.current.y) - 10).toString());
+            } else {
+              counterEl.textContent = '';
+            }
           }
 
           if (selectionAnimationFrameRef.current === null) {

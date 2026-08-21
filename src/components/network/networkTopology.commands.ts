@@ -1,4 +1,4 @@
-﻿import { Terminal, Globe, Wifi, Settings, Eye, Server, Router, Network, Book, Zap, Keyboard, LucideIcon, Lightbulb, FileText, Layers, Shield, Radio } from 'lucide-react';
+import { Terminal, Globe, Wifi, Settings, Eye, Server, Router, Network, Book, Zap, Keyboard, LucideIcon, Lightbulb, FileText, Layers, Shield, Radio } from 'lucide-react';
 
 export interface CommandDefinition {
   id: string;
@@ -566,10 +566,14 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
     {
       id: 'keyboard',
       icon: Keyboard,
-      title: isTR ? 'Klavye Kısayolları' : 'Keyboard Shortcuts',
+      title: isTR ? 'Klavye & Fare Kısayolları' : 'Keyboard & Mouse Shortcuts',
       type: 'info',
       cmds: [
-        // Canvas
+        // Canvas & Mouse
+        ['Fare Orta Tuşu + Sürükle', isTR ? 'Çoklu seçim kutusu oluştur (Çoklu Cihaz Seçimi)' : 'Box multi-selection (Multi-select devices)'],
+        ['Shift + Fare Orta Tuşu / Sol Tık', isTR ? 'Mevcut seçime cihaz ekle / çıkar' : 'Add / remove device from selection'],
+        ['Sol Tık + Sürükle / Space + Sürükle', isTR ? 'Tuvali (Canvas) kaydır' : 'Pan canvas'],
+        ['Ctrl + Scroll', isTR ? 'Yakınlaştır / Uzaklaştır' : 'Zoom in / out'],
         ['Ctrl + Z', isTR ? 'Geri al' : 'Undo'],
         ['Ctrl + Y / Ctrl + Shift + Z', isTR ? 'Yeniden yap' : 'Redo'],
         ['Ctrl + C', isTR ? 'Seçili cihazı kopyala' : 'Copy selected device'],
@@ -578,8 +582,6 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['Ctrl + A', isTR ? 'Tümünü seç' : 'Select all'],
         ['Delete / Backspace', isTR ? 'Seçili öğeyi sil' : 'Delete selected'],
         ['Escape', isTR ? 'Seçimi iptal et / Modu kapat' : 'Cancel selection / Close mode'],
-        ['Ctrl + Scroll', isTR ? 'Yakınlaştır / Uzaklaştır' : 'Zoom in / out'],
-        ['Space + Sürükle', isTR ? 'Canvas\'ı kaydır' : 'Pan canvas'],
         ['F1', isTR ? 'Yardım panelini aç / kapat' : 'Open / close help panel'],
         // Ping packet panel
         ['P', isTR ? 'Paket analizi: Oynat / Duraklat' : 'Packet analysis: Play / Pause'],

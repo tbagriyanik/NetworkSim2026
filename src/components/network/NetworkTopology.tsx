@@ -1324,7 +1324,7 @@ export function NetworkTopology({
     setSelectionBox, setSelectedDeviceIds, setIsActuallyDragging, setDraggedDevice, setIsDrawingConnection,
     setConnectionStart, setDeviceTooltip, setPortTooltip, setContextMenu, setSelectAllMode, setPingMode, setPingSource,
     setPingResult, setPanStart, setSelectedNoteIds, mergeSelectionIds, getDeviceIdsInSelectionBox,
-    openContextMenu, cancelConnectionDrawing, onDeviceSelect, pingMode, pingSource
+    openContextMenu, cancelConnectionDrawing, onDeviceSelect, pingMode, pingSource, language
   });
 
   // Handle Wheel and Middle Click Auto-scroll Prevention

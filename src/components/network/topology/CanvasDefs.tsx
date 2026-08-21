@@ -25,22 +25,44 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
         <feDropShadow dx="0.5" dy="1" stdDeviation="1" floodOpacity={isDark ? "0.4" : "0.25"} />
       </filter>
       {/* Canvas background gradient */}
-      <radialGradient id="canvasBgGradient" cx="46%" cy="30%" r="88%">
+      <radialGradient id="canvasBgGradient" cx="44%" cy="28%" r="90%">
+        <stop offset="0%" stopColor="var(--canvas-bg-0)" />
+        <stop offset="26%" stopColor="var(--canvas-bg-1)" />
+        <stop offset="52%" stopColor="var(--canvas-bg-2)" />
+        <stop offset="76%" stopColor="var(--canvas-bg-3)" />
+        <stop offset="100%" stopColor="var(--canvas-bg-4)" />
+      </radialGradient>
+      {/* Subtle top-right ambient accent glow */}
+      <radialGradient id="canvasAmbientGlow" cx="82%" cy="18%" r="65%">
         {isDark ? (
           <>
-            <stop offset="0%" stopColor="var(--canvas-bg-0)" />
-            <stop offset="28%" stopColor="var(--canvas-bg-1)" />
-            <stop offset="55%" stopColor="var(--canvas-bg-2)" />
-            <stop offset="78%" stopColor="var(--canvas-bg-3)" />
-            <stop offset="100%" stopColor="var(--canvas-bg-4)" />
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.16" />
+            <stop offset="45%" stopColor="#0ea5e9" stopOpacity="0.08" />
+            <stop offset="85%" stopColor="#3b82f6" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
           </>
         ) : (
           <>
-            <stop offset="0%" stopColor="var(--canvas-bg-0)" />
-            <stop offset="28%" stopColor="var(--canvas-bg-1)" />
-            <stop offset="55%" stopColor="var(--canvas-bg-2)" />
-            <stop offset="78%" stopColor="var(--canvas-bg-3)" />
-            <stop offset="100%" stopColor="var(--canvas-bg-4)" />
+            <stop offset="0%" stopColor="#818cf8" stopOpacity="0.14" />
+            <stop offset="45%" stopColor="#38bdf8" stopOpacity="0.07" />
+            <stop offset="85%" stopColor="#60a5fa" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+          </>
+        )}
+      </radialGradient>
+      {/* Subtle bottom-left warmth ambient glow */}
+      <radialGradient id="canvasAmbientGlowSecondary" cx="15%" cy="85%" r="60%">
+        {isDark ? (
+          <>
+            <stop offset="0%" stopColor="#a855f7" stopOpacity="0.10" />
+            <stop offset="50%" stopColor="#6366f1" stopOpacity="0.04" />
+            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+          </>
+        ) : (
+          <>
+            <stop offset="0%" stopColor="#c084fc" stopOpacity="0.08" />
+            <stop offset="50%" stopColor="#818cf8" stopOpacity="0.03" />
+            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </>
         )}
       </radialGradient>

@@ -32,12 +32,12 @@ export function AppFooter({
   setShowAboutModal
 }: AppFooterProps) {
   const getDeviceCountLabel = (count: number) => (
-    language === 'tr' ? t.devicesCount : (count === 1 ? 'device' : 'devices')
+    language === 'tr' ? 'Cihaz' : (count === 1 ? 'Device' : 'Devices')
   );
 
   const getDeviceCountText = (count: number) => {
-    if (count === 0) {
-      return language === 'tr' ? 'Cihaz yok' : 'No devices';
+    if (count <= 0) {
+      return '';
     }
 
     return `${count} ${getDeviceCountLabel(count)}`;
@@ -108,16 +108,20 @@ export function AppFooter({
                       <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
                         }`}>Ctrl+S</kbd>
                       <span className="mx-1">{t.saveLabel}</span>
-                      <span className={`mx-2 ${isDark ? 'text-secondary-500' : 'text-secondary-400'}`}>|</span>
-                      <span className={`text-[11px] ${isDark ? 'text-secondary-400' : 'text-secondary-600'}`}>
-                        {getDeviceCountText(topologyDevices?.length || 0)}
-                      </span>
+                      {(topologyDevices?.length || 0) > 0 && (
+                        <>
+                          <span className={`mx-2 ${isDark ? 'text-secondary-500' : 'text-secondary-400'}`}>|</span>
+                          <span className={`text-[11px] ${isDark ? 'text-secondary-400' : 'text-secondary-600'}`}>
+                            {getDeviceCountText(topologyDevices?.length || 0)}
+                          </span>
+                        </>
+                      )}
                       <div className={`flex items-center gap-1 text-[10px] ${isDark ? 'text-secondary-400' : 'text-secondary-500'}`}>
-                        <span className="font-semibold">LeftMB</span>:{t.pan}
+                        <span className="font-semibold">{language === 'tr' ? 'Sol Tık' : 'LeftMB'}</span>:{t.pan}
                         <span className="mx-1">·</span>
-                        <span className="font-semibold">MidMB</span>:{t.boxSelect}
+                        <span className="font-semibold">{language === 'tr' ? 'Orta Tuş' : 'MidMB'}</span>:{t.boxSelect}
                         <span className="mx-1">·</span>
-                        <span className="font-semibold">RightMB</span>:{t.menu}
+                        <span className="font-semibold">{language === 'tr' ? 'Sağ Tık' : 'RightMB'}</span>:{t.menu}
                         <span className="mx-1">·</span>
                         <span className="font-semibold">{language === 'tr' ? 'Tekerlek' : 'Wheel'}</span>:{language === 'tr' ? 'Yakınlaştır' : 'Zoom'}
                       </div>
@@ -189,10 +193,14 @@ export function AppFooter({
             <span className="truncate font-medium">
               {hasUnsavedChanges ? t.unsaved : t.saved}
             </span>
-            <span className="opacity-30">|</span>
-            <span className="truncate opacity-80">
-              {getDeviceCountText(topologyDevices?.length || 0)}
-            </span>
+            {(topologyDevices?.length || 0) > 0 && (
+              <>
+                <span className="opacity-30">|</span>
+                <span className="truncate opacity-80">
+                  {getDeviceCountText(topologyDevices?.length || 0)}
+                </span>
+              </>
+            )}
           </div>
 
           {/* Task info / Lab score */}

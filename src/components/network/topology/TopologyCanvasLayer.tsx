@@ -234,6 +234,8 @@ export function TopologyCanvasLayer({
 
                     <g clipPath="url(#canvasClip)">
                         <rect x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#canvasBgGradient)" />
+                        <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#canvasAmbientGlow)" />
+                        <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#canvasAmbientGlowSecondary)" />
                         <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#majorGridPattern)" />
                         <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="url(#gridPattern)" />
 

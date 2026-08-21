@@ -607,6 +607,12 @@ export function useRefreshNetwork({
               description: wifiMessages.join('\n'),
               duration: 4000,
             });
+            addNetworkEventLog({
+              level: 'info',
+              category: 'Wireless',
+              message: t.wirelessStatus || (language === 'tr' ? 'Kablosuz Ağ Durumu' : 'Wireless Status'),
+              detail: wifiMessages.join('\n'),
+            });
           }
 
           let conflictToastDelay = 0;

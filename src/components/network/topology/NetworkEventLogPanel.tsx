@@ -17,7 +17,7 @@ export function NetworkEventLogPanel({ isOpen, onClose, isDark }: NetworkEventLo
   const logs = useNetworkEventLogs();
   const clearLogs = useAppStore(state => state.clearNetworkEventLogs);
   const { language } = useLanguage();
-  const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all');
+  const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all');
 
   if (!isOpen) return null;
 
@@ -92,15 +92,16 @@ export function NetworkEventLogPanel({ isOpen, onClose, isDark }: NetworkEventLo
           <Filter className={cn("w-4 h-4 mr-1", isDark ? "text-slate-400" : "text-slate-500")} />
           <select
             value={filter}
-            onChange={(e) => setFilter(e.target.value as 'all' | 'error' | 'warning')}
+            onChange={(e) => setFilter(e.target.value as 'all' | 'error' | 'warning' | 'info')}
             className={cn(
               "text-xs rounded border px-2 py-1 outline-none flex-1",
               isDark ? "bg-slate-900 border-slate-700 text-slate-200" : "bg-white border-slate-200 text-slate-700"
             )}
           >
             <option value="all">{language === 'tr' ? 'Tümü' : 'All'}</option>
-            <option value="error">{language === 'tr' ? 'Sadece Hatalar' : 'Errors Only'}</option>
+            <option value="info">{language === 'tr' ? 'Sadece Bilgilendirme' : 'Info Only'}</option>
             <option value="warning">{language === 'tr' ? 'Sadece Uyarılar' : 'Warnings Only'}</option>
+            <option value="error">{language === 'tr' ? 'Sadece Hatalar' : 'Errors Only'}</option>
           </select>
         </div>
         <Button
