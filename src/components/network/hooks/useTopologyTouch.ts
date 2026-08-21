@@ -17,8 +17,8 @@ export interface UseTopologyTouchProps {
   handleDeviceDoubleClick: (device: CanvasDevice) => void;
   onDeviceSelect: (type: DeviceType, id: string, model?: string, name?: string) => void;
   isDrawingConnection: boolean;
-  mobileConnectionSource: string | null;
-  setMobileConnectionSource: (id: string | null) => void;
+  mobileConnectionSource?: string | null;
+  setMobileConnectionSource?: (id: string | null) => void;
   isMobile: boolean;
   isTR: boolean;
   toast: (opts: { title: string; description?: string; duration?: number }) => void;
@@ -63,12 +63,12 @@ export function useTopologyTouch({
   openContextMenu,
   handleDeviceDoubleClick,
   onDeviceSelect,
-  isDrawingConnection,
-  mobileConnectionSource,
-  setMobileConnectionSource,
-  isMobile,
-  isTR,
-  toast,
+  isDrawingConnection: _isDrawingConnection,
+  mobileConnectionSource: _mobileConnectionSource,
+  setMobileConnectionSource: _setMobileConnectionSource,
+  isMobile: _isMobile,
+  isTR: _isTR,
+  toast: _toast,
   getCanvasDimensions,
   getDistance,
   setDevices,
@@ -228,21 +228,6 @@ export function useTopologyTouch({
 
   const handleDeviceTouchEnd = useCallback(() => {
     if (touchDraggedDevice && !isTouchDragging) {
-      const deviceId = touchDraggedDevice.id;
-
-      if (isMobile && !isDrawingConnection) {
-        if (!mobileConnectionSource) {
-          setMobileConnectionSource(deviceId);
-          toast({
-            title: isTR ? "Bağlantı Başlatıldı" : "Connection Started",
-            description: isTR ? "Hedef cihazı seçin." : "Select the target device.",
-            duration: 3000,
-          });
-        } else {
-          setMobileConnectionSource(null);
-        }
-      }
-
       setSelectedDeviceIds([touchDraggedDevice.id]);
       onDeviceSelect(touchDraggedDevice.type, touchDraggedDevice.id, isSwitchDeviceType(touchDraggedDevice.type) ? touchDraggedDevice.switchModel : undefined, touchDraggedDevice.name);
     }

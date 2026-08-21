@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo, Mou
 import React from 'react';
 import { flushSync } from 'react-dom';
 import { useAppStore, useTopologyDevices, useTopologyConnections, useTopologyNotes, useGraphicsQuality, useIsSimulationMode, useEnvironment, useNetworkEventLogs } from '@/lib/store/appStore';
-import { isCableCompatible } from '@/lib/network/types';
 import { checkDeviceConnectivity, getPingDiagnostics, getWirelessDistance } from '@/lib/network/connectivity';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -12,12 +11,9 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 import { useNetworkRefreshWithPositions } from '@/hooks/useNetworkRefreshWithPositions';
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { toast } from "@/hooks/use-toast";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ShortcutBadge } from "@/components/ui/ShortcutBadge";
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, ContextMenuState, ContextMenuMode, NetworkTopologyProps } from './networkTopology.types';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
-
 
 import {
   getDeviceWidth,
@@ -27,7 +23,7 @@ import {
   getDeviceCenter,
   getPortPosition,
 } from './networkTopology.helpers';
-import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, TOOLTIP_DELAY, TOOLTIP_OFFSET_Y, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_COLORS, NOTE_FONTS_DESKTOP as NOTE_FONTS, NOTE_FONT_SIZES, NOTE_OPACITY as NOTE_OPACITY_OPTIONS, PC_PORT_SPACING, PORT_SPACING, PORT_START_X } from './networkTopology.constants';
+import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, TOOLTIP_DELAY, TOOLTIP_OFFSET_Y, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_FONTS_DESKTOP as NOTE_FONTS } from './networkTopology.constants';
 
 import { useCanvasActions } from '../../hooks/useCanvasActions';
 import { exportTopologyToPNG } from '../../utils/exportPNG';
@@ -40,7 +36,6 @@ import { useCanvasClipboard } from './hooks/useCanvasClipboard';
 import { useDeviceDrag } from './hooks/useDeviceDrag';
 import { useCanvasSelection } from './hooks/useCanvasSelection';
 import { useNoteEditing } from './hooks/useNoteEditing';
-import { useNoteDragging } from './hooks/useNoteDragging';
 import { useIotSensorDetection } from './hooks/useIotSensorDetection';
 import { usePeriodicNetworkPackets } from './hooks/usePeriodicNetworkPackets';
 import { useTopologySync } from './hooks/useTopologySync';
@@ -51,12 +46,12 @@ import { useTopologyPingUI } from './hooks/useTopologyPingUI';
 import { usePingSequence, type PingAnimationState, type BroadcastAnimTarget } from './hooks/usePingSequence';
 import { useTopologyIot } from './hooks/useTopologyIot';
 import { useTopologyTooltipHandlers } from './hooks/useTopologyTooltipHandlers';
+import { useTopologyNoteActions } from './hooks/useTopologyNoteActions';
+import { useTopologyPortConnection } from './hooks/useTopologyPortConnection';
+import { useTopologyEventListeners } from './hooks/useTopologyEventListeners';
+import { useDeviceNavigation } from './hooks/useDeviceNavigation';
 import { CanvasToolbar } from './topology/CanvasToolbar';
 import { TopologyDeviceRenderer } from './topology/TopologyDeviceRenderer';
-
-import { TopologyPrintPreview } from './topology/TopologyPrintPreview';
-import { TopologyPaletteSheet } from './topology/TopologyPaletteSheet';
-import { TopologyTooltips } from './topology/TopologyTooltips';
 import { NetworkEventLogPanel } from './topology/NetworkEventLogPanel';
 import { TopologyModals } from './topology/TopologyModals';
 import { DEVICE_ICONS } from './topology/DeviceIcons';
@@ -64,8 +59,8 @@ import { TopologySelectionToolbar } from './topology/TopologySelectionToolbar';
 import { TopologyCanvasLayer } from './topology/TopologyCanvasLayer';
 import { TopologyFullscreenButton } from './topology/TopologyFullscreenButton';
 import { buildImplicitWirelessConnections } from '@/lib/network/wireless';
-
-
+import { TopologyPaletteSheet } from './topology/TopologyPaletteSheet';
+import { TopologyTooltips } from './topology/TopologyTooltips';
 
 export function NetworkTopology({
   cableInfo,
@@ -232,8 +227,6 @@ export function NetworkTopology({
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);
   const [pan, setPan] = useState(panProp ?? { x: 0, y: 0 });
   const [canvasDimensions, setCanvasDimensions] = useState({ width: 0, height: 0 });
-  const syncingZoomFromPropRef = useRef(false);
-  const syncingPanFromPropRef = useRef(false);
 
   // Update canvas dimensions on resize and mount
   useLayoutEffect(() => {
@@ -279,8 +272,6 @@ export function NetworkTopology({
   const startPingAnimationRef = useRef<((sourceId: string, targetId: string) => void) | null>(null);
 
   // Zoom mouse drag state
-  const [isDraggingZoom, setIsDraggingZoom] = useState(false);
-  const zoomDragRef = useRef({ isDragging: false, startX: 0, startZoom: 0 });
 
   const currentViewport = useMemo(() => {
     if (canvasDimensions.width === 0 || canvasDimensions.height === 0 || !zoom || zoom <= 0) {
@@ -514,20 +505,51 @@ export function NetworkTopology({
     latestNotesRef,
   });
 
+
+  const syncingZoomFromPropRef = useRef(false);
+  const syncingPanFromPropRef = useRef(false);
+
+  const {
+    handleZoomWheel,
+    handleZoomMouseDown,
+    isDraggingZoom,
+    resetView,
+  } = useCanvasZoomPan({
+    zoom,
+    setZoom,
+    pan,
+    setPan,
+    zoomProp,
+    onZoomChange,
+    panProp,
+    onPanChange,
+    canvasRef,
+    svgContentGroupRef,
+    devices,
+    notes,
+    zoomRef,
+    panRef,
+    pendingPanRef,
+    pendingZoomRef,
+    wheelSyncTimerRef,
+    syncingZoomFromPropRef,
+    syncingPanFromPropRef,
+  });
+
   // Configuration state
   const [configuringDevice, setConfiguringDevice] = useState<string | null>(null);
 
   // UI state
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
   const [mobilePaletteOpen, setMobilePaletteOpen] = useState(false);
+  const [mobileConnectionSource, setMobileConnectionSource] = useState<string | null>(null);
 
 
   // Touch/Mobile state
   const isMobile = useIsMobile();
 
 
-  // Tap-tap connection state
-  const [mobileConnectionSource, setMobileConnectionSource] = useState<string | null>(null);
+
 
   // Ping and port selector state
   const [showPortSelector, setShowPortSelector] = useState(false);
@@ -679,28 +701,6 @@ export function NetworkTopology({
     t
   });
 
-  // Zoom & Pan Hook
-  const { handleZoomWheel, resetView } = useCanvasZoomPan({
-    zoom,
-    setZoom,
-    pan,
-    setPan,
-    zoomProp,
-    onZoomChange,
-    panProp,
-    onPanChange,
-    canvasRef,
-    svgContentGroupRef,
-    devices,
-    notes,
-    zoomRef,
-    panRef,
-    pendingPanRef,
-    pendingZoomRef,
-    wheelSyncTimerRef,
-    syncingZoomFromPropRef,
-    syncingPanFromPropRef
-  });
 
   // Note Editing Hook
   const {
@@ -907,11 +907,6 @@ export function NetworkTopology({
     }));
   }, [deleteConnection, saveToHistory, setDevicesState, topologyConnections, visualConnections]);
 
-
-
-
-
-
   // Get dynamic canvas dimensions based on screen size
   const getCanvasDimensions = useCallback(() => {
     if (typeof window === 'undefined') return { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
@@ -926,66 +921,6 @@ export function NetworkTopology({
     const dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
   }, []);
-
-  // Zoom mouse drag/scroll handlers
-  const handleZoomMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const startX = e.clientX;
-    const startZoom = zoom;
-
-    setIsDraggingZoom(true);
-    zoomDragRef.current = { isDragging: true, startX, startZoom };
-
-    let animationFrameId: number;
-
-    // Add global mouse event listeners
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!zoomDragRef.current.isDragging) return;
-
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-
-      animationFrameId = requestAnimationFrame(() => {
-        if (!zoomDragRef.current.isDragging) return;
-
-        const deltaX = moveEvent.clientX - zoomDragRef.current.startX;
-        const zoomDelta = deltaX * 0.002; // Sensitivity adjustment
-        let newZoom = zoomDragRef.current.startZoom + zoomDelta;
-
-        // Clamp to min/max zoom
-        newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
-
-        if (!canvasRef.current) {
-          setZoom(newZoom);
-          return;
-        }
-
-        const rect = canvasRef.current.getBoundingClientRect();
-        const cursorX = rect.width / 2;
-        const cursorY = rect.height / 2;
-        setPan(prevPan => ({
-          x: cursorX - (cursorX - prevPan.x) * (newZoom / zoomRef.current),
-          y: cursorY - (cursorY - prevPan.y) * (newZoom / zoomRef.current)
-        }));
-        setZoom(newZoom);
-      });
-    };
-
-    const handleMouseUp = () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      setIsDraggingZoom(false);
-      zoomDragRef.current = { isDragging: false, startX: 0, startZoom: 0 };
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove, { passive: true });
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [zoom]);
-
-  // handleZoomWheel is now provided by useCanvasZoomPan hook
-
-
-  // Context menu auto-close removed - should stay open per user request
 
   useEffect(() => {
     if (!contextMenu || !contextMenuRef.current) return;
@@ -1009,39 +944,11 @@ export function NetworkTopology({
     };
   }, []);
 
-  // Mobile back button auto-close removed - modals should stay open per user request
-
-  // Allow page-level header buttons (next to the device selector) to control topology UI on mobile.
-  useEffect(() => {
-    const openPalette = () => setIsPaletteOpen(true);
-    const openConnect = () => {
-      setShowPortSelector(true);
-      setPortSelectorStep('source');
-      setSelectedSourcePort(null);
-    };
-    const closeAllModals = () => {
-      setIsPaletteOpen(false);
-      setShowPortSelector(false);
-      setContextMenu(null);
-    };
-
-    window.addEventListener('trigger-topology-palette', openPalette as EventListener);
-    window.addEventListener('trigger-topology-connect', openConnect as EventListener);
-    window.addEventListener('close-menus-broadcast', closeAllModals as EventListener);
-    return () => {
-      window.removeEventListener('trigger-topology-palette', openPalette as EventListener);
-      window.removeEventListener('trigger-topology-connect', openConnect as EventListener);
-      window.removeEventListener('close-menus-broadcast', closeAllModals as EventListener);
-    };
-  }, []);
-
   // Handle right-click context menu with viewport clamping
   const openContextMenu = useCallback((clientX: number, clientY: number, deviceId: string | null = null, mode: ContextMenuMode = deviceId ? 'device' : 'canvas', noteId: string | null = null) => {
-    // Estimate menu dimensions (approximate)
     const menuWidth = 180;
-    const menuHeight = deviceId ? 400 : 200; // Device menu is taller
+    const menuHeight = deviceId ? 400 : 200;
 
-    // Clamp coordinates to stay within viewport
     let x = clientX;
     let y = clientY;
 
@@ -1053,7 +960,6 @@ export function NetworkTopology({
       y = window.innerHeight - menuHeight - 10;
     }
 
-    // Ensure it doesn't go off the top/left either
     x = Math.max(10, x);
     y = Math.max(10, y);
 
@@ -1082,8 +988,6 @@ export function NetworkTopology({
     if (!selectionAdditiveRef.current) return boxSelectedIds;
     return Array.from(new Set([...selectionBaseIdsRef.current, ...boxSelectedIds]));
   }, []);
-
-  // handleCanvasMouseDown removed by patch3
 
   // Keep refs in sync with state on every render (no cost - just ref assignment)
   useLayoutEffect(() => {
@@ -1221,7 +1125,8 @@ export function NetworkTopology({
     startDeviceDrag(e, deviceId, newSelectedIds, initialPositions);
   }, [devices, pan, zoom, selectedDeviceIds, onDeviceSelect, pingMode, pingSource, startDeviceDrag]);
 
-  // Handle device click (single click - select only)
+
+
   const handleDeviceClick = useCallback((e: ReactMouseEvent, device: CanvasDevice) => {
     e.stopPropagation();
 
@@ -1232,19 +1137,6 @@ export function NetworkTopology({
 
     if (pingModeRef.current || pingSourceRef.current) {
       return;
-    }
-
-    if (isMobile && !isDrawingConnection) {
-      if (!mobileConnectionSource) {
-        setMobileConnectionSource(device.id);
-        toast({
-          title: isTR ? "Bağlantı Başlatıldı" : "Connection Started",
-          description: isTR ? "Hedef cihazı seçin." : "Select the target device.",
-          duration: 3000,
-        });
-      } else {
-        setMobileConnectionSource(null);
-      }
     }
 
     setSelectedNoteIds([]);
@@ -1266,85 +1158,20 @@ export function NetworkTopology({
     }
     // Focus canvas for keyboard navigation
     canvasRef.current?.focus();
-  }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates, setContextMenu, isMobile, isDrawingConnection, mobileConnectionSource, isTR]);
+  }, [onDeviceSelect, pingMode, pingSource, devices, connections, deviceStates, setContextMenu]);
 
-  const navigateToNextDevice = useCallback((currentDeviceId: string | null, shift = false) => {
-    if (devices.length === 0) return;
-
-    const orderedDevices = [...devices].sort((a, b) => {
-      if (a.y !== b.y) return a.y - b.y;
-      if (a.x !== b.x) return a.x - b.x;
-      return a.id.localeCompare(b.id);
-    });
-
-    const currentIndex = currentDeviceId
-      ? orderedDevices.findIndex(d => d.id === currentDeviceId)
-      : -1;
-
-    const nextIndex = currentIndex >= 0
-      ? (currentIndex + (shift ? -1 : 1) + orderedDevices.length) % orderedDevices.length
-      : 0;
-
-    const nextDevice = orderedDevices[nextIndex];
-    if (!nextDevice) return;
-
-    setSelectedDeviceIds([nextDevice.id]);
-    setSelectedNoteIds([]);
-    onDeviceSelect(nextDevice.type, nextDevice.id, isSwitchDeviceType(nextDevice.type) ? nextDevice.switchModel : undefined, nextDevice.name);
-
-    // Smooth scroll to the next device and focus it
-    const nextEl = document.querySelector<SVGGElement>(`[data-device-id="${nextDevice.id}"]`);
-    if (nextEl && canvasRef.current) {
-      nextEl.focus();
-
-      // Calculate pan to center the device in viewport
-      const canvasRect = canvasRef.current.getBoundingClientRect();
-      const deviceX = nextDevice.x;
-      const deviceY = nextDevice.y;
-      const currentZoom = zoomRef.current;
-
-      // Center the device in viewport
-      const targetPanX = canvasRect.width / 2 - deviceX * currentZoom;
-      const targetPanY = canvasRect.height / 2 - deviceY * currentZoom;
-
-      // Smooth pan animation
-      const startPan = { ...panRef.current };
-      const startTime = performance.now();
-      const duration = 300; // ms
-
-      const animatePan = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = easeInOutCubic(progress);
-
-        panRef.current = {
-          x: startPan.x + (targetPanX - startPan.x) * eased,
-          y: startPan.y + (targetPanY - startPan.y) * eased
-        };
-
-        const g = svgContentGroupRef.current;
-        if (g) {
-          g.style.transform = `translate3d(${panRef.current.x}px, ${panRef.current.y}px, 0px) scale(${currentZoom})`;
-        }
-
-        if (progress < 1) {
-          requestAnimationFrame(animatePan);
-        } else {
-          // Sync with React state after animation
-          setPan(panRef.current);
-        }
-      };
-
-      requestAnimationFrame(animatePan);
-    }
-  }, [devices, onDeviceSelect]);
-
-  const handleDeviceKeyDown = useCallback((e: React.KeyboardEvent<SVGGElement>, device: CanvasDevice) => {
-    if (e.key !== 'Tab') return;
-    e.preventDefault();
-    e.stopPropagation();
-    navigateToNextDevice(device.id, e.shiftKey);
-  }, [navigateToNextDevice]);
+  const { navigateToNextDevice, handleDeviceKeyDown } = useDeviceNavigation({
+    devices,
+    deviceMap,
+    onDeviceSelect,
+    setSelectedDeviceIds,
+    setSelectedNoteIds,
+    setPan,
+    canvasRef,
+    zoomRef,
+    panRef,
+    svgContentGroupRef,
+  });
 
   // Handle device double click - open terminal
   const handleDeviceDoubleClick = useCallback((device: CanvasDevice) => {
@@ -1486,8 +1313,6 @@ export function NetworkTopology({
 
   const isDraggingInteractionDisabled = isActuallyDragging || isTouchDragging;
 
-
-
   const { handleCanvasMouseDown } = useTopologyMouse({
     canvasRef, canvasRectRef, panRef, zoomRef, mousePosRef, isPanningRef, lastMouseMoveTimeRef, lastMouseMovePosRef,
     velocityRef, panAnimationFrameRef, panStartRef, svgContentGroupRef, pendingPanRef, isSelectingRef, selectionBoxRef,
@@ -1571,7 +1396,10 @@ export function NetworkTopology({
       canvas.removeEventListener('wheel', handleWheel);
       canvas.removeEventListener('mousedown', handleMouseDown);
     };
-  }, []);
+  }, [canvasRef, setPan, setZoom]);
+
+
+
 
   // Handle Keyboard Navigation
   useEffect(() => {
@@ -1644,195 +1472,66 @@ export function NetworkTopology({
     };
 
     canvas.addEventListener('keydown', handleKeyDown);
-    return () => canvas.removeEventListener('keydown', handleKeyDown);
-  }, [zoom, selectedDeviceIds, devices, onDeviceSelect, onDeviceDelete]);
+    return () => {
+      canvas.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [canvasRef, zoom, selectedDeviceIds, deviceMap, handleDeviceDoubleClick, setSelectedDeviceIds, setPan, setZoom, navigateToNextDevice]);
 
-  // Handle port click for connection
-  const handlePortClick = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
-    e.stopPropagation();
-    if (isActuallyDraggingRef.current || isTouchDraggingRef.current) return;
+  const { handlePortClick } = useTopologyPortConnection({
+    deviceMap,
+    topologyConnections,
+    connections,
+    devices,
+    cableInfo,
+    onCableChange,
+    saveToHistory,
+    setConnections,
+    setDevices,
+    setIsDrawingConnection,
+    setConnectionStart,
+    setConnectionError,
+    cancelConnectionDrawing,
+    isDrawingConnectionRef,
+    connectionStartRef,
+    isActuallyDraggingRef,
+    isTouchDraggingRef,
+    language,
+    t: { portInUse: t.portInUse },
+  });
 
-    // Use refs to avoid stale closures
-    const isDrawingConnection = isDrawingConnectionRef.current;
-    const connectionStart = connectionStartRef.current;
+  const {
+    draggedNoteId,
+    resizingNoteId,
+    noteDragStart,
+    noteResizeStart,
+    noteResizeDirection,
+    updateNoteText,
+    updateNoteStyle,
+    cycleNoteColor,
+    cycleNoteFont,
+    cycleNoteFontSize,
+    cycleNoteOpacity,
+    handleNoteHeaderMouseDown,
+    handleNoteHeaderTouchStart,
+    handleNoteResizeStart,
+    handleNoteResizeTouchStart,
+  } = useTopologyNoteActions({
+    notes,
+    setNotes: setNotesState,
+    latestNotesRef,
+    saveToHistory,
+    bringNoteToFront,
+    setSelectedNoteIds,
+    canvasRef,
+    zoomRef,
+    draggedNoteIdRef,
+    resizingNoteIdRef,
+    noteDragStartRef,
+    noteResizeStartRef,
+    noteResizeDirectionRef,
+  });
 
-    const device = deviceMap.get(deviceId);
-    if (!device) return;
-
-    const port = device.ports.find((p) => p.id === portId);
-    if (!port) return;
-
-    // Check if port is already connected
-    const hasPersistedPortConnection = topologyConnections.some((connection) =>
-      (connection.sourceDeviceId === deviceId && connection.sourcePort === portId) ||
-      (connection.targetDeviceId === deviceId && connection.targetPort === portId)
-    );
-    if (port.status === 'connected' && hasPersistedPortConnection) {
-      // Port is already in use - cannot connect
-      if (isDrawingConnection) {
-        setConnectionError(t.portInUse);
-        setTimeout(() => setConnectionError(null), 3000);
-        setIsDrawingConnection(false);
-        setConnectionStart(null);
-      }
-      return;
-    }
-
-    if (isDrawingConnection && connectionStart) {
-      // Check if trying to connect to itself (same device, different port)
-      if (connectionStart.deviceId === deviceId) {
-        // Show error message - cannot connect device to itself
-        const errorMsg = language === 'tr'
-          ? 'Bir cihaz kendisine bağlanamaz!'
-          : 'A device cannot connect to itself!';
-        setConnectionError(errorMsg);
-        setTimeout(() => setConnectionError(null), 3000);
-        setIsDrawingConnection(false);
-        setConnectionStart(null);
-        return;
-      }
-
-      // Check cable compatibility
-      const sourceDevice = deviceMap.get(connectionStart.deviceId);
-      const targetDevice = deviceMap.get(deviceId);
-
-      if (sourceDevice && targetDevice) {
-        const cableCheck: import('@/lib/network/types').CableInfo = {
-          connected: true,
-          cableType: cableInfo.cableType,
-          sourceDevice: sourceDevice.type,
-          targetDevice: targetDevice.type,
-          sourcePort: connectionStart.portId,
-          targetPort: portId,
-        };
-
-        if (!isCableCompatible(cableCheck)) {
-          const errorMsg = language === 'tr'
-            ? 'Bu cihaz türü seçilen bağlantı tipini desteklememektedir!'
-            : 'This device type does not support the selected connection type!';
-          setConnectionError(errorMsg);
-          setTimeout(() => setConnectionError(null), 3000);
-          cancelConnectionDrawing();
-          return;
-        }
-
-        // Complete connection
-        saveToHistory();
-        const newConnection: CanvasConnection = {
-          id: `conn-${Date.now()}`,
-          sourceDeviceId: connectionStart.deviceId,
-          sourcePort: connectionStart.portId,
-          targetDeviceId: deviceId,
-          targetPort: portId,
-          cableType: cableInfo.cableType,
-          active: true,
-        };
-
-        setConnections((prev) => [...prev, newConnection]);
-
-        // Update port status - her iki cihazda da
-        setDevices((prev) =>
-          prev.map((d) => {
-            // Source device port'unu güncelle
-            if (d.id === connectionStart.deviceId) {
-              return {
-                ...d,
-                ports: d.ports.map((p) =>
-                  p.id === connectionStart.portId
-                    ? { ...p, status: 'connected' as const }
-                    : p
-                ),
-              };
-            }
-            // Target device port'unu güncelle
-            if (d.id === deviceId) {
-              return {
-                ...d,
-                ports: d.ports.map((p) =>
-                  p.id === portId
-                    ? { ...p, status: 'connected' as const }
-                    : p
-                ),
-              };
-            }
-            return d;
-          })
-        );
-
-        // Trigger STP recalculation when connection is added
-        window.dispatchEvent(new CustomEvent('stp-recalculation-needed', {
-          detail: { topologyDevices: devices, topologyConnections: [...connections, newConnection] }
-        }));
-
-        // Trigger immediate MAC learning on the switches (new connection)
-        window.dispatchEvent(new CustomEvent('connection-created', {
-          detail: { connection: newConnection, topologyDevices: devices }
-        }));
-
-        // Update cable info
-        onCableChange({
-          ...cableInfo,
-          connected: true,
-          sourceDevice: sourceDevice.type,
-          targetDevice: targetDevice.type,
-        });
-      }
-
-      setIsDrawingConnection(false);
-      setConnectionStart(null);
-    } else {
-      // Start connection - calculate port position inline
-      const portIndex = device.ports.findIndex(p => p.id === portId);
-      const normalizedPortId = portId.toLowerCase();
-      const inferredCableType = normalizedPortId === 'wlan0'
-        ? 'wireless'
-        : (normalizedPortId === 'com1' || normalizedPortId === 'console' ? 'console' : 'straight');
-      onCableChange({
-        ...cableInfo,
-        cableType: inferredCableType,
-        connected: false,
-        sourceDevice: device.type,
-        targetDevice: device.type,
-      });
-      const portsPerRow = (device.type === 'pc' || device.type === 'iot') ? 2 : 8;
-      const col = portIndex % portsPerRow;
-      const row = Math.floor(portIndex / portsPerRow);
-      const deviceWidth = getDeviceWidth(device.type);
-      const deviceHeight = getDeviceHeight(device.type, device.ports.length);
-      let portX = 0;
-      let portY = 0;
-
-      if (device.type === 'pc' || device.type === 'iot') {
-        const pcPortSpacing = PC_PORT_SPACING;
-        const pcStartY = deviceHeight / 2 - ((device.ports.length - 1) * pcPortSpacing) / 2;
-        portX = device.x + deviceWidth - 8;
-        portY = device.y + pcStartY + portIndex * pcPortSpacing;
-      } else {
-        portX = device.x + PORT_START_X + col * PORT_SPACING;
-        portY = device.y + 80 + row * 14;
-      }
-
-      setIsDrawingConnection(true);
-      setConnectionStart({
-        deviceId,
-        portId,
-        point: { x: portX, y: portY },
-      });
-    }
-  }, [devices, connections, isDrawingConnection, connectionStart, cableInfo, onCableChange, saveToHistory, language, t]);
-
-  // Note management functions
-  // noteClipboard and noteTextSelection are now managed by useNoteEditing hook
-
-  // Note dragging and resizing state
-  const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
-  const [resizingNoteId, setResizingNoteId] = useState<string | null>(null);
-  const [noteDragStart, setNoteDragStart] = useState<{ x: number; y: number } | null>(null);
-  const [noteResizeStart, setNoteResizeStart] = useState<{ x: number; y: number; width: number; height: number; noteX: number; noteY: number } | null>(null);
-  const [noteResizeDirection, setNoteResizeDirection] = useState<string>('se');
-
-  // Keep refs fresh for event handlers - only non-overlapping refs (pan/zoom/drag refs
-  // are synced via the per-render useLayoutEffect above)
+  // Keep refs fresh for event handlers
   useEffect(() => {
     latestDevicesRef.current = devices;
     latestConnectionsRef.current = connections;
@@ -1855,6 +1554,7 @@ export function NetworkTopology({
     isTouchDragging,
     touchDraggedDevice,
   ]);
+
   const handleExportPNG = useCallback(() => {
     setIsExporting(true);
     setTimeout(() => {
@@ -1883,186 +1583,33 @@ export function NetworkTopology({
     }, 300);
   }, [devices, connections, notes, deviceStates]);
 
-  // Handle toolbar events from page.tsx
-  useEffect(() => {
-    const handleAddDevice = (event: CustomEvent) => {
-      if (isExamActive && !isExamEditorOpen) return;
-      const deviceType = event.detail;
-      if (deviceType === 'pc') addDevice('pc');
-      else if (deviceType === 'switchL2') addDevice('switch', 'L2');
-      else if (deviceType === 'switchL3') addDevice('switch', 'L3');
-      else if (deviceType === 'router') addDevice('router');
-      else if (deviceType === 'iot') addDevice('iot');
-      else if (deviceType === 'firewall') addDevice('firewall');
-      else if (deviceType === 'wlc') addDevice('wlc');
-    };
-    const handleTogglePingMode = () => {
-      setPingMode(m => {
-        pingModeRef.current = !m;
-        if (!m) {
-          pingIsPausedRef.current = false;
-          pingStepModeRef.current = false;
-          if (pingAnimationRef.current) {
-            cancelAnimationFrame(pingAnimationRef.current);
-            pingAnimationRef.current = null;
-          }
-          if (pingCleanupTimeoutRef.current) {
-            clearTimeout(pingCleanupTimeoutRef.current);
-            pingCleanupTimeoutRef.current = null;
-          }
-          setPingAnimation(null);
-          setHopPacketInfos([]);
-          setPacketPopupHop(null);
-        }
-        return !m;
-      });
-      setPingSource(null);
-      pingSourceRef.current = null;
-      setPingResult(null);
-    };
-    const handleAddNote = () => addNote();
-    const handleAddSummaryNote = () => addSummaryNote();
-
-    window.addEventListener('add-device', handleAddDevice as EventListener);
-    window.addEventListener('toggle-ping-mode', handleTogglePingMode as EventListener);
-    window.addEventListener('add-note', handleAddNote as EventListener);
-    window.addEventListener('add-summary-note', handleAddSummaryNote as EventListener);
-    window.addEventListener('trigger-topology-export-png', handleExportPNG as EventListener);
-    return () => {
-      window.removeEventListener('add-device', handleAddDevice as EventListener);
-      window.removeEventListener('toggle-ping-mode', handleTogglePingMode as EventListener);
-      window.removeEventListener('add-note', handleAddNote as EventListener);
-      window.removeEventListener('add-summary-note', handleAddSummaryNote as EventListener);
-      window.removeEventListener('trigger-topology-export-png', handleExportPNG as EventListener);
-    };
-  }, [addDevice, addNote, addSummaryNote, handleExportPNG]);
-
-  const updateNoteText = useCallback((noteId: string, text: string) => {
-    setNotes((prev) =>
-      prev.map((n) => (n.id === noteId ? { ...n, text } : n))
-    );
-  }, []);
-
-  const updateNoteStyle = useCallback((noteId: string, updates: Partial<CanvasNote>) => {
-    saveToHistory();
-    setNotes((prev) =>
-      prev.map((n) => (n.id === noteId ? { ...n, ...updates } : n))
-    );
-  }, [saveToHistory]);
-
-  const cycleNoteColor = useCallback((noteId: string) => {
-    const note = latestNotesRef.current.find((n) => n.id === noteId);
-    if (!note) return;
-    const idx = NOTE_COLORS.indexOf(note.color as typeof NOTE_COLORS[number]);
-    const next = NOTE_COLORS[(idx >= 0 ? idx + 1 : 0) % NOTE_COLORS.length];
-    updateNoteStyle(noteId, { color: next });
-  }, [updateNoteStyle]);
-
-  const cycleNoteFont = useCallback((noteId: string) => {
-    const note = latestNotesRef.current.find((n) => n.id === noteId);
-    if (!note) return;
-    const idx = NOTE_FONTS.indexOf(note.font as typeof NOTE_FONTS[number]);
-    const next = NOTE_FONTS[(idx >= 0 ? idx + 1 : 0) % NOTE_FONTS.length];
-    updateNoteStyle(noteId, { font: next });
-  }, [updateNoteStyle]);
-
-  const cycleNoteFontSize = useCallback((noteId: string) => {
-    const note = latestNotesRef.current.find((n) => n.id === noteId);
-    if (!note) return;
-    const idx = NOTE_FONT_SIZES.indexOf(note.fontSize);
-    const next = NOTE_FONT_SIZES[(idx >= 0 ? idx + 1 : 0) % NOTE_FONT_SIZES.length];
-    updateNoteStyle(noteId, { fontSize: next });
-  }, [updateNoteStyle]);
-
-  const cycleNoteOpacity = useCallback((noteId: string) => {
-    const note = latestNotesRef.current.find((n) => n.id === noteId);
-    if (!note) return;
-    const idx = NOTE_OPACITY_OPTIONS.indexOf(note.opacity);
-    const next = NOTE_OPACITY_OPTIONS[(idx >= 0 ? idx + 1 : 0) % NOTE_OPACITY_OPTIONS.length];
-    updateNoteStyle(noteId, { opacity: next });
-  }, [updateNoteStyle]);
-
-  // Note editing helper functions are now managed by useNoteEditing hook
-
-  // Handle note header drag start
-  const handleNoteHeaderMouseDown = useCallback((e: ReactMouseEvent, noteId: string) => {
-    e.stopPropagation();
-    if (!canvasRef.current) return;
-
-    const note = notes.find((n) => n.id === noteId);
-    if (!note) return;
-
-    saveToHistory();
-    bringNoteToFront(noteId);
-    draggedNoteIdRef.current = noteId;
-    noteDragStartRef.current = { x: e.clientX, y: e.clientY };
-    setDraggedNoteId(noteId);
-    setNoteDragStart({ x: e.clientX, y: e.clientY });
-    setSelectedNoteIds([noteId]);
-  }, [notes, saveToHistory, bringNoteToFront, setSelectedNoteIds]);
-
-  // Handle note header touch start (mobile)
-  const handleNoteHeaderTouchStart = useCallback((e: React.TouchEvent, noteId: string) => {
-    e.stopPropagation();
-    if (!canvasRef.current || e.touches.length !== 1) return;
-
-    const touch = e.touches[0];
-    const note = notes.find((n) => n.id === noteId);
-    if (!note) return;
-
-    saveToHistory();
-    bringNoteToFront(noteId);
-    draggedNoteIdRef.current = noteId;
-    noteDragStartRef.current = { x: touch.clientX, y: touch.clientY };
-    setDraggedNoteId(noteId);
-    setNoteDragStart({ x: touch.clientX, y: touch.clientY });
-    setSelectedNoteIds([noteId]);
-  }, [notes, saveToHistory, bringNoteToFront, setSelectedNoteIds]);
-
-  // Handle note resize start
-  const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string, direction: string = 'se') => {
-    e.stopPropagation();
-    if (!canvasRef.current) return;
-
-    const note = notes.find((n) => n.id === noteId);
-    if (!note) return;
-
-    saveToHistory();
-    setResizingNoteId(noteId);
-    setNoteResizeDirection(direction);
-    setNoteResizeStart({ x: e.clientX, y: e.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y });
-    setSelectedNoteIds([noteId]);
-  }, [notes, saveToHistory, setSelectedNoteIds]);
-
-  const handleNoteResizeTouchStart = useCallback((e: React.TouchEvent, noteId: string, direction: string = 'se') => {
-    e.stopPropagation();
-    if (!canvasRef.current || e.touches.length !== 1) return;
-
-    const touch = e.touches[0];
-    const note = notes.find((n) => n.id === noteId);
-    if (!note) return;
-
-    saveToHistory();
-    setResizingNoteId(noteId);
-    setNoteResizeDirection(direction);
-    setNoteResizeStart({ x: touch.clientX, y: touch.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y });
-    setSelectedNoteIds([noteId]);
-  }, [notes, saveToHistory, setSelectedNoteIds]);
-
-  useNoteDragging({
-    canvasRef,
-    zoomRef,
-    draggedNoteIdRef,
-    resizingNoteIdRef,
-    noteDragStartRef,
-    noteResizeStartRef,
-    noteResizeDirectionRef,
-    setNotes,
-    setDraggedNoteId,
-    setNoteDragStart,
-    setResizingNoteId,
-    setNoteResizeStart,
-    setNoteResizeDirection,
+  useTopologyEventListeners({
+    isExamActive,
+    isExamEditorOpen,
+    addDevice,
+    addNote,
+    addSummaryNote,
+    handleExportPNG,
+    setPingMode,
+    pingModeRef,
+    pingIsPausedRef,
+    pingStepModeRef,
+    pingAnimationRef,
+    pingCleanupTimeoutRef,
+    setPingAnimation: setPingAnimation as React.Dispatch<React.SetStateAction<unknown>>,
+    setHopPacketInfos: setHopPacketInfos as React.Dispatch<React.SetStateAction<unknown>>,
+    setPacketPopupHop,
+    setPingSource,
+    pingSourceRef,
+    setPingResult: setPingResult as React.Dispatch<React.SetStateAction<unknown>>,
+    setContextMenu: setContextMenu as React.Dispatch<React.SetStateAction<unknown>>,
+    setIsPaletteOpen,
+    setShowPortSelector,
+    setPortSelectorStep,
+    setSelectedSourcePort,
+    saveToHistory,
+    setDevices: setDevicesState,
+    deleteConnection,
   });
 
   // Notify parent of topology changes — debounced to avoid calling at 60fps during drag
@@ -2391,7 +1938,6 @@ export function NetworkTopology({
             visibleNotes={visibleNotes}
             devicesSortedForRender={devicesSortedForRender}
             activeDeviceId={activeDeviceId}
-            mobileConnectionSource={mobileConnectionSource}
             iotUpdateTrigger={iotUpdateTrigger}
             graphicsQuality={graphicsQuality}
             zoom={zoom}
@@ -2400,8 +1946,7 @@ export function NetworkTopology({
             language={language}
             selectionBox={selectionBox}
             hoveredConnectionId={hoveredConnectionId}
-            activeCaptureConnectionId={activeCaptureConnectionId}
-            handleCanvasMouseDown={handleCanvasMouseDown}
+                      handleCanvasMouseDown={handleCanvasMouseDown}
             handleTouchStart={handleTouchStart}
             handleTouchMove={handleTouchMove}
             handleTouchEnd={handleTouchEnd}
@@ -2440,10 +1985,6 @@ export function NetworkTopology({
             tForPing={t}
           />
 
-
-          {/* Mobile FAB for Device Addition */}
-
-
           {/* Zoom Controls - Mobile Float - Above Footer */}
           <CanvasToolbar
             zoom={zoom}
@@ -2467,102 +2008,6 @@ export function NetworkTopology({
             onClose={() => setShowLogPanel(false)}
             isDark={isDark}
           />
-
-          {/* Zoom Controls - Desktop Only - Hidden (now in footer) */}
-          <div
-            className={`hidden`}
-          >
-            <button
-              onClick={() => setZoom((z) => {
-                const newZoom = Math.max(MIN_ZOOM, z - 0.25);
-                if (!canvasRef.current) return newZoom;
-                const rect = canvasRef.current.getBoundingClientRect();
-                const cursorX = rect.width / 2;
-                const cursorY = rect.height / 2;
-                setPan(prevPan => ({
-                  x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
-                  y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
-                }));
-                return newZoom;
-              })}
-              className={`w-7 h-7 flex items-center justify-center rounded ui-hover-surface ${isDark ? 'text-secondary-300 hover:text-secondary-100' : 'text-secondary-600 hover:text-secondary-900'
-                }`}
-            >
-              −
-            </button>
-            <span
-              onMouseDown={handleZoomMouseDown}
-              onWheel={handleZoomWheel}
-              className={`text-xs font-mono w-12 text-center cursor-pointer select-none rounded transition-colors ${isDraggingZoom
-                ? 'text-primary-400'
-                : isDark
-                  ? 'text-secondary-300 hover:bg-secondary-700'
-                  : 'text-secondary-600 hover:bg-secondary-100'
-                }`}
-              title={t.dragToZoomOrScroll}
-            >
-              {Math.round(zoom * 100)}%
-            </span>
-            <button
-              onClick={() => setZoom((z) => {
-                const newZoom = Math.min(MAX_ZOOM, z + 0.25);
-                if (!canvasRef.current) return newZoom;
-                const rect = canvasRef.current.getBoundingClientRect();
-                const cursorX = rect.width / 2;
-                const cursorY = rect.height / 2;
-                setPan(prevPan => ({
-                  x: cursorX - (cursorX - prevPan.x) * (newZoom / z),
-                  y: cursorY - (cursorY - prevPan.y) * (newZoom / z)
-                }));
-                return newZoom;
-              })}
-              className={`w-7 h-7 flex items-center justify-center rounded ui-hover-surface ${isDark ? 'text-secondary-300 hover:text-secondary-100' : 'text-secondary-600 hover:text-secondary-900'
-                }`}
-            >
-              +
-            </button>
-            <div className={`w-px h-5 ${isDark ? 'bg-secondary-600' : 'bg-secondary-300'} mx-1`} />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={resetView}
-                  className={`px-2 py-1 text-xs rounded ui-hover-surface ${isDark
-                    ? 'text-secondary-300 hover:text-secondary-100'
-                    : 'text-secondary-600 hover:text-secondary-900'
-                    }`}
-                >
-                  {t.reset}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="flex items-center gap-2">
-                <span>{t.reset}</span>
-                <ShortcutBadge shortcut="Alt+R" variant="primary" />
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={toggleFullscreen}
-                  className={`px-2 py-1 text-xs rounded flex items-center gap-1 ui-hover-surface ${isDark
-                    ? 'text-secondary-300 hover:text-secondary-100'
-                    : 'text-secondary-600 hover:text-secondary-900'
-                    }`}
-                >
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                  {isFullscreen ? t.exit : t.fullScreen}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="flex items-center gap-2">
-                <ShortcutBadge shortcut="Ctrl+F" variant="warning" />
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {/* Minimap (Preview) - Hidden */}
-          <TopologyPrintPreview canvasWidth={getCanvasDimensions().width} canvasHeight={getCanvasDimensions().height} zoom={zoom} isDark={isDark} connections={connections} devicesSortedForRender={devicesSortedForRender} deviceMap={deviceMap} getDeviceWidth={getDeviceWidth} getDeviceHeight={getDeviceHeight} isSwitchDeviceType={isSwitchDeviceType} />
-
         </div>
       </div>
 

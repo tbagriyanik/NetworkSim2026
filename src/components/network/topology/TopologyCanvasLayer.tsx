@@ -42,7 +42,7 @@ export interface TopologyCanvasLayerProps {
     visibleNotes: CanvasNote[];
     devicesSortedForRender: CanvasDevice[];
     activeDeviceId?: string | null;
-    mobileConnectionSource: string | null;
+    mobileConnectionSource?: string | null;
     iotUpdateTrigger: number;
     graphicsQuality: 'high' | 'low';
     zoom: number;

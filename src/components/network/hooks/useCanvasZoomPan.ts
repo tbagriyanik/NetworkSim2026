@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { CanvasDevice, CanvasNote } from '../networkTopology.types';
 
 const MIN_ZOOM = 0.2;
@@ -9,9 +9,9 @@ const DEFAULT_ZOOM = 1.0;
 
 interface CanvasZoomPanProps {
   zoom: number;
-  setZoom: (zoom: number) => void;
+  setZoom: (zoom: number | ((prev: number) => number)) => void;
   pan: { x: number; y: number };
-  setPan: (pan: { x: number; y: number }) => void;
+  setPan: (pan: { x: number; y: number } | ((prev: { x: number; y: number }) => { x: number; y: number })) => void;
   zoomProp?: number;
   onZoomChange?: (zoom: number) => void;
   panProp?: { x: number; y: number };
@@ -164,8 +164,64 @@ export function useCanvasZoomPan({
     window.scrollTo(0, 0);
   }, [devices, notes, setZoom, setPan]);
 
+  const [isDraggingZoom, setIsDraggingZoom] = useState(false);
+  const zoomDragRef = useRef({ isDragging: false, startX: 0, startZoom: 1 });
+
+  const handleZoomMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startZoom = zoom;
+
+    setIsDraggingZoom(true);
+    zoomDragRef.current = { isDragging: true, startX, startZoom };
+
+    let animationFrameId: number;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!zoomDragRef.current.isDragging) return;
+
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+
+      animationFrameId = requestAnimationFrame(() => {
+        if (!zoomDragRef.current.isDragging) return;
+
+        const deltaX = moveEvent.clientX - zoomDragRef.current.startX;
+        const zoomDelta = deltaX * 0.002;
+        let newZoom = zoomDragRef.current.startZoom + zoomDelta;
+        newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+
+        if (!canvasRef.current) {
+          setZoom(newZoom);
+          return;
+        }
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        const cursorX = rect.width / 2;
+        const cursorY = rect.height / 2;
+        setPan(prevPan => ({
+          x: cursorX - (cursorX - prevPan.x) * (newZoom / zoomRef.current),
+          y: cursorY - (cursorY - prevPan.y) * (newZoom / zoomRef.current)
+        }));
+        setZoom(newZoom);
+      });
+    };
+
+    const handleMouseUp = () => {
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      setIsDraggingZoom(false);
+      zoomDragRef.current = { isDragging: false, startX: 0, startZoom: 0 };
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove, { passive: true });
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [zoom, setZoom, setPan, canvasRef, zoomRef]);
+
   return {
     handleZoomWheel,
+    handleZoomMouseDown,
+    isDraggingZoom,
     resetView
   };
 }
