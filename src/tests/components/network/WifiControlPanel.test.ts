@@ -243,5 +243,44 @@ describe('WifiControlPanel', () => {
     expect(html).toContain('connected-wireless-clients-container');
     expect(html).toContain('Smart Plug 1');
   });
+
+  it('requires login with default admin:admin credentials', () => {
+    const html = generateRouterAdminPage(baseDevice, 'tr');
+
+    // Login overlay must be visible by default and main content hidden
+    expect(html).toContain('id="login-form" class="login-overlay" style="display:flex;"');
+    expect(html).toContain('id="main-content" style="display:none;"');
+    expect(html).toContain('id="login-username"');
+    expect(html).toContain('id="login-password"');
+    // Default credentials admin/admin are baked into the page script
+    expect(html).toContain('var currentAdminUser = "admin";');
+    expect(html).toContain('var currentAdminPass = "admin";');
+  });
+
+  it('uses persisted credentials from services.http over defaults', () => {
+    const html = generateRouterAdminPage({
+      ...baseDevice,
+      services: {
+        http: { enabled: true, content: '', username: 'netadmin', password: 'S3cret!' },
+      },
+    }, 'tr');
+
+    expect(html).toContain('var currentAdminUser = "netadmin";');
+    expect(html).toContain('var currentAdminPass = "S3cret!"');
+    expect(html).not.toContain('var currentAdminUser = "admin";');
+  });
+
+  it('renders admin tab with change password form and posts save message', () => {
+    const html = generateRouterAdminPage(baseDevice, 'en');
+
+    expect(html).toContain('data-tab="admin"');
+    expect(html).toContain('id="admin-tab"');
+    expect(html).toContain('id="admin-credentials-form"');
+    expect(html).toContain('handleSaveCredentials(event)');
+    expect(html).toContain("type: 'router-admin-save-credentials'");
+    expect(html).toContain('cred-current-password');
+    expect(html).toContain('cred-new-password');
+    expect(html).toContain('cred-confirm-password');
+  });
 });
 

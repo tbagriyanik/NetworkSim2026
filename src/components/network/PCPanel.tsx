@@ -583,7 +583,7 @@ export function PCPanel({
       if (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3' && device.type !== 'wlc') return;
       const state = safeStates?.get(device.id);
       const apWifi = getDeviceWifiConfig(device, safeStates);
-      const activeSsids = getApActiveSsids(apWifi, state);
+      const activeSsids = getApActiveSsids(apWifi, state, safeStates);
 
       activeSsids.forEach(item => {
         if (!item.ssid) return;
@@ -1359,6 +1359,19 @@ export function PCPanel({
 
         const clientWifi = getDeviceWifiConfig(d, deviceStates);
         const macAddr = getDeviceMacAddress(d, deviceStates) || d.macAddress || d.ports?.[0]?.macAddress || `00:11:22:${d.id.slice(-2)}:33:44`;
+        let signalPercent = 100;
+        if (!isWiredConnected) {
+          const dx = (d.x || 0) - (routerDevice.x || 0);
+          const dy = (d.y || 0) - (routerDevice.y || 0);
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) signalPercent = 100;
+          else if (dist < 250) signalPercent = 85;
+          else if (dist < 350) signalPercent = 70;
+          else if (dist < 450) signalPercent = 50;
+          else if (dist < 550) signalPercent = 30;
+          else signalPercent = 15;
+        }
+        const rssiDbm = isWiredConnected ? -30 : Math.min(-30, Math.max(-95, Math.round(-95 + (signalPercent * 0.65))));
 
         return {
           id: d.id,
@@ -1369,6 +1382,8 @@ export function PCPanel({
           mac: macAddr,
           ssid: clientWifi?.ssid || d.wifi?.ssid || routerDevice.wifi?.ssid || 'WiFi',
           isWired: isWiredConnected,
+          signalPercent,
+          rssiDbm,
         };
       });
   }, [topologyDevices, topologyConnections, deviceStates]);

@@ -33,6 +33,10 @@ export interface ConnectedIoTDevice {
   connected: boolean;
   ip?: string;
   isWired?: boolean;
+  mac?: string;
+  ssid?: string;
+  signalPercent?: number;
+  rssiDbm?: number;
 }
 
 export interface AvailableIoTDevice {
@@ -85,8 +89,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   const safeDns = sanitizeHTML(dhcpPool?.dnsServer || deviceIp || '192.168.1.1');
   const safeLeaseTime = String(dhcpPool?.maxUsers || 24);
   // JSON stringified versions for use in <script> blocks to prevent logic corruption and XSS
-  const jsUsername = safeJSONForHTML(username || '');
-  const jsPassword = safeJSONForHTML(password || '');
+  // Admin credentials: default admin:admin unless explicitly configured (persisted in services.http)
+  const adminUsername = username || 'admin';
+  const adminPassword = password || 'admin';
+  const jsUsername = safeJSONForHTML(adminUsername);
+  const jsPassword = safeJSONForHTML(adminPassword);
   const jsDeviceId = safeJSONForHTML(deviceId || '');
   const jsSsid = safeJSONForHTML(wifi.ssid || '');
   const jsWifiPassword = safeJSONForHTML(wifi.password || '');
@@ -169,7 +176,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   `;
 
   const loginFormHTML = `
-    <div id="login-form" class="login-overlay" style="${(username || password) ? 'display:flex;' : 'display:none;'}">
+    <div id="login-form" class="login-overlay" style="display:flex;">
       <div class="login-card">
         <div class="login-header">
           <div class="login-icon">🔒</div>
@@ -180,7 +187,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           <div class="form-group">
             <label for="login-username">${isTurkish ? 'Kullanıcı Adı' : 'Username'}</label>
 
-            <input type="text" id="login-username" placeholder="${isTurkish ? 'Kullanıcı adını girin' : 'Enter username'}" required>
+            <input type="text" id="login-username" placeholder="${isTurkish ? 'Kullanıcı adını girin' : 'Enter username'}" required autocomplete="off">
           </div>
           <div class="form-group">
             <label for="login-password">${isTurkish ? 'Şifre' : 'Password'}</label>
@@ -190,13 +197,14 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             ❌ ${isTurkish ? 'Hatalı kullanıcı adı veya şifre!' : 'Invalid username or password!'}
           </div>
           <button type="submit" class="btn btn-primary btn-block">🔓 ${isTurkish ? 'Giriş Yap' : 'Login'}</button>
+          <span class="hint" style="display:block;text-align:center;margin-top:10px;">${isTurkish ? 'Varsayılan: admin / admin' : 'Default: admin / admin'}</span>
         </form>
       </div>
     </div>
   `;
 
   const mainContent = `
-    <div id="main-content" style="${(username || password) ? 'display:none;' : 'display:block;'}">
+    <div id="main-content" style="display:none;">
   `;
 
   return `
@@ -307,6 +315,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .login-header { text-align: center; margin-bottom: 24px; }
     .login-icon { font-size: 40px; margin-bottom: 8px; }
     .error-message { background: #fef2f2; border: 1px solid #fecaca; color: var(--color-error-600); padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; text-align: center; }
+    .success-message { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--color-success-700, #15803d); padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; text-align: center; }
 
     /* Client list table styles */
     .client-card { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border: 1px solid var(--color-secondary-200); border-radius: 8px; margin-bottom: 8px; transition: all 0.2s; }
@@ -335,13 +344,18 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   ${loginFormHTML}
   ${mainContent}
   <div class="container">
-    <div class="header">
-      <h1>🔧 ${safeDeviceName}</h1>
-      <div class="subtitle">${isTurkish ? 'Kablosuz Ağ Yönetimi & Çoklu SSID Portalı' : 'Wireless Network Administration & Multi-SSID Portal'}</div>
-      <div class="device-info">
-        <span>📍 IP: ${safeDeviceIp}</span>
-        <span>📡 WLAN Interface: wlan0</span>
+    <div class="header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
+      <div>
+        <h1>🔧 ${safeDeviceName}</h1>
+        <div class="subtitle">${isTurkish ? 'Kablosuz Ağ Yönetimi & Çoklu SSID Portalı' : 'Wireless Network Administration & Multi-SSID Portal'}</div>
+        <div class="device-info">
+          <span>📍 IP: ${safeDeviceIp}</span>
+          <span>📡 WLAN Interface: wlan0</span>
+        </div>
       </div>
+      <button type="button" class="btn btn-secondary" onclick="handleLogout()" style="padding:8px 16px;font-size:12px;background:#ffffff;border:1px solid var(--color-secondary-300);color:var(--color-secondary-700);cursor:pointer;shrink:0;border-radius:6px;" title="${isTurkish ? 'Oturumu Kapat' : 'Logout'}">
+        🚪 ${isTurkish ? 'Çıkış Yap' : 'Logout'}
+      </button>
     </div>
     
     <div class="nav-tabs">
@@ -349,6 +363,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       <button type="button" class="nav-tab${activeTab === 'status' ? ' active' : ''}" data-tab="status">📊 ${isTurkish ? 'Durum & Bağlı Cihazlar' : 'Status & Connected Clients'}</button>
       <button type="button" class="nav-tab${activeTab === 'advanced' ? ' active' : ''}" data-tab="advanced">⚙️ ${isTurkish ? 'Gelişmiş' : 'Advanced'}</button>
       <button type="button" class="nav-tab${activeTab === 'iot' ? ' active' : ''}" data-tab="iot">🛜 ${isTurkish ? 'IoT Cihazları' : 'IoT Devices'}</button>
+      <button type="button" class="nav-tab${activeTab === 'admin' ? ' active' : ''}" data-tab="admin">👤 ${isTurkish ? 'Yönetici' : 'Admin'}</button>
     </div>
     
     <!-- Wireless Tab -->
@@ -567,7 +582,43 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       </div>
       ` : ''}
     </div>
-      
+
+    <!-- Admin Tab -->
+    <div id="admin-tab" class="content" style="display:${activeTab === 'admin' ? 'block' : 'none'};">
+      <h2 class="panel-title">👤 ${isTurkish ? 'Yönetici Hesabı' : 'Administrator Account'}</h2>
+      <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'Yönetici paneli giriş bilgilerini güncelleyin. Şifre değiştirildiğinde bir sonraki girişte yeni bilgiler istenir.' : 'Update admin panel login credentials. After changing the password, the new credentials are required on next login.'}</p>
+
+      <div style="background:#f8fafc;padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);max-width:520px;">
+        <h3 style="margin:0 0 16px 0;font-size:15px;color:var(--color-secondary-900);">🔑 ${isTurkish ? 'Şifre Değiştir' : 'Change Password'}</h3>
+        <form id="admin-credentials-form" onsubmit="handleSaveCredentials(event)">
+          <div class="form-group">
+            <label for="cred-current-password">${isTurkish ? 'Mevcut Şifre (Doğrulama)' : 'Current Password (Verification)'}</label>
+            <input type="password" id="cred-current-password" placeholder="${isTurkish ? 'Mevcut şifrenizi girin' : 'Enter your current password'}" required autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="cred-new-username">${isTurkish ? 'Yeni Kullanıcı Adı' : 'New Username'}</label>
+            <input type="text" id="cred-new-username" value="${jsUsername}" required autocomplete="off">
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label for="cred-new-password">${isTurkish ? 'Yeni Şifre' : 'New Password'}</label>
+              <input type="password" id="cred-new-password" minlength="4" placeholder="${isTurkish ? 'En az 4 karakter' : 'At least 4 characters'}" required autocomplete="new-password">
+            </div>
+            <div class="form-group">
+              <label for="cred-confirm-password">${isTurkish ? 'Yeni Şifre (Tekrar)' : 'Confirm New Password'}</label>
+              <input type="password" id="cred-confirm-password" minlength="4" placeholder="${isTurkish ? 'Şifreyi tekrar girin' : 'Repeat the password'}" required autocomplete="new-password">
+            </div>
+          </div>
+          <div id="cred-error" class="error-message" style="display:none;"></div>
+          <div id="cred-success" class="success-message" style="display:none;">✅ ${isTurkish ? 'Yönetici bilgileri güncellendi!' : 'Admin credentials updated!'}</div>
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">💾 ${isTurkish ? 'Bilgileri Kaydet' : 'Save Credentials'}</button>
+            <button type="button" class="btn btn-secondary" onclick="resetCredentialsForm()">↺ ${isTurkish ? 'Sıfırla' : 'Reset'}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Status Tab -->
     <div id="status-tab" class="content" style="display:${activeTab === 'status' ? 'block' : 'none'};">
       <h2 class="panel-title">${isTurkish ? 'Ağ Durumu & Bağlı Cihazlar' : 'Network Status & Connected Devices'}</h2>
@@ -918,6 +969,9 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       });
     };
 
+    var currentAdminUser = ${jsUsername};
+    var currentAdminPass = ${jsPassword};
+
     window.handleLogin = function(event) {
       try {
         event.preventDefault();
@@ -930,12 +984,77 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         const usernameInput = usernameEl ? (usernameEl.value || '') : '';
         const passwordInput = passwordEl ? (passwordEl.value || '') : '';
 
-        if (usernameInput === ${jsUsername} && passwordInput === ${jsPassword}) {
+        if (usernameInput === currentAdminUser && passwordInput === currentAdminPass) {
+          try { sessionStorage.setItem('router_admin_auth_' + ${jsDeviceId}, 'true'); } catch(_e) {}
           if (loginForm) loginForm.style.display = 'none';
           if (mainContent) mainContent.style.display = 'block';
         } else {
           if (loginError) loginError.style.display = 'block';
         }
+      } catch (err) {}
+    };
+
+    window.handleLogout = function() {
+      try {
+        sessionStorage.removeItem('router_admin_auth_' + ${jsDeviceId});
+      } catch(_e) {}
+      var loginForm = document.getElementById('login-form');
+      var mainContent = document.getElementById('main-content');
+      var loginError = document.getElementById('login-error');
+      if (loginError) loginError.style.display = 'none';
+      if (mainContent) mainContent.style.display = 'none';
+      if (loginForm) loginForm.style.display = 'flex';
+      var uInput = document.getElementById('login-username');
+      var pInput = document.getElementById('login-password');
+      if (uInput) uInput.value = '';
+      if (pInput) pInput.value = '';
+    };
+
+    window.resetCredentialsForm = function() {
+      const get = (id) => document.getElementById(id);
+      if (get('cred-current-password')) get('cred-current-password').value = '';
+      if (get('cred-new-username')) get('cred-new-username').value = currentAdminUser;
+      if (get('cred-new-password')) get('cred-new-password').value = '';
+      if (get('cred-confirm-password')) get('cred-confirm-password').value = '';
+      if (get('cred-error')) get('cred-error').style.display = 'none';
+      if (get('cred-success')) get('cred-success').style.display = 'none';
+    };
+
+    window.handleSaveCredentials = function(event) {
+      try {
+        event.preventDefault();
+        const get = (id) => document.getElementById(id);
+        const errorEl = get('cred-error');
+        const successEl = get('cred-success');
+        if (errorEl) errorEl.style.display = 'none';
+        if (successEl) successEl.style.display = 'none';
+
+        const currentPass = (get('cred-current-password') ? get('cred-current-password').value : '') || '';
+        const newUsername = ((get('cred-new-username') ? get('cred-new-username').value : '') || '').trim();
+        const newPass = (get('cred-new-password') ? get('cred-new-password').value : '') || '';
+        const confirmPass = (get('cred-confirm-password') ? get('cred-confirm-password').value : '') || '';
+
+        const showCredError = (msgTr, msgEn) => {
+          if (errorEl) { errorEl.textContent = '❌ ' + (isTurkish ? msgTr : msgEn); errorEl.style.display = 'block'; }
+        };
+
+        if (currentPass !== currentAdminPass) { showCredError('Mevcut şifre hatalı!', 'Current password is incorrect!'); return; }
+        if (!newUsername) { showCredError('Kullanıcı adı boş olamaz.', 'Username cannot be empty.'); return; }
+        if (newPass.length < 4) { showCredError('Yeni şifre en az 4 karakter olmalı.', 'New password must be at least 4 characters.'); return; }
+        if (newPass !== confirmPass) { showCredError('Yeni şifreler eşleşmiyor!', 'New passwords do not match!'); return; }
+
+        currentAdminUser = newUsername;
+        currentAdminPass = newPass;
+
+        try {
+          window.parent.postMessage({
+            type: 'router-admin-save-credentials',
+            deviceId: ${safeJSONForHTML(deviceId || '')},
+            payload: { username: newUsername, password: newPass }
+          }, '*');
+        } catch (_e) {}
+
+        if (successEl) successEl.style.display = 'block';
       } catch (err) {}
     };
 
@@ -1122,6 +1241,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         var clientSsid = client.ssid || ${jsSsid} || 'WiFi';
         var jsId = JSON.stringify(client.id || '').replace(/"/g, '&quot;');
 
+        var sigPct = typeof client.signalPercent === 'number' ? client.signalPercent : 90;
+        var sigDbm = typeof client.rssiDbm === 'number' ? client.rssiDbm : Math.round(-95 + (sigPct * 0.65));
+        var sigBadgeClass = client.isWired ? 'badge-success' : (sigPct > 60 ? 'badge-success' : (sigPct > 30 ? 'badge-warning' : 'badge-danger'));
+        var sigDisplay = client.isWired ? '🔌 1 Gbps' : ('📶 ' + sigDbm + ' dBm (%' + sigPct + ')');
+
         return '<div class="client-card">' +
           '<div style="display:flex;align-items:center;gap:12px;min-width:0;">' +
             '<div class="client-icon">' + icon + '</div>' +
@@ -1134,7 +1258,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             '</div>' +
           '</div>' +
           '<div class="client-badges">' +
-            '<span class="badge badge-success">📶 -45 dBm (%90)</span>' +
+            '<span class="badge ' + sigBadgeClass + '">' + sigDisplay + '</span>' +
             '<span class="badge badge-success">' + (isTurkish ? '● Bağlı' : '● Connected') + '</span>' +
             '<button type="button" class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="renewIotDevice(' + jsId + ')" title="' + (isTurkish ? 'IP Yenile' : 'Renew IP') + '">🔄</button>' +
             '<button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="disconnectIotDevice(' + jsId + ')" title="' + (isTurkish ? 'Bağlantıyı Kes' : 'Disconnect') + '">🔌</button>' +
@@ -1196,10 +1320,20 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       } catch(err) {}
     }
 
-    // Initialize lists on document ready
+    // Initialize lists & session state on document ready
     renderSsidList();
     renderConnectedWirelessClients();
     renderMacFilterList();
+
+    try {
+      var sessionAuth = sessionStorage.getItem('router_admin_auth_' + ${jsDeviceId});
+      if (sessionAuth === 'true') {
+        var loginForm = document.getElementById('login-form');
+        var mainContent = document.getElementById('main-content');
+        if (loginForm) loginForm.style.display = 'none';
+        if (mainContent) mainContent.style.display = 'block';
+      }
+    } catch(err) {}
   </script>
 </body>
 </html>
@@ -1298,14 +1432,17 @@ export function generateRouterAdminPage(
   activeTab?: string
 ): string {
   const interfaceIp = state?.ports ? Object.values(state.ports).find((p) => p?.ipAddress && !p.shutdown)?.ipAddress : undefined;
+  // Persisted admin credentials live in services.http (changeable via Admin tab); fall back to defaults inside the panel
+  const persistedUsername = state?.services?.http?.username ?? device.services?.http?.username;
+  const persistedPassword = state?.services?.http?.password ?? device.services?.http?.password;
   const config: RouterWebConfig = {
     wifi: getRouterWifiConfig(device, state),
     deviceName: device.name,
     deviceIp: interfaceIp || device.ip || '192.168.1.1',
     deviceId: device.id,
     adminPassword: 'admin',
-    username: username,
-    password: password,
+    username: username ?? persistedUsername,
+    password: password ?? persistedPassword,
     connectedIotDevices: connectedIotDevices || [],
     availableIotDevices: availableIotDevices || [],
     language: language,

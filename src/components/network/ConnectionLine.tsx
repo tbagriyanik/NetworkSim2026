@@ -101,11 +101,23 @@ export const ConnectionLine = memo(function ConnectionLine({
 
   const isPoweredOff = sourceDevice.status === 'offline' || targetDevice.status === 'offline';
   const isEffectivelyActive = connection.active && isCompatible && !isShutdown && !isPoweredOff && !isSTPBlocking;
-  // Use secondary-500 for both dark and light when inactive — visible on both themes
+
+  const isWireless = connection.cableType === 'wireless';
+  const wirelessSsidColors = [
+    CABLE_COLORS.wireless?.primary || '#f59e0b', // Index 0: 1. Primary SSID (Amber)
+    '#a855f7',                                   // Index 1: 2. Guest SSID / Misafir Ağ (Purple)
+    '#10b981',                                   // Index 2: 3. IoT SSID (Emerald Green)
+    '#ec4899',                                   // Index 3: 4. Secondary SSID (Pink)
+    '#06b6d4',                                   // Index 4: 5. Secondary SSID (Cyan)
+  ];
+  const activeWirelessColor = isWireless && typeof connection.ssidIndex === 'number'
+    ? wirelessSsidColors[connection.ssidIndex % wirelessSsidColors.length]
+    : (CABLE_COLORS.wireless?.primary || '#f59e0b');
+
   const color = !isCompatible || connection.active === false ? CABLE_COLORS.error.primary :
-    isShutdown || (isSTPBlocking && isVlan1) ? (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-400)') : // Gray if shutdown or STP blocking (VLAN 1 only)
-      isPoweredOff ? (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-400)') : // Gray if device offline
-        CABLE_COLORS[connection.cableType].primary;
+    isShutdown || (isSTPBlocking && isVlan1) ? (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-400)') :
+      isPoweredOff ? (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-400)') :
+        (isWireless ? activeWirelessColor : CABLE_COLORS[connection.cableType].primary);
 
   // Calculate offset for parallel lines (spread out from center)
   const maxOffset = 20;
@@ -119,7 +131,8 @@ export const ConnectionLine = memo(function ConnectionLine({
   // Apply perpendicular offset for parallel lines
   const dx = target.x - source.x;
   const dy = target.y - source.y;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1; const perpX = -dy / len * offset;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  const perpX = -dy / len * offset;
   const perpY = dx / len * offset;
 
   const controlPoint1 = {
@@ -130,8 +143,6 @@ export const ConnectionLine = memo(function ConnectionLine({
     x: midX + perpX,
     y: target.y + perpY - Math.abs(offset) * 0.5
   };
-
-  const isWireless = connection.cableType === 'wireless';
 
   // For wireless connections, generate a sinusoidal wave path
   const buildWavePath = (sx: number, sy: number, tx: number, ty: number) => {
@@ -320,13 +331,14 @@ export const ConnectionLine = memo(function ConnectionLine({
   return (
     prevProps.connection.id === nextProps.connection.id &&
     prevProps.connection.active === nextProps.connection.active &&
+    prevProps.connection.ssidIndex === nextProps.connection.ssidIndex &&
     prevProps.sourceDevice.x === nextProps.sourceDevice.x &&
     prevProps.sourceDevice.y === nextProps.sourceDevice.y &&
     prevProps.targetDevice.x === nextProps.targetDevice.x &&
     prevProps.targetDevice.y === nextProps.targetDevice.y &&
     prevProps.sourceDevice.ports.find(p => p.id === prevProps.connection.sourcePort)?.shutdown ===
     nextProps.sourceDevice.ports.find(p => p.id === nextProps.connection.sourcePort)?.shutdown &&
-    prevProps.targetDevice.ports.find(p => p.id === prevProps.connection.targetPort)?.shutdown ===
+    prevProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.shutdown ===
     nextProps.targetDevice.ports.find(p => p.id === nextProps.connection.targetPort)?.shutdown &&
     prevProps.sourceDevice.status === nextProps.sourceDevice.status &&
     prevProps.targetDevice.status === nextProps.targetDevice.status &&

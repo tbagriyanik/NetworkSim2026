@@ -213,6 +213,8 @@ export interface CanvasConnection {
   targetPort: string;
   cableType: CableType;
   active: boolean;
+  ssidIndex?: number;
+  ssid?: string;
 }
 
 export interface CanvasNote {

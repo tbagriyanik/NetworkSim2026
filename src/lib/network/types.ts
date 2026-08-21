@@ -459,6 +459,8 @@ export interface SwitchState {
       enabled: boolean;
       content?: string;
       fontSize?: number;
+      username?: string;
+      password?: string;
     };
     mail?: {
       enabled: boolean;

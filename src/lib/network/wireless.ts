@@ -435,7 +435,7 @@ export function getApActiveSsids(
 
     if (Array.isArray(apWifi.ssids)) {
       for (const item of apWifi.ssids) {
-        if (item.enabled && item.ssid) {
+        if (item.enabled !== false && item.ssid) {
           list.push({
             ssid: item.ssid,
             security: item.security || 'open',
@@ -518,7 +518,7 @@ export function buildImplicitWirelessConnections(
     return (d.type === 'pc' || d.type === 'iot') && !!wifi && wifi.enabled && !!wifi.ssid && (wifi.mode === 'client' || wifi.mode === 'sta');
   });
 
-  const candidatesByAp = new Map<string, Array<{ client: CanvasDevice; dist: number }>>();
+  const candidatesByAp = new Map<string, Array<{ client: CanvasDevice; dist: number; ssidIndex: number; ssid: string }>>();
 
   for (const ap of apDevices) {
     const apState = safeDeviceStates?.get(ap.id);
@@ -531,8 +531,9 @@ export function buildImplicitWirelessConnections(
       if (!clientWifi || !clientWifi.enabled || !clientWifi.ssid) continue;
       if (clientWifi.bssid && clientWifi.bssid !== ap.id) continue;
 
-      const matchingSsid = activeSsids.find(s => s.ssid.toLowerCase() === clientWifi.ssid.toLowerCase());
-      if (!matchingSsid) continue;
+      const matchingSsidIndex = activeSsids.findIndex(s => s.ssid.toLowerCase() === clientWifi.ssid.toLowerCase());
+      if (matchingSsidIndex === -1) continue;
+      const matchingSsid = activeSsids[matchingSsidIndex];
 
       const clientSec = (clientWifi.security || 'open').toLowerCase();
       const apSec = (matchingSsid.security || 'open').toLowerCase();
@@ -548,7 +549,7 @@ export function buildImplicitWirelessConnections(
       if (dist >= 550) continue;
 
       const list = candidatesByAp.get(ap.id) || [];
-      list.push({ client, dist });
+      list.push({ client, dist, ssidIndex: matchingSsidIndex, ssid: matchingSsid.ssid });
       candidatesByAp.set(ap.id, list);
     }
   }
@@ -562,7 +563,7 @@ export function buildImplicitWirelessConnections(
     candidates
       .sort((a, b) => a.dist - b.dist || a.client.id.localeCompare(b.client.id))
       .slice(0, limit)
-      .forEach(({ client }) => {
+      .forEach(({ client, ssidIndex, ssid }) => {
         wirelessConnections.push({
           id: `${idPrefix}-${client.id}-${ap.id}`,
           sourceDeviceId: client.id,
@@ -571,6 +572,8 @@ export function buildImplicitWirelessConnections(
           targetPort: 'wlan0',
           cableType: 'wireless',
           active: true,
+          ssidIndex: ssidIndex,
+          ssid: ssid,
         } as CanvasConnection);
       });
   }

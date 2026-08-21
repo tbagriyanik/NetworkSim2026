@@ -235,6 +235,49 @@ export function usePCPanelRouterAdmin({
         });
       }
 
+      // Handle admin credential changes from the Admin tab
+      if (data.type === 'router-admin-save-credentials') {
+        if (!httpAppDeviceId || !data.deviceId || data.deviceId !== httpAppDeviceId) return;
+
+        const device = topologyDevices.find((d) => d.id === httpAppDeviceId);
+        const payload = data.payload || {};
+        const nextUsername = String(payload.username || 'admin').trim() || 'admin';
+        const nextPassword = String(payload.password || 'admin') || 'admin';
+
+        window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+          detail: {
+            deviceId: httpAppDeviceId,
+            config: {
+              services: {
+                ...(device?.services || {}),
+                http: {
+                  enabled: true,
+                  content: '',
+                  ...(device?.services?.http || {}),
+                  username: nextUsername,
+                  password: nextPassword,
+                },
+              },
+            },
+          },
+        }));
+
+        addLocalOutput(
+          'success',
+          language === 'tr'
+            ? `${device?.name || 'Cihaz'} yönetici bilgileri güncellendi. Kullanıcı: ${nextUsername}`
+            : `${device?.name || 'Device'} admin credentials updated. User: ${nextUsername}`
+        );
+
+        useAppStore.getState().addNetworkEventLog({
+          level: 'info',
+          category: 'Wireless',
+          message: language === 'tr' ? `${device?.name || 'Cihaz'} yönetici şifresi değiştirildi` : `${device?.name || 'Device'} admin password changed`,
+          detail: `User: ${nextUsername}`,
+        });
+        return;
+      }
+
       // Handle IoT device connect (existing device)
       if (data.type === 'router-admin-connect-iot') {
         const payload = data.payload || {};
