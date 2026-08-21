@@ -1448,8 +1448,7 @@ export function NetworkTopology({
           break;
         case '0':
           e.preventDefault();
-          setZoom(1);
-          setPan({ x: 0, y: 0 });
+          resetView();
           break;
         case 'Enter':
           e.preventDefault();
@@ -1475,7 +1474,7 @@ export function NetworkTopology({
     return () => {
       canvas.removeEventListener('keydown', handleKeyDown);
     };
-  }, [canvasRef, zoom, selectedDeviceIds, deviceMap, handleDeviceDoubleClick, setSelectedDeviceIds, setPan, setZoom, navigateToNextDevice]);
+  }, [canvasRef, zoom, selectedDeviceIds, deviceMap, handleDeviceDoubleClick, setSelectedDeviceIds, setPan, setZoom, navigateToNextDevice, resetView]);
 
   const { handlePortClick } = useTopologyPortConnection({
     deviceMap,

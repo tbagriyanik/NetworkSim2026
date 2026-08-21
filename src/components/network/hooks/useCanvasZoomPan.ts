@@ -146,12 +146,15 @@ export function useCanvasZoomPan({
   // Reset view
   const resetView = useCallback(() => {
     setZoom(DEFAULT_ZOOM);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+    const topMargin = isMobile ? 110 : 10;
+    const sideMargin = isMobile ? 16 : 10;
+
     if (devices.length === 0 && notes.length === 0) {
-      setPan({ x: 0, y: 0 });
+      setPan({ x: isMobile ? sideMargin : 0, y: isMobile ? topMargin : 0 });
       return;
     }
 
-    const padding = 10;
     const minDeviceX = devices.length ? Math.min(...devices.map(d => d.x)) : Infinity;
     const minDeviceY = devices.length ? Math.min(...devices.map(d => d.y)) : Infinity;
     const minNoteX = notes.length ? Math.min(...notes.map(n => n.x)) : Infinity;
@@ -160,7 +163,10 @@ export function useCanvasZoomPan({
     const minX = Math.min(minDeviceX, minNoteX);
     const minY = Math.min(minDeviceY, minNoteY);
 
-    setPan({ x: padding - minX * DEFAULT_ZOOM, y: padding - minY * DEFAULT_ZOOM });
+    setPan({
+      x: sideMargin - minX * DEFAULT_ZOOM,
+      y: topMargin - minY * DEFAULT_ZOOM
+    });
     window.scrollTo(0, 0);
   }, [devices, notes, setZoom, setPan]);
 

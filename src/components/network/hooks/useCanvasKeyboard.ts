@@ -205,8 +205,8 @@ export function useCanvasKeyboard({
         }
       }
 
-      // Alt+R to reset zoom/pan view
-      if (e.altKey && !e.ctrlKey && !e.metaKey && key === 'r') {
+      // Home key or Alt+R to reset zoom/pan view
+      if (!isEditable && (e.key === 'Home' || (e.altKey && !e.ctrlKey && !e.metaKey && key === 'r'))) {
         e.preventDefault();
         resetView();
       }

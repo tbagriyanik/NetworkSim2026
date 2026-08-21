@@ -45,6 +45,7 @@ interface TopologyToolbarProps {
   setCableInfo: (info: CableInfo) => void;
   setZoom: (zoom: number) => void;
   setPan: (pan: { x: number; y: number }) => void;
+  resetView?: () => void;
   handleDeviceSelectFromMenu: (type: DeviceType, id?: string, model?: string, name?: string) => void;
   handleUndo: () => void;
   handleRedo: () => void;
@@ -68,7 +69,7 @@ export function TopologyToolbar({
   canUndo, canRedo, hasHydrated,
   isExamActive,
   setDeviceSearchQuery, setCableInfo,
-  setZoom, setPan,
+  setZoom, setPan, resetView,
   handleDeviceSelectFromMenu,
   handleUndo, handleRedo,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
@@ -85,13 +86,28 @@ export function TopologyToolbar({
      ? 'drop-shadow-[0_0_2px_rgba(34,211,238,0.15)] dark:drop-shadow-[0_0_2px_rgba(34,211,238,0.12)]'
      : '';
 
+  const handleResetView = () => {
+    if (resetView) {
+      resetView();
+    } else {
+      setZoom(1.0);
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+      const topMargin = isMobile ? 110 : 10;
+      const sideMargin = isMobile ? 16 : 10;
+      if (topologyDevices && topologyDevices.length > 0) {
+        const minX = Math.min(...topologyDevices.map((d) => d.x));
+        const minY = Math.min(...topologyDevices.map((d) => d.y));
+        setPan({ x: sideMargin - minX, y: topMargin - minY });
+      } else {
+        setPan({ x: isMobile ? sideMargin : 0, y: isMobile ? topMargin : 0 });
+      }
+    }
+  };
+
    useKeyboardShortcuts([
      {
        key: 'Home',
-       handler: () => {
-         setZoom(1.0);
-         setPan({ x: 0, y: 0 });
-       },
+       handler: handleResetView,
        description: 'Reset topology view',
      },
      {
@@ -117,10 +133,7 @@ export function TopologyToolbar({
               ? 'text-accent-400 hover:text-secondary-300 hover:bg-accent-400/10'
               : 'text-accent-600 hover:text-secondary-600 hover:bg-accent-600/10'
               }`}
-            onClick={() => {
-              setZoom(1.0);
-              setPan({ x: 0, y: 0 });
-            }}
+            onClick={handleResetView}
           >
             <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
