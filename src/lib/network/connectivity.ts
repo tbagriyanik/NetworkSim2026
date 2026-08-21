@@ -6,16 +6,18 @@ import { learnMacAddress, findMacPort } from './macLearning';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { recalculateStp } from './stp';
 import { normalizePortId } from './initialState';
-import { getDeviceWifiConfig, getWirelessSignalStrength, getWirelessDistance, buildImplicitWirelessConnections, getApActiveSsids, type DeviceWifiConfig } from './wireless';
+import { getDeviceWifiConfig, getDeviceMacAddress, getWirelessSignalStrength, getWirelessDistance, buildImplicitWirelessConnections, getApActiveSsids, wifiMacFilterMatches, type DeviceWifiConfig } from './wireless';
 import { isExternalDomain, resolveHostname } from './dns';
 import { buildConnectionIndex } from './connectionIndex';
 
 export {
   getDeviceWifiConfig,
+  getDeviceMacAddress,
   getWirelessSignalStrength,
   getWirelessDistance,
   buildImplicitWirelessConnections,
   getApActiveSsids,
+  wifiMacFilterMatches,
   type DeviceWifiConfig,
   isExternalDomain,
   resolveHostname

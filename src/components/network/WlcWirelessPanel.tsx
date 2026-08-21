@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Radio, Laptop, Trash2, Power, Edit3 } from 'lucide-react';
 import type { SwitchState } from '@/lib/network/types';
 import type { CanvasDevice } from './networkTopology.types';
-import { getDeviceWifiConfig } from '@/lib/network/wireless';
+import { getDeviceWifiConfig, wifiMacFilterMatches } from '@/lib/network/wireless';
 
 interface WlcWirelessPanelProps {
     state: SwitchState;
@@ -92,7 +92,10 @@ export function WlcWirelessPanel({
         if (dev.status === 'offline') return false;
         const wifi = getDeviceWifiConfig(dev, deviceStates);
         if (!wifi?.enabled || !wifi?.ssid) return false;
-        return activeWlanSsids.has(wifi.ssid.toLowerCase());
+        if (!activeWlanSsids.has(wifi.ssid.toLowerCase())) return false;
+        const wlcDevice = topologyDevices.find(d => d.id === activeDeviceId);
+        const wlcWifi = getDeviceWifiConfig(wlcDevice, deviceStates);
+        return wifiMacFilterMatches(wlcWifi, dev, deviceStates);
     });
 
     const cardClass = isDark ? 'bg-secondary-900/60 border-secondary-700' : 'bg-white border-secondary-200';

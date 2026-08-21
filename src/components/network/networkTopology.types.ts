@@ -160,6 +160,7 @@ export interface CanvasDevice {
         defaultGateway: string;
         dnsServer: string;
         startIp: string;
+        endIp?: string;
         subnetMask: string;
         maxUsers: number;
       }>;

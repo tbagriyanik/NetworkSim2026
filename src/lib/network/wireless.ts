@@ -146,7 +146,8 @@ export function formatChannelDisplay(channel: string | undefined, language = 'tr
   return isTr ? `Kanal ${num}` : `Channel ${num}`;
 }
 
-export function wifiChannelMatches(apWifi: DeviceWifiConfig, clientWifi: DeviceWifiConfig): boolean {
+export function wifiChannelMatches(apWifi: DeviceWifiConfig | undefined, clientWifi: DeviceWifiConfig): boolean {
+  if (!apWifi) return true;
   const apCh = normalizeChannel(apWifi.channel);
   const clientCh = normalizeChannel(clientWifi.channel);
 
@@ -184,14 +185,25 @@ export function getDeviceMacAddress(device: CanvasDevice | undefined, deviceStat
   if (device.macAddress) return device.macAddress;
   const wlanPort = device.ports?.find(p => p.id === 'wlan0');
   if (wlanPort?.macAddress) return wlanPort.macAddress;
-  if (device.ports?.[0]?.macAddress) return device.ports[0].macAddress;
+  const firstPortWithMac = device.ports?.find(p => p.macAddress);
+  if (firstPortWithMac?.macAddress) return firstPortWithMac.macAddress;
 
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const state = safeDeviceStates?.get(device.id);
   if (state?.ports?.['wlan0']?.macAddress) return state.ports['wlan0'].macAddress;
   if (state?.macAddress) return state.macAddress;
+  const firstStatePort = state?.ports ? Object.values(state.ports).find(p => p?.macAddress) : undefined;
+  if (firstStatePort?.macAddress) return firstStatePort.macAddress;
 
-  return undefined;
+  // Deterministic fallback MAC for devices without explicit MAC property
+  let hash = 0;
+  const id = device.id || device.name || 'client';
+  for (let i = 0; i < id.length; i++) {
+    hash = (hash << 5) - hash + id.charCodeAt(i);
+    hash |= 0;
+  }
+  const hex = Math.abs(hash).toString(16).padStart(6, '0').slice(0, 6);
+  return `00:50:79:${hex.slice(0, 2)}:${hex.slice(2, 4)}:${hex.slice(4, 6)}`;
 }
 
 export function wifiMacFilterMatches(
@@ -238,11 +250,16 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       security: normalizeSecurity(wlanState.wifi.security),
       channel: normalizeChannel(wlanState.wifi.channel),
       mode,
-      hidden: wlanState.wifi.hidden,
-      maxClients: wlanState.wifi.maxClients,
-      macFilterEnabled: Boolean(wlanState.wifi.macFilterEnabled),
-      macFilterMode: wlanState.wifi.macFilterMode === 'deny' ? 'deny' : 'allow',
-      macFilterList: Array.isArray(wlanState.wifi.macFilterList) ? wlanState.wifi.macFilterList : [],
+      hidden: wlanState.wifi.hidden ?? device.wifi?.hidden,
+      maxClients: wlanState.wifi.maxClients ?? device.wifi?.maxClients,
+      macFilterEnabled: Boolean(wlanState.wifi.macFilterEnabled ?? device.wifi?.macFilterEnabled),
+      macFilterMode: (wlanState.wifi.macFilterMode || device.wifi?.macFilterMode) === 'deny' ? 'deny' : 'allow',
+      macFilterList: Array.isArray(wlanState.wifi.macFilterList) && wlanState.wifi.macFilterList.length > 0
+        ? wlanState.wifi.macFilterList
+        : (Array.isArray(device.wifi?.macFilterList) ? device.wifi.macFilterList : []),
+      ssids: Array.isArray(wlanState.wifi.ssids) && wlanState.wifi.ssids.length > 0
+        ? wlanState.wifi.ssids
+        : (Array.isArray(device.wifi?.ssids) ? device.wifi.ssids : []),
     };
   }
 
@@ -260,6 +277,7 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       macFilterEnabled: Boolean(device.wifi.macFilterEnabled),
       macFilterMode: device.wifi.macFilterMode === 'deny' ? 'deny' : 'allow',
       macFilterList: Array.isArray(device.wifi.macFilterList) ? device.wifi.macFilterList : [],
+      ssids: Array.isArray(device.wifi.ssids) ? device.wifi.ssids : [],
     };
   }
 
@@ -273,11 +291,16 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       security: normalizeSecurity(wlanPort.wifi.security),
       channel: normalizeChannel(wlanPort.wifi.channel),
       mode,
-      hidden: wlanPort.wifi.hidden,
-      maxClients: wlanPort.wifi.maxClients,
-      macFilterEnabled: Boolean(wlanPort.wifi.macFilterEnabled),
-      macFilterMode: wlanPort.wifi.macFilterMode === 'deny' ? 'deny' : 'allow',
-      macFilterList: Array.isArray(wlanPort.wifi.macFilterList) ? wlanPort.wifi.macFilterList : [],
+      hidden: wlanPort.wifi.hidden ?? device.wifi?.hidden,
+      maxClients: wlanPort.wifi.maxClients ?? device.wifi?.maxClients,
+      macFilterEnabled: Boolean(wlanPort.wifi.macFilterEnabled ?? device.wifi?.macFilterEnabled),
+      macFilterMode: (wlanPort.wifi.macFilterMode || device.wifi?.macFilterMode) === 'deny' ? 'deny' : 'allow',
+      macFilterList: Array.isArray(wlanPort.wifi.macFilterList) && wlanPort.wifi.macFilterList.length > 0
+        ? wlanPort.wifi.macFilterList
+        : (Array.isArray(device.wifi?.macFilterList) ? device.wifi.macFilterList : []),
+      ssids: Array.isArray(wlanPort.wifi.ssids) && wlanPort.wifi.ssids.length > 0
+        ? wlanPort.wifi.ssids
+        : (Array.isArray(device.wifi?.ssids) ? device.wifi.ssids : []),
     };
   }
 
@@ -330,22 +353,15 @@ export function getWirelessSignalStrength(
 
   devices.forEach(dev => {
     if (dev.id === device.id) return;
+    const devState = safeDeviceStates.get(dev.id);
     const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
-    if (!apWifi || apWifi.mode !== 'ap' || !apWifi.enabled) {
-      const devState = safeDeviceStates.get(dev.id);
-      if (devState?.wlcWlans) {
-        const wlan = Object.values(devState.wlcWlans).find(w => w.status === 'enabled' && w.ssid?.toLowerCase() === targetSsid);
-        if (!wlan) return;
-      } else {
-        return;
-      }
-    } else if (apWifi.ssid?.toLowerCase() !== targetSsid) {
-      return;
-    } else if (!wifiChannelMatches(apWifi, pcWifi)) {
-      return;
-    } else if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) {
-      return;
-    }
+    const activeSsids = getApActiveSsids(apWifi, devState);
+    const matchingSsid = activeSsids.find(s => s.ssid.toLowerCase() === targetSsid);
+    if (!matchingSsid) return;
+
+    if (apWifi && !wifiChannelMatches(apWifi, pcWifi)) return;
+    if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) return;
+
     const dx = (device.x || 0) - (dev.x || 0);
     const dy = (device.y || 0) - (dev.y || 0);
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -377,22 +393,15 @@ export function getWirelessDistance(
 
   devices.forEach(dev => {
     if (dev.id === device.id) return;
+    const devState = safeDeviceStates.get(dev.id);
     const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
-    if (!apWifi || apWifi.mode !== 'ap' || !apWifi.enabled) {
-      const devState = safeDeviceStates.get(dev.id);
-      if (devState?.wlcWlans) {
-        const wlan = Object.values(devState.wlcWlans).find(w => w.status === 'enabled' && w.ssid?.toLowerCase() === targetSsid);
-        if (!wlan) return;
-      } else {
-        return;
-      }
-    } else if (apWifi.ssid?.toLowerCase() !== targetSsid) {
-      return;
-    } else if (!wifiChannelMatches(apWifi, pcWifi)) {
-      return;
-    } else if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) {
-      return;
-    }
+    const activeSsids = getApActiveSsids(apWifi, devState);
+    const matchingSsid = activeSsids.find(s => s.ssid.toLowerCase() === targetSsid);
+    if (!matchingSsid) return;
+
+    if (apWifi && !wifiChannelMatches(apWifi, pcWifi)) return;
+    if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) return;
+
     const dx = (device.x || 0) - (dev.x || 0);
     const dy = (device.y || 0) - (dev.y || 0);
     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -410,7 +419,8 @@ function getApMaxClients(apWifi: DeviceWifiConfig | undefined): number {
 
 export function getApActiveSsids(
   apWifi: DeviceWifiConfig | undefined,
-  state?: SwitchState
+  state?: SwitchState,
+  deviceStates?: Map<string, SwitchState>
 ): Array<{ ssid: string; security: string; password?: string }> {
   const list: Array<{ ssid: string; security: string; password?: string }> = [];
 
@@ -444,6 +454,20 @@ export function getApActiveSsids(
           security: wlan.security || 'open',
           password: wlan.password,
         });
+      }
+    }
+  } else if (deviceStates && apWifi && apWifi.enabled) {
+    for (const s of deviceStates.values()) {
+      if (s.wlcWlans) {
+        for (const wlan of Object.values(s.wlcWlans)) {
+          if (wlan.status === 'enabled' && wlan.ssid) {
+            list.push({
+              ssid: wlan.ssid,
+              security: wlan.security || 'open',
+              password: wlan.password,
+            });
+          }
+        }
       }
     }
   }
@@ -499,9 +523,7 @@ export function buildImplicitWirelessConnections(
   for (const ap of apDevices) {
     const apState = safeDeviceStates?.get(ap.id);
     const apWifi = getDeviceWifiConfig(ap, safeDeviceStates);
-    if (!apWifi || !apWifi.enabled || apWifi.mode !== 'ap') continue;
-
-    const activeSsids = getApActiveSsids(apWifi, apState);
+    const activeSsids = getApActiveSsids(apWifi, apState, safeDeviceStates);
     if (activeSsids.length === 0) continue;
 
     for (const client of clientDevices) {

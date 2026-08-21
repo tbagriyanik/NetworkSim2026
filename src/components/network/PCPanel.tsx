@@ -7,7 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import type { TerminalOutput } from './Terminal';
 import type { CanvasDevice, CanvasConnection } from './networkTopology.types';
-import { checkConnectivity, getWirelessSignalStrength, getDeviceWifiConfig, getApActiveSsids } from '@/lib/network/connectivity';
+import { checkConnectivity, getWirelessSignalStrength, getDeviceWifiConfig, getDeviceMacAddress, getApActiveSsids, wifiMacFilterMatches } from '@/lib/network/connectivity';
 import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { Laptop, Terminal as TerminalIcon, Globe, Settings, Wifi, Radio } from 'lucide-react';
@@ -581,13 +581,12 @@ export function PCPanel({
     topologyDevices.forEach((device) => {
       if (device.id === deviceId) return; // skip self
       if (device.type !== 'router' && device.type !== 'switchL2' && device.type !== 'switchL3' && device.type !== 'wlc') return;
-
       const state = safeStates?.get(device.id);
       const apWifi = getDeviceWifiConfig(device, safeStates);
-      if (!apWifi || !apWifi.enabled || (apWifi.mode && apWifi.mode !== 'ap')) return;
-
       const activeSsids = getApActiveSsids(apWifi, state);
+
       activeSsids.forEach(item => {
+        if (!item.ssid) return;
         const uniqueKey = `${device.id}:${item.ssid}`;
         if (!addedKeys.has(uniqueKey)) {
           addedKeys.add(uniqueKey);
@@ -595,7 +594,7 @@ export function PCPanel({
             ssid: item.ssid,
             deviceId: device.id,
             deviceName: device.name,
-            channel: apWifi.channel || '2.4GHz',
+            channel: apWifi?.channel || '2.4GHz',
           });
         }
       });
@@ -1286,19 +1285,27 @@ export function PCPanel({
         if (d.type !== 'iot' && d.type !== 'pc') return false;
 
         let isWifiConnected = false;
-        if (d.wifi?.enabled !== false && d.wifi?.ssid) {
-          const clientSsidLower = d.wifi.ssid.toLowerCase();
+        const clientWifi = getDeviceWifiConfig(d, deviceStates);
+        if (clientWifi && clientWifi.enabled && clientWifi.ssid) {
+          const clientSsidLower = clientWifi.ssid.toLowerCase();
           const matchedSsid = routerSsids.get(clientSsidLower);
           if (matchedSsid) {
-            const clientSec = (d.wifi.security || 'open').toLowerCase();
+            const clientSec = (clientWifi.security || 'open').toLowerCase();
             const apSec = (matchedSsid.security || 'open').toLowerCase();
-            if (clientSec === apSec && (apSec === 'open' || matchedSsid.password === d.wifi.password)) {
+            if (clientSec === apSec && (apSec === 'open' || matchedSsid.password === clientWifi.password)) {
               isWifiConnected = true;
             }
           }
         }
-        if (d.wifi?.bssid === routerId) {
+        if (clientWifi?.bssid === routerId || d.wifi?.bssid === routerId) {
           isWifiConnected = true;
+        }
+
+        if (isWifiConnected) {
+          const routerApWifi = getDeviceWifiConfig(routerDevice, deviceStates);
+          if (!wifiMacFilterMatches(routerApWifi, d, deviceStates)) {
+            isWifiConnected = false;
+          }
         }
 
         const isWiredConnected = topologyConnections.some(c =>
@@ -1350,16 +1357,17 @@ export function PCPanel({
           }, 0);
         }
 
-        const macAddr = d.macAddress || d.ports?.[0]?.macAddress || `00:11:22:${d.id.slice(-2)}:33:44`;
+        const clientWifi = getDeviceWifiConfig(d, deviceStates);
+        const macAddr = getDeviceMacAddress(d, deviceStates) || d.macAddress || d.ports?.[0]?.macAddress || `00:11:22:${d.id.slice(-2)}:33:44`;
 
         return {
           id: d.id,
           name: d.name,
           sensorType: (d.iot?.sensorType || (d.type === 'pc' ? 'Laptop/PC' : d.type)) as 'temperature' | 'sound' | 'motion' | 'humidity' | 'light',
-          connected: !!(isWiredConnected || (d.status === 'online' && d.wifi?.enabled !== false)),
+          connected: !!(isWiredConnected || (d.status !== 'offline' && clientWifi?.enabled !== false)),
           ip: deviceIp || d.ip,
           mac: macAddr,
-          ssid: d.wifi?.ssid || routerDevice.wifi?.ssid || 'WiFi',
+          ssid: clientWifi?.ssid || d.wifi?.ssid || routerDevice.wifi?.ssid || 'WiFi',
           isWired: isWiredConnected,
         };
       });

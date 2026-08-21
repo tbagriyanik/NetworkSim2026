@@ -167,11 +167,25 @@ export function useTopologyEventListeners({
 
       saveToHistory();
       setDevices((prev) =>
-        prev.map((d) =>
-          d.id === deviceId
-            ? { ...d, ...config }
-            : d
-        )
+        prev.map((d) => {
+          if (d.id !== deviceId) return d;
+          const updatedDevice = { ...d, ...config };
+          if (config.wifi && updatedDevice.ports) {
+            updatedDevice.ports = updatedDevice.ports.map(p => {
+              if (p.id !== 'wlan0') return p;
+              const existingWifi = p.wifi || { ssid: '', security: 'open' as const, channel: '2.4GHz' as const, mode: 'client' as const };
+              return {
+                ...p,
+                wifi: {
+                  ...existingWifi,
+                  ...config.wifi,
+                  ssid: config.wifi?.ssid ?? existingWifi.ssid ?? '',
+                },
+              };
+            });
+          }
+          return updatedDevice;
+        })
       );
     };
 

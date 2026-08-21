@@ -53,6 +53,8 @@ interface RouterWebConfig {
   connectedIotDevices?: ConnectedIoTDevice[];
   availableIotDevices?: AvailableIoTDevice[];
   language?: string;
+  device?: CanvasDevice;
+  runtimeState?: SwitchState;
 }
 
 /**
@@ -60,7 +62,7 @@ interface RouterWebConfig {
  * Styled like a typical router web admin page (e.g., 192.168.1.1)
  */
 function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string = 'wireless'): string {
-  const { wifi, deviceName, deviceIp, deviceId, connectedIotDevices = [], availableIotDevices = [], username, password, language = 'en' } = config;
+  const { wifi, deviceName, deviceIp, deviceId, connectedIotDevices = [], availableIotDevices = [], username, password, language = 'en', device, runtimeState } = config;
   const isTurkish = language === 'tr';
   const pluralize = (count: number, singular: string, plural: string) => (count === 1 ? singular : plural);
 
@@ -69,6 +71,19 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   const safeDeviceIp = sanitizeHTML(deviceIp);
   const safeSsid = sanitizeHTML(wifi.ssid || '');
   const safeWifiPassword = sanitizeHTML(wifi.password || '');
+  const onlyIotConnectedDevices = (connectedIotDevices || []).filter(d =>
+    d.sensorType !== 'Laptop/PC' &&
+    !String(d.id).toLowerCase().startsWith('pc-') &&
+    !String(d.id).toLowerCase().startsWith('laptop-')
+  );
+  const dhcpPool = device?.services?.dhcp?.pools?.[0] || runtimeState?.services?.dhcp?.pools?.[0];
+  const dhcpServerEnabled = device?.services?.dhcp?.enabled ?? runtimeState?.services?.dhcp?.enabled ?? true;
+  const safeStartIp = sanitizeHTML(dhcpPool?.startIp || '192.168.1.100');
+  const safeEndIp = sanitizeHTML(dhcpPool?.endIp || '192.168.1.200');
+  const safeGateway = sanitizeHTML(dhcpPool?.defaultGateway || deviceIp || '192.168.1.1');
+  const safeSubnet = sanitizeHTML(dhcpPool?.subnetMask || device?.subnet || '255.255.255.0');
+  const safeDns = sanitizeHTML(dhcpPool?.dnsServer || deviceIp || '192.168.1.1');
+  const safeLeaseTime = String(dhcpPool?.maxUsers || 24);
   // JSON stringified versions for use in <script> blocks to prevent logic corruption and XSS
   const jsUsername = safeJSONForHTML(username || '');
   const jsPassword = safeJSONForHTML(password || '');
@@ -84,6 +99,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   ];
   const jsCurrentSsidList = safeJSONForHTML(defaultSsidsList);
   const jsConnectedClientsData = safeJSONForHTML(connectedIotDevices || []);
+  const jsMacFilterList = safeJSONForHTML(wifi.macFilterList || []);
 
   const securityOptions = [
     { value: 'open', label: isTurkish ? 'Açık (Güvenlik Yok)' : 'Open (No Security)' },
@@ -330,9 +346,9 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     
     <div class="nav-tabs">
       <button type="button" class="nav-tab${activeTab === 'wireless' ? ' active' : ''}" data-tab="wireless">📶 ${isTurkish ? 'Kablosuz & Çoklu SSID' : 'Wireless & Multi-SSID'}</button>
-      <button type="button" class="nav-tab${activeTab === 'iot' ? ' active' : ''}" data-tab="iot">🛜 ${isTurkish ? 'IoT Cihazları' : 'IoT Devices'}</button>
       <button type="button" class="nav-tab${activeTab === 'status' ? ' active' : ''}" data-tab="status">📊 ${isTurkish ? 'Durum & Bağlı Cihazlar' : 'Status & Connected Clients'}</button>
       <button type="button" class="nav-tab${activeTab === 'advanced' ? ' active' : ''}" data-tab="advanced">⚙️ ${isTurkish ? 'Gelişmiş' : 'Advanced'}</button>
+      <button type="button" class="nav-tab${activeTab === 'iot' ? ' active' : ''}" data-tab="iot">🛜 ${isTurkish ? 'IoT Cihazları' : 'IoT Devices'}</button>
     </div>
     
     <!-- Wireless Tab -->
@@ -483,15 +499,15 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       <div class="status-card" style="margin-bottom:20px;">
         <div class="status-info">
           <h3>${isTurkish ? 'IoT Ağı' : 'IoT Network'}</h3>
-          <p>${connectedIotDevices.length} ${isTurkish ? "cihaz bu AP'ye bağlı" : pluralize(connectedIotDevices.length, 'device connected to this AP', 'devices connected to this AP')}</p>
+          <p>${onlyIotConnectedDevices.length} ${isTurkish ? "cihaz bu AP'ye bağlı" : pluralize(onlyIotConnectedDevices.length, 'device connected to this AP', 'devices connected to this AP')}</p>
         </div>
-        <span class="status-badge">${connectedIotDevices.filter(d => d.connected).length} ${isTurkish ? 'Aktif' : 'Active'}</span>
+        <span class="status-badge">${onlyIotConnectedDevices.filter(d => d.connected).length} ${isTurkish ? 'Aktif' : 'Active'}</span>
       </div>
       
-      ${connectedIotDevices.length > 0 ? `
+      ${onlyIotConnectedDevices.length > 0 ? `
       <div class="iot-device-list" style="margin-bottom:25px;">
         <p style="color:var(--color-secondary-500);margin-bottom:15px;font-size:13px;">${isTurkish ? 'Bağlı IoT cihazlarını yönetin:' : 'Manage connected IoT devices:'}</p>
-        ${connectedIotDevices.map(device => {
+        ${onlyIotConnectedDevices.map(device => {
           const safeIotName = sanitizeHTML(device.name);
           const safeIotId = sanitizeHTML(device.id);
           const safeIotIp = sanitizeHTML(device.ip || '');
@@ -642,6 +658,55 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         </div>
       </div>
 
+      <!-- DHCP Server Settings Section -->
+      <div style="background:#f8fafc;border:1px solid var(--color-secondary-200);border-radius:10px;padding:20px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div>
+            <h3 style="margin:0 0 4px 0;font-size:16px;color:var(--color-secondary-900);">🌐 ${isTurkish ? 'DHCP Sunucusu Ayarları' : 'DHCP Server Settings'}</h3>
+            <p style="margin:0;font-size:13px;color:var(--color-secondary-500);">${isTurkish ? 'Ağa bağlanan cihazlara otomatik IP adresi dağıtımını ve ağ parametrelerini yapılandırın.' : 'Configure automatic IP assignment and network parameters for connected devices.'}</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="dhcp-server-enabled" ${dhcpServerEnabled ? 'checked' : ''} onchange="toggleDhcpServerSection()">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div id="dhcp-server-body" style="display:${dhcpServerEnabled ? 'block' : 'none'};">
+          <div class="grid-2" style="margin-bottom:12px;">
+            <div class="form-group">
+              <label for="dhcp-start-ip">${isTurkish ? 'Başlangıç IP Adresi' : 'Start IP Address'}</label>
+              <input type="text" id="dhcp-start-ip" value="${safeStartIp}" placeholder="192.168.1.100" style="font-family:monospace;">
+            </div>
+            <div class="form-group">
+              <label for="dhcp-end-ip">${isTurkish ? 'Bitiş IP Adresi' : 'End IP Address'}</label>
+              <input type="text" id="dhcp-end-ip" value="${safeEndIp}" placeholder="192.168.1.200" style="font-family:monospace;">
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:12px;">
+            <div class="form-group">
+              <label for="dhcp-gateway">${isTurkish ? 'Varsayılan Ağ Geçidi' : 'Default Gateway'}</label>
+              <input type="text" id="dhcp-gateway" value="${safeGateway}" placeholder="192.168.1.1" style="font-family:monospace;">
+            </div>
+            <div class="form-group">
+              <label for="dhcp-subnet">${isTurkish ? 'Alt Ağ Maskesi' : 'Subnet Mask'}</label>
+              <input type="text" id="dhcp-subnet" value="${safeSubnet}" placeholder="255.255.255.0" style="font-family:monospace;">
+            </div>
+          </div>
+
+          <div class="grid-2" style="margin-bottom:12px;">
+            <div class="form-group">
+              <label for="dhcp-dns">${isTurkish ? 'Birincil DNS Sunucusu' : 'Primary DNS Server'}</label>
+              <input type="text" id="dhcp-dns" value="${safeDns}" placeholder="192.168.1.1" style="font-family:monospace;">
+            </div>
+            <div class="form-group">
+              <label for="dhcp-lease">${isTurkish ? 'Kiralama Süresi (Saat)' : 'Lease Time (Hours)'}</label>
+              <input type="number" id="dhcp-lease" value="${safeLeaseTime}" min="1" max="720" style="font-family:monospace;">
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="actions">
         <button type="button" class="btn btn-primary" id="save-advanced-btn" onclick="saveMacFilterSettings()">💾 ${isTurkish ? 'Gelişmiş Ayarları Kaydet' : 'Save Advanced Settings'}</button>
       </div>
@@ -655,9 +720,98 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     window.currentSsidList = currentSsidList;
 
     var connectedClientsData = ${jsConnectedClientsData};
+    var currentMacFilterList = ${jsMacFilterList};
+    if (!Array.isArray(currentMacFilterList)) currentMacFilterList = [];
+    window.currentMacFilterList = currentMacFilterList;
+
+    window.toggleMacFilterSection = function() {
+      var enabled = !!document.getElementById('mac-filter-enabled')?.checked;
+      var body = document.getElementById('mac-filter-body');
+      if (body) body.style.display = enabled ? 'block' : 'none';
+      saveAllWifiSettings();
+    };
+
+    window.renderMacFilterList = function() {
+      var container = document.getElementById('mac-filter-list-container');
+      var countEl = document.getElementById('mac-list-count');
+      if (!container) return;
+
+      var list = window.currentMacFilterList || [];
+      if (countEl) {
+        countEl.innerHTML = list.length + ' ' + (isTurkish ? 'adres' : 'items');
+      }
+
+      if (list.length === 0) {
+        container.innerHTML = '<div style="text-align:center;padding:12px;color:var(--color-secondary-400);">' +
+          (isTurkish ? 'Filtrelenmiş MAC adresi bulunmuyor.' : 'No filtered MAC addresses.') + '</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(function(mac, idx) {
+        var safeMac = String(mac).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#ffffff;border:1px solid var(--color-secondary-200);border-radius:6px;margin-bottom:6px;font-family:monospace;font-size:13px;color:var(--color-secondary-800);">' +
+          '<span>🛡️ ' + safeMac + '</span>' +
+          '<button type="button" class="btn btn-danger" style="padding:2px 8px;font-size:11px;" onclick="removeMacFromFilter(' + idx + ')" title="' + (isTurkish ? 'Sil' : 'Remove') + '">🗑️</button>' +
+        '</div>';
+      }).join('');
+    };
+
+    window.addManualMac = function() {
+      var input = document.getElementById('manual-mac-input');
+      if (!input) return;
+      var val = (input.value || '').trim();
+      if (!val) {
+        alert('❌ ' + (isTurkish ? 'Lütfen geçerli bir MAC adresi girin' : 'Please enter a valid MAC address'));
+        return;
+      }
+
+      var clean = val.toLowerCase().replace(/[^0-9a-f]/g, '');
+      if (clean.length === 12) {
+        val = clean.match(/.{1,2}/g).join(':');
+      } else if (!/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/.test(val)) {
+        alert('❌ ' + (isTurkish ? 'Geçersiz MAC adresi formatı. Örnek: 00:11:22:33:44:55' : 'Invalid MAC address format. Example: 00:11:22:33:44:55'));
+        return;
+      }
+
+      if (!window.currentMacFilterList) window.currentMacFilterList = [];
+      var normalizedVal = val.toLowerCase();
+      var exists = window.currentMacFilterList.some(function(item) {
+        return item.toLowerCase() === normalizedVal;
+      });
+
+      if (exists) {
+        alert('⚠️ ' + (isTurkish ? 'Bu MAC adresi zaten listede var' : 'This MAC address is already in the list'));
+        return;
+      }
+
+      window.currentMacFilterList.push(val);
+      input.value = '';
+      window.renderMacFilterList();
+      saveAllWifiSettings();
+    };
+
+    window.removeMacFromFilter = function(index) {
+      if (window.currentMacFilterList && window.currentMacFilterList[index] !== undefined) {
+        window.currentMacFilterList.splice(index, 1);
+        window.renderMacFilterList();
+        saveAllWifiSettings();
+      }
+    };
+
+    window.toggleDhcpServerSection = function() {
+      var enabled = !!document.getElementById('dhcp-server-enabled')?.checked;
+      var body = document.getElementById('dhcp-server-body');
+      if (body) body.style.display = enabled ? 'block' : 'none';
+      saveAllWifiSettings();
+    };
+
+    window.saveMacFilterSettings = function() {
+      saveAllWifiSettings();
+      alert('✅ ' + (isTurkish ? 'Gelişmiş kablosuz MAC filtreleme ve DHCP ayarları kaydedildi.' : 'Advanced wireless MAC filtering and DHCP settings saved.'));
+    };
 
     function showTab(tabId) {
-      const tabs = ['wireless', 'iot', 'status', 'advanced'];
+      const tabs = ['wireless', 'status', 'advanced', 'iot'];
       tabs.forEach(id => {
         const el = document.getElementById(id + '-tab');
         if (el) el.style.display = id === tabId ? 'block' : 'none';
@@ -1003,6 +1157,14 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       var macFilterMode = document.querySelector('input[name="macFilterMode"]:checked')?.value || 'allow';
       var macFilterList = Array.isArray(window.currentMacFilterList) ? window.currentMacFilterList.slice() : [];
 
+      var dhcpEnabled = !!document.getElementById('dhcp-server-enabled')?.checked;
+      var dhcpStartIp = document.getElementById('dhcp-start-ip') ? (document.getElementById('dhcp-start-ip').value || '192.168.1.100') : '192.168.1.100';
+      var dhcpEndIp = document.getElementById('dhcp-end-ip') ? (document.getElementById('dhcp-end-ip').value || '192.168.1.200') : '192.168.1.200';
+      var dhcpGateway = document.getElementById('dhcp-gateway') ? (document.getElementById('dhcp-gateway').value || '192.168.1.1') : '192.168.1.1';
+      var dhcpSubnet = document.getElementById('dhcp-subnet') ? (document.getElementById('dhcp-subnet').value || '255.255.255.0') : '255.255.255.0';
+      var dhcpDns = document.getElementById('dhcp-dns') ? (document.getElementById('dhcp-dns').value || '192.168.1.1') : '192.168.1.1';
+      var dhcpLeaseTime = document.getElementById('dhcp-lease') ? (document.getElementById('dhcp-lease').value || '24') : '24';
+
       try {
         window.parent.postMessage({
           type: 'router-admin-save-wifi',
@@ -1019,7 +1181,16 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             macFilterEnabled: macFilterEnabled,
             macFilterMode: macFilterMode,
             macFilterList: macFilterList,
-            ssids: currentSsidList
+            ssids: currentSsidList,
+            dhcp: {
+              enabled: dhcpEnabled,
+              startIp: dhcpStartIp,
+              endIp: dhcpEndIp,
+              gateway: dhcpGateway,
+              subnet: dhcpSubnet,
+              dns: dhcpDns,
+              leaseTime: Number(dhcpLeaseTime)
+            }
           }
         }, '*');
       } catch(err) {}
@@ -1028,6 +1199,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     // Initialize lists on document ready
     renderSsidList();
     renderConnectedWirelessClients();
+    renderMacFilterList();
   </script>
 </body>
 </html>
@@ -1137,6 +1309,8 @@ export function generateRouterAdminPage(
     connectedIotDevices: connectedIotDevices || [],
     availableIotDevices: availableIotDevices || [],
     language: language,
+    device: device,
+    runtimeState: state,
   };
 
   return generateWifiControlPanelHTML(config, activeTab);

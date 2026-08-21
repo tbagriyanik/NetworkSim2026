@@ -185,14 +185,40 @@ export function usePCPanelRouterAdmin({
           bssid: device?.wifi?.bssid || '',
         };
 
+        const nextDhcp = payload.dhcp ? {
+          enabled: Boolean(payload.dhcp.enabled),
+          pools: [
+            {
+              poolName: 'default-pool',
+              defaultGateway: String(payload.dhcp.gateway || '192.168.1.1'),
+              dnsServer: String(payload.dhcp.dns || '192.168.1.1'),
+              startIp: String(payload.dhcp.startIp || '192.168.1.100'),
+              subnetMask: String(payload.dhcp.subnet || '255.255.255.0'),
+              maxUsers: Number(payload.dhcp.leaseTime || 24),
+            }
+          ]
+        } : undefined;
+
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
             deviceId: httpAppDeviceId,
             config: {
               wifi: nextWifi,
+              ...(nextDhcp ? { services: { ...(device?.services || {}), dhcp: nextDhcp } } : {}),
             },
           },
         }));
+
+        if (httpAppDeviceId) {
+          const targetDevice = topologyDevices.find((d) => d.id === httpAppDeviceId);
+          if (targetDevice && isRouterDevice(targetDevice)) {
+            const runtimeState = deviceStates?.get(httpAppDeviceId);
+            const connectedIot = getConnectedIotDevices(httpAppDeviceId);
+            const availableIot = getAvailableIotDevices(httpAppDeviceId);
+            const refreshed = generateRouterAdminPage(targetDevice, language, runtimeState, connectedIot, availableIot, undefined, undefined, routerActiveTabRef.current);
+            setHttpAppContent(refreshed);
+          }
+        }
 
         addLocalOutput(
           'success',
@@ -268,10 +294,15 @@ export function usePCPanelRouterAdmin({
 
         if (!iotDeviceId) return;
 
-        const iotDevice = topologyDevices.find((d) => d.id === iotDeviceId);
-        if (!iotDevice || iotDevice.type !== 'iot') return;
+        const targetClient = topologyDevices.find((d) => d.id === iotDeviceId);
+        if (!targetClient || (targetClient.type !== 'iot' && targetClient.type !== 'pc')) return;
 
         const ipConfig = allocateIotIpConfig(httpAppDeviceId || '', iotDeviceId);
+        const updatedPorts = targetClient.ports ? targetClient.ports.map(p =>
+          p.id === 'wlan0' || p.id === 'fa0'
+            ? { ...p, ipAddress: ipConfig.ip, subnetMask: ipConfig.subnet }
+            : p
+        ) : undefined;
 
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
@@ -282,6 +313,7 @@ export function usePCPanelRouterAdmin({
               gateway: ipConfig.gateway,
               subnet: ipConfig.subnet,
               dns: ipConfig.dns,
+              ...(updatedPorts ? { ports: updatedPorts } : {}),
             },
           },
         }));
@@ -289,8 +321,8 @@ export function usePCPanelRouterAdmin({
         addLocalOutput(
           'success',
           language === 'tr'
-            ? `IoT cihaz "${iotDevice.name}" için IP yenilendi: ${ipConfig.ip}`
-            : `Renewed IP for IoT device "${iotDevice.name}": ${ipConfig.ip}`
+            ? `Cihaz "${targetClient.name}" için IP yenilendi: ${ipConfig.ip}`
+            : `Renewed IP for device "${targetClient.name}": ${ipConfig.ip}`
         );
 
         if (httpAppDeviceId) {
@@ -305,7 +337,7 @@ export function usePCPanelRouterAdmin({
         }
       }
 
-      // Handle IoT device delete
+      // Handle IoT / PC device delete
       if (data.type === 'router-admin-delete-iot') {
         const payload = data.payload || {};
         const iotDeviceId = payload.iotDeviceId;
@@ -317,7 +349,7 @@ export function usePCPanelRouterAdmin({
         }
       }
 
-      // Handle IoT device disconnect
+      // Handle IoT / PC device disconnect
       if (data.type === 'router-admin-disconnect-iot') {
         const payload = data.payload || {};
         const iotDeviceId = payload.iotDeviceId;
@@ -327,13 +359,13 @@ export function usePCPanelRouterAdmin({
           return;
         }
 
-        const iotDevice = topologyDevices.find((d) => d.id === iotDeviceId);
-        if (!iotDevice || iotDevice.type !== 'iot') {
-          logger.warn('IoT device not found or wrong type for disconnect:', iotDeviceId);
+        const targetClient = topologyDevices.find((d) => d.id === iotDeviceId);
+        if (!targetClient || (targetClient.type !== 'iot' && targetClient.type !== 'pc')) {
+          logger.warn('Device not found or wrong type for disconnect:', iotDeviceId);
           return;
         }
 
-        // Update the IoT device's WiFi config to disconnect (disable WiFi)
+        // Update device's WiFi config to disconnect (disable WiFi)
         const updatedWifi = {
           enabled: false,
           ssid: '',
@@ -345,13 +377,13 @@ export function usePCPanelRouterAdmin({
         };
 
         // Update ports to clear WiFi connection
-        const updatedPorts = iotDevice.ports.map(p =>
+        const updatedPorts = targetClient.ports ? targetClient.ports.map(p =>
           p.id === 'wlan0'
             ? { ...p, status: 'disconnected' as const, ipAddress: undefined, subnetMask: undefined, wifi: { ssid: '', security: 'open' as const, channel: '2.4GHz' as const, mode: 'client' as const } }
             : p
-        );
+        ) : undefined;
 
-        // Dispatch event to update the IoT device
+        // Dispatch event to update device
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
           detail: {
             deviceId: iotDeviceId,
@@ -360,12 +392,12 @@ export function usePCPanelRouterAdmin({
               ip: '',
               subnet: '',
               gateway: '',
-              ports: updatedPorts,
+              ...(updatedPorts ? { ports: updatedPorts } : {}),
             },
           },
         }));
 
-        // Delete any physical cable connections between this AP and the IoT device
+        // Delete any physical cable connections between this AP and the device
         if (topologyConnections) {
           topologyConnections.forEach(conn => {
             if ((conn.sourceDeviceId === httpAppDeviceId && conn.targetDeviceId === iotDeviceId) ||
@@ -379,8 +411,8 @@ export function usePCPanelRouterAdmin({
         addLocalOutput(
           'success',
           language === 'tr'
-            ? `IoT cihaz "${iotDevice.name}" ağdan çıkarıldı.`
-            : `IoT device "${iotDevice.name}" disconnected from the network.`
+            ? `Cihaz "${targetClient.name}" ağdan çıkarıldı.`
+            : `Device "${targetClient.name}" disconnected from the network.`
         );
 
         // Refresh router admin page to update device list

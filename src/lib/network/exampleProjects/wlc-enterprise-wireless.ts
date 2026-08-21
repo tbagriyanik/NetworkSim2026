@@ -297,7 +297,7 @@ const example = (isTr: boolean): ExampleProject => {
   sw1State.switchModel = 'WS-C3650-24PS';
   sw1State.switchLayer = 'L3';
   sw1State.deviceType = 'switchL3';
-  sw1State.ipRouting = true;
+  sw1State.ipRouting = false;
   sw1State.vlans = {
     ...sw1State.vlans,
     10: { id: 10, name: 'Corp-Wireless', status: 'active', ports: ['gi1/0/3'] },
