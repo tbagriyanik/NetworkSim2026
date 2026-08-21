@@ -418,6 +418,11 @@ export function useHistory(initialState: ProjectState) {
         return prev;
       }
 
+      // Guard against history truncation when inspecting/playing back past steps without explicit user action
+      if (!explicitDescription && prev.index < prev.items.length - 1) {
+        return prev;
+      }
+
       newItems.push(entry);
 
       let nextIndex = newItems.length - 1;

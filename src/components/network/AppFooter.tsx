@@ -23,14 +23,13 @@ interface AppFooterProps {
   showProjectPicker: boolean;
   showOnboarding: boolean;
   setShowAboutModal: (v: boolean) => void;
-  children?: React.ReactNode;
 }
 
 export function AppFooter({
   t, isDark, language, activeTab, activeDeviceType, activeDeviceId,
   hasUnsavedChanges, lastSaveTime, projectName, totalScore, maxScore,
   topologyDevices, lastTaskEvent, showProjectPicker, showOnboarding,
-  setShowAboutModal, children
+  setShowAboutModal
 }: AppFooterProps) {
   const getDeviceCountLabel = (count: number) => (
     language === 'tr' ? t.devicesCount : (count === 1 ? 'device' : 'devices')

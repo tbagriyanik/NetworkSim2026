@@ -34,7 +34,7 @@ const NetworkTopology = dynamic(
 );
 
 
-import { Button } from '@/components/ui/button';
+
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 
@@ -738,6 +738,17 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   const { pushState, undo, redo, canUndo, canRedo, resetHistory, currentState, historyItems, historyIndex, jumpTo, loadHistory } = useHistory(getCurrentState());
 
+  const historyApplyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const markApplyingHistory = useCallback(() => {
+    isApplyingHistoryRef.current = true;
+    if (historyApplyTimerRef.current) {
+      clearTimeout(historyApplyTimerRef.current);
+    }
+    historyApplyTimerRef.current = setTimeout(() => {
+      isApplyingHistoryRef.current = false;
+    }, 1200);
+  }, []);
+
   const pendingActionDesc = useRef<string | null>(null);
   const commitAction = useCallback((desc: string) => {
     pendingActionDesc.current = desc;
@@ -745,6 +756,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   // Handle undo/redo execution
   const applyProjectState = useCallback((state: ProjectState) => {
+    markApplyingHistory();
     // We use functional updates to ensure we're using latest state and prevent loops if possible
     // but here we just want to set EVERYTHING at once.
     setTopologyDevices(state.topologyDevices);
@@ -762,28 +774,28 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     if (state.activeTab) {
       setActiveTab(state.activeTab as TabType);
     }
-    // setTopologyKey(prev => prev + 1); // Only for resets
-  }, [setTopologyDevices, setTopologyConnections, setTopologyNotes, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setCableInfo, setActiveDeviceId, setActiveDeviceType, setZoom, setPan, setActiveTab]);
+    lastPushedStateRef.current = serializeState(state);
+  }, [markApplyingHistory, setTopologyDevices, setTopologyConnections, setTopologyNotes, setDeviceStates, setDeviceOutputs, setPcOutputs, setPcHistories, setCableInfo, setActiveDeviceId, setActiveDeviceType, setZoom, setPan, setActiveTab]);
 
   const handleUndo = useCallback(() => {
     if (activeTabRef.current !== 'topology') return;
-    isApplyingHistoryRef.current = true;
+    markApplyingHistory();
     pendingHistoryActionRef.current = 'undo';
     undo();
-  }, [undo]);
+  }, [undo, markApplyingHistory]);
 
   const handleRedo = useCallback(() => {
     if (activeTabRef.current !== 'topology') return;
-    isApplyingHistoryRef.current = true;
+    markApplyingHistory();
     pendingHistoryActionRef.current = 'redo';
     redo();
-  }, [redo]);
+  }, [redo, markApplyingHistory]);
 
   const handleJumpTo = useCallback((index: number) => {
-    isApplyingHistoryRef.current = true;
+    markApplyingHistory();
     pendingHistoryActionRef.current = 'jumpTo';
     jumpTo(index);
-  }, [jumpTo]);
+  }, [jumpTo, markApplyingHistory]);
 
   useEffect(() => {
     if (!isApplyingHistoryRef.current) return;
@@ -811,8 +823,8 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
     if (stateString !== lastPushedStateRef.current) {
       if (isApplyingHistoryRef.current) {
+        // Keep lastPushedStateRef in sync while history is being navigated/played back
         lastPushedStateRef.current = stateString;
-        isApplyingHistoryRef.current = false;
       } else if (pendingActionDesc.current) {
         // Small timeout ensures all React batch updates are captured
         // We do NOT clear pendingActionDesc.current synchronously to prevent losing actions on rapid re-renders
@@ -828,24 +840,25 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
         }, 150); // Slightly larger debounce to capture all cascading state updates
       } else {
         // Auto-push state changes to history with debounce (coalesces rapid changes like drag)
-        timer = setTimeout(() => {
-          const freshState = getCurrentState();
-          pushState(freshState, activeTab === 'topology' ? 'topology' : 'ui', undefined);
-          lastPushedStateRef.current = serializeState(freshState);
-        }, 300);
-      }
-    } else {
-      // If state didn't change but we were applying history, 
-      // we still need to clear the flag
-      if (isApplyingHistoryRef.current) {
-        isApplyingHistoryRef.current = false;
+        // CRITICAL GUARD: Only auto-push if we are at the end of history!
+        // If navigating past steps, unprompted background diffs MUST NOT slice/corrupt future history!
+        if (historyIndex === historyItems.length - 1) {
+          timer = setTimeout(() => {
+            if (isApplyingHistoryRef.current) return;
+            const freshState = getCurrentState();
+            pushState(freshState, activeTab === 'topology' ? 'topology' : 'ui', undefined);
+            lastPushedStateRef.current = serializeState(freshState);
+          }, 300);
+        } else {
+          lastPushedStateRef.current = stateString;
+        }
       }
     }
 
     return () => {
       if (timer) clearTimeout(timer);
     };
-  }, [topologyDevices, topologyConnections, topologyNotes, deviceStates, deviceOutputs, pcOutputs, pcHistories, cableInfo, activeDeviceId, activeDeviceType, zoom, pan, activeTab, isAppLoading, pushState]);
+  }, [topologyDevices, topologyConnections, topologyNotes, deviceStates, deviceOutputs, pcOutputs, pcHistories, cableInfo, activeDeviceId, activeDeviceType, zoom, pan, activeTab, isAppLoading, pushState, historyIndex, historyItems.length]);
 
   // Show hourglass cursor during app startup
   useEffect(() => {
