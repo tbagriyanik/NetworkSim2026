@@ -20,7 +20,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 ---
 
-## Latest Updates (v2.6.0)
+## Latest Updates (v2.7.0)
 
 | English | Türkçe |
 | --- | --- |
@@ -6660,7 +6660,7 @@ Yeni eklenen meydan okuma modları ile ağ hatalarını teşhis etme ve düzeltm
 
 ---
 
-## 🚀 Gelişmiş Özellikler ve Protokoller (v2.6.0 Güncellemesi)
+## 🚀 Gelişmiş Özellikler ve Protokoller (v2.7.0 Güncellemesi)
 
 Bu bölümde, simülatörün en son sürümünde uygulanan ancak daha önce dokümantasyonda derinlemesine açıklanmamış gelişmiş mimari, UI, ağ protokolleri ve güvenlik yetenekleri yer almaktadır.
 

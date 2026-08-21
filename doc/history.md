@@ -2,6 +2,14 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v2.7.0 — 2026-08-21
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-21 | **Sürüm Yükseltmesi (v2.7.0)** — Dokümantasyondaki 18 eksik özellik tam olarak belgelendi. `PC_CMD_REFERENCE.md`, `PACKET_CAPTURE_GUIDE.md` ve `TOPOLOGY_GENERATOR.md` oluşturuldu. Tüm kılavuzlar ve kitapçık v2.7.0'a göre güncellendi. Örnek uygulama projeleri sayısı 46'ya çıkarıldı. |
+
+---
+
 ## v2.6.0 — 2026-08-20
 
 | Tarih | Değişiklik |

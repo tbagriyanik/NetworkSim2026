@@ -1,13 +1,13 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-2.6.0-blue)
+![Version](https://img.shields.io/badge/version-2.7.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.1-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-127,811-lightgrey)
-![Source Files](https://img.shields.io/badge/source--files-494-informational)
+![Total Lines](https://img.shields.io/badge/total--lines-115,876-lightgrey)
+![Source Files](https://img.shields.io/badge/source--files-500-informational)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -27,19 +27,20 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
+- **Version 2.7.0 Sürümü:** 18 eksik özellik tam dokümante edildi. Topoloji Üretici, Paket Yakalama filtreleri, VRRP, BGP, SPAN, IP Source Guard ve çift tıklama daraltma özellikleri ağ kitapçığı ve kılavuzlara eklendi. Örnek uygulama projeleri sayısı 46'ya çıkarıldı.
 - **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
 - **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.
-- **Version 2.5 Sürümü:** Switch/router arayüz komutları ve PC CMD ARP yönetimi iyileştirildi; derleme ve tip kontrolleri temizlendi.
 
- 
+
 ## Stats / İstatistikler
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır (src/) | 127,811 |
+| Version / Sürüm | 2.7.0 |
+| Total Lines / Toplam Satır (src/) | 115,876 |
 | Source Files / Kaynak Dosya | 500 |
-| Documentation Files / Dokümantasyon Dosya | 23 |
-| Example Projects / Örnek Proje | 45 |
+| Documentation Files / Dokümantasyon Dosya | 22 |
+| Example Projects / Örnek Proje | 46 |
 | Guided Lessons / Rehberli Ders | 19 |
 | Exams / Sınavlar | Sınav modu desteği |
 | CLI Commands / CLI Komutları | CLI referansında listelenen komutlar |
