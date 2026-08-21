@@ -3,6 +3,132 @@ import type { CommandPattern } from './commandPatterns.types';
 
 export const interfacePatterns: Record<string, CommandPattern> = {
   // Firewall ASA specific commands
+  'access-group': {
+    pattern: /^access-group\s+(\S+)\s+in\s+interface\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 4,
+    maxArgs: 4,
+    capability: 'firewall'
+  },
+  'no access-group': {
+    pattern: /^no\s+access-group\s+(\S+)\s+in\s+interface\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 4,
+    maxArgs: 4,
+    capability: 'firewall'
+  },
+  'object network': {
+    pattern: /^object\s+network\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2,
+    capability: 'firewall'
+  },
+  'no object network': {
+    pattern: /^no\s+object\s+network\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 3,
+    maxArgs: 3,
+    capability: 'firewall'
+  },
+  'nat': {
+    pattern: /^nat\s*(?:\([^)]+\)|\s+.+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 6,
+    capability: 'firewall'
+  },
+  'no nat': {
+    pattern: /^no\s+nat\s*(?:\([^)]+\)|\s+.+)?$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 6,
+    capability: 'firewall'
+  },
+  'route': {
+    pattern: /^route\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(\d+))?$/i,
+    modes: ['config'],
+    minArgs: 4,
+    maxArgs: 5,
+    capability: 'firewall'
+  },
+  'no route': {
+    pattern: /^no\s+route\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(\S+))?$/i,
+    modes: ['config'],
+    minArgs: 4,
+    maxArgs: 5,
+    capability: 'firewall'
+  },
+  'timeout': {
+    pattern: /^timeout\s+(\S+)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2,
+    capability: 'firewall'
+  },
+  'passwd': {
+    pattern: /^passwd\s+(.+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'firewall'
+  },
+  'http server enable': {
+    pattern: /^http\s+server\s+enable$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'no http server enable': {
+    pattern: /^no\s+http\s+server\s+enable$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'ssh asa': {
+    pattern: /^ssh\s+(\S+)\s+(\S+)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 3,
+    maxArgs: 3,
+    capability: 'firewall'
+  },
+  'no ssh asa': {
+    pattern: /^no\s+ssh\s+(\S+)\s+(\S+)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 3,
+    maxArgs: 3,
+    capability: 'firewall'
+  },
+  'telnet asa': {
+    pattern: /^telnet\s+(\S+)\s+(\S+)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 3,
+    maxArgs: 3,
+    capability: 'firewall'
+  },
+  'no telnet asa': {
+    pattern: /^no\s+telnet\s+(\S+)\s+(\S+)\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 3,
+    maxArgs: 3,
+    capability: 'firewall'
+  },
+  'logging enable': {
+    pattern: /^logging\s+enable$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'no logging enable': {
+    pattern: /^no\s+logging\s+enable$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
   'nameif': {
     pattern: /^nameif\s+(\S+)$/i,
     modes: ['interface'],

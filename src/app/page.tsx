@@ -1945,13 +1945,13 @@ pcOutputs={pcOutputs}
 
           {/* Main Content - Fits between header and footer with scroll */}
           <main className={cn(
-            "overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-[64px]",
-            activeTab === 'topology' ? 'md:pt-[116px]' : 'md:pt-[64px]',
-            isTablet && (showPCPanel || showUnifiedDeviceModal || showRouterPanel) && "flex-row md:pt-[64px]"
+            "overflow-hidden flex flex-col min-h-0 h-[calc(100vh-44px)] pt-14 sm:pt-16",
+            activeTab === 'topology' ? 'md:pt-[116px]' : 'md:pt-16',
+            isTablet && (showPCPanel || showUnifiedDeviceModal || showRouterPanel) && "flex-row md:pt-16"
           )}>
             <div className={cn(
               "w-full flex-1 flex flex-col min-h-0 overflow-hidden transition-all duration-500",
-              isTablet && (showPCPanel || showUnifiedDeviceModal || showRouterPanel) && "w-1/2 flex-none border-r border-secondary-200/50 dark:border-secondary-800/50"
+              isTablet && (showPCPanel || showUnifiedDeviceModal || showRouterPanel) && "w-full sm:w-1/2 flex-none border-r border-secondary-200/50 dark:border-secondary-800/50"
             )}>
               {/* Tab Content - Always render but hide non-active */}
               <div className={`flex-1 flex flex-col min-h-0 ${activeTab === 'topology' ? 'flex' : 'hidden'} print:flex`}>

@@ -33,23 +33,23 @@ describe('IOS_ERRORS', () => {
 
 describe('iosModeError', () => {
   it('should return error for user EXEC mode', () => {
-    const result = iosModeError('show vlan', 'user', 'en');
+    const result = iosModeError('user');
     expect(result).toContain('User EXEC');
     expect(result).toContain('not available');
   });
 
   it('should return error for privileged EXEC mode', () => {
-    const result = iosModeError('configure terminal', 'privileged', 'en');
+    const result = iosModeError('privileged');
     expect(result).toContain('Privileged EXEC');
   });
 
   it('should return error for config mode', () => {
-    const result = iosModeError('copy running-config startup-config', 'config', 'en');
+    const result = iosModeError('config');
     expect(result).toContain('Global Configuration');
   });
 
   it('should handle unknown mode gracefully', () => {
-    const result = iosModeError('test', 'unknown-mode', 'en');
+    const result = iosModeError('unknown-mode');
     expect(result).toContain('unknown');
   });
 });

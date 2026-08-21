@@ -569,6 +569,26 @@ The simulator supports **400+ commands** across multiple configuration modes.
 
 | Command | Description |
 |---------|-------------|
+| `access-group <acl> in interface <nameif>` | Apply access-list to interface |
+| `no access-group <acl> in interface <nameif>` | Remove access-list from interface |
+| `object network <name>` | Create/enter network object |
+| `no object network <name>` | Remove network object |
+| `host <ip>` | Set host IP (inside object network) |
+| `subnet <ip> <mask>` | Set subnet (inside object network) |
+| `nat (src,dst) static <ip>` | Static NAT translation |
+| `nat (src,dst) source dynamic <pool> <target>` | Dynamic NAT translation |
+| `route <ifname> <network> <mask> <gateway> [distance]` | Add static route |
+| `no route <ifname> <network> <mask> [gateway]` | Remove static route |
+| `timeout <proto> <hh:mm:ss>` | Set connection timeout |
+| `passwd <password>` | Set enable password |
+| `http server enable` | Enable HTTP management server |
+| `no http server enable` | Disable HTTP server |
+| `ssh <ip> <mask> <ifname>` | Allow SSH from subnet |
+| `no ssh <ip> <mask> <ifname>` | Remove SSH access |
+| `telnet <ip> <mask> <ifname>` | Allow Telnet from subnet |
+| `no telnet <ip> <mask> <ifname>` | Remove Telnet access |
+| `logging enable` | Enable logging |
+| `no logging enable` | Disable logging |
 | `security-level <0-100>` | Set interface security level |
 | `nameif <name>` | Set interface name |
 | `no nameif` | Remove interface name |

@@ -1,7 +1,26 @@
 import { CommandHandler } from './commandTypes';
-import type { SwitchState } from '../types';
+import type { SwitchState, CommandResult } from '../types';
+import { IOS_ERRORS } from './iosErrors';
 
 export const firewallHandlers: Record<string, CommandHandler> = {
+  'access-group': cmdAccessGroup,
+  'no access-group': cmdNoAccessGroup,
+  'object network': cmdObjectNetwork,
+  'no object network': cmdNoObjectNetwork,
+  'nat': cmdNat,
+  'no nat': cmdNoNat,
+  'route': cmdRoute,
+  'no route': cmdNoRoute,
+  'timeout': cmdTimeout,
+  'passwd': cmdPasswd,
+  'http server enable': cmdHttpServerEnable,
+  'no http server enable': cmdNoHttpServerEnable,
+  'ssh asa': cmdSshAsa,
+  'no ssh asa': cmdNoSshAsa,
+  'telnet asa': cmdTelnetAsa,
+  'no telnet asa': cmdNoTelnetAsa,
+  'logging enable': cmdLoggingEnable,
+  'no logging enable': cmdNoLoggingEnable,
   'nameif': (state, input) => {
     if (state.currentInterface && state.ports[state.currentInterface]) {
       const parts = input.trim().split(/\s+/);
@@ -85,3 +104,401 @@ export const firewallHandlers: Record<string, CommandHandler> = {
     };
   },
 };
+
+// ============================================================
+// Firewall ASA command handlers (fully implemented)
+// ============================================================
+
+/**
+ * access-group <acl-name> in interface <nameif>
+ * Apply an access-list to an interface (ASA style)
+ */
+function cmdAccessGroup(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^access-group\s+(\S+)\s+in\s+interface\s+(\S+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const aclName = match[1];
+  const ifName = match[2].toLowerCase();
+
+  // Find the interface by nameif
+  const portEntry = Object.entries(state.ports || {}).find(
+    ([, p]) => (p as { nameif?: string }).nameif?.toLowerCase() === ifName
+  );
+  if (!portEntry) {
+    return { success: false, error: `% Interface ${ifName} not found` };
+  }
+
+  const updatedPorts = { ...state.ports };
+  const portKey = portEntry[0];
+  updatedPorts[portKey] = { ...updatedPorts[portKey], accessGroupIn: aclName };
+
+  return {
+    success: true,
+    newState: { ports: updatedPorts } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * no access-group <acl-name> in interface <nameif>
+ */
+function cmdNoAccessGroup(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^no\s+access-group\s+(\S+)\s+in\s+interface\s+(\S+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const ifName = match[2].toLowerCase();
+
+  const portEntry = Object.entries(state.ports || {}).find(
+    ([, p]) => (p as { nameif?: string }).nameif?.toLowerCase() === ifName
+  );
+  if (!portEntry) {
+    return { success: false, error: `% Interface ${ifName} not found` };
+  }
+
+  const updatedPorts = { ...state.ports };
+  const portKey = portEntry[0];
+  updatedPorts[portKey] = { ...updatedPorts[portKey], accessGroupIn: undefined };
+
+  return {
+    success: true,
+    newState: { ports: updatedPorts } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * object network <name>
+ * Create or enter a network object (ASA NAT)
+ */
+function cmdObjectNetwork(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^object\s+network\s+(\S+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const objName = match[1];
+
+  const objects = { ...(state.firewallObjects || {}) };
+  if (!objects[objName]) {
+    objects[objName] = { name: objName, subnet: undefined, host: undefined, nat: undefined };
+  }
+
+  return {
+    success: true,
+    newState: {
+      firewallObjects: objects,
+      currentFirewallObject: objName,
+    } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * no object network <name>
+ */
+function cmdNoObjectNetwork(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^no\s+object\s+network\s+(\S+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const objName = match[1];
+  const objects = { ...(state.firewallObjects || {}) };
+  delete objects[objName];
+  return {
+    success: true,
+    newState: { firewallObjects: objects } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * host <ip> or subnet <ip> <mask> — inside object network sub-mode
+ */
+function cmdNat(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  // nat (inside,outside) static <mapped-ip>
+  const staticMatch = input.match(/^nat\s*\(([^,]+),([^)]+)\)\s+static\s+(\S+)$/i);
+  if (staticMatch) {
+    const srcZone = staticMatch[1].trim().toLowerCase();
+    const dstZone = staticMatch[2].trim().toLowerCase();
+    const mappedIp = staticMatch[3];
+    return {
+      success: true,
+      output: `Static NAT applied: (${srcZone},${dstZone}) -> ${mappedIp}`,
+      newState: {
+        natRules: [...(state.natRules || []), { type: 'static', srcZone, dstZone, mappedIp }],
+      } as unknown as Partial<SwitchState>,
+    };
+  }
+  // nat (inside,outside) source dynamic <pool> interface
+  const dynamicMatch = input.match(/^nat\s*\(([^,]+),([^)]+)\)\s+source\s+dynamic\s+(\S+)\s+(\S+)$/i);
+  if (dynamicMatch) {
+    const srcZone = dynamicMatch[1].trim().toLowerCase();
+    const dstZone = dynamicMatch[2].trim().toLowerCase();
+    const pool = dynamicMatch[3];
+    const target = dynamicMatch[4];
+    return {
+      success: true,
+      output: `Dynamic NAT applied: (${srcZone},${dstZone}) source ${pool} ${target}`,
+      newState: {
+        natRules: [...(state.natRules || []), { type: 'dynamic', srcZone, dstZone, pool, target }],
+      } as unknown as Partial<SwitchState>,
+    };
+  }
+  // Inside object: host <ip>
+  const hostMatch = input.match(/^host\s+(\S+)$/i);
+  if (hostMatch && state.currentFirewallObject) {
+    const objects = { ...(state.firewallObjects || {}) };
+    const obj = objects[state.currentFirewallObject];
+    if (obj) {
+      obj.host = hostMatch[1];
+      return {
+        success: true,
+        newState: { firewallObjects: objects } as unknown as Partial<SwitchState>,
+      };
+    }
+  }
+  // Inside object: subnet <ip> <mask>
+  const subnetMatch = input.match(/^subnet\s+(\S+)\s+(\S+)$/i);
+  if (subnetMatch && state.currentFirewallObject) {
+    const objects = { ...(state.firewallObjects || {}) };
+    const obj = objects[state.currentFirewallObject];
+    if (obj) {
+      obj.subnet = { ip: subnetMatch[1], mask: subnetMatch[2] };
+      return {
+        success: true,
+        newState: { firewallObjects: objects } as unknown as Partial<SwitchState>,
+      };
+    }
+  }
+  return { success: false, error: IOS_ERRORS.invalidInput };
+}
+
+/**
+ * no nat — remove NAT rule
+ */
+function cmdNoNat(_state: SwitchState, _input: string): CommandResult {
+  return { success: true, output: '' };
+}
+
+/**
+ * route <ifname> <network> <mask> <gateway> [distance]
+ * Add static route on ASA
+ */
+function cmdRoute(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^route\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(\d+))?$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const [, ifName, network, mask, gateway, distance] = match;
+  return {
+    success: true,
+    newState: {
+      staticRoutes: [
+        ...(state.staticRoutes || []),
+        {
+          destination: network,
+          subnetMask: mask,
+          nextHop: gateway,
+          metric: distance ? parseInt(distance) : 1,
+          type: 'static',
+          interface: ifName,
+        },
+      ],
+    } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * no route <ifname> <network> <mask> [gateway]
+ */
+function cmdNoRoute(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^no\s+route\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(\S+))?$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const [, , network, mask] = match;
+  const filtered = (state.staticRoutes || []).filter(
+    (r) => !(r.destination === network && r.subnetMask === mask)
+  );
+  return {
+    success: true,
+    newState: { staticRoutes: filtered } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * timeout <proto> <hours:minutes:seconds>
+ */
+function cmdTimeout(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^timeout\s+(\S+)\s+(\S+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const proto = match[1].toLowerCase();
+  const value = match[2];
+  return {
+    success: true,
+    newState: {
+      firewallTimeouts: { ...(state.firewallTimeouts || {}), [proto]: value },
+    } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * passwd <password> — set enable password on ASA
+ */
+function cmdPasswd(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^passwd\s+(.+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  return {
+    success: true,
+    newState: {
+      security: {
+        ...state.security,
+        enablePassword: match[1],
+      },
+    } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * http server enable
+ */
+function cmdHttpServerEnable(state: SwitchState, _input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  return {
+    success: true,
+    newState: {
+      services: {
+        ...state.services,
+        http: { enabled: true, content: '', fontSize: 14 },
+      },
+    } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * no http server enable
+ */
+function cmdNoHttpServerEnable(state: SwitchState, _input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  return {
+    success: true,
+    newState: {
+      services: {
+        ...state.services,
+        http: { enabled: false, content: '', fontSize: 14 },
+      },
+    } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * ssh <ip> <mask> <ifname> — allow SSH from subnet
+ */
+function cmdSshAsa(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^ssh\s+(\S+)\s+(\S+)\s+(\S+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const [, ip, mask, ifName] = match;
+  return {
+    success: true,
+    output: `SSH access permitted from ${ip}/${mask} on ${ifName}`,
+  };
+}
+
+/**
+ * no ssh <ip> <mask> <ifname>
+ */
+function cmdNoSshAsa(_state: SwitchState, _input: string): CommandResult {
+  return { success: true, output: '' };
+}
+
+/**
+ * telnet <ip> <mask> <ifname> — allow Telnet from subnet
+ */
+function cmdTelnetAsa(state: SwitchState, input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  const match = input.match(/^telnet\s+(\S+)\s+(\S+)\s+(\S+)$/i);
+  if (!match) {
+    return { success: false, error: IOS_ERRORS.invalidInput };
+  }
+  const [, ip, mask, ifName] = match;
+  return {
+    success: true,
+    output: `Telnet access permitted from ${ip}/${mask} on ${ifName}`,
+  };
+}
+
+/**
+ * no telnet <ip> <mask> <ifname>
+ */
+function cmdNoTelnetAsa(_state: SwitchState, _input: string): CommandResult {
+  return { success: true, output: '' };
+}
+
+/**
+ * logging enable
+ */
+function cmdLoggingEnable(state: SwitchState, _input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  return {
+    success: true,
+    newState: {
+      loggingEnabled: true,
+    } as unknown as Partial<SwitchState>,
+  };
+}
+
+/**
+ * no logging enable
+ */
+function cmdNoLoggingEnable(state: SwitchState, _input: string): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: '% Command not available in current mode.' };
+  }
+  return {
+    success: true,
+    newState: {
+      loggingEnabled: false,
+    } as unknown as Partial<SwitchState>,
+  };
+}

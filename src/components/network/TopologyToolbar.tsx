@@ -105,7 +105,7 @@ export function TopologyToolbar({
    ]);
 
   return (
-    <div className={cn("fixed top-[64px] left-0 right-0 z-30 px-4 py-1.5 border-b backdrop-blur-md hidden md:flex items-center gap-3", isDark ? "bg-secondary-900/95 border-secondary-800" : "bg-white/95 border-secondary-200 shadow-sm")}>
+    <div className={cn("fixed top-14 sm:top-16 left-0 right-0 z-30 px-2 sm:px-4 py-1 sm:py-1.5 border-b backdrop-blur-md flex items-center gap-1.5 sm:gap-3 overflow-x-auto", isDark ? "bg-secondary-900/95 border-secondary-800" : "bg-white/95 border-secondary-200 shadow-sm")}>
       {/* Reset View Button */}
       <Tooltip>
         <TooltipTrigger asChild>
@@ -138,7 +138,7 @@ export function TopologyToolbar({
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className={`w-48 flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-all ${isDark
+            className={`w-36 sm:w-48 flex items-center gap-2 px-2 sm:px-2.5 py-1.5 rounded-lg border transition-all shrink-0 ${isDark
               ? 'bg-secondary-900 border-secondary-800 text-secondary-300 hover:text-white hover:border-secondary-600'
               : 'bg-white border-secondary-200 text-secondary-700 hover:text-secondary-900 hover:border-secondary-400'
               }`}
@@ -284,7 +284,7 @@ export function TopologyToolbar({
 
       {/* Device Buttons - hidden during exam */}
       {!isExamActive && (
-        <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
+        <div className={`flex items-center gap-0 p-1 rounded-xl border shrink-0 ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -439,7 +439,7 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
       )}
 
       {/* Cable Type Buttons */}
-      <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
+      <div className={`flex items-center gap-0 p-1 rounded-xl border shrink-0 ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
         {(['straight', 'crossover', 'serial', 'console'] as CableType[]).map((type) => {
           const colorMap: Record<string, string> = {
             straight: cableInfo.cableType === type ? 'text-primary-400' : 'text-primary-500 hover:text-primary-400',
@@ -482,7 +482,7 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
       </div>
 
       {/* Action Tools Group */}
-      <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
+      <div className={`flex items-center gap-0 p-1 rounded-xl border shrink-0 ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
         {/* Connect Button */}
         <Tooltip>
           <TooltipTrigger asChild>
@@ -591,7 +591,7 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
       </div>
 
       {/* History Group (Undo / Redo) */}
-      <div className={`flex items-center gap-0 p-1 rounded-xl border ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
+      <div className={`flex items-center gap-0 p-1 rounded-xl border shrink-0 ${isDark ? 'bg-secondary-900/40 border-secondary-700/30' : 'bg-primary-50/50 border-primary-100/50'}`}>
         {/* Undo Button */}
         <Tooltip>
           <TooltipTrigger asChild>

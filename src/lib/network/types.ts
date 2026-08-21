@@ -607,6 +607,24 @@ export interface SwitchState {
   spanningTreePortfastDefault?: boolean;
   // STP calculation results
   stpState?: Record<number, StpVlanState>;
+  // Firewall ASA-specific state
+  firewallObjects?: Record<string, {
+    name: string;
+    subnet?: { ip: string; mask: string };
+    host?: string;
+    nat?: string;
+  }>;
+  currentFirewallObject?: string;
+  natRules?: Array<{
+    type: 'static' | 'dynamic';
+    srcZone: string;
+    dstZone: string;
+    mappedIp?: string;
+    pool?: string;
+    target?: string;
+  }>;
+  firewallTimeouts?: Record<string, string>;
+  loggingEnabled?: boolean;
 }
 
 export interface StartupConfig {

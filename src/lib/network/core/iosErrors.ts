@@ -8,7 +8,7 @@ export const IOS_ERRORS = {
   marker: '^'
 } as const;
 
-export const iosModeError = (_input?: string, currentMode?: string, _language?: 'tr' | 'en'): string => {
+export const iosModeError = (currentMode?: string): string => {
   const modeNames: Record<string, string> = {
     user: 'User EXEC',
     privileged: 'Privileged EXEC',

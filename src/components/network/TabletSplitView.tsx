@@ -109,7 +109,7 @@ export function TabletSplitView({
   if (!isTablet || (!showPCPanel && !showUnifiedDeviceModal && !showRouterPanel)) return null;
 
   return (
-    <div className="w-1/2 h-full bg-background/50 backdrop-blur-md overflow-hidden animate-in slide-in-from-right duration-500 border-l border-primary/10 relative z-50">
+    <div className="w-full sm:w-1/2 h-full bg-background/50 backdrop-blur-md overflow-hidden animate-in slide-in-from-right duration-500 border-l border-primary/10 relative z-50">
       {showUnifiedDeviceModal && (
         <UnifiedDevicePanel
           isOpen={true}

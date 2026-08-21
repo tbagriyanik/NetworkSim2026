@@ -327,83 +327,49 @@ function cmdDo(
   // Temporarily change mode to privileged for execution
   const privilegedState = { ...state, currentMode: 'privileged' as CommandMode };
 
-  // Route to appropriate handler based on command type
+  // Parse and validate the sub-command in privileged mode
+  const parsedSub = parseCommand(subCommand, 'privileged');
+  if (!parsedSub) {
+    return { success: false, error: `% Invalid input detected at '^' marker.\n${subCommand ? `% ${subCommand}` : ''}` };
+  }
+  const validationSub = validateCommand(parsedSub, 'privileged', privilegedState);
+  if (!validationSub.valid || !validationSub.matchedPattern) {
+    return { success: false, error: `% Invalid input detected at '^' marker.\n${subCommand ? `% ${subCommand}` : ''}` };
+  }
 
-  // Show commands (intent-first parse in privileged mode)
-  if (subCommandLower.startsWith('show ') || subCommandLower === 'show') {
-    const parsedSub = parseCommand(subCommand, 'privileged');
-    if (parsedSub) {
-      const validationSub = validateCommand(parsedSub, 'privileged', privilegedState);
-      if (validationSub.valid && validationSub.matchedPattern) {
-        const showHandler = showHandlers[validationSub.matchedPattern];
-        if (showHandler) {
-          const result = showHandler(privilegedState, parsedSub.resolvedInput || subCommand, ctx);
-          if (result.newState) {
-            result.newState = { ...result.newState, currentMode: originalMode };
-          } else {
-            result.newState = { currentMode: originalMode };
-          }
-          return result;
-        }
+  const matched = validationSub.matchedPattern;
+  const normalizedInput = parsedSub.resolvedInput || subCommand;
+
+  // Special case: 'write memory' / 'copy running-config startup-config' triggers config save
+  if (matched === 'write memory' || matched === 'copy running-config startup-config') {
+    return withOriginalMode({
+      success: true,
+      output: 'Building configuration...\n[OK]\n',
+      saveConfig: true,
+      newState: { currentMode: originalMode }
+    });
+  }
+
+  // Intent-first dispatch for show commands
+  if (parsedSub.intent?.family === 'show') {
+    const showHandler = showHandlers[matched];
+    if (showHandler) {
+      const result = showHandler(privilegedState, normalizedInput, ctx);
+      if (result.newState) {
+        result.newState = { ...result.newState, currentMode: originalMode };
+      } else {
+        result.newState = { currentMode: originalMode };
       }
+      return result;
     }
   }
 
-  // Parser-first privileged command dispatch
-  const parsedSub = parseCommand(subCommand, 'privileged');
-  if (parsedSub) {
-    const validationSub = validateCommand(parsedSub, 'privileged', privilegedState);
-    if (validationSub.valid && validationSub.matchedPattern) {
-      const matched = validationSub.matchedPattern;
-      const normalizedInput = parsedSub.resolvedInput || subCommand;
-
-      if (matched === 'reload') return privilegedHandlers['reload'](privilegedState, normalizedInput, ctx);
-      if (matched === 'write memory' || matched === 'copy running-config startup-config') {
-        return withOriginalMode({
-          success: true,
-          output: 'Building configuration...\n[OK]\n',
-          saveConfig: true,
-          newState: { currentMode: originalMode }
-        });
-      }
-      if (matched === 'copy running-config flash') {
-        return withOriginalMode(privilegedHandlers['copy running-config flash'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'erase startup-config') {
-        return withOriginalMode(privilegedHandlers['erase startup-config'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'erase nvram') {
-        return withOriginalMode(privilegedHandlers['erase nvram'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'delete flash:vlan.dat') {
-        return withOriginalMode(privilegedHandlers['delete flash:vlan.dat'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'ip route') {
-        return withOriginalMode(privilegedHandlers['ip route'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'no ip route') {
-        return withOriginalMode(privilegedHandlers['no ip route'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'terminal') {
-        return withOriginalMode(privilegedHandlers['terminal'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'clear arp-cache') {
-        return withOriginalMode(privilegedHandlers['clear arp-cache'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'clear mac address-table') {
-        return withOriginalMode(privilegedHandlers['clear mac address-table'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'debug') {
-        return withOriginalMode(privilegedHandlers['debug'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'undebug all') {
-        return withOriginalMode(privilegedHandlers['undebug all'](privilegedState, normalizedInput, ctx));
-      }
-      if (matched === 'ping' || matched === 'traceroute' || matched === 'telnet' || matched === 'ssh') {
-        const h = privilegedHandlers[matched];
-        if (h) return withOriginalMode(h(privilegedState, normalizedInput, ctx));
-      }
-    }
+  // Dynamic dispatch: look up handler from privilegedHandlers map.
+  // This replaces the previous explicit if-chain and automatically supports
+  // any new privileged command without manual updates.
+  const handler = privilegedHandlers[matched];
+  if (handler) {
+    return withOriginalMode(handler(privilegedState, normalizedInput, ctx));
   }
 
   // Unknown command

@@ -89,7 +89,7 @@ export function AppHeader({
   isPingPanelOpen
 }: AppHeaderProps) {
   return (
-    <header className={cn("fixed top-0 left-0 right-0 z-[50] border-b px-5 h-[64px] flex items-center", isDark ? "liquid-glass border-secondary-800" : "bg-white/90 backdrop-blur-md border-secondary-200")}>
+    <header className={cn("fixed top-0 left-0 right-0 z-[50] border-b px-3 sm:px-5 h-14 sm:h-16 flex items-center", isDark ? "liquid-glass border-secondary-800" : "bg-white/90 backdrop-blur-md border-secondary-200")}>
       <div className="w-full">
         <div className="flex items-center justify-between">
           {/* Logo & Title */}
@@ -159,7 +159,7 @@ export function AppHeader({
             <div className="flex items-center gap-1 px-2 py-1.5 rounded-xl border bg-white border-secondary-200/60 shadow-sm dark:bg-secondary-800/40 dark:border-secondary-800">
               {/* Undo/Redo Group */}
               {activeTab === 'topology' && (
-                <div className="hidden items-center gap-1 sm:hidden">
+                <div className="hidden items-center gap-1 sm:flex">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8 ui-hover-surface text-secondary-600 hover:text-primary-600 dark:text-secondary-300 dark:hover:text-primary-400" onClick={handleUndo} disabled={hasHydrated && !canUndo}>
@@ -619,7 +619,7 @@ export function AppHeader({
 
       {/* Mobile Guided Lesson Button */}
       {isGuidedModeActive && isPanelMinimized && (
-        <div className="flex md:hidden items-center gap-1.5 mr-auto mt-2 pb-1">
+        <div className="flex md:hidden items-center gap-1.5 mr-auto mt-1 sm:mt-2 pb-1">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button

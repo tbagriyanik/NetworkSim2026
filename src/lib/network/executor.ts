@@ -1373,165 +1373,113 @@ export function executeCommand(
 }
 
 // --- Session helpers (kept local) ---
-function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
-  const needsLogin = !!(state.security.consoleLine.login && state.security.consoleLine.password);
 
-  let output = '';
-
-  // Calculate interface counts for boot message (Reported counts as per user request)
+/**
+ * Compute the interface summary line for boot messages.
+ */
+function computeInterfaceSummary(state: SwitchState): string {
   const isRouter = isRouterModel(state.version.modelName) || isRouterModel(state.switchModel);
   const isL3Switch = state.version.modelName.includes('3650');
   const isFirewall = state.deviceType === 'firewall' || state.switchLayer === 'FW' || state.version.modelName.includes('ASA') || state.version.modelName.includes('Firepower');
 
   const reportedFeCount = isRouter ? 0 : 24;
-  const reportedGiCount = isFirewall
-    ? 2
-    : (isRouter || isL3Switch) ? 4 : 2;
+  const reportedGiCount = isFirewall ? 2 : (isRouter || isL3Switch) ? 4 : 2;
   const wlanCount = Object.values(state.ports || {}).filter(p => (p?.id || '').startsWith('wlan')).length;
 
-  let ifaceSummary = '';
-  if (reportedFeCount > 0) {
-    ifaceSummary += `${reportedFeCount} FastEthernet/IEEE 802.3 interface(s)\n`;
-  }
-  if (reportedGiCount > 0) {
-    ifaceSummary += `${reportedGiCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
-  }
-  if (wlanCount > 0) {
-    ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
-  }
+  const parts: string[] = [];
+  if (reportedFeCount > 0) parts.push(`${reportedFeCount} FastEthernet/IEEE 802.3 interface(s)`);
+  if (reportedGiCount > 0) parts.push(`${reportedGiCount} Gigabit Ethernet/IEEE 802.3 interface(s)`);
+  if (wlanCount > 0) parts.push(`${wlanCount} 802.11 Wireless interface(s)`);
+  return parts.join('\n');
+}
 
-  // Generate realistic boot messages based on device type
-  let bootMessages: string;
+/**
+ * Generate realistic boot messages for a device.
+ * @param full When true, includes POST, memory test, and full initialization (console).
+ *            When false, shows a shorter boot sequence (telnet/SSH remote sessions).
+ */
+function generateBootMessages(state: SwitchState, language: 'tr' | 'en', full: boolean): string {
+  const isRouter = isRouterModel(state.version.modelName) || isRouterModel(state.switchModel);
+  const isL3Switch = state.version.modelName.includes('3650');
+  const ifaceSummary = computeInterfaceSummary(state);
+  const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
 
-  if (isRouter) {
-    //  ISR Router boot sequence
-    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
-    bootMessages = language === 'tr' ?
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-ISR4451/K9 platform with 4096 K bytes of memory
+  // Common header (identical across all device types)
+  const platform = isRouter
+    ? 'ISR4451/K9 platform with 4096 K bytes of memory'
+    : isL3Switch
+      ? 'C3650 platform with 131072 K bytes of memory'
+      : 'C2960 platform with 65536 K bytes of memory';
+  const bootBin = isRouter
+    ? 'router-software.bin'
+    : isL3Switch
+      ? 'l3switch-software.bin'
+      : 'l2switch-software.bin';
+  const postCheck = isRouter
+    ? 'POST: CPU PCIe port Check PASS'
+    : isL3Switch
+      ? 'POST: CPU PCIe port Check PASS'
+      : 'POST: CPU Ethernet port Check PASS';
+
+  let body: string;
+  if (full) {
+    // Console boot: full POST, memory test, initialization, and flash boot
+    const initLines = isRouter
+      ? `Load/bootstrap symbols loaded, GOXR initialization
+Reading all bootflash vectors`
+      : `Load/bootstrap symbols loaded
+Reading all bootflash vectors`;
+    body = `${platform}
 
 ${syslog}
-Load/bootstrap symbols loaded, GOXR initialization
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
+${initLines}
+${postCheck}
 CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:router-software.bin...OK!
-Extracting files from flash:router-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}` :
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-ISR4451/K9 platform with 4096 K bytes of memory
-
-${syslog}
-Load/bootstrap symbols loaded, GOXR initialization
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:router-software.bin...OK!
-Extracting files from flash:router-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}`;
-  } else if (isL3Switch) {
-    //  3650 L3 Switch boot sequence
-    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
-    bootMessages = language === 'tr' ?
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C3650 platform with 131072 K bytes of memory
-
-${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:l3switch-software.bin...OK!
-Extracting files from flash:l3switch-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}` :
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C3650 platform with 131072 K bytes of memory
-
-${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU PCIe port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:l3switch-software.bin...OK!
-Extracting files from flash:l3switch-software.bin...
+Booting flash:${bootBin}...OK!
+Extracting files from flash:${bootBin}...
   ########## [OK]
   0 bytes remaining in flash device
 
 ${ifaceSummary}`;
   } else {
-    //  2960 L2 Switch boot sequence
-    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
-    bootMessages = language === 'tr' ?
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C2960 platform with 65536 K bytes of memory
-
-${syslog}
+    // Remote session: shorter boot for Router/L3, full for L2
+    const fullBootLines = `${syslog}
 Load/bootstrap symbols loaded
 Reading all bootflash vectors
-POST: CPU Ethernet port Check PASS
+${postCheck}
 CPU memory test . . . . . . . . . . . . . OK
 Board initialization completed
 Initializing flash file system
 
-Booting flash:l2switch-software.bin...OK!
-Extracting files from flash:l2switch-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}` :
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C2960 platform with 65536 K bytes of memory
-
-${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU Ethernet port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:l2switch-software.bin...OK!
-Extracting files from flash:l2switch-software.bin...
+Booting flash:${bootBin}...OK!
+Extracting files from flash:${bootBin}...
   ########## [OK]
   0 bytes remaining in flash device
 
 ${ifaceSummary}`;
+    const shortBootLines = `${syslog}
+Extracting files from flash:${bootBin}...
+  ########## [OK]
+  0 bytes remaining in flash device
+
+${ifaceSummary}`;
+    // Router and L3 get short boot on remote sessions; L2 gets full boot
+    body = (!isRouter && !isL3Switch) ? fullBootLines : shortBootLines;
   }
 
-  output += `${bootMessages}\n`;
+  return `System Bootstrap
+Technical Support: http://yunus.sf.net
+Copyright (c) 1996-2026 by Network Systems, Inc.
+${body}`;
+}
+
+function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
+  const needsLogin = !!(state.security.consoleLine.login && state.security.consoleLine.password);
+
+  let output = `${generateBootMessages(state, language, true)}\n`;
 
   // Display banner MOTD next
   if (state.bannerMOTD) {
@@ -1575,130 +1523,7 @@ ${ifaceSummary}`;
 function handleTelnetConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
   const needsLogin = !!(state.security.vtyLines?.login && state.security.vtyLines?.password);
 
-  let output = '';
-
-  // Calculate interface counts for boot message (Reported counts as per user request)
-  const isRouter = isRouterModel(state.version.modelName) || isRouterModel(state.switchModel);
-  const isL3Switch = state.version.modelName.includes('3650');
-  const isFirewall = state.deviceType === 'firewall' || state.switchLayer === 'FW' || state.version.modelName.includes('ASA') || state.version.modelName.includes('Firepower');
-
-  const reportedFeCount = isRouter ? 0 : 24;
-  const reportedGiCount = isFirewall
-    ? 2
-    : (isRouter || isL3Switch) ? 4 : 2;
-  const wlanCount = Object.values(state.ports || {}).filter(p => (p?.id || '').startsWith('wlan')).length;
-
-  let ifaceSummary = '';
-  if (reportedFeCount > 0) {
-    ifaceSummary += `${reportedFeCount} FastEthernet/IEEE 802.3 interface(s)\n`;
-  }
-  if (reportedGiCount > 0) {
-    ifaceSummary += `${reportedGiCount} Gigabit Ethernet/IEEE 802.3 interface(s)`;
-  }
-  if (wlanCount > 0) {
-    ifaceSummary += `\n${wlanCount} 802.11 Wireless interface(s)`;
-  }
-
-  // Generate realistic boot messages based on device type
-  let bootMessages: string;
-
-  if (isRouter) {
-    //  ISR Router boot sequence
-    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
-    bootMessages = language === 'tr' ?
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-ISR4451/K9 platform with 4096 K bytes of memory
-
-${syslog}
-Extracting files from flash:router-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}` :
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-ISR4451/K9 platform with 4096 K bytes of memory
-
-${syslog}
-Extracting files from flash:router-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}`;
-  } else if (isL3Switch) {
-    //  3650 L3 Switch boot sequence
-    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
-    bootMessages = language === 'tr' ?
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C3650 platform with 131072 K bytes of memory
-
-${syslog}
-Extracting files from flash:l3switch-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}` :
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C3650 platform with 131072 K bytes of memory
-
-${syslog}
-Extracting files from flash:l3switch-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}`;
-  } else {
-    //  2960 L2 Switch boot sequence
-    const syslog = language === 'tr' ? '*** Syslog istemcisi başlatıldı' : '*** Syslog client started';
-    bootMessages = language === 'tr' ?
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C2960 platform with 65536 K bytes of memory
-
-${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU Ethernet port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:l2switch-software.bin...OK!
-Extracting files from flash:l2switch-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}` :
-      `System Bootstrap
-Technical Support: http://yunus.sf.net
-Copyright (c) 1996-2026 by Network Systems, Inc.
-C2960 platform with 65536 K bytes of memory
-
-${syslog}
-Load/bootstrap symbols loaded
-Reading all bootflash vectors
-POST: CPU Ethernet port Check PASS
-CPU memory test . . . . . . . . . . . . . OK
-Board initialization completed
-Initializing flash file system
-
-Booting flash:l2switch-software.bin...OK!
-Extracting files from flash:l2switch-software.bin...
-  ########## [OK]
-  0 bytes remaining in flash device
-
-${ifaceSummary}`;
-  }
-
-  output += `${bootMessages}\n`;
+  let output = `${generateBootMessages(state, language, false)}\n`;
 
   if (!needsLogin) {
     // Display banner MOTD for open access
