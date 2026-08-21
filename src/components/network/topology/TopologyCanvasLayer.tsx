@@ -78,6 +78,7 @@ export interface TopologyCanvasLayerProps {
     setPingCursorPos: React.Dispatch<React.SetStateAction<{ x: number; y: number } | null>>;
     setZoom: React.Dispatch<React.SetStateAction<number>>;
     setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+    resetView?: () => void;
     getCanvasDimensions: () => { width: number; height: number };
     renderDevice: (device: CanvasDevice, isDragging?: boolean) => React.ReactNode;
     handleConnectionMouseEnter: (e: React.MouseEvent<SVGPathElement>, connectionId: string, sourceName: string, sourcePort: string, targetName: string, targetPort: string, cableType: string, statusText: string) => void;
@@ -154,6 +155,7 @@ export function TopologyCanvasLayer({
     setPingCursorPos,
     setZoom,
     setPan,
+    resetView,
     getCanvasDimensions,
     renderDevice,
     handleConnectionMouseEnter,
@@ -194,9 +196,33 @@ export function TopologyCanvasLayer({
                 if (pingMode) setPingCursorPos({ x: e.clientX, y: e.clientY });
             }}
             onMouseLeave={() => setPingCursorPos(null)}
-            onDoubleClick={() => {
-                setZoom(1.0);
-                setPan({ x: 0, y: 0 });
+            onDoubleClick={(e) => {
+                const target = e.target as HTMLElement;
+                if (target.closest('[data-device-id]') || target.closest('[data-note-id]')) {
+                    return;
+                }
+                if (resetView) {
+                    resetView();
+                } else {
+                    setZoom(1.0);
+                    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+                    const topMargin = isMobile ? 110 : 55;
+                    const sideMargin = isMobile ? 16 : 24;
+                    if (devices.length === 0 && notes.length === 0) {
+                        setPan({ x: sideMargin, y: topMargin });
+                    } else {
+                        const minDeviceX = devices.length ? Math.min(...devices.map(d => d.x)) : Infinity;
+                        const minDeviceY = devices.length ? Math.min(...devices.map(d => d.y)) : Infinity;
+                        const minNoteX = notes.length ? Math.min(...notes.map(n => n.x)) : Infinity;
+                        const minNoteY = notes.length ? Math.min(...notes.map(n => n.y)) : Infinity;
+                        const minX = Math.min(minDeviceX, minNoteX);
+                        const minY = Math.min(minDeviceY, minNoteY);
+                        setPan({
+                            x: sideMargin - minX,
+                            y: topMargin - minY
+                        });
+                    }
+                }
             }}
             onClick={() => {
                 canvasRef.current?.focus();

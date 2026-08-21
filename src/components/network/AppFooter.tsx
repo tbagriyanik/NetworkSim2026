@@ -193,6 +193,14 @@ export function AppFooter({
             <span className="truncate font-medium">
               {hasUnsavedChanges ? t.unsaved : t.saved}
             </span>
+            {projectName && (
+              <>
+                <span className="opacity-30">|</span>
+                <span className="truncate font-semibold max-w-[100px] sm:max-w-[150px]" title={projectName}>
+                  {projectName}
+                </span>
+              </>
+            )}
             {(topologyDevices?.length || 0) > 0 && (
               <>
                 <span className="opacity-30">|</span>

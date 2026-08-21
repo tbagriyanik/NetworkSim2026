@@ -1971,6 +1971,7 @@ export function NetworkTopology({
             setPingCursorPos={setPingCursorPos}
             setZoom={setZoom}
             setPan={setPan}
+            resetView={resetView}
             getCanvasDimensions={getCanvasDimensions}
             renderDevice={renderDevice}
             handleConnectionMouseEnter={handleConnectionMouseEnter}

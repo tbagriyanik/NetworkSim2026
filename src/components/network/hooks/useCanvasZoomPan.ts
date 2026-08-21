@@ -147,11 +147,11 @@ export function useCanvasZoomPan({
   const resetView = useCallback(() => {
     setZoom(DEFAULT_ZOOM);
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-    const topMargin = isMobile ? 110 : 10;
-    const sideMargin = isMobile ? 16 : 10;
+    const topMargin = isMobile ? 110 : 55;
+    const sideMargin = isMobile ? 16 : 24;
 
     if (devices.length === 0 && notes.length === 0) {
-      setPan({ x: isMobile ? sideMargin : 0, y: isMobile ? topMargin : 0 });
+      setPan({ x: isMobile ? sideMargin : sideMargin, y: isMobile ? topMargin : topMargin });
       return;
     }
 
