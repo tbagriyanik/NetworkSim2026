@@ -418,7 +418,7 @@ graph TB
     end
 
     subgraph "IoT Sensör Ağı - 192.168.10.0/24"
-        IOT_GW["🔌 IoT Gateway<br/>192.168.10.1<br/>─────────────<br/>Zigbee ↔ WiFi<br/>MQTT Publisher<br/>Local Buffer"]
+        IOT_GW["🔌 IoT Gateway<br/>192.168.10.1<br/>─────────────<br/>802.15.4 ↔ WiFi<br/>MQTT Publisher<br/>Local Buffer"]
 
         subgraph "Sensörler"
             S1["🌡️ Sıcaklık<br/>DHT22<br/>24.5°C<br/>Okuma: 5sn"]
@@ -452,17 +452,17 @@ graph TB
 
     ROUTER <-.->|"WiFi 2.4GHz<br/>WPA2-PSK"| IOT_GW
 
-    IOT_GW <-.->|"Zigbee 3.0"| S1
-    IOT_GW <-.->|"Zigbee 3.0"| S2
-    IOT_GW <-.->|"Zigbee 3.0"| S3
-    IOT_GW <-.->|"Zigbee 3.0"| S4
-    IOT_GW <-.->|"Zigbee 3.0"| S5
-    IOT_GW <-.->|"Zigbee 3.0"| S6
+    IOT_GW <-.->|"802.15.4"| S1
+    IOT_GW <-.->|"802.15.4"| S2
+    IOT_GW <-.->|"802.15.4"| S3
+    IOT_GW <-.->|"802.15.4"| S4
+    IOT_GW <-.->|"802.15.4"| S5
+    IOT_GW <-.->|"802.15.4"| S6
 
-    IOT_GW <-.->|"Zigbee 3.0"| A1
-    IOT_GW <-.->|"Zigbee 3.0"| A2
-    IOT_GW <-.->|"Zigbee 3.0"| A3
-    IOT_GW <-.->|"Zigbee 3.0"| A4
+    IOT_GW <-.->|"802.15.4"| A1
+    IOT_GW <-.->|"802.15.4"| A2
+    IOT_GW <-.->|"802.15.4"| A3
+    IOT_GW <-.->|"802.15.4"| A4
 
     style AWS fill:#FF9800,color:#fff
     style DASH fill:#FF9800,color:#fff
