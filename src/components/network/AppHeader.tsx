@@ -20,15 +20,13 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from '@/lib/utils';
 import {
-  Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, File, Undo2, Redo2, BookOpen, Leaf, Compass, Info, Sparkles, Cloud, Trophy,
+  Menu, Plus, Save, FolderOpen, Languages, Sun, Moon, File, BookOpen, Leaf, Compass, Info, Sparkles, Cloud, Trophy,
   Mail, GraduationCap, ImageDown, FileText, Wand2
 } from 'lucide-react';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { RefObject } from 'react';
-
-type TabType = 'topology' | 'cmd' | 'terminal' | 'tasks';
 
 interface AppHeaderProps {
   t: Translations;
@@ -39,7 +37,6 @@ interface AppHeaderProps {
   setTheme: (theme: 'dark' | 'light' | 'high-contrast' | 'auto') => void;
   graphicsQuality: 'high' | 'low';
   setGraphicsQuality: (q: 'high' | 'low') => void;
-  activeTab: TabType;
   activeDeviceType: DeviceType;
   activeDeviceId: string;
   topologyDevices: CanvasDevice[];
@@ -48,11 +45,6 @@ interface AppHeaderProps {
   setHelpLevel: (level: 'beginner' | 'intermediate' | 'exam') => void;
   totalScore: number;
   maxScore: number;
-  canUndo: boolean;
-  canRedo: boolean;
-  hasHydrated: boolean;
-  handleUndo: () => void;
-  handleRedo: () => void;
   handleNewProject: () => void;
   handleSaveProject: () => void;
   handleLoadProject: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -76,10 +68,10 @@ interface AppHeaderProps {
 export function AppHeader({
   t, isDark, language, setLanguage, setTheme,
   graphicsQuality, setGraphicsQuality,
-  activeTab, activeDeviceType, activeDeviceId,
+  activeDeviceType, activeDeviceId,
   topologyDevices,
-  totalScore, maxScore, canUndo, canRedo, hasHydrated,
-  handleUndo, handleRedo, handleNewProject, handleSaveProject, handleLoadProject,
+  totalScore, maxScore,
+  handleNewProject, handleSaveProject, handleLoadProject,
   fileInputRef, showMobileMenu, setShowMobileMenu,
   setShowProjectPicker, setShowOnboarding, setOnboardingStep,
   handleRefreshNetwork, setIsEnvironmentPanelOpen,
@@ -157,29 +149,6 @@ export function AppHeader({
           {/* Right Controls - Integrated Toolbar */}
           <div className="flex items-center gap-2 sticky top-0 z-10">
             <div className="flex items-center gap-1 px-2 py-1.5 rounded-xl border bg-white border-secondary-200/60 shadow-sm dark:bg-secondary-800/40 dark:border-secondary-800">
-              {/* Undo/Redo Group */}
-              {activeTab === 'topology' && (
-                <div className="hidden items-center gap-1 sm:flex">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 ui-hover-surface text-secondary-600 hover:text-primary-600 dark:text-secondary-300 dark:hover:text-primary-400" onClick={handleUndo} disabled={hasHydrated && !canUndo}>
-                        <Undo2 className={`w-4 h-4 ${!canUndo ? 'opacity-30' : ''}`} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t.undo}</TooltipContent>
-                  </Tooltip>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" className={`h-8 w-8 ui-hover-surface ${isDark ? 'text-secondary-300 hover:text-primary-400' : 'text-secondary-600 hover:text-primary-600'}`} onClick={handleRedo} disabled={hasHydrated && !canRedo}>
-                        <Redo2 className={`w-4 h-4 ${!canRedo ? 'opacity-30' : ''}`} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>{t.redo}</TooltipContent>
-                  </Tooltip>
-                  <div className="w-px h-4 mx-1 bg-secondary-300 hidden md:block dark:bg-secondary-700" />
-                </div>
-              )}
-
               {/* Project Controls - Desktop only */}
               <div className="hidden md:flex items-center">
                 <div className="flex items-center rounded-lg border overflow-hidden bg-white border-secondary-200 dark:bg-secondary-800/50 dark:border-secondary-700">

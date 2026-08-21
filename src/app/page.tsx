@@ -33,7 +33,7 @@ const NetworkTopology = dynamic(
   { ssr: false }
 );
 
-import { UserKey, Users } from "lucide-react";
+
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -1765,18 +1765,12 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             setTheme={setTheme}
             graphicsQuality={graphicsQuality}
             setGraphicsQuality={setGraphicsQuality}
-            activeTab={activeTab}
             activeDeviceType={activeDeviceType}
             activeDeviceId={activeDeviceId}
             topologyDevices={topologyDevices}
             deviceStates={deviceStates}
             totalScore={totalScore}
             maxScore={maxScore}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            hasHydrated={hasHydrated}
-            handleUndo={handleUndo}
-            handleRedo={handleRedo}
             handleNewProject={handleNewProject}
             handleSaveProject={handleSaveProject}
             handleLoadProject={handleLoadProject}
@@ -2179,39 +2173,8 @@ pcOutputs={pcOutputs}
             lastTaskEvent={lastTaskEvent}
             showProjectPicker={showProjectPicker}
             showOnboarding={showOnboarding}
-            handleRefreshNetwork={handleRefreshNetwork}
-            setIsEnvironmentPanelOpen={setIsEnvironmentPanelOpen}
             setShowAboutModal={setShowAboutModal}
-          >
-            {isRoomEnabled && (
-              <>
-                <div className={cn("w-px h-4 mx-0.5", isDark ? "bg-secondary-700" : "bg-secondary-300")} />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-primary-500 hover:bg-primary-500/10"
-                  onClick={() => setShowRoomJoinDialog(true)}
-                  aria-label={t.roomStudentJoin}
-                >
-                  <Users className="w-3.5 h-3.5" />
-                </Button>
-                {!studentRoomCode && (
-                  <>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-purple-500 hover:bg-purple-500/10"
-                      onClick={() => setShowTeacherPanel(true)}
-                      aria-label={t.roomTeacherOpen}
-                    >
-                      <UserKey className="w-3.5 h-3.5" />
-                    </Button>
-                  </>
-                )}
-              </>
-            )}
-          </AppFooter>
+          />
 
 
 

@@ -3,8 +3,7 @@
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { Translations } from '@/contexts/LanguageContext';
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Plus, Link2, RefreshCw, Leaf } from 'lucide-react';
+
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 
 interface AppFooterProps {
@@ -23,8 +22,6 @@ interface AppFooterProps {
   lastTaskEvent: { type: 'completed' | 'failed'; taskName: string; timestamp: number } | null;
   showProjectPicker: boolean;
   showOnboarding: boolean;
-  handleRefreshNetwork: () => void;
-  setIsEnvironmentPanelOpen: (v: boolean) => void;
   setShowAboutModal: (v: boolean) => void;
   children?: React.ReactNode;
 }
@@ -33,7 +30,7 @@ export function AppFooter({
   t, isDark, language, activeTab, activeDeviceType, activeDeviceId,
   hasUnsavedChanges, lastSaveTime, projectName, totalScore, maxScore,
   topologyDevices, lastTaskEvent, showProjectPicker, showOnboarding,
-  handleRefreshNetwork, setIsEnvironmentPanelOpen, setShowAboutModal, children
+  setShowAboutModal, children
 }: AppFooterProps) {
   const getDeviceCountLabel = (count: number) => (
     language === 'tr' ? t.devicesCount : (count === 1 ? 'device' : 'devices')
@@ -183,67 +180,34 @@ export function AppFooter({
         </div>
       </footer>
 
-      {/* Mobile Footer */}
-      <footer className={`md:hidden fixed bottom-0 inset-x-0 z-2 border-t backdrop-blur-xl transition-all h-[36px] ${isDark ? 'bg-secondary-900/95 border-secondary-800' : 'bg-white/95 border-secondary-200'
+      {/* Mobile Footer — status bar / informational messages */}
+      <footer className={`md:hidden fixed bottom-0 inset-x-0 z-2 border-t backdrop-blur-xl transition-all h-[32px] flex items-center px-3 text-[11px] select-none ${isDark ? 'bg-secondary-900/95 border-secondary-800 text-secondary-300' : 'bg-white/95 border-secondary-200 text-secondary-600'
         } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
-        <div className="w-full px-3 py-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              {activeTab === 'topology' && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-error-500 hover:bg-error-500/10"
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('trigger-topology-palette'));
-                      }
-                    }}
-                    aria-label={t.addDeviceOrCable}
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-accent-500 hover:bg-accent-500/10"
-                    onClick={() => {
-                      if (typeof window !== 'undefined') {
-                        window.dispatchEvent(new CustomEvent('trigger-topology-connect'));
-                      }
-                    }}
-                    aria-label={t.connectDevices}
-                  >
-                    <Link2 className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-pink-500 hover:bg-pink-500/10"
-                    onClick={handleRefreshNetwork}
-                    aria-label={t.refreshNetworkF5}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-success-500 hover:bg-success-500/10"
-                    onClick={() => setIsEnvironmentPanelOpen(true)}
-                    aria-label={t.environmentSettings}
-                  >
-                    <Leaf className="w-3.5 h-3.5" />
-                  </Button>
-                </>
-              )}
-              {children}
-            </div>
+        <div className="w-full flex items-center justify-between gap-2 overflow-hidden">
+          {/* Status & Device count */}
+          <div className="flex items-center gap-2 truncate">
+            <span className={`w-2 h-2 rounded-full shrink-0 ${hasUnsavedChanges ? 'bg-warning-400 animate-pulse' : 'bg-success-400'}`} />
+            <span className="truncate font-medium">
+              {hasUnsavedChanges ? t.unsaved : t.saved}
+            </span>
+            <span className="opacity-30">|</span>
+            <span className="truncate opacity-80">
+              {getDeviceCountText(topologyDevices?.length || 0)}
+            </span>
+          </div>
 
-            <div className="flex items-center gap-1.5">
-              <span className={`w-1.5 h-1.5 rounded-full ${hasUnsavedChanges ? 'bg-warning-400 animate-pulse' : 'bg-success-400'
-                }`} />
-            </div>
+          {/* Task info / Lab score */}
+          <div className="flex items-center gap-2 shrink-0">
+            {isTaskEventRecent && lastTaskEvent ? (
+              <span className={`font-semibold flex items-center gap-1 text-[10px] ${lastTaskEvent.type === 'completed' ? 'text-success-400' : 'text-warning-400'}`}>
+                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                <span className="truncate max-w-[100px]">{lastTaskEvent.taskName}</span>
+              </span>
+            ) : maxScore > 0 && topologyDevices && topologyDevices.length > 0 && activeDeviceId ? (
+              <span className={`font-bold text-[10px] ${isDark ? 'text-accent-400' : 'text-accent-600'}`}>
+                {t.labProgress}: {Math.round((totalScore / maxScore) * 100)}%
+              </span>
+            ) : null}
           </div>
         </div>
       </footer>
