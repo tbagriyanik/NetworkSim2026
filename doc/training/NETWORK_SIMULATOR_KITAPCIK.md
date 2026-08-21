@@ -20,36 +20,31 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 ---
 
-## Latest Updates (v2.6)
+## Latest Updates (v2.6.0)
 
 | English | Türkçe |
 | --- | --- |
-| **Advanced Packet Capture & Analysis**: Real-time search filter, multi-term exclude filter (`cdp, stp, arp`), pagination (10 pkts/page), and protocol number mappings `STP (0x4242)`. | **Gelişmiş Paket Yakalama & Analiz**: Canlı arama filtresi, virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp`), sayfalama (sayfa başı 10 paket) ve protokol numaraları gösterimi `STP (0x4242)`. |
-| **Automated Background Protocol Capture**: Full DHCP DORA sequence (`Discover/Offer/Request/ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` updates, and `WLAN Beacon` frame capturing. | **Otomatik Arka Plan Paket Kaydı**: DHCP DORA akışı (`Discover/Offer/Request/ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketlerinin canlı paket analizine otomatik kaydı. |
-| **Ping & Packet Animation Fixes**: Hop-by-hop ping packet animation analysis, synchronised play/pause, and packet progress enhancements. | **Ping ve Paket Animasyonu İyileştirmeleri**: Adım adım ping paket analizi oynatma ve duraklatma senkronizasyon mekanizması geliştirildi. |
-| **Topology Rendering Optimization**: Added custom memo comparator for `ConnectionLine` and optimized canvas interaction loops for high FPS. | **Topoloji Çizim Optimizasyonu**: `ConnectionLine` için özel memo karşılaştırıcı eklendi ve yüksek cihaz sayılarında tuval performansı optimize edildi. |
-| **UI & Theme Polish**: Modernized header styles, responsive toolbar, smooth window dragging/resizing, and header gradient themes. | **Arayüz ve Tema İyileştirmeleri**: Başlık stilleri, duyarlı araç çubuğu, pürüzsüz pencere sürükleme/boyutlandırma ve başlık gradyan temaları modernize edildi. |
-| **Storage Security (XOR+Base64)**: App-wide encrypted `localStorage` interceptor with backwards compatibility and XSS input sanitization. | **Güvenli Depolama (XOR+Base64)**: Geriye dönük uyumlu şifreli `localStorage` altyapısı ve XSS girdi temizleme koruması. |
-| **Dependency Modernization**: Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3, and Tailwind CSS 4.2.2. | **Modern Altyapı**: Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3 ve Tailwind CSS 4.2.2 sürüm güncellemeleri. |
-| **FTP Services**: FTP client/server configuration, file upload, and file transfer simulation across devices. | **FTP Servisleri**: FTP istemci/sunucu yapılandırması, dosya yükleme ve cihazlar arası dosya aktarım simülasyonu. |
-| **NTP Time Sync**: NTP server/client configuration for network-wide time synchronization. | **NTP Zaman Senkronizasyonu**: Ağ genelinde zaman senkronizasyonu için NTP sunucu/istemci yapılandırması. |
-| **Firewall Service Integration**: Firewall rules with integrated service selection for traffic filtering. | **Güvenlik Duvarı Servis Entegrasyonu**: Trafik filtreleme için entegre servis seçimli güvenlik duvarı kuralları. |
-| **Wireless Dashboard**: Dedicated wireless device home page with SSID and security management. | **Kablosuz Gösterge Paneli**: SSID ve güvenlik yönetimi ile özel kablosuz cihaz ana sayfası. |
-| **IoT Panel Tabs**: Tabbed IoT device panel for managing sensors, actuators, and device settings. | **IoT Panel Sekmeleri**: Sensörler, aktüatörler ve cihaz ayarlarını yönetmek için sekmeli IoT cihaz paneli. |
-| **Sensor Enhancements**: Motion sensor radius visualization, mouse-adjustable sound sensor range, lamp icon. | **Sensör Geliştirmeleri**: Hareket sensörü yarıçap görselleştirmesi, fare ayarlanabilir ses sensörü menzili, lamba simgesi. |
-| **Window Resizable Notes**: Resizable windows with collapsible sections and note-taking capability. | **Pencere Notları**: Daraltılabilir bölümler ve not alma özelliği ile yeniden boyutlandırılabilir pencereler. |
-| **API Rate Limiting**: Contact form API rate limiting for improved security and abuse prevention. | **API Hız Sınırlama**: Gelişmiş güvenlik ve kötüye kullanım önleme için iletişim formu API hız sınırlaması. |
-| **Browser Window ESC Close**: Web browser window closes with ESC key without affecting PC panel. | **Tarayıcı Penceresi ESC Kapatma**: Web tarayıcı penceresi ESC tuşu ile kapatılır, PC paneli etkilenmez. |
-| **PC History Cleanup**: New projects and opened projects no longer inherit previous PC cmd/CLI history. | **PC Geçmiş Temizliği**: Yeni projeler ve açılan projeler artık önceki PC cmd/CLI geçmişini almaz. |
-| **Achievement System**: Activity tracking for projects, guided lessons, and exams with session duration logging. | **Başarım Sistemi**: Projeler, rehberli dersler ve sınavlar için aktivite takibi ile oturum süresi günlüğü. |
-| **Exam Mode**: Teacher exam editor, project-to-exam conversion, mobile-responsive layout, and secure student distribution. | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, mobil uyumlu düzen ve güvenli öğrenci dağıtımı. |
-| **Guided Mode & Tutorial Wizard**: Step-by-step guided lessons with gamification points, progress tracking, and hint system, plus "Teach Me" tracks. | **Rehberli Mod ve Eğitim Sihirbazı**: Oyunlaştırma puanları, ilerleme takibi ve ipucu sistemi ile adım adım rehberli dersler; "Bana Öğret" modülü dahil. |
-| **Intelligent CLI Assistant**: Fuzzy-matched command suggestions and device-aware subcommand hints below CLI error messages. | **Akıllı CLI Asistanı**: CLI hata mesajlarının altında bulanık eşleştirmeli komut önerileri ve cihaz bilinçli alt komut ipuçları. |
-| **Exam Import Enhancements**: Improved `.json` / `.exam` import with smarter PC IP extraction, connection parsing, and weighted scoring. | **Sınav İçe Aktarma İyileştirmeleri**: Gelişmiş `.json` / `.exam` içe aktarma ile akıllı PC IP çıkarma, bağlantı ayrıştırma ve ağırlıklı puanlama. |
-| **PC Services Persistence**: PC service configurations (DHCP, DNS, HTTP) persist across network refreshes. | **PC Servis Kalıcılığı**: PC servis yapılandırmaları (DHCP, DNS, HTTP) ağ yenilemelerinde korunur. |
-| **WLC & AP Management**: Wireless LAN Controller with Lightweight AP support, dot11 WLAN config, AP join, auth-mac filtering. | **WLC ve AP Yönetimi**: Hafif AP desteği ile Kablosuz LAN Denetleyicisi, dot11 WLAN yapılandırması, AP katılımı, auth-mac filtreleme. |
-| **Serial / WAN Interfaces**: HDLC and PPP encapsulation, clock rate, PAP/CHAP authentication, DCE/DTE detection. | **Seri / WAN Arayüzleri**: HDLC ve PPP kapsülleme, saat hızı, PAP/CHAP kimlik doğrulama, DCE/DTE tespiti. |
-| **Advanced Routing**: EIGRP (named/config), BGP (basic), OSPFv3 (IPv6), RIPng (IPv6), route redistribution. | **Gelişmiş Yönlendirme**: EIGRP (adlandırılmış/yapılandırma), BGP (temel), OSPFv3 (IPv6), RIPng (IPv6), rota yeniden dağıtımı. |
+| **Advanced Packet Capture & Analysis**: Real-time IP/protocol search, multi-term exclude filter (`cdp, stp, arp`), pagination (10 pkts/page), protocol number display `STP (0x4242)`. | **Gelişmiş Paket Yakalama & Analiz**: Canlı IP/protokol arama, çoklu dışlama filtresi (`cdp, stp, arp`), sayfalama ve protokol numaraları `STP (0x4242)`. |
+| **Background Protocol Capture**: Automatic capture of DHCP DORA, STP BPDU, CDP, OSPF Hello, RIP/EIGRP updates, WLAN Beacons into the live capture table. | **Arka Plan Protokol Kaydı**: DHCP DORA, STP BPDU, CDP, OSPF Hello, RIP/EIGRP ve WLAN Beacon paketlerinin canlı tabloya otomatik kaydı. |
+| **Trunk Allowed VLAN Filtering**: `switchport trunk allowed vlan add/remove/except/all` with full PVST recalculation. | **Trunk VLAN Filtreleme**: `switchport trunk allowed vlan add/remove/except/all` sözdizimi ve PVST hesaplamaya tam entegrasyon. |
+| **Window Collapse on Double-Click**: Double-clicking any floating window title bar collapses/expands it instantly. | **Çift Tık ile Pencere Daraltma**: Yüzen pencere başlık çubuğuna çift tıklayarak pencereyi anında daraltma/genişletme. |
+| **PC CMD Parameter Support**: `ping -n -l -w -a -t`, `tracert -d -h`, `nbtstat`, `netstat`, `arp -a/-d/-s`, `nslookup -type` Windows-style parameters. | **PC CMD Parametre Desteği**: `ping`, `tracert`, `nbtstat`, `netstat`, `arp`, `nslookup` komutları için Windows tarzı parametreler. |
+| **Topology Generator Wizard**: 40+ pre-built scenarios (VLAN, OSPF, EIGRP, NAT, IoT, Troubleshooting) with keyword search. | **Topoloji Üretici Sihirbazı**: Anahtar kelime araması ile 40+ hazır senaryo (VLAN, OSPF, EIGRP, NAT, IoT, Sorun Giderme). |
+| **Storage Security (XOR+Base64)**: App-wide encrypted localStorage with backwards compatibility and XSS input sanitization. | **Güvenli Depolama (XOR+Base64)**: Geriye dönük uyumlu şifreli localStorage altyapısı ve XSS koruma. |
+| **Ping & Packet Animation**: Hop-by-hop analysis with P/N key control, synchronised play/pause. | **Ping Animasyonu**: P/N tuşu kontrolü ile adım adım paket analizi, oynat/duraklat senkronizasyonu. |
+| **Advanced Routing Protocols**: EIGRP DUAL, BGP (basic neighbor/network), OSPFv3 (IPv6), RIPng, VRRP redundancy, route redistribution. | **Gelişmiş Yönlendirme**: EIGRP DUAL, BGP (temel), OSPFv3 (IPv6), RIPng, VRRP yedeklilik, rota yeniden dağıtımı. |
+| **Security Features**: DHCP Snooping, Dynamic ARP Inspection, IP Source Guard, SPAN Port Monitoring, Storm Control, UDLD. | **Güvenlik Özellikleri**: DHCP Snooping, Dinamik ARP İnceleme, IP Kaynak Koruma, SPAN Port İzleme, Fırtına Kontrolü, UDLD. |
+| **EtherChannel**: LACP (active/passive), PAgP (desirable/auto), static (on), load-balance algorithms. | **EtherChannel**: LACP (aktif/pasif), PAgP (arzu edilir/otomatik), statik (on), yük dengeleme algoritmaları. |
+| **Exam Mode**: Teacher exam editor, project-to-exam conversion, timer, auto-scoring, secure `.exam` distribution, integrity hash. | **Sınav Modu**: Öğretmen sınav editörü, projeden sınava dönüştürme, zamanlayıcı, otomatik puanlama, güvenli `.exam` dağıtımı. |
+| **Guided Mode & Tutorial Wizard**: 19 step-by-step lessons, gamification points, "Teach Me" tracks (Beginner/Intermediate/Advanced). | **Rehberli Mod**: 19 adım adım ders, oyunlaştırma puanları, "Bana Öğret" modülü (Başlangıç/Orta/İleri). |
+| **PDF Certificate**: Auto-generated certificates with Turkish character support, 1-year validity, and secure verification codes. | **PDF Sertifika**: Türkçe karakter korumalı, 1 yıllık geçerlilik süresi ve doğrulama kodlu otomatik sertifika üretimi. |
+| **Text-to-Speech (TTS)**: Built-in lesson narration using browser speech synthesis. | **Metin Okuma (TTS)**: Tarayıcı konuşma sentezi ile yerleşik ders anlatımı. |
+| **Fault Injection**: 8 fault types (wrong subnet, wrong VLAN, shutdown interface, wrong gateway, ACL block, duplicate IP, missing route). | **Hata Enjeksiyonu**: 8 hata tipi (yanlış subnet, yanlış VLAN, kapalı arayüz, yanlış gateway, ACL engeli, çakışan IP, eksik rota). |
+| **Classroom Room System**: Redis-backed teacher rooms, code-based student join, real-time progress tracking, PDF reporting. | **Sınıf Oda Sistemi**: Redis tabanlı öğretmen odaları, kod ile öğrenci katılımı, gerçek zamanlı ilerleme takibi, PDF raporlama. |
+| **WLC & AP Management**: AIR-CT2504-K9, Lightweight AP, CAPWAP, dot11 WLAN config, auth-mac filtering, RF channel/power. | **WLC & AP Yönetimi**: AIR-CT2504-K9, Lightweight AP, CAPWAP, dot11 WLAN yapılandırması, auth-mac filtreleme. |
+| **Serial / WAN Interfaces**: HDLC/PPP encapsulation, clock rate, PAP/CHAP authentication, DCE/DTE detection. | **Seri / WAN Arayüzleri**: HDLC/PPP kapsülleme, saat hızı, PAP/CHAP kimlik doğrulama, DCE/DTE tespiti. |
+| **PWA Support**: Service worker, offline caching, "Add to Home Screen" install prompt. | **PWA Desteği**: Servis çalışanı, çevrimdışı önbellekleme, "Ana Ekrana Ekle" kurulum bildirimi. |
+| **Mobile Optimization**: Bottom sheet menus, split-view for tablets, Android back button, visualViewport keyboard fix. | **Mobil Optimizasyon**: Alt sayfa menüleri, tablet bölünmüş ekran, Android geri tuşu, sanal klavye kaydırma düzeltmesi. |
 
 ---
 
@@ -59,33 +54,38 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 | English | Türkçe |
 | --- | --- |
-| **Switching**: VLAN, STP, trunk/access ports, MAC learning, switchport security | **Anahtarlama**: VLAN, STP, trunk/access portları, MAC öğrenmesi, switchport güvenliği |
-| **Routing**: Static routes, OSPF, RIP, EIGRP, inter-VLAN routing, L3 switching, default routes | **Yönlendirme**: Statik rotalar, OSPF, RIP, EIGRP, VLAN'lar arası yönlendirme, L3 anahtarlama, varsayılan rotalar |
-| **Wireless**: WLAN configuration, SSID management, wireless security, WLC/AP management, dot11 commands | **Kablosuz**: WLAN yapılandırması, SSID yönetimi, kablosuz güvenlik, WLC/AP yönetimi, dot11 komutları |
-| **IoT**: Device management, IoT web panel, sensor/actuator integration, IoT CLI commands | **IoT**: Cihaz yönetimi, IoT web paneli, sensör/aktüatör entegrasyonu, IoT CLI komutları |
-| **Firewall / ACL**: Access control lists, firewall rules, traffic filtering, firewall CLI commands | **Güvenlik Duvarı / ACL**: Erişim kontrol listeleri, güvenlik duvarı kuralları, trafik filtreleme, güvenlik duvarı CLI komutları |
-| **DHCP**: DHCP server & client configuration, address pools, lease management | **DHCP**: DHCP sunucu ve istemci yapılandırması, adres havuzları, kira yönetimi |
-| **DNS**: DNS configuration, name resolution | **DNS**: DNS yapılandırması, ad çözümleme |
-| **FTP**: FTP server & client, file upload, file transfer simulation | **FTP**: FTP sunucu ve istemci, dosya yükleme, dosya aktarım simülasyonu |
-| **NTP**: NTP server & client, time synchronization across devices | **NTP**: NTP sunucu ve istemci, cihazlar arası zaman senkronizasyonu |
-| **ARP**: ARP table management, MAC-to-IP resolution | **ARP**: ARP tablosu yönetimi, MAC-IP çözümleme |
-| **Link-Local**: Automatic link-local addressing (169.254.x.x) | **Link-Yerel**: Otomatik link-yerel adresleme (169.254.x.x) |
-| **Connectivity Testing**: Ping, traceroute, extended ping | **Bağlantı Testi**: Ping, traceroute, genişletilmiş ping |
-| **Serialization**: Export/import network topologies as JSON | **Serileştirme**: Ağ topolojilerini JSON olarak dışa/içe aktarma |
+| **Switching**: VLAN, STP (PVST+/Rapid-PVST+), trunk/access ports, MAC learning, switchport security | **Anahtarlama**: VLAN, STP (PVST+/Rapid-PVST+), trunk/access portlar, MAC öğrenmesi, switchport güvenliği |
+| **Trunk Allowed VLAN**: `switchport trunk allowed vlan add/remove/except/all` fine-grained VLAN filtering | **Trunk VLAN Filtreleme**: `add/remove/except/all` sözdizimi ile ayrıntılı VLAN filtreleme |
+| **EtherChannel**: LACP (active/passive), PAgP (desirable/auto), static (on), load-balance | **EtherChannel**: LACP (aktif/pasif), PAgP (arzu edilir/otomatik), statik, yük dengeleme |
+| **Routing**: Static, OSPF multi-area (SPF Dijkstra), RIP, EIGRP (DUAL), BGP (basic), inter-VLAN, L3 switch | **Yönlendirme**: Statik, OSPF multi-alan (SPF Dijkstra), RIP, EIGRP (DUAL), BGP (temel), VLAN arası, L3 |
+| **Redundancy**: HSRP (active/standby/preempt), VRRP | **Yedeklilik**: HSRP (active/standby/preempt), VRRP |
+| **IPv6**: OSPFv3, RIPng, DHCPv6 (stateful/stateless), static IPv6 routes | **IPv6**: OSPFv3, RIPng, DHCPv6 (stateful/stateless), statik IPv6 rotalar |
+| **Serial / WAN**: HDLC, PPP (PAP/CHAP), clock rate, DCE/DTE detection | **Seri / WAN**: HDLC, PPP (PAP/CHAP), saat hızı, DCE/DTE tespiti |
+| **NAT/PAT**: Static, dynamic, overload/PAT, ip nat inside/outside | **NAT/PAT**: Statik, dinamik, overload/PAT, ip nat inside/outside |
+| **Security**: Standard & Extended ACL, Port Security (sticky MAC), DHCP Snooping, Dynamic ARP Inspection, IP Source Guard, SPAN | **Güvenlik**: Standart & Genişletilmiş ACL, Port Security, DHCP Snooping, Dinamik ARP İnceleme, IP Kaynak Koruma, SPAN |
+| **Wireless**: WLC (AIR-CT2504-K9), Lightweight AP, CAPWAP, SSID, WPA/WPA2/WPA3, hidden SSID, MAC filter, signal strength by distance | **Kablosuz**: WLC, Lightweight AP, CAPWAP, SSID, WPA/WPA2/WPA3, gizli SSID, MAC filtre, mesafeye göre sinyal |
+| **IoT**: 5 sensors (temp/humidity/light/motion/sound) + 3 actuators, rule engine, environmental simulation, IoT web panel | **IoT**: 5 sensör + 3 aktüatör, kural motoru, çevresel simülasyon, IoT web paneli |
+| **Services**: DHCP, DNS, HTTP, FTP, NTP, Mail (SMTP/POP3), Firewall rules | **Servisler**: DHCP, DNS, HTTP, FTP, NTP, Mail (SMTP/POP3), güvenlik duvarı kuralları |
+| **SSH / Telnet**: SSH v1/v2 with crypto key generation, Telnet VTY sessions | **SSH / Telnet**: SSH v1/v2 kripto anahtar üretimi ile, Telnet VTY oturumları |
+| **ARP & Connectivity**: ARP table management, ping (ICMP), traceroute, extended ping | **ARP & Bağlantı**: ARP tablo yönetimi, ping (ICMP), traceroute, genişletilmiş ping |
+| **Export / Import**: JSON topology export/import, PNG 300 DPI export | **Dışa/İçe Aktarma**: JSON topoloji dışa/içe aktarma, PNG 300 DPI dışa aktarma |
 
 ### 🖥️ CLI Engine / CLI Motoru
 
 | English | Türkçe |
 | --- | --- |
-| **Command Families**: CLI with enable mode, configure terminal, interface config, etc. | **Komut Ailesi**: CLI (enable modu, configure terminal, interface config, vb.) |
-| **Context-Aware Help**: Device-aware subcommand suggestions and syntax hints | **Bağlam Duyarlı Yardım**: Cihaz bilinçli alt komut önerileri ve sözdizimi ipuçları |
-| **Fuzzy Matching**: Intelligent command matching with typo tolerance | **Bulanık Eşleştirme**: Yazım hatası toleranslı akıllı komut eşleştirme |
-| **Pipe Support**: Command output piping and filtering | **Pipe Desteği**: Komut çıktısı yönlendirme ve filtreleme |
-| **VLAN Commands**: VLAN creation, assignment, trunk configuration | **VLAN Komutları**: VLAN oluşturma, atama, trunk yapılandırması |
-| **Interface Commands**: IP addressing, description, admin state, speed/duplex | **Arayüz Komutları**: IP adresleme, açıklama, yönetsel durum, hız/duplex |
-| **Routing Protocol Commands**: OSPF, RIP, EIGRP, BGP, OSPFv3, RIPng configuration | **Yönlendirme Protokolü Komutları**: OSPF, RIP, EIGRP, BGP, OSPFv3, RIPng yapılandırması |
-| **Serial / WAN Commands**: HDLC, PPP, clock rate, PAP/CHAP authentication, DCE/DTE detection | **Seri / WAN Komutları**: HDLC, PPP, saat hızı, PAP/CHAP kimlik doğrulama, DCE/DTE tespiti |
-| **Show Commands**: Running-config, startup-config, interfaces, VLAN, ARP, routing tables, DHCP leases, NTP status, IoT status, WLAN status | **Show Komutları**: Running-config, startup-config, arayüzler, VLAN, ARP, yönlendirme tabloları, DHCP kiralamaları, NTP durumu, IoT durumu, WLAN durumu |
+| **14 CLI Modes**: user, priv, global, interface, if-range, line, vlan, router, dhcp, ssid, dot11, ap, std-nacl, ext-nacl | **14 CLI Modu**: user, priv, global, interface, if-range, line, vlan, router, dhcp, ssid, dot11, ap, std-nacl, ext-nacl |
+| **Fuzzy Matching (Levenshtein)**: "Did you mean?" typo tolerance with edit-distance scoring | **Bulanık Eşleştirme (Levenshtein)**: Yazma hatası toleransı ve düzünleme mesafesi skoru |
+| **Alias & Prefix Expansion**: `sh int` → `show interfaces`, `no shut` → `no shutdown` | **Alias & Prefix Genişletme**: `sh int` → `show interfaces` otomatik genişletme |
+| **Tab Completion**: Context-aware auto-complete for commands and subcommands | **Tab Tamamlama**: Komutlar ve alt komutlar için bağlama duyarlı otomatik tamamlama |
+| **? Help System**: Inline syntax hints for every command and mode | **? Yardım Sistemi**: Her komut ve mod için satır içi sözdizimi ipucu |
+| **Pipe Filtering**: `show run | include`, `| begin`, `| section`, `| exclude` | **Pipe Filtreleme**: `show run | include`, `| begin`, `| section`, `| exclude` |
+| **Routing Protocol Commands**: OSPF (multi-area), RIP, EIGRP (DUAL), BGP, OSPFv3, RIPng, VRRP, HSRP | **Yönlendirme Protokolü Komutları**: OSPF (multi-alan), RIP, EIGRP (DUAL), BGP, OSPFv3, RIPng, VRRP, HSRP |
+| **Security Commands**: ACL, DHCP Snooping, Dynamic ARP Inspection, IP Source Guard, SPAN, Port Security, Storm Control | **Güvenlik Komutları**: ACL, DHCP Snooping, Dinamik ARP İnceleme, IP Kaynak Koruma, SPAN, Port Security |
+| **EtherChannel Commands**: `channel-group`, `port-channel`, `show etherchannel summary/detail` | **EtherChannel Komutları**: `channel-group`, `port-channel`, `show etherchannel summary/detail` |
+| **Show Commands**: running-config, startup-config, interfaces, VLAN, ARP, ip route, DHCP, NTP, IoT, WLAN, etherchannel, spanning-tree, standby | **Show Komutları**: running-config, interfaces, VLAN, ARP, ip route, DHCP, NTP, IoT, WLAN, etherchannel, spanning-tree |
+| **Colored Realism Indicator**: Real / Stub / Sim-Only color tags per command | **Renkli Gerçeklik Göstergesi**: Komut başına Real / Stub / Sim-Only renk etiketi |
+| **Device Gating**: Commands restricted by device type (Router/Switch/L3/WLC/Firewall) | **Cihaz Kapısı**: Komutlar cihaz tipine göre kısıtlanır (Router/Switch/L3/WLC/Firewall) |
 | **CLI History**: Command history navigation with up/down arrows | **Komut Geçmişi**: Yukarı/aşağı ok tuşları ile komut geçmişi gezintisi |
 
 ### 🎮 Modes / Modlar
@@ -97,47 +97,44 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Exam Mode**: Teacher exam editor, project-to-exam conversion, automatic scoring, student distribution | **Sınav Modu**: Öğretmen sınav düzenleyicisi, projeden sınava dönüşüm, otomatik puanlama, öğrenci dağıtımı |
 | **Exam Import**: Smart `.json` / `.exam` file import with PC IP extraction and connection parsing | **Sınav İçe Aktarma**: PC IP çıkarma ve bağlantı ayrıştırma ile akıllı `.json` / `.exam` dosya içe aktarma |
 
-### 🏆 Gamification / Oyunlaştırma
-
-| English | Türkçe |
-| --- | --- |
-| **Activity Tracking**: Session duration, completed projects, guided lessons, and exam history | **Aktivite Takibi**: Oturum süresi, tamamlanan projeler, rehberli dersler ve sınav geçmişi |
-| **Achievement Panel**: Visual display of tracked activities with timestamps and scores | **Başarım Paneli**: Zaman damgaları ve puanlarla takip edilen aktivitelerin görsel görüntülenmesi |
-| **Gamification Points**: Points earned through tasks, lessons, and challenges | **Oyunlaştırma Puanları**: Görevler, dersler ve zorluklar aracılığıyla kazanılan puanlar |
-| **Example Projects**: Pre-built example projects with guides | **Örnek Projeler**: Kılavuzlarla birlikte önceden oluşturulmuş örnek proje |
-
 ### 🧩 UI & UX
 
 | English | Türkçe |
 | --- | --- |
-| **Network Canvas**: Drag & drop topology builder with visual connections | **Ağ Tuvali**: Sürükle-bırak topoloji oluşturucu, görsel bağlantılar |
-| **Device Palette**: Router, switch, PC, laptop, server, IoT, wireless device palette | **Cihaz Paleti**: Yönlendirici, anahtar, PC, dizüstü, sunucu, IoT, kablosuz cihaz paleti |
-| **CLI Terminal**: Full-featured terminal with syntax highlighting | **CLI Terminali**: Sözdizimi vurgulamalı, tam donanımlı tarzı terminal |
-| **Context Panels**: PC Panel, Firewall Panel, IoT Panel, Device Configuration Panel | **Bağlam Panelleri**: PC Paneli, Güvenlik Duvarı Paneli, IoT Paneli, Cihaz Yapılandırma Paneli |
-| **Quick Commands**: One-click common command suggestions | **Hızlı Komutlar**: Tek tıklamayla sık kullanılan komut önerileri |
-| **Mode Selector**: Easy switching between Free, Guided, and Exam modes | **Mod Seçici**: Serbest, Rehberli ve Sınav modları arasında kolay geçiş |
-| **Achievement Panel**: Visual badge gallery with progress tracking | **Başarım Paneli**: İlerleme takibi ile görsel rozet galerisi |
-| **Help Panel**: Context-sensitive help system | **Yardım Paneli**: Bağlama duyarlı yardım sistemi |
-| **Keyboard Navigation**: Full keyboard shortcuts for all operations | **Klavye Gezintisi**: Tüm işlemler için tam klavye kısayolları |
-| **Screen Reader Support**: ARIA labels and accessibility features | **Ekran Okuyucu Desteği**: ARIA etiketleri ve erişilebilirlik özellikleri |
-| **High Contrast Mode**: Visual accessibility mode for better readability | **Yüksek Kontrast Modu**: Daha iyi okunabilirlik için görsel erişilebilirlik modu |
-| **Responsive Design**: Mobile-friendly layout with adaptive breakpoints | **Duyarlı Tasarım**: Mobil uyumlu düzen, uyarlanabilir kırılım noktaları |
-| **Drag & Drop Windows**: Resizable and draggable dialog windows | **Sürükle-Bırak Pencereler**: Yeniden boyutlandırılabilir ve sürüklenebilir diyalog pencereleri |
-| **Toast Notifications**: Non-intrusive notification system | **Toast Bildirimleri**: Rahatsız etmeyen bildirim sistemi |
+| **Network Canvas**: Drag & drop topology builder, multi-select, copy/cut/paste, undo/redo | **Ağ Tuvali**: Sürükle-bırak topoloji, çoklu seçim, kopyala/kes/yapıştur, geri al/ileri al |
+| **Topology Generator Wizard**: 40+ pre-built scenarios with keyword search — auto-configure on load | **Topoloji Üretici Sihirbazı**: Anahtar kelime araması ile 40+ hazır senaryo, yüklemede otomatik yapılandırma |
+| **Note System**: Draggable/resizable sticky notes with color, opacity, and font size controls | **Not Sistemi**: Renk, opaklık ve yazı boyutu kontrollü sürükleme/boyutlandırma destekli notlar |
+| **Device Palette**: Router, Switch, L3 Switch, PC, Laptop, Server, Firewall (ASA), IoT, WLC, AP palette | **Cihaz Paleti**: Router, Switch, L3 Switch, PC, Laptop, Sunucu, Firewall (ASA), IoT, WLC, AP paleti |
+| **Window Collapse**: Double-click any floating window title bar to collapse/expand instantly | **Pencere Daraltma**: Herhangi bir yüzen pencere başlığına çift tık ile anında daralt/genişlet |
+| **CLI Terminal**: Syntax-highlighted NOS-style terminal with tab-complete and ? help | **CLI Terminali**: Tab tamamlama ve ? yardım ile sözdizimi vurgulu NOS tarzı terminal |
+| **PC CMD**: Windows-style CMD (ping/tracert/arp/netstat/nbtstat/nslookup with full parameters) | **PC CMD**: Windows tarzı CMD (ping/tracert/arp/netstat/nbtstat/nslookup tam parametrelerle) |
+| **Packet Capture Panel**: Wireshark-lite style capture with multi-term filter, pagination, protocol numbers | **Paket Yakalama Paneli**: Wireshark-lite stil yakalama: çoklu filtre, sayfalama, protokol numaraları |
+| **Ping Animation**: Hop-by-hop PDU playback with P (play/pause) and N (next hop) key control | **Ping Animasyonu**: P (oynat/duraklat) ve N (sonraki hop) tuşu ile hop-by-hop PDU oynatma |
+| **Context Menu**: Right-click device/cable for quick actions | **Bağlam Menüsü**: Cihaz/kabloya sağ tık ile hızlı işlemler |
+| **Graphics Quality Toggle**: High/Low graphics mode for large topologies (50+ devices) | **Grafik Kalite Seçici**: Büyük topolojilerde performans için Yüksek/Düşük grafik modu |
+| **Mobile Touch**: Tap-tap cable drawing, bottom sheet menus, split-view tablet support | **Mobil Dokunma**: Tap-tap kablo çizme, alt sayfa menüleri, tablet bölünmüş ekran desteği |
+| **Mode Selector**: Free / Guided / Exam mode with instant switch | **Mod Seçici**: Serbest / Rehberli / Sınav modu anlık geçiş |
+| **Achievement Panel**: Visual badge gallery with timestamps and scores | **Başarım Paneli**: Zaman damgalı ve puanlı görsel rozet galerisi |
 | **Multi-language**: Full Turkish / English interface support | **Çoklu Dil**: Tam Türkçe / İngilizce arayüz desteği |
+| **Toast Notifications**: Non-intrusive notification system | **Toast Bildirimleri**: Rahatsız etmeyen bildirim sistemi |
+| **Help Panel (F1)**: Context-sensitive help with beginner / intermediate / exam levels | **Yardım Paneli (F1)**: Başlangıç / orta / sınav seviyeli bağlama duyarlı yardım |
 
 ### 🔧 Technical / Teknik
 
 | English | Türkçe |
 | --- | --- |
-| **State Management**: Zustand 5.0 with optimized stores | **Durum Yönetimi**: Optimize edilmiş depolar ile Zustand 5.0 |
-| **History System**: Undo/redo with canvas history tracking | **Geçmiş Sistemi**: Tuval geçmişi takibi ile geri alma/ileri alma |
-| **Project Persistence**: Save/load projects with browser storage | **Proje Kalıcılığı**: Tarayıcı depolama ile proje kaydetme/yükleme |
-| **Offline Storage**: Service worker with offline caching | **Çevrimdışı Depolama**: Servis çalışanı ile çevrimdışı önbellekleme |
-| **Session Management**: Secure session handling for exam mode | **Oturum Yönetimi**: Sınav modu için güvenli oturum yönetimi |
+| **State Management**: Zustand 5.0 with selector-optimized stores | **Durum Yönetimi**: Selöktör-optimize edilmiş depolar ile Zustand 5.0 |
+| **History System**: Full undo/redo (Ctrl+Z/Y) with canvas topology history | **Geçmiş Sistemi**: Tam geri alma/ileri alma (Ctrl+Z/Y) ile tuval topoloji geçmişi |
+| **Encrypted Storage**: XOR+Base64 localStorage encryption with backward compatibility; XSS input sanitization | **Şifreli Depolama**: Geriye dönük uyumlu XOR+Base64 localStorage şifreleme; XSS girdi temizleme |
+| **Project Persistence**: Save/load via encrypted browser storage; multi-tab warning dialog | **Proje Kalıcılığı**: Şifreli tarayıcı depolama ile kaydet/yükle; çoklu sekme uyarı diyaloğu |
+| **PWA / Offline**: Service worker, offline caching, "Add to Home Screen" install prompt | **PWA / Çevrimdışı**: Servis çalışanı, çevrimdışı önbellekleme, "Ana Ekrana Ekle" kurulum bildirimi |
+| **Spatial Partitioning**: Viewport-based spatial indexing for smooth 100+ device topologies | **Uzamsal Bölümleme**: 100+ cihazlı topolojilerde akıcılık için görünü pencere tabanlı indeksleme |
+| **Animation System**: Smooth transitions, micro-interactions, canvas-optimized rendering | **Animasyon Sistemi**: Pürüzsüz geçişler, mikro etkileşimler, canvas-optimize render |
+| **Security**: Rate limiting (API), CSP headers (hardened), XSS protection, exam integrity hash | **Güvenlik**: API hız sınırlama, güçlendirilmiş CSP başlıkları, XSS koruma, sınav bütünlük hash'i |
+| **Testing**: 940 unit tests across 92 test files (Vitest + Testing Library) | **Test**: 92 test dosyasında 940 birim test (Vitest + Testing Library) |
+| **TypeScript**: Strict mode, zero type errors in build pipeline | **TypeScript**: Sıkı mod, derleme zincirinde sıfır tip hatası |
 | **Error Handling**: Comprehensive error handling and user feedback | **Hata Yönetimi**: Kapsamlı hata yönetimi ve kullanıcı geri bildirimi |
 | **Performance Monitoring**: Canvas optimization and bundle optimization | **Performans İzleme**: Tuval optimizasyonu ve paket optimizasyonu |
-| **Animation System**: Smooth transitions and micro-interactions | **Animasyon Sistemi**: Pürüzsüz geçişler ve mikro etkileşimler |
 
 ---
 
@@ -151,33 +148,38 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Total Lines / Toplam Satır | 126,636 |
-| Source Files / Kaynak Dosya | 496 |
-| Documentation Files / Dokümantasyon Dosya | 23 |
-| Example Projects / Örnek Proje | 43 |
+| Version / Sürüm | 2.6.0 |
+| Total Lines / Toplam Satır (src/) | 115,876 |
+| Source Files / Kaynak Dosya | 500 |
+| Documentation Files / Dokümantasyon Dosya | 22 |
+| Example Projects / Örnek Proje | 49 |
 | Guided Lessons / Rehberli Ders | 19 |
 | Exams / Sınav | 6 |
+| Tests / Test | 940 (92 dosya) |
 | CLI Commands / CLI Komutları | 400+ |
 
 ## Documentation / Dokümantasyon
 
 | Document / Doküman | Description / Açıklama |
 | --- | --- |
-| [details.md](doc/reference/details.md) | Projects details / Proje detayları |
-| [examples.md](doc/reference/examples.md) | Example projects with step-by-step guides / Adım adım örnek projeler |
-| [INSTALL.md](INSTALL.md) | Installation & build instructions / Kurulum & derleme talimatları |
-| [USAGE.md](doc/getting-started/USAGE.md) | Usage guide & keyboard shortcuts (TR/EN) / Kullanım kılavuzu & klavye kısayolları |
-| [CLI_GUIDED_TUTORIAL.md](doc/cli/CLI_GUIDED_TUTORIAL.md) | CLI guided tutorial / CLI rehberli eğitim |
-| [CLI_COMMANDS.md](doc/cli/CLI_COMMANDS.md) | CLI commands reference / CLI komut referansı |
-| [QUICK_REFERENCE.md](doc/getting-started/QUICK_REFERENCE.md) | Quick reference & code snippets / Hızlı referans & kod parçacıkları |
-| [WIRELESS_CONFIGURATION_GUIDE.md](doc/network/WIRELESS_CONFIGURATION_GUIDE.md) | Wireless network configuration / Kablosuz ağ yapılandırma |
-| [L3_SWITCH_CONFIGURATION.md](doc/network/L3_SWITCH_CONFIGURATION.md) | Layer 3 switching guide / L3 anahtarlama rehberi |
-| [GOOGLE_SHEETS_SETUP.md](doc/network/GOOGLE_SHEETS_SETUP.md) | Google Sheets integration / Google Sheets entegrasyonu |
-| [ROOM_TRACKING_SETUP.md](doc/network/ROOM_TRACKING_SETUP.md) | Room tracking system setup / Oda takip sistemi kurulumu |
-| [DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Documentation index & reading map / Dokümantasyon indeksi & okuma haritası |
-| [CONTRIBUTING.md](doc/development/CONTRIBUTING.md) | Dev conventions & agent rules / Geliştirici kuralları |
-| [ERROR_HANDLING_GUIDE.md](doc/development/ERROR_HANDLING_GUIDE.md) | Error handling guide / Hata kontrol rehberi |
-| [INTEGRATION_GUIDE.md](doc/development/INTEGRATION_GUIDE.md) | Integration guide / Entegrasyon rehberi |
+| [INSTALL.md](INSTALL.md) | Kurulum & derleme / Installation & build |
+| [USAGE.md](doc/getting-started/USAGE.md) | Kullanım kılavuzu & kısayollar / Usage guide & shortcuts |
+| [PC_CMD_REFERENCE.md](doc/getting-started/PC_CMD_REFERENCE.md) | PC CMD parametreleri / PC CMD command parameters |
+| [TOPOLOGY_GENERATOR.md](doc/getting-started/TOPOLOGY_GENERATOR.md) | Topoloji üretici sihirbazı / Topology generator guide |
+| [CLI_COMMANDS.md](doc/cli/CLI_COMMANDS.md) | CLI komut referansı / CLI command reference |
+| [CLI_GUIDED_TUTORIAL.md](doc/cli/CLI_GUIDED_TUTORIAL.md) | Rehberli CLI dersleri / Guided CLI lessons |
+| [QUICK_REFERENCE.md](doc/getting-started/QUICK_REFERENCE.md) | Hızlı referans / Quick reference |
+| [WIRELESS_CONFIGURATION_GUIDE.md](doc/network/WIRELESS_CONFIGURATION_GUIDE.md) | Kablosuz ağ / Wireless configuration |
+| [L3_SWITCH_CONFIGURATION.md](doc/network/L3_SWITCH_CONFIGURATION.md) | L3 switch yapılandırma / L3 switch guide |
+| [PACKET_CAPTURE_GUIDE.md](doc/network/PACKET_CAPTURE_GUIDE.md) | Paket yakalama paneli / Packet capture guide |
+| [GOOGLE_SHEETS_SETUP.md](doc/network/GOOGLE_SHEETS_SETUP.md) | Google Sheets entegrasyonu / Google Sheets setup |
+| [ROOM_TRACKING_SETUP.md](doc/network/ROOM_TRACKING_SETUP.md) | Oda takip sistemi / Room tracking setup |
+| [DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Tüm belgeler indeksi / Full documentation index |
+| [CONTRIBUTING.md](doc/development/CONTRIBUTING.md) | Katkı rehberi / Contribution guide |
+| [ERROR_HANDLING_GUIDE.md](doc/development/ERROR_HANDLING_GUIDE.md) | Hata kontrol rehberi / Error handling guide |
+| [INTEGRATION_GUIDE.md](doc/development/INTEGRATION_GUIDE.md) | Entegrasyon rehberi / Integration guide |
+| [examples.md](doc/reference/examples.md) | Adım adım örnek projeler / Example projects |
+| [details.md](doc/reference/details.md) | Sürüm detayları / Version details |
 
 ## Architecture / Mimari
 
@@ -209,7 +211,7 @@ src/
 
 ## Tech Stack / Teknoloji
 
-Next.js 16.2.4, React 19.2.5, TypeScript 6.0.3, Tailwind CSS 4.2.2, Radix UI, Zustand 5.0
+Next.js 16.3.2, React 19.2.8, TypeScript 7.0.2, Tailwind CSS 4.3.3, Radix UI, Zustand 5.0
 
 ## License / Lisans
 
@@ -243,6 +245,8 @@ Free and open source. See [LICENSE](LICENSE).
 | **Straight-through / Düz** | PC ↔ Switch, Router ↔ Switch |
 | **Crossover / Çapraz** | Switch ↔ Switch, Router ↔ Router, PC ↔ PC, PC ↔ Router |
 | **Console** | PC COM → Switch/Router Console port |
+| **Serial** | Router ↔ Router (WAN, PPP/HDLC, clock rate, DCE/DTE) |
+| **Wireless** | Otomatik — SSID eşleşmesi + güvenlik + mesafe / Auto — SSID match + security + distance |
 
 ---
 
@@ -6651,5 +6655,105 @@ Yeni eklenen meydan okuma modları ile ağ hatalarını teşhis etme ve düzeltm
 
 ## 🎓 Başarı Sertifikası ve Sesli Anlatım
 
-- **PDF Sertifika:** Herhangi bir rehberli dersi veya sınavı %100 başarıyla tamamladığınızda, adınıza düzenlenmiş dijital başarı sertifikasını indirebilirsiniz.
-- **Sesli Rehber (TTS):** Rehberli moddaki talimatları sağ üstteki hoparlör simgesine tıklayarak sesli olarak dinleyebilirsiniz.
+- PDF Sertifika: Herhangi bir rehberli dersi veya sınavı %100 başarıyla tamamladığınızda, adınıza düzenlenmiş dijital başarı sertifikasını indirebilirsiniz.
+- Sesli Rehber (TTS): Rehberli moddaki talimatları sağ üstteki hoparlör simgesine tıklayarak sesli olarak dinleyebilirsiniz.
+
+---
+
+## 🚀 Gelişmiş Özellikler ve Protokoller (v2.6.0 Güncellemesi)
+
+Bu bölümde, simülatörün en son sürümünde uygulanan ancak daha önce dokümantasyonda derinlemesine açıklanmamış gelişmiş mimari, UI, ağ protokolleri ve güvenlik yetenekleri yer almaktadır.
+
+### 1. Gelişmiş Paket Yakalama Paneli (Wireshark-lite)
+Paket yakalama panelinde sunulan gelişmiş filtreleme ve izleme özellikleri:
+- **Çoklu Dışlama Filtresi (Exclude Filter):** Arayüzde yer alan dışlama kutusuna virgül veya boşluk ile ayrılmış terimler (`cdp, stp, arp` vb.) girilerek ilgili paketlerin listede görünmesi engellenir. Bu işlem büyük/küçük harfe duyarsızdır (case-insensitive).
+- **Sayfalama (Pagination):** Yakalanan tüm paketler sayfa başına 10 paket olacak şekilde listelenir. Bu sayede tarayıcı performansı korunur. Sayfalar arasında `◀ Önceki` ve `Sonraki ▶` butonları ile geçiş yapılır.
+- **Detaylı Protokol Numaraları:** Protokol sütununda, standart IP protokol numaraları ve Ethernet protokol kodları gösterilir (Örneğin: OSPF için `89`, STP için `0x4242`, ARP için `0x0806`).
+
+### 2. Arka Plan Ağ Trafiği Simülasyonu
+Ağ çalışır durumda iken arka planda otomatik olarak üretilen ve paket yakalama panelinde gözlemlenebilen periyodik trafikler:
+- **DHCP DORA:** DHCP istemcisi etkinleştirildiğinde sırasıyla `Discover`, `Offer`, `Request` ve `ACK` paketleri otomatik üretilir.
+- **STP BPDU:** Switch'ler kendi aralarında her 2 saniyede bir Spanning Tree köprü protokol veri birimi (BPDU) paketi gönderir.
+- **OSPF Hello / RIP / EIGRP Updates:** Aktif yönlendirme protokollerine sahip router'lar periyodik komşu keşif ve rota güncelleme paketleri yayınlar.
+- **WLAN Beacon:** Kablosuz AP'ler ve WLC, istemcilerin bağlanabilmesi için periyodik beacon paketleri yayar.
+
+### 3. PC CMD Gelişmiş Parametreleri
+PC CMD arayüzünde Windows tarzı parametreler desteklenmektedir:
+- `ping <ip> [-n count] [-l size] [-w timeout] [-a] [-t] [-4|-6]`: Paket sayısını, boyutunu, zaman aşımını belirleme, ters DNS çözme (`-a`) ve sürekli ping (`-t`).
+- `tracert <ip> [-d] [-h max_hops] [-w timeout]`: DNS çözümlemesini atlama (`-d`) ve maksimum hop sınırı belirleme (`-h`).
+- `netstat [-a] [-n] [-r] [-s]`: Tüm portları listeleme, sayısal gösterim, yönlendirme tablosu ve istatistikler.
+- `arp [-a] [-d <ip>] [-s <ip> <mac>]`: ARP önbelleğini görme, girdi silme ve statik IP-MAC eşleştirmesi ekleme.
+- `nslookup <domain> [-type=A|AAAA|MX|CNAME|NS|PTR] [server]`: Belirli kayıt tiplerini sorgulama ve özel DNS sunucusu seçimi.
+
+### 4. Topoloji Üretici Sihirbazı (Topology Generator)
+Arayüzdeki "Topoloji Üret" butonu ile erişilebilen sihirbaz:
+- **Kategori Filtresi:** VLAN, Routing, Security, Wireless ve Sektörel olmak üzere ağ senaryolarını gruplar.
+- **Otomatik Şablon Arama:** Arama kutusuna yazılan anahtar kelimelere göre (örn. `ospf`, `trouble`) anında filtreleme yapar.
+- **Ön Yapılandırılmış Yükleme:** Şablon seçilip "Oluştur" denildiğinde, tüm cihazlar ve kablolar önceden yapılandırılmış IP, VLAN ve yönlendirme protokolleriyle tuvale otomatik yüklenir.
+
+### 5. BGP (Border Gateway Protocol) Desteği
+Router CLI'ında temel sınır geçit protokolü (BGP) konfigürasyonu:
+- `router bgp <as-number>`: BGP yönlendirme sürecini başlatır.
+- `neighbor <ip-address> remote-as <as-number>`: BGP komşuluğunu tanımlar.
+- `network <network-ip> mask <subnet-mask>`: BGP sürecine dahil edilecek ağı anons eder.
+- `show ip bgp summary`: BGP komşuluklarını ve durumlarını özetler.
+
+### 6. Yüzen Pencerelerin Çift Tıklama ile Daraltılması (Collapse)
+Ekran alanını verimli kullanabilmek için tasarlanan pencere özelliği:
+- Herhangi bir cihaz paneli veya yüzen pencerenin **başlık çubuğuna (title bar) çift tıklandığında** pencere sadece başlık çubuğu kalacak şekilde dikey olarak daralır (collapse).
+- Tekrar çift tıklandığında eski boyutuna geri döner (expand).
+
+### 7. Grafik Kalitesi Ayarı (High/Low)
+Büyük topolojilerdeki (50+ cihaz) render performansını optimize etmek amacıyla:
+- Üst araç çubuğundaki kalite menüsünden **"Düşük Kalite (Low)"** seçildiğinde, kablolardaki animasyonlar ve gölgeler devre dışı bırakılarak CPU/GPU yükü azaltılır ve akıcı bir tuval performansı sağlanır.
+
+### 8. switchport trunk allowed vlan Filtreleme
+Switch ve L3 Switch'lerde trunk bağlantılardan geçebilecek VLAN'ları kısıtlama sözdizimi:
+- `switchport trunk allowed vlan {all | add | remove | except} <vlan-list>`:
+  - `add`: Trunk hattına yeni VLAN'lar ekler.
+  - `remove`: Mevcut allowed listesinden belirli VLAN'ları çıkartır.
+  - `except`: Belirtilen VLAN'lar dışındaki tüm VLAN'lara izin verir.
+- Bu komut STP / PVST hesaplamalarıyla tam senkronize çalışarak ağ döngülerini VLAN bazında engeller.
+
+### 9. IP Source Guard (IPSG)
+IP adresi taklidini (IP spoofing) önleyen güvenlik komutları:
+- `ip verify source`: Arayüz altında IP Source Guard'ı aktif eder. IPSG, DHCP Snooping veritabanını kullanarak IP-MAC eşleşmelerini doğrular.
+- `ip source binding <mac> vlan <vlan-id> <ip> interface <interface-id>`: Statik IP-MAC-Port eşleşme veritabanı girdisi oluşturur.
+
+### 10. SPAN (Switch Port Analyzer) Port Aynalama
+Trafik analizi veya paket yakalama amacıyla port trafiğini başka bir porta kopyalama:
+- `monitor session <session-id> source interface <interface-id> [rx | tx | both]`: Trafiği izlenecek kaynak portu belirtir.
+- `monitor session <session-id> destination interface <interface-id>`: Kopyalanan trafiğin gönderileceği hedef analiz portunu belirtir.
+
+### 11. İlk Kullanım Sihirbazı (Onboarding Dialog)
+- Uygulama ilk kez açıldığında kullanıcıyı karşılayan, simülatörün temel bileşenlerini (cihaz paleti, tuval, paket yakalama ve rehberli dersler) tanıtan interaktif onboarding adımları sunulur.
+
+### 12. Çoklu Sekme Koruması (Multi-Tab Warning)
+- Zustand veri tabanının tarayıcı sekmeleri arasında çakışmasını engellemek amacıyla, simülatör aynı tarayıcıda ikinci bir sekmede açıldığında kullanıcıya bir uyarı dialogu gösterilir ve veri kaybını önlemek için tek sekmede kalınması önerilir.
+
+### 13. PDF Sertifika Doğrulama Sayfası (/verify)
+- Başarıyla tamamlanan eğitimlerden elde edilen PDF başarı sertifikalarının üzerindeki doğrulama kodu, `/verify?code=XYZ` adresiyle sorgulanabilir. Bu sayfa sertifikanın geçerliliğini ve kime ait olduğunu doğrular.
+
+### 14. VRRP (Virtual Router Redundancy Protocol)
+Router'lar arasında varsayılan ağ geçidi yedekliliği:
+- `vrrp <group-id> ip <virtual-ip>`: Sanal ağ geçidi IP adresini tanımlar.
+- `vrrp <group-id> priority <value>`: Aktif yönlendirici seçimi için öncelik değerini belirler.
+- `show vrrp`: VRRP gruplarını ve durumlarını listeler.
+
+### 15. QoS (Quality of Service) Stub Komutları
+- Cisco IOS uyumluluğu açısından eklenen `mls qos`, `policy-map <name>`, `class-map <name>` komutları CLI parser tarafından tanınmakta ve konfigürasyona eklenebilmektedir (Simülasyon düzeyinde stub olarak çalışırlar).
+
+### 16. Spatial Partitioning (Uzamsal Bölümleme)
+- Topolojide 100+ cihaz ve kablo olduğunda render performansının düşmesini engellemek için, tuval alanı sanal karelere bölünür (spatial hashing). Sadece ekranda görünür olan (viewport) cihazlar ve kablolar çizilerek yüksek FPS korunur.
+
+### 17. Gelişmiş EtherChannel
+Kabloları mantıksal tek bir hatta birleştirme:
+- `channel-group <number> mode {active | passive | desirable | auto | on}`:
+  - `active/passive`: LACP (802.3ad) protokolü ile otomatik EtherChannel kurma.
+  - `desirable/auto`: PAgP (Cisco) protokolü ile otomatik EtherChannel kurma.
+  - `on`: Statik EtherChannel.
+- `show etherchannel summary`: Port-channel gruplarını ve üye portların durumlarını gösterir.
+
+### 18. Çift Tıklama ile Daraltılabilir Cihaz Paneli
+- Tuval üzerinde herhangi bir cihaza çift tıklandığında açılan cihaz paneli, yan taraftaki ok simgesi kullanılarak veya ekran kenarından tutularak tamamen daraltılabilir (collapsed). Böylece kullanıcı terminal komutlarını yazarken tuval alanını rahatlıkla görebilir.
+
