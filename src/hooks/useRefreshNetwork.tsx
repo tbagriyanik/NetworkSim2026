@@ -204,6 +204,12 @@ export function useRefreshNetwork({
             ),
             duration: 4000,
           });
+          addNetworkEventLog({
+            level: 'info',
+            category: 'DHCP',
+            message: t.dhcpAssignments || (language === 'tr' ? 'DHCP Atamaları' : 'DHCP Assignments'),
+            detail: dhcpAssignments.map(asgn => `${asgn.name}: ${asgn.ip}`).join('\n'),
+          });
         }
       }
 
@@ -679,6 +685,15 @@ export function useRefreshNetwork({
             dhcpMessages.push(language === 'tr'
               ? `\u26A0 ${dhcpClientNoLeaseCount} ${t.dhcpNoLease}`
               : `\u26A0 ${dhcpClientNoLeaseCount} ${t.dhcpNoLease}`);
+          }
+
+          if (dhcpMessages.length > 0) {
+            addNetworkEventLog({
+              level: 'info',
+              category: 'DHCP',
+              message: language === 'tr' ? 'DHCP Durumu' : 'DHCP Status',
+              detail: dhcpMessages.join('\n'),
+            });
           }
 
           setRefreshNetworkReport({
