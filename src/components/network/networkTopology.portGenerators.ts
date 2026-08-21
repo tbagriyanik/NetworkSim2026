@@ -60,3 +60,12 @@ export function generateRouterPorts(): CanvasPort[] {
         { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true },
     ];
 }
+
+/** Generates PC / Laptop ports: Eth0 + Console + WLAN0 */
+export function generatePCPorts(): CanvasPort[] {
+    return [
+        { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
+        { id: 'console', label: 'Console', status: 'disconnected' as const },
+        { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true },
+    ];
+}

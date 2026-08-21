@@ -545,6 +545,18 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
             }
 
             liveDeviceDragPositionsRef.current = newPositions;
+            setDevices(prev => {
+              let changed = false;
+              const nextDevices = prev.map(d => {
+                const livePos = newPositions.get(d.id);
+                if (livePos && (Math.abs(d.x - livePos.x) > 0.1 || Math.abs(d.y - livePos.y) > 0.1)) {
+                  changed = true;
+                  return { ...d, x: livePos.x, y: livePos.y };
+                }
+                return d;
+              });
+              return changed ? nextDevices : prev;
+            });
             dragAnimationFrameRef.current = null;
           });
         }

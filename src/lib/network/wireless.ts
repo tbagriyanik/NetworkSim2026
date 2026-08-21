@@ -353,11 +353,17 @@ export function getWirelessSignalStrength(
 
   devices.forEach(dev => {
     if (dev.id === device.id) return;
+    if (dev.status === 'offline') return;
     const devState = safeDeviceStates.get(dev.id);
     const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
     const activeSsids = getApActiveSsids(apWifi, devState);
     const matchingSsid = activeSsids.find(s => s.ssid.toLowerCase() === targetSsid);
     if (!matchingSsid) return;
+
+    const clientSec = (pcWifi.security || 'open').toLowerCase();
+    const apSec = (matchingSsid.security || 'open').toLowerCase();
+    if (clientSec !== apSec) return;
+    if (apSec !== 'open' && matchingSsid.password !== pcWifi.password) return;
 
     if (apWifi && !wifiChannelMatches(apWifi, pcWifi)) return;
     if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) return;

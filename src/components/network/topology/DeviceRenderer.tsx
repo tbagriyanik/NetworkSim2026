@@ -823,10 +823,11 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
       {/* Ports rendering */}
       {isPcLike ? (
-        (device.type === 'iot' ? device.ports.filter((port) => port.id !== 'wlan0') : device.ports).map((port, idx) => {
+        device.ports.filter((port) => port.id !== 'wlan0').map((port, idx) => {
           const portSpacing = 18;
           const portX = deviceWidth - 8;
-          const visiblePortCount = device.type === 'iot' ? device.ports.filter((item) => item.id !== 'wlan0').length : device.ports.length;
+          const visiblePorts = device.ports.filter((item) => item.id !== 'wlan0');
+          const visiblePortCount = visiblePorts.length;
           const startY = deviceHeight / 2 - ((visiblePortCount - 1) * portSpacing) / 2;
           const portY = startY + idx * portSpacing;
           const isConnected = port.status === 'connected';
@@ -835,13 +836,14 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           const isStartPort = isDrawingConnection && connectionStart?.deviceId === device.id && connectionStart?.portId === port.id;
           const isTargetPort = isTargetingThisDevice && !isConnected;
           const hasProblem = isShutdown || isDeviceOffline || (isConnected && !isPortConnectionHealthy(port.id));
-          const isWirelessPort = port.id.toLowerCase().startsWith('wlan');
-          const portLabel = port.id.toLowerCase().startsWith('com') ? 'C' : isWirelessPort ? '' : 'E';
+
+          const isConsolePort = port.id.toLowerCase().startsWith('com') || port.id.toLowerCase() === 'console';
+          const portLabel = isConsolePort ? 'C' : 'E';
 
           const portColor = isStartPort ? 'var(--color-success-500)' :
             isTargetPort ? 'var(--color-warning-500)' :
             (isShutdown || isDeviceOffline) ? STATUS_COLORS.offline :
-            port.id.toLowerCase().startsWith('com')
+            isConsolePort
               ? (isConnected ? PORT_COLORS.console.connected : PORT_COLORS.console.disconnected)
               : device.type === 'iot'
                 ? PORT_COLORS.ethernet.connected
@@ -863,7 +865,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
                 />
               )}
               <circle
-                r={9} // Adjusted to prevent overlap with adjacent port (PC spacing is 18)
+                r={9}
                 fill="transparent"
                 style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
                 onPointerDown={(e) => {
@@ -1205,7 +1207,13 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
   // Device objects are structurally shared by the simulation. This lets an
   // unrelated device update skip the expensive SVG subtree while still
   // refreshing a Wi-Fi device when the topology used for signal strength changes.
-  const wifiContextChanged = prev.device.wifi?.enabled || next.device.wifi?.enabled
+  const isWifiClientDevice =
+    prev.device.type === 'pc' ||
+    prev.device.type === 'iot' ||
+    Boolean(prev.device.wifi) ||
+    Boolean(prev.device.ports?.some(p => p.id === 'wlan0'));
+
+  const wifiContextChanged = isWifiClientDevice
     ? prev.topologyDevices !== next.topologyDevices
     : false;
   return prev.device === next.device &&

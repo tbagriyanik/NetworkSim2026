@@ -302,13 +302,18 @@ export function useCanvasActions({
         type === 'pc' || type === 'iot'
           ? [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) },
+            { id: 'console', label: 'Console', status: 'disconnected' as const },
             ...(type === 'iot' ? [{
               id: 'wlan0',
               label: 'WLAN0',
               status: 'disconnected' as const,
               wifi: { ssid: '', security: 'open' as const, channel: '2.4GHz' as const, mode: 'client' as const },
-            }] : []),
-            ...(type === 'pc' ? [{ id: 'com1', label: 'COM1', status: 'disconnected' as const }] : []),
+            }] : [{
+              id: 'wlan0',
+              label: 'WLAN0',
+              status: 'disconnected' as const,
+              shutdown: true,
+            }]),
           ]
           : type === 'switch'
             ? switchLayer === 'L3' ? generateL3SwitchPorts() : generateSwitchPorts()
@@ -519,10 +524,21 @@ export function useCanvasActions({
       });
     }
 
+    // Position note on the right empty space of the canvas to avoid overlapping devices
+    let targetX = 750;
+    let targetY = 50;
+
+    if (devices.length > 0) {
+      const maxX = Math.max(...devices.map(d => (d.x || 0)));
+      const minY = Math.min(...devices.map(d => (d.y || 0)));
+      targetX = Math.max(720, maxX + 180);
+      targetY = Math.max(40, minY);
+    }
+
     const newNote: CanvasNote = {
       id: getNextNoteId(),
-      x: 150 + Math.random() * 50,
-      y: 150 + Math.random() * 50,
+      x: targetX,
+      y: targetY,
       width: 440,
       height: Math.min(380, Math.max(160, 60 + devices.length * 40)),
       text: summaryText.trim(),

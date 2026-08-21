@@ -3,7 +3,7 @@
 import type { ScenarioType } from './topologyScenarios';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
-import { generateSwitchPorts, generateRouterPorts } from '../networkTopology.portGenerators';
+import { generateSwitchPorts, generateRouterPorts, generatePCPorts } from '../networkTopology.portGenerators';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -116,12 +116,14 @@ function addPcToSwitch(
   extras: Partial<CanvasDevice> = {},
 ): CanvasDevice {
   const pcId = `pc-${pcIndex}`;
+  const pcPorts = generatePCPorts();
+  pcPorts[0].status = 'connected';
   const pc: CanvasDevice = {
     id: pcId, type: 'pc', name: `PC-${pcIndex}`,
     macAddress: MAC_POOL[(pcIndex - 1) % MAC_POOL.length],
     ip, subnet: '255.255.255.0', gateway, dns,
     ipConfigMode: 'static', x, y, status: 'online',
-    ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' }],
+    ports: pcPorts,
     ...extras,
   };
   ctx.devices.push(pc);
