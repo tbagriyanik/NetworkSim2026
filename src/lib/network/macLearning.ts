@@ -62,9 +62,12 @@ export function learnMacAddress(
  * Only affects dynamic entries, static entries are permanent
  */
 export function cleanExpiredMacEntries(state: SwitchState): void {
-  if (!state.macAddressTable) return;
+  if (!state.macAddressTable || state.macAddressTable.length === 0) return;
 
   const now = Date.now();
+  const hasExpired = state.macAddressTable.some(entry => entry.type !== 'STATIC' && entry.timestamp && (now - entry.timestamp) >= MAC_AGING_TIME);
+  if (!hasExpired) return;
+
   state.macAddressTable = state.macAddressTable.filter(entry => {
     // Static entries never expire
     if (entry.type === 'STATIC') return true;

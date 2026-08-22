@@ -1,3 +1,5 @@
+import { logger } from '@/lib/logger';
+
 /**
  * Secure Storage Wrapper
  * Adds a basic layer of obfuscation (XOR + Base64) to localStorage to prevent casual tampering.
@@ -24,7 +26,7 @@ function encode(data: string): string {
     // Since xorData is pure ASCII, btoa will not throw InvalidCharacterError.
     return PREFIX + btoa(xorData);
   } catch (e) {
-    console.error('Error encoding data', e);
+    logger.error('Error encoding data', e);
     return data;
   }
 }
@@ -41,7 +43,7 @@ function decode(data: string): string {
     const decodedUri = xorCipher(xorData, SECRET_KEY);
     return decodeURIComponent(decodedUri);
   } catch (e) {
-    console.error('Error decoding data', e);
+    logger.error('Error decoding data', e);
     return data; // Return original on failure
   }
 }
@@ -53,7 +55,7 @@ export const secureStorage = {
       const encoded = encode(value);
       window.localStorage.setItem(key, encoded);
     } catch (e) {
-      console.error(`Error setting secureStorage key ${key}`, e);
+      logger.error(`Error setting secureStorage key ${key}`, e);
     }
   },
 
@@ -64,7 +66,7 @@ export const secureStorage = {
       if (value === null) return null;
       return decode(value);
     } catch (e) {
-      console.error(`Error getting secureStorage key ${key}`, e);
+      logger.error(`Error getting secureStorage key ${key}`, e);
       return null;
     }
   },

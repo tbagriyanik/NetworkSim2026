@@ -61,9 +61,12 @@ export function updateArpCache(
  * Remove expired ARP entries (older than ARP_TIMEOUT)
  */
 export function cleanExpiredArpEntries(state: SwitchState): void {
-  if (!state.arpCache) return;
+  if (!state.arpCache || state.arpCache.length === 0) return;
 
   const now = Date.now();
+  const hasExpired = state.arpCache.some(entry => (now - entry.timestamp) >= ARP_TIMEOUT);
+  if (!hasExpired) return;
+
   state.arpCache = state.arpCache.filter(entry => {
     return (now - entry.timestamp) < ARP_TIMEOUT;
   });

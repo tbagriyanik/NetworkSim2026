@@ -1143,10 +1143,10 @@ export function Terminal({
         const end = inputRef.current.selectionEnd || 0;
         if (start !== end) {
           const selectedText = input.substring(start, end);
-          navigator.clipboard.writeText(selectedText);
+          navigator.clipboard?.writeText(selectedText)?.catch?.(() => {});
         } else if (input) {
           // If no selection, copy all
-          navigator.clipboard.writeText(input);
+          navigator.clipboard?.writeText(input)?.catch?.(() => {});
         }
       }
       return;
@@ -1155,7 +1155,7 @@ export function Terminal({
     // Handle Ctrl+V (Paste)
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
       e.preventDefault();
-      navigator.clipboard.readText().then(text => {
+      navigator.clipboard?.readText()?.then(text => {
         if (text && text.includes('\n')) {
           queueCommands(text.split('\n'));
           setInput('');
@@ -1163,21 +1163,18 @@ export function Terminal({
           return;
         }
 
-        if (inputRef.current) {
-          const start = inputRef.current.selectionStart || 0;
-          const end = inputRef.current.selectionEnd || 0;
+        if (text) {
+          const start = inputRef.current?.selectionStart || 0;
+          const end = inputRef.current?.selectionEnd || 0;
           const newInput = input.substring(0, start) + text + input.substring(end);
           setInput(newInput);
-          // Move cursor to end of pasted text
           setTimeout(() => {
             if (inputRef.current) {
-              inputRef.current.setSelectionRange(start + text.length, start + text.length);
+              inputRef.current.selectionStart = inputRef.current.selectionEnd = start + text.length;
             }
           }, 0);
         }
-      }).catch(() => {
-        // Clipboard access denied, silently fail
-      });
+      })?.catch?.(() => {});
       return;
     }
 

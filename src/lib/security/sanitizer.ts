@@ -24,12 +24,21 @@ export function sanitizeHTTPContent(input: string): string {
     let safe = input.replace(/&/g, '&amp;');
     safe = safe.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     
+    // Whitelist formatting and layout tags safely
     safe = safe
         .replace(/&lt;b&gt;/gi, '<b>').replace(/&lt;\/b&gt;/gi, '</b>')
         .replace(/&lt;i&gt;/gi, '<i>').replace(/&lt;\/i&gt;/gi, '</i>')
-        .replace(/&lt;u&gt;/gi, '<u>').replace(/&lt;\/u&gt;/gi, '</u>');
+        .replace(/&lt;u&gt;/gi, '<u>').replace(/&lt;\/u&gt;/gi, '</u>')
+        .replace(/&lt;br\s*\/?&gt;/gi, '<br />')
+        .replace(/&lt;p&gt;/gi, '<p>').replace(/&lt;\/p&gt;/gi, '</p>')
+        .replace(/&lt;span&gt;/gi, '<span>').replace(/&lt;\/span&gt;/gi, '</span>')
+        .replace(/&lt;h([1-6])&gt;/gi, '<h$1>').replace(/&lt;\/h([1-6])&gt;/gi, '</h$1>');
+
+    // Safe link transformation (disallow javascript: URIs)
+    safe = safe.replace(/&lt;a\s+href=&quot;(https?:\/\/[^&"]+)&quot;&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">')
+               .replace(/&lt;\/a&gt;/gi, '</a>');
         
-    return safe.replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    return safe;
 }
 
 export function sanitizeInput(input: string): string {

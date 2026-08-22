@@ -371,6 +371,10 @@ export const NoteNode = memo(function NoteNode({
             }}
             onKeyDown={(e) => {
               e.stopPropagation();
+              if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.currentTarget.blur();
+                return;
+              }
               // ESC tuşu ile context menu'yü kapat
               if (e.key === 'Escape' && contextMenu?.noteId === note.id) {
                 setContextMenu(null);

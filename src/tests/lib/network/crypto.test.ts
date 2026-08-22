@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { encryptMd5Password, encryptType7Password, decryptType7Password } from '@/lib/network/crypto';
+import { encryptMd5Password, encryptType7Password, decryptType7Password, verifyType7Password, verifyMd5Password } from '@/lib/network/crypto';
 
 describe('Crypto Module', () => {
   describe('encryptMd5Password', () => {
@@ -57,6 +57,22 @@ describe('Crypto Module', () => {
 
     it('should handle empty string', () => {
       expect(decryptType7Password('')).toBe('');
+    });
+  });
+
+  describe('verifyType7Password', () => {
+    it('should correctly verify valid Type 7 password', () => {
+      const encrypted = encryptType7Password('cisco123');
+      expect(verifyType7Password('cisco123', encrypted)).toBe(true);
+      expect(verifyType7Password('wrongpass', encrypted)).toBe(false);
+    });
+  });
+
+  describe('verifyMd5Password', () => {
+    it('should correctly verify valid MD5 Type 5 password', () => {
+      const hashed = encryptMd5Password('secret', 'saltsalt');
+      expect(verifyMd5Password('secret', hashed)).toBe(true);
+      expect(verifyMd5Password('wrongsecret', hashed)).toBe(false);
     });
   });
 });

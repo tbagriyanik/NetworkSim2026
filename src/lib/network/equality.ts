@@ -35,3 +35,16 @@ export function areWifiConfigsEqual(
     a.bssid === b.bssid
   );
 }
+
+/**
+ * Checks if two Maps are equal by size and key/value pairs.
+ */
+export function areMapsEqual<K, V>(a: Map<K, V> | undefined | null, b: Map<K, V> | undefined | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.size !== b.size) return false;
+  for (const [key, value] of a.entries()) {
+    if (!b.has(key) || b.get(key) !== value) return false;
+  }
+  return true;
+}

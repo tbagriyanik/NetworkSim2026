@@ -85,6 +85,7 @@ export const processIotRules = (
         const { condition, action } = rule;
         const [sensor, operator, thresholdStr] = condition.split(' ');
         const threshold = parseFloat(thresholdStr);
+        if (Number.isNaN(threshold)) return;
 
         const sensorValue = getRuleSensorReading(sensor, devices, environment, device.id);
 

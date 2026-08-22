@@ -59,6 +59,17 @@ export function ProjectPickerDialog({
   const convertInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeProjectPicker();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, closeProjectPicker]);
+
+  useEffect(() => {
     setTimeout(() => setSelectedProjectId(null), 0);
   }, [open, projectPickerTab, projectSearchQuery]);
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { areArraysEqual, areWifiConfigsEqual } from '@/lib/network/equality';
+import { areArraysEqual, areWifiConfigsEqual, areMapsEqual } from '@/lib/network/equality';
 
 describe('equality helpers', () => {
   describe('areArraysEqual', () => {
@@ -43,6 +43,20 @@ describe('equality helpers', () => {
       const a = { ssid: 'test', security: 'wpa2', channel: '1' };
       const b = { ssid: 'test', security: 'wpa2', channel: '1' };
       expect(areWifiConfigsEqual(a, b)).toBe(true);
+    });
+  });
+
+  describe('areMapsEqual', () => {
+    it('should return true for identical maps', () => {
+      const m1 = new Map([['k1', 'v1'], ['k2', 'v2']]);
+      const m2 = new Map([['k1', 'v1'], ['k2', 'v2']]);
+      expect(areMapsEqual(m1, m2)).toBe(true);
+    });
+
+    it('should return false for different sizes or values', () => {
+      const m1 = new Map([['k1', 'v1']]);
+      const m2 = new Map([['k1', 'v1'], ['k2', 'v2']]);
+      expect(areMapsEqual(m1, m2)).toBe(false);
     });
   });
 });

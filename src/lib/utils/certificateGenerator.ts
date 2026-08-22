@@ -100,7 +100,8 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
   const isTr = language === 'tr';
 
   // ─── Step 1: Register certificate on server and get verify code ───────────
-  const PRODUCTION_URL = (process.env.NEXT_PUBLIC_APP_URL || '').replace(/\/$/, '');
+  const windowOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+  const PRODUCTION_URL = (process.env.NEXT_PUBLIC_APP_URL || windowOrigin).replace(/\/$/, '');
   let verifyCode = '';
   if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
     const array = new Uint32Array(2);
@@ -306,4 +307,9 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
   doc.text('Network Simulator', pageWidth / 2, pageHeight - 15, { align: 'center' });
 
   doc.save(`Sertifika-${data.studentName.replace(/\s+/g, '_')}.pdf`);
+
+  toast({
+    title: isTr ? '🎉 Sertifika İndirildi' : '🎉 Certificate Downloaded',
+    description: isTr ? 'Sertifikanız PDF formatında başarıyla kaydedildi.' : 'Your certificate has been successfully saved as PDF.',
+  });
 };

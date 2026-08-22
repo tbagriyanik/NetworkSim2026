@@ -65,11 +65,38 @@ export function encryptType7Password(password: string): string {
 export function decryptType7Password(encrypted: string): string {
   let result = '';
   for (let i = 0; i < encrypted.length; i += 2) {
-    const hexPair = encrypted.substr(i, 2);
+    const hexPair = encrypted.substring(i, i + 2);
     const encryptedValue = parseInt(hexPair, 16) - 1; // subtracts 1
     const keyChar = TYPE7_KEY.charCodeAt((i / 2) % TYPE7_KEY.length);
     const decrypted = encryptedValue ^ keyChar;
     result += String.fromCharCode(decrypted);
   }
   return result;
+}
+
+/**
+ * Verify a plain text password against a Cisco Type 7 encrypted password
+ */
+export function verifyType7Password(inputPassword: string, encryptedPassword: string): boolean {
+  try {
+    const decrypted = decryptType7Password(encryptedPassword);
+    return decrypted === inputPassword;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Verify a plain text password against a Cisco Type 5 (MD5) hashed password ($1$salt$hash)
+ */
+export function verifyMd5Password(inputPassword: string, storedHash: string): boolean {
+  try {
+    const parts = storedHash.split('$');
+    if (parts.length < 4 || parts[1] !== '1') return false;
+    const salt = parts[2];
+    const computed = encryptMd5Password(inputPassword, salt);
+    return computed === storedHash;
+  } catch {
+    return false;
+  }
 }
