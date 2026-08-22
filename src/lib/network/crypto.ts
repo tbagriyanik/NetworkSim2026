@@ -7,12 +7,12 @@ import { createHash } from 'crypto';
 export function encryptMd5Password(password: string, salt?: string): string {
   // Generate random salt if not provided (8 characters)
   const actualSalt = salt || generateSalt();
-  
+
   // Create MD5 hash: salt + password
   const hash = createHash('md5')
     .update(actualSalt + password)
     .digest('hex');
-  
+
   return `$1$${actualSalt}$${hash}`;
 }
 
@@ -75,7 +75,7 @@ export function decryptType7Password(encrypted: string): string {
 }
 
 /**
- * Verify a plain text password against a Cisco Type 7 encrypted password
+ * Verify a plain text password against a Type 7 encrypted password
  */
 export function verifyType7Password(inputPassword: string, encryptedPassword: string): boolean {
   try {
@@ -87,7 +87,7 @@ export function verifyType7Password(inputPassword: string, encryptedPassword: st
 }
 
 /**
- * Verify a plain text password against a Cisco Type 5 (MD5) hashed password ($1$salt$hash)
+ * Verify a plain text password against a Type 5 (MD5) hashed password ($1$salt$hash)
  */
 export function verifyMd5Password(inputPassword: string, storedHash: string): boolean {
   try {

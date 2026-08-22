@@ -35,9 +35,9 @@ export const RefreshHeader: React.FC<RefreshHeaderProps> = ({
 
   return (
     <div
-      className={`flex items-center justify-between px-3 py-2 border-b rounded-t-xl select-none ${!isDark ? 'cursor-grab active:cursor-grabbing' : ''} ${isDark ? 'bg-white/5 border-success-500/20' : 'bg-black/5 border-success-500/30'}`}
+      className={`flex items-center justify-between px-3 py-2 border-b rounded-t-xl select-none cursor-grab active:cursor-grabbing ${isDark ? 'bg-white/5 border-success-500/20' : 'bg-black/5 border-success-500/30'}`}
       ref={headerRef}
-      data-drag-handle={!isDark ? true : undefined}
+      data-drag-handle="true"
       onDoubleClick={(e) => {
         const target = e.target as HTMLElement;
         if (target.closest('button, input, select, textarea, .no-drag')) return;

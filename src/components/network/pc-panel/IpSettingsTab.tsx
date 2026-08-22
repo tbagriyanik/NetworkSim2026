@@ -34,7 +34,7 @@ interface IpSettingsTabProps {
   setServiceNtpServer: (val: string) => void;
   serviceNtpServerError: string;
   setServiceNtpServerError: (val: string) => void;
-  setServiceNtpServerPreset: React.Dispatch<React.SetStateAction<'pool.ntp.org' | 'time.google.com' | 'time.cloudflare.com' | 'local-clock' | 'custom'>>;
+  setServiceNtpServerPreset: React.Dispatch<React.SetStateAction<'pool.ntp.org' | 'time.cloudflare.com' | 'local-clock' | 'custom'>>;
   serviceNtpEnabled: boolean;
   serviceNtpDate: string;
   serviceNtpTime: string;
@@ -274,13 +274,11 @@ export function IpSettingsTab({
               setServiceNtpServerPreset(
                 value === 'pool.ntp.org'
                   ? 'pool.ntp.org'
-                  : value === 'time.google.com'
-                    ? 'time.google.com'
-                    : value === 'time.cloudflare.com'
-                      ? 'time.cloudflare.com'
-                      : value === 'local-clock'
-                        ? 'local-clock'
-                        : 'custom'
+                  : value === 'time.cloudflare.com'
+                    ? 'time.cloudflare.com'
+                    : value === 'local-clock'
+                      ? 'local-clock'
+                      : 'custom'
               );
               const syncedTime = applyNtpServerTime(value);
               dispatchDeviceConfig({

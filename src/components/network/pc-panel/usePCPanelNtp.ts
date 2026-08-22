@@ -26,7 +26,7 @@ interface UsePCPanelNtpOptions {
   serviceNtpTime: string;
   setServiceNtpTime: Dispatch<SetStateAction<string>>;
   setServiceNtpServerPreset: (
-    v: 'pool.ntp.org' | 'time.google.com' | 'time.cloudflare.com' | 'local-clock' | 'custom'
+    v: 'pool.ntp.org' | 'local-clock' | 'custom'
   ) => void;
   isValidIpAddress: (value: string) => boolean;
 }
@@ -249,13 +249,9 @@ export function usePCPanelNtp({
       setServiceNtpServerPreset(
         normalized === 'pool.ntp.org'
           ? 'pool.ntp.org'
-          : normalized === 'time.google.com'
-            ? 'time.google.com'
-            : normalized === 'time.cloudflare.com'
-              ? 'time.cloudflare.com'
-              : normalized === 'local-clock'
-                ? 'local-clock'
-                : 'custom'
+          : normalized === 'local-clock'
+            ? 'local-clock'
+            : 'custom'
       );
       return { date: nextDate, time: nextTime };
     },

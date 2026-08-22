@@ -147,12 +147,6 @@ function getRecommendedCliCommands(
           desc: isTR ? `Varsayılan Ağ Geçidine (${rawDevice.gateway}) Ping Testi` : `Ping default gateway (${rawDevice.gateway})`
         });
       }
-      if (rawDevice.dns && rawDevice.dns !== '0.0.0.0') {
-        cmds.push({
-          cmd: `nslookup www.google.com`,
-          desc: isTR ? `DNS Sunucusu (${rawDevice.dns}) Üzerinden Sorgu` : `DNS query via ${rawDevice.dns}`
-        });
-      }
     }
   }
 
