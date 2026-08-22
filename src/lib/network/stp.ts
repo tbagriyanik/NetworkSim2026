@@ -2,6 +2,7 @@ import type { SwitchState, StpVlanState, Port } from './types';
 import type { CanvasConnection } from '@/components/network/networkTopology.types';
 import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { detectEtherChannelBundles } from './etherchannel';
+import { buildConnectionIndex, getConnectionAtPort, type ConnectionIndex } from './connectionIndex';
 
 /**
  * Spanning Tree Protocol Bridge Protocol Data Unit (BPDU)
@@ -136,6 +137,9 @@ export function recalculateStp(
 
   if (switchIds.length === 0) return updatedStates;
 
+  // Build connection index once for O(1) port connection lookups across all VLANs
+  const connectionIndex = buildConnectionIndex(connections);
+
   // Check if there are any active connections between DIFFERENT switches.
   // STP blocking is only enabled if the topology contains at least two switches connected to each other.
   // This prevents self-loops from blocking ports on isolated switches, making it easier for beginners.
@@ -148,7 +152,7 @@ export function recalculateStp(
 
   // For each VLAN, run STP calculation
   allVlanIds.forEach(vlanId => {
-    runStpForVlan(vlanId, switchIds, connections, updatedStates, hasInterSwitchLinks);
+    runStpForVlan(vlanId, switchIds, connections, connectionIndex, updatedStates, hasInterSwitchLinks);
   });
 
   return updatedStates;
@@ -158,6 +162,7 @@ function runStpForVlan(
   vlanId: number,
   switchIds: string[],
   connections: CanvasConnection[],
+  connectionIndex: ConnectionIndex,
   deviceStates: Map<string, SwitchState>,
   hasInterSwitchLinks: boolean
 ) {
@@ -384,9 +389,9 @@ function runStpForVlan(
         // 3. (Tie-breaker) It has a lower Bridge ID than the other side
         // 4. (Tie-breaker) It has a lower Port ID than the other side
 
-        const conn = connections.find(c =>
-          c.active && ((c.sourceDeviceId === deviceId && c.sourcePort === portId) || (c.targetDeviceId === deviceId && c.targetPort === portId))
-        );
+        // BOLT: Use connectionIndex for O(1) port-connection lookup instead of scanning connections array
+        const portConn = getConnectionAtPort(connectionIndex, deviceId, portId);
+        const conn = (portConn && portConn.active !== false) ? portConn : undefined;
 
         if (!conn) {
           // No connection or non-switch peer -> Designated
