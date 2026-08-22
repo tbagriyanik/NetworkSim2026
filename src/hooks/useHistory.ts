@@ -79,8 +79,7 @@ function estimateStateBytes(state: ProjectState): number {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function serializeProjectState(state: ProjectState): any {
+function serializeProjectState(state: ProjectState): SerializedHistoryEntry['state'] {
   return {
     ...state,
     deviceStates: Array.from(state.deviceStates.entries()),

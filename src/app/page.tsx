@@ -221,10 +221,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   usePWA();
 
   // Track session start time for achievement records
-  const sessionStartRef = useRef(1715600000000);
-  useEffect(() => {
-    sessionStartRef.current = Date.now();
-  }, []);
+  const sessionStartRef = useRef(Date.now());
 
   // Which overlay panel is on top — last clicked wins
   const [focusedOverlay, setFocusedOverlay] = useState<'refresh' | 'packet' | 'pc-info' | 'router-info' | 'switch-info'>('packet');
@@ -1372,8 +1369,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     if (!topologyDevices) return;
 
     let topologyChanged = false;
-    const simulatorChanged = false;
-    const newDeviceStates = new Map(deviceStates);
 
     const updatedTopologyDevices = topologyDevices.map(device => {
       if (device.type === 'pc') return device;
@@ -1383,14 +1378,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
       // If simulator has a different hostname than topology, simulator wins (manual change via CLI/Panel)
       if (deviceState.hostname !== device.name) {
-        // Special case: if simulator has default generic name and topology has specific name (initial load/create)
-        const isDefaultCLIHostname = deviceState.hostname === 'Switch' || deviceState.hostname === 'Router';
-
-        if (isDefaultCLIHostname && !device.name.includes('Router') && !device.name.includes('Switch')) {
-          // This shouldn't really happen with current logic but keeping for safety
-          // Usually topology has names like Switch-1, Router-1 which are also defaults
-        }
-
         // If the simulator name changed, update topology
         topologyChanged = true;
         return { ...device, name: deviceState.hostname };
@@ -1398,15 +1385,11 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       return device;
     });
 
-    if (simulatorChanged) {
-      setDeviceStates(newDeviceStates);
-    }
-
     if (topologyChanged) {
       setTopologyDevices(updatedTopologyDevices);
       setTimeout(() => setHasUnsavedChanges(true), 0);
     }
-  }, [deviceStates, topologyDevices, setDeviceStates, setTopologyDevices, setHasUnsavedChanges]);
+  }, [deviceStates, topologyDevices, setTopologyDevices, setHasUnsavedChanges]);
 
   // Sync services (HTTP, etc.) from deviceStates to topologyDevices
   useEffect(() => {
@@ -1802,7 +1785,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             showBasarilarim={showBasarilarim}
             setShowBasarilarim={setShowBasarilarim}
             helpLevel={helpLevel}
-            setHelpLevel={(level) => useAppStore.getState().setHelpLevel(level)}
+            setHelpLevel={useAppStore.getState().setHelpLevel}
           />
 
           {isGeneratorOpen && <TopologyGeneratorDialog
@@ -1921,7 +1904,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             pcPanelInitialTab={pcPanelInitialTab}
             deviceStates={deviceStates}
             deviceOutputs={deviceOutputs}
-pcOutputs={pcOutputs}
+            pcOutputs={pcOutputs}
             setPcOutputs={setPcOutputs as PcOutputsSetter}
             pcHistories={pcHistories}
             handleUpdatePCHistory={handleUpdatePCHistory}
@@ -2028,9 +2011,7 @@ pcOutputs={pcOutputs}
                       setActiveDeviceId(deviceId);
                       const device = topologyDevices?.find(d => d.id === deviceId);
                       if (!device || device.type === 'pc') return;
-                      if (device) {
-                        setActiveDeviceType(device.type);
-                      }
+                      setActiveDeviceType(device.type);
                       setUnifiedDeviceActiveTab('settings');
                       setShowUnifiedDeviceModal(true);
                     }}
@@ -2041,32 +2022,38 @@ pcOutputs={pcOutputs}
                   />
 
                   {/* PC Info Popover - Bottom Right Mini Panel */}
-                  {activeDeviceId && (activeDeviceId.startsWith('pc-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'pc') && topologyDevices && topologyDevices.find(d => d.id === activeDeviceId) && (
-                    <PCInfoPopover
-                      pc={topologyDevices.find(d => d.id === activeDeviceId) as CanvasDevice}
-                      t={t}
-                      language={language}
-                      isDark={isDark}
-                      isFocused={focusedOverlay === 'pc-info'}
-                      onClose={() => {
-                        setSelectedDevice(null);
-                        setActiveDeviceId('');
-                      }}
-                      onFocus={() => setFocusedOverlay('pc-info')}
-                      zIndex={focusedOverlay === 'pc-info' ? 36 : 25}
-                      handleDeviceDoubleClick={handleDeviceDoubleClick}
-                      onOpenPanel={(id) => {
-                        setShowUnifiedDeviceModal(false);
-                        setShowRouterPanel(false);
-                        setShowFirewallPanel(false);
-                        setShowPCDeviceId(id);
-                        setPcPanelInitialTab('settings');
-                        setShowPCPanel(true);
-                      }}
-                      topologyDevices={topologyDevices}
-                      deviceStates={deviceStates}
-                    />
-                  )}
+                  {(() => {
+                    const activeDevice = activeDeviceId
+                      ? topologyDevices?.find(d => d.id === activeDeviceId) ?? null
+                      : null;
+                    const isPcDevice = activeDevice?.type === 'pc' || activeDeviceId?.startsWith('pc-');
+                    return isPcDevice && activeDevice ? (
+                      <PCInfoPopover
+                        pc={activeDevice}
+                        t={t}
+                        language={language}
+                        isDark={isDark}
+                        isFocused={focusedOverlay === 'pc-info'}
+                        onClose={() => {
+                          setSelectedDevice(null);
+                          setActiveDeviceId('');
+                        }}
+                        onFocus={() => setFocusedOverlay('pc-info')}
+                        zIndex={focusedOverlay === 'pc-info' ? 36 : 25}
+                        handleDeviceDoubleClick={handleDeviceDoubleClick}
+                        onOpenPanel={(id) => {
+                          setShowUnifiedDeviceModal(false);
+                          setShowRouterPanel(false);
+                          setShowFirewallPanel(false);
+                          setShowPCDeviceId(id);
+                          setPcPanelInitialTab('settings');
+                          setShowPCPanel(true);
+                        }}
+                        topologyDevices={topologyDevices}
+                        deviceStates={deviceStates}
+                      />
+                    ) : null;
+                  })()}
 
                   {activeDeviceId && (activeDeviceId.startsWith('router-') || topologyDevices?.find(d => d.id === activeDeviceId)?.type === 'router') && topologyDevices && (
                     <RouterInfoPopover
@@ -2140,8 +2127,8 @@ pcOutputs={pcOutputs}
               cableInfo={cableInfo}
               pcPanelInitialTab={pcPanelInitialTab}
               deviceOutputs={deviceOutputs}
-            pcOutputs={pcOutputs}
-            setPcOutputs={setPcOutputs as PcOutputsSetter}
+              pcOutputs={pcOutputs}
+              setPcOutputs={setPcOutputs as PcOutputsSetter}
               pcHistories={pcHistories}
               handleUpdatePCHistory={handleUpdatePCHistory}
               handleExecuteCommand={handleExecuteCommand}

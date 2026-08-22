@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Globe, Network, Download, History, Settings } from 'lucide-react';
+import { Globe, Network, Download, History, Mail } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DnsServiceConfig } from './DnsServiceConfig';
@@ -181,7 +181,7 @@ export function ServicesTab({
       case 'ftp':
         return <Download className="w-3.5 h-3.5" />;
       case 'mail':
-        return <Settings className="w-3.5 h-3.5" />;
+        return <Mail className="w-3.5 h-3.5" />;
       case 'ntp':
         return <History className="w-3.5 h-3.5" />;
     }

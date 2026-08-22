@@ -14,6 +14,8 @@ export function computeLiveSummary(
   let hsrpActive = 0, hsrpStandby = 0;
   let eigrpCount = 0, eigrpNeighbors = 0;
   states.forEach((state, deviceId) => {
+    const device = Array.isArray(devices) ? devices.find(d => d.id === deviceId) : undefined;
+    if (device && (device.type === 'pc' || device.type === 'iot' || device.type === 'firewall' || device.type === 'wlc')) return;
     if (state.vlans) Object.keys(state.vlans).forEach((vId) => allVlans.add(Number(vId)));
     [state.staticRoutes, state.dynamicRoutes].forEach((routes) => {
       if (!routes) return;
@@ -34,7 +36,6 @@ export function computeLiveSummary(
       }
     });
     const hasRootPort = Object.values(state.ports).some(p => p.spanningTree?.role === 'root');
-    const device = devices.find(d => d.id === deviceId);
     const isSwitch = device ? device.type.startsWith('switch') : false;
     if (isSwitch && !hasRootPort && Object.values(state.ports).some(p => p.spanningTree)) {
       stpRootCount++;

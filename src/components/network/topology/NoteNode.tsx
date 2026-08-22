@@ -1,25 +1,22 @@
 import React, { memo } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { CanvasNote, CanvasDevice, CanvasConnection } from '../networkTopology.types';
+import { CanvasNote, CanvasDevice, CanvasConnection, ContextMenuState } from '../networkTopology.types';
 
 export interface NoteNodeProps {
   note: CanvasNote;
   isDark: boolean;
   selectedNoteIds: string[];
   draggedNoteId: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  contextMenu: any;
+  contextMenu: ContextMenuState | null;
   language: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  t: any;
+  t: Record<string, string>;
   noteTextareaRefs: React.MutableRefObject<Record<string, HTMLTextAreaElement | null>>;
   devices: CanvasDevice[];
   connections: CanvasConnection[];
   notes: CanvasNote[];
   setSelectedNoteIds: React.Dispatch<React.SetStateAction<string[]>>;
   setSelectedDeviceIds: React.Dispatch<React.SetStateAction<string[]>>;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setContextMenu: React.Dispatch<React.SetStateAction<any>>;
+  setContextMenu: React.Dispatch<React.SetStateAction<ContextMenuState | null>>;
   handleNoteHeaderMouseDown: (e: React.MouseEvent, id: string) => void;
   handleNoteHeaderTouchStart: (e: React.TouchEvent, id: string) => void;
   cycleNoteColor: (id: string) => void;

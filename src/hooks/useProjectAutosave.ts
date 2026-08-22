@@ -12,7 +12,7 @@ export interface UseProjectAutosaveParams {
   topologyNotes: CanvasNote[];
   deviceStates: Map<string, SwitchState>;
   deviceOutputs: Map<string, TerminalOutput[]>;
-  pcOutputs: Map<string, TerminalOutput[]>;
+  pcOutputs: Map<string, unknown[]>;
   pcHistories: Map<string, string[]>;
   cableInfo: CableInfo;
   activeDeviceId: string;

@@ -99,7 +99,7 @@ export function useAutoDhcpRenewal({
 
     dhcpRenewalDoneRef.current = true;
     isInitialLoadRef.current = false;
-  }, [assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, deviceStates, setTopologyDevices]);
+  }, [assignDhcpLeaseForPc, buildLinkLocalLease, topologyDevices, deviceStates, setTopologyDevices, pcOutputs, setPcOutputs]);
 
   // Sequential DHCP toasts for "Router DHCP" example
   useEffect(() => {
@@ -118,7 +118,7 @@ export function useAutoDhcpRenewal({
             const lease = assignDhcpLeaseForPc(pc, currentTopology) || buildLinkLocalLease(pc, currentTopology);
 
             if (lease) {
-              const { ip: newIp, subnet, gateway, dns } = lease as { ip: string; subnet: string; gateway: string; dns: string };
+              const { ip: newIp, subnet, gateway } = lease;
               if (!newIp.startsWith('169.254.')) {
                 assignments.push({ name: pc.name || pc.id, ip: newIp });
               }
@@ -131,7 +131,7 @@ export function useAutoDhcpRenewal({
                   ip: newIp,
                   subnet,
                   gateway,
-                  dns
+                  dns: lease.dns
                 };
                 hasOverallChanges = true;
 
@@ -175,5 +175,5 @@ export function useAutoDhcpRenewal({
         setTimeout(() => setLoadedExampleId(null), 0);
       }
     }
-  }, [assignDhcpLeaseForPc, buildLinkLocalLease, loadedExampleId, topologyDevices, deviceStates, toast, language, setTopologyDevices]);
+  }, [assignDhcpLeaseForPc, buildLinkLocalLease, loadedExampleId, topologyDevices, deviceStates, toast, language, setTopologyDevices, handleRefreshNetwork, setLoadedExampleId, setPcOutputs, pcOutputs, t]);
 }

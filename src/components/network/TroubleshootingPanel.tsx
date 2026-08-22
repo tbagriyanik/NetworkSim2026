@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   CheckCircle2,
   Circle,
@@ -8,7 +8,8 @@ import {
   ChevronDown,
   ChevronUp,
   Target,
-  Award
+  Award,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -36,7 +37,7 @@ export function TroubleshootingPanel({
   deviceStates,
   topologyDevices,
   tasks = [],
-  onClose: _onClose,
+  onClose,
   onMinimize,
   isMinimized
 }: TroubleshootingPanelProps) {
@@ -49,6 +50,10 @@ export function TroubleshootingPanel({
   const dragStartPos = useRef({ x: 0, y: 0 });
   const panelStartPos = useRef({ x: 0, y: 0 });
   const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
 
   const handlePointerDown = (e: React.PointerEvent) => {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -177,6 +182,13 @@ export function TroubleshootingPanel({
           >
             {isMinimized ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>
+          <button
+            onClick={onClose}
+            className="p-1 hover:bg-white/10 rounded-md transition-colors text-secondary-500 hover:text-error-500"
+            title={t.close || 'Close'}
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -243,7 +255,7 @@ export function TroubleshootingPanel({
                             </div>
                             {fault.hint && !isResolved && (
                               <div className="text-xs mt-1 italic text-warning-700 dark:text-warning-300/80">
-                                İpucu: {fault.hint[language] || fault.hint.en}
+                                {language === 'tr' ? 'İpucu:' : 'Hint:'} {fault.hint[language] || fault.hint.en}
                               </div>
                             )}
                           </div>
@@ -293,7 +305,7 @@ export function TroubleshootingPanel({
                             </div>
                             {task.hint && !isResolved && (
                               <div className="text-xs text-warning-300/80 mt-1.5 italic">
-                                İpucu: {task.hint[language as 'tr' | 'en'] || task.hint.en}
+                                {language === 'tr' ? 'İpucu:' : 'Hint:'} {task.hint[language as 'tr' | 'en'] || task.hint.en}
                               </div>
                             )}
                           </div>

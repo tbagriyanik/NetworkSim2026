@@ -60,7 +60,7 @@ export function AppFooter({
     <>
       {/* Desktop Footer */}
       <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-2 border-t backdrop-blur-xl transition-all h-[44px] pb-[50px] ${isDark ? 'bg-secondary-950/95 border-secondary-900' : 'bg-white/95 border-secondary-200'
-        } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
+        } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
         <div className="w-full px-5 py-2 pb-[10px]">
           <div className="flex items-center justify-between gap-4">
             {/* Save Status */}
@@ -127,7 +127,7 @@ export function AppFooter({
                       </div>
                     </>
                   )}
-                  {(activeTab === 'cmd' || activeTab === 'terminal') && (
+                  {activeTab === 'cmd' && (
                     <span className="text-[11px] italic">{t.clickIconsToRun}</span>
                   )}
                 </span>
@@ -185,7 +185,7 @@ export function AppFooter({
 
       {/* Mobile Footer — status bar / informational messages */}
       <footer className={`md:hidden fixed bottom-0 inset-x-0 z-2 border-t backdrop-blur-xl transition-all h-[32px] flex items-center px-3 text-[11px] select-none ${isDark ? 'bg-secondary-900/95 border-secondary-800 text-secondary-300' : 'bg-white/95 border-secondary-200 text-secondary-600'
-        } ${showProjectPicker || showOnboarding || activeTab === 'terminal' ? 'hidden' : ''}`}>
+        } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
         <div className="w-full flex items-center justify-between gap-2 overflow-hidden">
           {/* Status & Device count */}
           <div className="flex items-center gap-2 truncate">

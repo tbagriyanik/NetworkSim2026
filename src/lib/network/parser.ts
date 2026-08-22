@@ -409,9 +409,14 @@ export function getInvalidCommandError(
 ): string {
   // Access global state safely (SSR friendly)
   let helpLevel: 'beginner' | 'intermediate' | 'exam' = 'beginner';
+  let language: 'tr' | 'en' = 'tr';
   if (typeof window !== 'undefined') {
     try {
       helpLevel = useAppStore.getState().helpLevel;
+      const storedLang = localStorage.getItem('netsim_language');
+      if (storedLang === 'en' || storedLang === 'tr') {
+        language = storedLang;
+      }
     } catch (_e) { /* ignore */ }
   }
 
@@ -433,19 +438,32 @@ export function getInvalidCommandError(
     const cmdTokens = cleanedInput.toLowerCase().split(/\s+/);
     const firstWord = cmdTokens[0];
 
-    // Educational hints for specific commands (Bilingual)
+    const isTr = language === 'tr';
+    // Educational hints for specific commands
     if (firstWord === 'interface' || firstWord === 'int') {
-      errorMsg += `\n💡 İpucu: "interface" komutundan sonra bir arayüz adı bekleniyor. (Hint: "interface" command expects an interface name like "fa0/1")`;
+      errorMsg += isTr
+        ? `\n💡 İpucu: "interface" komutundan sonra bir arayüz adı bekleniyor (Örn: "fa0/1").`
+        : `\n💡 Hint: "interface" command expects an interface name (e.g. "fa0/1").`;
     } else if (firstWord === 'vlan') {
-      errorMsg += `\n💡 İpucu: "vlan" komutundan sonra bir numara bekleniyor. (Hint: "vlan" command expects a number (1-4094))`;
+      errorMsg += isTr
+        ? `\n💡 İpucu: "vlan" komutundan sonra bir numara bekleniyor (1-4094).`
+        : `\n💡 Hint: "vlan" command expects a number (1-4094).`;
     } else if (firstWord === 'ip' && cmdTokens[1] === 'address') {
-      errorMsg += `\n💡 İpucu: "ip address" komutu bir IP ve alt ağ maskesi bekler. (Hint: "ip address" command expects an IP and subnet mask)`;
+      errorMsg += isTr
+        ? `\n💡 İpucu: "ip address" komutu bir IP ve alt ağ maskesi bekler.`
+        : `\n💡 Hint: "ip address" command expects an IP and subnet mask.`;
     } else if (firstWord === 'access-list') {
-      errorMsg += `\n💡 İpucu: "access-list" komutu bir numara, permit/deny ve koşul bekler. (Hint: "access-list" command expects a number, permit/deny and condition)`;
+      errorMsg += isTr
+        ? `\n💡 İpucu: "access-list" komutu bir numara, permit/deny ve koşul bekler.`
+        : `\n💡 Hint: "access-list" command expects a number, permit/deny and condition.`;
     } else if (firstWord === 'line' && (cmdTokens[1] === 'vty' || cmdTokens[1] === 'console' || cmdTokens[1] === 'con')) {
-      errorMsg += `\n💡 İpucu: "line" komutundan sonra hat tipi ve numarası bekleniyor. (Hint: "line" command expects line type and number)`;
+      errorMsg += isTr
+        ? `\n💡 İpucu: "line" komutundan sonra hat tipi ve numarası bekleniyor.`
+        : `\n💡 Hint: "line" command expects line type and number.`;
     } else if (firstWord === 'router' && (cmdTokens[1] === 'ospf' || cmdTokens[1] === 'rip' || cmdTokens[1] === 'eigrp')) {
-      errorMsg += `\n💡 İpucu: "router" komutundan sonra protokol ve ID bekleniyor. (Hint: "router" command expects protocol and AS/Process ID)`;
+      errorMsg += isTr
+        ? `\n💡 İpucu: "router" komutundan sonra protokol ve ID bekleniyor.`
+        : `\n💡 Hint: "router" command expects protocol and AS/Process ID.`;
     }
 
     // Mevcut mod için geçerli komutların ilk kelimelerini topla

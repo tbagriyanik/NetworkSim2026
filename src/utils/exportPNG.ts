@@ -1,5 +1,5 @@
 import { CanvasDevice, CanvasConnection, CanvasNote } from '../components/network/networkTopology.types';
-import { isCableCompatible } from '@/lib/network/types';
+import { isCableCompatible, SwitchState } from '@/lib/network/types';
 import { CABLE_COLORS } from '../components/network/networkTopology.constants';
 import { logger } from '../lib/logger';
 
@@ -8,8 +8,7 @@ export interface ExportPNGOptions {
   devices: CanvasDevice[];
   notes: CanvasNote[];
   connections: CanvasConnection[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deviceStates?: Map<string, any>;
+  deviceStates?: Map<string, SwitchState>;
   getPortPosition: (device: CanvasDevice, portId: string) => { x: number; y: number };
 }
 

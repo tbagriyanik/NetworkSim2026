@@ -33,7 +33,7 @@ export function isExternalDomain(hostname: string, devices: CanvasDevice[], devi
 export function simulateDnsLookup(hostname: string): string | null {
   const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
 
-  // TODO: Replace this mock implementation with actual DNS server lookups from topology
+  // Known external mock domain mapping & fallback IP generation for internet resolution simulation
   const knownDomains: Record<string, string> = {
     'portal.local': '192.0.2.10',
     'docs.local': '192.0.2.20',
