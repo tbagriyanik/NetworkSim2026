@@ -53,7 +53,8 @@ const getVlanSpecificSTPBlocking = (
   vlanId: number,
   connections: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>,
-  existingConnection?: CanvasConnection
+  existingConnection?: CanvasConnection,
+  connectionIndex?: ReturnType<typeof buildConnectionIndex>
 ): boolean => {
   if (!deviceStates) return false;
 
@@ -68,9 +69,12 @@ const getVlanSpecificSTPBlocking = (
 
   // Check if the connection is active - if the link is down, STP should reconverge
   // and blocked ports should become forwarding (backup path)
-  const connection = existingConnection || connections.find(c =>
-    (c.sourceDeviceId === deviceId && c.sourcePort === portId) ||
-    (c.targetDeviceId === deviceId && c.targetPort === portId)
+  const connection = existingConnection || (connectionIndex
+    ? connectionIndex.byPort.get(`${deviceId}:${portId}`)
+    : connections.find(c =>
+        (c.sourceDeviceId === deviceId && c.sourcePort === portId) ||
+        (c.targetDeviceId === deviceId && c.targetPort === portId)
+      )
   );
 
   // If connection is down, STP would reconverge and this port would not block
@@ -492,8 +496,8 @@ export function checkConnectivity(
           const isDstShutdown = isPortShutdown(neighborId, dstPortId, devices, safeDeviceStates, dstDev);
           const isSrcPoweredOff = !isDevicePoweredOn(srcDev);
           const isDstPoweredOff = !isDevicePoweredOn(dstDev);
-          const isSrcSTPBlocking = allowedVlan ? getVlanSpecificSTPBlocking(cur, srcPortId, allowedVlan, connections, stpDeviceStates, conn) : false;
-          const isDstSTPBlocking = allowedVlan ? getVlanSpecificSTPBlocking(neighborId, dstPortId, allowedVlan, connections, stpDeviceStates, conn) : false;
+          const isSrcSTPBlocking = allowedVlan ? getVlanSpecificSTPBlocking(cur, srcPortId, allowedVlan, connections, stpDeviceStates, conn, connectionIndex) : false;
+          const isDstSTPBlocking = allowedVlan ? getVlanSpecificSTPBlocking(neighborId, dstPortId, allowedVlan, connections, stpDeviceStates, conn, connectionIndex) : false;
           const isCableOk = isConnectionCableCompatible(conn, srcDev, dstDev);
           const isSerialEncapOk = checkSerialEncapsulation(cur, srcPortId, neighborId, dstPortId, safeDeviceStates);
 
@@ -1680,7 +1684,9 @@ export function getPingDiagnostics(
   }
 
   // 8. Check interfaces are up
-  const sourceConn = connections.find(c => c.sourceDeviceId === sourceId || c.targetDeviceId === sourceId);
+  // BOLT: Build connection index for O(1) device connection lookups
+  const connectionIndex = buildConnectionIndex(connections);
+  const sourceConn = connectionIndex.byDevice.get(sourceId)?.[0];
   if (sourceConn) {
     const sourcePortId = sourceConn.sourceDeviceId === sourceId ? sourceConn.sourcePort : sourceConn.targetPort;
     // BOLT: Use pre-resolved safeDeviceStates
@@ -1690,7 +1696,7 @@ export function getPingDiagnostics(
     }
   }
 
-  const targetConn = connections.find(c => c.sourceDeviceId === targetDevice.id || c.targetDeviceId === targetDevice.id);
+  const targetConn = connectionIndex.byDevice.get(targetDevice.id)?.[0];
   if (targetConn) {
     const targetPortId = targetConn.sourceDeviceId === targetDevice.id ? targetConn.targetPort : targetConn.sourcePort;
     // BOLT: Use pre-resolved safeDeviceStates
