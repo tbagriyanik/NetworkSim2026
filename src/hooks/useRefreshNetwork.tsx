@@ -399,16 +399,22 @@ export function useRefreshNetwork({
       duplicateMacCount = Array.from(macOwners.values()).filter(hasCrossDeviceConflict).length;
       duplicateIpv6Count = Array.from(ipv6Owners.values()).filter(hasCrossDeviceConflict).length;
 
+      const invalidGatewayDevices: string[] = [];
       iotProcessedDevices.forEach((device) => {
         if ((device.type !== 'pc' && device.type !== 'iot') || !device.gateway || !isValidIpv4(device.ip) || !isValidIpv4(device.subnet || '')) return;
         const gateway = device.gateway || '';
+        const devName = device.name || device.id;
         if (!isValidIpv4(gateway) || gateway === '0.0.0.0') {
           invalidGatewayCount++;
+          invalidGatewayDevices.push(devName);
           return;
         }
         if (!isSameSubnetByMask(device.ip, gateway, device.subnet)) {
           subnetMismatchCount++;
           invalidGatewayCount++;
+          if (!invalidGatewayDevices.includes(devName)) {
+            invalidGatewayDevices.push(devName);
+          }
         }
       });
 
@@ -509,8 +515,15 @@ export function useRefreshNetwork({
         addNetworkEventLog({ level: 'warning', category: 'Subnet', message: language === 'tr' ? `Alt ağ uyumsuzluğu tespit edildi (${subnetMismatchCount})` : `Subnet mismatch detected (${subnetMismatchCount})` });
       }
       if (invalidGatewayCount > 0) {
-        summaryWarnings.push(language === 'tr' ? `Geçersiz ağ geçidi: ${invalidGatewayCount}` : `Invalid gateway: ${invalidGatewayCount}`);
-        addNetworkEventLog({ level: 'warning', category: 'Gateway', message: language === 'tr' ? `Geçersiz ağ geçidi tespit edildi (${invalidGatewayCount})` : `Invalid gateway detected (${invalidGatewayCount})` });
+        const devList = invalidGatewayDevices.join(', ');
+        summaryWarnings.push(language === 'tr' ? `Geçersiz ağ geçidi (${devList}): ${invalidGatewayCount}` : `Invalid gateway (${devList}): ${invalidGatewayCount}`);
+        addNetworkEventLog({
+          level: 'warning',
+          category: 'Gateway',
+          message: language === 'tr'
+            ? `Geçersiz ağ geçidi tespit edildi: ${devList} (${invalidGatewayCount})`
+            : `Invalid gateway detected: ${devList} (${invalidGatewayCount})`
+        });
       }
       if (disconnectedLinkCount > 0) {
         summaryWarnings.push(language === 'tr' ? `Kopuk bağlantı: ${disconnectedLinkCount}` : `Disconnected link: ${disconnectedLinkCount}`);

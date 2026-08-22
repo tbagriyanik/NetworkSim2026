@@ -203,6 +203,12 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     ...pfx('errdisable', ['recovery']),
     'errdisable recovery': ['cause'],
     'interface': ['dot11radio', 'FastEthernet', 'GigabitEthernet', 'Loopback', 'Range', 'Serial', 'Vlan'],
+    'interface fastethernet': ['<0-48>', '0/1', '0/2', '0/3', '0/4'],
+    'interface gigabitethernet': ['<0-48>', '0/1', '0/2', '1/0/1'],
+    'interface vlan': ['<1-4094>'],
+    'interface loopback': ['<0-2147483647>'],
+    'interface serial': ['0/0/0', '0/1/0'],
+    'interface range': ['fastEthernet', 'gigabitEthernet', 'vlan'],
 
     ...pfx('ip', ['access-list', 'arp', 'default-gateway', 'dhcp', 'domain', 'domain-lookup', 'domain-name', 'host', 'http', 'name-server', 'nat', 'route', 'routing', 'ssh']),
     'ip arp': ['inspection'],
@@ -673,8 +679,11 @@ const commandDescriptions: Record<string, Record<string, string>> = {
 function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, state?: SwitchState): string {
   const modeCommands = commandHelp[mode] || commandHelp.user;
   const modeDescriptions = commandDescriptions[mode] || commandDescriptions.user;
-  const lowerRaw = partialInput.toLowerCase();
-  const hasSpace = /\s$/.test(lowerRaw) || partialInput.length === 0;
+  
+  // Resolve command aliases and keyword prefixes (e.g. "int f" -> "interface f", "sh ip" -> "show ip")
+  const resolvedInput = expandKeywordPrefixes(resolveAliases(partialInput, state), mode);
+  const lowerRaw = resolvedInput.toLowerCase();
+  const hasSpace = /\s$/.test(partialInput) || partialInput.length === 0;
   const lower = lowerRaw.trim();
 
   let suggestions: string[] = [];
@@ -736,14 +745,36 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, 
       if (modeCommands[lower]) {
         suggestions = [...modeCommands[lower]];
       } else {
-        // Prefix match for subcommands with trailing space
-        for (const key of Object.keys(modeCommands)) {
-          if (key.startsWith(lower + ' ')) {
-            const remaining = key.substring(lower.length + 1).trim();
-            if (remaining) {
-              const nextWord = remaining.split(' ')[0];
-              if (nextWord && !suggestions.includes(nextWord)) {
-                suggestions.push(nextWord);
+        // Try expanding the last token if it's an abbreviated sub-keyword (e.g. "interface f" -> "interface FastEthernet")
+        const tokens = lower.split(/\s+/);
+        if (tokens.length > 1) {
+          const parentKey = tokens.slice(0, -1).join(' ');
+          const lastToken = tokens[tokens.length - 1];
+          if (modeCommands[parentKey]) {
+            const matches = modeCommands[parentKey].filter(child => child.toLowerCase().startsWith(lastToken));
+            if (matches.length === 1) {
+              const expandedKey = `${parentKey} ${matches[0]}`.toLowerCase();
+              if (modeCommands[expandedKey]) {
+                suggestions = [...modeCommands[expandedKey]];
+              } else {
+                suggestions = [matches[0]];
+              }
+            } else if (matches.length > 1) {
+              suggestions = matches;
+            }
+          }
+        }
+
+        // Fallback: Prefix match for subcommands with trailing space
+        if (suggestions.length === 0) {
+          for (const key of Object.keys(modeCommands)) {
+            if (key.startsWith(lower + ' ')) {
+              const remaining = key.substring(lower.length + 1).trim();
+              if (remaining) {
+                const nextWord = remaining.split(' ')[0];
+                if (nextWord && !suggestions.includes(nextWord)) {
+                  suggestions.push(nextWord);
+                }
               }
             }
           }
