@@ -1,0 +1,90 @@
+openapi: 3.0.3
+info:
+  title: Network Simulator API
+  version: 2.7.0
+  description: API for classroom rooms, student progress, contact messages, and certificates.
+servers:
+  - url: /
+security:
+  - csrfToken: []
+paths:
+  /api/room:
+    get:
+      summary: Get active room count
+      security: []
+      responses:
+        '200': { description: Room count }
+        '503': { description: Room system disabled }
+    post:
+      summary: Create a classroom room
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, teacherId]
+              properties:
+                code: { type: string, minLength: 4, maxLength: 10 }
+                teacherId: { type: string, minLength: 8, maxLength: 100 }
+      responses:
+        '200': { description: Room created }
+        '400': { description: Invalid request }
+        '403': { description: Invalid CSRF token }
+  /api/room/{code}:
+    get:
+      summary: Check whether a room exists
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/RoomCode'
+      responses:
+        '200': { description: Room status }
+  /api/room/{code}/students:
+    get:
+      summary: List students in a room
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/RoomCode'
+        - name: teacherId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Student progress list }
+  /api/room/{code}/student/{studentId}:
+    patch:
+      summary: Update student progress
+      parameters:
+        - $ref: '#/components/parameters/RoomCode'
+        - name: studentId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: Progress updated }
+        '403': { description: Invalid CSRF token }
+  /api/contact:
+    post:
+      summary: Submit contact message
+      responses:
+        '200': { description: Message accepted }
+        '400': { description: Invalid request }
+        '403': { description: Invalid CSRF token }
+  /api/certificate:
+    post:
+      summary: Create certificate verification code
+      responses:
+        '200': { description: Certificate created }
+        '403': { description: Invalid CSRF token }
+components:
+  securitySchemes:
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+  parameters:
+    RoomCode:
+      name: code
+      in: path
+      required: true
+      schema: { type: string, minLength: 4, maxLength: 10 }

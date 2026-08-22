@@ -104,7 +104,9 @@ export async function getActiveRoomCount(): Promise<number> {
     } while (cursor !== 0);
     return keys.length;
   } catch (e) {
-    logger.error('Error getting active room count:', e);
+    if (process.env.NODE_ENV !== 'test') {
+      logger.error('Error getting active room count:', e);
+    }
     return 0;
   }
 }

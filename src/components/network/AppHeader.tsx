@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import {
   Tooltip,
   TooltipTrigger,
@@ -273,18 +274,12 @@ export function AppHeader({
                   {language.toUpperCase()}
                 </button>
               </TooltipWrapper>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    aria-label={isDark ? t.lightMode : t.darkMode}
-                    className={cn("h-7 w-7 rounded flex items-center justify-center transition-all ui-hover-surface", isDark ? 'text-secondary-300 hover:text-yellow-300' : 'text-secondary-500 hover:text-yellow-600')}
-                    onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                  >
-                    {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{isDark ? t.lightMode : t.darkMode}</TooltipContent>
-              </Tooltip>
+              <ThemeToggle
+                isDark={isDark}
+                lightLabel={t.lightMode}
+                darkLabel={t.darkMode}
+                onToggle={() => setTheme(isDark ? 'light' : 'dark')}
+              />
 
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -302,13 +297,12 @@ export function AppHeader({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    aria-label={`${t.helpLevelLabel}: ${
-                      helpLevel === 'beginner'
+                    aria-label={`${t.helpLevelLabel}: ${helpLevel === 'beginner'
                         ? t.beginner
                         : helpLevel === 'intermediate'
                           ? t.intermediate
                           : t.advanced
-                    }`}
+                      }`}
                     className={cn(
                       "h-7 w-7 rounded flex items-center justify-center transition-all ui-hover-surface",
                       helpLevel === 'beginner' ? 'text-success-500' : helpLevel === 'intermediate' ? 'text-warning-500' : 'text-error-500'

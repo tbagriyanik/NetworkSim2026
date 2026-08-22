@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useRoom } from '@/contexts/RoomContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { generateSecureId } from '@/lib/security/sanitizer';
+import { csrfHeaders } from '@/lib/security/csrf';
 
 type SortField = 'name' | 'duration' | 'tasks' | 'score';
 type SortDir = 'asc' | 'desc';
@@ -253,7 +254,7 @@ export function TeacherRoomPanel() {
     try {
       const res = await fetch('/api/room', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({ code, teacherId: getTeacherId() }),
       });
       const json = await res.json();

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { generateSecureId } from '@/lib/security/sanitizer';
+import { csrfHeaders } from '@/lib/security/csrf';
 
 interface UseRoomSyncOptions {
   roomCode: string | null;
@@ -46,7 +47,7 @@ export function useRoomSync({
       try {
         const res = await fetch(`/api/room/${roomCode}/student/${studentIdRef.current}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
           body: JSON.stringify({ displayName, currentTask, completedTasks, totalTasks, projectFile, durationMinutes }),
         });
         if (res.status === 404) {

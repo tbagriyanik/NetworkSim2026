@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import { toast } from '@/hooks/use-toast';
+import { csrfHeaders } from '@/lib/security/csrf';
 
 interface CertificateData {
   studentName: string;
@@ -118,7 +119,7 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
 
     const res = await fetch('/api/certificate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
       body: JSON.stringify({
         studentName: data.studentName,
         projectTitle: data.projectTitle,
@@ -136,7 +137,7 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
       try {
         const json = await res.json();
         errMsg = json.error || errMsg;
-      } catch {}
+      } catch { }
       throw new Error(errMsg);
     }
 

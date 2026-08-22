@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { csrfHeaders } from '@/lib/security/csrf';
 import { logger } from '@/lib/logger';
 import {
   Dialog,
@@ -93,7 +94,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
       // Or a Next.js API route
       const response = await fetch('/api/contact', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
         body: JSON.stringify({
           ...contactData,
           timestamp: new Date().toISOString(),

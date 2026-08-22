@@ -108,7 +108,7 @@ const config = async () => {
             { key: "X-Content-Type-Options", value: "nosniff" },
             { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
             { key: "X-XSS-Protection", value: "1; mode=block" },
-            { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+            // CSP header is now set by middleware with a nonce per requestobject-src 'none'; script-src 'self' blob: 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ws: wss: https:; worker-src 'self' blob:; manifest-src 'self'" },
             { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }
           ],
         },

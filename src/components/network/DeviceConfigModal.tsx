@@ -20,17 +20,19 @@ export function DeviceConfigModal({
 }: DeviceConfigModalProps) {
   const { t, language } = useLanguage();
   const configInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
 
   const [tempNameValue, setTempNameValue] = useState(device.name || '');
   const [ipValue, setIpValue] = useState(device.ip || '');
   const [subnetValue, setSubnetValue] = useState(device.subnet || '255.255.255.0');
-  
+
   const initialGateway = device.gateway || (device.ip ? (() => {
     const parts = device.ip.split('.');
     parts[3] = '1';
     return parts.join('.');
   })() : '192.168.1.1');
-  
+
   const [gatewayValue, setGatewayValue] = useState(initialGateway);
   const [ipv6Value, setIpv6Value] = useState(device.ipv6 || '');
   const [dnsValue, setDnsValue] = useState(device.dns || '8.8.8.8');
@@ -56,8 +58,34 @@ export function DeviceConfigModal({
   }, []);
 
   useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
     const timer = setTimeout(() => configInputRef.current?.focus(), 50);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      previousFocusRef.current?.focus();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleTab = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab' || !modalRef.current) return;
+      const focusable = Array.from(modalRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleTab);
+    return () => document.removeEventListener('keydown', handleTab);
   }, []);
 
   useEffect(() => {
@@ -109,6 +137,7 @@ export function DeviceConfigModal({
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 modal" onClick={onClose}>
       <div className="absolute inset-0 bg-secondary-950/40" />
       <div
+        ref={modalRef}
         className={`relative w-full max-w-md overflow-hidden rounded-[2rem] border transition-all duration-500 hover:shadow-accent-500/10 ${isDark ? 'bg-secondary-900/80 border-secondary-800/50 shadow-2xl' : 'bg-white/90 border-secondary-200/50 shadow-2xl'
           }`}
         onClick={e => e.stopPropagation()}
@@ -252,7 +281,7 @@ export function DeviceConfigModal({
                     placeholder="2001:db8::1"
                   />
                 </div>
-                
+
                 <div className="space-y-1">
                   <label className={`text-[10px] font-bold tracking-widest ml-1 ${isDark ? 'text-secondary-500' : 'text-secondary-400'}`}>
                     DNS Server
@@ -273,7 +302,7 @@ export function DeviceConfigModal({
           )}
 
           {configError && (
-            <div className={`p-4 rounded-xl text-sm font-semibold flex items-center gap-3 ${isDark ? 'bg-error-500/10 text-error-400 border border-error-500/20' : 'bg-error-50 text-error-600 border border-error-100'}`}>
+            <div role="alert" aria-live="assertive" className={`p-4 rounded-xl text-sm font-semibold flex items-center gap-3 ${isDark ? 'bg-error-500/10 text-error-400 border border-error-500/20' : 'bg-error-50 text-error-600 border border-error-100'}`}>
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
