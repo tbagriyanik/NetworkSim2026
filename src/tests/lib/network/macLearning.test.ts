@@ -235,6 +235,34 @@ describe('MAC Learning Module', () => {
       expect(table[0]).toMatchObject({ mac: 'aa:bb:cc:dd:ee:ff', port: 'fa0/1', vlan: 10, type: 'DYNAMIC' });
     });
 
+    it('learns the first MAC as sticky and shuts down for a different MAC', () => {
+      const state = makeState();
+      state.ports = {
+        'fa0/1': {
+          id: 'fa0/1', name: '', vlan: 10, accessVlan: 10, status: 'connected', mode: 'access',
+          duplex: 'auto', speed: 'auto', shutdown: false, type: 'fastethernet',
+          portSecurity: { enabled: true, sticky: true, violationAction: 'shutdown' }
+        }
+      };
+      deviceStates.set('SW1', state);
+
+      const firstConnection = {
+        id: 'conn-1', sourceDeviceId: 'SW1', sourcePort: 'fa0/1',
+        targetDeviceId: 'PC1', targetPort: 'eth0', cableType: 'straight', active: true,
+      } as CanvasConnection;
+      const first = learnMacsOnNewConnection(deviceStates, firstConnection, [sw1, pc]);
+      const learnedPort = (first.get('SW1') as SwitchState).ports['fa0/1'];
+      expect(learnedPort.staticMacs).toEqual(['aa:bb:cc:dd:ee:ff']);
+      expect(learnedPort.shutdown).toBe(false);
+
+      const differentPc = { ...pc, id: 'PC2', macAddress: '11:22:33:44:55:66' } as CanvasDevice;
+      const second = learnMacsOnNewConnection(first, { ...firstConnection, targetDeviceId: 'PC2' }, [sw1, differentPc]);
+      const securedPort = (second.get('SW1') as SwitchState).ports['fa0/1'];
+      expect(securedPort.shutdown).toBe(true);
+      expect(securedPort.status).toBe('err-disabled');
+      expect(securedPort.portSecurity?.violations).toBe(1);
+    });
+
     it('learns the peer switch MAC on a switch-to-switch trunk (both directions)', () => {
       deviceStates.set('SW1', makeState());
       deviceStates.set('SW2', makeState());

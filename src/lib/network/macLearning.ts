@@ -211,7 +211,37 @@ export function learnMacsOnNewConnection(
     if (!peer.macAddress) return;
     const state = nextStates.get(switchDev.id);
     const port = state?.ports?.[portId];
+    if (!state) return;
     const vlan = Number(port?.accessVlan || port?.vlan || 1);
+
+    if (port?.portSecurity?.enabled) {
+      const normalizedPeerMac = peer.macAddress.toLowerCase().replace(/[-:.]/g, '');
+      const secureMacs = (port.staticMacs || []).map((mac) => mac.toLowerCase().replace(/[-:.]/g, ''));
+
+      if (secureMacs.length === 0 && port.portSecurity.sticky) {
+        const updatedPorts = { ...state.ports };
+        updatedPorts[portId] = {
+          ...port,
+          staticMacs: [peer.macAddress],
+          portSecurity: { ...port.portSecurity, macAddress: peer.macAddress }
+        };
+        nextStates.set(switchDev.id, { ...state, ports: updatedPorts });
+      } else if (!secureMacs.includes(normalizedPeerMac)) {
+        const updatedPorts = { ...state.ports };
+        updatedPorts[portId] = {
+          ...port,
+          shutdown: true,
+          status: 'err-disabled',
+          portSecurity: {
+            ...port.portSecurity,
+            violations: (port.portSecurity.violations || 0) + 1
+          }
+        };
+        nextStates.set(switchDev.id, { ...state, ports: updatedPorts });
+        return;
+      }
+    }
+
     learnMacAddress(switchDev.id, peer.macAddress, portId, vlan, nextStates, 'DYNAMIC');
   };
 
