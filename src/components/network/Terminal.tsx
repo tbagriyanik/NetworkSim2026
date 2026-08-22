@@ -13,7 +13,7 @@ import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
 import { useOutputSearch } from '@/hooks/useOutputSearch';
 import { commandHelp } from '@/lib/network/executor';
-import { commandPatterns } from '@/lib/network/parser';
+import { commandPatterns, expandKeywordPrefixes, resolveAliases } from '@/lib/network/parser';
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -554,12 +554,18 @@ export function Terminal({
 
   // Command Context for Autocomplete
   const expandCommandContext = useCallback((mode: keyof typeof commandHelp, rawValue: string) => {
-    const helpTree = commandHelp[mode] || commandHelp.user;
-    const tokens = rawValue.trim().split(/\s+/).filter(Boolean);
-    const hasTrailingSpace = rawValue.endsWith(' ');
+    const isDoPrefix = rawValue.trim().toLowerCase().startsWith('do ') && mode !== 'privileged' && mode !== 'user';
+    const effectiveMode = isDoPrefix ? 'privileged' : mode;
+    const valueToProcess = isDoPrefix ? (rawValue.trim().substring(3) + (rawValue.endsWith(' ') ? ' ' : '')) : rawValue;
+
+    const helpTree = commandHelp[effectiveMode] || commandHelp.user;
+    const tokens = valueToProcess.trim().split(/\s+/).filter(Boolean);
+    const hasTrailingSpace = valueToProcess.endsWith(' ');
     const contextTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
     const currentWord = hasTrailingSpace ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
     const contextKey = contextTokens.join(' ').toLowerCase();
+
+    const finalContextTokens = isDoPrefix ? ['do', ...contextTokens] : contextTokens;
 
     // 1. Try commandHelp tree first
     let candidates: string[] = contextTokens.length === 0
@@ -570,7 +576,7 @@ export function Terminal({
     if (candidates.length === 0 && contextKey) {
       const patternCandidates: string[] = [];
       for (const [name, pattern] of Object.entries(commandPatterns)) {
-        if (!pattern.modes.includes(mode as CommandMode)) continue;
+        if (!pattern.modes.includes(effectiveMode as CommandMode)) continue;
         const nameLower = name.toLowerCase();
         const prefix = contextKey + ' ';
         if (!nameLower.startsWith(prefix)) continue;
@@ -593,7 +599,7 @@ export function Terminal({
     return {
       candidates: filteredCandidates,
       currentWord,
-      contextTokens,
+      contextTokens: finalContextTokens,
       hasTrailingSpace,
       allCandidates: candidates // Keep all candidates for ? help
     };
@@ -792,21 +798,21 @@ export function Terminal({
 
   const getAutocompleteContext = useCallback((value: string) => {
     const mode = state.currentMode;
-    const base = expandCommandContext(mode, value);
+    const resolvedValue = expandKeywordPrefixes(resolveAliases(value, state), mode);
+    const base = expandCommandContext(mode, resolvedValue.length > 0 ? resolvedValue : value);
     const helpTree = commandHelp[mode] || commandHelp.user || {};
     const contextKey = base.contextTokens.join(' ').toLowerCase();
 
-    if (contextKey === 'conf' && helpTree['configure']) {
+    if (helpTree[contextKey]) {
       return {
         ...base,
-        candidates: helpTree['configure'],
-        allCandidates: helpTree['configure'],
-        contextTokens: ['configure']
+        candidates: helpTree[contextKey],
+        allCandidates: helpTree[contextKey],
       };
     }
 
     return base;
-  }, [state.currentMode, expandCommandContext]);
+  }, [state.currentMode, state, expandCommandContext]);
 
   const handleTabComplete = useCallback(() => {
     const value = input;

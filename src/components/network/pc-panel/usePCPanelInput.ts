@@ -4,6 +4,7 @@ import { useCallback, useEffect } from 'react';
 import type { KeyboardEvent } from 'react';
 import type { PCActiveTab, OutputLine } from './PCPanel.types';
 import { expandCommandContext, DESKTOP_COMMANDS } from '../pcPanel.utils';
+import { resolveAliases, expandKeywordPrefixes } from '@/lib/network/parser';
 
 export interface UsePCPanelInputParams {
   input: string;
@@ -94,7 +95,8 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
 
   const buildCompletedInput = useCallback((selected: string) => {
     const mode = getCommandMode();
-    const { contextTokens } = expandCommandContext(mode, input);
+    const resolvedInput = expandKeywordPrefixes(resolveAliases(input), mode as any);
+    const { contextTokens } = expandCommandContext(mode, resolvedInput.length > 0 ? resolvedInput : input);
     const prefix = contextTokens.join(' ');
     return prefix ? `${prefix} ${selected}` : selected;
   }, [input, getCommandMode]);

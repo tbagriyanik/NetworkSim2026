@@ -2,12 +2,18 @@ import { commandHelp } from '@/lib/network/executor';
 
 /** Expands autocomplete context for the given command mode and raw input value */
 export const expandCommandContext = (mode: keyof typeof commandHelp, rawValue: string) => {
-    const helpTree = commandHelp[mode] || commandHelp.user;
-    const tokens = rawValue.trim().split(/\s+/).filter(Boolean);
-    const hasTrailingSpace = rawValue.endsWith(' ');
+    const isDoPrefix = rawValue.trim().toLowerCase().startsWith('do ') && mode !== 'privileged' && mode !== 'user';
+    const effectiveMode = isDoPrefix ? 'privileged' : mode;
+    const valueToProcess = isDoPrefix ? (rawValue.trim().substring(3) + (rawValue.endsWith(' ') ? ' ' : '')) : rawValue;
+
+    const helpTree = commandHelp[effectiveMode] || commandHelp.user;
+    const tokens = valueToProcess.trim().split(/\s+/).filter(Boolean);
+    const hasTrailingSpace = valueToProcess.endsWith(' ');
     const contextTokens = hasTrailingSpace ? tokens : tokens.slice(0, -1);
     const currentWord = hasTrailingSpace ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
     const contextKey = contextTokens.join(' ').toLowerCase();
+
+    const finalContextTokens = isDoPrefix ? ['do', ...contextTokens] : contextTokens;
 
     // Get all candidates
     const candidates = contextTokens.length === 0 ? (helpTree[''] || []) : (helpTree[contextKey] || []);
@@ -20,7 +26,7 @@ export const expandCommandContext = (mode: keyof typeof commandHelp, rawValue: s
     return {
         candidates: filteredCandidates,
         currentWord,
-        contextTokens,
+        contextTokens: finalContextTokens,
         allCandidates: candidates // Keep all candidates for ? help
     };
 };

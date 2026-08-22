@@ -38,6 +38,13 @@ const cachedSortedAliases = Object.entries(commandAliases || {})
 export function resolveAliases(input: string, state?: Partial<SwitchState>): string {
   const trimmed = input.trim().toLowerCase();
 
+  // Special handling for "do <subcommand>" — delegate alias resolution to privileged mode
+  if (trimmed.startsWith('do ')) {
+    const subInput = input.trim().substring(3);
+    const resolvedSub = resolveAliases(subInput, state);
+    return `do ${resolvedSub}`;
+  }
+
   // Exec aliases: built-in defaults + user-defined (runtime)
   const builtInExecAliases: Record<string, string> = {
     h: 'show history',
@@ -226,6 +233,13 @@ function tokenize(input: string): string[] {
 export function expandKeywordPrefixes(input: string, currentMode: CommandMode, capabilities?: DeviceCapabilities): string {
   const rawTokens = input.trim().split(/\s+/).filter(Boolean);
   if (rawTokens.length === 0) return input;
+
+  // Special handling for "do <subcommand>" — delegating keyword expansion to privileged mode
+  if (rawTokens[0].toLowerCase() === 'do' && rawTokens.length > 1 && currentMode !== 'privileged' && currentMode !== 'user') {
+    const subInput = input.trim().substring(rawTokens[0].length).trim();
+    const expandedSub = expandKeywordPrefixes(subInput, 'privileged', capabilities);
+    return `do ${expandedSub}`;
+  }
 
   let frontier: CommandTreeNode[] = [ensureCommandTree(currentMode, capabilities)];
   const expanded = [...rawTokens];
