@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useRef, useEffect } from 'react';
 import { Laptop, CornerDownLeft, Trash2 } from 'lucide-react';
@@ -65,9 +65,10 @@ export function CommandLineTab({
   handleFontSizeChange,
   isMobile,
   t,
+  inputRef: externalInputRef,
   outputRef,
 }: CommandLineTabProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = externalInputRef;
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll output area
@@ -89,7 +90,7 @@ export function CommandLineTab({
   }, []);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden relative">
       {/* Settings Bar */}
       {showCmdSettings && (
         <div className="px-3 md:px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2 shrink-0">
@@ -120,8 +121,8 @@ export function CommandLineTab({
           event.currentTarget.scrollTop += event.deltaY;
         }}
         className={cn(
-          "h-0 flex-1 min-h-0 max-h-full overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar",
-          isMobile && "mobile-scroll",
+          "flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y scroll-smooth font-geist-mono leading-relaxed custom-scrollbar min-h-0 cursor-text",
+          isMobile ? "mobile-scroll p-3" : "p-6",
           isPcPoweredOff ? "bg-black" : terminalBg
         )}
         style={{ ...mobileVerticalScrollStyle, fontSize: `${fontSize}px`, contain: 'layout style paint' }}
@@ -158,34 +159,50 @@ export function CommandLineTab({
         )}
       </div>
 
-      {/* Input Area - Fixed at bottom */}
+      {/* Input Area - Pinned to bottom in flex flow */}
       {!isPcPoweredOff && (
-        <div onClick={handleContainerClick} className={cn("flex-none w-full min-h-[58px] relative z-20 border-t bg-muted/95 backdrop-blur-sm", isMobile ? "p-2" : "p-3")}>
+        <div onClick={handleContainerClick} className={cn("shrink-0 border-t bg-muted/95 backdrop-blur-sm z-20", isMobile ? "p-2 pb-safe" : "p-3")}>
           <form onSubmit={(e) => { e.preventDefault(); void executeCommand(); }} className="flex items-center gap-3 relative">
-            <div
-              className={cn(
-                "flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner overflow-hidden",
-                isMobile && "px-3 py-2",
-                "border-input focus-within:ring-primary/50"
-              )}
-            >
-              <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[80px] sm:max-w-none md:max-w-[150px] text-primary">
-                {ftpSession ? 'ftp>' : `${internalPcHostname} C:\\>`}
-              </span>
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => handleInputChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px] placeholder:text-muted-foreground/50 min-w-0"
-                placeholder={t.typeCommand}
-                aria-label={t.typeCommand}
-                autoComplete="off"
-                spellCheck={false}
-                disabled={isCmdInputDisabled}
-              />
-            </div>
+              <div
+                className={cn(
+                  "flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner overflow-hidden",
+                  "border-input focus-within:ring-primary/50",
+                  isMobile && "px-3 py-2"
+                )}
+              >
+                <span className="shrink-0 text-primary">
+                  <Laptop className="w-4 h-4" />
+                </span>
+                <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[80px] sm:max-w-none md:max-w-[150px] text-primary">
+                  {ftpSession ? 'ftp>' : `${internalPcHostname} C:\\>`}
+                </span>
+                <input
+                  ref={inputRef}
+                  data-terminal-input
+                  type="text"
+                  value={input}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onPaste={(e) => {
+                    const pastedData = e.clipboardData.getData('text');
+                    if (pastedData && pastedData.includes('\n')) {
+                      e.preventDefault();
+                      const lines = pastedData.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                      void (async () => {
+                        for (const line of lines) {
+                          await executeCommand(line);
+                        }
+                      })();
+                    }
+                  }}
+                  className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px] placeholder:text-muted-foreground/50 min-w-0"
+                  placeholder={t.typeCommand}
+                  aria-label={t.typeCommand}
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={isCmdInputDisabled}
+                />
+              </div>
 
             {shouldShowAutocomplete && (
               <div
@@ -231,7 +248,8 @@ export function CommandLineTab({
 
             <Button
               type="submit"
-              disabled={!input.trim() || isCmdInputDisabled}
+              disabled={isCmdInputDisabled}
+              aria-label={t.typeCommand}
               className={cn(
                 "shrink-0 rounded-xl shadow-lg px-3 bg-secondary-800 text-white hover:bg-secondary-700 dark:bg-white dark:text-secondary-900 dark:hover:bg-secondary-200",
                 isMobile ? "h-9 text-xs" : "h-11 text-sm"

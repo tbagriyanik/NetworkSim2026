@@ -386,8 +386,8 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
     }
 
     if (e.key === 'Enter') {
+      e.preventDefault();
       if (canUseAutocomplete && autocompleteNavigated) {
-        e.preventDefault();
         const completed = completeAutocompleteSelection(renderAutocompleteSuggestions[autocompleteIndex] || renderAutocompleteSuggestions[0]);
         void executeCommand(completed);
         return;

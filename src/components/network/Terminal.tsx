@@ -1399,10 +1399,11 @@ export function Terminal({
       className={cn("flex flex-col h-full max-h-[85vh] sm:max-h-none", className)}
       style={{ height: '100%' }}
     >
-      <div className={cn("flex flex-col h-full overflow-hidden terminal-container max-h-[75vh] sm:max-h-none", isDark ? "bg-black" : "bg-secondary-50")}>
+      {/* Outer container — matches CommandLineTab exactly */}
+      <div className={cn("flex flex-col flex-1 min-h-0 h-full overflow-hidden relative", isDark ? "bg-black" : "bg-secondary-50")}>
         {/* Settings Bar */}
         {showSettings && (
-          <div className="px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2">
+          <div className="px-3 md:px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2 shrink-0">
             <label className="text-[10px] font-black tracking-widest text-muted-foreground whitespace-nowrap">
               {t.fontSizeLabel}: {fontSize}px
             </label>
@@ -1412,7 +1413,7 @@ export function Terminal({
               onChange={(e) => { const v = parseInt(e.target.value); setFontSize(v); try { localStorage.setItem('terminal-font-size', String(v)); } catch { } }}
               className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
             />
-            <Button variant="ghost" size="sm" onClick={clearTerminalView} className="h-7 text-[10px] font-black  tracking-widest text-error-500 gap-1.5">
+            <Button variant="ghost" size="sm" onClick={clearTerminalView} className="h-7 text-[10px] font-black tracking-widest text-error-500 gap-1.5">
               <Trash2 className="w-3 h-3" />
               {t.clearTerminalBtn}
               <ShortcutBadge shortcut="Ctrl+L" variant="danger" className="scale-75 origin-right" />
@@ -1420,141 +1421,149 @@ export function Terminal({
           </div>
         )}
 
-        <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
-          <div
-            ref={terminalRef}
-            role="log"
-            aria-live="polite"
-            aria-label={t.typeCommand}
-            onClick={() => inputRef.current?.focus()}
-            className={cn(
-              "flex-1 overflow-y-auto overflow-x-hidden font-geist-mono leading-relaxed custom-scrollbar min-h-0 cursor-text",
-              isMobile ? "mobile-scroll p-3 pb-36" : "p-6 pb-32",
-              isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-secondary-50")
-            )}
-            style={{
-              fontSize: `${fontSize}px`,
-              paddingBottom: isMobile && keyboardHeight > 0 ? `${keyboardHeight + 20}px` : undefined
-            }}
-          >
-            {isPoweredOff ? (
-              <div className="h-full flex flex-col items-center justify-center gap-3">
-                <svg className="w-16 h-16 text-error-600 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.36 5.64a9 9 0 1 1-12.73 0" />
-                </svg>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {/* Show all output with natural scrolling */}
-                {displayedLines.filter(line => line != null).map((line) => (
-                  <div key={line.id} className="animate-in fade-in slide-in-from-left-1 duration-200 break-words overflow-hidden">
-                    {line.type === 'command' ? (
-                      <div className="flex gap-2 text-accent-500 font-bold group flex-wrap">
-                        {deviceIconInfo && (
-                          <span className={`shrink-0 ${deviceIconInfo.color}`}>
-                            {deviceIconInfo.icon === RouterIcon ? (
-                              <RouterIcon className="w-4 h-4" />
-                            ) : deviceIconInfo.icon === SwitchIcon ? (
-                              <SwitchIcon className="w-4 h-4" isL3={deviceIconInfo.isL3} />
-                            ) : (
-                              <deviceIconInfo.icon className="w-4 h-4" />
-                            )}
-                          </span>
-                        )}
-                        <span className="shrink-0 opacity-40 select-none">{line.prompt || prompt}</span>
-                        <span className={isDark ? "text-secondary-100" : "text-secondary-900"}>{highlightCommand(line.content)}</span>
-                      </div>
-                    ) : (
-                      <>
-                        <div className={cn(
-                          "whitespace-pre-wrap break-words overflow-hidden flex items-start gap-2",
-                          line.type === 'error' ? "text-error-500" :
-                          (line.type === 'success' ?
-                            (line.realismLevel === 'stub' ? "text-warning-500" :
-                             line.realismLevel === 'sim-only' ? "text-primary-500" : "text-success-500")
-                            : (isDark ? "text-secondary-300" : "text-secondary-700"))
-                        )}>
-                          {line.realismLevel === 'stub' && <span className="shrink-0 mt-1">⚠️</span>}
-                          {line.realismLevel === 'sim-only' && <span className="shrink-0 mt-1">ℹ️</span>}
-                          <div className="flex-1">
+        {/* Output Area — matches CommandLineTab scroll styles */}
+        <div
+          ref={terminalRef}
+          role="log"
+          aria-live="polite"
+          aria-label={t.typeCommand}
+          onClick={() => inputRef.current?.focus()}
+          onWheel={(event) => {
+            event.stopPropagation();
+            event.currentTarget.scrollTop += event.deltaY;
+          }}
+          className={cn(
+            "flex-1 overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y scroll-smooth font-geist-mono leading-relaxed custom-scrollbar min-h-0 cursor-text",
+            isMobile ? "mobile-scroll p-3" : "p-6",
+            isPoweredOff ? "bg-black" : (isDark ? "bg-black" : "bg-secondary-50")
+          )}
+          style={{
+            fontSize: `${fontSize}px`,
+            paddingBottom: isMobile && keyboardHeight > 0 ? `${keyboardHeight + 20}px` : undefined,
+            contain: 'layout style paint'
+          }}
+        >
+          {isPoweredOff ? (
+            <div className="h-full flex flex-col items-center justify-center gap-3">
+              <svg className="w-16 h-16 text-error-600 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.36 5.64a9 9 0 1 1-12.73 0" />
+              </svg>
+            </div>
+          ) : (
+            <div>
+              {displayedLines.filter(line => line != null).map((line) => (
+                <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
+                  {line.type === 'command' ? (
+                    <div className="flex items-start gap-2 text-accent-500 font-bold">
+                      {deviceIconInfo && (
+                        <span className={`shrink-0 ${deviceIconInfo.color}`}>
+                          {deviceIconInfo.icon === RouterIcon ? (
+                            <RouterIcon className="w-4 h-4" />
+                          ) : deviceIconInfo.icon === SwitchIcon ? (
+                            <SwitchIcon className="w-4 h-4" isL3={deviceIconInfo.isL3} />
+                          ) : (
+                            <deviceIconInfo.icon className="w-4 h-4" />
+                          )}
+                        </span>
+                      )}
+                      <span className="shrink-0 opacity-40 select-none font-geist-mono">{line.prompt || prompt}</span>
+                      <span className={isDark ? "text-secondary-100" : "text-secondary-900"}>{highlightCommand(line.content)}</span>
+                    </div>
+                  ) : (
+                    <>
+                      {line.type === 'output' && (
+                        <div className={cn(isDark ? 'text-secondary-300' : 'text-secondary-700', "whitespace-pre-wrap")}>
+                          <span>
                             {line.content === BOOT_PROGRESS_MARKER
                               ? (completedBootIds.has(line.id)
                                 ? <span className={`font-mono font-bold ${isDark ? 'text-success-400' : 'text-success-600'}`}>{'#'.repeat(10)} {t.bootReady}</span>
                                 : <BootProgressBar key={line.id} id={line.id} isDark={isDark} readyText={t.bootReady} onDone={(id) => { completedBootIds.add(id); setBootVersion(v => v + 1); }} />)
                               : highlightText(line.content)}
+                          </span>
+                        </div>
+                      )}
+                      {line.type === 'error' && <span className="text-error-500 font-bold italic">{highlightText(line.content)}</span>}
+                      {line.type === 'success' && (
+                        <span className={cn(
+                          "font-bold text-xs tracking-widest opacity-80",
+                          line.realismLevel === 'stub' ? "text-warning-500" :
+                          line.realismLevel === 'sim-only' ? "text-primary-500" : "text-accent-500"
+                        )}>{highlightText(line.content)}</span>
+                      )}
+                      {line.type === 'password-prompt' && (
+                        <div className={cn(isDark ? 'text-secondary-300' : 'text-secondary-700', "whitespace-pre-wrap")}>
+                          <span>{highlightText(line.content)}</span>
+                        </div>
+                      )}
+                      {line.hint && (helpLevel === 'beginner' || (helpLevel === 'intermediate' && line.type === 'error')) && (
+                        <div className={cn(
+                          "mt-1 mb-2 p-2 rounded-lg border flex gap-2 animate-in zoom-in-95 duration-300",
+                          isDark ? "bg-accent-500/5 border-accent-500/20 text-accent-200" : "bg-accent-50 border-accent-200 text-accent-800"
+                        )}>
+                          <span className="shrink-0">💡</span>
+                          <div className="text-[11px] leading-relaxed">
+                            <span className="font-black uppercase tracking-tighter mr-1 opacity-70">
+                              {t.learningNote}
+                            </span>
+                            {typeof line.hint === 'string' ? line.hint : (language === 'tr' ? line.hint?.tr : line.hint?.en)}
                           </div>
                         </div>
-                        {line.hint && (helpLevel === 'beginner' || (helpLevel === 'intermediate' && line.type === 'error')) && (
-                          <div className={cn(
-                            "mt-1 mb-2 p-2 rounded-lg border flex gap-2 animate-in zoom-in-95 duration-300",
-                            isDark ? "bg-accent-500/5 border-accent-500/20 text-accent-200" : "bg-accent-50 border-accent-200 text-accent-800"
-                          )}>
-                            <span className="shrink-0">💡</span>
-                            <div className="text-[11px] leading-relaxed">
-                              <span className="font-black uppercase tracking-tighter mr-1 opacity-70">
-                                {t.learningNote}
-                              </span>
-                              {typeof line.hint === 'string' ? line.hint : (language === 'tr' ? line.hint?.tr : line.hint?.en)}
-                            </div>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                ))}
-                {isLoading && (
-                  <div className="flex items-center gap-2 text-primary/50 italic py-1 animate-pulse">
-                    <span className="text-[10px] font-black tracking-widest">{t.processing}...</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {!isPoweredOff && (
-            <div onClick={() => inputRef.current?.focus()} className={cn(
-              "absolute inset-x-0 bottom-0 z-20 border-t bg-muted/95 backdrop-blur-sm",
-              isMobile ? "p-2 pb-safe" : "p-3"
-            )}>
-              {isMobile && !state.awaitingPassword && !confirmDialog?.show && (
-                <div className="flex gap-1.5 overflow-x-auto pb-2 mb-1 px-1 no-scrollbar">
-                  {(device?.type === 'pc' ? QUICK_COMMANDS.pc : device?.type === 'iot' ? QUICK_COMMANDS.iot : QUICK_COMMANDS[state.currentMode] || []).map((cmd) => (
-                    <Button
-                      key={cmd}
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className={cn(
-                        "h-8 px-3 text-[11px] font-bold tracking-tight whitespace-nowrap rounded-lg flex-shrink-0 border shadow-sm",
-                        isDark
-                          ? "bg-secondary-800/80 border-secondary-700 text-secondary-300 active:bg-secondary-700"
-                          : "bg-white border-secondary-200 text-secondary-600 active:bg-secondary-100"
                       )}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleQuickCommand(cmd);
-                      }}
-                    >
-                      {cmd.trim()}
-                    </Button>
-                  ))}
+                    </>
+                  )}
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex items-center gap-2 text-primary/50 italic py-1 animate-pulse">
+                  <span className="text-[10px] font-black tracking-widest">{t.processing}...</span>
                 </div>
               )}
-              <form onSubmit={handleFormSubmit} className="flex items-center gap-3 relative">
-                {/* Contextual hint above input for confirm/reload states */}
-                {(confirmDialog?.show || isReloadConfirmationPending) && helpLevel !== 'exam' && (
-                  <div className="absolute -top-7 left-4 right-4 text-[10px] font-black tracking-widest text-warning-400 animate-pulse">
-                    {confirmDialog?.show
-                      ? (confirmDialog.message || t.pressEnterToConfirm)
-                      : `${t.pressEnterToConfirm} [confirm]`}
-                  </div>
-                )}
-                <div
-                  onClick={() => inputRef.current?.focus()}
-                  className={cn(
+            </div>
+          )}
+        </div>
+
+        {/* Input Area — matches CommandLineTab absolute positioning */}
+        {!isPoweredOff && (
+          <div onClick={() => inputRef.current?.focus()} className={cn("shrink-0 border-t bg-muted/95 backdrop-blur-sm z-20", isMobile ? "p-2 pb-safe" : "p-3")}>
+            {isMobile && !state.awaitingPassword && !confirmDialog?.show && (
+              <div className="flex gap-1.5 overflow-x-auto pb-2 mb-1 px-1 no-scrollbar">
+                {(device?.type === 'pc' ? QUICK_COMMANDS.pc : device?.type === 'iot' ? QUICK_COMMANDS.iot : QUICK_COMMANDS[state.currentMode] || []).map((cmd) => (
+                  <Button
+                    key={cmd}
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className={cn(
+                      "h-8 px-3 text-[11px] font-bold tracking-tight whitespace-nowrap rounded-lg flex-shrink-0 border shadow-sm",
+                      isDark
+                        ? "bg-secondary-800/80 border-secondary-700 text-secondary-300 active:bg-secondary-700"
+                        : "bg-white border-secondary-200 text-secondary-600 active:bg-secondary-100"
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleQuickCommand(cmd);
+                    }}
+                  >
+                    {cmd.trim()}
+                  </Button>
+                ))}
+              </div>
+            )}
+            <form onSubmit={handleFormSubmit} className="flex items-center gap-3 relative">
+              {/* Contextual hint above input */}
+              {(confirmDialog?.show || isReloadConfirmationPending) && helpLevel !== 'exam' && (
+                <div className="absolute -top-7 left-4 right-4 text-[10px] font-black tracking-widest text-warning-400 animate-pulse">
+                  {confirmDialog?.show
+                    ? (confirmDialog.message || t.pressEnterToConfirm)
+                    : `${t.pressEnterToConfirm} [confirm]`}
+                </div>
+              )}
+              <div
+                onClick={() => inputRef.current?.focus()}
+                className={cn(
                   "flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner overflow-hidden",
                   state.awaitingPassword || localPasswordPrompt
                     ? "border-warning-500/50 focus-within:ring-warning-500/50"
@@ -1562,136 +1571,134 @@ export function Terminal({
                       ? "border-warning-500/50 focus-within:ring-warning-500/50"
                       : "border-input focus-within:ring-primary/50",
                   isMobile && "px-3 py-2"
-                )}>
-                  {deviceIconInfo && (
-                    <span className={`shrink-0 ${deviceIconInfo.color}`}>
-                      {deviceIconInfo.icon === RouterIcon ? (
-                        <RouterIcon className="w-4 h-4" />
-                      ) : deviceIconInfo.icon === SwitchIcon ? (
-                        <SwitchIcon className="w-4 h-4" isL3={deviceIconInfo.isL3} />
-                      ) : (
-                        <deviceIconInfo.icon className="w-4 h-4" />
-                      )}
-                    </span>
-                  )}
-                  <span className={cn(
-                    "font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[80px] sm:max-w-none md:max-w-[150px]",
-                    state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending
-                      ? "text-warning-400"
-                      : "text-primary"
-                  )}>
-                    {state.awaitingPassword || localPasswordPrompt
-                      ? t.passwordLabel
-                      : confirmDialog?.show || isReloadConfirmationPending
-                        ? '[confirm]'
-                        : prompt}
-                  </span>
-                  <input
-                    ref={inputRef}
-                    data-terminal-input
-                    type={state.awaitingPassword || localPasswordPrompt ? 'password' : 'text'}
-                    value={input}
-                    onChange={(e) => handleInputChange(e.target.value)}
-                    onPaste={handlePaste}
-                    onKeyDown={handleKeyDown}
-                    onFocus={() => {
-                      // Scroll input into view on mobile when keyboard opens
-                      if (isMobile) {
-                        setTimeout(() => {
-                          inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 400);
-                      }
-                    }}
-                    disabled={isInputDisabled}
-                    className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px] placeholder:text-muted-foreground/50 min-w-0"
-                    placeholder={
-                      state.awaitingPassword || localPasswordPrompt
-                        ? t.enterPassword
-                        : confirmDialog?.show || isReloadConfirmationPending
-                          ? t.typeCommandPlaceholder
-                          : t.typeCommand
-                    }
-                    autoComplete="off"
-                    spellCheck={false}
-                  />
-                </div>
-                {(state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && (
-                  <Button
-                    type="button"
-                    disabled={isInputDisabled}
-                    variant="ghost"
-                    className="shrink-0 rounded-xl hover:bg-error-500/20 text-error-500 px-2 h-9 text-xs"
-                    onClick={() => {
-                      if (onCommand) {
-                        if (state.awaitingPassword || localPasswordPrompt) {
-                          onCommand('__PASSWORD_CANCELLED__');
-                        } else if (isReloadConfirmationPending) {
-                          // Send 'n' to cancel reload
-                          onCommand('n');
-                        }
-                      }
-                      if (state.awaitingPassword || localPasswordPrompt) {
-                        setLocalPasswordPrompt(false);
-                      }
-                      setInput('');
-                    }}
-                    title={t.cancel}
-                  >
-                    <X className={cn("w-4 h-4 mr-1", isMobile && "w-3 h-3")} />
-                    <span className="text-error-600 dark:text-error-400 font-medium">{t.cancel}</span>
-                  </Button>
                 )}
-                <Button
-                  type="submit"
+              >
+                {deviceIconInfo && (
+                  <span className={`shrink-0 ${deviceIconInfo.color}`}>
+                    {deviceIconInfo.icon === RouterIcon ? (
+                      <RouterIcon className="w-4 h-4" />
+                    ) : deviceIconInfo.icon === SwitchIcon ? (
+                      <SwitchIcon className="w-4 h-4" isL3={deviceIconInfo.isL3} />
+                    ) : (
+                      <deviceIconInfo.icon className="w-4 h-4" />
+                    )}
+                  </span>
+                )}
+                <span className={cn(
+                  "font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[80px] sm:max-w-none md:max-w-[150px]",
+                  state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending
+                    ? "text-warning-400"
+                    : "text-primary"
+                )}>
+                  {state.awaitingPassword || localPasswordPrompt
+                    ? t.passwordLabel
+                    : confirmDialog?.show || isReloadConfirmationPending
+                      ? '[confirm]'
+                      : prompt}
+                </span>
+                <input
+                  ref={inputRef}
+                  data-terminal-input
+                  type={state.awaitingPassword || localPasswordPrompt ? 'password' : 'text'}
+                  value={input}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onPaste={handlePaste}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    if (isMobile) {
+                      setTimeout(() => {
+                        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      }, 400);
+                    }
+                  }}
                   disabled={isInputDisabled}
-                  aria-label={t.typeCommand}
-                  className={cn(
-                    "shrink-0 rounded-xl shadow-lg px-3 bg-secondary-800 text-white hover:bg-secondary-700 dark:bg-white dark:text-secondary-900 dark:hover:bg-secondary-200",
-                    isMobile ? "h-9 text-xs" : "h-11 text-sm",
-                    (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "bg-warning-500 hover:bg-warning-600 text-white"
-                  )}
+                  className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px] placeholder:text-muted-foreground/50 min-w-0"
+                  placeholder={
+                    state.awaitingPassword || localPasswordPrompt
+                      ? t.enterPassword
+                      : confirmDialog?.show || isReloadConfirmationPending
+                        ? t.typeCommandPlaceholder
+                        : t.typeCommand
+                  }
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+              {(state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && (
+                <Button
+                  type="button"
+                  disabled={isInputDisabled}
+                  variant="ghost"
+                  className="shrink-0 rounded-xl hover:bg-error-500/20 text-error-500 px-2 h-9 text-xs"
+                  onClick={() => {
+                    if (onCommand) {
+                      if (state.awaitingPassword || localPasswordPrompt) {
+                        onCommand('__PASSWORD_CANCELLED__');
+                      } else if (isReloadConfirmationPending) {
+                        onCommand('n');
+                      }
+                    }
+                    if (state.awaitingPassword || localPasswordPrompt) {
+                      setLocalPasswordPrompt(false);
+                    }
+                    setInput('');
+                  }}
+                  title={t.cancel}
                 >
-                  <span className="rounded-md p-1"><CornerDownLeft className={cn("w-4 h-4 text-white dark:text-secondary-900", isMobile && "w-3 h-3")} /></span>
+                  <X className={cn("w-4 h-4 mr-1", isMobile && "w-3 h-3")} />
+                  <span className="text-error-600 dark:text-error-400 font-medium">{t.cancel}</span>
                 </Button>
-              </form>
+              )}
+              <Button
+                type="submit"
+                disabled={isInputDisabled}
+                aria-label={t.typeCommand}
+                className={cn(
+                  "shrink-0 rounded-xl shadow-lg px-3 bg-secondary-800 text-white hover:bg-secondary-700 dark:bg-white dark:text-secondary-900 dark:hover:bg-secondary-200",
+                  isMobile ? "h-9 text-xs" : "h-11 text-sm",
+                  (state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "bg-warning-500 hover:bg-warning-600 text-white"
+                )}
+              >
+                <span className="rounded-md p-1"><CornerDownLeft className={cn("w-4 h-4 text-white dark:text-secondary-900", isMobile && "w-3 h-3")} /></span>
+              </Button>
+            </form>
 
-              {/* Autocomplete Dropdown */}
-              {shouldShowAutocomplete && (
-                <div
-                  ref={autocompleteRef}
-                  className="absolute bottom-16 sm:bottom-20 left-2 sm:left-4 z-20 w-[min(420px,calc(100%-1rem))]"
-                >
-                  <div className={cn(
-                    "rounded-lg border shadow-xl overflow-hidden",
-                    isDark ? "bg-secondary-800 border-secondary-700" : "bg-white border-secondary-200"
-                  )}>
-                    <div className="max-h-40 overflow-y-auto overflow-x-hidden font-geist-mono">
-                      {renderAutocompleteSuggestions.map((cmd, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          data-autocomplete-index={idx}
-                          onClick={() => {
-                            completeAutocompleteSelection(cmd);
-                            inputRef.current?.focus();
-                          }}
-                          className={cn(
-                            "w-full text-left px-2.5 py-1 text-[11px] font-geist-mono transition-colors",
-                            autocompleteIndex >= 0 && idx === autocompleteIndex
-                              ? (isDark ? "bg-accent-500/20 text-accent-200" : "bg-accent-50 text-accent-900")
-                              : (isDark ? "text-secondary-300 hover:bg-primary/10" : "text-secondary-700 hover:bg-primary/10")
-                          )}
-                        >
-                          {cmd}
-                        </button>
-                      ))}
-                    </div>
+            {/* Autocomplete Dropdown */}
+            {shouldShowAutocomplete && (
+              <div
+                ref={autocompleteRef}
+                className="absolute bottom-16 sm:bottom-20 left-2 sm:left-4 z-20 w-[min(420px,calc(100%-1rem))]"
+              >
+                <div className={cn(
+                  "rounded-lg border shadow-xl overflow-hidden",
+                  isDark ? "bg-secondary-800 border-secondary-700" : "bg-white border-secondary-200"
+                )}>
+                  <div className="max-h-40 overflow-y-auto overflow-x-hidden font-geist-mono">
+                    {renderAutocompleteSuggestions.map((cmd, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        data-autocomplete-index={idx}
+                        onClick={() => {
+                          completeAutocompleteSelection(cmd);
+                          inputRef.current?.focus();
+                        }}
+                        className={cn(
+                          "w-full text-left px-2.5 py-1 text-[11px] font-geist-mono transition-colors",
+                          autocompleteIndex >= 0 && idx === autocompleteIndex
+                            ? (isDark ? "bg-accent-500/20 text-accent-200" : "bg-accent-50 text-accent-900")
+                            : (isDark ? "text-secondary-300 hover:bg-primary/10" : "text-secondary-700 hover:bg-primary/10")
+                        )}
+                      >
+                        {cmd}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              )}
-            </div>
-          )}
-        </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Search popup */}

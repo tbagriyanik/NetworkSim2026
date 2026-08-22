@@ -753,9 +753,9 @@ export function PCPanel({
   }, [isVisible, isPcPoweredOff, initialTab, onNavigate]);
 
   // Validate and sync global state
-  
 
-    const { dispatchDeviceConfig, syncToGlobal } = usePCPanelSync({
+
+  const { dispatchDeviceConfig, syncToGlobal } = usePCPanelSync({
     deviceId,
     deviceFromTopology,
     topologyDevices,
@@ -797,7 +797,7 @@ export function PCPanel({
     t
   });
 
-    const { validateIpField, validateSubnetField } = usePCPanelValidation({
+  const { validateIpField, validateSubnetField } = usePCPanelValidation({
     deviceId,
     topologyDevices,
     pcSubnet,
@@ -857,9 +857,9 @@ export function PCPanel({
     syncToGlobalRef.current = syncToGlobal;
   }, [syncToGlobal]);
 
-  
 
-  
+
+
 
   const [pcOutput, setPcOutput] = useState<OutputLine[]>(() => {
     if (pcOutputs?.has(deviceId)) {
@@ -918,7 +918,7 @@ export function PCPanel({
     };
   }, [isVisible, onClose, httpAppContent]);
 
-    const { filteredSuggestions, browserWindow, setBrowserWindow } = usePCPanelBrowserState({
+  const { filteredSuggestions, browserWindow, setBrowserWindow } = usePCPanelBrowserState({
     topologyDevices,
     httpAppUrl,
     setHttpAppUrl,
@@ -947,7 +947,7 @@ export function PCPanel({
   } | null>(null);
   const urlInputRef = useRef<HTMLInputElement>(null);
 
-  
+
 
   // Global Navigation handler (Escape key & Mobile Back Button)
   useEffect(() => {
@@ -1079,7 +1079,7 @@ export function PCPanel({
   const consoleDevice = getConsoleDeviceCallback();
 
 
-    const { activeConsoleOutput, handleCopyAll, getCommandMode, getAutocompleteSuggestionsCallback, renderAutocompleteSuggestions, shouldShowAutocomplete } = usePCPanelTerminalSync({
+  const { activeConsoleOutput, handleCopyAll, getCommandMode, getAutocompleteSuggestionsCallback, renderAutocompleteSuggestions, shouldShowAutocomplete } = usePCPanelTerminalSync({
     isConsoleConnected,
     connectedDeviceId,
     deviceOutputs: deviceOutputs || new Map(),
@@ -1112,7 +1112,7 @@ export function PCPanel({
     });
   }, [pcOutput, activeConsoleOutput, activeTab]);
 
-  
+
 
   const connectedConsoleDevice = useMemo(() => {
     if (!connectedDeviceId) return null;
@@ -1158,13 +1158,13 @@ export function PCPanel({
     return () => clearTimeout(timer);
   }, [activeTab, isConsoleConnected, consoleNeedsPassword, consoleConfirmDialog?.show, consoleReloadPending]);
 
-  
 
-  
 
-  
 
-  
+
+
+
+
   const httpAppSrcDoc = useMemo(() => {
     if (!httpAppContent) return '';
     const trimmed = httpAppContent.trim();
@@ -2265,6 +2265,7 @@ export function PCPanel({
                           setInput={setInput}
                           highlightText={highlightText}
                           consoleDevice={consoleDevice}
+                          inputRef={inputRef}
                           outputRef={outputRef}
                           mobileVerticalScrollStyle={mobileVerticalScrollStyle}
                         />
