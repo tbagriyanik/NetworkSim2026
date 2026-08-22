@@ -1,6 +1,6 @@
 import type { SwitchState, StpVlanState, Port } from './types';
 import type { CanvasConnection } from '@/components/network/networkTopology.types';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../utils/packetCapture';
 import { detectEtherChannelBundles } from './etherchannel';
 
 /**

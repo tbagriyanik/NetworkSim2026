@@ -78,10 +78,10 @@ const createSwitchDevice = (id: string, name: string, x: number, y: number, ip: 
   status: 'online',
   switchModel: 'WS-C2960-24TT-L',
   ports: [
-    ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const })),
+    ...Array.from({ length: 24 }, (_, i) => ({ id: `fa0/${i + 1}`, label: `Fa0/${i + 1}`, status: 'disconnected' as const, macAddress: deterministicMac(`${id}:fa0/${i + 1}`) })),
     { id: 'console', label: 'Console', status: 'disconnected' as const },
-    { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const },
-    { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }
+    { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/1`) },
+    { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const, macAddress: deterministicMac(`${id}:gi0/2`) }
   ]
 });
 

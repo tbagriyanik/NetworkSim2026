@@ -457,11 +457,21 @@ export function useRefreshNetwork({
 
       sanitizedConnections.forEach((connection) => {
         if (connection.active === false) return;
+        // End hosts do not participate in 802.1Q/access-VLAN negotiation;
+        // their interface state normally has the default VLAN even when the
+        // switch access port is assigned to the host's VLAN.
+        const sourceDevice = iotProcessedDevices.find((device) => device.id === connection.sourceDeviceId);
+        const targetDevice = iotProcessedDevices.find((device) => device.id === connection.targetDeviceId);
+        if (sourceDevice?.type === 'pc' || sourceDevice?.type === 'iot' || targetDevice?.type === 'pc' || targetDevice?.type === 'iot') return;
         const aState = portSecurityUpdatedStates.get(connection.sourceDeviceId);
         const bState = portSecurityUpdatedStates.get(connection.targetDeviceId);
         const aPort = aState?.ports?.[connection.sourcePort];
         const bPort = bState?.ports?.[connection.targetPort];
         if (!aPort || !bPort) return;
+        // A routed/L3 interface does not carry an access VLAN. An access
+        // switch uplink connected to such an interface must not be compared
+        // as two Layer-2 access ports.
+        if (aPort.mode === 'routed' || bPort.mode === 'routed' || aPort.isRoutedPort || bPort.isRoutedPort) return;
         const aTrunk = aPort.mode === 'trunk';
         const bTrunk = bPort.mode === 'trunk';
         if (aTrunk && bTrunk) {

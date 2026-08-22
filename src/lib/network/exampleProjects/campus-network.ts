@@ -6,8 +6,8 @@ import { createInitialState, createInitialRouterState } from '../initialState';
 
 const example = (isTr: boolean): ExampleProject => {
   const campusDevices = [
-    createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 10),
-    createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 20),
+    createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 10, '192.168.10.1'),
+    createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 20, '192.168.20.1'),
     createSwitchDevice('switch-1', 'ACC-SW1', 240, 190),
     createRouterDevice('router-1', 'CORE-R1', 440, 190),
     createSwitchDevice('switch-2', 'ACC-SW2', 640, 190)
@@ -49,7 +49,9 @@ const example = (isTr: boolean): ExampleProject => {
     { destination: '0.0.0.0', subnetMask: '0.0.0.0', nextHop: '192.168.20.254', metric: 1, type: 'static' }
   ];
 
-  const campusAcc2 = createInitialState('00:1A:2B:3C:4D:6A');
+  // Port MACs are generated from the base address (+1..+26). Keep the
+  // second switch outside ACC-SW1's entire port range.
+  const campusAcc2 = createInitialState('00:1A:2B:3C:4D:90');
   campusAcc2.hostname = 'ACC-SW2';
   campusAcc2.vlans[20] = { id: 20, name: 'VLAN20', status: 'active', ports: ['FA0/1'] };
   campusAcc2.ports['fa0/1'] = { ...campusAcc2.ports['fa0/1'], vlan: 20, mode: 'access', status: 'connected' };

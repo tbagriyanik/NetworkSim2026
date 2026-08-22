@@ -1,5 +1,5 @@
 import { SwitchState } from './types';
-import { errorHandler } from '@/lib/errors/errorHandler';
+import { errorHandler } from '../errors/errorHandler';
 
 // Cache Map representation of deviceStates to avoid O(N) conversion in hot paths.
 // Since the store uses immutable state, we can use the Record object as a key.
