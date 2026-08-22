@@ -127,8 +127,20 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'copy tftp': ['running-config'],
     ...pfx('delete', ['flash:vlan.dat', 'nvram']),
     ...pfx('erase', ['nvram', 'startup-config']),
-    ...pfx('no', ['debug']),
-    'no debug': ['all'],
+    ...pfx('debug', ['all', 'arp', 'cdp', 'dhcp', 'etherchannel', 'icmp', 'ip', 'ipv6', 'mac', 'packet', 'spanning-tree', 'sw-vlan', 'vlan']),
+    'debug ip': ['arp', 'bgp', 'dhcp', 'icmp', 'nat', 'ospf', 'packet', 'route'],
+    'debug ip icmp': [],
+    'debug ip packet': [],
+    'debug ip ospf': ['events', 'hello', 'packet'],
+    'debug ip dhcp': ['server'],
+    'debug ip arp': [],
+    'debug ip bgp': ['events', 'keepalives'],
+    'debug ip nat': ['detailed'],
+    'debug arp': [],
+    'debug cdp': ['packets'],
+    'debug vlan': ['packet'],
+    'debug sw-vlan': ['packet'],
+    'debug spanning-tree': ['events', 'bpdu'],
     ...pfx('show', ['access-lists', 'alias', 'ap', 'archive', 'arp', 'authentication', 'banner', 'boot', 'cdp', 'class-map', 'clock', 'controllers', 'debugging', 'diagnostic', 'dot11', 'environment', 'errdisable', 'etherchannel', 'flash', 'history', 'interface', 'interfaces', 'inventory', 'ip', 'ipv6', 'lldp', 'mac', 'memory', 'mls', 'monitor', 'nameif', 'ntp', 'policy-map', 'port-security', 'processes', 'redundancy', 'running-config', 'sdm', 'sessions', 'snmp', 'spanning-tree', 'ssh', 'standby', 'startup-config', 'storm-control', 'system', 'udld', 'users', 'version', 'vlan', 'vtp', 'wireless', 'wlan']),
     'show ap': ['config', 'join', 'summary'],
     'show ap config': [],
@@ -494,6 +506,19 @@ const commandDescriptions: Record<string, Record<string, string>> = {
     'clear': 'Önbelleği temizle (Clear cache/counters)',
     'debug': 'Hata ayıklama etkinleştir (Enable debugging)',
     'undebug': 'Hata ayıklamayı devre dışı bırak (Disable debugging)',
+    'all': 'Tüm seçenekler (All debug options)',
+    'packet': 'Paket seviyesinde hata ayıklama (Packet level debugging)',
+    'icmp': 'ICMP mesajları hata ayıklaması (ICMP debugging)',
+    'ospf': 'OSPF protokolü hata ayıklaması (OSPF debugging)',
+    'bgp': 'BGP protokolü hata ayıklaması (BGP debugging)',
+    'dhcp': 'DHCP işlemleri hata ayıklaması (DHCP debugging)',
+    'arp': 'ARP paketleri hata ayıklaması (ARP debugging)',
+    'nat': 'NAT dönüştürme hata ayıklaması (NAT debugging)',
+    'route': 'Yönlendirme tablosu hata ayıklaması (Routing debugging)',
+    'cdp': 'CDP protokolü hata ayıklaması (CDP debugging)',
+    'vlan': 'VLAN işlemleri hata ayıklaması (VLAN debugging)',
+    'sw-vlan': 'Switch VLAN işlemleri hata ayıklaması (Switch VLAN debugging)',
+    'spanning-tree': 'Spanning Tree Protokolü hata ayıklaması (Spanning Tree debugging)',
     'terminal': 'Terminal ayarlarını yapılandır (Configure terminal settings)',
     'write': 'Yapılandırmayı kaydet (Save configuration)',
     'ping': 'Ağ bağlantısını test et (Test network connectivity)',
@@ -648,7 +673,9 @@ const commandDescriptions: Record<string, Record<string, string>> = {
 function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, state?: SwitchState): string {
   const modeCommands = commandHelp[mode] || commandHelp.user;
   const modeDescriptions = commandDescriptions[mode] || commandDescriptions.user;
-  const lower = partialInput.toLowerCase().trim();
+  const lowerRaw = partialInput.toLowerCase();
+  const hasSpace = /\s$/.test(lowerRaw) || partialInput.length === 0;
+  const lower = lowerRaw.trim();
 
   let suggestions: string[] = [];
 
@@ -659,21 +686,23 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, 
     const privilegedCommands = commandHelp['privileged'] || {};
     // Strip the "do " prefix to get the sub-command portion
     const subInput = lower === 'do' ? '' : lower.slice(3); // e.g. "show", "show ip", ""
+    const subHasSpace = /\s$/.test(subInput) || subInput === '' || lower === 'do';
+    const subLower = subInput.trim();
 
-    if (subInput === '') {
+    if (subLower === '') {
       // "do ?" → list all privileged top-level commands
       suggestions = [...(privilegedCommands[''] || [])].filter(
         c => !['configure', 'disable', '?', 'help'].includes(c)
       );
     } else {
       // "do show ?" or "do ping ?" etc. → look up in privileged tree
-      if (privilegedCommands[subInput]) {
-        suggestions = [...privilegedCommands[subInput]];
+      if (subHasSpace && privilegedCommands[subLower]) {
+        suggestions = [...privilegedCommands[subLower]];
       } else {
         // Prefix match in privileged tree
         for (const key of Object.keys(privilegedCommands)) {
-          if (key.startsWith(subInput) && key !== subInput) {
-            const remaining = key.substring(subInput.length).trim();
+          if (key.startsWith(subLower) && key !== subLower) {
+            const remaining = key.substring(subLower.length).trim();
             if (remaining) {
               const nextWord = remaining.split(' ')[0];
               if (nextWord && !suggestions.includes(nextWord)) {
@@ -686,8 +715,8 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, 
         if (suggestions.length === 0) {
           for (const [name, pattern] of Object.entries(commandPatterns)) {
             if (!pattern.modes.includes('privileged')) continue;
-            if (!name.startsWith(subInput + ' ') && name !== subInput) continue;
-            const remaining = name.substring(subInput.length).trim();
+            if (!name.startsWith(subLower + ' ') && name !== subLower) continue;
+            const remaining = name.substring(subLower.length).trim();
             if (!remaining) continue;
             const nextWord = remaining.split(' ')[0];
             if (nextWord && !suggestions.includes(nextWord)) {
@@ -698,38 +727,76 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, 
       }
     }
   } else {
-    // 1. Exact match in commandHelp tree
-    if (modeCommands[lower]) {
-      suggestions = [...modeCommands[lower]];
-    }
-
-    // 2. Prefix match in commandHelp tree
-    if (suggestions.length === 0) {
-      for (const key of Object.keys(modeCommands)) {
-        if (key.startsWith(lower) && key !== lower) {
-          const remaining = key.substring(lower.length).trim();
-          if (remaining) {
-            const nextWord = remaining.split(' ')[0];
-            if (nextWord && !suggestions.includes(nextWord)) {
-              suggestions.push(nextWord);
+    // Standard help lookup
+    if (lower === '') {
+      // Top-level commands for current mode
+      suggestions = [...(modeCommands[''] || [])];
+    } else if (hasSpace) {
+      // 1. Exact match in commandHelp tree when trailing space is present (e.g. "debug ?", "debug ip ?")
+      if (modeCommands[lower]) {
+        suggestions = [...modeCommands[lower]];
+      } else {
+        // Prefix match for subcommands with trailing space
+        for (const key of Object.keys(modeCommands)) {
+          if (key.startsWith(lower + ' ')) {
+            const remaining = key.substring(lower.length + 1).trim();
+            if (remaining) {
+              const nextWord = remaining.split(' ')[0];
+              if (nextWord && !suggestions.includes(nextWord)) {
+                suggestions.push(nextWord);
+              }
             }
           }
         }
       }
+    } else {
+      // No trailing space (e.g., "deb?", "debug?") — find completing keywords or exact command match
+      for (const key of Object.keys(modeCommands)) {
+        const tokens = key.split(' ');
+        for (const token of tokens) {
+          if (token.startsWith(lower) && !suggestions.includes(token)) {
+            suggestions.push(token);
+          }
+        }
+      }
+
+      // Check top-level command list for matching prefixes
+      const topLevel = modeCommands[''] || [];
+      for (const cmd of topLevel) {
+        if (cmd.startsWith(lower) && !suggestions.includes(cmd)) {
+          suggestions.push(cmd);
+        }
+      }
     }
 
-    // 3. Fallback: derive suggestions from commandPatterns for this mode
-    //    This handles "no ip ?", multi-word prefixes not in commandHelp tree
-    if (suggestions.length === 0) {
+    // Fallback: derive suggestions from commandPatterns for this mode
+    if (suggestions.length === 0 && lower !== '') {
       const patternSuggestions: string[] = [];
       for (const [name, pattern] of Object.entries(commandPatterns)) {
         if (!pattern.modes.includes(mode)) continue;
-        if (!name.startsWith(lower + ' ') && name !== lower) continue;
-        const remaining = name.substring(lower.length).trim();
-        if (!remaining) continue;
-        const nextWord = remaining.split(' ')[0];
-        if (nextWord && !patternSuggestions.includes(nextWord)) {
-          patternSuggestions.push(nextWord);
+        const nameLower = name.toLowerCase();
+        if (hasSpace) {
+          if (nameLower.startsWith(lower + ' ')) {
+            const remaining = nameLower.substring(lower.length + 1).trim();
+            if (remaining) {
+              const nextWord = remaining.split(' ')[0];
+              if (nextWord && !patternSuggestions.includes(nextWord)) {
+                patternSuggestions.push(nextWord);
+              }
+            }
+          }
+        } else {
+          if (nameLower.startsWith(lower)) {
+            const remaining = nameLower.substring(lower.length).trim();
+            if (remaining) {
+              const nextWord = remaining.split(' ')[0];
+              if (nextWord && !patternSuggestions.includes(nextWord)) {
+                patternSuggestions.push(nextWord);
+              }
+            } else if (!patternSuggestions.includes(nameLower)) {
+              patternSuggestions.push(nameLower);
+            }
+          }
         }
       }
       suggestions = patternSuggestions;
@@ -1214,7 +1281,7 @@ export function executeCommand(
   if (isHelpRequest) {
     let partialInput = '';
     if (cmdToProcess.endsWith('?')) {
-      partialInput = cmdToProcess.slice(0, -1).trim();
+      partialInput = cmdToProcess.slice(0, -1);
     } else if (cmdToProcess.toLowerCase().trim().endsWith(' help')) {
       const idx = cmdToProcess.toLowerCase().trim().lastIndexOf(' help');
       partialInput = cmdToProcess.trim().substring(0, idx).trim();
