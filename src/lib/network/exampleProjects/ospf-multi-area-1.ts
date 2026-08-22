@@ -1,27 +1,9 @@
 import { createSwitchDevice, createL3SwitchDevice, createPcDevice, createRouterDevice, connectPorts, baseProjectData } from './helpers';
-;
-import type { ExampleProject } from './types';
 import { createInitialState, createInitialRouterState } from '../initialState';
+import type { ExampleProject } from './types';
 import type { CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
 
 const example = (isTr: boolean): ExampleProject => {
-  const ospfMultiAreaNotes: CanvasNote[] = [
-    {
-      id: 'ospf-multi-area-note',
-      text: isTr
-        ? 'Amaç: Çok alanlı (multi-area) OSPF yapılandırması ile ölçeklenebilir yönlendirme sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) ML1 (Area 0):\n   - router ospf 1\n   - network 192.168.1.0 0.0.0.255 area 0\n   - network 10.0.0.0 0.0.0.255 area 0\n\n2) R3 (ABR - Area 0 & 10):\n   - router ospf 1\n   - network 10.0.0.0 0.0.0.255 area 0\n   - network 20.0.0.0 0.0.0.255 area 10\n\n3) ML2 (Area 10):\n   - router ospf 1\n   - network 20.0.0.0 0.0.0.255 area 10\n   - network 192.168.2.0 0.0.0.255 area 10\n\n4) TEST:\n   - show ip ospf neighbor\n   - show ip route ospf\n   - Ping 192.168.2.10'
-        : '🔧 BUILD STEPS:\n\n1) ML1 (Area 0):\n   - router ospf 1\n   - network 192.168.1.0 0.0.0.255 area 0\n   - network 10.0.0.0 0.0.0.255 area 0\n\n2) R3 (ABR - Area 0 & 10):\n   - router ospf 1\n   - network 10.0.0.0 0.0.0.255 area 0\n   - network 20.0.0.0 0.0.0.255 area 10\n\n3) ML2 (Area 10):\n   - router ospf 1\n   - network 20.0.0.0 0.0.0.255 area 10\n   - network 192.168.2.0 0.0.0.255 area 10\n\n4) TEST:\n   - show ip ospf neighbor\n   - show ip route ospf\n   - Ping 192.168.2.10',
-      x: 450,
-      y: 80,
-      width: 520,
-      height: 380,
-      color: 'var(--color-primary-500)',
-      font: 'verdana',
-      fontSize: 12,
-      opacity: 0.75
-    }
-  ];
-
   const staticL3RoutingDevices = [
     createPcDevice('pc0', 'PC0', 50, 350, '192.168.1.10', 1, '192.168.1.1'),
     createSwitchDevice('switch0', 'Switch0', 200, 350),
@@ -40,12 +22,29 @@ const example = (isTr: boolean): ExampleProject => {
   connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'mlswitch2', 'gi1/0/2', 'switch1', 'fa0/1');
   connectPorts(staticL3RoutingDevices, staticL3RoutingConnections, 'switch1', 'fa0/2', 'pc4', 'eth0');
 
-  const switch0State = createInitialState('00:1A:2B:3C:4D:82', 'WS-C2960-24TT-L');
+  const ospfMultiAreaNotes: CanvasNote[] = [
+    {
+      id: 'ospf-multi-area-note-1',
+      text: isTr
+        ? 'Amaç: Çok alanlı (Multi-Area) OSPF yapılandırması.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) AREA 0 VE AREA 10 (R3/ABR):\n   - router ospf 1\n   - network 10.0.0.0 0.0.0.255 area 0\n   - network 20.0.0.0 0.0.0.255 area 10\n\n2) DOĞRULAMA:\n   - show ip ospf neighbor\n   - show ip route ospf'
+        : '🔧 BUILD STEPS:\n\n1) AREA 0 AND AREA 10 (R3/ABR):\n   - router ospf 1\n   - network 10.0.0.0 0.0.0.255 area 0\n   - network 20.0.0.0 0.0.0.255 area 10\n\n2) VERIFY:\n   - show ip ospf neighbor\n   - show ip route ospf',
+      x: 450,
+      y: 80,
+      width: 520,
+      height: 380,
+      color: 'var(--color-primary-500)',
+      font: 'verdana',
+      fontSize: 12,
+      opacity: 0.75
+    }
+  ];
+
+  const switch0State = createInitialState('00:1A:2B:3C:A3:80', 'WS-C2960-24TT-L');
   switch0State.hostname = 'Switch0';
   switch0State.ports['fa0/1'] = { ...switch0State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
   switch0State.ports['fa0/2'] = { ...switch0State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
 
-  const mlSwitch1State = createInitialState('00:1A:2B:3C:4D:80', 'WS-C3650-24PS');
+  const mlSwitch1State = createInitialState('00:1A:2B:3C:A3:00', 'WS-C3650-24PS');
   mlSwitch1State.hostname = 'MultilayerSwitch1';
   mlSwitch1State.switchModel = 'WS-C3650-24PS';
   mlSwitch1State.switchLayer = 'L3';
@@ -76,7 +75,7 @@ const example = (isTr: boolean): ExampleProject => {
     'end'
   ];
 
-  const router3State = createInitialRouterState('00:50:00:00:00:10');
+  const router3State = createInitialRouterState('00:50:00:00:A3:10');
   router3State.hostname = 'Router3';
   router3State.ipRouting = true;
   router3State.ports['gi0/0'] = { ...router3State.ports['gi0/0'], ipAddress: '10.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
@@ -103,7 +102,7 @@ const example = (isTr: boolean): ExampleProject => {
     'end'
   ];
 
-  const mlSwitch2State = createInitialState('00:1A:2B:3C:4D:81', 'WS-C3650-24PS');
+  const mlSwitch2State = createInitialState('00:1A:2B:3C:A3:40', 'WS-C3650-24PS');
   mlSwitch2State.hostname = 'MultilayerSwitch2';
   mlSwitch2State.switchModel = 'WS-C3650-24PS';
   mlSwitch2State.switchLayer = 'L3';
@@ -134,7 +133,7 @@ const example = (isTr: boolean): ExampleProject => {
     'end'
   ];
 
-  const switch1State = createInitialState('00:1A:2B:3C:4D:83', 'WS-C2960-24TT-L');
+  const switch1State = createInitialState('00:1A:2B:3C:A3:C0', 'WS-C2960-24TT-L');
   switch1State.hostname = 'Switch1';
   switch1State.ports['fa0/1'] = { ...switch1State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
   switch1State.ports['fa0/2'] = { ...switch1State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
@@ -157,4 +156,3 @@ const example = (isTr: boolean): ExampleProject => {
 };
 
 export default example;
-

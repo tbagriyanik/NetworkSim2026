@@ -76,7 +76,7 @@ export function RefreshReportPanel({
             setFocusedOverlay={setFocusedOverlay}
             language={language}
           />
-          <CollapsibleContent className="flex min-h-0 flex-1 flex-col max-h-none">
+          <CollapsibleContent className="flex min-h-0 flex-1 flex-col">
             <div className="min-h-0 flex-1 overflow-y-auto p-2">
               <Tabs defaultValue="summary" className="w-full">
                 <TabsList className={`w-full grid grid-cols-2 rounded-lg ${isDark ? 'bg-secondary-800/80' : 'bg-secondary-200/80'}`}>

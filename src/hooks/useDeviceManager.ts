@@ -234,7 +234,11 @@ export function useDeviceManager() {
 
         // Get the switch model from existing state or default. L3 switches should start as 3650.
         const switchModel = existingState?.switchModel || incomingModel || (isWLC ? 'AIR-CT2504-K9' : isRouter || isSwitchL3 ? 'WS-C3650-24PS' : 'WS-C2960-24TT-L');
-        const baseState = isRouter ? createInitialRouterState() : isWLC ? createInitialWLCState() : createInitialState(undefined, switchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
+        const baseState = isRouter
+          ? createInitialRouterState(existingState?.macAddress)
+          : isWLC
+            ? createInitialWLCState(existingState?.macAddress)
+            : createInitialState(existingState?.macAddress, switchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
 
         // Get existing state to preserve saved configuration and identity
         const startupConfig = existingState?.startupConfig;
@@ -889,7 +893,9 @@ export function useDeviceManager() {
           });
         }
         if (result.reloadDevice) {
-          const baseState = deviceId.includes('router') ? createInitialRouterState() : createInitialState();
+          const baseState = deviceId.includes('router')
+            ? createInitialRouterState(deviceState.macAddress)
+            : createInitialState(deviceState.macAddress, deviceState.switchModel as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
           const startupConfig = deviceState.startupConfig;
           const hasStartupConfig = !!startupConfig;
           const baseIdentityState = {
