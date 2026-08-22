@@ -6,7 +6,7 @@ import { useCallback } from 'react';
 import type { CanvasConnection, CanvasDevice } from '../networkTopology.types';
 import { buildHopPacketInfos as buildHopPacketInfosFn } from '../PingPacketInfoPanel';
 import { checkDeviceConnectivity as checkDeviceConnectivityFn, getPingDiagnostics as getPingDiagnosticsFn, getWirelessDistance as getWirelessDistanceFn } from '@/lib/network/connectivity';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 
 export interface BroadcastAnimTarget {
   targetId: string;

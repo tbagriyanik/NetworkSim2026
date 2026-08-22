@@ -5,7 +5,7 @@ import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { OutputLine } from './PCPanel.types';
 import { checkConnectivity } from '@/lib/network/connectivity';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { isRouterDevice, generateRouterAdminPage } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
 

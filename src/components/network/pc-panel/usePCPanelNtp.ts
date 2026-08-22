@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useMemo, useCallback, Dispatch, SetStateAc
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { checkConnectivity } from '@/lib/network/connectivity';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 
 interface UsePCPanelNtpOptions {
   language: string;

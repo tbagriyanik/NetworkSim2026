@@ -1,7 +1,7 @@
 import { iosModeError } from './iosErrors';
 import type { CommandHandler, CommandContext } from './commandTypes';
 import { checkConnectivity, getWirelessDistance } from '../connectivity';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult, Port } from '../types';
 import { clearArpCache } from '../arp';

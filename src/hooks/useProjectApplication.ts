@@ -7,7 +7,7 @@ import { generateExamFromProject } from '@/lib/network/examMode';
 import type { GuidedProject } from '@/lib/network/guidedMode';
 import type { ExampleProject } from '@/lib/network/exampleProjects';
 import { createInitialState, createInitialRouterState, createInitialFirewallState, createInitialWLCState } from '@/lib/network/initialState';
-import { addProjectRecord } from '@/utils/achievementRecords';
+import { addProjectRecord } from '../utils/achievementRecords';
 
 export function useProjectApplication({
   loadProjectData,

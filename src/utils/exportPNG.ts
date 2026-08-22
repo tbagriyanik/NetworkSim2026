@@ -1,7 +1,7 @@
 import { CanvasDevice, CanvasConnection, CanvasNote } from '../components/network/networkTopology.types';
 import { isCableCompatible } from '@/lib/network/types';
 import { CABLE_COLORS } from '../components/network/networkTopology.constants';
-import { logger } from '@/lib/logger';
+import { logger } from '../lib/logger';
 
 export interface ExportPNGOptions {
   svgElement: SVGSVGElement;

@@ -16,7 +16,7 @@ Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
 import { saveWindowPositions, restoreWindowPositions, clearWindowPositionsBackup, getWindowPositionsBackup } from '@/lib/storage/windowPositionManager';
 
-vi.mock('@/lib/logger', () => ({
+vi.mock('../../lib/logger', () => ({
   logger: { warn: vi.fn(), error: vi.fn() },
 }));
 

@@ -5,7 +5,7 @@ import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import type { OutputLine, FtpSession, PcFile, PCActiveTab } from './PCPanel.types';
 import { checkConnectivity, getWirelessDistance } from '@/lib/network/connectivity';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { getL3Hops } from '@/lib/network/routing';
 import { errorHandler, DHCP_ERRORS, DEVICE_ERRORS } from '@/lib/errors/errorHandler';
 import { formatMacForArp } from './pcPanelHelpers';

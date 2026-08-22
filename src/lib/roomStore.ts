@@ -1,6 +1,6 @@
 import { Redis } from '@upstash/redis';
 import type { RoomData, StudentProgress, RoomMeta, CertificateRecord } from './roomTypes';
-import { logger } from '@/lib/logger';
+import { logger } from './logger';
 
 const redisUrl = process.env.KV_REST_API_URL;
 const redisToken = process.env.KV_REST_API_TOKEN;

@@ -5,7 +5,7 @@ import type { ExamProject } from '@/lib/network/examMode';
 import { decryptExamData } from '@/lib/network/examMode';
 import { safeParse } from '@/lib/network/serialization';
 import { formatErrorForUser, errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
-import { addProjectRecord } from '@/utils/achievementRecords';
+import { addProjectRecord } from '../utils/achievementRecords';
 
 export function useLoadProject({
   loadProjectData,

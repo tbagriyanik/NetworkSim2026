@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 
 interface UsePeriodicNetworkPacketsOptions {
   devices: CanvasDevice[];

@@ -7,7 +7,7 @@ import type { DhcpPoolConfig } from './PCPanel.types';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { errorHandler, DHCP_ERRORS } from '@/lib/errors/errorHandler';
-import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 
 interface UsePCPanelDhcpOptions {
   language: string;

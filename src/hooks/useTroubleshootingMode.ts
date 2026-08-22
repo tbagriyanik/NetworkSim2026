@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { SwitchState } from '@/lib/network/types';
 import { checkFaultResolved } from '@/lib/network/faults';
-import { addGuidedLessonRecord } from '@/utils/achievementRecords';
+import { addGuidedLessonRecord } from '../utils/achievementRecords';
 import { ExamProject } from '@/lib/network/examMode';
 import { ExampleProject, ExampleProjectLevel } from '@/lib/network/exampleProjects';
 

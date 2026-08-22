@@ -1,4 +1,4 @@
-import { logger } from '@/lib/logger';
+import { logger } from '../lib/logger';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getActiveTabCount, clearTabData } from '@/lib/store/tabStorage';
