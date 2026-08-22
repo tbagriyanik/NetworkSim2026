@@ -2,6 +2,14 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v2.8.0 — 2026-08-22
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-22 | **Sürüm Yükseltmesi (v2.8.0)** — Ağ Yenileme Raporu penceresine koyu/açık tema sürükleme (drag-and-drop) ve çift tıkla daraltma desteği eklendi. Olay günlüğü rozeti renk uyumu sağlandı. Örnek projelerdeki taban MAC çakışmaları ve cihaz kapatıp açma durumunda MAC adresinin korunması sağlandı. Çift yönlü arama ile ACL filtresi ve `access-list` Global Konfigürasyon mod desteği entegre edildi. |
+
+---
+
 ## v2.7.0 — 2026-08-21
 
 | Tarih | Değişiklik |

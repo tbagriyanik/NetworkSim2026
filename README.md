@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-2.7.0-blue)
+![Version](https://img.shields.io/badge/version-2.8.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.1-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -27,7 +27,7 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
-- **Version 2.7.0 Sürümü:** 18 eksik özellik tam dokümante edildi. Topoloji Üretici, Paket Yakalama filtreleri, VRRP, BGP, SPAN, IP Source Guard ve çift tıklama daraltma özellikleri ağ kitapçığı ve kılavuzlara eklendi. Örnek uygulama projeleri sayısı 46'ya çıkarıldı.
+- **Version 2.8.0 Sürümü:** 18 eksik özellik tam dokümante edildi. Topoloji Üretici, Paket Yakalama filtreleri, VRRP, BGP, SPAN, IP Source Guard ve çift tıklama daraltma özellikleri ağ kitapçığı ve kılavuzlara eklendi. Örnek uygulama projeleri sayısı 46'ya çıkarıldı.
 - **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
 - **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.
 
@@ -36,7 +36,7 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 2.7.0 |
+| Version / Sürüm | 2.8.0 |
 | Total Lines / Toplam Satır (src/) | 128,610 |
 | Source Files / Kaynak Dosya | 506 |
 | Documentation Files / Dokümantasyon Dosya | 22 |
