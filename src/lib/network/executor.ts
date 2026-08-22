@@ -161,7 +161,9 @@ export const commandHelp: Record<string, Record<string, string[]>> = {
     'show ip nat': ['translations', 'statistics'],
     'show ip ospf': ['interface', 'neighbor'],
     'show ip source': ['binding'],
+    'show ip source binding': ['vlan', 'interface'],
     'show ip verify': ['source'],
+    'show ip verify source': [],
     'show ipv6': ['dhcp', 'interface', 'ospf', 'rip', 'route'],
     'show ipv6 dhcp': ['pool'],
     'show ipv6 interface': ['brief'],
@@ -525,6 +527,9 @@ const commandDescriptions: Record<string, Record<string, string>> = {
     'vlan': 'VLAN işlemleri hata ayıklaması (VLAN debugging)',
     'sw-vlan': 'Switch VLAN işlemleri hata ayıklaması (Switch VLAN debugging)',
     'spanning-tree': 'Spanning Tree Protokolü hata ayıklaması (Spanning Tree debugging)',
+    'source': 'IP Source Guard ayarları ve bağlama tablosu (IP Source Guard)',
+    'binding': 'IP Source Guard bağlama tablosu (IP Source Guard binding table)',
+    'verify': 'IP doğrulama ayarları (IP verification)',
     'terminal': 'Terminal ayarlarını yapılandır (Configure terminal settings)',
     'write': 'Yapılandırmayı kaydet (Save configuration)',
     'ping': 'Ağ bağlantısını test et (Test network connectivity)',
@@ -1409,7 +1414,7 @@ export function executeCommand(
 
   const l3OnlyCommands = [
     'show ip route', 'show ipv6 route', 'show ip protocols', 'show ip ospf', 'show ip ospf neighbor',
-    'show mls qos', 'show sdm prefer', 'show ip verify source', 'show ip source binding'
+    'show mls qos', 'show sdm prefer'
   ];
   const switchOnlyCommands = [
     'show vlan', 'show vlan brief', 'show spanning-tree', 'show port-security', 'show mac address-table',

@@ -532,29 +532,58 @@ export function cmdShowIpOspf(state: SwitchState, _input: string, _ctx: CommandC
 /**
  * Show IP DHCP Snooping
  */
+function getDhcpSnoopingBindingsList(state: SwitchState): DhcpSnoopingBinding[] {
+  const map = new Map<string, DhcpSnoopingBinding>();
+
+  (state.dhcpSnoopingBindings || []).forEach(b => {
+    const key = (b.macAddress || b.ipAddress || Math.random().toString()).toLowerCase();
+    map.set(key, b);
+  });
+
+  Object.keys(state.ports || {}).forEach(portName => {
+    const pLower = portName.toLowerCase();
+    if (pLower.startsWith('console') || pLower.startsWith('line') || pLower.startsWith('aux') || pLower.startsWith('vty')) return;
+    const port = state.ports[portName];
+    if (port && port.ipAddress && port.macAddress) {
+      const key = port.macAddress.toLowerCase();
+      if (!map.has(key)) {
+        map.set(key, {
+          macAddress: port.macAddress,
+          ipAddress: port.ipAddress,
+          leaseTime: 86400,
+          type: 'dhcp-snooping',
+          vlan: port.vlan || 1,
+          portId: portName
+        });
+      }
+    }
+  });
+
+  return Array.from(map.values());
+}
+
 export function cmdShowIpDhcpSnooping(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const enabled = state.dhcpSnoopingEnabled ?? false;
   const vlans: string[] = state.dhcpSnoopingVlans ?? [];
-  const bindings = state.dhcpSnoopingBindings || [];
+  const bindings = getDhcpSnoopingBindingsList(state);
 
   // Subcommand: show ip dhcp snooping binding
   if (/\bbinding\b/i.test(input)) {
-    let output = '\nDHCP Snooping Binding Table\n';
-    output += '---------------------------\n\n';
-    output += 'MacAddress          IpAddress        Lease(sec)  Type    VLAN  Interface\n';
+    let output = '\nMacAddress          IpAddress        Lease(sec)  Type    VLAN  Interface\n';
     output += '------------------- ---------------- ----------- ------- ----- ---------------\n';
     if (bindings.length === 0) {
-      output += 'No bindings found\n';
+      output += 'Total number of bindings: 0\n';
     } else {
       bindings.forEach(b => {
         const mac = (b.macAddress || '').padEnd(19);
         const ip = (b.ipAddress || '').padEnd(16);
-        const lease = (b.leaseTime !== undefined ? String(b.leaseTime) : '-').padEnd(11);
-        const type = (b.type || 'dynamic').padEnd(7);
-        const vlan = String(b.vlan ?? '-').padEnd(5);
+        const lease = (b.leaseTime !== undefined ? String(b.leaseTime) : '86400').padEnd(11);
+        const type = (b.type || 'dhcp-snooping').padEnd(7);
+        const vlan = String(b.vlan ?? '1').padEnd(5);
         const port = b.portId || '-';
         output += `${mac}${ip}${lease}${type}${vlan}${port}\n`;
       });
+      output += `Total number of bindings: ${bindings.length}\n`;
     }
     output += '!\n';
     return { success: true, output };
@@ -568,6 +597,8 @@ export function cmdShowIpDhcpSnooping(state: SwitchState, input: string, _ctx: C
   output += '------------------ -------- -----------------\n';
 
   Object.keys(state.ports || {}).forEach(portName => {
+    const pLower = portName.toLowerCase();
+    if (pLower.startsWith('console') || pLower.startsWith('line') || pLower.startsWith('aux') || pLower.startsWith('vty')) return;
     const port = state.ports[portName];
     const trusted = port?.dhcpSnoopingTrust ? 'yes' : 'no';
     const rateLimit = port?.dhcpSnoopingLimitRate !== undefined ? String(port.dhcpSnoopingLimitRate) : 'unlimited';
