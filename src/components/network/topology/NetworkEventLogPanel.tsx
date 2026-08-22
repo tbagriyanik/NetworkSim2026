@@ -75,6 +75,7 @@ export function NetworkEventLogPanel({ isOpen, onClose, isDark }: NetworkEventLo
         </div>
         <button
           onClick={onClose}
+          aria-label={language === 'tr' ? 'Kapat' : 'Close'}
           className={cn(
             "p-1.5 rounded-md hover:bg-slate-100 transition-colors",
             isDark ? "hover:bg-slate-800 text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700"
