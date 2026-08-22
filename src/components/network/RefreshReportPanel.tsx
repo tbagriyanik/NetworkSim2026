@@ -1,44 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RefreshCw, X, ChevronUp, ChevronDown } from 'lucide-react';
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { LiveDeviceList } from '@/components/network/LiveDeviceList';
-import { CanvasDevice } from './networkTopology.types';
-import { SwitchState } from '@/lib/network/types';
-import { RefreshNetworkReport } from '@/hooks/useRefreshReport';
 import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
+import { RefreshNetworkReport } from '@/hooks/useRefreshReport';
 
-interface LiveSummary {
-  deviceCount: { total: number; routers: number; switches: number; pcs: number; iot: number; firewalls: number; wlcs: number };
-  activeLinks: number;
-  vlanCount: number;
-  routingTableSummary: { totalRoutes: number; connected: number; static: number; dynamic: number };
-  protocolStats: {
-    ospf: { count: number; neighbors: number };
-    stp: { roots: number; blocked: number };
-    hsrp: { active: number; standby: number };
-    eigrp: { count: number; neighbors: number };
-  };
-}
-
-interface RefreshReportPanelProps {
-  refreshNetworkReport: RefreshNetworkReport | null;
-  setRefreshNetworkReport: React.Dispatch<React.SetStateAction<RefreshNetworkReport | null>>;
-  refreshReportRef: React.RefObject<HTMLDivElement | null>;
-  isMobile: boolean;
-  isDark: boolean;
-  focusedOverlay: string;
-  setFocusedOverlay: (overlay: 'refresh' | 'packet' | 'pc-info' | 'router-info' | 'switch-info') => void;
-  language: 'tr' | 'en';
-  t: Record<string, string>;
-  handleRefreshNetwork: () => void;
-  liveSummary: LiveSummary | null;
-  topologyDevices: CanvasDevice[];
-  deviceStates: Map<string, SwitchState>;
-  bringElementToFront: (el: HTMLElement) => void;
-}
+import { RefreshReportPanelProps } from './RefreshReportPanel/types';
+import { RefreshHeader } from './RefreshReportPanel/RefreshHeader';
 
 export function RefreshReportPanel({
   refreshNetworkReport,
@@ -49,7 +19,7 @@ export function RefreshReportPanel({
   focusedOverlay,
   setFocusedOverlay,
   language,
-  t,
+  t: _t,
   handleRefreshNetwork,
   liveSummary,
   topologyDevices,
@@ -87,7 +57,7 @@ export function RefreshReportPanel({
         }`}
       style={{
         zIndex: 100,
-        ...(!isMobile ? { maxHeight: 'calc(100vh - 20px)' } : { maxHeight: 'calc(100vh - 20px)' }),
+        maxHeight: 'calc(100vh - 20px)',
         resize: 'both',
         overflow: 'hidden',
       }}
@@ -96,45 +66,16 @@ export function RefreshReportPanel({
     >
       <Collapsible open={!isCollapsed} onOpenChange={(open) => setIsCollapsed(!open)}>
         <div className="flex h-full min-h-0 flex-col">
-          <div
-            className={`flex items-center justify-between px-3 py-2 border-b rounded-t-xl select-none ${!isMobile ? 'cursor-grab active:cursor-grabbing' : ''} ${isDark ? 'bg-white/5 border-success-500/20' : 'bg-black/5 border-success-500/30'}`}
-            data-drag-handle={!isMobile ? true : undefined}
-            onDoubleClick={(e) => {
-              const target = e.target as HTMLElement;
-              if (target.closest('button, input, select, textarea, .no-drag')) return;
-              setIsCollapsed(prev => !prev);
-            }}
-          >
-            <h3 className="text-sm font-bold flex items-center gap-2 pointer-events-none">
-              {refreshNetworkReport.title}
-            </h3>
-            <div className="flex items-center gap-1">
-              <TooltipWrapper title={t.refreshNetwork}>
-                <button
-                  onClick={() => { handleRefreshNetwork(); }}
-                  className="w-5 h-5 rounded-md bg-primary-500 hover:bg-primary-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-                >
-                  <RefreshCw className="w-3 h-3 text-white pointer-events-none" />
-                </button>
-              </TooltipWrapper>
-              <TooltipWrapper title={t.close}>
-                <button
-                  onClick={() => setRefreshNetworkReport(prev => prev ? { ...prev, show: false } : null)}
-                  className="w-5 h-5 rounded-md bg-error-500 hover:bg-error-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
-                >
-                  <X className="w-3 h-3 text-white pointer-events-none" />
-                </button>
-              </TooltipWrapper>
-              <TooltipWrapper title={isCollapsed ? t.expand : t.collapse}>
-                <button
-                  className="p-1 rounded hover:bg-secondary-100/50 dark:hover:bg-secondary-800/50 transition-colors"
-                  onClick={() => setIsCollapsed(!isCollapsed)}
-                >
-                  {isCollapsed ? <ChevronDown className="w-3 h-3 text-secondary-500 dark:text-secondary-400" /> : <ChevronUp className="w-3 h-3 text-secondary-500 dark:text-secondary-400" />}
-                </button>
-              </TooltipWrapper>
-            </div>
-          </div>
+          <RefreshHeader
+            title={refreshNetworkReport.title}
+            isDark={isDark}
+            isCollapsed={isCollapsed}
+            onRefresh={handleRefreshNetwork}
+            onClose={() => setRefreshNetworkReport((prev: RefreshNetworkReport | null) => prev ? { ...prev, show: false } : null)}
+            onToggleCollapse={() => setIsCollapsed((prev: boolean) => !prev)}
+            setFocusedOverlay={setFocusedOverlay}
+            language={language}
+          />
           <CollapsibleContent className="flex min-h-0 flex-1 flex-col max-h-none">
             <div className="min-h-0 flex-1 overflow-y-auto p-2">
               <Tabs defaultValue="summary" className="w-full">
@@ -151,7 +92,7 @@ export function RefreshReportPanel({
                   {/* Quick status messages */}
                   {refreshNetworkReport.dhcpMessages.length > 0 && (
                     <div className="flex flex-wrap gap-x-3 gap-y-1 opacity-80 text-xs">
-                      {refreshNetworkReport.dhcpMessages.map((msg, i) => (
+                      {refreshNetworkReport.dhcpMessages.map((msg: string, i: number) => (
                         <div key={i} className="flex items-center gap-1.5">
                           <span>{i + 1}.</span>
                           <span>{msg}</span>
@@ -220,7 +161,7 @@ export function RefreshReportPanel({
                             {language === 'tr' ? 'Ağ Uyarıları' : 'Network Warnings'} ({refreshNetworkReport.summary.networkWarnings.length})
                           </div>
                           <div className="space-y-0.5">
-                            {refreshNetworkReport.summary.networkWarnings.map((w, i) => (
+                            {refreshNetworkReport.summary.networkWarnings.map((w: string, i: number) => (
                               <div key={i} className="flex items-center gap-1 text-amber-700 dark:text-amber-300">
                                 <span>⚠</span>
                                 <span>{w}</span>
