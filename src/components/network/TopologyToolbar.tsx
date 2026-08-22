@@ -20,7 +20,7 @@ import {
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { DeviceIcon } from '@/components/network/DeviceIcon';
-import {   ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, LineSquiggle, Leaf, Plug, TrendingUpDown, Users, UserKey, Activity } from 'lucide-react';
+import { ChevronDown, Plus, Undo2, Redo2, Search, X, Cable, LineSquiggle, Leaf, Plug, TrendingUpDown, Users, UserKey, Activity } from 'lucide-react';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState, CableType, CableInfo } from '@/lib/network/types';
@@ -82,9 +82,9 @@ export function TopologyToolbar({
 
   const isHighQuality = graphicsQuality === 'high';
   // Register Home key shortcut for reset view
-   const toolbarGlowClass = isHighQuality
-     ? 'drop-shadow-[0_0_2px_rgba(34,211,238,0.15)] dark:drop-shadow-[0_0_2px_rgba(34,211,238,0.12)]'
-     : '';
+  const toolbarGlowClass = isHighQuality
+    ? 'drop-shadow-[0_0_2px_rgba(34,211,238,0.15)] dark:drop-shadow-[0_0_2px_rgba(34,211,238,0.12)]'
+    : '';
 
   const handleResetView = () => {
     if (resetView) {
@@ -104,21 +104,21 @@ export function TopologyToolbar({
     }
   };
 
-   useKeyboardShortcuts([
-     {
-       key: 'Home',
-       handler: handleResetView,
-       description: 'Reset topology view',
-     },
-     {
-       key: 's',
-       handler: () => {
-         const current = useAppStore.getState().topology.isSimulationMode;
-         setSimulationMode(!current);
-       },
-       description: 'Toggle simulation mode',
-     },
-   ]);
+  useKeyboardShortcuts([
+    {
+      key: 'Home',
+      handler: handleResetView,
+      description: 'Reset topology view',
+    },
+    {
+      key: 's',
+      handler: () => {
+        const current = useAppStore.getState().topology.isSimulationMode;
+        setSimulationMode(!current);
+      },
+      description: 'Toggle simulation mode',
+    },
+  ]);
 
   return (
     <div className={cn("fixed top-14 sm:top-16 left-0 right-0 z-30 px-2 sm:px-4 py-1 sm:py-1.5 border-b backdrop-blur-md flex items-center gap-1.5 sm:gap-3 overflow-x-auto", isDark ? "bg-secondary-900/95 border-secondary-800" : "bg-white/95 border-secondary-200 shadow-sm")}>
@@ -145,6 +145,25 @@ export function TopologyToolbar({
           <ShortcutBadge shortcut="Home" variant="default" />
         </TooltipContent>
       </Tooltip>
+
+      <div className="md:hidden">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.refreshNetworkF5}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"
+              onClick={handleRefreshNetwork}
+            >
+              <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t.refreshNetworkF5}</TooltipContent>
+        </Tooltip>
+      </div>
 
       {/* Active Device Dropdown */}
       <DropdownMenu onOpenChange={(open) => { if (!open) setDeviceSearchQuery(''); }}>
@@ -195,7 +214,7 @@ export function TopologyToolbar({
                 </>
               ) : (
                 <>
-                <Plus className={`w-4 h-4 text-secondary-500 ${toolbarGlowClass}`} />
+                  <Plus className={`w-4 h-4 text-secondary-500 ${toolbarGlowClass}`} />
                   <span className="text-sm font-bold text-secondary-500">
                     {t.selectDeviceDropdown}
                   </span>
@@ -307,7 +326,7 @@ export function TopologyToolbar({
                 className="h-8 w-8 p-0 text-primary-500 hover:bg-primary-500/10"
                 onClick={() => { window.dispatchEvent(new CustomEvent('add-device', { detail: 'pc' })); }}
               >
-                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
                 </svg>
               </Button>
@@ -328,7 +347,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
                 </svg>
               </Button>
@@ -349,7 +368,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
                 </svg>
               </Button>
@@ -370,7 +389,7 @@ export function TopologyToolbar({
                   }
                 }}
               >
-                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <circle cx="12" cy="12" r="9" strokeWidth={2} />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
                 </svg>
@@ -384,15 +403,15 @@ export function TopologyToolbar({
                 aria-label={t.addIoT}
                 variant="ghost"
                 size="icon"
-className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
-                 onClick={() => {
-                   if (typeof window !== 'undefined') {
-                     const event = new CustomEvent('add-device', { detail: 'iot' });
+                className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    const event = new CustomEvent('add-device', { detail: 'iot' });
                     window.dispatchEvent(event);
                   }
                 }}
               >
-                  <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-8 h-8 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.247 7.761a6 6 0 0 1 0 8.478" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.075 4.933a10 10 0 0 1 0 14.134" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.925 19.067a10 10 0 0 1 0-14.134" />
@@ -461,35 +480,35 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
             console: cableInfo.cableType === type ? 'text-accent-400' : 'text-accent-500 hover:text-accent-400',
           };
           return (
-          <Tooltip key={type}>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label={type === 'straight' ? t.straightCable : type === 'crossover' ? t.crossoverCable : type === 'serial' ? t.serialCable : t.consoleCable}
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 p-0 flex items-center justify-center font-bold transition-all
+            <Tooltip key={type}>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={type === 'straight' ? t.straightCable : type === 'crossover' ? t.crossoverCable : type === 'serial' ? t.serialCable : t.consoleCable}
+                  variant="ghost"
+                  size="icon"
+                  className={`h-8 w-8 p-0 flex items-center justify-center font-bold transition-all
                   ${cableInfo.cableType === type
-                    ? isDark ? 'bg-secondary-700/80' : 'bg-secondary-200/80'
-                    : ''
-                  }
+                      ? isDark ? 'bg-secondary-700/80' : 'bg-secondary-200/80'
+                      : ''
+                    }
                   ${colorMap[type] || colorMap.console}`}
-                onClick={() => setCableInfo({ ...cableInfo, cableType: type })}
-              >
-                {type === 'straight' ? (
-                  <Cable className={`w-4 h-4 ${toolbarGlowClass}`} />
-                ) : type === 'crossover' ? (
-                  <LineSquiggle className={`w-4 h-4 ${toolbarGlowClass}`} />
-                ) : type === 'serial' ? (
-                  <Plug className={`w-4 h-4 ${toolbarGlowClass}`} />
-                ) : (
-                  <TrendingUpDown className={`w-4 h-4 ${toolbarGlowClass}`} />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              {type === 'straight' ? t.straightCable : type === 'crossover' ? t.crossoverCable : type === 'serial' ? t.serialCable : t.consoleCable}
-            </TooltipContent>
-          </Tooltip>
+                  onClick={() => setCableInfo({ ...cableInfo, cableType: type })}
+                >
+                  {type === 'straight' ? (
+                    <Cable className={`w-4 h-4 ${toolbarGlowClass}`} />
+                  ) : type === 'crossover' ? (
+                    <LineSquiggle className={`w-4 h-4 ${toolbarGlowClass}`} />
+                  ) : type === 'serial' ? (
+                    <Plug className={`w-4 h-4 ${toolbarGlowClass}`} />
+                  ) : (
+                    <TrendingUpDown className={`w-4 h-4 ${toolbarGlowClass}`} />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {type === 'straight' ? t.straightCable : type === 'crossover' ? t.crossoverCable : type === 'serial' ? t.serialCable : t.consoleCable}
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>
@@ -649,25 +668,27 @@ className="h-8 w-8 p-0 text-warning-500 hover:bg-warning-500/10"
       <div className={`w-px h-4 ${isDark ? 'bg-secondary-700' : 'bg-secondary-200'}`} />
 
       {/* Refresh Network Button */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            aria-label={t.refreshNetworkF5}
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"
-            onClick={handleRefreshNetwork}
-          >
-            <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent className="flex items-center gap-2">
-          <span>{t.refreshNetworkF5}</span>
-          <ShortcutBadge shortcut="F5" variant="danger" />
-        </TooltipContent>
-      </Tooltip>
+      <div className="hidden md:block">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              aria-label={t.refreshNetworkF5}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-pink-500 hover:bg-pink-500/10"
+              onClick={handleRefreshNetwork}
+            >
+              <svg className={`w-4 h-4 ${toolbarGlowClass}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="flex items-center gap-2">
+            <span>{t.refreshNetworkF5}</span>
+            <ShortcutBadge shortcut="F5" variant="danger" />
+          </TooltipContent>
+        </Tooltip>
+      </div>
 
 
 

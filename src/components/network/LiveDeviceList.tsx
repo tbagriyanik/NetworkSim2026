@@ -11,6 +11,8 @@ import {
   Terminal,
   Settings,
   Copy,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   ChevronUp,
   Server,
@@ -228,6 +230,7 @@ function RefreshDeviceListToast({
   const { t } = useLanguage();
   const [selectedId, setSelectedId] = useState<string | null>(devices[0]?.id ?? null);
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+  const [commandIndex, setCommandIndex] = useState(0);
   const [openSection, setOpenSection] = useState<'details' | 'cli' | 'services'>('details');
 
   const selected = devices.find((device) => device.id === selectedId) || null;
@@ -245,6 +248,10 @@ function RefreshDeviceListToast({
     }
   }, [devices, selectedId]);
 
+  useEffect(() => {
+    setCommandIndex(0);
+  }, [selectedId]);
+
   const copyToClipboard = (text: string) => {
     if (!text || text === '-') return;
     navigator.clipboard.writeText(text);
@@ -260,6 +267,7 @@ function RefreshDeviceListToast({
   const rawDev = selected?.rawDevice;
   const rawState = selected?.rawState;
   const recommendedCmds = selected ? getRecommendedCliCommands(selected.type, isTR, rawState, rawDev) : [];
+  const activeCommand = recommendedCmds[commandIndex];
 
   // PC Active Services Data
   const servicesList: Array<{ name: string; info: string; active: boolean }> = [];
@@ -479,7 +487,7 @@ function RefreshDeviceListToast({
               </button>
 
               {openSection === 'cli' && (
-                <div className="p-2 space-y-2 bg-white/50 dark:bg-secondary-900/30">
+                <div className="p-2 space-y-2 bg-white/50 dark:bg-secondary-900/30 max-h-64 overflow-y-auto custom-scrollbar">
                   {/* Switch/Router Quick Stats */}
                   {switchRouterSummary && (
                     <div className="grid grid-cols-3 gap-1 text-[10px] pb-1 border-b border-secondary-200 dark:border-secondary-700/80">
@@ -523,20 +531,19 @@ function RefreshDeviceListToast({
                   <div className="space-y-1">
                     <span className="text-[10px] font-semibold opacity-60 uppercase">{isTR ? 'Önerilen CLI Komutları:' : 'Recommended CLI Commands:'}</span>
                     <div className="space-y-1">
-                      {recommendedCmds.map((c, i) => {
-                        const isCopied = copiedCmd === c.cmd;
+                      {activeCommand && (() => {
+                        const isCopied = copiedCmd === activeCommand.cmd;
                         return (
                           <div
-                            key={i}
-                            onClick={() => copyToClipboard(c.cmd)}
+                            onClick={() => copyToClipboard(activeCommand.cmd)}
                             className="flex items-center justify-between p-1.5 rounded bg-secondary-100/70 dark:bg-secondary-800/70 hover:bg-secondary-200 dark:hover:bg-secondary-700/90 cursor-pointer transition-all border border-transparent hover:border-primary-500/30 group"
                           >
                             <div className="flex flex-col min-w-0 pr-2">
                               <span className="font-mono font-bold text-[11px] text-primary-600 dark:text-primary-300 whitespace-pre-wrap">
-                                {c.mode ? `${c.mode} ` : ''}{c.cmd}
+                                {activeCommand.mode ? `${activeCommand.mode} ` : ''}{activeCommand.cmd}
                               </span>
                               <span className="text-[9px] text-secondary-500 dark:text-secondary-400 mt-0.5">
-                                {c.desc}
+                                {activeCommand.desc}
                               </span>
                             </div>
                             <button
@@ -548,8 +555,35 @@ function RefreshDeviceListToast({
                             </button>
                           </div>
                         );
-                      })}
+                      })()}
                     </div>
+                    {recommendedCmds.length > 1 && (
+                      <div className="flex items-center justify-center gap-1 pt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setCommandIndex(index => Math.max(0, index - 1))}
+                          disabled={commandIndex === 0}
+                          className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] text-secondary-500 hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                          aria-label={isTR ? 'Önceki komut' : 'Previous command'}
+                        >
+                          <ChevronLeft className="w-3 h-3" />
+                          {isTR ? 'Önceki' : 'Previous'}
+                        </button>
+                        <span className="min-w-[42px] text-center text-[10px] font-semibold text-secondary-500">
+                          {commandIndex + 1} / {recommendedCmds.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setCommandIndex(index => Math.min(recommendedCmds.length - 1, index + 1))}
+                          disabled={commandIndex === recommendedCmds.length - 1}
+                          className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] text-secondary-500 hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                          aria-label={isTR ? 'Sonraki komut' : 'Next command'}
+                        >
+                          {isTR ? 'Sonraki' : 'Next'}
+                          <ChevronRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -577,21 +611,20 @@ function RefreshDeviceListToast({
               </button>
 
               {openSection === 'cli' && (
-                <div className="p-2 space-y-1 bg-white/50 dark:bg-secondary-900/30">
-                  {recommendedCmds.map((c, i) => {
-                    const isCopied = copiedCmd === c.cmd;
+                <div className="p-2 space-y-1 bg-white/50 dark:bg-secondary-900/30 max-h-64 overflow-y-auto custom-scrollbar">
+                  {activeCommand && (() => {
+                    const isCopied = copiedCmd === activeCommand.cmd;
                     return (
                       <div
-                        key={i}
-                        onClick={() => copyToClipboard(c.cmd)}
+                        onClick={() => copyToClipboard(activeCommand.cmd)}
                         className="flex items-center justify-between p-1.5 rounded bg-secondary-100/70 dark:bg-secondary-800/70 hover:bg-secondary-200 dark:hover:bg-secondary-700/90 cursor-pointer transition-all border border-transparent hover:border-primary-500/30 group"
                       >
                         <div className="flex flex-col min-w-0 pr-2">
                           <span className="font-mono font-bold text-[11px] text-primary-600 dark:text-primary-300 truncate">
-                            C:\&gt; {c.cmd}
+                            C:\&gt; {activeCommand.cmd}
                           </span>
                           <span className="text-[9px] text-secondary-500 dark:text-secondary-400 truncate">
-                            {c.desc}
+                            {activeCommand.desc}
                           </span>
                         </div>
                         <button
@@ -603,14 +636,42 @@ function RefreshDeviceListToast({
                         </button>
                       </div>
                     );
-                  })}
+                  })()}
+                  {recommendedCmds.length > 1 && (
+                    <div className="flex items-center justify-center gap-1 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setCommandIndex(index => Math.max(0, index - 1))}
+                        disabled={commandIndex === 0}
+                        className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] text-secondary-500 hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label={isTR ? 'Önceki komut' : 'Previous command'}
+                      >
+                        <ChevronLeft className="w-3 h-3" />
+                        {isTR ? 'Önceki' : 'Previous'}
+                      </button>
+                      <span className="min-w-[42px] text-center text-[10px] font-semibold text-secondary-500">
+                        {commandIndex + 1} / {recommendedCmds.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setCommandIndex(index => Math.min(recommendedCmds.length - 1, index + 1))}
+                        disabled={commandIndex === recommendedCmds.length - 1}
+                        className="flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] text-secondary-500 hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                        aria-label={isTR ? 'Sonraki komut' : 'Next command'}
+                      >
+                        {isTR ? 'Sonraki' : 'Next'}
+                        <ChevronRight className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
 
