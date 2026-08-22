@@ -115,7 +115,10 @@ export function CommandLineTab({
         role="log"
         aria-live="polite"
         onClick={handleContainerClick}
-        onWheel={(event) => event.stopPropagation()}
+        onWheel={(event) => {
+          event.stopPropagation();
+          event.currentTarget.scrollTop += event.deltaY;
+        }}
         className={cn(
           "h-0 flex-1 min-h-0 max-h-full overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar",
           isMobile && "mobile-scroll",
@@ -157,7 +160,7 @@ export function CommandLineTab({
 
       {/* Input Area - Fixed at bottom */}
       {!isPcPoweredOff && (
-        <div onClick={handleContainerClick} className={cn("flex-none min-h-[58px] relative z-20 border-t bg-muted/95 backdrop-blur-sm", isMobile ? "p-2" : "p-3")}>
+        <div onClick={handleContainerClick} className={cn("flex-none w-full min-h-[58px] relative z-20 border-t bg-muted/95 backdrop-blur-sm", isMobile ? "p-2" : "p-3")}>
           <form onSubmit={(e) => { e.preventDefault(); void executeCommand(); }} className="flex items-center gap-3 relative">
             <div
               className={cn(

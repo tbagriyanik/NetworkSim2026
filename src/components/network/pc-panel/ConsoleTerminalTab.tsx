@@ -121,11 +121,11 @@ export function ConsoleTerminalTab({
         </div>
       )}
       <div className={cn(
-        "px-3 md:px-4 py-2 border-b shrink-0 flex items-center justify-between gap-3",
+        "relative z-30 w-full min-h-[52px] px-3 md:px-4 py-2 border-b shrink-0 flex items-center justify-between gap-3 overflow-visible",
         isDark ? 'border-secondary-800 bg-secondary-900/40' : 'border-secondary-200 bg-secondary-50'
       )}>
-        <div className="flex flex-col gap-1">
-          <div className="text-xs">
+        <div className="min-w-0 w-full flex flex-col items-start gap-1">
+          <div className="text-xs break-words">
             {isConsoleConnected && connectedDeviceId ? (
               <span className="text-success-500 font-medium">
                 {t.physicalConnectionDetected} {topologyDevices.find((d: CanvasDevice) => d.id === connectedDeviceId)?.name || connectedDeviceId}
@@ -137,15 +137,15 @@ export function ConsoleTerminalTab({
           <div className={cn("text-[10px] opacity-70", isDark ? 'text-secondary-200' : 'text-secondary-400')}>
             {t.consoleConfiguration}
           </div>
+          <Button
+            size="sm"
+            onClick={isConsoleConnected ? () => { setIsConsoleConnected(false); setConnectedDeviceId(null); } : handleConnect}
+            disabled={isPcPoweredOff || (!consoleDevice && !isConsoleConnected)}
+            className={cn("!inline-flex shrink-0 whitespace-nowrap mt-1", isConsoleConnected ? 'bg-error-600 hover:bg-error-700 text-white' : 'bg-success-600 hover:bg-success-700 text-white')}
+          >
+            {isConsoleConnected ? t.disconnect : t.connect}
+          </Button>
         </div>
-        <Button
-          size="sm"
-          onClick={isConsoleConnected ? () => { setIsConsoleConnected(false); setConnectedDeviceId(null); } : handleConnect}
-          disabled={isPcPoweredOff || (!consoleDevice && !isConsoleConnected)}
-          className={isConsoleConnected ? 'bg-error-600 hover:bg-error-700 text-white' : 'bg-success-600 hover:bg-success-700 text-white'}
-        >
-          {isConsoleConnected ? t.disconnect : t.connect}
-        </Button>
       </div>
 
       {/* Output Area - Scrollable */}
@@ -154,7 +154,10 @@ export function ConsoleTerminalTab({
         role="log"
         aria-live="polite"
         onClick={handleContainerClick}
-        onWheel={(event) => event.stopPropagation()}
+        onWheel={(event) => {
+          event.stopPropagation();
+          event.currentTarget.scrollTop += event.deltaY;
+        }}
         className={cn(
           "h-0 flex-1 min-h-0 max-h-full overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar",
           isMobile && "mobile-scroll",
@@ -203,7 +206,7 @@ export function ConsoleTerminalTab({
 
       {/* Input Area - Fixed at bottom */}
       {!isPcPoweredOff && (
-        <div onClick={handleContainerClick} className={cn("flex-none min-h-[58px] relative z-20 border-t bg-muted/95 backdrop-blur-sm", isMobile ? "p-2" : "p-3")}>
+        <div onClick={handleContainerClick} className={cn("flex-none w-full min-h-[58px] relative z-20 border-t bg-muted/95 backdrop-blur-sm", isMobile ? "p-2" : "p-3")}>
           <form onSubmit={(e) => { e.preventDefault(); void executeCommand(); }} className="flex items-center gap-3 relative">
             {isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
               <div className="absolute -top-7 left-4 right-4 text-[10px] font-black tracking-widest text-warning-400 animate-pulse">
