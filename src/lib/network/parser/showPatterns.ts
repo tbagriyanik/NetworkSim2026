@@ -1,4 +1,4 @@
-﻿// Show komutlari
+// Show komutlari
 import type { CommandPattern } from './commandPatterns.types';
 
 export const showPatterns: Record<string, CommandPattern> = {
@@ -292,16 +292,16 @@ export const showPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'show ip source binding': {
-    pattern: /^show\s+ip\s+source\s+binding(\s+(vlan\s+\d+|interface\s+\S+))?$/i,
+    pattern: /^show\s+ip\s+source\s+binding(\s+(vlan\s+\d+|interface\s+\S+|\S+))?\s*$/i,
     modes: ['privileged'],
     minArgs: 0,
     maxArgs: 2
   },
   'show ip verify source': {
-    pattern: /^show\s+ip\s+verify\s+source$/i,
+    pattern: /^show\s+ip\s+verify\s+source(\s+(interface\s+\S+|\S+))?\s*$/i,
     modes: ['privileged'],
     minArgs: 0,
-    maxArgs: 1
+    maxArgs: 2
   },
   'show ip dhcp pool': {
     pattern: /^show\s+ip\s+dhcp\s+pool(\s+(\S+))?$/i,

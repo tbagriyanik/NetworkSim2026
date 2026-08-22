@@ -1,6 +1,6 @@
 import type { CommandContext } from './commandTypes';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
-import type { SwitchState, CommandResult, Route, Port } from '../types';
+import type { SwitchState, CommandResult, Route, Port, DhcpSnoopingBinding } from '../types';
 import { buildOSPFLinkStateDatabase } from '../ospf';
 import { ensureDeviceStatesMap } from '../networkUtils';
 import {
@@ -551,7 +551,7 @@ function getDhcpSnoopingBindingsList(state: SwitchState): DhcpSnoopingBinding[] 
           macAddress: port.macAddress,
           ipAddress: port.ipAddress,
           leaseTime: 86400,
-          type: 'dhcp-snooping',
+          type: 'dynamic',
           vlan: port.vlan || 1,
           portId: portName
         });
@@ -578,7 +578,7 @@ export function cmdShowIpDhcpSnooping(state: SwitchState, input: string, _ctx: C
         const mac = (b.macAddress || '').padEnd(19);
         const ip = (b.ipAddress || '').padEnd(16);
         const lease = (b.leaseTime !== undefined ? String(b.leaseTime) : '86400').padEnd(11);
-        const type = (b.type || 'dhcp-snooping').padEnd(7);
+        const type = (b.type || 'dynamic').padEnd(7);
         const vlan = String(b.vlan ?? '1').padEnd(5);
         const port = b.portId || '-';
         output += `${mac}${ip}${lease}${type}${vlan}${port}\n`;

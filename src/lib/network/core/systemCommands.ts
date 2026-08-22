@@ -351,8 +351,8 @@ function cmdDo(
   }
 
   // Intent-first dispatch for show commands
-  if (parsedSub.intent?.family === 'show') {
-    const showHandler = showHandlers[matched];
+  if (parsedSub.intent?.family === 'show' || matched.startsWith('show ')) {
+    const showHandler = showHandlers[matched] || Object.entries(showHandlers).find(([k]) => matched.startsWith(k + ' ') || matched === k)?.[1];
     if (showHandler) {
       const result = showHandler(privilegedState, normalizedInput, ctx);
       if (result.newState) {
