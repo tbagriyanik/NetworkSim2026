@@ -550,6 +550,7 @@ export function checkConnectivity(
     const conn = adjList.get(aId)?.find(n => n.neighborId === bId)?.connection;
     if (conn) {
       pathConnections.set(`${aId}-${bId}`, conn);
+      pathConnections.set(`${bId}-${aId}`, conn);
 
       // Track ports used in this hop
       const srcPortId = conn.sourceDeviceId === aId ? conn.sourcePort : conn.targetPort;

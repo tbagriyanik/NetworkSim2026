@@ -73,12 +73,19 @@ const example = (isTr: boolean): ExampleProject => {
   const router3State = createInitialRouterState('00:50:00:00:A2:10');
   router3State.hostname = 'Router3';
   router3State.ipRouting = true;
-  router3State.ports['gi0/0'] = { ...router3State.ports['gi0/0'], ipAddress: '10.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
+  router3State.ports['gi0/0'] = { ...router3State.ports['gi0/0'], ipAddress: '10.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false, accessGroupIn: 'WEB-ONLY' };
   router3State.ports['gi0/1'] = { ...router3State.ports['gi0/1'], ipAddress: '20.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
   router3State.staticRoutes = [
     { destination: '192.168.1.0', subnetMask: '255.255.255.0', nextHop: '10.0.0.1', metric: 1, type: 'static' },
     { destination: '192.168.2.0', subnetMask: '255.255.255.0', nextHop: '20.0.0.2', metric: 1, type: 'static' }
   ];
+  router3State.accessLists = {
+    'WEB-ONLY': [
+      'permit tcp 192.168.1.0 0.0.0.255 host 192.168.2.10 eq 80',
+      'deny ip any any'
+    ]
+  };
+  router3State.namedAclTypes = { 'WEB-ONLY': 'extended' };
   router3State.runningConfig = [
     '!',
     'hostname Router3',

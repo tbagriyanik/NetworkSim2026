@@ -96,7 +96,13 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
   const buildCompletedInput = useCallback((selected: string) => {
     const mode = getCommandMode();
     const resolvedInput = expandKeywordPrefixes(resolveAliases(input), mode as any);
-    const { contextTokens } = expandCommandContext(mode, resolvedInput.length > 0 ? resolvedInput : input);
+    const { contextTokens, currentWord } = expandCommandContext(mode, resolvedInput.length > 0 ? resolvedInput : input);
+    const isIp = /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(selected);
+    if (isIp && currentWord) {
+      const tokens = input.trim().split(/\s+/);
+      const commandPrefix = input.endsWith(' ') ? input.trim() : tokens.slice(0, -1).join(' ');
+      return commandPrefix ? `${commandPrefix} ${selected}` : selected;
+    }
     const prefix = contextTokens.join(' ');
     return prefix ? `${prefix} ${selected}` : selected;
   }, [input, getCommandMode]);

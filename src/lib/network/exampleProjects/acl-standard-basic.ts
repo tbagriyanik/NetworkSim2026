@@ -26,8 +26,8 @@ const example = (isTr: boolean): ExampleProject => {
     {
       id: 'acl-standard-note',
       text: isTr
-        ? 'Amaç: Standart ACL kullanarak kaynak IP bazlı trafik filtreleme yapmak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) ACL TANIMLAMA (R3):\n   - access-list 10 deny 192.168.1.0 0.0.0.255\n   - access-list 10 permit any\n\n2) ACL UYGULAMA:\n   - interface gi0/1\n   - ip access-group 10 out\n\n3) TEST:\n   - PC0 (192.168.1.10) ping PC2 (başarısız olmalı)\n   - show access-lists'
-        : '🔧 BUILD STEPS:\n\n1) DEFINE ACL (R3):\n   - access-list 10 deny 192.168.1.0 0.0.0.255\n   - access-list 10 permit any\n\n2) APPLY ACL:\n   - interface gi0/1\n   - ip access-group 10 out\n\n3) TEST:\n   - PC0 (192.168.1.10) ping PC2 (should fail)\n   - show access-lists',
+        ? 'Amaç: Standart ACL kullanarak kaynak IP bazlı trafik filtreleme yapmak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) ACL TANIMLAMA (R3):\n   - enable\n   - configure terminal\n   - access-list 10 deny 192.168.1.0 0.0.0.255\n   - access-list 10 permit any\n\n2) ACL UYGULAMA:\n   - interface gi0/1\n   - ip access-group 10 out\n\n3) TEST:\n   - PC0 (192.168.1.10) -> ping 192.168.2.10 (başarısız olmalı)\n   - show access-lists'
+        : '🔧 BUILD STEPS:\n\n1) DEFINE ACL (R3):\n   - enable\n   - configure terminal\n   - access-list 10 deny 192.168.1.0 0.0.0.255\n   - access-list 10 permit any\n\n2) APPLY ACL:\n   - interface gi0/1\n   - ip access-group 10 out\n\n3) TEST:\n   - PC0 (192.168.1.10) -> ping 192.168.2.10 (should fail)\n   - show access-lists',
       x: 450,
       y: 80,
       width: 520,
@@ -74,11 +74,17 @@ const example = (isTr: boolean): ExampleProject => {
   router3State.hostname = 'Router3';
   router3State.ipRouting = true;
   router3State.ports['gi0/0'] = { ...router3State.ports['gi0/0'], ipAddress: '10.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
-  router3State.ports['gi0/1'] = { ...router3State.ports['gi0/1'], ipAddress: '20.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
+  router3State.ports['gi0/1'] = { ...router3State.ports['gi0/1'], ipAddress: '20.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false, accessGroupOut: '10' };
   router3State.staticRoutes = [
     { destination: '192.168.1.0', subnetMask: '255.255.255.0', nextHop: '10.0.0.1', metric: 1, type: 'static' },
     { destination: '192.168.2.0', subnetMask: '255.255.255.0', nextHop: '20.0.0.2', metric: 1, type: 'static' }
   ];
+  router3State.accessLists = {
+    '10': [
+      'deny 192.168.1.0 0.0.0.255',
+      'permit any'
+    ]
+  };
   router3State.runningConfig = [
     '!',
     'hostname Router3',

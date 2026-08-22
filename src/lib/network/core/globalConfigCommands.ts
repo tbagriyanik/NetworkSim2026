@@ -10,6 +10,7 @@ import { getPvstUpdate } from './commandHelpers';
 import { getDeviceCapabilities } from '../capabilities';
 import { validateIpRoutingSupport } from './L3Validation';
 import { createStubHandler } from './stubCommandHints';
+import { cmdAccessList, cmdNoAccessList } from './interface/cmd.misc';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
 
@@ -119,6 +120,8 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'class-map': createStubHandler('class-map'),
   'policy-map': createStubHandler('policy-map'),
   'template': createStubHandler('template'),
+  'access-list': cmdAccessList,
+  'no access-list': cmdNoAccessList,
   'ip access-list': cmdIpAccessList,
   'permit (named-acl)': cmdNamedAclPermit,
   'deny (named-acl)': cmdNamedAclDeny,
