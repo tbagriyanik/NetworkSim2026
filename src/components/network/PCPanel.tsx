@@ -2074,19 +2074,26 @@ export function PCPanel({
           language={language}
           isPcPoweredOff={isPcPoweredOff}
           wifiSignalStrength={wifiSignalStrength}
-          showCmdSettings={showCmdSettings}
-          isMobile={isMobile}
           ntpPanelTime={ntpPanelTime}
           t={t}
           deviceId={deviceId}
           onGoHome={goHome}
           onNavigateToProgram={navigateToProgram}
-          onToggleShowCmdSettings={() => setShowCmdSettings(prev => !prev)}
           onTogglePower={onTogglePower}
-          onClose={onClose}
           openWebPage={openWebPage}
           formatTime={formatTime}
           formatFullDateTime={formatFullDateTime}
+          terminalToolbar={isMobile ? <PCPanelTerminalToolbar
+            activeTab={activeTab}
+            isDark={isDark}
+            t={t}
+            isMobile={isMobile}
+            language={language}
+            showCmdSettings={showCmdSettings}
+            onSearchOpen={() => setSearchOpen(true)}
+            onCopyAll={handleCopyAll}
+            onToggleCmdSettings={() => setShowCmdSettings(!showCmdSettings)}
+          /> : undefined}
         />
 
         <div className="flex-1 min-h-0 px-2 pb-2 md:px-2 md:pb-2">
@@ -2114,11 +2121,12 @@ export function PCPanel({
                 <ModernPanel
                   id={deviceId}
                   title={internalPcHostname}
-                  onClose={onClose}
-                  collapsible={!isMobile}
+                  // The outer PC window already owns collapse/close actions.
+                  // Keep the inner panel as a content-only surface.
+                  collapsible={false}
                   hideTitle={(activeTab === 'desktop' || activeTab === 'terminal') ? false : true}
                   hideHeader={(activeTab === 'desktop' || activeTab === 'terminal') ? false : true}
-                  headerAction={<PCPanelTerminalToolbar
+                  headerAction={!isMobile ? <PCPanelTerminalToolbar
                     activeTab={activeTab}
                     isDark={isDark}
                     t={t}
@@ -2128,7 +2136,7 @@ export function PCPanel({
                     onSearchOpen={() => setSearchOpen(true)}
                     onCopyAll={handleCopyAll}
                     onToggleCmdSettings={() => setShowCmdSettings(!showCmdSettings)}
-                  />}
+                  /> : undefined}
                   showHeaderOnMobile
                   noPadding
                   style={{ height: '100%' }}

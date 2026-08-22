@@ -1,6 +1,7 @@
 'use client';
 
-import { ArrowLeft, Globe, Settings, SlidersHorizontal, X } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { ArrowLeft, Globe, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { WifiSignalMeter } from '../PCPanelWidgets';
@@ -15,19 +16,16 @@ interface PCPanelHeaderProps {
   language: string;
   isPcPoweredOff: boolean;
   wifiSignalStrength: number;
-  showCmdSettings: boolean;
-  isMobile: boolean;
   ntpPanelTime: Date;
   t: Record<string, string>;
   deviceId: string;
   onGoHome: () => void;
   onNavigateToProgram: (program: PCActiveTab) => void;
-  onToggleShowCmdSettings: () => void;
   onTogglePower?: (deviceId: string) => void;
-  onClose?: () => void;
   openWebPage: (url: string, target?: string) => void;
   formatTime: (date: Date) => string;
   formatFullDateTime: (date: Date) => string;
+  terminalToolbar?: ReactNode;
 }
 
 export function PCPanelHeader({
@@ -38,19 +36,16 @@ export function PCPanelHeader({
   language,
   isPcPoweredOff,
   wifiSignalStrength,
-  showCmdSettings,
-  isMobile,
   ntpPanelTime,
   t,
   deviceId,
   onGoHome,
   onNavigateToProgram,
-  onToggleShowCmdSettings,
   onTogglePower,
-  onClose,
   openWebPage,
   formatTime,
   formatFullDateTime,
+  terminalToolbar,
 }: PCPanelHeaderProps) {
   return (
     <div className="shrink-0 px-2 pt-2 md:px-2 md:pt-2">
@@ -141,25 +136,7 @@ export function PCPanelHeader({
                 <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />
               </Button>
             </TooltipWrapper>
-            {isMobile && (
-              <TooltipWrapper title={language === 'tr' ? 'Hızlı ayarlar' : 'Quick settings'}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onToggleShowCmdSettings}
-                  disabled={isPcPoweredOff}
-                  className={cn(
-                    "h-7 w-7 rounded-full",
-                    showCmdSettings
-                      ? (isDark ? "bg-warning-500/20 text-warning-300" : "bg-warning-100 text-warning-700")
-                      : (isDark ? "text-warning-300 hover:bg-white/5" : "text-warning-700 hover:bg-secondary-100")
-                  )}
-                  aria-label={language === 'tr' ? 'Hızlı ayarlar' : 'Quick settings'}
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipWrapper>
-            )}
+            {terminalToolbar}
             <TooltipWrapper title={formatFullDateTime(ntpPanelTime)}>
               <div className={cn(
                 "rounded-full px-2 py-1 md:px-3 md:py-2 text-[10px] md:text-[11px] font-mono font-semibold tracking-wide cursor-default",
@@ -191,22 +168,6 @@ export function PCPanelHeader({
                 </svg>
               </Button>
             </TooltipWrapper>
-            {isMobile && (
-              <TooltipWrapper title={language === 'tr' ? 'Kapat' : 'Close'}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onClose}
-                  className={cn(
-                    "h-7 w-7 rounded-full",
-                    isDark ? "text-error-400 hover:bg-error-500/10" : "text-error-600 hover:bg-error-500/10"
-                  )}
-                  aria-label={language === 'tr' ? 'Kapat' : 'Close'}
-                >
-                  <X className="w-3.5 h-3.5" />
-                </Button>
-              </TooltipWrapper>
-            )}
           </div>
         </div>
       </div>

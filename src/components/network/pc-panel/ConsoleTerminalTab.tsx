@@ -154,8 +154,9 @@ export function ConsoleTerminalTab({
         role="log"
         aria-live="polite"
         onClick={handleContainerClick}
+        onWheel={(event) => event.stopPropagation()}
         className={cn(
-          "flex-1 overflow-y-auto overflow-x-hidden scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar min-h-0",
+          "h-0 flex-1 min-h-0 max-h-full overflow-y-auto overflow-x-hidden overscroll-contain touch-pan-y scroll-smooth p-3 md:p-6 space-y-1.5 font-geist-mono leading-relaxed custom-scrollbar",
           isMobile && "mobile-scroll",
           isPcPoweredOff ? "bg-black" : terminalBg
         )}
@@ -202,7 +203,7 @@ export function ConsoleTerminalTab({
 
       {/* Input Area - Fixed at bottom */}
       {!isPcPoweredOff && (
-        <div onClick={handleContainerClick} className={cn("shrink-0 border-t bg-muted/95 backdrop-blur-sm", isMobile ? "p-2" : "p-3")}>
+        <div onClick={handleContainerClick} className={cn("flex-none min-h-[58px] relative z-20 border-t bg-muted/95 backdrop-blur-sm", isMobile ? "p-2" : "p-3")}>
           <form onSubmit={(e) => { e.preventDefault(); void executeCommand(); }} className="flex items-center gap-3 relative">
             {isConsoleConnected && (consoleNeedsPassword || consoleConfirmDialog?.show || consoleReloadPending) && (
               <div className="absolute -top-7 left-4 right-4 text-[10px] font-black tracking-widest text-warning-400 animate-pulse">
