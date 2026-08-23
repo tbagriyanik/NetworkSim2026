@@ -1,8 +1,8 @@
-export { portsFormTrunk, getVlanSpecificSTPBlocking } from './vlanAndSwitching';
-export { checkPortSecurityViolation, checkSerialEncapsulation } from './security';
-export { evaluateAcl } from './acl';
-export { checkConnectivity } from './pathResolution';
-export { checkDeviceConnectivity, getPingDiagnostics } from './pingDiagnostics';
+export * from './pathResolution';
+export * from './vlanAndSwitching';
+export * from './security';
+export * from './pingDiagnostics';
+export * from './acl';
 
 export {
   getDeviceWifiConfig,
@@ -13,9 +13,20 @@ export {
   getApActiveSsids,
   wifiMacFilterMatches,
   type DeviceWifiConfig,
-} from '../wireless';
+} from '@/lib/network/wireless';
 
 export {
   isExternalDomain,
   resolveHostname,
-} from '../dns';
+} from '@/lib/network/dns';
+
+export {
+  getPrimaryDeviceIp,
+  getSubnetForDeviceIp,
+  isConnectionCableCompatible,
+  isDevicePoweredOn,
+  isIpInSubnet,
+  isManagementIpSet,
+  isPortShutdown,
+  matchIpWithWildcard,
+} from '@/lib/network/connectivity.utils';

@@ -1,14 +1,14 @@
 import { CanvasDevice, CanvasConnection, CanvasPort } from '@/components/network/networkTopology.types';
-import { SwitchState, Port } from '../types';
-import { findRoute, getRoutingTable, isIpv6InNetwork } from '../routing';
-import { performArpResolution, getMacFromArpCache } from '../arp';
-import { learnMacAddress, findMacPort } from '../macLearning';
-import { ensureDeviceStatesMap } from '../networkUtils';
-import { recalculateStp } from '../stp';
-import { normalizePortId } from '../initialState';
-import { buildImplicitWirelessConnections } from '../wireless';
-import { isExternalDomain, resolveHostname } from '../dns';
-import { buildConnectionIndex } from '../connectionIndex';
+import { SwitchState, Port } from '@/lib/network/types';
+import { findRoute, getRoutingTable, isIpv6InNetwork } from '@/lib/network/routing';
+import { performArpResolution, getMacFromArpCache } from '@/lib/network/arp';
+import { learnMacAddress, findMacPort } from '@/lib/network/macLearning';
+import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
+import { recalculateStp } from '@/lib/network/stp';
+import { normalizePortId } from '@/lib/network/initialState';
+import { buildImplicitWirelessConnections } from '@/lib/network/wireless';
+import { isExternalDomain, resolveHostname } from '@/lib/network/dns';
+import { buildConnectionIndex } from '@/lib/network/connectionIndex';
 import {
   getPrimaryDeviceIp,
   getSubnetForDeviceIp,
@@ -17,7 +17,7 @@ import {
   isIpInSubnet,
   isManagementIpSet,
   isPortShutdown,
-} from '../connectivity.utils';
+} from '@/lib/network/connectivity.utils';
 import { portsFormTrunk, getVlanSpecificSTPBlocking } from './vlanAndSwitching';
 import { checkPortSecurityViolation, checkSerialEncapsulation } from './security';
 import { evaluateAcl } from './acl';

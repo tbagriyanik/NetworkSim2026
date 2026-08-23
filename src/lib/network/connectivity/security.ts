@@ -1,4 +1,4 @@
-import { SwitchState } from '../types';
+import { SwitchState } from '@/lib/network/types';
 
 /**
  * Check port security for a switch port

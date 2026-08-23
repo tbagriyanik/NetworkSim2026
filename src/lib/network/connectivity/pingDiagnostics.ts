@@ -1,14 +1,14 @@
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
-import { SwitchState } from '../types';
-import { ensureDeviceStatesMap } from '../networkUtils';
-import { resolveHostname } from '../dns';
-import { buildConnectionIndex } from '../connectionIndex';
+import { SwitchState } from '@/lib/network/types';
+import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
+import { resolveHostname } from '@/lib/network/dns';
+import { buildConnectionIndex } from '@/lib/network/connectionIndex';
 import {
   getPrimaryDeviceIp,
   getSubnetForDeviceIp,
   isIpInSubnet,
   isPortShutdown,
-} from '../connectivity.utils';
+} from '@/lib/network/connectivity.utils';
 import { checkConnectivity } from './pathResolution';
 
 export function checkDeviceConnectivity(

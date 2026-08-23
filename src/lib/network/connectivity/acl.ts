@@ -1,5 +1,5 @@
-import { SwitchState } from '../types';
-import { matchIpWithWildcard } from '../connectivity.utils';
+import { SwitchState } from '@/lib/network/types';
+import { matchIpWithWildcard } from '@/lib/network/connectivity.utils';
 
 function incrementAclCounter(state: SwitchState, aclId: string, ruleIndex: number): void {
   if (!state.aclMatchCounters) state.aclMatchCounters = {};

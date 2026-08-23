@@ -1,6 +1,6 @@
 import { CanvasConnection } from '@/components/network/networkTopology.types';
-import { SwitchState, Port } from '../types';
-import { buildConnectionIndex } from '../connectionIndex';
+import { SwitchState, Port } from '@/lib/network/types';
+import { buildConnectionIndex } from '@/lib/network/connectionIndex';
 
 /**
  * DTP (Dynamic Trunking Protocol) negotiation.
