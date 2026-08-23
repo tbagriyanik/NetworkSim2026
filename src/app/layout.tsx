@@ -1,22 +1,32 @@
 import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import Script from "next/script";
-import { Inria_Sans, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
 
-const inriaSans = Inria_Sans({
+const inriaSans = localFont({
+  src: [
+    {
+      path: "../../public/fonts/InriaSans-Regular.woff",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/InriaSans-Bold.woff",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-inria-sans",
-  subsets: ["latin"],
-  weight: ["300", "400", "700"],
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: "../../public/fonts/GeistMono-Regular.woff",
   variable: "--font-geist-mono",
-  subsets: ["latin"],
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://network2026.vercel.app';

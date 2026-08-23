@@ -1,4 +1,25 @@
-import { createHash } from 'crypto';
+import { createHash, createHmac } from 'crypto';
+
+const HMAC_EXAM_KEY = 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
+
+/**
+ * Generate HMAC-SHA256 signature for data integrity
+ */
+export function generateHmacSignature(data: string, key: string = HMAC_EXAM_KEY): string {
+  return createHmac('sha256', key).update(data).digest('hex');
+}
+
+/**
+ * Verify HMAC-SHA256 signature against payload data
+ */
+export function verifyHmacSignature(data: string, signature: string, key: string = HMAC_EXAM_KEY): boolean {
+  try {
+    const expected = generateHmacSignature(data, key);
+    return expected === signature;
+  } catch {
+    return false;
+  }
+}
 
 /**
  * MD5 password encryption (Type 5)

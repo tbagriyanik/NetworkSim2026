@@ -91,7 +91,8 @@ export function ConsoleTerminalTab({
   outputRef,
   inputRef: externalInputRef,
 }: ConsoleTerminalTabProps) {
-  const inputRef = externalInputRef || useRef<HTMLInputElement>(null);
+  const internalInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = externalInputRef ?? internalInputRef;
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll output area

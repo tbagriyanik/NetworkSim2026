@@ -234,17 +234,19 @@ function RefreshDeviceListToast({
 
   useEffect(() => {
     if (!devices.length) {
-      setTimeout(() => setSelectedId(null), 0);
+      setTimeout(() => {
+        setSelectedId(null);
+        setCommandIndex(0);
+      }, 0);
       return;
     }
     if (!selectedId || !devices.some((device) => device.id === selectedId)) {
-      setTimeout(() => setSelectedId(devices[0].id), 0);
+      setTimeout(() => {
+        setSelectedId(devices[0].id);
+        setCommandIndex(0);
+      }, 0);
     }
   }, [devices, selectedId]);
-
-  useEffect(() => {
-    setCommandIndex(0);
-  }, [selectedId]);
 
   const copyToClipboard = (text: string) => {
     if (!text || text === '-') return;
@@ -329,7 +331,10 @@ function RefreshDeviceListToast({
             <button
               key={device.id}
               type="button"
-              onClick={() => setSelectedId(device.id)}
+              onClick={() => {
+                setSelectedId(device.id);
+                setCommandIndex(0);
+              }}
               className={`px-2 py-0.5 text-[10px] font-bold rounded transition-all border shrink-0 ${isSelected
                 ? 'bg-primary-600 border-primary-700 text-white shadow-sm scale-105 z-10'
                 : isDark

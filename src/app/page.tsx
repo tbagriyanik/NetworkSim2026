@@ -221,7 +221,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   usePWA();
 
   // Track session start time for achievement records
-  const sessionStartRef = useRef(Date.now());
+  const [sessionStart] = useState(() => Date.now());
 
   // Which overlay panel is on top — last clicked wins
   const [focusedOverlay, setFocusedOverlay] = useState<'refresh' | 'packet' | 'pc-info' | 'router-info' | 'switch-info'>('packet');
@@ -325,7 +325,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     setRefreshNetworkReport(null);
     setProjectSearchQuery('');
     setLoadedExampleId('');
-    
+
     // Additional resets to prevent old project remnants
     setLastCommand('');
     setLastOutput('');
@@ -379,7 +379,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   // Record session duration on unload
   useEffect(() => {
     const handleBeforeUnload = () => {
-      const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
+      const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
       if (elapsed >= 10) {
         addSessionDuration(elapsed);
       }
@@ -930,7 +930,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     topologyConnections,
   };
 
-    // Track task completion changes globally
+  // Track task completion changes globally
   useTaskSync({
     isTaskSystemEnabled,
     activeDeviceTasks,
@@ -969,7 +969,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
 
 
-    // Persistence: Save to localStorage
+  // Persistence: Save to localStorage
   useProjectAutosave({
     isAppLoading,
     topologyDevices,
@@ -1104,7 +1104,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
 
 
-    // Handle command using active device
+  // Handle command using active device
   const { handleCommand, handleExecuteCommand } = useCommandExecution({
     activeDeviceId,
     activeDeviceType,
@@ -1126,7 +1126,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   const prompt = getPrompt(state);
 
-    usePageGlobalEvents({
+  usePageGlobalEvents({
     topologyDevices,
     topologyConnections,
     deviceStates,
@@ -1146,7 +1146,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     setActiveTab
   });
 
-  
+
 
   const handleClearTerminal = () => {
     setDeviceOutputs(prev => {
@@ -1338,7 +1338,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     if (data.projectName) {
       setProjectName(data.projectName);
     }
-    
+
     if (data.projectDescription) {
       localStorage.setItem('lastProjectDescription', data.projectDescription);
     } else {

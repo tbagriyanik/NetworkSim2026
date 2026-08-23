@@ -117,6 +117,26 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
     const roomCode = data.roomCode || (typeof localStorage !== 'undefined' ? localStorage.getItem('room-joined-code') : undefined);
     const studentId = data.studentId || (typeof localStorage !== 'undefined' ? localStorage.getItem('room-student-id') : undefined);
 
+    let scoreToken: string | undefined = undefined;
+    if (!roomCode) {
+      const signRes = await fetch('/api/certificate/sign-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+        body: JSON.stringify({
+          studentName: data.studentName,
+          projectTitle: data.projectTitle,
+          score,
+          totalScore,
+        }),
+      });
+      if (signRes.ok) {
+        const signJson = await signRes.json();
+        if (signJson.success && signJson.data?.scoreToken) {
+          scoreToken = signJson.data.scoreToken;
+        }
+      }
+    }
+
     const res = await fetch('/api/certificate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
@@ -128,7 +148,8 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
         date: data.date,
         language,
         roomCode,
-        studentId
+        studentId,
+        scoreToken,
       }),
     });
 

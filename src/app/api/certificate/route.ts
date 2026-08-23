@@ -3,6 +3,7 @@ import { saveCertificate, getRoomStudents } from '@/lib/roomStore';
 import type { RoomApiResponse } from '@/lib/roomTypes';
 import { isRateLimited } from '@/lib/security/rateLimiter';
 import { sanitizeInput } from '@/lib/security/sanitizer';
+import { verifyScoreToken } from '@/lib/security/scoreSigner';
 import crypto from 'crypto';
 import { logger } from '@/lib/logger';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
@@ -35,7 +36,7 @@ export const POST = withErrorHandling(async (
   }
 
   const body = await req.json();
-  const { studentName, projectTitle, score, totalScore, date, language, roomCode, studentId } = body;
+  const { studentName, projectTitle, score, totalScore, date, language, roomCode, studentId, scoreToken } = body;
 
   if (!studentName || !projectTitle || score == null || totalScore == null || !date) {
     return NextResponse.json(
@@ -68,6 +69,9 @@ export const POST = withErrorHandling(async (
     );
   }
 
+  const cleanStudentName = sanitizeInput(String(studentName)).slice(0, 100);
+  const cleanProjectTitle = sanitizeInput(String(projectTitle)).slice(0, 200);
+
   // --- Server-side Score Validation ---
   if (roomCode && studentId) {
     const upperRoomCode = String(roomCode).toUpperCase().trim();
@@ -95,7 +99,6 @@ export const POST = withErrorHandling(async (
         const serverProgressRatio = student.totalTasks > 0 ? student.completedTasks / student.totalTasks : 0;
         const claimedRatio = numTotalScore > 0 ? numScore / numTotalScore : 0;
 
-        // Allow up to 2% tolerance for float rounding in exam scoring
         if (claimedRatio - serverProgressRatio > 0.02) {
           logger.warn(`Certificate validation failed for ${studentName} in room ${upperRoomCode}. Claimed: ${claimedRatio}, Server: ${serverProgressRatio}`);
           return NextResponse.json(
@@ -107,16 +110,33 @@ export const POST = withErrorHandling(async (
     } catch (err) {
       logger.error('Room validation error:', err);
     }
+  } else {
+    // --- Solo Mode Signed Score Token Verification ---
+    if (
+      !scoreToken ||
+      !verifyScoreToken(scoreToken, {
+        score: numScore,
+        totalScore: numTotalScore,
+        studentName: cleanStudentName,
+        projectTitle: cleanProjectTitle,
+      })
+    ) {
+      logger.warn(`Solo mode certificate score token validation failed for ${studentName}`);
+      return NextResponse.json(
+        { success: false, error: 'Invalid or missing solo mode score verification token', code: 'INVALID_SCORE_TOKEN' },
+        { status: 400 },
+      );
+    }
   }
 
   const verifyCode = generateVerifyCode();
 
   await saveCertificate({
     verifyCode,
-    studentName: sanitizeInput(String(studentName)).slice(0, 100),
-    projectTitle: sanitizeInput(String(projectTitle)).slice(0, 200),
-    score: Number(score),
-    totalScore: Number(totalScore),
+    studentName: cleanStudentName,
+    projectTitle: cleanProjectTitle,
+    score: numScore,
+    totalScore: numTotalScore,
     date: sanitizeInput(String(date)).slice(0, 30),
     language: language === 'tr' ? 'tr' : 'en',
     issuedAt: Date.now(),

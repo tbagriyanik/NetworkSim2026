@@ -157,11 +157,6 @@ function stringToUint8Array(str: string): Uint8Array {
   return encoder.encode(str);
 }
 
-// Uint8Array'i hex string'e dönüştüren yardımcı fonksiyon
-function uint8ArrayToHex(buffer: Uint8Array): string {
-  return Array.from(buffer, byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
 // XOR şifrelemesi için yardımcı fonksiyon
 function xorBytes(data: Uint8Array, key: Uint8Array): Uint8Array {
   const result = new Uint8Array(data.length);
@@ -195,13 +190,11 @@ export function decryptExamData(encrypted: string): unknown {
   }
 }
 
+import { generateHmacSignature, verifyHmacSignature } from './crypto';
+
 /**
- * Generate integrity hash for exam project
- * Detects accidental changes to critical fields.
- * ⚠️ DISCLAIMER: This uses a client-side fixed XOR key and is NOT
- * cryptographically secure. It catches accidental data corruption or
- * unintended modifications, but does NOT protect against intentional
- * tampering by a determined user with browser DevTools access.
+ * Generate integrity HMAC-SHA256 hash signature for exam project
+ * Cryptographically protects critical exam state fields from tampering.
  */
 export function generateExamIntegrityHash(project: ExamProject): string {
   const criticalData = {
@@ -218,24 +211,31 @@ export function generateExamIntegrityHash(project: ExamProject): string {
   };
   
   const json = JSON.stringify(criticalData);
-  const bytes = stringToUint8Array(json);
-  const xored = xorBytes(bytes, EXAM_KEY_BYTES);
-  return uint8ArrayToHex(xored);
+  return generateHmacSignature(json);
 }
 
 /**
- * Verify if exam project integrity is intact
- * Returns true if no accidental corruption detected.
- * ⚠️ See generateExamIntegrityHash disclaimer — this is NOT tamper-proof.
+ * Verify if exam project integrity is intact using HMAC-SHA256 signature
  */
 export function verifyExamIntegrity(project: ExamProject): boolean {
   if (!project.integrityHash) return false;
   
-  // Create a copy without the integrityHash to generate the hash
   const projectCopy = { ...project, integrityHash: undefined };
-  const generatedHash = generateExamIntegrityHash(projectCopy as ExamProject);
-  
-  return generatedHash === project.integrityHash;
+  const criticalData = {
+    id: projectCopy.id,
+    durationMinutes: projectCopy.durationMinutes,
+    tasks: projectCopy.tasks.map(t => ({
+      id: t.id,
+      weight: t.weight,
+      completed: t.completed,
+      completedAt: t.completedAt ? t.completedAt.getTime() : null
+    })),
+    startedAt: projectCopy.startedAt ? projectCopy.startedAt.getTime() : null,
+    finishedAt: projectCopy.finishedAt ? projectCopy.finishedAt.getTime() : null
+  };
+
+  const json = JSON.stringify(criticalData);
+  return verifyHmacSignature(json, project.integrityHash);
 }
 
 // Exam tasks - Basic Connectivity Exam
