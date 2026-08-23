@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Monitor, MousePointer2, Terminal, Server, Check, X, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { colors } from '@/lib/design-tokens/colors';
 
 const animTranslations = {
   tr: {
@@ -346,10 +347,10 @@ export function TutorialAnimationPlayer({ animationId }: TutorialAnimationPlayer
             <div className="flex-1 relative">
               {/* Topology SVG lines */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-45">
-                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke="#6366f1" strokeWidth="2" />
-                <line x1={`${pcb.x}%`} y1={`${pcb.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke="#6366f1" strokeWidth="2" />
-                <line x1={`${pcc.x}%`} y1={`${pcc.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke="#6366f1" strokeWidth="2" />
-                <line x1={`${pcd.x}%`} y1={`${pcd.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke="#6366f1" strokeWidth="2" />
+                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
+                <line x1={`${pcb.x}%`} y1={`${pcb.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
+                <line x1={`${pcc.x}%`} y1={`${pcc.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
+                <line x1={`${pcd.x}%`} y1={`${pcd.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
               </svg>
 
               {/* PC-A (Sender) */}
@@ -483,9 +484,9 @@ export function TutorialAnimationPlayer({ animationId }: TutorialAnimationPlayer
           <div className="relative w-full h-56 bg-secondary-900 border border-secondary-800 rounded-lg overflow-hidden flex flex-col justify-between p-3 select-none">
             <div className="flex-1 relative">
               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-45">
-                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke="#6366f1" strokeWidth="2" />
-                <line x1={`${pcb.x}%`} y1={`${pcb.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke="#6366f1" strokeWidth="2" />
-                <line x1={`${pcc.x}%`} y1={`${pcc.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke="#6366f1" strokeWidth="2" />
+                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
+                <line x1={`${pcb.x}%`} y1={`${pcb.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
+                <line x1={`${pcc.x}%`} y1={`${pcc.y}%`} x2={`${sw.x}%`} y2={`${sw.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
               </svg>
 
               {/* PC-A */}
@@ -611,7 +612,7 @@ export function TutorialAnimationPlayer({ animationId }: TutorialAnimationPlayer
           <div className="relative w-full h-56 bg-secondary-900 border border-secondary-800 rounded-lg overflow-hidden flex flex-col justify-between p-3 select-none">
             <div className="flex-1 relative">
               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-45">
-                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${pcb.x}%`} y2={`${pcb.y}%`} stroke="#6366f1" strokeWidth="2" />
+                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${pcb.x}%`} y2={`${pcb.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
               </svg>
 
               {/* PC-A */}
@@ -742,7 +743,7 @@ export function TutorialAnimationPlayer({ animationId }: TutorialAnimationPlayer
 
             <div className="flex-1 relative mt-1">
               <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-45">
-                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${srv.x}%`} y2={`${srv.y}%`} stroke="#6366f1" strokeWidth="2" />
+                <line x1={`${pca.x}%`} y1={`${pca.y}%`} x2={`${srv.x}%`} y2={`${srv.y}%`} stroke={colors.indigo['500']} strokeWidth="2" />
               </svg>
 
               {/* Client PC */}

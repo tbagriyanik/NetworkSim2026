@@ -1,6 +1,7 @@
 
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
+import { colors } from '@/lib/design-tokens/colors';
 
 export type IotRule = {
   id: string;
@@ -109,21 +110,21 @@ export const generateIotWebPanelContent = (
         <title>${isTurkish ? 'IoT Web Paneli' : 'IoT Web Panel'}</title>
         <style>
           :root {
-            --color-primary-500: #3b82f6;
-            --color-primary-700: #1d4ed8;
-            --color-secondary-500: #64748b;
-            --color-secondary-600: #475569;
-            --color-secondary-200: #e2e8f0;
-            --color-secondary-300: #cbd5e1;
-            --color-success-500: #22c55e;
-            --color-success-600: #16a34a;
-            --color-error-500: #ef4444;
-            --color-error-600: #dc2626;
+            --color-primary-500: ${colors.status.info};
+            --color-primary-700: ${colors.blue['700']};
+            --color-secondary-500: ${colors.cables.console};
+            --color-secondary-600: ${colors.cables.disabled};
+            --color-secondary-200: ${colors.topology.noteText};
+            --color-secondary-300: ${colors.terminal.output};
+            --color-success-500: ${colors.status.active};
+            --color-success-600: ${colors.green['600']};
+            --color-error-500: ${colors.status.offline};
+            --color-error-600: ${colors.red['600']};
           }
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            background-color: ${colors.neutral['100']};
+            color: ${colors.neutral.dark};
             margin: 0;
             padding: 20px;
             display: flex;
@@ -133,7 +134,7 @@ export const generateIotWebPanelContent = (
             touch-action: manipulation;
           }
           .container {
-            background-color: #ffffff;
+            background-color: ${colors.common.white};
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             padding: 30px;
@@ -165,7 +166,7 @@ export const generateIotWebPanelContent = (
           input[type="password"] {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid #ced4da;
+            border: 1px solid ${colors.neutral['400']};
             border-radius: 5px;
             box-sizing: border-box;
             font-size: 16px;
@@ -208,39 +209,39 @@ export const generateIotWebPanelContent = (
             gap: 12px;
           }
           .iot-device-card.powered-off {
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
+            background-color: ${colors.red['100']};
+            border-color: ${colors.red.light};
             opacity: 0.7;
           }
           .iot-device-card.connected {
-            background-color: #dcfce7;
-            border-color: #86efac;
+            background-color: ${colors.green['100']};
+            border-color: ${colors.green['300']};
           }
           .iot-device-card.connected-inactive {
-            background-color: #fef3c7;
-            border-color: #fde68a;
+            background-color: ${colors.amber['100']};
+            border-color: ${colors.amber['200']};
           }
           .iot-device-card.active {
             background-color: var(--color-primary-100);
-            border-color: #7dd3fc;
+            border-color: ${colors.sky['200']};
           }
           .iot-device-card.inactive {
-            background-color: #f3f4f6;
+            background-color: ${colors.neutral.soft};
             border-color: var(--color-secondary-300);
             opacity: 0.7;
           }
           .iot-device-card.offline {
-            background-color: #e2e3e5;
-            border-color: #d6d8db;
+            background-color: ${colors.neutral['450']};
+            border-color: ${colors.neutral.medium};
             opacity: 0.6;
           }
           .iot-device-card.wifi-disabled {
             background-color: var(--color-warning-100);
-            border-color: #ffeaa7;
+            border-color: ${colors.amber.light};
           }
           .iot-device-card.powered-off.wifi-disabled {
-            background-color: #e2e3e5;
-            border-color: #d6d8db;
+            background-color: ${colors.neutral['450']};
+            border-color: ${colors.neutral.medium};
           }
           .device-info {
             flex: 1;
@@ -248,7 +249,7 @@ export const generateIotWebPanelContent = (
           .device-name {
             font-weight: 600;
             font-size: 16px;
-            color: #333;
+            color: ${colors.neutral.dark};
           }
           .device-details {
             display: flex;
@@ -265,7 +266,7 @@ export const generateIotWebPanelContent = (
           .device-rules,
           .device-rule-count {
             font-size: 12px;
-            color: #166534;
+            color: ${colors.green['800']};
             font-weight: 600;
           }
           .device-status {
@@ -278,15 +279,15 @@ export const generateIotWebPanelContent = (
             font-weight: 500;
           }
           .device-status.online {
-            color: #166534;
+            color: ${colors.green['800']};
             font-weight: 500;
           }
           .device-status.online-inactive {
-            color: #92400e;
+            color: ${colors.amber['800']};
             font-weight: 500;
           }
           .device-status.active {
-            color: #0369a1;
+            color: ${colors.theme.primaryHover};
             font-weight: 500;
           }
           .device-status.inactive {
@@ -327,7 +328,7 @@ export const generateIotWebPanelContent = (
           .device-name {
             font-size: 16px;
             font-weight: 500;
-            color: #333;
+            color: ${colors.neutral.dark};
           }
           .connect-button {
             background-color: var(--color-primary-500);
@@ -394,7 +395,7 @@ export const generateIotWebPanelContent = (
             position: absolute;
             top: 70px;
             right: 20px;
-            background-color: #ffffff;
+            background-color: ${colors.common.white};
             border: 1px solid var(--color-secondary-200);
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -409,7 +410,7 @@ export const generateIotWebPanelContent = (
           .settings-popup-title {
             font-size: 14px;
             font-weight: 600;
-            color: #333;
+            color: ${colors.neutral.dark};
             margin-bottom: 15px;
             padding-bottom: 10px;
             border-bottom: 1px solid var(--color-secondary-200);
@@ -430,7 +431,7 @@ export const generateIotWebPanelContent = (
           .settings-input {
             width: 100%;
             padding: 8px 10px;
-            border: 1px solid #ced4da;
+            border: 1px solid ${colors.neutral['400']};
             border-radius: 5px;
             box-sizing: border-box;
             font-size: 14px;
@@ -797,23 +798,23 @@ export const generateIotDevicePageContent = (
         <title>${isTurkish ? 'IoT Cihaz Yönetimi' : 'IoT Device Management'}: ${safeName}</title>
         <style>
           :root {
-            --color-primary-500: #3b82f6;
-            --color-primary-700: #1d4ed8;
-            --color-secondary-500: #64748b;
-            --color-secondary-600: #475569;
-            --color-secondary-200: #e2e8f0;
-            --color-secondary-300: #cbd5e1;
-            --color-success-500: #22c55e;
-            --color-success-600: #16a34a;
-            --color-error-500: #ef4444;
-            --color-error-600: #dc2626;
-            --color-warning-100: #fef3c7;
-            --color-warning-700: #b45309;
+            --color-primary-500: ${colors.status.info};
+            --color-primary-700: ${colors.blue['700']};
+            --color-secondary-500: ${colors.cables.console};
+            --color-secondary-600: ${colors.cables.disabled};
+            --color-secondary-200: ${colors.topology.noteText};
+            --color-secondary-300: ${colors.terminal.output};
+            --color-success-500: ${colors.status.active};
+            --color-success-600: ${colors.green['600']};
+            --color-error-500: ${colors.status.offline};
+            --color-error-600: ${colors.red['600']};
+            --color-warning-100: ${colors.amber['100']};
+            --color-warning-700: ${colors.amber['700']};
           }
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            color: #333;
+            background-color: ${colors.neutral['100']};
+            color: ${colors.neutral.dark};
             margin: 0;
             padding: 20px;
             display: flex;
@@ -821,7 +822,7 @@ export const generateIotDevicePageContent = (
             align-items: center;
           }
           .device-panel {
-            background-color: #ffffff;
+            background-color: ${colors.common.white};
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
             padding: 30px;
@@ -837,7 +838,7 @@ export const generateIotDevicePageContent = (
             font-weight: 600;
           }
           .device-info {
-            background-color: #f8f9fa;
+            background-color: ${colors.neutral['50']};
             border-radius: 6px;
             padding: 20px;
             margin-bottom: 25px;
@@ -879,7 +880,7 @@ export const generateIotDevicePageContent = (
             left: 0;
             right: 0;
             bottom: 0;
-            background-color: #ccc;
+            background-color: ${colors.neutral.muted};
             transition: .4s;
             border-radius: 34px;
           }
@@ -917,7 +918,7 @@ export const generateIotDevicePageContent = (
           }
           .power-off-message {
             background-color: var(--color-warning-100);
-            border: 1px solid #ffc107;
+            border: 1px solid ${colors.amber['400']};
             border-radius: 6px;
             padding: 15px;
             margin-bottom: 25px;
@@ -944,14 +945,14 @@ export const generateIotDevicePageContent = (
           .programming-section {
             margin-top: 30px;
             padding-top: 20px;
-            border-top: 1px solid #eee;
+            border-top: 1px solid ${colors.neutral.light};
             text-align: left;
           }
           .programming-title {
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 15px;
-            color: #333;
+            color: ${colors.neutral.dark};
             display: flex;
             align-items: center;
             gap: 8px;
@@ -960,14 +961,14 @@ export const generateIotDevicePageContent = (
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background: #f8f9fa;
+            background: ${colors.neutral['50']};
             padding: 15px;
             border-radius: 6px;
             margin-bottom: 15px;
           }
           .rule-form select, .rule-form input {
             padding: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid ${colors.neutral.lighter};
             border-radius: 4px;
             font-size: 13px;
           }
@@ -989,8 +990,8 @@ export const generateIotDevicePageContent = (
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #fff;
-            border: 1px solid #eee;
+            background: ${colors.common.white};
+            border: 1px solid ${colors.neutral.light};
             padding: 8px 12px;
             border-radius: 4px;
             font-size: 13px;
@@ -1110,7 +1111,7 @@ export const generateIotDevicePageContent = (
               .replace(/</g, '&lt;')
               .replace(/>/g, '&gt;')
               .replace(/"/g, '&quot;')
-              .replace(/'/g, '&#039;');
+              .replace(/'/g, '&${colors.common.navy};');
           }
 
           function addRule() {

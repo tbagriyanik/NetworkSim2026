@@ -2,6 +2,7 @@ import { CanvasDevice, CanvasConnection, CanvasNote } from '../components/networ
 import { isCableCompatible, SwitchState } from '@/lib/network/types';
 import { CABLE_COLORS } from '../components/network/networkTopology.constants';
 import { logger } from '../lib/logger';
+import { colors } from '@/lib/design-tokens/colors';
 
 export interface ExportPNGOptions {
   svgElement: SVGSVGElement;
@@ -35,7 +36,7 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
   let url = '';
   let width = 800;
   let height = 600;
-  const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-white').trim() || '#ffffff';
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--color-white').trim() || colors.common.white;
 
   try {
     // Resolve actual app fonts from CSS custom properties

@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
+import { colors } from '@/lib/design-tokens/colors';
 
 const inriaSans = localFont({
   src: [
@@ -151,7 +152,7 @@ export default async function RootLayout({
             }
           })();
         `}} />
-        <meta name="theme-color" content="#0f172a" />
+        <meta name="theme-color" content={colors.topology.bg} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

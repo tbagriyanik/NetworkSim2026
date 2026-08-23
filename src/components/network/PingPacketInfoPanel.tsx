@@ -5,6 +5,7 @@ import { type BroadcastAnimTarget } from './hooks/usePingSequence';
 import { cn } from '@/lib/utils';
 
 import { CABLE_COLORS } from './networkTopology.constants';
+import { colors } from '@/lib/design-tokens/colors';
 
 export interface HopPacketInfo {
     hopIndex: number;
@@ -642,8 +643,8 @@ export function PingPacketInfoPanel({
                                     {broadcastSvgData.map((bt, i) => (
                                         <g key={`${bt.targetId}-${i}`}>
                                             <line x1={bt.fromX} y1={bt.fromY} x2={bt.x} y2={bt.y} stroke={isDark ? 'rgba(251, 191, 36, 0.85)' : 'rgba(180, 83, 9, 0.85)'} strokeWidth="2" strokeLinecap="round" opacity={0.8} />
-                                            <circle cx={bt.x} cy={bt.y} r="7" fill={isDark ? '#fbbf24' : '#d97706'} filter="url(#panel-broadcast-glow)" opacity={0.9} />
-                                            <rect x={bt.x - 10} y={bt.y - 8} width="20" height="16" rx="3" fill={isDark ? '#fbbf24' : '#d97706'} opacity={0.9} />
+                                            <circle cx={bt.x} cy={bt.y} r="7" fill={isDark ? colors.terminal.warning : colors.amber['600']} filter="url(#panel-broadcast-glow)" opacity={0.9} />
+                                            <rect x={bt.x - 10} y={bt.y - 8} width="20" height="16" rx="3" fill={isDark ? colors.terminal.warning : colors.amber['600']} opacity={0.9} />
                                             <path d={`M ${bt.x - 7} ${bt.y - 2} L ${bt.x} ${bt.y + 5} L ${bt.x + 7} ${bt.y - 2}`} fill="none" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                                         </g>
                                     ))}

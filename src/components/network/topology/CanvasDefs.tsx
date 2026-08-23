@@ -1,4 +1,5 @@
 import React from 'react';
+import { colors } from '@/lib/design-tokens/colors';
 
 interface CanvasDefsProps {
   isDark: boolean;
@@ -36,17 +37,17 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
       <radialGradient id="canvasAmbientGlow" cx="82%" cy="18%" r="65%">
         {isDark ? (
           <>
-            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.16" />
-            <stop offset="45%" stopColor="#0ea5e9" stopOpacity="0.08" />
-            <stop offset="85%" stopColor="#3b82f6" stopOpacity="0.02" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            <stop offset="0%" stopColor={colors.indigo['500']} stopOpacity="0.16" />
+            <stop offset="45%" stopColor={colors.sky['500']} stopOpacity="0.08" />
+            <stop offset="85%" stopColor={colors.status.info} stopOpacity="0.02" />
+            <stop offset="100%" stopColor={colors.common.black} stopOpacity="0" />
           </>
         ) : (
           <>
-            <stop offset="0%" stopColor="#818cf8" stopOpacity="0.14" />
-            <stop offset="45%" stopColor="#38bdf8" stopOpacity="0.07" />
-            <stop offset="85%" stopColor="#60a5fa" stopOpacity="0.02" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="0%" stopColor={colors.indigo['400']} stopOpacity="0.14" />
+            <stop offset="45%" stopColor={colors.cables.selected} stopOpacity="0.07" />
+            <stop offset="85%" stopColor={colors.cables.hover} stopOpacity="0.02" />
+            <stop offset="100%" stopColor={colors.common.white} stopOpacity="0" />
           </>
         )}
       </radialGradient>
@@ -54,15 +55,15 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
       <radialGradient id="canvasAmbientGlowSecondary" cx="15%" cy="85%" r="60%">
         {isDark ? (
           <>
-            <stop offset="0%" stopColor="#a855f7" stopOpacity="0.10" />
-            <stop offset="50%" stopColor="#6366f1" stopOpacity="0.04" />
-            <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+            <stop offset="0%" stopColor={colors.purple['500']} stopOpacity="0.10" />
+            <stop offset="50%" stopColor={colors.indigo['500']} stopOpacity="0.04" />
+            <stop offset="100%" stopColor={colors.common.black} stopOpacity="0" />
           </>
         ) : (
           <>
-            <stop offset="0%" stopColor="#c084fc" stopOpacity="0.08" />
-            <stop offset="50%" stopColor="#818cf8" stopOpacity="0.03" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+            <stop offset="0%" stopColor={colors.purple['400']} stopOpacity="0.08" />
+            <stop offset="50%" stopColor={colors.indigo['400']} stopOpacity="0.03" />
+            <stop offset="100%" stopColor={colors.common.white} stopOpacity="0" />
           </>
         )}
       </radialGradient>

@@ -3,6 +3,7 @@
 import { CanvasDevice } from './networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
+import { colors } from '@/lib/design-tokens/colors';
 import {
   WIRELESS_CHANNELS_2_4GHZ,
   WIRELESS_CHANNELS_5GHZ,
@@ -216,31 +217,31 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   <title>${safeDeviceName} - ${isTurkish ? 'Kablosuz Ayarları' : 'Wireless Settings'}</title>
   <style>
     :root {
-      --color-primary-500: #3b82f6;
-      --color-primary-600: #2563eb;
-      --color-primary-700: #1d4ed8;
-      --color-primary-100: #dbeafe;
-      --color-secondary-100: #f1f5f9;
-      --color-secondary-200: #e2e8f0;
-      --color-secondary-300: #cbd5e1;
-      --color-secondary-400: #94a3b8;
-      --color-secondary-500: #64748b;
-      --color-secondary-700: #334155;
-      --color-secondary-900: #0f172a;
-      --color-success-500: #22c55e;
-      --color-success-600: #16a34a;
-      --color-warning-500: #eab308;
-      --color-warning-600: #ca8a04;
-      --color-error-500: #ef4444;
-      --color-error-600: #dc2626;
-      --color-accent-600: #0d9488;
+      --color-primary-500: ${colors.status.info};
+      --color-primary-600: ${colors.blue['600']};
+      --color-primary-700: ${colors.blue['700']};
+      --color-primary-100: ${colors.blue['100']};
+      --color-secondary-100: ${colors.terminal.fg};
+      --color-secondary-200: ${colors.topology.noteText};
+      --color-secondary-300: ${colors.terminal.output};
+      --color-secondary-400: ${colors.cables.default};
+      --color-secondary-500: ${colors.cables.console};
+      --color-secondary-700: ${colors.topology.gridLine};
+      --color-secondary-900: ${colors.topology.bg};
+      --color-success-500: ${colors.status.active};
+      --color-success-600: ${colors.green['600']};
+      --color-warning-500: ${colors.packet.http};
+      --color-warning-600: ${colors.yellow['600']};
+      --color-error-500: ${colors.status.offline};
+      --color-error-600: ${colors.red['600']};
+      --color-accent-600: ${colors.teal['600']};
     }
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      background: #f8fafc;
+      background: ${colors.topology.deviceText};
       color: var(--color-secondary-900);
       line-height: 1.5;
       padding: 20px;
@@ -250,15 +251,15 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .container {
       max-width: 900px;
       margin: 0 auto;
-      background: #ffffff;
+      background: ${colors.common.white};
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.08);
       overflow: hidden;
     }
     
     .header {
-      background: linear-gradient(135deg, var(--color-secondary-900) 0%, #1e293b 100%);
-      color: #ffffff;
+      background: linear-gradient(135deg, var(--color-secondary-900) 0%, ${colors.topology.canvasBg} 100%);
+      color: ${colors.common.white};
       padding: 24px;
     }
     
@@ -274,11 +275,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .content { padding: 24px; }
     .panel-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--color-secondary-900); display: flex; align-items: center; justify-content: space-between; }
     
-    .status-card { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .status-card { display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, ${colors.sky['50']} 0%, ${colors.sky['50']} 100%); border: 1px solid ${colors.sky['100']}; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
     .status-card.disabled { background: var(--color-secondary-100); border-color: var(--color-secondary-200); }
     .status-info h3 { font-size: 14px; font-weight: 600; }
     .status-info p { font-size: 12px; color: var(--color-secondary-500); }
-    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: var(--color-success-500); color: #fff; }
+    .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: var(--color-success-500); color: ${colors.common.white}; }
     .status-card.disabled .status-badge { background: var(--color-secondary-400); }
     
     .form-group { margin-bottom: 18px; }
@@ -292,17 +293,17 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; font-size: 13px; }
-    .btn-primary { background: var(--color-primary-600); color: #fff; }
+    .btn-primary { background: var(--color-primary-600); color: ${colors.common.white}; }
     .btn-primary:hover { background: var(--color-primary-700); }
     .btn-secondary { background: var(--color-secondary-200); color: var(--color-secondary-700); }
     .btn-secondary:hover { background: var(--color-secondary-300); }
-    .btn-danger { background: var(--color-error-500); color: #fff; }
+    .btn-danger { background: var(--color-error-500); color: ${colors.common.white}; }
     .btn-danger:hover { background: var(--color-error-600); }
     .btn-block { width: 100%; }
     
     .actions { display: flex; gap: 12px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--color-secondary-200); }
     
-    .toggle-switch { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--color-secondary-200); margin-bottom: 20px; }
+    .toggle-switch { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: ${colors.topology.deviceText}; border-radius: 8px; border: 1px solid var(--color-secondary-200); margin-bottom: 20px; }
     .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--color-secondary-300); transition: .3s; border-radius: 24px; }
@@ -311,24 +312,24 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     input:checked + .slider:before { transform: translateX(20px); }
     
     .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-    .login-card { background: #ffffff; border-radius: 12px; width: 100%; max-width: 400px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .login-card { background: ${colors.common.white}; border-radius: 12px; width: 100%; max-width: 400px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
     .login-header { text-align: center; margin-bottom: 24px; }
     .login-icon { font-size: 40px; margin-bottom: 8px; }
-    .error-message { background: #fef2f2; border: 1px solid #fecaca; color: var(--color-error-600); padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; text-align: center; }
-    .success-message { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--color-success-700, #15803d); padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; text-align: center; }
+    .error-message { background: ${colors.red['50']}; border: 1px solid ${colors.red['200']}; color: var(--color-error-600); padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; text-align: center; }
+    .success-message { background: ${colors.green['50']}; border: 1px solid ${colors.green['200']}; color: var(--color-success-700, ${colors.green['700']}); padding: 10px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; text-align: center; }
 
     /* Client list table styles */
-    .client-card { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #f8fafc; border: 1px solid var(--color-secondary-200); border-radius: 8px; margin-bottom: 8px; transition: all 0.2s; }
-    .client-card:hover { border-color: var(--color-primary-500); background: #ffffff; }
+    .client-card { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: ${colors.topology.deviceText}; border: 1px solid var(--color-secondary-200); border-radius: 8px; margin-bottom: 8px; transition: all 0.2s; }
+    .client-card:hover { border-color: var(--color-primary-500); background: ${colors.common.white}; }
     .client-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--color-primary-100); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--color-primary-600); shrink: 0; }
     .client-details { display: flex; flex-direction: column; min-width: 0; }
     .client-title { font-weight: 600; color: var(--color-secondary-900); font-size: 13px; display: flex; align-items: center; gap: 8px; }
     .client-sub { font-size: 11px; color: var(--color-secondary-500); font-family: monospace; }
     .client-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: var(--color-secondary-100); color: var(--color-secondary-700); }
-    .badge-primary { background: #dbeafe; color: #1d4ed8; }
-    .badge-success { background: #dcfce7; color: #15803d; }
-    .badge-warning { background: #fef9c3; color: #a16207; }
+    .badge-primary { background: ${colors.blue['100']}; color: ${colors.blue['700']}; }
+    .badge-success { background: ${colors.green['100']}; color: ${colors.green['700']}; }
+    .badge-warning { background: ${colors.yellow['100']}; color: ${colors.yellow['700']}; }
 
     @media (max-width: 600px) {
       body { padding: 10px; }
@@ -353,7 +354,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           <span>📡 WLAN Interface: wlan0</span>
         </div>
       </div>
-      <button type="button" class="btn btn-secondary" onclick="handleLogout()" style="padding:8px 16px;font-size:12px;background:#ffffff;border:1px solid var(--color-secondary-300);color:var(--color-secondary-700);cursor:pointer;shrink:0;border-radius:6px;" title="${isTurkish ? 'Oturumu Kapat' : 'Logout'}">
+      <button type="button" class="btn btn-secondary" onclick="handleLogout()" style="padding:8px 16px;font-size:12px;background:${colors.common.white};border:1px solid var(--color-secondary-300);color:var(--color-secondary-700);cursor:pointer;shrink:0;border-radius:6px;" title="${isTurkish ? 'Oturumu Kapat' : 'Logout'}">
         🚪 ${isTurkish ? 'Çıkış Yap' : 'Logout'}
       </button>
     </div>
@@ -443,7 +444,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
       <div id="ssid-profiles-container" style="margin-bottom:20px;"></div>
 
-      <div style="background:#f8fafc;padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);margin-bottom:25px;">
+      <div style="background:${colors.topology.deviceText};padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);margin-bottom:25px;">
         <h3 style="margin:0 0 12px 0;font-size:14px;color:var(--color-secondary-900);" id="ssid-form-title">
           ➕ ${isTurkish ? 'Yeni SSID Profili Ekle' : 'Add New SSID Profile'}
         </h3>
@@ -528,7 +529,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           const safeIotIp = sanitizeHTML(device.ip || '');
           const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
           return `
-          <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:#f8f9fa;border-radius:10px;margin-bottom:10px;border:1px solid var(--color-secondary-200);cursor:pointer;">
+          <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:${colors.neutral['50']};border-radius:10px;margin-bottom:10px;border:1px solid var(--color-secondary-200);cursor:pointer;">
             <div style="display:flex;align-items:center;gap:12px;">               
               <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? 'var(--color-success-500) 0%, var(--color-success-600) 100%' : 'var(--color-warning-400) 0%, var(--color-warning-600) 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
                 ${device.isWired ? '🔌' : '🛜'}
@@ -542,7 +543,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:10px;">
-              <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? '#dcfce7' : 'var(--color-warning-100)'};color:${device.connected ? 'var(--color-success-700)' : 'var(--color-warning-700)'};">
+              <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? colors.green['100'] : 'var(--color-warning-100)'};color:${device.connected ? 'var(--color-success-700)' : 'var(--color-warning-700)'};">
                 ${device.connected ? (isTurkish ? '● Bağlı' : '● Connected') : (isTurkish ? '○ Bağlı Değil' : '○ Disconnected')}
               </span>
               <button type="button" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:none;border-radius:6px;background:var(--color-primary-500);color:white;cursor:pointer;" onclick="event.stopPropagation();renewIotDevice(${jsIotId})" title="${isTurkish ? 'IP Yenile' : 'IP Renew'}" aria-label="${isTurkish ? 'IP Yenile' : 'IP Renew'}">
@@ -565,7 +566,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           const safeIotId = sanitizeHTML(device.id);
           const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
           return `
-          <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;border:1px solid var(--color-secondary-200);cursor:pointer;" onclick="toggleIotDeviceSelection(${jsIotId})">
+          <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:${colors.topology.deviceText};border-radius:8px;margin-bottom:8px;border:1px solid var(--color-secondary-200);cursor:pointer;" onclick="toggleIotDeviceSelection(${jsIotId})">
             <div style="display:flex;align-items:center;gap:10px;">
               <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}">
               <span style="font-weight:600;">${safeIotName}</span>
@@ -588,7 +589,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       <h2 class="panel-title">👤 ${isTurkish ? 'Yönetici Hesabı' : 'Administrator Account'}</h2>
       <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'Yönetici paneli giriş bilgilerini güncelleyin. Şifre değiştirildiğinde bir sonraki girişte yeni bilgiler istenir.' : 'Update admin panel login credentials. After changing the password, the new credentials are required on next login.'}</p>
 
-      <div style="background:#f8fafc;padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);max-width:520px;">
+      <div style="background:${colors.topology.deviceText};padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);max-width:520px;">
         <h3 style="margin:0 0 16px 0;font-size:15px;color:var(--color-secondary-900);">🔑 ${isTurkish ? 'Şifre Değiştir' : 'Change Password'}</h3>
         <form id="admin-credentials-form" onsubmit="handleSaveCredentials(event)">
           <div class="form-group">
@@ -648,7 +649,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
       <div id="connected-wireless-clients-container" style="margin-bottom:24px;"></div>
 
-      <div style="background:#f8fafc;padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);">
+      <div style="background:${colors.topology.deviceText};padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);">
         <h3 style="margin-bottom:15px;font-size:15px;color:var(--color-secondary-900);">${isTurkish ? 'Ağ & Yayın Bilgileri' : 'Network & Broadcast Information'}</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
           <div><strong>SSID (Ana):</strong> ${safeSsid || (isTurkish ? 'Yapılandırılmadı' : 'Not configured')}</div>
@@ -665,7 +666,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       <h2 class="panel-title">${isTurkish ? 'Gelişmiş Kablosuz Ayarları' : 'Advanced Wireless Settings'}</h2>
       <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'Kablosuz MAC adresi filtreleme ve güvenlik kurallarını yapılandırın.' : 'Configure wireless MAC address filtering and security rules.'}</p>
       
-      <div style="background:#f8fafc;border:1px solid var(--color-secondary-200);border-radius:10px;padding:20px;margin-bottom:24px;">
+      <div style="background:${colors.topology.deviceText};border:1px solid var(--color-secondary-200);border-radius:10px;padding:20px;margin-bottom:24px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
           <div>
             <h3 style="margin:0 0 4px 0;font-size:16px;color:var(--color-secondary-900);">🛡️ ${isTurkish ? 'Kablosuz MAC Adresi Filtreleme' : 'Wireless MAC Address Filtering'}</h3>
@@ -710,7 +711,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       </div>
 
       <!-- DHCP Server Settings Section -->
-      <div style="background:#f8fafc;border:1px solid var(--color-secondary-200);border-radius:10px;padding:20px;margin-bottom:24px;">
+      <div style="background:${colors.topology.deviceText};border:1px solid var(--color-secondary-200);border-radius:10px;padding:20px;margin-bottom:24px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
           <div>
             <h3 style="margin:0 0 4px 0;font-size:16px;color:var(--color-secondary-900);">🌐 ${isTurkish ? 'DHCP Sunucusu Ayarları' : 'DHCP Server Settings'}</h3>
@@ -800,7 +801,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
       container.innerHTML = list.map(function(mac, idx) {
         var safeMac = String(mac).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#ffffff;border:1px solid var(--color-secondary-200);border-radius:6px;margin-bottom:6px;font-family:monospace;font-size:13px;color:var(--color-secondary-800);">' +
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:${colors.common.white};border:1px solid var(--color-secondary-200);border-radius:6px;margin-bottom:6px;font-family:monospace;font-size:13px;color:var(--color-secondary-800);">' +
           '<span>🛡️ ' + safeMac + '</span>' +
           '<button type="button" class="btn btn-danger" style="padding:2px 8px;font-size:11px;" onclick="removeMacFromFilter(' + idx + ')" title="' + (isTurkish ? 'Sil' : 'Remove') + '">🗑️</button>' +
         '</div>';
@@ -891,14 +892,14 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         if (checkbox) checkbox.checked = false;
         if (card) {
           card.style.borderColor = 'var(--color-secondary-200)';
-          card.style.background = '#f8fafc';
+          card.style.background = '${colors.topology.deviceText}';
         }
       } else {
         selectedIotDevices.add(deviceId);
         if (checkbox) checkbox.checked = true;
         if (card) {
           card.style.borderColor = 'var(--color-primary-500)';
-          card.style.background = '#f0f9ff';
+          card.style.background = '${colors.sky['50']}';
         }
       }
     };
@@ -933,7 +934,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       document.querySelectorAll('.iot-checkbox').forEach(cb => cb.checked = false);
       document.querySelectorAll('.iot-device-card.available').forEach(card => {
         card.style.borderColor = 'var(--color-secondary-200)';
-        card.style.background = '#f8fafc';
+        card.style.background = '${colors.topology.deviceText}';
       });
     };
 
@@ -1077,7 +1078,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           ? '<span class="status-badge" style="background:var(--color-success-500);">' + (isTurkish ? '● Etkin' : '● Active') + '</span>'
           : '<span class="status-badge" style="background:var(--color-secondary-400);">' + (isTurkish ? '○ Pasif' : '○ Disabled') + '</span>';
 
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#ffffff;border:1px solid var(--color-secondary-200);border-radius:8px;margin-bottom:8px;gap:12px;">' +
+        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:${colors.common.white};border:1px solid var(--color-secondary-200);border-radius:8px;margin-bottom:8px;gap:12px;">' +
           '<div style="min-w-0;">' +
             '<div style="font-weight:600;font-size:14px;color:var(--color-secondary-900);display:flex;align-items:center;gap:8px;">' +
               '<span>📶 ' + (item.name || item.ssid) + '</span>' +
@@ -1226,7 +1227,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       if (!container) return;
 
       if (!connectedClientsData || connectedClientsData.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:24px;background:#f8fafc;border-radius:8px;border:1px solid var(--color-secondary-200);color:var(--color-secondary-500);">' +
+        container.innerHTML = '<div style="text-align:center;padding:24px;background:${colors.topology.deviceText};border-radius:8px;border:1px solid var(--color-secondary-200);color:var(--color-secondary-500);">' +
           '<div style="font-size:36px;margin-bottom:8px;">📶</div>' +
           '<div>' + (isTurkish ? 'Şu anda bu erişim noktasına bağlı aktif kablosuz istemci yok.' : 'No active wireless clients currently connected to this AP.') + '</div>' +
         '</div>';
