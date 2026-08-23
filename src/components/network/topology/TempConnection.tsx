@@ -110,7 +110,17 @@ export function TempConnection({
           textAnchor="middle"
           className="select-none pointer-events-none"
         >
-          {cableInfo.cableType === 'straight' ? 'Düz' : cableInfo.cableType === 'crossover' ? 'Çapraz' : 'Konsol'}
+          {cableInfo.cableType === 'straight'
+            ? 'Düz'
+            : cableInfo.cableType === 'crossover'
+              ? 'Çapraz'
+              : cableInfo.cableType === 'serial'
+                ? 'Seri'
+                : cableInfo.cableType === 'console'
+                  ? 'Konsol'
+                  : cableInfo.cableType === 'wireless'
+                    ? 'Kablosuz'
+                    : 'Fiber'}
         </text>
       </g>
     </>

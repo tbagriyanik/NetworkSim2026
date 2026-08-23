@@ -180,7 +180,9 @@ export function useTopologyPortConnection({
       const normalizedPortId = portId.toLowerCase();
       const inferredCableType = normalizedPortId === 'wlan0'
         ? 'wireless'
-        : (normalizedPortId === 'com1' || normalizedPortId === 'console' ? 'console' : 'straight');
+        : ((normalizedPortId === 'com1' || normalizedPortId === 'console') && cableInfo.cableType === 'straight'
+          ? 'console'
+          : (cableInfo.cableType || 'straight'));
       onCableChange({
         ...cableInfo,
         cableType: inferredCableType,

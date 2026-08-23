@@ -13,7 +13,7 @@ import { SelectionBoxOverlay } from './SelectionBoxOverlay';
 import { PingAnimationOverlay } from './PingAnimationOverlay';
 import type { PingAnimationOverlayProps } from './PingAnimationOverlay';
 import type { CanvasConnection, CanvasDevice, CanvasNote, ContextMenuState } from '../networkTopology.types';
-import type { SwitchState } from '@/lib/network/types';
+import type { SwitchState, CableInfo } from '@/lib/network/types';
 
 export interface TopologyCanvasLayerProps {
     canvasRef: React.RefObject<HTMLDivElement | null>;
@@ -29,6 +29,7 @@ export interface TopologyCanvasLayerProps {
     connectionStart: { deviceId: string; portId: string; point: { x: number; y: number } } | null;
     mousePos: { x: number; y: number };
     isDrawingConnection: boolean;
+    cableInfo: CableInfo;
     contextMenu: ContextMenuState | null;
     noteTextareaRefs: React.MutableRefObject<Record<string, HTMLTextAreaElement | null>>;
     isActuallyDragging: boolean;
@@ -106,6 +107,7 @@ export function TopologyCanvasLayer({
     connectionStart,
     mousePos,
     isDrawingConnection,
+    cableInfo,
     contextMenu,
     noteTextareaRefs,
     isActuallyDragging,
@@ -315,7 +317,7 @@ export function TopologyCanvasLayer({
                             isDrawingConnection={isDrawingConnection}
                             connectionStart={connectionStart}
                             mousePos={mousePos}
-                            cableInfo={{ connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'pc' }}
+                            cableInfo={cableInfo}
                             CABLE_COLORS={CABLE_COLORS}
                         />
 

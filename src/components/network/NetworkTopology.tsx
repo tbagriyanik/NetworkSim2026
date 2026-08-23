@@ -1924,6 +1924,7 @@ export function NetworkTopology({
             connectionStart={connectionStart}
             mousePos={mousePos}
             isDrawingConnection={isDrawingConnection}
+            cableInfo={cableInfo}
             contextMenu={contextMenu}
             noteTextareaRefs={noteTextareaRefs}
             isActuallyDragging={isActuallyDragging}
