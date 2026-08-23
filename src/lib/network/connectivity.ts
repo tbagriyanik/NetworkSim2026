@@ -1,6 +1,6 @@
 import { CanvasDevice, CanvasConnection, CanvasPort } from '@/components/network/networkTopology.types';
-import { CableInfo, SwitchState, isCableCompatible, Port } from './types';
-import { findRoute, ipToNumber, getRoutingTable, isIpv6InNetwork } from './routing';
+import { SwitchState, Port } from './types';
+import { findRoute, getRoutingTable, isIpv6InNetwork } from './routing';
 import { performArpResolution, getMacFromArpCache } from './arp';
 import { learnMacAddress, findMacPort } from './macLearning';
 import { ensureDeviceStatesMap } from './networkUtils';
@@ -9,6 +9,16 @@ import { normalizePortId } from './initialState';
 import { getDeviceWifiConfig, getDeviceMacAddress, getWirelessSignalStrength, getWirelessDistance, buildImplicitWirelessConnections, getApActiveSsids, wifiMacFilterMatches, type DeviceWifiConfig } from './wireless';
 import { isExternalDomain, resolveHostname } from './dns';
 import { buildConnectionIndex } from './connectionIndex';
+import {
+  getPrimaryDeviceIp,
+  getSubnetForDeviceIp,
+  isConnectionCableCompatible,
+  isDevicePoweredOn,
+  isIpInSubnet,
+  isManagementIpSet,
+  isPortShutdown,
+  matchIpWithWildcard,
+} from './connectivity.utils';
 
 export {
   getDeviceWifiConfig,
@@ -72,9 +82,9 @@ const getVlanSpecificSTPBlocking = (
   const connection = existingConnection || (connectionIndex
     ? connectionIndex.byPort.get(`${deviceId}:${portId}`)
     : connections.find(c =>
-        (c.sourceDeviceId === deviceId && c.sourcePort === portId) ||
-        (c.targetDeviceId === deviceId && c.targetPort === portId)
-      )
+      (c.sourceDeviceId === deviceId && c.sourcePort === portId) ||
+      (c.targetDeviceId === deviceId && c.targetPort === portId)
+    )
   );
 
   // If connection is down, STP would reconverge and this port would not block
@@ -1765,111 +1775,6 @@ export function getPingDiagnostics(
 }
 
 /**
- * Check if an IP is in a subnet
- */
-function isIpInSubnet(ip: string, targetIp: string, subnet: string): boolean {
-  try {
-    const ipParts = ip.split('.').map(Number);
-    const targetParts = targetIp.split('.').map(Number);
-    const subnetParts = subnet.split('.').map(Number);
-
-    for (let i = 0; i < 4; i++) {
-      const ipMasked = ipParts[i] & subnetParts[i];
-      const targetMasked = targetParts[i] & subnetParts[i];
-      if (ipMasked !== targetMasked) return false;
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function getPrimaryDeviceIp(
-  deviceId: string,
-  devices: CanvasDevice[],
-  deviceStates?: Map<string, SwitchState>,
-  preferIpv6: boolean = false,
-  device?: CanvasDevice
-): string {
-  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-  if (!device) {
-    device = devices.find(d => d.id === deviceId);
-  }
-
-  if (preferIpv6 && device?.ipv6) return device.ipv6;
-  if (device?.ip) return device.ip;
-  if (device?.ipv6) return device.ipv6;
-
-  const state = safeDeviceStates.get(deviceId);
-  if (!state) return '';
-
-  for (const port of Object.values(state.ports)) {
-    if (preferIpv6 && port.ipv6Address) return port.ipv6Address;
-    if (port.ipAddress) return port.ipAddress;
-    if (port.ipv6Address) return port.ipv6Address;
-  }
-
-  return '';
-}
-
-function getSubnetForDeviceIp(
-  deviceId: string,
-  ip: string,
-  devices: CanvasDevice[],
-  deviceStates?: Map<string, SwitchState>,
-  device?: CanvasDevice
-): string {
-  if (!ip) return '';
-
-  const state = deviceStates?.get(deviceId);
-  if (state) {
-    for (const port of Object.values(state.ports)) {
-      if (port.ipAddress === ip && port.subnetMask) {
-        return port.subnetMask;
-      }
-    }
-  }
-
-  if (!device) {
-    device = devices.find(d => d.id === deviceId);
-  }
-  return device?.subnet || '';
-}
-
-function isPortShutdown(deviceId: string, portId: string, devices: CanvasDevice[], deviceStates?: Map<string, SwitchState>, device?: CanvasDevice): boolean {
-  const normalizedPortId = normalizePortId(portId) || portId;
-  // Check deviceStates (Switch/Router)
-  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-  if (safeDeviceStates) {
-    const state = safeDeviceStates.get(deviceId);
-    if (state && state.ports[normalizedPortId]) {
-      return state.ports[normalizedPortId].shutdown;
-    }
-  }
-
-  // Check topology (PCs)
-  if (!device) {
-    device = devices.find(d => d.id === deviceId);
-  }
-  if (device) {
-    const port = device.ports.find(p => p.id === portId || (normalizePortId(p.id) || p.id) === normalizedPortId);
-    if (normalizedPortId === 'wlan0' && device.type === 'pc') {
-      return !device.wifi?.enabled;
-    }
-    return port?.status === 'disabled';
-  }
-
-  return false;
-}
-
-function isManagementIpSet(deviceId: string, deviceStates?: Map<string, SwitchState>): boolean {
-  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-  const state = safeDeviceStates.get(deviceId);
-  if (!state) return false;
-  return Object.values(state.ports).some(port => !!port.ipAddress);
-}
-
-/**
  * Evaluate ACL (Standard or Extended)
  */
 function incrementAclCounter(state: SwitchState, aclId: string, ruleIndex: number): void {
@@ -1980,34 +1885,3 @@ export function evaluateAcl(
 /**
  * Match IP with wildcard mask (inverse mask)
  */
-function matchIpWithWildcard(ip: string, ruleIp: string, wildcard: string): boolean {
-  try {
-    const ipNum = ipToNumber(ip);
-    const ruleIpNum = ipToNumber(ruleIp);
-    const wildcardNum = ipToNumber(wildcard);
-    const mask = (~wildcardNum) >>> 0;
-    return (ipNum & mask) === (ruleIpNum & mask);
-  } catch {
-    return false;
-  }
-}
-
-function isDevicePoweredOn(device: CanvasDevice | undefined): boolean {
-  if (!device) return false;
-  return device.status !== 'offline';
-}
-
-function isConnectionCableCompatible(conn: CanvasConnection, a?: CanvasDevice, b?: CanvasDevice): boolean {
-  if (!a || !b) return true;
-
-  const cable: CableInfo = {
-    connected: true,
-    cableType: conn.cableType,
-    sourceDevice: a.type,
-    targetDevice: b.type,
-    sourcePort: conn.sourceDeviceId === a.id ? conn.sourcePort : conn.targetPort,
-    targetPort: conn.sourceDeviceId === a.id ? conn.targetPort : conn.sourcePort,
-  };
-
-  return isCableCompatible(cable);
-}

@@ -30,6 +30,8 @@ export const colors = {
     disabled: '#475569',
   },
 
+  wirelessSsid: ['#f59e0b', '#a855f7', '#10b981', '#ec4899', '#06b6d4'],
+
   // Topology Canvas & Device Node Colors
   topology: {
     bg: '#0f172a',

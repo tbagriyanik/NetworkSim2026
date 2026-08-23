@@ -1,3 +1,4 @@
+import { colors } from '@/lib/design-tokens';
 import { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
@@ -104,15 +105,11 @@ export const ConnectionLine = memo(function ConnectionLine({
 
   const isWireless = connection.cableType === 'wireless';
   const wirelessSsidColors = [
-    CABLE_COLORS.wireless?.primary || '#f59e0b', // Index 0: 1. Primary SSID (Amber)
-    '#a855f7',                                   // Index 1: 2. Guest SSID / Misafir Ağ (Purple)
-    '#10b981',                                   // Index 2: 3. IoT SSID (Emerald Green)
-    '#ec4899',                                   // Index 3: 4. Secondary SSID (Pink)
-    '#06b6d4',                                   // Index 4: 5. Secondary SSID (Cyan)
+    ...colors.wirelessSsid,
   ];
   const activeWirelessColor = isWireless && typeof connection.ssidIndex === 'number'
     ? wirelessSsidColors[connection.ssidIndex % wirelessSsidColors.length]
-    : (CABLE_COLORS.wireless?.primary || '#f59e0b');
+    : (CABLE_COLORS.wireless?.primary || colors.wirelessSsid[0]);
 
   const color = !isCompatible || connection.active === false ? CABLE_COLORS.error.primary :
     isShutdown || (isSTPBlocking && isVlan1) ? (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-400)') :
@@ -258,8 +255,8 @@ export const ConnectionLine = memo(function ConnectionLine({
           }
           const mt = 1 - t;
           return {
-            x: mt*mt*mt*source.x + 3*mt*mt*t*controlPoint1.x + 3*mt*t*t*controlPoint2.x + t*t*t*target.x,
-            y: mt*mt*mt*source.y + 3*mt*mt*t*controlPoint1.y + 3*mt*t*t*controlPoint2.y + t*t*t*target.y
+            x: mt * mt * mt * source.x + 3 * mt * mt * t * controlPoint1.x + 3 * mt * t * t * controlPoint2.x + t * t * t * target.x,
+            y: mt * mt * mt * source.y + 3 * mt * mt * t * controlPoint1.y + 3 * mt * t * t * controlPoint2.y + t * t * t * target.y
           };
         };
         const srcPos = bezierPoint(0.42);

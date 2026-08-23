@@ -58,6 +58,7 @@ import {
   isDhcpPoolCompatibleForClient
 } from './pc-panel/pcBrowser.utils';
 import { getConsoleDevice } from './pc-panel/pcTerminal.utils';
+import { usePCPanelNavigation } from './pc-panel/usePCPanelNavigation';
 
 export function PCPanel({
   deviceId,
@@ -90,28 +91,22 @@ export function PCPanel({
   // Ref for click-outside detection
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const deviceFromTopology = topologyDevices.find(d => d.id === deviceId);
+  const defaultConfig = getPCConfigDefaults(deviceId);
+  const isPcPoweredOff = deviceFromTopology?.status === 'offline';
+
+  const { activeTab, setActiveTab, activeTabRef, goHome, navigateToProgram } = usePCPanelNavigation({
+    deviceId,
+    isVisible,
+    isPoweredOn: !isPcPoweredOff,
+    initialTab,
+    onNavigate,
+  });
 
   const terminalBg = isDark ? 'bg-black' : 'bg-secondary-50';
   const textColor = isDark ? 'text-secondary-300' : 'text-secondary-700';
 
-  const [activeTab, setActiveTab] = useState<PCActiveTab>(initialTab || 'home');
-  const activeTabRef = useRef<PCActiveTab>(activeTab);
-  useEffect(() => {
-    activeTabRef.current = activeTab;
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (isVisible && typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('pc-tab-changed', {
-        detail: { deviceId, activeTab }
-      }));
-    }
-  }, [activeTab, deviceId, isVisible]);
-
   const [activeServiceTab, setActiveServiceTab] = useState<'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp'>('dns');
-  const tabletHistoryRef = useRef<PCActiveTab[]>(['home']);
-  const tabletHistoryIndexRef = useRef(0);
-  const isInternalTabletNavRef = useRef(false);
   const mobileVerticalScrollStyle: CSSProperties | undefined = isMobile
     ? {
       overflowY: 'auto' as const,
@@ -120,49 +115,6 @@ export function PCPanel({
       touchAction: 'pan-y' as const,
     }
     : undefined;
-
-  const goHome = useCallback(() => {
-    setActiveTab('home');
-    tabletHistoryRef.current = ['home'];
-    tabletHistoryIndexRef.current = 0;
-    onNavigate?.('home');
-  }, [onNavigate]);
-
-  const navigateToProgram = useCallback((program: PCActiveTab) => {
-    if (program === 'home') {
-      // Going home - pop from history
-      if (tabletHistoryIndexRef.current > 0) {
-        tabletHistoryIndexRef.current--;
-        isInternalTabletNavRef.current = true;
-        setActiveTab(tabletHistoryRef.current[tabletHistoryIndexRef.current]);
-        onNavigate?.('home');
-      } else {
-        setActiveTab('home');
-        onNavigate?.('home');
-      }
-    } else {
-      // Going to a program - push to history
-      tabletHistoryRef.current = tabletHistoryRef.current.slice(0, tabletHistoryIndexRef.current + 1);
-      tabletHistoryRef.current.push(program);
-      tabletHistoryIndexRef.current = tabletHistoryRef.current.length - 1;
-      setActiveTab(program);
-      onNavigate?.(program);
-    }
-  }, [onNavigate]);
-
-  useEffect(() => {
-    const handleTabletPopState = (e: CustomEvent) => {
-      const { program } = e.detail || {};
-      if (program === 'home' && tabletHistoryIndexRef.current > 0) {
-        tabletHistoryIndexRef.current--;
-        isInternalTabletNavRef.current = true;
-        setActiveTab(tabletHistoryRef.current[tabletHistoryIndexRef.current]);
-      }
-    };
-    window.addEventListener('tablet-back', handleTabletPopState as EventListener);
-    return () => window.removeEventListener('tablet-back', handleTabletPopState as EventListener);
-  }, []);
-
 
   const [fontSize, setFontSize] = useState<number>(() => {
     try {
@@ -286,9 +238,6 @@ export function PCPanel({
   }, [deviceId, isVisible]);
 
   // Get device from topology
-  const deviceFromTopology = topologyDevices.find(d => d.id === deviceId);
-  const defaultConfig = getPCConfigDefaults(deviceId);
-  const isPcPoweredOff = deviceFromTopology?.status === 'offline';
   const wifiSignalStrength = useMemo(
     () => getWirelessSignalStrength(deviceFromTopology, topologyDevices, deviceStates),
     [deviceFromTopology, topologyDevices, deviceStates]
@@ -730,23 +679,6 @@ export function PCPanel({
     }, 0);
     return () => clearTimeout(timer);
   }, [selectedIotDeviceId]);
-
-  // When tablet powers on or opens, navigate to initial or home screen
-  const initialNavDoneRef = useRef(false);
-  useEffect(() => {
-    if (isVisible) {
-      if (!isPcPoweredOff) {
-        const targetTab = initialTab || 'home';
-        setTimeout(() => setActiveTab(targetTab), 0);
-        tabletHistoryRef.current = [targetTab];
-        tabletHistoryIndexRef.current = 0;
-        onNavigate?.(targetTab);
-        initialNavDoneRef.current = true;
-      }
-    } else {
-      initialNavDoneRef.current = false;
-    }
-  }, [isVisible, isPcPoweredOff, initialTab, onNavigate]);
 
   // Validate and sync global state
 
