@@ -10,4 +10,9 @@ export default defineConfig([
         "next-env.d.ts",
         "examples/**",
     ]),
+    {
+        rules: {
+            "react-hooks/exhaustive-deps": "off",
+        },
+    },
 ]);

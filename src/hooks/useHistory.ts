@@ -351,7 +351,7 @@ export function useHistory(initialState: ProjectState) {
               if (changes.length === 0) {
                 const allKeys = new Set([...Object.keys(pState), ...Object.keys(st)]);
                 for (const key of allKeys) {
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                   
                   if (JSON.stringify((pState as any)[key]) !== JSON.stringify((st as any)[key])) {
                     changes.push(key);
                   }

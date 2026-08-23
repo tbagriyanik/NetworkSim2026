@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { describe, it, expect } from 'vitest';
 import { firewallHandlers } from '@/lib/network/core/firewallCommands';
 import { SwitchState, SecurityConfig } from '@/lib/network/types';

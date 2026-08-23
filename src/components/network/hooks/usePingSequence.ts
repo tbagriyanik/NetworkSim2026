@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import { useCallback } from 'react';
 import type { CanvasConnection, CanvasDevice } from '../networkTopology.types';

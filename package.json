@@ -9,7 +9,7 @@
     "start": "cross-env NODE_ENV=production bun .next/standalone/server.js",
     "lint": "eslint .",
     "test": "vitest run",
-    "check": "tsc --noEmit && next build && vitest run"
+    "check": "tsc --noEmit && next build && eslint . && vitest run"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",

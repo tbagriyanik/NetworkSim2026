@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 
 import type { ScenarioType } from './topologyScenarios';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';

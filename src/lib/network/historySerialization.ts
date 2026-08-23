@@ -71,7 +71,7 @@ function cleanState(
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function serializeState(state: CleanProjectState): any {
   return {
     topologyDevices: state.topologyDevices,
@@ -90,7 +90,7 @@ function serializeState(state: CleanProjectState): any {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function deserializeState(serialized: any): ProjectState {
   return {
     topologyDevices: serialized.topologyDevices || [],

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+ 
 import { describe, it, expect } from 'vitest';
 import { interfaceHandlers } from '@/lib/network/core/interfaceCommands';
 import { SwitchState } from '@/lib/network/types';
