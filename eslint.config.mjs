@@ -11,6 +11,11 @@ export default defineConfig([
         "examples/**",
     ]),
     {
+        languageOptions: {
+            parserOptions: {
+                warnOnUnsupportedTypeScriptVersion: false,
+            },
+        },
         rules: {
             "react-hooks/exhaustive-deps": "off",
         },
