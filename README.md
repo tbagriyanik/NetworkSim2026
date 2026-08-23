@@ -6,7 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-126,293-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-126,399-lightgrey)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
@@ -36,7 +36,7 @@ npm install && npm run dev
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
 | Version / Sürüm | 2.8.0 |
-| Total Lines / Toplam Satır (src/) | 126,293 |
+| Total Lines / Toplam Satır (src/) | 126,399 |
 | Source Files / Kaynak Dosya | 527 |
 | Documentation Files / Dokümantasyon Dosya | 22 |
 | Example Projects / Örnek Proje | 46 |
