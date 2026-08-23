@@ -874,7 +874,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           tab.classList.remove('active');
         }
       });
-      try { window.parent.postMessage({ type: 'router-admin-tab-change', tab: tabId }, '*'); } catch(_e) {}
+      try { window.parent.postMessage({ type: 'router-admin-tab-change', tab: tabId }, '*'); } catch {}
     }
 
     document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -985,7 +985,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         const passwordInput = passwordEl ? (passwordEl.value || '') : '';
 
         if (usernameInput === currentAdminUser && passwordInput === currentAdminPass) {
-          try { sessionStorage.setItem('router_admin_auth_' + ${jsDeviceId}, 'true'); } catch(_e) {}
+          try { sessionStorage.setItem('router_admin_auth_' + ${jsDeviceId}, 'true'); } catch {}
           if (loginForm) loginForm.style.display = 'none';
           if (mainContent) mainContent.style.display = 'block';
         } else {
@@ -997,7 +997,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     window.handleLogout = function() {
       try {
         sessionStorage.removeItem('router_admin_auth_' + ${jsDeviceId});
-      } catch(_e) {}
+      } catch {}
       var loginForm = document.getElementById('login-form');
       var mainContent = document.getElementById('main-content');
       var loginError = document.getElementById('login-error');
@@ -1052,7 +1052,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             deviceId: ${safeJSONForHTML(deviceId || '')},
             payload: { username: newUsername, password: newPass }
           }, '*');
-        } catch (_e) {}
+        } catch {}
 
         if (successEl) successEl.style.display = 'block';
       } catch (err) {}

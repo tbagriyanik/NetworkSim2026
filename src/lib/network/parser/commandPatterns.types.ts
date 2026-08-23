@@ -1,4 +1,4 @@
-﻿import type { CommandMode } from '../types';
+import type { CommandMode } from '../types';
 
 // Komut yapilari
 export interface CommandPattern {

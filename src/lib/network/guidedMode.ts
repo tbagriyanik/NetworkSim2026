@@ -719,7 +719,8 @@ export const checkStepCompletion = (
       if (configKey === 'eigrpAs') return targetState?.eigrpAs === configValue;
       if (configKey === 'ntpServers') {
         if (Array.isArray(targetState?.ntpServers) && Array.isArray(configValue)) {
-          return configValue.every(s => (targetState?.ntpServers as string[]).includes(s));
+          const ntpServers = targetState.ntpServers as string[];
+          return configValue.every(s => ntpServers.includes(s));
         }
         return false;
       }

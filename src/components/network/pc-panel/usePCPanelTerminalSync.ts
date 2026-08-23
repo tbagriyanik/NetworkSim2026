@@ -53,7 +53,7 @@ export function usePCPanelTerminalSync({
         title: t.copyToastSuccessTitle || 'Copied',
         description: t.copyToastSuccessDescription || 'Terminal output copied to clipboard',
       });
-    } catch (_err) {
+    } catch {
       errorHandler.logError(CLIPBOARD_ERRORS.COPY_FAILED({ contentLength: pcOutput.length, activeTab }));
       toast({
         title: t.copyToastFailureTitle || 'Copy Failed',

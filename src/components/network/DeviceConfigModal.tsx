@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { CanvasDevice } from './networkTopology.types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { normalizeMAC } from '../../lib/utils';

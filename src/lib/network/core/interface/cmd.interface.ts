@@ -177,7 +177,7 @@ export function cmdInterface(state: SwitchState, input: string, _ctx: CommandCon
       } as Port;
     }
 
-    const newWirelessRadios = { ...(state.wirelessRadios || {}) };
+    const newWirelessRadios = { ...state.wirelessRadios };
     if (!newWirelessRadios[radioId]) {
       newWirelessRadios[radioId] = {
         id: radioId,

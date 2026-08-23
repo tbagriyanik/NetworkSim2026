@@ -1111,7 +1111,7 @@ function cmdShowBannerMotd(state: SwitchState, _input: string, _ctx: CommandCont
 function cmdShowAlias(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   let output = '\nExec aliases:\n';
   const builtIn: Record<string, string> = { 'h': 'show history', 'lo': 'exit' };
-  const allAliases = { ...builtIn, ...(state.execAliases || {}) };
+  const allAliases = { ...builtIn, ...state.execAliases };
   if (Object.keys(allAliases).length === 0) {
     output += '  (none)\n';
   } else {

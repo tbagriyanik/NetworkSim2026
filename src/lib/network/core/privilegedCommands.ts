@@ -140,7 +140,7 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
                     const updatedPorts = { ...deviceState.ports };
                     const port = updatedPorts[traversed.portId];
                     if (port) {
-                        const stats = { ...(port.statistics || {}) };
+                        const stats = { ...port.statistics };
                         if (traversed.type === 'ingress') {
                             stats.inputPackets = (stats.inputPackets || 0) + numPackets;
                             stats.inputBytes = (stats.inputBytes || 0) + totalBytes;
@@ -574,7 +574,7 @@ function cmdDebug(state: SwitchState, input: string, _ctx: CommandContext): Comm
     }
 
     const debugType = match[1].toLowerCase();
-    const newDebugs = { ...(state.debugs || {}) };
+    const newDebugs = { ...state.debugs };
     newDebugs[debugType] = true;
 
     let output = `${debugType} debugging is on\n`;
@@ -699,7 +699,7 @@ function cmdTraceroute(state: SwitchState, input: string, ctx: CommandContext): 
                     const updatedPorts = { ...deviceState.ports };
                     const port = updatedPorts[traversed.portId];
                     if (port) {
-                        const stats = { ...(port.statistics || {}) };
+                        const stats = { ...port.statistics };
                         if (traversed.type === 'ingress') {
                             stats.inputPackets = (stats.inputPackets || 0) + numPackets;
                             stats.inputBytes = (stats.inputBytes || 0) + totalBytes;
@@ -1130,9 +1130,9 @@ function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): Co
                     deviceId: targetDevice.id,
                     config: {
                         services: {
-                            ...(targetDevice.services || {}),
+                            ...targetDevice.services,
                             ftp: {
-                                ...(targetDevice.services?.ftp || {}),
+                                ...targetDevice.services?.ftp,
                                 enabled: true,
                                 files: [...((targetDevice.services?.ftp?.files || []).filter((f: { name: string }) => f.name !== filename)), newFile]
                             }
@@ -1140,7 +1140,7 @@ function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandContext): Co
                     }
                 }
             }));
-        } catch (_e) {
+        } catch {
             // Non-critical; backup still reported as OK
         }
     }

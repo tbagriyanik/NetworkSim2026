@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Suspense, lazy } from 'react';
 import { CableType } from '@/lib/network/types';

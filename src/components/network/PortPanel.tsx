@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Port, PortLEDColor } from '@/lib/network/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

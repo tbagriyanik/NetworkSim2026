@@ -50,7 +50,7 @@ export function resolveAliases(input: string, state?: Partial<SwitchState>): str
     h: 'show history',
     lo: 'exit'
   };
-  const execAliases = { ...builtInExecAliases, ...(state?.execAliases || {}) };
+  const execAliases = { ...builtInExecAliases, ...state?.execAliases };
 
   // 1. Tam eşleşme (kullanıcı + built-in exec alias)
   if (execAliases[trimmed]) {
@@ -417,7 +417,7 @@ export function getInvalidCommandError(
       if (storedLang === 'en' || storedLang === 'tr') {
         language = storedLang;
       }
-    } catch (_e) { /* ignore */ }
+    } catch { /* ignore */ }
   }
 
   let failedTokenIndex: number | undefined = undefined;

@@ -149,7 +149,7 @@ export function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext)
 
   // WLC stores WLANs in wlcWlans (centralized controller state)
   if (state.deviceType === 'wlc') {
-    const newWlcWlans = { ...(state.wlcWlans || {}) };
+    const newWlcWlans = { ...state.wlcWlans };
     newWlcWlans[wlanId] = {
       id: Number(wlanId),
       name: wlanName,
@@ -188,7 +188,7 @@ export function cmdNoWlan(state: SwitchState, input: string, _ctx: CommandContex
 
   // WLC stores WLANs in wlcWlans
   if (state.deviceType === 'wlc') {
-    const newWlcWlans = { ...(state.wlcWlans || {}) };
+    const newWlcWlans = { ...state.wlcWlans };
     if (!newWlcWlans[wlanId]) {
       return { success: false, error: `% WLAN ${wlanId} does not exist` };
     }
@@ -196,7 +196,7 @@ export function cmdNoWlan(state: SwitchState, input: string, _ctx: CommandContex
     return { success: true, newState: { wlcWlans: newWlcWlans } };
   }
 
-  const wlans = { ...(state.wlans || {}) };
+  const wlans = { ...state.wlans };
   if (!wlans[wlanId]) {
     return { success: false, error: `% WLAN ${wlanId} does not exist` };
   }
@@ -456,7 +456,7 @@ export function cmdAccessList(state: SwitchState, input: string, _ctx: CommandCo
     }
   }
 
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   const existingRules = accessLists[aclId] || [];
 
   // Determine sequence number
@@ -514,7 +514,7 @@ export function cmdNoAccessList(state: SwitchState, input: string, _ctx: Command
   const aclId = match[1];
   const seqToRemove = match[2]; // Optional sequence number for single rule deletion
 
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
 
   if (seqToRemove) {
     // Remove single rule by sequence number
@@ -952,7 +952,7 @@ export function cmdPowerInline(state: SwitchState, input: string, _ctx: CommandC
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^power\s+inline$/i);
   if (!match) return { success: false, error: '% Invalid power inline command' };
-  const updatePort = (port: Port) => ({ ...port, powerInline: { ...(port.powerInline || {}), enabled: true } });
+  const updatePort = (port: Port) => ({ ...port, powerInline: { ...port.powerInline, enabled: true } });
   const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
   if (!ports) return { success: false, error: '% No interface selected' };
   return { success: true, output: 'Power inline enabled', newState: { ports } };

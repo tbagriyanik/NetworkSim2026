@@ -1,4 +1,4 @@
-﻿// Routing protocols ve router config alt komutlari
+// Routing protocols ve router config alt komutlari
 import type { CommandPattern } from './commandPatterns.types';
 
 export const routingPatterns: Record<string, CommandPattern> = {

@@ -12,7 +12,7 @@ export function isSameSubnet(sourceIp: string, targetIp: string, subnetMask: str
       if ((a[i] & m[i]) !== (b[i] & m[i])) return false;
     }
     return true;
-  } catch (_err) {
+  } catch {
     return false;
   }
 }
@@ -44,7 +44,7 @@ export function normalizeLookupTarget(raw: string): string {
       : `http://${value}`;
     const parsed = new URL(withScheme);
     return parsed.hostname || value;
-  } catch (_err) {
+  } catch {
     return value.split('/')[0].split('?')[0].trim();
   }
 }

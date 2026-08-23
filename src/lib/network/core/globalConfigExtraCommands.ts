@@ -724,7 +724,7 @@ export function cmdIpDhcpPool(state: SwitchState, input: string, _ctx: CommandCo
   if (!match) return { success: false, error: '% Invalid ip dhcp pool command' };
 
   const poolName = match[1];
-  const pools = { ...(state.dhcpPools || {}) };
+  const pools = { ...state.dhcpPools };
   if (!pools[poolName]) {
     pools[poolName] = {};
   }
@@ -765,7 +765,7 @@ export function cmdNoIpDhcpPool(state: SwitchState, input: string, _ctx: Command
   if (!match) return { success: false, error: '% Invalid no ip dhcp pool command' };
 
   const poolName = match[1];
-  const pools = { ...(state.dhcpPools || {}) };
+  const pools = { ...state.dhcpPools };
   if (!pools[poolName]) {
     return { success: false, error: `% DHCP pool ${poolName} not found` };
   }
@@ -788,7 +788,7 @@ export function cmdIpv6DhcpPool(state: SwitchState, input: string, _ctx: Command
   if (!match) return { success: false, error: '% Invalid ipv6 dhcp pool command' };
 
   const poolName = match[1];
-  const pools = { ...(state.ipv6DhcpPools || {}) };
+  const pools = { ...state.ipv6DhcpPools };
   if (!pools[poolName]) {
     pools[poolName] = {};
   }
@@ -811,7 +811,7 @@ export function cmdNoIpv6DhcpPool(state: SwitchState, input: string, _ctx: Comma
   if (!match) return { success: false, error: '% Invalid no ipv6 dhcp pool command' };
 
   const poolName = match[1];
-  const pools = { ...(state.ipv6DhcpPools || {}) };
+  const pools = { ...state.ipv6DhcpPools };
   if (!pools[poolName]) return { success: false, error: `% DHCP pool ${poolName} not found` };
   delete pools[poolName];
 
@@ -842,8 +842,8 @@ export function cmdIpAccessList(state: SwitchState, input: string, _ctx: Command
   const aclTypeRaw = match[1].toLowerCase();
   const aclType = aclTypeRaw === 'extended' ? 'extended' as const : 'standard' as const;
   const aclName = match[2];
-  const accessLists = { ...(state.accessLists || {}) };
-  const namedAclTypes = { ...(state.namedAclTypes || {}) };
+  const accessLists = { ...state.accessLists };
+  const namedAclTypes = { ...state.namedAclTypes };
   if (!accessLists[aclName]) {
     accessLists[aclName] = [];
   }
@@ -883,7 +883,7 @@ export function cmdNamedAclPermit(state: SwitchState, input: string, _ctx: Comma
   if (!match) return { success: false, error: '% Invalid permit command' };
 
   const rule = `permit ${match[1]}`;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   const aclName = state.currentNamedAcl;
   accessLists[aclName] = [...(accessLists[aclName] || []), rule];
 
@@ -902,7 +902,7 @@ export function cmdNamedAclDeny(state: SwitchState, input: string, _ctx: Command
   if (!match) return { success: false, error: '% Invalid deny command' };
 
   const rule = `deny ${match[1]}`;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   const aclName = state.currentNamedAcl;
   accessLists[aclName] = [...(accessLists[aclName] || []), rule];
 
@@ -922,7 +922,7 @@ export function cmdNamedAclNoPermit(state: SwitchState, input: string, _ctx: Com
 
   const rule = `permit ${match[1]}`;
   const aclName = state.currentNamedAcl;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
 
   return {
@@ -941,7 +941,7 @@ export function cmdNamedAclNoDeny(state: SwitchState, input: string, _ctx: Comma
 
   const rule = `deny ${match[1]}`;
   const aclName = state.currentNamedAcl;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
 
   return {
@@ -959,7 +959,7 @@ export function cmdExtAclPermit(state: SwitchState, input: string, _ctx: Command
   if (!match) return { success: false, error: '% Invalid permit command' };
 
   const aclName = state.currentExtendedAcl;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   accessLists[aclName] = [...(accessLists[aclName] || []), `permit ${match[1]}`];
 
   return { success: true, newState: { accessLists } };
@@ -974,7 +974,7 @@ export function cmdExtAclDeny(state: SwitchState, input: string, _ctx: CommandCo
   if (!match) return { success: false, error: '% Invalid deny command' };
 
   const aclName = state.currentExtendedAcl;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   accessLists[aclName] = [...(accessLists[aclName] || []), `deny ${match[1]}`];
 
   return { success: true, newState: { accessLists } };
@@ -990,7 +990,7 @@ export function cmdExtAclNoPermit(state: SwitchState, input: string, _ctx: Comma
 
   const rule = `permit ${match[1]}`;
   const aclName = state.currentExtendedAcl;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
 
   return { success: true, newState: { accessLists } };
@@ -1006,7 +1006,7 @@ export function cmdExtAclNoDeny(state: SwitchState, input: string, _ctx: Command
 
   const rule = `deny ${match[1]}`;
   const aclName = state.currentExtendedAcl;
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
 
   return { success: true, newState: { accessLists } };
@@ -1019,7 +1019,7 @@ export function cmdNoIpAccessList(state: SwitchState, input: string, _ctx: Comma
   if (!match) return { success: false, error: '% Invalid command' };
 
   const aclName = match[2];
-  const accessLists = { ...(state.accessLists || {}) };
+  const accessLists = { ...state.accessLists };
   delete accessLists[aclName];
 
   return { success: true, output: `IP access-list ${aclName} removed`, newState: { accessLists } };
@@ -1075,7 +1075,7 @@ export function cmdAliasExec(state: SwitchState, input: string, _ctx: CommandCon
     return { success: true, output: `% ${mode} mode aliases not supported yet` };
   }
 
-  const execAliases = { ...(state.execAliases || {}) };
+  const execAliases = { ...state.execAliases };
   execAliases[aliasName.toLowerCase()] = aliasCommand;
 
   const updatedState = { ...state, execAliases };
@@ -1130,7 +1130,7 @@ export function cmdIpNatPool(state: SwitchState, input: string, _ctx: CommandCon
   if (!match) return { success: false, error: '% Invalid NAT pool command' };
 
   const [_, name, startIp, endIp, netmask] = match;
-  const pools = { ...(state.natPools || {}) };
+  const pools = { ...state.natPools };
   pools[name] = { startIp, endIp, netmask };
 
   return { success: true, newState: { natPools: pools } };

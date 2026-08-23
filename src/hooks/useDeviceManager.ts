@@ -771,8 +771,8 @@ export function useDeviceManager() {
             const next = new Map(prev);
             const current = next.get(deviceId);
             if (current) {
-              const flashFiles = { ...(current.flashFiles || {}) };
-              const flashStartupConfigs = { ...(current.flashStartupConfigs || {}) };
+              const flashFiles = { ...current.flashFiles };
+              const flashStartupConfigs = { ...current.flashStartupConfigs };
               flashFiles[flashFilename] = buildRunningConfig(current);
               flashStartupConfigs[flashFilename] = buildStartupConfig(current);
               next.set(deviceId, { ...current, flashFiles, flashStartupConfigs });

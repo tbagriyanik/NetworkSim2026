@@ -17,8 +17,8 @@ function cmdDhcpNetwork(state: SwitchState, input: string, _ctx: CommandContext)
     const poolName = state.currentDhcpPool;
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
-    const pools = { ...(state.dhcpPools || {}) };
-    pools[poolName] = { ...(pools[poolName] || {}), network: match[1], subnetMask: match[2] };
+    const pools = { ...state.dhcpPools };
+    pools[poolName] = { ...pools[poolName], network: match[1], subnetMask: match[2] };
 
     // Sync with services.dhcp.pools for PC DHCP functionality
     const services = { ...state.services };
@@ -57,8 +57,8 @@ function cmdDhcpDefaultRouter(state: SwitchState, input: string, _ctx: CommandCo
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
     const primaryGw = match[1].trim().split(/\s+/)[0];
-    const pools = { ...(state.dhcpPools || {}) };
-    pools[poolName] = { ...(pools[poolName] || {}), defaultRouter: primaryGw };
+    const pools = { ...state.dhcpPools };
+    pools[poolName] = { ...pools[poolName], defaultRouter: primaryGw };
 
     // Sync with services.dhcp.pools
     const services = { ...state.services };
@@ -83,8 +83,8 @@ function cmdDhcpDnsServer(state: SwitchState, input: string, _ctx: CommandContex
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
     const primaryDns = match[1].trim().split(/\s+/)[0];
-    const pools = { ...(state.dhcpPools || {}) };
-    pools[poolName] = { ...(pools[poolName] || {}), dnsServer: primaryDns };
+    const pools = { ...state.dhcpPools };
+    pools[poolName] = { ...pools[poolName], dnsServer: primaryDns };
 
     // Sync with services.dhcp.pools
     const services = { ...state.services };
@@ -108,8 +108,8 @@ function cmdDhcpLease(state: SwitchState, input: string, _ctx: CommandContext): 
     const poolName = state.currentDhcpPool;
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
-    const pools = { ...(state.dhcpPools || {}) };
-    pools[poolName] = { ...(pools[poolName] || {}), leaseTime: match[1].trim() };
+    const pools = { ...state.dhcpPools };
+    pools[poolName] = { ...pools[poolName], leaseTime: match[1].trim() };
 
     const updatedState = { ...state, dhcpPools: pools };
     return { success: true, newState: { dhcpPools: pools, runningConfig: buildRunningConfig(updatedState) } };
@@ -125,8 +125,8 @@ function cmdDhcpDomainName(state: SwitchState, input: string, _ctx: CommandConte
     const poolName = state.currentDhcpPool;
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
-    const pools = { ...(state.dhcpPools || {}) };
-    pools[poolName] = { ...(pools[poolName] || {}), domainName: match[1] };
+    const pools = { ...state.dhcpPools };
+    pools[poolName] = { ...pools[poolName], domainName: match[1] };
 
     const updatedState = { ...state, dhcpPools: pools };
     return { success: true, newState: { dhcpPools: pools, runningConfig: buildRunningConfig(updatedState) } };
@@ -142,8 +142,8 @@ function cmdIpv6DhcpAddressPrefix(state: SwitchState, input: string, _ctx: Comma
     const poolName = state.currentIpv6DhcpPool;
     if (!poolName) return { success: false, error: '% No active IPv6 DHCP pool' };
 
-    const pools = { ...(state.ipv6DhcpPools || {}) };
-    pools[poolName] = { ...(pools[poolName] || {}), addressPrefix: match[1] };
+    const pools = { ...state.ipv6DhcpPools };
+    pools[poolName] = { ...pools[poolName], addressPrefix: match[1] };
 
     const updatedState = { ...state, ipv6DhcpPools: pools };
     return { success: true, newState: { ipv6DhcpPools: pools, runningConfig: buildRunningConfig(updatedState) } };
@@ -171,7 +171,7 @@ function cmdNoDhcpNetwork(state: SwitchState, _input: string, _ctx: CommandConte
     const poolName = state.currentDhcpPool;
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
-    const pools = { ...(state.dhcpPools || {}) };
+    const pools = { ...state.dhcpPools };
     if (pools[poolName]) {
         delete pools[poolName].network;
         delete pools[poolName].subnetMask;
@@ -198,7 +198,7 @@ function cmdNoDhcpDefaultRouter(state: SwitchState, _input: string, _ctx: Comman
     const poolName = state.currentDhcpPool;
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
-    const pools = { ...(state.dhcpPools || {}) };
+    const pools = { ...state.dhcpPools };
     if (pools[poolName]) delete pools[poolName].defaultRouter;
 
     const services = { ...state.services };
@@ -219,7 +219,7 @@ function cmdNoDhcpDnsServer(state: SwitchState, _input: string, _ctx: CommandCon
     const poolName = state.currentDhcpPool;
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
-    const pools = { ...(state.dhcpPools || {}) };
+    const pools = { ...state.dhcpPools };
     if (pools[poolName]) delete pools[poolName].dnsServer;
 
     const services = { ...state.services };
@@ -240,7 +240,7 @@ function cmdNoDhcpDomainName(state: SwitchState, _input: string, _ctx: CommandCo
     const poolName = state.currentDhcpPool;
     if (!poolName) return { success: false, error: '% No active DHCP pool' };
 
-    const pools = { ...(state.dhcpPools || {}) };
+    const pools = { ...state.dhcpPools };
     if (pools[poolName]) delete pools[poolName].domainName;
 
     const updatedState = { ...state, dhcpPools: pools };
@@ -255,7 +255,7 @@ function cmdNoIpv6DhcpAddressPrefix(state: SwitchState, _input: string, _ctx: Co
     const poolName = state.currentIpv6DhcpPool;
     if (!poolName) return { success: false, error: '% No active IPv6 DHCP pool' };
 
-    const pools = { ...(state.ipv6DhcpPools || {}) };
+    const pools = { ...state.ipv6DhcpPools };
     if (pools[poolName]) delete pools[poolName].addressPrefix;
 
     const updatedState = { ...state, ipv6DhcpPools: pools };

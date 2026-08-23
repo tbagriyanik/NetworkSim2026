@@ -186,7 +186,7 @@ function cmdObjectNetwork(state: SwitchState, input: string): CommandResult {
   }
   const objName = match[1];
 
-  const objects = { ...(state.firewallObjects || {}) };
+  const objects = { ...state.firewallObjects };
   if (!objects[objName]) {
     objects[objName] = { name: objName, subnet: undefined, host: undefined, nat: undefined };
   }
@@ -212,7 +212,7 @@ function cmdNoObjectNetwork(state: SwitchState, input: string): CommandResult {
     return { success: false, error: IOS_ERRORS.invalidInput };
   }
   const objName = match[1];
-  const objects = { ...(state.firewallObjects || {}) };
+  const objects = { ...state.firewallObjects };
   delete objects[objName];
   return {
     success: true,
@@ -259,7 +259,7 @@ function cmdNat(state: SwitchState, input: string): CommandResult {
   // Inside object: host <ip>
   const hostMatch = input.match(/^host\s+(\S+)$/i);
   if (hostMatch && state.currentFirewallObject) {
-    const objects = { ...(state.firewallObjects || {}) };
+    const objects = { ...state.firewallObjects };
     const obj = objects[state.currentFirewallObject];
     if (obj) {
       obj.host = hostMatch[1];
@@ -272,7 +272,7 @@ function cmdNat(state: SwitchState, input: string): CommandResult {
   // Inside object: subnet <ip> <mask>
   const subnetMatch = input.match(/^subnet\s+(\S+)\s+(\S+)$/i);
   if (subnetMatch && state.currentFirewallObject) {
-    const objects = { ...(state.firewallObjects || {}) };
+    const objects = { ...state.firewallObjects };
     const obj = objects[state.currentFirewallObject];
     if (obj) {
       obj.subnet = { ip: subnetMatch[1], mask: subnetMatch[2] };
@@ -360,7 +360,7 @@ function cmdTimeout(state: SwitchState, input: string): CommandResult {
   return {
     success: true,
     newState: {
-      firewallTimeouts: { ...(state.firewallTimeouts || {}), [proto]: value },
+      firewallTimeouts: { ...state.firewallTimeouts, [proto]: value },
     } as unknown as Partial<SwitchState>,
   };
 }

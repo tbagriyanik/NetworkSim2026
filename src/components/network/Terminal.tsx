@@ -285,7 +285,7 @@ export function Terminal({
 
   const isBooted = useMemo(() => {
     const bootMarkers = output.filter(o => o.content === BOOT_PROGRESS_MARKER);
-    return bootMarkers.length === 0 || bootMarkers.every(m => completedBootIds.has(m.id));
+    return bootMarkers.every(m => completedBootIds.has(m.id));
   }, [output, bootVersion]);
   const isInputDisabled = isLoading || isConnectionError;
 

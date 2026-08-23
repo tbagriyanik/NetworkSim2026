@@ -1,4 +1,4 @@
-﻿import { memo } from 'react';
+import { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './networkTopology.types';
 import { isCableCompatible } from '@/lib/network/types';
 import type { CableInfo } from '@/lib/network/types';

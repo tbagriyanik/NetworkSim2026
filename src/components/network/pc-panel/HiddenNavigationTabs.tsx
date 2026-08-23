@@ -1,4 +1,4 @@
-﻿import { Command, Globe, LayoutGrid, Monitor, Network, Radio, ShieldCheck, Terminal as TerminalIcon } from 'lucide-react';
+import { Command, Globe, LayoutGrid, Monitor, Network, Radio, ShieldCheck, Terminal as TerminalIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { PCActiveTab } from './PCPanel.types';
 

@@ -91,11 +91,11 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
   handleDeviceTouchStart,
   handleDeviceTouchMove,
   handleDeviceTouchEnd,
-  _mousePosRef: _mousePosRef,
+  _mousePosRef,
   isDrawingConnection = false,
   connectionStart = null
 }: DeviceRendererProps) {
-
+  void _mousePosRef;
   const isTargetingThisDevice = isDrawingConnection && connectionStart && connectionStart.deviceId !== device.id;
   const isTR = language === 'tr';
   const isSwitchDevice = (type: string) => type === 'switchL2' || type === 'switchL3';

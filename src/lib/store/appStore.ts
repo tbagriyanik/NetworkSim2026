@@ -259,7 +259,7 @@ function sanitizePersistedState(input: Record<string, unknown> | undefined): Par
             showSTPOverlay: !!topology.showSTPOverlay,
             environment: {
                 ...initialEnvironmentSettings,
-                ...((topology.environment as Record<string, unknown>) || {})
+                ...(topology.environment as Record<string, unknown>)
             }
         };
     }

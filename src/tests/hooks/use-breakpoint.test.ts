@@ -2,27 +2,32 @@ import { describe, it, expect } from 'vitest';
 
 describe('useBreakpoint Hook', () => {
   it('should detect mobile breakpoint (width < 768)', () => {
-    const isMobile = 375 < 768;
+    const width = 375;
+    const isMobile = width < 768;
     expect(isMobile).toBe(true);
   });
 
   it('should detect tablet breakpoint (768 <= width < 1024)', () => {
-    const isTablet = 768 >= 768 && 768 < 1024;
+    const width = 768;
+    const isTablet = width >= 768 && width < 1024;
     expect(isTablet).toBe(true);
   });
 
   it('should detect desktop breakpoint (width >= 1024)', () => {
-    const isDesktop = 1440 >= 1024;
+    const width = 1440;
+    const isDesktop = width >= 1024;
     expect(isDesktop).toBe(true);
   });
 
   it('should not be mobile at 1024px width', () => {
-    const isMobile = 1024 < 768;
+    const width = 1024;
+    const isMobile = width < 768;
     expect(isMobile).toBe(false);
   });
 
   it('should handle SSR (width = 0)', () => {
-    const isMobile = 0 < 768;
+    const width = 0;
+    const isMobile = width < 768;
     expect(isMobile).toBe(true);
   });
 

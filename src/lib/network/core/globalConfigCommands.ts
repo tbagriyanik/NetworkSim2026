@@ -348,7 +348,7 @@ function cmdNoIpv6DhcpPool(state: SwitchState, input: string, _ctx: CommandConte
   if (!match) return { success: false, error: '% Invalid no ipv6 dhcp pool command' };
 
   const poolName = match[1];
-  const pools = { ...(state.ipv6DhcpPools || {}) };
+  const pools = { ...state.ipv6DhcpPools };
   if (!pools[poolName]) return { success: false, error: `% DHCP pool ${poolName} not found` };
   delete pools[poolName];
 

@@ -83,7 +83,7 @@ export function TroubleshootingPanel({
     setPosition(positionRef.current);
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch (_err) {}
+    } catch {}
   };
 
   if (!project || ((!project.injectedFaults || project.injectedFaults.length === 0) && tasks.length === 0)) {

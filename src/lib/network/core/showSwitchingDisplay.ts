@@ -277,7 +277,7 @@ export function cmdShowSpanningTree(
       output += `             Address     ${vStp.rootBridgeId.split('.').slice(1).join('.')}\n`;
 
       // Find root port for display
-      const rootPortEntry = Object.entries(vStp.ports).find(([_, p]) => p.role === 'root');
+      const rootPortEntry = Object.entries(vStp.ports).find(([, p]) => p.role === 'root');
       if (rootPortEntry) {
         const [portId] = rootPortEntry;
         const rootPortNum = getPortNumber(portId);

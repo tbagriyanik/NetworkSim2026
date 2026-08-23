@@ -1,4 +1,4 @@
-﻿// VLAN config ve line komutlari
+// VLAN config ve line komutlari
 import type { CommandPattern } from './commandPatterns.types';
 
 export const lineVlanPatterns: Record<string, CommandPattern> = {

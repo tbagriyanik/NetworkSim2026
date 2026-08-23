@@ -107,21 +107,21 @@ export function usePCPanelSync({
     const nextConfig: Partial<CanvasDevice> = { ...config };
     if (config.services) {
       nextConfig.services = {
-        ...(deviceFromTopology?.services || {}),
+        ...deviceFromTopology?.services,
         ...config.services,
         ftp: {
-          ...(deviceFromTopology?.services?.ftp || {}),
-          ...(config.services.ftp || {}),
+          ...deviceFromTopology?.services?.ftp,
+          ...config.services.ftp,
           enabled: config.services.ftp?.enabled ?? deviceFromTopology?.services?.ftp?.enabled ?? false,
         },
         mail: {
-          ...(deviceFromTopology?.services?.mail || {}),
-          ...(config.services.mail || {}),
+          ...deviceFromTopology?.services?.mail,
+          ...config.services.mail,
           enabled: config.services.mail?.enabled ?? deviceFromTopology?.services?.mail?.enabled ?? false,
         },
         ntp: {
-          ...(deviceFromTopology?.services?.ntp || {}),
-          ...(config.services.ntp || {}),
+          ...deviceFromTopology?.services?.ntp,
+          ...config.services.ntp,
           enabled: config.services.ntp?.enabled ?? deviceFromTopology?.services?.ntp?.enabled ?? false,
         },
       };

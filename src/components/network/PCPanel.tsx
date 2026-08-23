@@ -119,7 +119,7 @@ export function PCPanel({
   const [fontSize, setFontSize] = useState<number>(() => {
     try {
       return parseInt(localStorage.getItem('terminal-font-size') || '13', 10);
-    } catch (_err) {
+    } catch {
       errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ key: 'terminal-font-size', operation: 'read' }));
       return 13;
     }
@@ -130,7 +130,7 @@ export function PCPanel({
     setFontSize(val);
     try {
       localStorage.setItem('terminal-font-size', String(val));
-    } catch (_err) {
+    } catch {
       errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ key: 'terminal-font-size', operation: 'write', value: val }));
     }
   };
@@ -160,11 +160,11 @@ export function PCPanel({
       try {
         const stored = localStorage.getItem(`pc_files_${deviceId}`);
         if (stored) return JSON.parse(stored);
-      } catch (_e) { }
+      } catch { }
     }
     // First time this PC is used — seed with per-PC default files
     const defaults = getDefaultPcFiles(deviceId);
-    try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults)); } catch (_e) { }
+    try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults)); } catch { }
     return defaults;
   });
 
@@ -319,7 +319,7 @@ export function PCPanel({
       try {
         const stored = localStorage.getItem(`mail_inbox_${deviceId}`);
         if (stored) return JSON.parse(stored);
-      } catch (_e) { }
+      } catch { }
     }
     return deviceFromTopology?.services?.mail?.inbox || [];
   });
@@ -328,7 +328,7 @@ export function PCPanel({
       try {
         const stored = localStorage.getItem(`mail_sent_${deviceId}`);
         if (stored) return JSON.parse(stored);
-      } catch (_e) { }
+      } catch { }
     }
     return deviceFromTopology?.services?.mail?.sent || [];
   });
@@ -417,7 +417,7 @@ export function PCPanel({
               }
               if (sameSubnet) return true;
             }
-          } catch (_err) {
+          } catch {
             // Invalid IP format, skip silently - this is expected for malformed IPs
             if (process.env.NODE_ENV === 'development') {
               errorHandler.logError(new Error('IP validation failed'), { deviceId: device.id, ip: device.ip, pcIP, pcSubnet });
@@ -465,7 +465,7 @@ export function PCPanel({
                 }
                 if (!routerInSameSubnet) return false;
               }
-            } catch (_err) {
+            } catch {
               // Invalid IP format, skip silently - expected for malformed IPs
               if (process.env.NODE_ENV === 'development') {
                 errorHandler.logError(new Error('Router IP validation failed'), { deviceId: otherDevice.id, ip: otherDevice.ip, pcIP, pcSubnet });
@@ -616,7 +616,7 @@ export function PCPanel({
           if (storedInbox) inboxFromStorage = JSON.parse(storedInbox);
           const storedSent = localStorage.getItem(`mail_sent_${deviceId}`);
           if (storedSent) sentFromStorage = JSON.parse(storedSent);
-        } catch (_e) { }
+        } catch { }
       }
       setServiceMailInbox(inboxFromStorage || deviceFromTopology?.services?.mail?.inbox || []);
       setServiceMailSent(sentFromStorage || deviceFromTopology?.services?.mail?.sent || []);

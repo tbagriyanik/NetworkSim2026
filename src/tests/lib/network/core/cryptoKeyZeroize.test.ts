@@ -25,7 +25,7 @@ describe('Crypto Key Zeroize RSA', () => {
 
   it('should prompt for confirmation when keys exist', () => {
     const gen = executeCommand(base, 'crypto key generate rsa', 'en');
-    const withKeys = { ...base, ...(gen.newState || {}) } as SwitchState;
+    const withKeys = { ...base, ...gen.newState } as SwitchState;
 
     const result = executeCommand(withKeys, 'crypto key zeroize rsa', 'en');
     expect(result.success).toBe(true);
@@ -36,7 +36,7 @@ describe('Crypto Key Zeroize RSA', () => {
 
   it('should remove keys on confirmed zeroize', () => {
     const gen = executeCommand(base, 'crypto key generate rsa', 'en');
-    const withKeys = { ...base, ...(gen.newState || {}) } as SwitchState;
+    const withKeys = { ...base, ...gen.newState } as SwitchState;
 
     const result = executeCommand(withKeys, 'crypto key zeroize rsa', 'en', undefined, undefined, undefined, undefined, true);
     expect(result.success).toBe(true);

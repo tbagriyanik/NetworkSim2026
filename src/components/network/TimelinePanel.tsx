@@ -91,7 +91,7 @@ export function TimelinePanel({
     setPosition(positionRef.current);
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
-    } catch (_err) {}
+    } catch {}
   };
 
   // Auto-scroll to active item

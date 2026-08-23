@@ -63,7 +63,7 @@ export function VlanPanel({ vlans, ports, deviceName, deviceModel, onExecuteComm
 
   const getPortsForVlan = (vlanId: number): string[] => {
     return Object.entries(ports)
-      .filter(([_, p]) => Number(p?.accessVlan || p?.vlan || 1) === vlanId && !p?.shutdown)
+      .filter(([, p]) => Number(p?.accessVlan || p?.vlan || 1) === vlanId && !p?.shutdown)
       .map(([portKey, p]) => String(p?.id || portKey).toUpperCase());
   };
 

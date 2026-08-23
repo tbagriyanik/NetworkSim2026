@@ -1,4 +1,4 @@
-﻿import { CableType } from '@/lib/network/types';
+import { CableType } from '@/lib/network/types';
 import type { CanvasNote } from './networkTopology.types';
 
 const DEVICE_ICON_PATHS = {

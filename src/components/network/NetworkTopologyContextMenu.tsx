@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, type RefObject } from 'react';
+import { useState, useEffect, type RefObject } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Trash2, Undo2, Redo2, Scissors, Copy, ClipboardPaste,

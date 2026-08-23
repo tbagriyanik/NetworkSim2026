@@ -61,7 +61,7 @@ export function useNoteEditing({
     setNoteClipboard(selection.selectedText);
     try {
       await navigator.clipboard.writeText(selection.selectedText);
-    } catch (_err) {
+    } catch {
       // Fallback already handled
     }
   };
@@ -73,7 +73,7 @@ export function useNoteEditing({
     setNoteClipboard(selection.selectedText);
     try {
       await navigator.clipboard.writeText(selection.selectedText);
-    } catch (_err) {
+    } catch {
       // Fallback already handled
     }
     updateNoteTextRange(noteId, selection.start, selection.end, '');
@@ -95,7 +95,7 @@ export function useNoteEditing({
     let pastedText = '';
     try {
       pastedText = await navigator.clipboard.readText();
-    } catch (_err) {
+    } catch {
       pastedText = noteClipboard;
     }
 

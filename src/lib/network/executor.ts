@@ -2014,9 +2014,9 @@ function handleFtpSessionCommand(
       updatedDeviceStates.set(target.id, {
         ...targetState,
         services: {
-          ...(targetState.services || {}),
+          ...targetState.services,
           ftp: {
-            ...(targetState.services?.ftp || {}),
+            ...targetState.services?.ftp,
             enabled: !!targetState.services?.ftp?.enabled,
             files: nextFiles
           }
@@ -2080,7 +2080,7 @@ function handleMailSessionCommand(
         try {
           const storedInbox = window.localStorage.getItem(`mail_inbox_${delivered.device.id}`);
           if (storedInbox) currentInbox = JSON.parse(storedInbox);
-        } catch(_e) { /* localStorage error */ }
+        } catch { /* localStorage error */ }
       }
       const inbox = [{ from: session.address, subject, body: subject, timestamp }, ...currentInbox];
       if (typeof window !== 'undefined') window.localStorage.setItem(`mail_inbox_${delivered.device.id}`, JSON.stringify(inbox));
@@ -2091,16 +2091,16 @@ function handleMailSessionCommand(
         try {
           const storedSent = window.localStorage.getItem(`mail_sent_${ctx.sourceDeviceId}`);
           if (storedSent) currentSent = JSON.parse(storedSent);
-        } catch(_e) { /* localStorage error */ }
+        } catch { /* localStorage error */ }
       }
       const sent = [{ to: recipient, subject, body: subject, timestamp }, ...currentSent];
       if (ctx.sourceDeviceId && typeof window !== 'undefined') window.localStorage.setItem(`mail_sent_${ctx.sourceDeviceId}`, JSON.stringify(sent));
 
       const updated = new Map(ctx.deviceStates || []);
       // Update recipient's inbox
-      updated.set(delivered.device.id, { ...delivered.state, services: { ...(delivered.state.services || {}), mail: { ...(delivered.state.services?.mail || {}), enabled: !!delivered.state.services?.mail?.enabled, inbox } } });
+      updated.set(delivered.device.id, { ...delivered.state, services: { ...delivered.state.services, mail: { ...delivered.state.services?.mail, enabled: !!delivered.state.services?.mail?.enabled, inbox } } });
       // Update sender's sent box
-      const newSenderState = { ...state, services: { ...(state.services || {}), mail: { ...(state.services?.mail || {}), enabled: !!state.services?.mail?.enabled, sent } } };
+      const newSenderState = { ...state, services: { ...state.services, mail: { ...state.services?.mail, enabled: !!state.services?.mail?.enabled, sent } } };
       if (ctx.sourceDeviceId) {
         updated.set(ctx.sourceDeviceId, newSenderState);
       }

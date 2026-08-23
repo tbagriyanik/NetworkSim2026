@@ -246,7 +246,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
       const localFile = { name: fileName, size: serverFile?.size || 0, modifiedAt: new Date().toISOString() };
       setPcLocalFiles(prev => {
         const updated = prev.filter(f => f.name !== fileName).concat(localFile);
-        try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(updated)); } catch (_e) { /* ignore */ }
+        try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(updated)); } catch { /* ignore */ }
         return updated;
       });
       addLocalOutput('output', `150 Opening BINARY mode data connection for ${fileName}\n226 Transfer complete.`);
@@ -513,7 +513,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
         } else if (cmd === 'nslookup') {
           const typeFlagIdx = args.findIndex(a => /^-type=/i.test(a));
           const queryType = typeFlagIdx !== -1 ? (args[typeFlagIdx].split('=')[1] || 'A').toUpperCase() : 'A';
-          const positional = args.filter(a => !/^-/.test(a));
+          const positional = args.filter(a => !a.startsWith("-"));
           const rawTargetDomain = positional[0] ?? '';
           const queryServer = positional[1] ?? pcDNS;
           const targetDomain = rawTargetDomain ? normalizeLookupTargetCallback(rawTargetDomain) : '';

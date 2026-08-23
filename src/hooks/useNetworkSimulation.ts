@@ -86,7 +86,7 @@ export function useNetworkSimulation(
           const currentNtp = device.services?.ntp;
           if (currentNtp?.date === nextNtp.date && currentNtp?.time === nextNtp.time && currentNtp?.enabled) return;
           ntpUpdates.set(device.id, {
-            services: { ...(device.services || {}), ntp: nextNtp }
+            services: { ...device.services, ntp: nextNtp }
           });
         });
 

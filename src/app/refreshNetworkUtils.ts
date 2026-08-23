@@ -83,9 +83,9 @@ export const propagateVtpVlans = (
     const bRev = bState.vtpRevision || 0;
 
     if (aMode === 'server' && bMode === 'client' && aRev >= bRev) {
-      nextStates.set(b.id, { ...bState, vlans: { ...(aState.vlans || {}) }, vtpRevision: aRev });
+      nextStates.set(b.id, { ...bState, vlans: { ...aState.vlans }, vtpRevision: aRev });
     } else if (bMode === 'server' && aMode === 'client' && bRev >= aRev) {
-      nextStates.set(a.id, { ...aState, vlans: { ...(bState.vlans || {}) }, vtpRevision: bRev });
+      nextStates.set(a.id, { ...aState, vlans: { ...bState.vlans }, vtpRevision: bRev });
     }
   }
 

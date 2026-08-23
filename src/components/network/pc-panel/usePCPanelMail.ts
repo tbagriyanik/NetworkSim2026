@@ -124,7 +124,7 @@ export function usePCPanelMail({
         try {
           const stored = localStorage.getItem(`mail_inbox_${targetDevice.id}`);
           if (stored) existingInbox = JSON.parse(stored);
-        } catch (_e) {}
+        } catch {}
       }
       const updatedInbox = [newInboxEntry, ...existingInbox];
       if (typeof window !== 'undefined')
@@ -251,7 +251,7 @@ export function usePCPanelMail({
         try {
           const stored = localStorage.getItem(`mail_inbox_${targetDevice.id}`);
           if (stored) existingInbox = JSON.parse(stored);
-        } catch (_e) {}
+        } catch {}
       }
       const updatedInbox = [newInboxEntry, ...existingInbox];
       if (typeof window !== 'undefined')

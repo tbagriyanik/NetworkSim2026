@@ -184,7 +184,7 @@ export function decryptExamData(encrypted: string): unknown {
     const xored = xorBytes(bytes, EXAM_KEY_BYTES);
     const json = new TextDecoder().decode(xored);
     return JSON.parse(json);
-  } catch (_e) {
+  } catch {
     // console.error('Failed to decrypt exam data', _e);
     return null;
   }
@@ -1547,7 +1547,7 @@ export function generateExamFromProject(projectData: ProjectData, language: 'tr'
   notePcConfigs.forEach(pcConfig => {
     // Only add if a topology device with this id exists and has matching ip
     const topoDevice = projectData.topology?.devices?.find((d: ProjectDevice) =>
-      d.id === pcConfig.deviceId || d.id === pcConfig.deviceId
+      d.id === pcConfig.deviceId
     );
     if (topoDevice && topoDevice.ip && topoDevice.ip !== '') {
       // Already added from topology data above

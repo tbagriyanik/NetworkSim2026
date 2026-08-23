@@ -204,7 +204,7 @@ export function usePCPanelRouterAdmin({
             deviceId: httpAppDeviceId,
             config: {
               wifi: nextWifi,
-              ...(nextDhcp ? { services: { ...(device?.services || {}), dhcp: nextDhcp } } : {}),
+              ...(nextDhcp ? { services: { ...device?.services, dhcp: nextDhcp } } : {}),
             },
           },
         }));
@@ -249,11 +249,11 @@ export function usePCPanelRouterAdmin({
             deviceId: httpAppDeviceId,
             config: {
               services: {
-                ...(device?.services || {}),
+                ...device?.services,
                 http: {
                   enabled: true,
                   content: '',
-                  ...(device?.services?.http || {}),
+                  ...device?.services?.http,
                   username: nextUsername,
                   password: nextPassword,
                 },

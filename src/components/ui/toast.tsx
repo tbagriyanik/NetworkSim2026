@@ -20,7 +20,7 @@ const ToastViewport = React.forwardRef<
       "fixed right-0 bottom-0 z-[999999] flex max-h-screen w-full flex-col p-4 md:max-w-[420px] overflow-x-hidden",
       className
     )}
-    style={{ zIndex: 999999, ...(props.style || {}) }}
+    style={{ zIndex: 999999, ...props.style }}
     {...props}
   />
 ))

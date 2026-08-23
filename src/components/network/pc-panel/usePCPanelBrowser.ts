@@ -128,7 +128,7 @@ export function usePCPanelBrowser({
       const parsed = new URL(displayUrl);
       lookupTarget = parsed.hostname || lookupTarget;
       displayUrl = parsed.toString();
-    } catch (_err) {
+    } catch {
       // URL parsing failed - using raw input as fallback
     }
 
