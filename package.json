@@ -44,12 +44,12 @@
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^4.1.10",
     "cross-env": "^10.1.0",
-    "jsdom": "^29.1.1",
+    "jsdom": "^24.1.1",
     "oxlint": "^1.79.0",
     "postcss": "^8.5.10",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
-    "vitest": "^4.1.7"
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "postcss": "$postcss"
