@@ -20,11 +20,10 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
-import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
+import { errorHandler } from '@/lib/errors/errorHandler';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
 import { PCPanelNavigation } from './pc-panel/PCPanelNavigation';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
-import { HttpBrowserWindow } from './pc-panel/HttpBrowserWindow';
 import { HomeLauncher } from './pc-panel/HomeLauncher';
 import { PowerOffOverlay } from './pc-panel/PowerOffOverlay';
 import { getDefaultPcFiles, getPCConfigDefaults } from './pc-panel/pcPanelFiles';
@@ -41,12 +40,14 @@ import { usePCPanelCommands } from './pc-panel/usePCPanelCommands';
 import { usePCPanelInput } from './pc-panel/usePCPanelInput';
 import { validateIP, validateIPv6, isValidIpAddress, formatMacForArp, highlightText as highlightTextHelper, getInitialPcOutput } from './pc-panel/pcPanelHelpers';
 import type { DhcpPoolConfig, FtpSession, OutputLine, PCActiveTab, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
-import { CommandLineTab } from './pc-panel/CommandLineTab';
-import { ConsoleTerminalTab } from './pc-panel/ConsoleTerminalTab';
-import { IpSettingsTab } from './pc-panel/IpSettingsTab';
-import { ServicesTab } from './pc-panel/ServicesTab';
-import { WirelessConfigTab } from './pc-panel/WirelessConfigTab';
-import { IotDashboardTab } from './pc-panel/IotDashboardTab';
+import { usePCPanelState } from './pc-panel/usePCPanelState';
+import { PCDesktop } from './pc-panel/PCDesktop';
+import { PCTerminal } from './pc-panel/PCTerminal';
+import { PCNetworkSettings } from './pc-panel/PCNetworkSettings';
+import { PCServices } from './pc-panel/PCServices';
+import { PCWifi } from './pc-panel/PCWifi';
+import { PCIotPanel } from './pc-panel/PCIotPanel';
+import { PCBrowser } from './pc-panel/PCBrowser';
 import { PCPanelHeader } from './pc-panel/PCPanelHeader';
 import { PCPanelTerminalToolbar } from './pc-panel/PCPanelTerminalToolbar';
 import {
@@ -106,7 +107,19 @@ export function PCPanel({
   const terminalBg = isDark ? 'bg-black' : 'bg-secondary-50';
   const textColor = isDark ? 'text-secondary-300' : 'text-secondary-700';
 
-  const [activeServiceTab, setActiveServiceTab] = useState<'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp'>('dns');
+  const {
+    activeServiceTab,
+    setActiveServiceTab,
+    fontSize,
+    handleFontSizeChange,
+    showCmdSettings,
+    setShowCmdSettings,
+    searchOpen,
+    setSearchOpen,
+    searchQuery,
+    setSearchQuery,
+  } = usePCPanelState();
+
   const mobileVerticalScrollStyle: CSSProperties | undefined = isMobile
     ? {
       overflowY: 'auto' as const,
@@ -116,27 +129,7 @@ export function PCPanel({
     }
     : undefined;
 
-  const [fontSize, setFontSize] = useState<number>(() => {
-    try {
-      return parseInt(localStorage.getItem('terminal-font-size') || '13', 10);
-    } catch {
-      errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ key: 'terminal-font-size', operation: 'read' }));
-      return 13;
-    }
-  });
-  const [showCmdSettings, setShowCmdSettings] = useState(false);
-
-  const handleFontSizeChange = (val: number) => {
-    setFontSize(val);
-    try {
-      localStorage.setItem('terminal-font-size', String(val));
-    } catch {
-      errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ key: 'terminal-font-size', operation: 'write', value: val }));
-    }
-  };
   const [input, setInput] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
   const [autocompleteNavigated, setAutocompleteNavigated] = useState(false);
@@ -2127,7 +2120,7 @@ export function PCPanel({
                       )}
 
                       {activeTab === 'desktop' && (
-                        <CommandLineTab
+                        <PCDesktop
                           isDark={isDark}
                           language={language}
                           t={t}
@@ -2162,7 +2155,7 @@ export function PCPanel({
                       )}
 
                       {activeTab === 'terminal' && (
-                        <ConsoleTerminalTab
+                        <PCTerminal
                           isDark={isDark}
                           language={language}
                           t={t}
@@ -2200,7 +2193,7 @@ export function PCPanel({
                       )}
 
                       {activeTab === 'settings' && (
-                        <IpSettingsTab
+                        <PCNetworkSettings
                           isDark={isDark}
                           fontSize={fontSize}
                           mobileVerticalScrollStyle={mobileVerticalScrollStyle}
@@ -2246,7 +2239,7 @@ export function PCPanel({
                       )}
 
                       {activeTab === 'services' && (
-                        <ServicesTab
+                        <PCServices
                           isDark={isDark}
                           language={language}
                           t={t}
@@ -2310,7 +2303,7 @@ export function PCPanel({
                       )}
 
                       {activeTab === 'iot' && (
-                        <IotDashboardTab
+                        <PCIotPanel
                           isDark={isDark}
                           language={language}
                           isMobile={isMobile}
@@ -2332,7 +2325,7 @@ export function PCPanel({
                           topologyConnections={topologyConnections}
                           deviceId={deviceId}
                           wifiSSID={wifiSSID}
-                          navigateToProgram={(program) => navigateToProgram(program as PCActiveTab)}
+                          navigateToProgram={(program: string) => navigateToProgram(program as PCActiveTab)}
                           setInput={setInput}
                           executeCommand={executeCommand}
                           environment={environment}
@@ -2340,7 +2333,7 @@ export function PCPanel({
                       )}
 
                       {activeTab === 'wireless' && (
-                        <WirelessConfigTab
+                        <PCWifi
                           isDark={isDark}
                           language={language}
                           t={t}
@@ -2362,7 +2355,7 @@ export function PCPanel({
                           deviceId={deviceId}
                           wifiSignalStrength={wifiSignalStrength}
                           dispatchDeviceConfig={dispatchDeviceConfig}
-                          navigateToProgram={(program) => navigateToProgram(program as PCActiveTab)}
+                          navigateToProgram={(program: string) => navigateToProgram(program as PCActiveTab)}
                           setInput={setInput}
                           executeCommand={executeCommand}
                           mobileVerticalScrollStyle={mobileVerticalScrollStyle}
@@ -2388,7 +2381,7 @@ export function PCPanel({
         onPutFile={executeFtpPut}
       />
 
-      <HttpBrowserWindow
+      <PCBrowser
         isOpen={!!httpAppContent}
         isMobile={isMobile}
         isDark={isDark}

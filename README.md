@@ -7,11 +7,10 @@
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-126,776-lightgrey)
-![Source Files](https://img.shields.io/badge/source--files-500-informational)
 
 A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
 
-**Live app:** [network2026.vercel.app](https://network2026.vercel.app) · **Alternatif:** [tuzlanet.vercel.app](https://tuzlanet.vercel.app)
+**Live app:** [network2026.vercel.app](https://network2026.vercel.app) · **Alternatif Adres:** [tuzlanet.vercel.app](https://tuzlanet.vercel.app)
 
 ### Demo & Videos / Tanıtım Videoları
 - 📺 **Tanıtım 1:** [https://www.youtube.com/watch?v=2Xo-ZP5qgXI](https://www.youtube.com/watch?v=2Xo-ZP5qgXI)
