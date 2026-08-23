@@ -185,9 +185,26 @@ export function WirelessConfigTab({
                   )}
                 />
                 {wifiSSID && (
-                  <button type="button" onClick={() => { setWifiSSID(''); setWifiBSSID(''); setSsidDropdownOpen(false); }} className="text-secondary-200 hover:text-white text-xs">✕</button>
+                  <button
+                    type="button"
+                    onClick={() => { setWifiSSID(''); setWifiBSSID(''); setSsidDropdownOpen(false); }}
+                    className="text-secondary-400 hover:text-white text-xs p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded"
+                    aria-label={language === 'tr' ? 'SSID temizle' : 'Clear SSID'}
+                    title={language === 'tr' ? 'SSID temizle' : 'Clear SSID'}
+                  >
+                    ✕
+                  </button>
                 )}
-                <button type="button" onClick={() => setSsidDropdownOpen(o => !o)} className="text-secondary-200 hover:text-white text-xs">▾</button>
+                <button
+                  type="button"
+                  onClick={() => setSsidDropdownOpen(o => !o)}
+                  className="text-secondary-400 hover:text-white text-xs p-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded"
+                  aria-label={ssidDropdownOpen ? (language === 'tr' ? 'Ağ listesini kapat' : 'Close network list') : (language === 'tr' ? 'Ağ listesini aç' : 'Open network list')}
+                  title={ssidDropdownOpen ? (language === 'tr' ? 'Ağ listesini kapat' : 'Close network list') : (language === 'tr' ? 'Ağ listesini aç' : 'Open network list')}
+                  aria-expanded={ssidDropdownOpen}
+                >
+                  ▾
+                </button>
               </div>
               {ssidDropdownOpen && (
                 <div className={cn(
@@ -310,8 +327,9 @@ export function WirelessConfigTab({
                 <button
                   type="button"
                   onClick={() => setShowWifiPassword(v => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary-200 hover:text-white focus:outline-none"
-                  tabIndex={-1}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-secondary-400 hover:text-white p-1 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                  aria-label={showWifiPassword ? (language === 'tr' ? 'Parolayı gizle' : 'Hide password') : (language === 'tr' ? 'Parolayı göster' : 'Show password')}
+                  title={showWifiPassword ? (language === 'tr' ? 'Parolayı gizle' : 'Hide password') : (language === 'tr' ? 'Parolayı göster' : 'Show password')}
                 >
                   {showWifiPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>

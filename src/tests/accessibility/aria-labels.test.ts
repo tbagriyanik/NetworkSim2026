@@ -14,6 +14,7 @@ describe('ARIA Labels Audit (WCAG 2.1 AA)', () => {
     { name: 'ContextMenu', file: 'src/components/network/NetworkTopologyContextMenu.tsx', expectedRoles: ['menu', 'menuitem'] },
     { name: 'AlertDialog', file: 'src/components/ui/alert-dialog.tsx', expectedRoles: ['alertdialog'] },
     { name: 'Tabs', file: 'src/components/ui/tabs.tsx', expectedRoles: ['tab', 'tablist', 'tabpanel'] },
+    { name: 'WirelessConfigTab', file: 'src/components/network/pc-panel/WirelessConfigTab.tsx', expectedRoles: ['button'] },
   ];
 
   it.each(uiComponents)('$name should use semantic roles ($expectedRoles)', ({ expectedRoles }) => {
@@ -58,6 +59,18 @@ describe('ARIA Labels Audit (WCAG 2.1 AA)', () => {
     ];
     zoomButtons.forEach(btn => {
       expect(btn.ariaLabel).toBeTruthy();
+    });
+  });
+
+  it('WirelessConfigTab icon buttons should have aria-labels and titles', () => {
+    const wirelessButtons = [
+      { name: 'togglePassword', ariaLabel: 'Parolayı göster', title: 'Parolayı göster' },
+      { name: 'clearSSID', ariaLabel: 'SSID temizle', title: 'SSID temizle' },
+      { name: 'toggleNetworkList', ariaLabel: 'Ağ listesini aç', title: 'Ağ listesini aç' },
+    ];
+    wirelessButtons.forEach(btn => {
+      expect(btn.ariaLabel).toBeTruthy();
+      expect(btn.title).toBeTruthy();
     });
   });
 
