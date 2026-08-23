@@ -26,7 +26,18 @@ const inriaSans = localFont({
 });
 
 const geistMono = localFont({
-  src: "../../public/fonts/GeistMono-Regular.woff",
+  src: [
+    {
+      path: "../../public/fonts/GeistMono-LatinExt.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+  ],
   variable: "--font-geist-mono",
 });
 

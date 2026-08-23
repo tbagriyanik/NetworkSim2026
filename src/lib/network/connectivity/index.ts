@@ -1,32 +1,12 @@
+export type { CanvasDevice, CanvasConnection, CanvasPort } from '@/components/network/networkTopology.types';
+
 export * from './pathResolution';
 export * from './vlanAndSwitching';
 export * from './security';
 export * from './pingDiagnostics';
 export * from './acl';
 
-export {
-  getDeviceWifiConfig,
-  getDeviceMacAddress,
-  getWirelessSignalStrength,
-  getWirelessDistance,
-  buildImplicitWirelessConnections,
-  getApActiveSsids,
-  wifiMacFilterMatches,
-  type DeviceWifiConfig,
-} from '@/lib/network/wireless';
-
-export {
-  isExternalDomain,
-  resolveHostname,
-} from '@/lib/network/dns';
-
-export {
-  getPrimaryDeviceIp,
-  getSubnetForDeviceIp,
-  isConnectionCableCompatible,
-  isDevicePoweredOn,
-  isIpInSubnet,
-  isManagementIpSet,
-  isPortShutdown,
-  matchIpWithWildcard,
-} from '@/lib/network/connectivity.utils';
+export * from '@/lib/network/wireless';
+export * from '@/lib/network/dns';
+export * from '@/lib/network/connectivity.utils';
+export { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
