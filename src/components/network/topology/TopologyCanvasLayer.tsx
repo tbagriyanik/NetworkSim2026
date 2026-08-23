@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { CABLE_COLORS } from '../networkTopology.constants';
-import { getConnectionStatusMessage, getPortPosition, getDeviceCenter } from '../networkTopology.helpers';
+import { getConnectionStatusMessage, getPortPosition, getDeviceCenter, getDevicePairKey } from '../networkTopology.helpers';
 import { ConnectionLine } from '../ConnectionLine';
 import { ConnectionHandle } from '../ConnectionHandle';
 import { NoteNode } from './NoteNode';
@@ -174,7 +174,7 @@ export function TopologyCanvasLayer({
     const connectionGroups = React.useMemo(() => {
         const groups = new Map<string, string[]>();
         connections.forEach((item) => {
-            const pair = [item.sourceDeviceId, item.targetDeviceId].sort().join(':');
+            const pair = getDevicePairKey(item.sourceDeviceId, item.targetDeviceId);
             const ids = groups.get(pair);
             if (ids) ids.push(item.id);
             else groups.set(pair, [item.id]);
@@ -274,9 +274,10 @@ export function TopologyCanvasLayer({
                             const targetDevice = deviceMap.get(conn.targetDeviceId);
                             if (!sourceDevice || !targetDevice) return null;
 
-                            const ids = connectionGroups.get([conn.sourceDeviceId, conn.targetDeviceId].sort().join(':')) ?? [];
-                            const index = ids.indexOf(conn.id);
-                            const pairMeta = { index: index >= 0 ? index : 0, total: ids.length || 1 };
+                            const ids = connectionGroups.get(getDevicePairKey(conn.sourceDeviceId, conn.targetDeviceId)) ?? [];
+                            const rawIndex = ids.indexOf(conn.id);
+                            const sameConnIndex = rawIndex >= 0 ? rawIndex : 0;
+                            const totalSameConns = ids.length || 1;
 
                             return (
                                 <React.Fragment key={`connection-group-${conn.id}`}>
@@ -286,8 +287,8 @@ export function TopologyCanvasLayer({
                                         targetDevice={targetDevice}
                                         isDark={isDark}
                                         isDragging={isActuallyDragging || isTouchDragging}
-                                        totalSameConns={pairMeta.total}
-                                        sameConnIndex={pairMeta.index}
+                                        totalSameConns={totalSameConns}
+                                        sameConnIndex={sameConnIndex}
                                         getPortPosition={getPortPosition}
                                         CABLE_COLORS={CABLE_COLORS}
                                         zoom={zoom}
@@ -303,8 +304,8 @@ export function TopologyCanvasLayer({
                                         sourceDevice={sourceDevice}
                                         targetDevice={targetDevice}
                                         isDark={isDark}
-                                        sameConnIndex={pairMeta.index}
-                                        totalSameConns={pairMeta.total}
+                                        sameConnIndex={sameConnIndex}
+                                        totalSameConns={totalSameConns}
                                         getPortPosition={getPortPosition}
                                         onDelete={onDeleteConnection}
                                         onToggleActive={onToggleConnectionActive}

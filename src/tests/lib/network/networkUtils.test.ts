@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import type { SwitchState } from '@/lib/network/types';
+import { getDevicePairKey } from '@/components/network/networkTopology.helpers';
 
 vi.mock('@/lib/errors/errorHandler', () => ({
   errorHandler: { logError: vi.fn() },
@@ -42,5 +43,14 @@ describe('ensureDeviceStatesMap', () => {
     const result = ensureDeviceStatesMap({});
     expect(result).toBeInstanceOf(Map);
     expect(result.size).toBe(0);
+  });
+});
+
+describe('getDevicePairKey', () => {
+  it('should generate consistent pair keys regardless of parameter order', () => {
+    expect(getDevicePairKey('devA', 'devB')).toBe('devA:devB');
+    expect(getDevicePairKey('devB', 'devA')).toBe('devA:devB');
+    expect(getDevicePairKey('dev1', 'dev2', '::')).toBe('dev1::dev2');
+    expect(getDevicePairKey('dev2', 'dev1', '::')).toBe('dev1::dev2');
   });
 });

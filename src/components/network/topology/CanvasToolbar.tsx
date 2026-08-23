@@ -151,8 +151,9 @@ export function CanvasToolbar({
 
       <TooltipWrapper title={language === 'tr' ? 'Ağ Olay Günlüğü' : 'Network Event Log'}>
         <button
+          aria-label={language === 'tr' ? 'Ağ Olay Günlüğü' : 'Network Event Log'}
           onClick={onToggleLogPanel}
-          className={`relative px-2 py-1 flex items-center justify-center rounded ui-hover-surface ${
+          className={`relative px-2 py-1 flex items-center justify-center rounded ui-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
             isDark ? 'text-secondary-300 hover:text-secondary-100' : 'text-secondary-600 hover:text-secondary-900'
           }`}
         >

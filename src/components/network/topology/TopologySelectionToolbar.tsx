@@ -54,13 +54,14 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
     >
       <TooltipWrapper title={t.alignLeft}>
         <button
+          aria-label={t.alignLeft || 'Align Left'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             logger.debug('[Toolbar] Align left clicked');
             handleAlign('left');
           }}
-          className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
+          className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 2v20M8 5h10M8 11h7M8 17h12" />
@@ -69,13 +70,14 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
       </TooltipWrapper>
       <TooltipWrapper title={t.alignTop}>
         <button
+          aria-label={t.alignTop || 'Align Top'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             logger.debug('[Toolbar] Align top clicked');
             handleAlign('top');
           }}
-          className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
+          className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
@@ -88,6 +90,7 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
       </span>
       <TooltipWrapper title={t.cancel}>
         <button
+          aria-label={t.cancel || 'Clear Selection'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -97,13 +100,14 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
             setSelectedDeviceIds(firstId ? [firstId] : []);
             if (firstDevice) onDeviceSelect(firstDevice.type === 'router' ? 'router' : firstDevice.type, firstId, undefined, firstDevice.name);
           }}
-          className={`p-1.5 rounded-lg transition-colors ${isDark ? 'hover:bg-secondary-700 text-secondary-200' : 'hover:bg-secondary-100 text-secondary-600'}`}
+          className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-200' : 'hover:bg-secondary-100 text-secondary-600'}`}
         >
           <X className="w-4 h-4" />
         </button>
       </TooltipWrapper>
       <TooltipWrapper title={t.delete}>
         <button
+          aria-label={t.delete || 'Delete Selected'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -112,7 +116,7 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
             selectedDeviceIds.forEach(id => deleteDevice(id));
             setSelectedDeviceIds([]);
           }}
-          className="p-1.5 rounded-lg hover:bg-error-500/20 text-error-500 transition-colors"
+          className="p-1.5 rounded-lg hover:bg-error-500/20 text-error-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-error-500"
         >
           <Trash2 className="w-4 h-4" />
         </button>

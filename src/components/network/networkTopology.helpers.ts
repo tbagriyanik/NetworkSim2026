@@ -133,3 +133,12 @@ export const getPortPosition = (device: CanvasDevice, portId: string) => {
     y: device.y + PORT_START_Y + actualRow * PORT_SPACING
   };
 };
+
+/**
+ * Generates a deterministic device pair key without allocating temporary arrays or running sorting algorithms.
+ * E.g., getDevicePairKey('devA', 'devB') -> 'devA:devB' or 'devB:devA'
+ */
+export const getDevicePairKey = (id1: string, id2: string, separator: string = ':'): string => {
+  return id1 < id2 ? `${id1}${separator}${id2}` : `${id2}${separator}${id1}`;
+};
+

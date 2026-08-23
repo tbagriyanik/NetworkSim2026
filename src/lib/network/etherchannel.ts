@@ -1,4 +1,5 @@
 import { CanvasConnection } from '@/components/network/networkTopology.types';
+import { getDevicePairKey } from '@/components/network/networkTopology.helpers';
 import { Port, SwitchState, EtherChannelMode } from './types';
 
 export interface EtherChannelBundle {
@@ -72,7 +73,7 @@ export function detectEtherChannelBundles(
   const groups = new Map<string, CanvasConnection[]>();
   for (const conn of connections) {
     if (conn.active === false) continue;
-    const key = [conn.sourceDeviceId, conn.targetDeviceId].sort().join('::');
+    const key = getDevicePairKey(conn.sourceDeviceId, conn.targetDeviceId, '::');
     const list = groups.get(key);
     if (list) list.push(conn);
     else groups.set(key, [conn]);

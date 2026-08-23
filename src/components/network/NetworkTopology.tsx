@@ -22,6 +22,7 @@ import {
   easeInOutCubic,
   getDeviceCenter,
   getPortPosition,
+  getDevicePairKey,
 } from './networkTopology.helpers';
 import { CABLE_COLORS, DRAG_THRESHOLD, LONG_PRESS_DURATION, TOOLTIP_DELAY, TOOLTIP_OFFSET_Y, VIRTUAL_CANVAS_WIDTH_MOBILE, VIRTUAL_CANVAS_HEIGHT_MOBILE, VIRTUAL_CANVAS_WIDTH_DESKTOP, VIRTUAL_CANVAS_HEIGHT_DESKTOP, MIN_ZOOM, MAX_ZOOM, DEFAULT_ZOOM, NOTE_FONTS_DESKTOP as NOTE_FONTS } from './networkTopology.constants';
 
@@ -152,7 +153,7 @@ export function NetworkTopology({
 
     // Group connections by endpoint pairs (agnostic of direction)
     visualConnections.forEach(conn => {
-      const pair = [conn.sourceDeviceId, conn.targetDeviceId].sort().join(':');
+      const pair = getDevicePairKey(conn.sourceDeviceId, conn.targetDeviceId);
       if (!groupMap.has(pair)) groupMap.set(pair, []);
       groupMap.get(pair)?.push(conn.id);
     });
