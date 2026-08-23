@@ -219,7 +219,12 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no alias <name>` | Remove command alias |
 | `macro name <name>` | ⚠️ Stub - Define command macro |
 | `sdm prefer <template>` | Set SDM template |
-| `ip arp inspection vlan <id>` | Enable DAI on VLAN |
+| `ip arp inspection vlan <id>` | Enable Dynamic ARP Inspection (DAI) on VLAN |
+| `logging host <ip>` | Configure Syslog server host IP address |
+| `logging trap <level>` | Set Syslog logging severity level |
+| `ip sla <id>` | Create IP SLA monitoring operation |
+| `spanning-tree mode mst` | Set Spanning Tree mode to Multiple Spanning Tree (MST) |
+| `spanning-tree mst configuration` | Enter MST configuration mode |
 | `default interface <name>` | ⚠️ Stub - Reset interface to default configuration |
 | `mac access-list extended <name>` | ⚠️ Stub - Create named MAC access list |
 | `class-map [match-all\|match-any] <name>` | ⚠️ Stub - Create QoS class map |

@@ -1170,3 +1170,60 @@ export function cmdIpNatInsideSourceList(state: SwitchState, input: string, _ctx
 
   return { success: false, error: '% Invalid dynamic NAT command' };
 }
+
+/**
+ * Logging host & trap commands (Syslog support)
+ */
+export function cmdLoggingHost(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^logging\s+(?:host\s+)?([0-9.]+)/i);
+  if (!match) return { success: false, error: '% Invalid logging host command' };
+
+  const hostIp = match[1];
+  const updatedState = { ...state, syslogHost: hostIp };
+  return {
+    success: true,
+    output: `Syslog server set to ${hostIp}`,
+    newState: { syslogHost: hostIp, runningConfig: buildRunningConfig(updatedState) }
+  };
+}
+
+export function cmdLoggingTrap(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^logging\s+trap\s+(\w+)/i);
+  if (!match) return { success: false, error: '% Invalid logging trap command' };
+
+  const level = match[1];
+  const updatedState = { ...state, syslogTrapLevel: level };
+  return {
+    success: true,
+    output: `Syslog trap level configured to ${level}`,
+    newState: { syslogTrapLevel: level, runningConfig: buildRunningConfig(updatedState) }
+  };
+}
+
+/**
+ * IP SLA & MSTP CLI configuration handlers
+ */
+export function cmdIpSla(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^ip\s+sla\s+(\d+)/i);
+  if (!match) return { success: false, error: '% Invalid IP SLA command syntax' };
+
+  const slaId = match[1];
+  return {
+    success: true,
+    output: `IP SLA responder/operation ${slaId} configured`,
+    newState: { currentSlaId: slaId }
+  };
+}
+
+export function cmdSpanningTreeMst(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  return {
+    success: true,
+    output: 'MST configuration mode entered',
+    newState: { spanningTreeMode: 'mst' }
+  };
+}
+

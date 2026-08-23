@@ -628,6 +628,9 @@ export interface SwitchState {
   }>;
   firewallTimeouts?: Record<string, string>;
   loggingEnabled?: boolean;
+  syslogHost?: string;
+  syslogTrapLevel?: string;
+  currentSlaId?: string;
 }
 
 export interface StartupConfig {

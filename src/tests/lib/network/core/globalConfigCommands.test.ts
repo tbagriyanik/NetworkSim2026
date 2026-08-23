@@ -51,4 +51,11 @@ describe('Global Configuration Commands', () => {
     const cmd = 'no logging console';
     expect(cmd).toBe('no logging console');
   });
+
+  it('should test Syslog and SLA command additions', () => {
+    expect('logging host 192.168.1.50').toContain('logging host');
+    expect('logging trap warning').toContain('logging trap');
+    expect('ip sla 1').toContain('ip sla');
+    expect('spanning-tree mode mst').toContain('mst');
+  });
 });

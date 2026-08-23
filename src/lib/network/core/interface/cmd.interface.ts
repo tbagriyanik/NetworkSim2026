@@ -156,6 +156,37 @@ export function cmdInterface(state: SwitchState, input: string, _ctx: CommandCon
     };
   }
 
+  // PPPoE Client interface (pppoe-client, dialer 1, etc.)
+  const pppoeMatch = interfaceName.match(/^(?:pppoe-client|dialer)\s*(\d+)$/i);
+  if (pppoeMatch) {
+    const dialerId = pppoeMatch[1];
+    const normalizedDialer = `dialer${dialerId}`;
+    const newPorts = { ...state.ports };
+    if (!newPorts[normalizedDialer]) {
+      newPorts[normalizedDialer] = {
+        id: normalizedDialer,
+        name: `Dialer${dialerId}`,
+        type: 'gigabitethernet',
+        vlan: 1,
+        status: 'connected',
+        shutdown: false,
+        mode: 'routed',
+        duplex: 'auto',
+        speed: 'auto',
+        isRoutedPort: true
+      } as Port;
+    }
+    return {
+      success: true,
+      newState: {
+        currentMode: 'interface',
+        currentInterface: normalizedDialer,
+        selectedInterfaces: [normalizedDialer],
+        ports: newPorts
+      }
+    };
+  }
+
   // Dot11Radio interface (Dot11Radio 0, Dot11Radio 1, dot11radio 0, etc.)
   const dot11Match = interfaceName.match(/^(?:dot11radio)\s*(\d+)$/i);
   if (dot11Match) {

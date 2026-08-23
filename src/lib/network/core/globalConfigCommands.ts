@@ -68,6 +68,10 @@ import {
   cmdIpNatPool,
   cmdIpNatInsideSourceStatic,
   cmdIpNatInsideSourceList,
+  cmdLoggingHost,
+  cmdLoggingTrap,
+  cmdIpSla,
+  cmdSpanningTreeMst,
 } from './globalConfigExtraCommands';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
@@ -197,6 +201,10 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'ip nat pool': cmdIpNatPool,
   'ip nat inside source static': cmdIpNatInsideSourceStatic,
   'ip nat inside source list': cmdIpNatInsideSourceList,
+  'logging host': cmdLoggingHost,
+  'logging trap': cmdLoggingTrap,
+  'ip sla': cmdIpSla,
+  'spanning-tree mst configuration': cmdSpanningTreeMst,
 };
 
 /**

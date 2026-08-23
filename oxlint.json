@@ -8,13 +8,7 @@
     "node_modules/**"
   ],
   "rules": {
-    "eslint/no-unused-vars": "off",
-    "eslint/no-irregular-whitespace": "off",
-    "eslint/no-unsafe-optional-chaining": "off",
-    "unicorn/no-useless-fallback-in-spread": "off",
-    "unicorn/prefer-string-starts-ends-with": "off",
-    "unicorn/no-document-cookie": "off",
-    "unicorn/no-useless-length-check": "off",
-    "oxc/const-comparisons": "off"
+    "eslint/no-irregular-whitespace": "warn",
+    "eslint/no-unsafe-optional-chaining": "warn"
   }
 }
