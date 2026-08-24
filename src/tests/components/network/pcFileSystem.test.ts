@@ -337,6 +337,110 @@ print('The solution are {0} and {1}'.format(sol1,sol2))
     expect(res.output).toContain('The solution are (-3+0j) and (-2+0j)');
     expect(res.error).toBeUndefined();
   });
+
+  it('should correctly support for-else loop construct for prime numbers calculation', () => {
+    const script = `
+lower = 10
+upper = 20
+
+for num in range(lower, upper + 1):
+   if num > 1:
+       for i in range(2, num):
+           if (num % i) == 0:
+               break
+       else:
+           print(num)
+`;
+    const res = executePythonScript(script);
+    expect(res.output.trim().split('\n')).toEqual(['11', '13', '17', '19']);
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should correctly evaluate Armstrong number script using //= floor division assignment', () => {
+    const script = `
+num = int(input("Enter a number: "))
+sum = 0
+temp = num
+
+while temp > 0:
+   digit = temp % 10
+   sum += digit ** 3
+   temp //= 10
+
+if num == sum:
+   print(num, "is an Armstrong number")
+else:
+   print(num, "is not an Armstrong number")
+`;
+    const res = executePythonScript(script, ['407']);
+    expect(res.output).toContain('407 is an Armstrong number');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should correctly evaluate list(map(lambda x: 2 ** x, range(terms))) and indexing', () => {
+    const script = `
+terms = 10
+result = list(map(lambda x: 2 ** x, range(terms)))
+
+print("The total terms are:", terms)
+for i in range(terms):
+   print("2 raised to power", i, "is", result[i])
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('The total terms are: 10');
+    expect(res.output).toContain('2 raised to power 0 is 1');
+    expect(res.output).toContain('2 raised to power 3 is 8');
+    expect(res.output).toContain('2 raised to power 9 is 512');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should correctly evaluate list(set(list_1)) deduplication', () => {
+    const script = `
+list_1 = [1, 2, 1, 4, 6]
+print(list(set(list_1)))
+`;
+    const res = executePythonScript(script);
+    expect(res.output.trim()).toBe('[1, 2, 4, 6]');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should correctly iterate over characters in a string in a for loop', () => {
+    const script = `
+count = 0
+my_string = "Programiz"
+my_char = "r"
+
+for i in my_string:
+    if i == my_char:
+        count += 1
+
+print(count)
+`;
+    const res = executePythonScript(script);
+    expect(res.output.trim()).toBe('2');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should correctly evaluate def function, divmod, and print end=\\r in countdown script', () => {
+    const script = `
+import time
+
+def countdown(time_sec):
+    while time_sec:
+        mins, secs = divmod(time_sec, 60)
+        timeformat = '{:02d}:{:02d}'.format(mins, secs)
+        print(timeformat, end='\\r')
+        time.sleep(1)
+        time_sec -= 1
+
+    print("stop")
+
+countdown(5)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('stop');
+    expect(res.error).toBeUndefined();
+  });
 });
 
 

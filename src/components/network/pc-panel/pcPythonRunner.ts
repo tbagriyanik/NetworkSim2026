@@ -24,7 +24,11 @@ function parseFormatArgs(
     return { positional, kwargs };
   }
 
-  const hasComma = trimmedRaw.includes(',');
+  // A print expression using Python's `%` formatting is a single expression,
+  // even when its format string contains spaces.
+  if (trimmedRaw.includes('%') && (trimmedRaw.startsWith("'") || trimmedRaw.startsWith('"'))) {
+    return { positional: [evalFn(trimmedRaw)], kwargs };
+  }
 
   const tokens: string[] = [];
   let current = '';
@@ -46,9 +50,9 @@ function parseFormatArgs(
       else if (char === ')' || char === ']' || char === '}') parenDepth--;
     }
 
-    const isDelimiter = hasComma
-      ? char === ',' && !inQuotes && parenDepth === 0
-      : (char === ',' || /\s/.test(char)) && !inQuotes && parenDepth === 0;
+    const isDelimiter = !inQuotes && parenDepth === 0 && (
+      char === ',' || (trimmedRaw.indexOf(',') === -1 && /\s/.test(char))
+    );
 
     if (isDelimiter) {
       if (current.trim()) {
@@ -112,6 +116,13 @@ function formatStringTemplate(
       if (floatMatch) {
         const decimals = parseInt(floatMatch[1], 10);
         return val.toFixed(decimals);
+      }
+      const intMatch = /^(0)?(\d+)?d$/.exec(spec);
+      if (intMatch) {
+        const padZero = intMatch[1] === '0';
+        const width = intMatch[2] ? parseInt(intMatch[2], 10) : 0;
+        const intStr = String(Math.floor(val));
+        return padZero && width > 0 ? intStr.padStart(width, '0') : intStr;
       }
     }
 
@@ -468,8 +479,9 @@ const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
 type Statement =
   | { type: 'line'; text: string }
   | { type: 'if'; branches: { condition: string | null; body: Statement[] }[] }
-  | { type: 'while'; condition: string; body: Statement[] }
-  | { type: 'for'; varName: string; iterableExpr: string; body: Statement[] };
+  | { type: 'while'; condition: string; body: Statement[]; elseBody?: Statement[] }
+  | { type: 'for'; varName: string; iterableExpr: string; body: Statement[]; elseBody?: Statement[] }
+  | { type: 'def'; funcName: string; paramNames: string[]; body: Statement[] };
 
 interface ParsedLine {
   indent: number;
@@ -477,6 +489,23 @@ interface ParsedLine {
 }
 
 export function executePythonScript(code: string, inputs: string[] = []): PythonExecutionResult {
+  return runPythonEngine(code, inputs, undefined, false) as PythonExecutionResult;
+}
+
+export async function executePythonScriptAsync(
+  code: string,
+  inputs: string[] = [],
+  onOutput?: (chunk: string, replaceLastLine?: boolean) => void
+): Promise<PythonExecutionResult> {
+  return (await runPythonEngine(code, inputs, onOutput, true)) as PythonExecutionResult;
+}
+
+function runPythonEngine(
+  code: string,
+  inputs: string[] = [],
+  onOutput?: (chunk: string, replaceLastLine?: boolean) => void,
+  asyncMode = false
+): PythonExecutionResult | Promise<PythonExecutionResult> {
   const rawLines = code.split('\n');
   const outputs: string[] = [];
 
@@ -522,6 +551,11 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       return digits > 0 ? Number(num.toFixed(digits)) : Math.round(num);
     },
     sum: (v: unknown) => (Array.isArray(v) ? v.reduce((acc: number, item: unknown) => acc + Number(item || 0), 0) : 0),
+    divmod: (a: unknown, b: unknown) => {
+      const n1 = Number(a || 0);
+      const n2 = Number(b || 1);
+      return [Math.floor(n1 / n2), n1 % n2];
+    },
     range: (...args: unknown[]) => pythonRange(...args.map(a => Number(a))),
     input: pythonInput,
   };
@@ -622,6 +656,152 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
     if (sumMatch) {
       const val = evaluateExpr(sumMatch[1]);
       return Array.isArray(val) ? val.reduce((acc: number, item: unknown) => acc + Number(item || 0), 0) : 0;
+    }
+
+    // Handle divmod(...)
+    const divmodMatch = /^divmod\s*\((.*)\)$/.exec(trimmed);
+    if (divmodMatch) {
+      const parts = splitOutsideQuotesAndParens(divmodMatch[1], ',').map(p => evaluateExpr(p));
+      const n1 = Number(parts[0] || 0);
+      const n2 = Number(parts[1] || 1);
+      return [Math.floor(n1 / n2), n1 % n2];
+    }
+
+    // Handle set(...)
+    const setMatch = /^set\s*\((.*)\)$/.exec(trimmed);
+    if (setMatch) {
+      const innerArg = setMatch[1].trim();
+      if (!innerArg) return [];
+      const val = evaluateExpr(innerArg);
+      if (Array.isArray(val)) return Array.from(new Set(val));
+      if (typeof val === 'string') return Array.from(new Set(val.split('')));
+      if (val instanceof Set) return Array.from(val);
+      return [val];
+    }
+
+    // Handle dict(...)
+    const dictMatch = /^dict\s*\((.*)\)$/.exec(trimmed);
+    if (dictMatch) {
+      const innerArg = dictMatch[1].trim();
+      if (!innerArg) return {};
+      const val = evaluateExpr(innerArg);
+      if (typeof val === 'object' && val !== null) return { ...val };
+      return {};
+    }
+
+    // Handle tuple(...)
+    const tupleMatch = /^tuple\s*\((.*)\)$/.exec(trimmed);
+    if (tupleMatch) {
+      const innerArg = tupleMatch[1].trim();
+      if (!innerArg) return [];
+      const val = evaluateExpr(innerArg);
+      if (Array.isArray(val)) return [...val];
+      return [val];
+    }
+
+    // Handle min(...)
+    const minMatch = /^min\s*\((.*)\)$/.exec(trimmed);
+    if (minMatch) {
+      const parts = splitOutsideQuotesAndParens(minMatch[1], ',').map(p => evaluateExpr(p));
+      const items = parts.length === 1 && Array.isArray(parts[0]) ? parts[0] : parts;
+      const nums = items.map(i => Number(i));
+      return Math.min(...nums);
+    }
+
+    // Handle max(...)
+    const maxMatch = /^max\s*\((.*)\)$/.exec(trimmed);
+    if (maxMatch) {
+      const parts = splitOutsideQuotesAndParens(maxMatch[1], ',').map(p => evaluateExpr(p));
+      const items = parts.length === 1 && Array.isArray(parts[0]) ? parts[0] : parts;
+      const nums = items.map(i => Number(i));
+      return Math.max(...nums);
+    }
+
+    // Handle sorted(...)
+    const sortedMatch = /^sorted\s*\((.*)\)$/.exec(trimmed);
+    if (sortedMatch) {
+      const val = evaluateExpr(sortedMatch[1]);
+      if (Array.isArray(val)) {
+        const copy = [...val];
+        copy.sort((a, b) => (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))));
+        return copy;
+      }
+      return val;
+    }
+
+    // Handle list(...)
+    const listMatch = /^list\s*\((.*)\)$/.exec(trimmed);
+    if (listMatch) {
+      const innerArg = listMatch[1].trim();
+      if (!innerArg) return [];
+      const val = evaluateExpr(innerArg);
+      if (Array.isArray(val)) return [...val];
+      if (val instanceof Set) return Array.from(val);
+      if (typeof val === 'string') return val.split('');
+      if (typeof val === 'object' && val !== null) return Object.values(val);
+      return [val];
+    }
+
+    // Handle map(func, iterable)
+    const mapMatch = /^map\s*\((.*)\)$/.exec(trimmed);
+    if (mapMatch) {
+      const parts = splitOutsideQuotesAndParens(mapMatch[1], ',');
+      if (parts.length >= 2) {
+        const fnVal = evaluateExpr(parts[0]);
+        const iterVal = evaluateExpr(parts[1]);
+        const items = Array.isArray(iterVal) ? iterVal : [];
+        if (typeof fnVal === 'function') {
+          return items.map(item => fnVal(item));
+        }
+      }
+    }
+
+    // Handle filter(func, iterable)
+    const filterMatch = /^filter\s*\((.*)\)$/.exec(trimmed);
+    if (filterMatch) {
+      const parts = splitOutsideQuotesAndParens(filterMatch[1], ',');
+      if (parts.length >= 2) {
+        const fnVal = evaluateExpr(parts[0]);
+        const iterVal = evaluateExpr(parts[1]);
+        const items = Array.isArray(iterVal) ? iterVal : [];
+        if (typeof fnVal === 'function') {
+          return items.filter(item => Boolean(fnVal(item)));
+        }
+      }
+    }
+
+    // Handle lambda expression: lambda x, y: expr
+    const lambdaMatch = /^lambda\s*([^:]*)\s*:\s*(.+)$/.exec(trimmed);
+    if (lambdaMatch) {
+      const paramNames = lambdaMatch[1].split(',').map(p => p.trim()).filter(Boolean);
+      const bodyExpr = lambdaMatch[2].trim();
+      return (...fnArgs: unknown[]) => {
+        const savedValues: Record<string, unknown> = {};
+        paramNames.forEach((p, idx) => {
+          savedValues[p] = scope[p];
+          scope[p] = fnArgs[idx];
+        });
+        const res = evaluateExpr(bodyExpr);
+        paramNames.forEach(p => {
+          if (savedValues[p] !== undefined) scope[p] = savedValues[p];
+          else delete scope[p];
+        });
+        return res;
+      };
+    }
+
+    // Element indexing: var[idx]
+    const indexMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]$/.exec(trimmed);
+    if (indexMatch) {
+      const varName = indexMatch[1];
+      const idxExpr = indexMatch[2];
+      const target = scope[varName];
+      const idxVal = evaluateExpr(idxExpr);
+      const idx = Number(idxVal);
+      if (Array.isArray(target) || typeof target === 'string') {
+        const realIdx = idx < 0 ? target.length + idx : idx;
+        return target[realIdx];
+      }
     }
 
     // List method pop(...) as expression
@@ -764,6 +944,16 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       }
     }
 
+    // Floor division //
+    const floorDivIdx = findOperatorIndex(trimmed, '//');
+    if (floorDivIdx !== -1) {
+      const leftExpr = trimmed.slice(0, floorDivIdx).trim();
+      const rightExpr = trimmed.slice(floorDivIdx + 2).trim();
+      const leftVal = Number(evaluateExpr(leftExpr));
+      const rightVal = Number(evaluateExpr(rightExpr));
+      return Math.floor(leftVal / rightVal);
+    }
+
     // Exponentiation **
     const powIdx = findOperatorIndex(trimmed, '**');
     if (powIdx !== -1) {
@@ -852,9 +1042,19 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
     }
   };
 
-  const processLine = (line: string): void => {
-    const trimmed = line.trim();
+  const processLine = async (line: string): Promise<void> => {
+    const trimmed = stripInlineComment(line).trim();
     if (!trimmed || trimmed.startsWith('#')) return;
+
+    // Handle time.sleep(...)
+    const sleepMatch = /^time\.sleep\s*\((.*)\)$/.exec(trimmed);
+    if (sleepMatch) {
+      const secVal = Number(evaluateExpr(sleepMatch[1]) || 0);
+      if (asyncMode && secVal > 0) {
+        await new Promise(resolve => setTimeout(resolve, Math.min(secVal, 10) * 1000));
+      }
+      return;
+    }
 
     // Handle import statements: import random, math as m
     const importMatch = /^import\s+(.+)$/.exec(trimmed);
@@ -899,38 +1099,31 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
         return;
       }
 
-      // Split arguments respecting quotes and parenthesis depth
-      const args: string[] = [];
-      let current = '';
-      let inQuotes = false;
-      let quoteChar = '';
-      let parenDepth = 0;
+      const { positional, kwargs } = parseFormatArgs(rawArgs, evaluateExpr);
+      const endArg = kwargs['end'] !== undefined ? String(kwargs['end']) : '\n';
+      const sepArg = kwargs['sep'] !== undefined ? String(kwargs['sep']) : ' ';
 
-      for (let i = 0; i < rawArgs.length; i++) {
-        const char = rawArgs[i];
-        if ((char === '"' || char === "'") && (i === 0 || rawArgs[i - 1] !== '\\')) {
-          if (!inQuotes) {
-            inQuotes = true;
-            quoteChar = char;
-          } else if (quoteChar === char) {
-            inQuotes = false;
-          }
-        } else if (!inQuotes) {
-          if (char === '(' || char === '[' || char === '{') parenDepth++;
-          else if (char === ')' || char === ']' || char === '}') parenDepth--;
-        }
+      const formattedArgs = positional.map(a => formatPythonValue(a));
+      const lineStr = formattedArgs.join(sepArg);
 
-        if (char === ',' && !inQuotes && parenDepth === 0) {
-          args.push(current);
-          current = '';
+      if (endArg === '\r') {
+        if (outputs.length > 0) {
+          outputs[outputs.length - 1] = lineStr;
         } else {
-          current += char;
+          outputs.push(lineStr);
         }
+        onOutput?.(lineStr, true);
+      } else if (endArg === '' || endArg === ' ') {
+        if (outputs.length > 0) {
+          outputs[outputs.length - 1] += endArg + lineStr;
+        } else {
+          outputs.push(lineStr);
+        }
+        onOutput?.(lineStr, true);
+      } else {
+        outputs.push(lineStr);
+        onOutput?.(lineStr, false);
       }
-      if (current) args.push(current);
-
-      const evaluatedArgs = args.map(a => formatPythonValue(evaluateExpr(a)));
-      outputs.push(evaluatedArgs.join(' '));
       return;
     }
 
@@ -999,7 +1192,28 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       return;
     }
 
-    // Handle variable assignments (including tuple unpacking like x, y = y, x and augmented assignments +=, -=, *=, /=)
+    // Handle augmented assignments (+=, -=, *=, /=, %=, //=, **=)
+    const augMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
+    if (augMatch) {
+      const varName = augMatch[1];
+      const op = augMatch[2];
+      const rhsStr = augMatch[3];
+      if (op === '//=') {
+        const lNum = Number(evaluateExpr(varName) || 0);
+        const rNum = Number(evaluateExpr(rhsStr) || 1);
+        scope[varName] = Math.floor(lNum / rNum);
+      } else if (op === '**=') {
+        const lNum = Number(evaluateExpr(varName) || 0);
+        const rNum = Number(evaluateExpr(rhsStr) || 1);
+        scope[varName] = Math.pow(lNum, rNum);
+      } else {
+        const singleOp = op[0];
+        scope[varName] = evaluateExpr(`${varName} ${singleOp} (${rhsStr})`);
+      }
+      return;
+    }
+
+    // Handle variable assignments (including tuple unpacking like x, y = y, x)
     const eqIdx = findOperatorIndex(trimmed, '=');
     if (eqIdx !== -1) {
       const prevChar = trimmed[eqIdx - 1];
@@ -1143,8 +1357,20 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       if (whileMatch) {
         const cond = whileMatch[1];
         const bodyRes = parseBlockAt(i + 1, line.indent + 1);
-        statements.push({ type: 'while', condition: cond, body: bodyRes.statements });
-        i = bodyRes.nextIndex;
+        let nextI = bodyRes.nextIndex;
+        let elseBody: Statement[] | undefined = undefined;
+
+        if (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
+          const elseMatch = /^else:$/.exec(parsedLines[nextI].text);
+          if (elseMatch) {
+            const elseRes = parseBlockAt(nextI + 1, line.indent + 1);
+            elseBody = elseRes.statements;
+            nextI = elseRes.nextIndex;
+          }
+        }
+
+        statements.push({ type: 'while', condition: cond, body: bodyRes.statements, elseBody });
+        i = nextI;
         continue;
       }
 
@@ -1154,7 +1380,31 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
         const varName = forMatch[1];
         const iterableExpr = forMatch[2];
         const bodyRes = parseBlockAt(i + 1, line.indent + 1);
-        statements.push({ type: 'for', varName, iterableExpr, body: bodyRes.statements });
+        let nextI = bodyRes.nextIndex;
+        let elseBody: Statement[] | undefined = undefined;
+
+        if (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
+          const elseMatch = /^else:$/.exec(parsedLines[nextI].text);
+          if (elseMatch) {
+            const elseRes = parseBlockAt(nextI + 1, line.indent + 1);
+            elseBody = elseRes.statements;
+            nextI = elseRes.nextIndex;
+          }
+        }
+
+        statements.push({ type: 'for', varName, iterableExpr, body: bodyRes.statements, elseBody });
+        i = nextI;
+        continue;
+      }
+
+      // Handle def function definition
+      const defMatch = /^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\):$/.exec(line.text);
+      if (defMatch) {
+        const funcName = defMatch[1];
+        const paramsStr = defMatch[2].trim();
+        const paramNames = paramsStr ? splitOutsideQuotesAndParens(paramsStr, ',').map(p => p.trim()) : [];
+        const bodyRes = parseBlockAt(i + 1, line.indent + 1);
+        statements.push({ type: 'def', funcName, paramNames, body: bodyRes.statements });
         i = bodyRes.nextIndex;
         continue;
       }
@@ -1167,12 +1417,38 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
     return { statements, nextIndex: i };
   };
 
-  const execStatements = (stmts: Statement[]): 'normal' | 'break' | 'continue' => {
+  type ExecResult = 'normal' | 'break' | 'continue' | { type: 'return'; value: unknown };
+
+  const execStatementsSync = (stmts: Statement[]): ExecResult => {
     for (const stmt of stmts) {
       if (stmt.type === 'line') {
         if (stmt.text === 'break') return 'break';
         if (stmt.text === 'continue') return 'continue';
-        processLine(stmt.text);
+        const returnMatch = /^return(?:\s+(.+))?$/.exec(stmt.text);
+        if (returnMatch) {
+          const retExpr = returnMatch[1];
+          const retVal = retExpr ? evaluateExpr(retExpr) : undefined;
+          return { type: 'return', value: retVal };
+        }
+        processLineSync(stmt.text);
+      } else if (stmt.type === 'def') {
+        const { funcName, paramNames, body } = stmt;
+        scope[funcName] = (...fnArgs: unknown[]) => {
+          const savedValues: Record<string, unknown> = {};
+          paramNames.forEach((p, idx) => {
+            savedValues[p] = scope[p];
+            scope[p] = fnArgs[idx];
+          });
+          const sig = execStatementsSync(body);
+          paramNames.forEach(p => {
+            if (savedValues[p] !== undefined) scope[p] = savedValues[p];
+            else delete scope[p];
+          });
+          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+            return sig.value;
+          }
+          return undefined;
+        };
       } else if (stmt.type === 'if') {
         let branchToExec: Statement[] | null = null;
         for (const branch of stmt.branches) {
@@ -1182,48 +1458,401 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
           }
         }
         if (branchToExec) {
-          const sig = execStatements(branchToExec);
+          const sig = execStatementsSync(branchToExec);
           if (sig !== 'normal') return sig;
         }
       } else if (stmt.type === 'while') {
         let iterLimit = 10000;
+        let brokeOut = false;
         while (evalCondition(stmt.condition) && iterLimit-- > 0) {
-          const sig = execStatements(stmt.body);
-          if (sig === 'break') break;
+          const sig = execStatementsSync(stmt.body);
+          if (sig === 'break') {
+            brokeOut = true;
+            break;
+          }
           if (sig === 'continue') continue;
+          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+            return sig;
+          }
+        }
+        if (!brokeOut && stmt.elseBody) {
+          const sig = execStatementsSync(stmt.elseBody);
+          if (sig !== 'normal') return sig;
         }
       } else if (stmt.type === 'for') {
         const iterable = evaluateExpr(stmt.iterableExpr);
-        const items = Array.isArray(iterable) ? iterable : [];
+        let items: unknown[] = [];
+        if (Array.isArray(iterable)) {
+          items = iterable;
+        } else if (typeof iterable === 'string') {
+          items = iterable.split('');
+        } else if (iterable instanceof Set) {
+          items = Array.from(iterable);
+        } else if (typeof iterable === 'object' && iterable !== null) {
+          items = Object.keys(iterable);
+        }
+        let brokeOut = false;
         for (const item of items) {
           scope[stmt.varName] = item;
-          const sig = execStatements(stmt.body);
-          if (sig === 'break') break;
+          const sig = execStatementsSync(stmt.body);
+          if (sig === 'break') {
+            brokeOut = true;
+            break;
+          }
           if (sig === 'continue') continue;
+          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+            return sig;
+          }
+        }
+        if (!brokeOut && stmt.elseBody) {
+          const sig = execStatementsSync(stmt.elseBody);
+          if (sig !== 'normal') return sig;
         }
       }
     }
     return 'normal';
   };
 
-  try {
-    const { statements } = parseBlockAt(0, 0);
-    execStatements(statements);
-  } catch (err) {
-    if (err instanceof PythonInputRequiredException) {
+  const processLineSync = (line: string): void => {
+    const trimmed = stripInlineComment(line).trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+
+    // Handle time.sleep(...)
+    const sleepMatch = /^time\.sleep\s*\((.*)\)$/.exec(trimmed);
+    if (sleepMatch) return;
+
+    // Handle import statements: import random, math as m
+    const importMatch = /^import\s+(.+)$/.exec(trimmed);
+    if (importMatch) {
+      const rawMods = splitOutsideQuotesAndParens(importMatch[1], ',');
+      for (const item of rawMods) {
+        const parts = item.split(/\s+as\s+/i);
+        const modName = parts[0].trim();
+        const alias = parts[1] ? parts[1].trim() : modName;
+        if (PYTHON_MODULES[modName]) {
+          scope[alias] = PYTHON_MODULES[modName];
+        } else {
+          scope[alias] = {};
+        }
+      }
+      return;
+    }
+
+    // Handle from ... import ...
+    const fromImportMatch = /^from\s+([a-zA-Z0-9_.]+)\s+import\s+(.+)$/.exec(trimmed);
+    if (fromImportMatch) {
+      const modName = fromImportMatch[1].trim();
+      const rawItems = splitOutsideQuotesAndParens(fromImportMatch[2], ',');
+      const modObj = PYTHON_MODULES[modName] as Record<string, unknown> | undefined;
+      for (const item of rawItems) {
+        const parts = item.split(/\s+as\s+/i);
+        const itemName = parts[0].trim();
+        const alias = parts[1] ? parts[1].trim() : itemName;
+        if (modObj && modObj[itemName] !== undefined) {
+          scope[alias] = modObj[itemName];
+        }
+      }
+      return;
+    }
+
+    // Handle print(...)
+    const printMatch = /^print\s*\((.*)\)$/.exec(trimmed);
+    if (printMatch) {
+      const rawArgs = printMatch[1];
+      if (!rawArgs.trim()) {
+        outputs.push('');
+        return;
+      }
+
+      const { positional, kwargs } = parseFormatArgs(rawArgs, evaluateExpr);
+      const endArg = kwargs['end'] !== undefined ? String(kwargs['end']) : '\n';
+      const sepArg = kwargs['sep'] !== undefined ? String(kwargs['sep']) : ' ';
+
+      const formattedArgs = positional.map(a => formatPythonValue(a));
+      const lineStr = formattedArgs.join(sepArg);
+
+      if (endArg === '\r') {
+        if (outputs.length > 0) {
+          outputs[outputs.length - 1] = lineStr;
+        } else {
+          outputs.push(lineStr);
+        }
+      } else if (endArg === '' || endArg === ' ') {
+        if (outputs.length > 0) {
+          outputs[outputs.length - 1] += endArg + lineStr;
+        } else {
+          outputs.push(lineStr);
+        }
+      } else {
+        outputs.push(lineStr);
+      }
+      return;
+    }
+
+    // Handle List Methods:
+    // .append(...)
+    const appendMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*append\s*\((.*)\)$/.exec(trimmed);
+    if (appendMatch) {
+      const listVar = appendMatch[1];
+      const val = evaluateExpr(appendMatch[2]);
+      if (Array.isArray(scope[listVar])) {
+        (scope[listVar] as unknown[]).push(val);
+      } else {
+        scope[listVar] = [val];
+      }
+      return;
+    }
+
+    // .remove(...)
+    const removeMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*remove\s*\((.*)\)$/.exec(trimmed);
+    if (removeMatch) {
+      const listVar = removeMatch[1];
+      const val = evaluateExpr(removeMatch[2]);
+      const arr = scope[listVar];
+      if (Array.isArray(arr)) {
+        const idx = arr.indexOf(val);
+        if (idx !== -1) arr.splice(idx, 1);
+      }
+      return;
+    }
+
+    // .pop(...)
+    const popMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*pop\s*\((.*)\)$/.exec(trimmed);
+    if (popMatch) {
+      const listVar = popMatch[1];
+      const arr = scope[listVar];
+      if (Array.isArray(arr)) {
+        const argStr = popMatch[2].trim();
+        const idx = argStr ? Number(evaluateExpr(argStr)) : arr.length - 1;
+        arr.splice(idx, 1);
+      }
+      return;
+    }
+
+    // .sort(...)
+    const sortMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*sort\s*\((.*)\)$/.exec(trimmed);
+    if (sortMatch) {
+      const listVar = sortMatch[1];
+      const arr = scope[listVar];
+      if (Array.isArray(arr)) {
+        arr.sort((a, b) => {
+          if (typeof a === 'number' && typeof b === 'number') return a - b;
+          return String(a).localeCompare(String(b));
+        });
+      }
+      return;
+    }
+
+    // .reverse(...)
+    const reverseMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*reverse\s*\((.*)\)$/.exec(trimmed);
+    if (reverseMatch) {
+      const listVar = reverseMatch[1];
+      const arr = scope[listVar];
+      if (Array.isArray(arr)) {
+        arr.reverse();
+      }
+      return;
+    }
+
+    // Handle augmented assignments (+=, -=, *=, /=, %=, //=, **=)
+    const augMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
+    if (augMatch) {
+      const varName = augMatch[1];
+      const op = augMatch[2];
+      const rhsStr = augMatch[3];
+      if (op === '//=') {
+        const lNum = Number(evaluateExpr(varName) || 0);
+        const rNum = Number(evaluateExpr(rhsStr) || 1);
+        scope[varName] = Math.floor(lNum / rNum);
+      } else if (op === '**=') {
+        const lNum = Number(evaluateExpr(varName) || 0);
+        const rNum = Number(evaluateExpr(rhsStr) || 1);
+        scope[varName] = Math.pow(lNum, rNum);
+      } else {
+        const singleOp = op[0];
+        scope[varName] = evaluateExpr(`${varName} ${singleOp} (${rhsStr})`);
+      }
+      return;
+    }
+
+    // Handle variable assignments (including tuple unpacking like x, y = y, x)
+    const eqIdx = findOperatorIndex(trimmed, '=');
+    if (eqIdx !== -1) {
+      const prevChar = trimmed[eqIdx - 1];
+      const nextChar = trimmed[eqIdx + 1];
+      if (prevChar !== '=' && prevChar !== '!' && prevChar !== '<' && prevChar !== '>' && nextChar !== '=') {
+        const leftSide = trimmed.slice(0, eqIdx).trim();
+        const rightSide = trimmed.slice(eqIdx + 1).trim();
+
+        const targets = splitOutsideQuotesAndParens(leftSide, ',').map(t => t.trim());
+        if (targets.every(t => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(t))) {
+          if (targets.length === 1) {
+            scope[targets[0]] = evaluateExpr(rightSide);
+          } else {
+            const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
+            let rhsValues: unknown[];
+            if (rawRhsParts.length > 1) {
+              rhsValues = rawRhsParts.map(p => evaluateExpr(p));
+            } else {
+              const evalRhs = evaluateExpr(rightSide);
+              rhsValues = Array.isArray(evalRhs) ? (evalRhs as unknown[]) : [evalRhs];
+            }
+
+            for (let i = 0; i < targets.length; i++) {
+              scope[targets[i]] = rhsValues[i];
+            }
+          }
+          return;
+        }
+      }
+    }
+
+    // Fallback for simple standalone expression
+    try {
+      evaluateExpr(trimmed);
+    } catch {
+      // ignore
+    }
+  };
+
+  const execStatements = async (stmts: Statement[]): Promise<ExecResult> => {
+    for (const stmt of stmts) {
+      if (stmt.type === 'line') {
+        if (stmt.text === 'break') return 'break';
+        if (stmt.text === 'continue') return 'continue';
+        const returnMatch = /^return(?:\s+(.+))?$/.exec(stmt.text);
+        if (returnMatch) {
+          const retExpr = returnMatch[1];
+          const retVal = retExpr ? evaluateExpr(retExpr) : undefined;
+          return { type: 'return', value: retVal };
+        }
+        await processLine(stmt.text);
+      } else if (stmt.type === 'def') {
+        const { funcName, paramNames, body } = stmt;
+        scope[funcName] = async (...fnArgs: unknown[]) => {
+          const savedValues: Record<string, unknown> = {};
+          paramNames.forEach((p, idx) => {
+            savedValues[p] = scope[p];
+            scope[p] = fnArgs[idx];
+          });
+
+          const sig = await execStatements(body);
+
+          paramNames.forEach(p => {
+            if (savedValues[p] !== undefined) scope[p] = savedValues[p];
+            else delete scope[p];
+          });
+
+          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+            return sig.value;
+          }
+          return undefined;
+        };
+      } else if (stmt.type === 'if') {
+        let branchToExec: Statement[] | null = null;
+        for (const branch of stmt.branches) {
+          if (branch.condition === null || evalCondition(branch.condition)) {
+            branchToExec = branch.body;
+            break;
+          }
+        }
+        if (branchToExec) {
+          const sig = await execStatements(branchToExec);
+          if (sig !== 'normal') return sig;
+        }
+      } else if (stmt.type === 'while') {
+        let iterLimit = 10000;
+        let brokeOut = false;
+        while (evalCondition(stmt.condition) && iterLimit-- > 0) {
+          const sig = await execStatements(stmt.body);
+          if (sig === 'break') {
+            brokeOut = true;
+            break;
+          }
+          if (sig === 'continue') continue;
+          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+            return sig;
+          }
+        }
+        if (!brokeOut && stmt.elseBody) {
+          const sig = await execStatements(stmt.elseBody);
+          if (sig !== 'normal') return sig;
+        }
+      } else if (stmt.type === 'for') {
+        const iterable = evaluateExpr(stmt.iterableExpr);
+        let items: unknown[] = [];
+        if (Array.isArray(iterable)) {
+          items = iterable;
+        } else if (typeof iterable === 'string') {
+          items = iterable.split('');
+        } else if (iterable instanceof Set) {
+          items = Array.from(iterable);
+        } else if (typeof iterable === 'object' && iterable !== null) {
+          items = Object.keys(iterable);
+        }
+        let brokeOut = false;
+        for (const item of items) {
+          scope[stmt.varName] = item;
+          const sig = await execStatements(stmt.body);
+          if (sig === 'break') {
+            brokeOut = true;
+            break;
+          }
+          if (sig === 'continue') continue;
+          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+            return sig;
+          }
+        }
+        if (!brokeOut && stmt.elseBody) {
+          const sig = await execStatements(stmt.elseBody);
+          if (sig !== 'normal') return sig;
+        }
+      }
+    }
+    return 'normal';
+  };
+
+  if (asyncMode) {
+    return (async () => {
+      try {
+        const { statements } = parseBlockAt(0, 0);
+        await execStatements(statements);
+      } catch (err) {
+        if (err instanceof PythonInputRequiredException) {
+          return {
+            output: outputs.join('\n'),
+            waitingForInput: true,
+            inputPrompt: err.prompt,
+          };
+        }
+        return {
+          output: outputs.join('\n'),
+          error: `Python error: ${err instanceof Error ? err.message : String(err)}`,
+        };
+      }
       return {
         output: outputs.join('\n'),
-        waitingForInput: true,
-        inputPrompt: err.prompt,
+      };
+    })();
+  } else {
+    try {
+      const { statements } = parseBlockAt(0, 0);
+      execStatementsSync(statements);
+    } catch (err) {
+      if (err instanceof PythonInputRequiredException) {
+        return {
+          output: outputs.join('\n'),
+          waitingForInput: true,
+          inputPrompt: err.prompt,
+        };
+      }
+      return {
+        output: outputs.join('\n'),
+        error: `Python error: ${err instanceof Error ? err.message : String(err)}`,
       };
     }
     return {
       output: outputs.join('\n'),
-      error: `Python error: ${err instanceof Error ? err.message : String(err)}`,
     };
   }
-
-  return {
-    output: outputs.join('\n'),
-  };
 }

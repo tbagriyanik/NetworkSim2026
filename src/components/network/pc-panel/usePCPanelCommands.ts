@@ -13,7 +13,7 @@ import {
   loadFs, saveFs, resolvePath, isDir, listDir, makeDir, removeDir,
   readFile, deleteFile,
 } from './pcFileSystem';
-import { executePythonScript } from './pcPythonRunner';
+import { executePythonScript, executePythonScriptAsync } from './pcPythonRunner';
 
 export interface UsePCPanelCommandsParams {
   activeTabRef: React.MutableRefObject<PCActiveTab>;
@@ -1145,38 +1145,47 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           emit('output', `Opening editor for ${fileName}...`);
         } else if (cmd === 'python' || cmd === 'python3' || cmd === 'py') {
           const firstArg = args[0];
+          const streamOutput = (chunk: string, replaceLastLine?: boolean) => {
+            if (replaceLastLine) {
+              setPcOutput(prev => {
+                const newId = `${Date.now()}-${Math.random()}`;
+                if (prev.length === 0) return [{ id: newId, type: 'output', content: chunk }];
+                const next = [...prev];
+                const last = next[next.length - 1];
+                next[next.length - 1] = { id: last?.id || newId, type: 'output', content: chunk };
+                return next;
+              });
+            } else {
+              emit('output', chunk);
+            }
+          };
+
           if (firstArg === '-c' && args.length > 1) {
             const pyCode = args.slice(1).join(' ').replace(/^["']|["']$/g, '');
-            const result = executePythonScript(pyCode, []);
+            const result = await executePythonScriptAsync(pyCode, [], streamOutput);
             if (result.waitingForInput) {
               setPythonSession({
                 code: pyCode,
                 inputs: [],
                 currentPrompt: result.inputPrompt || '>>> ',
               });
-              if (result.output) emit('output', result.output);
             } else if (result.error) {
               emit('error', result.error);
-            } else {
-              emit('output', result.output);
             }
           } else if (firstArg) {
             const fs = loadFs(deviceId);
             const targetPath = resolvePath(currentPath, firstArg);
             const fileContent = readFile(fs, targetPath);
             if (fileContent !== null) {
-              const result = executePythonScript(fileContent, []);
+              const result = await executePythonScriptAsync(fileContent, [], streamOutput);
               if (result.waitingForInput) {
                 setPythonSession({
                   code: fileContent,
                   inputs: [],
                   currentPrompt: result.inputPrompt || '>>> ',
                 });
-                if (result.output) emit('output', result.output);
               } else if (result.error) {
                 emit('error', result.error);
-              } else {
-                emit('output', result.output);
               }
             } else {
               emit('error', `python: can't open file '${firstArg}': No such file or directory`);
