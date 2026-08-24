@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Save, Play, X, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PythonCodeEditor } from './PythonCodeEditor';
 
 interface FileEditorModalProps {
   open: boolean;
@@ -27,6 +28,10 @@ export function FileEditorModal({
   onClose,
 }: FileEditorModalProps) {
   const [content, setContent] = useState(initialContent);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [size, setSize] = useState({ width: 900, height: 620 });
+  const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
+  const resizeRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     setContent(initialContent);
@@ -48,10 +53,54 @@ export function FileEditorModal({
     onClose();
   };
 
+  const handleDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    if ((event.target as HTMLElement).closest('button')) return;
+    dragRef.current = { x: position.x, y: position.y, startX: event.clientX, startY: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const clampPosition = (x: number, y: number, width = size.width, height = size.height) => {
+    if (typeof window === 'undefined') return { x, y };
+    const margin = 12;
+    const halfWidth = Math.min(width, window.innerWidth - margin * 2) / 2;
+    const halfHeight = Math.min(height, window.innerHeight - margin * 2) / 2;
+    return {
+      x: Math.max(-window.innerWidth / 2 + halfWidth - margin, Math.min(window.innerWidth / 2 - halfWidth + margin, x)),
+      y: Math.max(-window.innerHeight / 2 + halfHeight - margin, Math.min(window.innerHeight / 2 - halfHeight + margin, y)),
+    };
+  };
+  const handleDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return;
+    setPosition(clampPosition(dragRef.current.x + event.clientX - dragRef.current.startX, dragRef.current.y + event.clientY - dragRef.current.startY));
+  };
+  const handleDragEnd = () => { dragRef.current = null; };
+  const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    resizeRef.current = { x: event.clientX, y: event.clientY, width: size.width, height: size.height };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const handleResizeMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!resizeRef.current) return;
+    const nextWidth = Math.min(Math.max(520, resizeRef.current.width + event.clientX - resizeRef.current.x), Math.max(520, window.innerWidth - 24));
+    const nextHeight = Math.min(Math.max(360, resizeRef.current.height + event.clientY - resizeRef.current.y), Math.max(360, window.innerHeight - 24));
+    setSize({ width: nextWidth, height: nextHeight });
+    setPosition((current) => clampPosition(current.x, current.y, nextWidth, nextHeight));
+  };
+  const handleResizeEnd = () => { resizeRef.current = null; };
+
   const lineCount = content.split('\n').length;
   const charCount = content.length;
 
   const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Do not let editor shortcuts trigger the main application's keyboard handlers.
+    if (e.key === 'Tab' || ((e.ctrlKey || e.metaKey) && e.code === 'Space')) {
+      e.stopPropagation();
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.code === 'Space') {
+      e.preventDefault();
+      return;
+    }
+
     // Save shortcut: Ctrl + S or Cmd + S
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
       e.preventDefault();
@@ -142,11 +191,11 @@ export function FileEditorModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => { if (!val) onClose(); }}>
-      <DialogContent className={`max-w-3xl sm:max-w-4xl h-[75vh] flex flex-col p-0 gap-0 overflow-hidden ${
+      <DialogContent showCloseButton={false} style={{ width: `min(${size.width}px, calc(100vw - 2rem))`, height: `min(${size.height}px, calc(100vh - 2rem))`, transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px)` }} className={`max-w-none flex flex-col p-0 gap-0 overflow-hidden ${
         isDark ? 'bg-secondary-950 text-secondary-100 border-secondary-800' : 'bg-white text-secondary-900 border-secondary-200'
       }`}>
         {/* Header */}
-        <DialogHeader className={`px-4 py-3 flex flex-row items-center justify-between border-b space-y-0 ${
+        <DialogHeader onPointerDown={handleDragStart} onPointerMove={handleDragMove} onPointerUp={handleDragEnd} onPointerCancel={handleDragEnd} className={`cursor-move px-4 py-3 flex flex-row items-center justify-between border-b space-y-0 ${
           isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50'
         }`}>
           <div className="flex items-center gap-2">
@@ -185,7 +234,7 @@ export function FileEditorModal({
               size="sm"
               variant="ghost"
               onClick={onClose}
-              className="h-8 w-8 p-0 text-secondary-400 hover:text-secondary-100"
+              className="h-8 w-8 p-0 rounded-md bg-red-600 text-white hover:bg-red-500 focus-visible:ring-red-400"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -193,21 +242,32 @@ export function FileEditorModal({
         </DialogHeader>
 
         {/* Main Editor Body */}
-        <div className="flex-1 relative flex flex-col font-mono text-sm overflow-hidden">
-          <textarea
+        <div data-code-editor="true" className="flex-1 relative flex flex-col font-mono text-sm overflow-hidden">
+          {isPythonFile ? <PythonCodeEditor
+            value={content}
+            onChange={setContent}
+            onKeyDown={handleTextareaKeyDown}
+            isDark={isDark}
+            placeholder={'# Python kodunuzu buraya yazın...\nprint("Merhaba Dunya!")'}
+          /> : <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleTextareaKeyDown}
-            placeholder={isPythonFile ? '# Python kodunuzu buraya yazın...\nprint("Merhaba Dunya!")' : ''}
-            className={`flex-1 w-full h-full p-4 resize-none outline-none font-mono text-xs sm:text-sm leading-relaxed ${
-              isDark
-                ? 'bg-secondary-950 text-emerald-400 placeholder:text-secondary-600 selection:bg-primary-800'
-                : 'bg-white text-secondary-900 placeholder:text-secondary-400 selection:bg-primary-200'
-            }`}
+            className={`flex-1 w-full h-full p-4 resize-none outline-none font-mono text-xs sm:text-sm leading-relaxed ${isDark ? 'bg-secondary-950 text-emerald-400 placeholder:text-secondary-600 selection:bg-primary-800' : 'bg-white text-secondary-900 placeholder:text-secondary-400 selection:bg-primary-200'}`}
             spellCheck={false}
             autoFocus
-          />
+          />}
         </div>
+
+        <div
+          role="presentation"
+          aria-label={language === 'tr' ? 'Editör boyutunu değiştir' : 'Resize editor'}
+          onPointerDown={handleResizeStart}
+          onPointerMove={handleResizeMove}
+          onPointerUp={handleResizeEnd}
+          onPointerCancel={handleResizeEnd}
+          className="absolute bottom-0 right-0 z-30 h-5 w-5 cursor-se-resize"
+        />
 
         {/* Footer Status Bar */}
         <div className={`px-4 py-1.5 flex justify-between items-center text-xs font-mono border-t ${

@@ -352,10 +352,18 @@
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"])::placeholder,
-  textarea::placeholder {
+textarea::placeholder {
     color: hsl(var(--muted-foreground));
     opacity: 1;
   }
+
+  /* Python editor token colors (the textarea keeps the caret and selection). */
+  .py-highlight .py-keyword { color: #c084fc; }
+  .py-highlight .py-builtin { color: #67e8f9; }
+  .py-highlight .py-string { color: #86efac; }
+  .py-highlight .py-number { color: #fbbf24; }
+  .py-highlight .py-constant { color: #fb7185; }
+  .py-highlight .py-comment { color: #94a3b8; font-style: italic; }
 
   /* Minimum font size for accessibility - 12px */
   html {

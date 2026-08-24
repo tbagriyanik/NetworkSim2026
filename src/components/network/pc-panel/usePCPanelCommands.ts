@@ -1115,7 +1115,6 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const targetPath = resolvePath(currentPath, firstArg);
             const fileContent = readFile(fs, targetPath);
             if (fileContent !== null) {
-              emit('output', `Running Python script ${firstArg}...\n`);
               const result = executePythonScript(fileContent);
               if (result.error) {
                 emit('error', result.error);

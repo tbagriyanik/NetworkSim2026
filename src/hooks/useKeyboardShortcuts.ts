@@ -114,6 +114,13 @@ export function useKeyboardShortcuts({
         }
       }
 
+      // Code editors own Tab/Shift+Tab for indentation and completion.
+      const focusedElement = document.activeElement as HTMLElement | null;
+      const isWindowInteriorFocused = Boolean(focusedElement?.closest('[data-code-editor], [data-modal-content], [data-slot="dialog-content"], [role="dialog"]'));
+      if (isWindowInteriorFocused && (e.key === 'Tab' || e.code === 'Tab')) {
+        return;
+      }
+
       if (e.key === 'Tab' || e.code === 'Tab') {
         if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
