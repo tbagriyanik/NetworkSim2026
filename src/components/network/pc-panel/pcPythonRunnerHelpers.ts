@@ -76,7 +76,11 @@ export function formatPythonValue(val: unknown): string {
   if (val === false) return 'False';
   if (val instanceof PyComplex) return val.toString();
   if (val instanceof Set) {
-    return `{${Array.from(val).map(item => formatPythonValue(item)).join(', ')}}`;
+    const items = Array.from(val).sort((a, b) => {
+      if (typeof a === 'number' && typeof b === 'number') return a - b;
+      return formatPythonValue(a).localeCompare(formatPythonValue(b));
+    });
+    return `{${items.map(item => formatPythonValue(item)).join(', ')}}`;
   }
   if (Array.isArray(val)) {
     return `[${val.map(item => formatPythonValue(item)).join(', ')}]`;

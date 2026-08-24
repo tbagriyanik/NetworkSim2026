@@ -315,6 +315,13 @@ export function createExpressionEvaluator(
       return [val];
     }
 
+    // Set literal: {1, 2, 3}
+    if (trimmed.startsWith('{') && trimmed.endsWith('}') && !trimmed.includes(':')) {
+      const inner = trimmed.slice(1, -1).trim();
+      if (!inner) return new Set();
+      return new Set(splitOutsideQuotesAndParens(inner, ',').map(item => evaluateExpr(item)));
+    }
+
     // Handle map(func, iterable)
     const mapMatch = /^map\s*\((.*)\)$/.exec(trimmed);
     if (mapMatch) {
@@ -784,11 +791,70 @@ export function createExpressionEvaluator(
         }
       } else {
         const parts = subParts.map(p => evaluateExpr(p));
+        if (parts.some(p => p instanceof Set)) {
+          let res = parts[0] instanceof Set ? new Set(parts[0] as Set<unknown>) : new Set(Array.isArray(parts[0]) ? (parts[0] as unknown[]) : [parts[0]]);
+          for (let i = 1; i < parts.length; i++) {
+            const nextSet = parts[i] instanceof Set ? (parts[i] as Set<unknown>) : new Set(Array.isArray(parts[i]) ? (parts[i] as unknown[]) : [parts[i]]);
+            res = new Set(Array.from(res).filter(x => !nextSet.has(x)));
+          }
+          return res;
+        }
         if (parts.some(p => p instanceof PyComplex)) {
           return parts.reduce((acc: unknown, val: unknown, idx: number) => (idx === 0 ? toPyComplex(val) : toPyComplex(acc).sub(val)), new PyComplex(0, 0));
         }
         return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc - Number(val)), 0);
       }
+    }
+
+    // Handle Set Operators: |, &, ^
+    const bitOrParts = splitOutsideQuotesAndParens(trimmed, '|');
+    if (bitOrParts.length > 1) {
+      const parts = bitOrParts.map(p => evaluateExpr(p));
+      if (parts.some(p => p instanceof Set)) {
+        const res = new Set<unknown>();
+        for (const p of parts) {
+          if (p instanceof Set) {
+            for (const item of p) res.add(item);
+          } else if (Array.isArray(p)) {
+            for (const item of p) res.add(item);
+          } else {
+            res.add(p);
+          }
+        }
+        return res;
+      }
+      return parts.reduce((acc: number, val: unknown) => acc | Number(val || 0), 0);
+    }
+
+    const bitAndParts = splitOutsideQuotesAndParens(trimmed, '&');
+    if (bitAndParts.length > 1) {
+      const parts = bitAndParts.map(p => evaluateExpr(p));
+      if (parts.some(p => p instanceof Set)) {
+        let res = parts[0] instanceof Set ? new Set(parts[0] as Set<unknown>) : new Set(Array.isArray(parts[0]) ? (parts[0] as unknown[]) : [parts[0]]);
+        for (let i = 1; i < parts.length; i++) {
+          const nextSet = parts[i] instanceof Set ? (parts[i] as Set<unknown>) : new Set(Array.isArray(parts[i]) ? (parts[i] as unknown[]) : [parts[i]]);
+          res = new Set(Array.from(res).filter(x => nextSet.has(x)));
+        }
+        return res;
+      }
+      return parts.slice(1).reduce((acc: number, val: unknown) => acc & Number(val || 0), Number(parts[0] || 0));
+    }
+
+    const bitXorParts = splitOutsideQuotesAndParens(trimmed, '^');
+    if (bitXorParts.length > 1) {
+      const parts = bitXorParts.map(p => evaluateExpr(p));
+      if (parts.some(p => p instanceof Set)) {
+        let res = parts[0] instanceof Set ? new Set(parts[0] as Set<unknown>) : new Set(Array.isArray(parts[0]) ? (parts[0] as unknown[]) : [parts[0]]);
+        for (let i = 1; i < parts.length; i++) {
+          const nextSet = parts[i] instanceof Set ? (parts[i] as Set<unknown>) : new Set(Array.isArray(parts[i]) ? (parts[i] as unknown[]) : [parts[i]]);
+          const newRes = new Set<unknown>();
+          for (const x of res) { if (!nextSet.has(x)) newRes.add(x); }
+          for (const x of nextSet) { if (!res.has(x)) newRes.add(x); }
+          res = newRes;
+        }
+        return res;
+      }
+      return parts.slice(1).reduce((acc: number, val: unknown) => acc ^ Number(val || 0), Number(parts[0] || 0));
     }
 
     const mulParts = splitOutsideQuotesAndParens(trimmed, '*');

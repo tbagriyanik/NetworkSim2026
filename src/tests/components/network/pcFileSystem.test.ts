@@ -367,6 +367,24 @@ else:
     expect(res.error).toBeUndefined();
   });
 
+  it('should support set operations (| & - ^) and trailing semicolons', () => {
+    const script = `
+E = {0, 2, 4, 6, 8};
+N = {1, 2, 3, 4, 5};
+
+print("Union of E and N is", E | N)
+print("Intersection of E and N is", E & N)
+print("Difference of E and N is", E - N)
+print("Symmetric difference of E and N is", E ^ N)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('Union of E and N is {0, 1, 2, 3, 4, 5, 6, 8}');
+    expect(res.output).toContain('Intersection of E and N is {2, 4}');
+    expect(res.output).toContain('Difference of E and N is {0, 6, 8}');
+    expect(res.output).toContain('Symmetric difference of E and N is {0, 1, 3, 5, 6, 8}');
+    expect(res.error).toBeUndefined();
+  });
+
   it('should support string .format(...) method', () => {
     const script = `
 num1 = 5

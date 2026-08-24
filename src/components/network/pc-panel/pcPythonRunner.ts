@@ -68,7 +68,10 @@ export function executePythonScript(
   };
 
   const processLineSync = (line: string): void => {
-    const trimmed = line.trim();
+    let trimmed = line.trim();
+    if (trimmed.endsWith(';')) {
+      trimmed = trimmed.replace(/;+$/, '').trim();
+    }
     if (!trimmed || trimmed.startsWith('#')) return;
 
     if (/^time\.sleep\s*\((.*)\)$/.test(trimmed)) return;
@@ -476,7 +479,10 @@ export async function executePythonScriptAsync(
   };
 
   const processLineSync = (line: string): void => {
-    const trimmed = line.trim();
+    let trimmed = line.trim();
+    if (trimmed.endsWith(';')) {
+      trimmed = trimmed.replace(/;+$/, '').trim();
+    }
     if (!trimmed || trimmed.startsWith('#')) return;
 
     if (/^time\.sleep\s*\((.*)\)$/.test(trimmed)) return;
@@ -817,7 +823,7 @@ export async function executePythonScriptAsync(
   };
 
   const processLine = async (line: string): Promise<void> => {
-    const trimmed = line.trim();
+    const trimmed = line.trim().replace(/;+\s*$/, '');
     if (!trimmed || trimmed.startsWith('#')) return;
 
     const sleepMatch = /^time\.sleep\s*\((.*)\)$/.exec(trimmed);
