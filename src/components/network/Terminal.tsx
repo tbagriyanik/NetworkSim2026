@@ -877,7 +877,7 @@ export function Terminal({
     const context = getAutocompleteContext(value);
     const { candidates, currentWord, contextTokens } = context;
 
-    // Use filtered candidates for TAB completion (supports Cisco interface shorthands like g0/1, fa0/1, v10)
+    // Use filtered candidates for TAB completion (supports interface shorthands like g0/1, fa0/1, v10)
     const matches = candidates.filter((opt) => {
       if (opt === '?') return false;
       const optLower = opt.toLowerCase();
