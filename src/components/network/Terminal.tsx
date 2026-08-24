@@ -13,7 +13,7 @@ import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
 import { useOutputSearch } from '@/hooks/useOutputSearch';
 import { commandHelp } from '@/lib/network/executor';
-import { commandPatterns, expandKeywordPrefixes, resolveAliases } from '@/lib/network/parser';
+import { commandPatterns } from '@/lib/network/parser';
 import { ModernPanel } from '@/components/ui/ModernPanel';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -798,21 +798,27 @@ export function Terminal({
 
   const getAutocompleteContext = useCallback((value: string) => {
     const mode = state.currentMode;
-    const resolvedValue = expandKeywordPrefixes(resolveAliases(value, state), mode);
-    const base = expandCommandContext(mode, resolvedValue.length > 0 ? resolvedValue : value);
+    const base = expandCommandContext(mode, value);
     const helpTree = commandHelp[mode] || commandHelp.user || {};
     const contextKey = base.contextTokens.join(' ').toLowerCase();
 
+    let candidates = base.candidates;
     if (helpTree[contextKey]) {
-      return {
-        ...base,
-        candidates: helpTree[contextKey],
-        allCandidates: helpTree[contextKey],
-      };
+      candidates = helpTree[contextKey];
     }
 
-    return base;
-  }, [state.currentMode, state, expandCommandContext]);
+    const isInterfaceContext = base.contextTokens.some(t => ['interface', 'int'].includes(t.toLowerCase()));
+    if (isInterfaceContext) {
+      const ifaceNames = state.ports ? Object.keys(state.ports) : ['GigabitEthernet0/0', 'GigabitEthernet0/1', 'FastEthernet0/1', 'Vlan1', 'Loopback0'];
+      candidates = Array.from(new Set([...candidates, ...ifaceNames]));
+    }
+
+    return {
+      ...base,
+      candidates,
+      allCandidates: candidates,
+    };
+  }, [state.currentMode, state.ports, expandCommandContext]);
 
   const handleTabComplete = useCallback(() => {
     const value = input;
@@ -827,7 +833,7 @@ export function Terminal({
       const ip = ipAddressMatch[1];
       const mask = ipAddressMatch[2];
       if (isIpv4(ip) && !mask) {
-        setInput(`ip address ${ip} 255.255.255.0`);
+        setInput(`ip address ${ip} 255.255.255.0 `);
         setTabCycleIndex(-1);
         return;
       }
@@ -850,7 +856,7 @@ export function Terminal({
       const netIp = networkMatch[1];
       const mask = networkMatch[2];
       if (isIpv4(netIp) && !mask) {
-        setInput(`network ${netIp} 255.255.255.0`);
+        setInput(`network ${netIp} 255.255.255.0 `);
         setTabCycleIndex(-1);
         return;
       }
@@ -871,10 +877,25 @@ export function Terminal({
     const context = getAutocompleteContext(value);
     const { candidates, currentWord, contextTokens } = context;
 
-    // Use filtered candidates for TAB completion
-    const matches = candidates.filter(
-      opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord)
-    );
+    // Use filtered candidates for TAB completion (supports Cisco interface shorthands like g0/1, fa0/1, v10)
+    const matches = candidates.filter((opt) => {
+      if (opt === '?') return false;
+      const optLower = opt.toLowerCase();
+      const cwLower = currentWord.toLowerCase();
+      if (optLower.startsWith(cwLower)) return true;
+
+      const expandShorthand = (s: string) => s
+        .replace(/^gi?(?=\d)/, 'gigabitethernet')
+        .replace(/^fa?(?=\d)/, 'fastethernet')
+        .replace(/^eth?(?=\d)/, 'ethernet')
+        .replace(/^v(?=\d)/, 'vlan')
+        .replace(/^lo(?=\d)/, 'loopback');
+
+      if (cwLower.length > 0 && /^[a-z]+\d/i.test(cwLower)) {
+        return optLower.startsWith(expandShorthand(cwLower));
+      }
+      return false;
+    });
 
     if (matches.length > 0) {
       if (tabCycleIndex === -1) {

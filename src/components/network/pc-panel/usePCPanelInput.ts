@@ -5,6 +5,7 @@ import type { KeyboardEvent } from 'react';
 import type { PCActiveTab, OutputLine } from './PCPanel.types';
 import { expandCommandContext, DESKTOP_COMMANDS } from '../pcPanel.utils';
 import { resolveAliases, expandKeywordPrefixes } from '@/lib/network/parser';
+import { loadFs, listDir } from './pcFileSystem';
 
 export interface UsePCPanelInputParams {
   input: string;
@@ -192,15 +193,54 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
     let contextTokens: string[] = [];
 
     if (activeTab === 'desktop') {
-      const tokens = value.trim().split(/\s+/).filter(Boolean);
-      const currentWord = value.endsWith(' ') ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
-      contextTokens = [];
-      matches = DESKTOP_COMMANDS.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord));
+      const trimmedVal = value.trimStart();
+      const parts = trimmedVal.split(/\s+/);
+      const firstCmd = parts[0]?.toLowerCase() || '';
+      const isFileCmd = ['python', 'py', 'edit', 'cat', 'del', 'delete', 'type', 'dir'].includes(firstCmd);
+      const hasSpaceAfterCmd = value.includes(' ');
+
+      if (isFileCmd && hasSpaceAfterCmd && connectedDeviceId) {
+        const currentArg = value.endsWith(' ') ? '' : (parts[parts.length - 1] || '');
+        const fs = loadFs(connectedDeviceId);
+        const files = listDir(fs, '/');
+        matches = files.filter(f => f.toLowerCase().startsWith(currentArg.toLowerCase()));
+        contextTokens = value.endsWith(' ') ? parts.filter(Boolean) : parts.slice(0, -1).filter(Boolean);
+      } else {
+        const tokens = value.trim().split(/\s+/).filter(Boolean);
+        const currentWord = value.endsWith(' ') ? '' : (tokens[tokens.length - 1] || '').toLowerCase();
+        contextTokens = [];
+        matches = DESKTOP_COMMANDS.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(currentWord));
+      }
     } else {
       const mode = getCommandMode();
       const context = expandCommandContext(mode, value);
       contextTokens = context.contextTokens;
-      matches = context.candidates.filter(opt => opt !== '?' && opt.toLowerCase().startsWith(context.currentWord));
+
+      let candidates = context.candidates;
+      const isInterfaceContext = contextTokens.some(t => ['interface', 'int'].includes(t.toLowerCase()));
+      if (isInterfaceContext) {
+        const commonIfaces = ['GigabitEthernet0/0', 'GigabitEthernet0/1', 'GigabitEthernet0/2', 'FastEthernet0/1', 'FastEthernet0/2', 'Vlan1', 'Vlan10', 'Loopback0'];
+        candidates = Array.from(new Set([...candidates, ...commonIfaces]));
+      }
+
+      matches = candidates.filter(opt => {
+        if (opt === '?') return false;
+        const optLower = opt.toLowerCase();
+        const cwLower = context.currentWord.toLowerCase();
+        if (optLower.startsWith(cwLower)) return true;
+
+        const expandShorthand = (s: string) => s
+          .replace(/^gi?(?=\d)/, 'gigabitethernet')
+          .replace(/^fa?(?=\d)/, 'fastethernet')
+          .replace(/^eth?(?=\d)/, 'ethernet')
+          .replace(/^v(?=\d)/, 'vlan')
+          .replace(/^lo(?=\d)/, 'loopback');
+
+        if (cwLower.length > 0 && /^[a-z]+\d/i.test(cwLower)) {
+          return optLower.startsWith(expandShorthand(cwLower));
+        }
+        return false;
+      });
     }
 
     if (matches.length > 0) {

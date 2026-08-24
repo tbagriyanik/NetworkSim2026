@@ -131,7 +131,7 @@ function formatStringTemplate(
 }
 
 export class PyComplex {
-  constructor(public real: number, public imag: number) {}
+  constructor(public real: number, public imag: number) { }
 
   add(other: unknown): PyComplex {
     const o = toPyComplex(other);
@@ -213,6 +213,31 @@ export function formatPythonValue(val: unknown): string {
     return `{${entries.join(', ')}}`;
   }
   return String(val);
+}
+
+export function isSingleStringLiteral(str: string): boolean {
+  const trimmed = str.trim();
+  if (trimmed.length < 2) return false;
+  const qChar = trimmed[0];
+  if (qChar !== '"' && qChar !== "'") return false;
+  if (trimmed[trimmed.length - 1] !== qChar) return false;
+
+  let escaped = false;
+  for (let i = 1; i < trimmed.length; i++) {
+    const char = trimmed[i];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (char === '\\') {
+      escaped = true;
+      continue;
+    }
+    if (char === qChar) {
+      return i === trimmed.length - 1;
+    }
+  }
+  return false;
 }
 
 function stripInlineComment(line: string): string {
@@ -352,7 +377,7 @@ function pythonRange(...args: number[]): number[] {
 }
 
 const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
-    random: {
+  random: {
     randint: (a: unknown, b: unknown) => {
       const min = Math.ceil(Number(a || 0));
       const max = Math.floor(Number(b || 0));
@@ -386,6 +411,78 @@ const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
       const min = Number(a || 0);
       const max = Number(b || 0);
       return min + Math.random() * (max - min);
+    },
+  },
+  itertools: {
+    product: (...args: unknown[]) => {
+      const iterables = args.map(a => (Array.isArray(a) ? a : typeof a === 'string' ? a.split('') : Array.from((a as Iterable<unknown>) || [])));
+      if (iterables.length === 0) return [];
+      let result: unknown[][] = [[]];
+      for (const pool of iterables) {
+        const nextResult: unknown[][] = [];
+        for (const x of result) {
+          for (const y of pool) {
+            nextResult.push([...x, y]);
+          }
+        }
+        result = nextResult;
+      }
+      return result;
+    },
+    permutations: (iterable: unknown, r?: unknown) => {
+      const arr = Array.isArray(iterable) ? iterable : String(iterable || '').split('');
+      const n = arr.length;
+      const k = r !== undefined ? Number(r) : n;
+      if (k > n || k < 0) return [];
+      const res: unknown[][] = [];
+      const backtrack = (current: unknown[], used: boolean[]) => {
+        if (current.length === k) {
+          res.push([...current]);
+          return;
+        }
+        for (let i = 0; i < n; i++) {
+          if (used[i]) continue;
+          used[i] = true;
+          current.push(arr[i]);
+          backtrack(current, used);
+          current.pop();
+          used[i] = false;
+        }
+      };
+      backtrack([], Array.from({ length: n }, () => false));
+      return res;
+    },
+    combinations: (iterable: unknown, r: unknown) => {
+      const arr = Array.isArray(iterable) ? iterable : String(iterable || '').split('');
+      const k = Number(r || 0);
+      const n = arr.length;
+      if (k > n || k <= 0) return [];
+      const res: unknown[][] = [];
+      const backtrack = (start: number, current: unknown[]) => {
+        if (current.length === k) {
+          res.push([...current]);
+          return;
+        }
+        for (let i = start; i < n; i++) {
+          current.push(arr[i]);
+          backtrack(i + 1, current);
+          current.pop();
+        }
+      };
+      backtrack(0, []);
+      return res;
+    },
+    chain: (...args: unknown[]) => {
+      const res: unknown[] = [];
+      for (const arg of args) {
+        if (Array.isArray(arg)) res.push(...arg);
+        else if (typeof arg === 'string') res.push(...arg.split(''));
+      }
+      return res;
+    },
+    repeat: (elem: unknown, n?: unknown) => {
+      const count = n !== undefined ? Number(n) : 100;
+      return Array.from({ length: Math.max(0, count) }, () => elem);
     },
   },
   math: {
@@ -482,7 +579,8 @@ type Statement =
   | { type: 'if'; branches: { condition: string | null; body: Statement[] }[] }
   | { type: 'while'; condition: string; body: Statement[]; elseBody?: Statement[] }
   | { type: 'for'; varName: string; iterableExpr: string; body: Statement[]; elseBody?: Statement[] }
-  | { type: 'def'; funcName: string; paramNames: string[]; paramDefaults: Record<string, string>; body: Statement[] };
+  | { type: 'def'; funcName: string; paramNames: string[]; paramDefaults: Record<string, string>; body: Statement[] }
+  | { type: 'try'; body: Statement[]; exceptBranches: { errorType: string | null; varName: string | null; body: Statement[] }[]; elseBody?: Statement[]; finallyBody?: Statement[] };
 
 interface ParsedLine {
   indent: number;
@@ -559,6 +657,22 @@ function runPythonEngine(
       return [Math.floor(n1 / n2), n1 % n2];
     },
     range: (...args: unknown[]) => pythonRange(...args.map(a => Number(a))),
+    bin: (v: unknown) => {
+      const num = Math.floor(Number(v || 0));
+      return num < 0 ? '-0b' + Math.abs(num).toString(2) : '0b' + num.toString(2);
+    },
+    oct: (v: unknown) => {
+      const num = Math.floor(Number(v || 0));
+      return num < 0 ? '-0o' + Math.abs(num).toString(8) : '0o' + num.toString(8);
+    },
+    hex: (v: unknown) => {
+      const num = Math.floor(Number(v || 0));
+      return num < 0 ? '-0x' + Math.abs(num).toString(16) : '0x' + num.toString(16);
+    },
+    ord: (v: unknown) => String(v || '').charCodeAt(0) || 0,
+    chr: (v: unknown) => String.fromCharCode(Number(v || 0)),
+    any: (v: unknown) => (Array.isArray(v) ? v.some(Boolean) : Boolean(v)),
+    all: (v: unknown) => (Array.isArray(v) ? v.every(Boolean) : Boolean(v)),
     input: pythonInput,
   };
 
@@ -575,6 +689,18 @@ function runPythonEngine(
       if (typeof targetVal === 'string') {
         const { positional, kwargs } = parseFormatArgs(rawFormatArgs, evaluateExpr);
         return formatStringTemplate(targetVal, positional, kwargs);
+      }
+    }
+
+    // Handle Python string .join(...) method
+    const joinIdx = trimmed.lastIndexOf('.join(');
+    if (joinIdx !== -1 && trimmed.endsWith(')')) {
+      const sepStrExpr = trimmed.slice(0, joinIdx).trim();
+      const rawJoinArg = trimmed.slice(joinIdx + 6, -1).trim();
+      const sepVal = evaluateExpr(sepStrExpr);
+      const iterVal = evaluateExpr(rawJoinArg);
+      if (typeof sepVal === 'string' && Array.isArray(iterVal)) {
+        return iterVal.map(item => formatPythonValue(item)).join(sepVal);
       }
     }
 
@@ -603,14 +729,19 @@ function runPythonEngine(
     const floatMatch = /^float\s*\((?:[^()]|\([^()]*\))*\)$/.exec(trimmed);
     if (floatMatch) {
       const val = evaluateExpr(trimmed.slice(trimmed.indexOf('(') + 1, -1));
-      return Number(val);
+      const num = Number(val);
+      if (isNaN(num)) throw new Error(`ValueError: could not convert string to float: '${val}'`);
+      return num;
     }
 
     // Handle int(...)
     const intMatch = /^int\s*\((.*)\)$/.exec(trimmed);
     if (intMatch) {
       const val = evaluateExpr(intMatch[1]);
-      return typeof val === 'boolean' ? (val ? 1 : 0) : Math.floor(Number(val));
+      if (typeof val === 'boolean') return val ? 1 : 0;
+      const num = Number(val);
+      if (isNaN(num)) throw new Error(`ValueError: invalid literal for int() with base 10: '${val}'`);
+      return Math.floor(num);
     }
 
     // Handle str(...)
@@ -664,7 +795,9 @@ function runPythonEngine(
     if (listLiteralMatch) {
       const inner = listLiteralMatch[1].trim();
       if (!inner) return [];
-      return splitOutsideQuotesAndParens(inner, ',').map(item => evaluateExpr(item));
+      return splitOutsideQuotesAndParens(inner, ',')
+        .filter(item => item.trim() !== '')
+        .map(item => evaluateExpr(item));
     }
 
     // String join: separator.join(iterable)
@@ -683,6 +816,41 @@ function runPythonEngine(
     if (absMatch) {
       const val = evaluateExpr(absMatch[1]);
       return Math.abs(Number(val || 0));
+    }
+
+    // Handle bin(...)
+    const binMatch = /^bin\s*\((.*)\)$/.exec(trimmed);
+    if (binMatch) {
+      const num = Math.floor(Number(evaluateExpr(binMatch[1]) || 0));
+      return num < 0 ? '-0b' + Math.abs(num).toString(2) : '0b' + num.toString(2);
+    }
+
+    // Handle oct(...)
+    const octMatch = /^oct\s*\((.*)\)$/.exec(trimmed);
+    if (octMatch) {
+      const num = Math.floor(Number(evaluateExpr(octMatch[1]) || 0));
+      return num < 0 ? '-0o' + Math.abs(num).toString(8) : '0o' + num.toString(8);
+    }
+
+    // Handle hex(...)
+    const hexMatch = /^hex\s*\((.*)\)$/.exec(trimmed);
+    if (hexMatch) {
+      const num = Math.floor(Number(evaluateExpr(hexMatch[1]) || 0));
+      return num < 0 ? '-0x' + Math.abs(num).toString(16) : '0x' + num.toString(16);
+    }
+
+    // Handle ord(...)
+    const ordMatch = /^ord\s*\((.*)\)$/.exec(trimmed);
+    if (ordMatch) {
+      const str = String(evaluateExpr(ordMatch[1]) || '');
+      return str.charCodeAt(0) || 0;
+    }
+
+    // Handle chr(...)
+    const chrMatch = /^chr\s*\((.*)\)$/.exec(trimmed);
+    if (chrMatch) {
+      const code = Number(evaluateExpr(chrMatch[1]) || 0);
+      return String.fromCharCode(code);
     }
 
     // Handle round(...)
@@ -837,17 +1005,46 @@ function runPythonEngine(
       };
     }
 
-    // Element indexing: var[idx]
-    const indexMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]$/.exec(trimmed);
-    if (indexMatch) {
-      const varName = indexMatch[1];
-      const idxExpr = indexMatch[2];
-      const target = scope[varName];
-      const idxVal = evaluateExpr(idxExpr);
-      const idx = Number(idxVal);
-      if (Array.isArray(target) || typeof target === 'string') {
-        const realIdx = idx < 0 ? target.length + idx : idx;
-        return target[realIdx];
+    // Element indexing / Chained indexing: targetExpr[idxExpr] (e.g. deck[i][0], matrix[r][c], arr[0])
+    if (trimmed.endsWith(']') && !trimmed.startsWith('[')) {
+      let bracketDepth = 0;
+      let openIdx = -1;
+      let inQuote: string | null = null;
+      for (let i = trimmed.length - 1; i >= 0; i--) {
+        const char = trimmed[i];
+        if (inQuote) {
+          if (char === inQuote && (i === 0 || trimmed[i - 1] !== '\\')) {
+            inQuote = null;
+          }
+          continue;
+        }
+        if (char === '"' || char === "'") {
+          inQuote = char;
+          continue;
+        }
+        if (char === ']') {
+          bracketDepth++;
+        } else if (char === '[') {
+          bracketDepth--;
+          if (bracketDepth === 0) {
+            openIdx = i;
+            break;
+          }
+        }
+      }
+      if (openIdx > 0) {
+        const targetExpr = trimmed.slice(0, openIdx).trim();
+        const idxExpr = trimmed.slice(openIdx + 1, -1).trim();
+        const targetVal = evaluateExpr(targetExpr);
+        const idxVal = evaluateExpr(idxExpr);
+        if (Array.isArray(targetVal) || typeof targetVal === 'string') {
+          const idx = Number(idxVal);
+          const realIdx = idx < 0 ? targetVal.length + idx : idx;
+          return targetVal[realIdx];
+        }
+        if (typeof targetVal === 'object' && targetVal !== null) {
+          return (targetVal as Record<string, unknown>)[String(idxVal)];
+        }
       }
     }
 
@@ -865,7 +1062,7 @@ function runPythonEngine(
     }
 
     // String literal
-    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+    if (isSingleStringLiteral(trimmed)) {
       return trimmed.slice(1, -1);
     }
 
@@ -1025,6 +1222,101 @@ function runPythonEngine(
       }
     }
 
+    // Handle Logical Operators: or, and, not
+    const orIdx = findOperatorIndex(trimmed, ' or ');
+    if (orIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, orIdx));
+      if (leftVal) return leftVal;
+      return evaluateExpr(trimmed.slice(orIdx + 4));
+    }
+
+    const andIdx = findOperatorIndex(trimmed, ' and ');
+    if (andIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, andIdx));
+      if (!leftVal) return leftVal;
+      return evaluateExpr(trimmed.slice(andIdx + 5));
+    }
+
+    if (trimmed.startsWith('not ') || trimmed.startsWith('not(')) {
+      const targetExpr = trimmed.startsWith('not ') ? trimmed.slice(4) : trimmed.slice(3);
+      return !evaluateExpr(targetExpr);
+    }
+
+    // Handle Comparison Operators: ==, !=, <=, >=, <, >, in, not in, is, is not
+    const isNotIdx = findOperatorIndex(trimmed, ' is not ');
+    if (isNotIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, isNotIdx));
+      const rightVal = evaluateExpr(trimmed.slice(isNotIdx + 8));
+      return leftVal !== rightVal;
+    }
+
+    const isIdx = findOperatorIndex(trimmed, ' is ');
+    if (isIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, isIdx));
+      const rightVal = evaluateExpr(trimmed.slice(isIdx + 4));
+      return leftVal === rightVal;
+    }
+
+    const notInIdx = findOperatorIndex(trimmed, ' not in ');
+    if (notInIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, notInIdx));
+      const rightVal = evaluateExpr(trimmed.slice(notInIdx + 8));
+      if (Array.isArray(rightVal)) return !rightVal.includes(leftVal);
+      if (typeof rightVal === 'string') return !rightVal.includes(String(leftVal));
+      return true;
+    }
+
+    const inIdx = findOperatorIndex(trimmed, ' in ');
+    if (inIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, inIdx));
+      const rightVal = evaluateExpr(trimmed.slice(inIdx + 4));
+      if (Array.isArray(rightVal)) return rightVal.includes(leftVal);
+      if (typeof rightVal === 'string') return rightVal.includes(String(leftVal));
+      return false;
+    }
+
+    const eqEqIdx = findOperatorIndex(trimmed, '==');
+    if (eqEqIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, eqEqIdx));
+      const rightVal = evaluateExpr(trimmed.slice(eqEqIdx + 2));
+      return leftVal === rightVal || formatPythonValue(leftVal) === formatPythonValue(rightVal);
+    }
+
+    const notEqIdx = findOperatorIndex(trimmed, '!=');
+    if (notEqIdx !== -1) {
+      const leftVal = evaluateExpr(trimmed.slice(0, notEqIdx));
+      const rightVal = evaluateExpr(trimmed.slice(notEqIdx + 2));
+      return leftVal !== rightVal && formatPythonValue(leftVal) !== formatPythonValue(rightVal);
+    }
+
+    const lteIdx = findOperatorIndex(trimmed, '<=');
+    if (lteIdx !== -1) {
+      const leftVal = Number(evaluateExpr(trimmed.slice(0, lteIdx)));
+      const rightVal = Number(evaluateExpr(trimmed.slice(lteIdx + 2)));
+      return leftVal <= rightVal;
+    }
+
+    const gteIdx = findOperatorIndex(trimmed, '>=');
+    if (gteIdx !== -1) {
+      const leftVal = Number(evaluateExpr(trimmed.slice(0, gteIdx)));
+      const rightVal = Number(evaluateExpr(trimmed.slice(gteIdx + 2)));
+      return leftVal >= rightVal;
+    }
+
+    const ltIdx = findOperatorIndex(trimmed, '<');
+    if (ltIdx !== -1 && trimmed[ltIdx + 1] !== '=' && trimmed[ltIdx + 1] !== '<') {
+      const leftVal = Number(evaluateExpr(trimmed.slice(0, ltIdx)));
+      const rightVal = Number(evaluateExpr(trimmed.slice(ltIdx + 1)));
+      return leftVal < rightVal;
+    }
+
+    const gtIdx = findOperatorIndex(trimmed, '>');
+    if (gtIdx !== -1 && trimmed[gtIdx + 1] !== '=' && trimmed[gtIdx + 1] !== '>') {
+      const leftVal = Number(evaluateExpr(trimmed.slice(0, gtIdx)));
+      const rightVal = Number(evaluateExpr(trimmed.slice(gtIdx + 1)));
+      return leftVal > rightVal;
+    }
+
     // Handle Python % string formatting or modulo
     const percentIdx = findOperatorIndex(trimmed, '%');
     if (percentIdx !== -1) {
@@ -1089,8 +1381,8 @@ function runPythonEngine(
           const negatedFirst = first instanceof PyComplex
             ? new PyComplex(-first.real, -first.imag)
             : typeof first === 'number'
-            ? -first
-            : toPyComplex(first).mul(-1);
+              ? -first
+              : toPyComplex(first).mul(-1);
 
           if (realParts.length === 1) {
             return negatedFirst;
@@ -1431,21 +1723,11 @@ function runPythonEngine(
 
   const evalCondition = (condStr: string): boolean => {
     try {
-      const { keys, vals } = getSafeScope();
-      const jsCond = condStr
-        .replace(/==/g, '===')
-        .replace(/!=/g, '!==')
-        .replace(/\bis not\b/g, '!==')
-        .replace(/\bis\b/g, '===')
-        .replace(/\bTrue\b/g, 'true')
-        .replace(/\bFalse\b/g, 'false')
-        .replace(/\bNone\b/g, 'null')
-        .replace(/\band\b/g, '&&')
-        .replace(/\bor\b/g, '||')
-        .replace(/\bnot\b/g, '!');
-      // eslint-disable-next-line no-new-func
-      const fn = new Function(...keys, `return Boolean(${jsCond});`);
-      return Boolean(fn(...vals));
+      const res = evaluateExpr(condStr);
+      if (res === 'False' || res === 'false' || res === '0' || res === 0 || res === false || res === null || res === undefined) {
+        return false;
+      }
+      return Boolean(res);
     } catch {
       return false;
     }
@@ -1460,7 +1742,7 @@ function runPythonEngine(
       if (line.indent < minIndent) break;
 
       // Handle if / elif / else
-      const ifMatch = /^if\s+(.+):$/.exec(line.text);
+      const ifMatch = /^if(?:\s+|(?=\())(.+):\s*$/.exec(line.text);
       if (ifMatch) {
         const branches: { condition: string | null; body: Statement[] }[] = [];
         const cond = ifMatch[1];
@@ -1469,8 +1751,8 @@ function runPythonEngine(
         i = bodyRes.nextIndex;
 
         while (i < parsedLines.length && parsedLines[i].indent === line.indent) {
-          const elifMatch = /^elif\s+(.+):$/.exec(parsedLines[i].text);
-          const elseMatch = /^else:$/.exec(parsedLines[i].text);
+          const elifMatch = /^elif(?:\s+|(?=\())(.+):\s*$/.exec(parsedLines[i].text);
+          const elseMatch = /^else:\s*$/.exec(parsedLines[i].text);
 
           if (elifMatch) {
             const elifBodyRes = parseBlockAt(i + 1, line.indent + 1);
@@ -1490,7 +1772,7 @@ function runPythonEngine(
       }
 
       // Handle while loop
-      const whileMatch = /^while\s+(.+):$/.exec(line.text);
+      const whileMatch = /^while(?:\s+|(?=\())(.+):\s*$/.exec(line.text);
       if (whileMatch) {
         const cond = whileMatch[1];
         const bodyRes = parseBlockAt(i + 1, line.indent + 1);
@@ -1498,7 +1780,7 @@ function runPythonEngine(
         let elseBody: Statement[] | undefined = undefined;
 
         if (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
-          const elseMatch = /^else:$/.exec(parsedLines[nextI].text);
+          const elseMatch = /^else:\s*$/.exec(parsedLines[nextI].text);
           if (elseMatch) {
             const elseRes = parseBlockAt(nextI + 1, line.indent + 1);
             elseBody = elseRes.statements;
@@ -1512,7 +1794,7 @@ function runPythonEngine(
       }
 
       // Handle for loop (supports single and tuple-unpacked targets: for a, b in items:)
-      const forMatch = /^for\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\s+in\s+(.+):$/.exec(line.text);
+      const forMatch = /^for(?:\s+|(?=\())(.+?)\s+in\s+(.+):\s*$/.exec(line.text);
       if (forMatch) {
         const varName = forMatch[1];
         const iterableExpr = forMatch[2];
@@ -1521,7 +1803,7 @@ function runPythonEngine(
         let elseBody: Statement[] | undefined = undefined;
 
         if (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
-          const elseMatch = /^else:$/.exec(parsedLines[nextI].text);
+          const elseMatch = /^else:\s*$/.exec(parsedLines[nextI].text);
           if (elseMatch) {
             const elseRes = parseBlockAt(nextI + 1, line.indent + 1);
             elseBody = elseRes.statements;
@@ -1535,7 +1817,7 @@ function runPythonEngine(
       }
 
       // Handle def function definition
-      const defMatch = /^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\):$/.exec(line.text);
+      const defMatch = /^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\):\s*$/.exec(line.text);
       if (defMatch) {
         const funcName = defMatch[1];
         const paramsStr = defMatch[2].trim();
@@ -1555,6 +1837,46 @@ function runPythonEngine(
         const bodyRes = parseBlockAt(i + 1, line.indent + 1);
         statements.push({ type: 'def', funcName, paramNames, paramDefaults, body: bodyRes.statements });
         i = bodyRes.nextIndex;
+        continue;
+      }
+
+      // Handle try / except / else / finally
+      const tryMatch = /^try:\s*$/.exec(line.text);
+      if (tryMatch) {
+        const bodyRes = parseBlockAt(i + 1, line.indent + 1);
+        const exceptBranches: { errorType: string | null; varName: string | null; body: Statement[] }[] = [];
+        let nextI = bodyRes.nextIndex;
+        let elseBody: Statement[] | undefined = undefined;
+        let finallyBody: Statement[] | undefined = undefined;
+
+        while (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
+          const exceptMatch = /^except(?:\s+([a-zA-Z0-9_.]+)(?:\s+as\s+([a-zA-Z0-9_]+))?)?\s*:\s*$/.exec(parsedLines[nextI].text);
+          const elseMatch = /^else:\s*$/.exec(parsedLines[nextI].text);
+          const finallyMatch = /^finally:\s*$/.exec(parsedLines[nextI].text);
+
+          if (exceptMatch) {
+            const exBodyRes = parseBlockAt(nextI + 1, line.indent + 1);
+            exceptBranches.push({
+              errorType: exceptMatch[1] || null,
+              varName: exceptMatch[2] || null,
+              body: exBodyRes.statements,
+            });
+            nextI = exBodyRes.nextIndex;
+          } else if (elseMatch) {
+            const elseRes = parseBlockAt(nextI + 1, line.indent + 1);
+            elseBody = elseRes.statements;
+            nextI = elseRes.nextIndex;
+          } else if (finallyMatch) {
+            const finRes = parseBlockAt(nextI + 1, line.indent + 1);
+            finallyBody = finRes.statements;
+            nextI = finRes.nextIndex;
+          } else {
+            break;
+          }
+        }
+
+        statements.push({ type: 'try', body: bodyRes.statements, exceptBranches, elseBody, finallyBody });
+        i = nextI;
         continue;
       }
 
@@ -1665,6 +1987,35 @@ function runPythonEngine(
           const sig = execStatementsSync(stmt.elseBody);
           if (sig !== 'normal') return sig;
         }
+      } else if (stmt.type === 'try') {
+        let brokeOrReturn: ExecResult = 'normal';
+        try {
+          const sig = execStatementsSync(stmt.body);
+          if (sig !== 'normal') {
+            brokeOrReturn = sig;
+          } else if (stmt.elseBody) {
+            const elseSig = execStatementsSync(stmt.elseBody);
+            if (elseSig !== 'normal') brokeOrReturn = elseSig;
+          }
+        } catch (err) {
+          if (err instanceof PythonInputRequiredException) throw err;
+          if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
+            for (const ex of stmt.exceptBranches) {
+              if (ex.varName && err instanceof Error) {
+                scope[ex.varName] = err.message;
+              }
+              const exSig = execStatementsSync(ex.body);
+              if (exSig !== 'normal') brokeOrReturn = exSig;
+              break;
+            }
+          }
+        } finally {
+          if (stmt.finallyBody) {
+            const finSig = execStatementsSync(stmt.finallyBody);
+            if (finSig !== 'normal') brokeOrReturn = finSig;
+          }
+        }
+        if (brokeOrReturn !== 'normal') return brokeOrReturn;
       }
     }
     return 'normal';
@@ -1741,14 +2092,17 @@ function runPythonEngine(
         } else {
           outputs.push(lineStr);
         }
+        onOutput?.(lineStr, true);
       } else if (endArg === '' || endArg === ' ') {
         if (outputs.length > 0) {
           outputs[outputs.length - 1] += endArg + lineStr;
         } else {
           outputs.push(lineStr);
         }
+        onOutput?.(lineStr, true);
       } else {
         outputs.push(lineStr);
+        onOutput?.(lineStr, false);
       }
       return;
     }
@@ -2002,6 +2356,35 @@ function runPythonEngine(
           const sig = await execStatements(stmt.elseBody);
           if (sig !== 'normal') return sig;
         }
+      } else if (stmt.type === 'try') {
+        let brokeOrReturn: ExecResult = 'normal';
+        try {
+          const sig = await execStatements(stmt.body);
+          if (sig !== 'normal') {
+            brokeOrReturn = sig;
+          } else if (stmt.elseBody) {
+            const elseSig = await execStatements(stmt.elseBody);
+            if (elseSig !== 'normal') brokeOrReturn = elseSig;
+          }
+        } catch (err) {
+          if (err instanceof PythonInputRequiredException) throw err;
+          if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
+            for (const ex of stmt.exceptBranches) {
+              if (ex.varName && err instanceof Error) {
+                scope[ex.varName] = err.message;
+              }
+              const exSig = await execStatements(ex.body);
+              if (exSig !== 'normal') brokeOrReturn = exSig;
+              break;
+            }
+          }
+        } finally {
+          if (stmt.finallyBody) {
+            const finSig = await execStatements(stmt.finallyBody);
+            if (finSig !== 'normal') brokeOrReturn = finSig;
+          }
+        }
+        if (brokeOrReturn !== 'normal') return brokeOrReturn;
       }
     }
     return 'normal';

@@ -11,7 +11,7 @@ import {
   writeFile,
   deleteFile,
 } from '@/components/network/pc-panel/pcFileSystem';
-import { executePythonScript } from '@/components/network/pc-panel/pcPythonRunner';
+import { executePythonScript, executePythonScriptAsync } from '@/components/network/pc-panel/pcPythonRunner';
 
 const mockStorage: Record<string, string> = {};
 
@@ -79,6 +79,158 @@ for i in range(3):
     expect(res.output).toContain('Item: 0');
     expect(res.output).toContain('Item: 1');
     expect(res.output).toContain('Item: 2');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should execute powers of 2 script with lambda and map', () => {
+    const script = `
+terms = 10
+result = list(map(lambda x: 2 ** x, range(terms)))
+print("The total terms are:",terms)
+for i in range(terms):
+   print("2 raised to power",i,"is",result[i])
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('The total terms are: 10');
+    expect(res.output).toContain('2 raised to power 9 is 512');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should correctly filter list elements using lambda and modulo operator', () => {
+    const script = `
+my_list = [12, 65, 54, 39, 102, 339, 221,]
+result = list(filter(lambda x: (x % 13 == 0), my_list))
+print("Numbers divisible by 13 are", result)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('Numbers divisible by 13 are [65, 39, 221]');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support bin(), oct(), and hex() conversions', () => {
+    const script = `
+dec = 344
+print("The decimal value of", dec, "is:")
+print(bin(dec), "in binary.")
+print(oct(dec), "in octal.")
+print(hex(dec), "in hexadecimal.")
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('0b101011000 in binary.');
+    expect(res.output).toContain('0o530 in octal.');
+    expect(res.output).toContain('0x158 in hexadecimal.');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support ord() for character ASCII value calculation', () => {
+    const script = `
+c = 'p'
+print("The ASCII value of '" + c + "' is", ord(c))
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain("The ASCII value of 'p' is 112");
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should calculate factors of a number inside a user-defined function', () => {
+    const script = `
+def print_factors(x):
+   print("The factors of",x,"are:")
+   for i in range(1, x + 1):
+       if x % i == 0:
+           print(i)
+
+num = 320
+print_factors(num)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('The factors of 320 are:');
+    expect(res.output).toContain('1');
+    expect(res.output).toContain('320');
+    expect(res.output).toContain('16');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should stream print outputs inside functions when running executePythonScriptAsync', async () => {
+    const script = `
+def print_factors(x):
+   print("The factors of",x,"are:")
+   for i in range(1, x + 1):
+       if x % i == 0:
+           print(i)
+
+num = 320
+print_factors(num)
+`;
+    const streamed: string[] = [];
+    const res = await executePythonScriptAsync(script, [], (chunk: string) => streamed.push(chunk));
+    expect(streamed.join('\n')).toContain('The factors of 320 are:');
+    expect(streamed.join('\n')).toContain('320');
+    expect(streamed.join('\n')).toContain('16');
+    expect(res.output).toContain('The factors of 320 are:');
+  });
+
+  it('should support try...except blocks and avoid running except on valid input', () => {
+    const script = `
+try:
+    num1 = float(input("Enter first number: "))
+    num2 = float(input("Enter second number: "))
+    print("Result:", num1 + num2)
+except:
+    print("Invalid input. Please enter a number.")
+`;
+    const res = executePythonScript(script, ['10', '20']);
+    expect(res.output).toContain('Result: 30');
+    expect(res.output).not.toContain('Invalid input');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should execute full calculator script correctly with except ValueError', () => {
+    const script = `
+def add(x, y):
+    return x + y
+
+while True:
+    choice = input("Enter choice(1/2/3/4): ")
+    if choice in ('1', '2', '3', '4'):
+        try:
+            num1 = float(input("Enter first number: "))
+            num2 = float(input("Enter second number: "))
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+            continue
+
+        if choice == '1':
+            print(num1, "+", num2, "=", add(num1, num2))
+
+        next_calc = input("Let's do next calculation? (yes/no): ")
+        if next_calc == "no":
+            break
+`;
+    // Test 1: Valid numbers 10 and 20
+    const res1 = executePythonScript(script, ['1', '10', '20', 'no']);
+    expect(res1.output).toContain('10 + 20 = 30');
+    expect(res1.output).not.toContain('Invalid input');
+
+    // Test 2: Invalid number 'abc' then valid number
+    const res2 = executePythonScript(script, ['1', 'abc', '1', '10', '20', 'no']);
+    expect(res2.output).toContain('Invalid input. Please enter a number.');
+    expect(res2.output).toContain('10 + 20 = 30');
+  });
+
+  it('should support itertools.product, random.shuffle, and chained indexing deck[i][0]', () => {
+    const script = `
+import itertools, random
+deck = list(itertools.product(range(1,14),['Spade','Heart','Diamond','Club']))
+random.shuffle(deck)
+print("You got:")
+for i in range(5):
+   print(deck[i][0], "of", deck[i][1])
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('You got:');
+    expect(res.output).not.toContain('None of None');
+    expect(res.output).toMatch(/\d+ of (Spade|Heart|Diamond|Club)/);
     expect(res.error).toBeUndefined();
   });
 

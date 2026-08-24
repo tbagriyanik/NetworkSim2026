@@ -114,8 +114,11 @@ export function useKeyboardShortcuts({
       const isCodeEditorFocused = Boolean(
         (e.target as HTMLElement | null)?.closest?.('[data-code-editor]')
       );
+      const isTerminalInputFocused = Boolean(
+        (e.target as HTMLElement | null)?.closest?.('[data-terminal-input]')
+      );
       if (isModalOrWindowActive && (
-        ((e.key === 'Tab' || e.code === 'Tab') && !isCodeEditorFocused) ||
+        ((e.key === 'Tab' || e.code === 'Tab') && !isCodeEditorFocused && !isTerminalInputFocused) ||
         ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm')
       )) {
         e.preventDefault();

@@ -2413,7 +2413,10 @@ export function PCPanel({
             writeFile(fs, editingFile.path, newContent);
             saveFs(deviceId, fs);
             const fileName = editingFile.path.split(/[\\/]/).pop() || '';
-            void executeCommand(`python ${fileName}`);
+            setActiveTab('desktop');
+            setTimeout(() => {
+              void executeCommand(`python ${fileName}`);
+            }, 50);
           }
         }}
         onClose={() => {
