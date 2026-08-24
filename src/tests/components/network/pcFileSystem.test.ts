@@ -268,6 +268,38 @@ print('The square root of %0.3f is %0.3f' % (num, num_sqrt))
     expect(res.output).not.toContain('NaN');
     expect(res.error).toBeUndefined();
   });
+
+  it('should calculate area of triangle correctly without resulting in 0', () => {
+    const script = `
+# Python Program to find the area of triangle
+a = 5
+b = 6
+c = 7
+
+s = (a + b + c) / 2
+area = (s*(s-a)*(s-b)*(s-c)) ** 0.5
+print('The area of the triangle is %0.2f' %area)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('The area of the triangle is 14.70');
+    expect(res.output).not.toContain('0.00');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support tuple unpacking and multiple variable swapping (x, y = y, x)', () => {
+    const script = `
+x = 5
+y = 10
+
+x, y = y, x
+print("x =", x)
+print("y =", y)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain("x = 10");
+    expect(res.output).toContain("y = 5");
+    expect(res.error).toBeUndefined();
+  });
 });
 
 

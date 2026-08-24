@@ -186,6 +186,34 @@ function findOperatorIndex(str: string, op: string): number {
   return -1;
 }
 
+function splitOutsideQuotesAndParens(str: string, op: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let inQ = false;
+  let qChar = '';
+  let pDepth = 0;
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if ((char === '"' || char === "'") && (i === 0 || str[i - 1] !== '\\')) {
+      if (!inQ) { inQ = true; qChar = char; }
+      else if (qChar === char) { inQ = false; }
+    } else if (!inQ) {
+      if (char === '(' || char === '[' || char === '{') pDepth++;
+      else if (char === ')' || char === ']' || char === '}') pDepth--;
+      else if (pDepth === 0 && str.startsWith(op, i)) {
+        parts.push(current);
+        current = '';
+        i += op.length - 1;
+        continue;
+      }
+    }
+    current += char;
+  }
+  if (current || parts.length > 0) parts.push(current);
+  return parts.map(p => p.trim());
+}
+
 function formatPrintfString(template: string, args: unknown[]): string {
   let argIndex = 0;
   return template.replace(/%([-+0 #]*)(\d+)?(?:\.(\d+))?([sdiXxfgeEG%])/g, (_match, flags, widthStr, precStr, type) => {
@@ -528,18 +556,32 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       return pythonRange(...args);
     }
 
-    // Handle string concatenation or math in simple expressions like: "Hello " + name
-    if (trimmed.includes('+')) {
-      const parts = trimmed.split('+').map(p => evaluateExpr(p));
+    // Handle math & concatenation outside parens/quotes
+    const addParts = splitOutsideQuotesAndParens(trimmed, '+');
+    if (addParts.length > 1) {
+      const parts = addParts.map(p => evaluateExpr(p));
       if (parts.some(p => typeof p === 'string')) {
         return parts.map(p => String(p ?? '')).join('');
       }
       return parts.reduce((acc: number, val: unknown) => acc + Number(val || 0), 0);
     }
 
-    if (trimmed.includes('*') && !trimmed.includes('**')) {
-      const parts = trimmed.split('*').map(p => evaluateExpr(p));
+    const subParts = splitOutsideQuotesAndParens(trimmed, '-');
+    if (subParts.length > 1 && subParts[0] !== '') {
+      const parts = subParts.map(p => evaluateExpr(p));
+      return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc - Number(val)), 0);
+    }
+
+    const mulParts = splitOutsideQuotesAndParens(trimmed, '*');
+    if (mulParts.length > 1 && !trimmed.includes('**')) {
+      const parts = mulParts.map(p => evaluateExpr(p));
       return parts.reduce((acc: number, val: unknown) => acc * Number(val || 1), 1);
+    }
+
+    const divParts = splitOutsideQuotesAndParens(trimmed, '/');
+    if (divParts.length > 1) {
+      const parts = divParts.map(p => evaluateExpr(p));
+      return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc / Number(val)), 0);
     }
 
     // Fallback: JS Function evaluation in isolated scope
@@ -666,13 +708,52 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       return;
     }
 
-    // Handle variable assignment: var_name = expr
-    const assignMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/.exec(trimmed);
-    if (assignMatch) {
-      const varName = assignMatch[1];
-      const expr = assignMatch[2];
-      scope[varName] = evaluateExpr(expr);
-      return;
+    // Handle variable assignments (including tuple unpacking like x, y = y, x and augmented assignments +=, -=, *=, /=)
+    const eqIdx = findOperatorIndex(trimmed, '=');
+    if (eqIdx !== -1) {
+      const prevChar = trimmed[eqIdx - 1];
+      const nextChar = trimmed[eqIdx + 1];
+      if (prevChar !== '=' && prevChar !== '!' && prevChar !== '<' && prevChar !== '>' && nextChar !== '=') {
+        let isAugmented = false;
+        let augOp = '';
+        if (prevChar === '+' || prevChar === '-' || prevChar === '*' || prevChar === '/') {
+          isAugmented = true;
+          augOp = prevChar;
+        }
+
+        const leftSide = isAugmented ? trimmed.slice(0, eqIdx - 1).trim() : trimmed.slice(0, eqIdx).trim();
+        const rightSide = trimmed.slice(eqIdx + 1).trim();
+
+        if (isAugmented) {
+          const varName = leftSide;
+          if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
+            scope[varName] = evaluateExpr(`${varName} ${augOp} (${rightSide})`);
+            return;
+          }
+        } else {
+          const targets = splitOutsideQuotesAndParens(leftSide, ',').map(t => t.trim());
+          if (targets.every(t => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(t))) {
+            if (targets.length === 1) {
+              scope[targets[0]] = evaluateExpr(rightSide);
+            } else {
+              // Multiple assignment / tuple unpacking (e.g. x, y = y, x)
+              const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
+              let rhsValues: unknown[];
+              if (rawRhsParts.length > 1) {
+                rhsValues = rawRhsParts.map(p => evaluateExpr(p));
+              } else {
+                const evalRhs = evaluateExpr(rightSide);
+                rhsValues = Array.isArray(evalRhs) ? (evalRhs as unknown[]) : [evalRhs];
+              }
+
+              for (let i = 0; i < targets.length; i++) {
+                scope[targets[i]] = rhsValues[i];
+              }
+            }
+            return;
+          }
+        }
+      }
     }
 
     // Fallback for simple standalone expression
