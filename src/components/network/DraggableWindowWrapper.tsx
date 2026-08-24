@@ -52,31 +52,25 @@ export function DraggableWindowWrapper({
 }: DraggableWindowWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Local z-index state initialized from store
-  const [zIndex, setZIndex] = useState(100);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { t, language } = useLanguage();
 
   const activeWindowId = useWindowStore(state => state.activeWindowId);
   const setActiveWindow = useWindowStore(state => state.setActiveWindow);
+  const zIndex = useWindowStore(state => state.windowZIndices[id] || 100);
 
   const isActive = activeWindowId === id;
 
   // Bring to front on mount and when opened
   useEffect(() => {
     if (isOpen) {
-      const newZ = setActiveWindow(id);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setZIndex(newZ);
+      setActiveWindow(id);
     }
   }, [isOpen, id, setActiveWindow]);
 
   // Handle focus when clicking anywhere inside the window
-  const handleFocus = (_e: React.MouseEvent | React.PointerEvent | React.TouchEvent) => {
-    if (!isActive) {
-      const newZ = setActiveWindow(id);
-      setZIndex(newZ);
-    }
+  const handleFocus = () => {
+    setActiveWindow(id);
   };
 
   // Handle escape key
@@ -94,6 +88,19 @@ export function DraggableWindowWrapper({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isActive, onClose, onEscapeKeyDown]);
+
+  // Handle Ctrl+M keydown to toggle minimize/maximize when active
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm' && isOpen && isActive) {
+        e.preventDefault();
+        setIsCollapsed(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isActive]);
 
   const [isMobile, setIsMobile] = useState(false);
 
@@ -146,6 +153,9 @@ export function DraggableWindowWrapper({
         className
       )}
       onPointerDownCapture={handleFocus}
+      onMouseDownCapture={handleFocus}
+      onTouchStartCapture={handleFocus}
+      onFocusCapture={handleFocus}
     >
       {/* Header */}
       <div

@@ -1,0 +1,235 @@
+'use client';
+
+import React, { useEffect, useCallback, useMemo } from 'react';
+import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
+import { useWindowStore } from '@/hooks/useWindowStore';
+import type { CanvasDevice } from '@/components/network/networkTopology.types';
+import { Monitor, Server, Router, Shield, Radio, AppWindow } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface WindowSwitcherModalProps {
+  topologyDevices?: CanvasDevice[];
+  isDark?: boolean;
+  language?: 'tr' | 'en';
+}
+
+const getDeviceIcon = (type: string) => {
+  switch (type) {
+    case 'pc':
+      return <Monitor className="w-6 h-6 text-cyan-400" />;
+    case 'switchL2':
+    case 'switchL3':
+      return <Server className="w-6 h-6 text-emerald-400" />;
+    case 'router':
+      return <Router className="w-6 h-6 text-blue-400" />;
+    case 'firewall':
+      return <Shield className="w-6 h-6 text-amber-400" />;
+    case 'wlc':
+      return <Radio className="w-6 h-6 text-purple-400" />;
+    default:
+      return <AppWindow className="w-6 h-6 text-secondary-400" />;
+  }
+};
+
+const getDeviceTypeName = (type: string, language: 'tr' | 'en') => {
+  switch (type) {
+    case 'pc':
+      return 'PC';
+    case 'switchL2':
+      return 'L2 Switch';
+    case 'switchL3':
+      return 'L3 Switch';
+    case 'router':
+      return 'Router';
+    case 'firewall':
+      return 'Firewall';
+    case 'wlc':
+      return 'WLC Controller';
+    default:
+      return language === 'tr' ? 'Cihaz' : 'Device';
+  }
+};
+
+export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
+  topologyDevices = [],
+  isDark = true,
+  language = 'tr',
+}) => {
+  const isSwitcherOpen = useMultiWindowStore((state) => state.isSwitcherOpen);
+  const switcherSelectedIndex = useMultiWindowStore((state) => state.switcherSelectedIndex);
+  const openWindows = useMultiWindowStore((state) => state.openWindows);
+  const setSwitcherSelectedIndex = useMultiWindowStore((state) => state.setSwitcherSelectedIndex);
+  const stepSwitcher = useMultiWindowStore((state) => state.stepSwitcher);
+  const closeSwitcher = useMultiWindowStore((state) => state.closeSwitcher);
+  const openDeviceWindow = useMultiWindowStore((state) => state.openDeviceWindow);
+  const isWindowOpen = useMultiWindowStore((state) => state.isWindowOpen);
+  const setActiveWindow = useWindowStore((state) => state.setActiveWindow);
+
+  // If openWindows has items, use openWindows. Otherwise, fall back to topologyDevices.
+  const displayList = useMemo(() => {
+    if (openWindows.length > 0) {
+      return openWindows.map((w) => ({ id: w.id, type: w.type }));
+    }
+    return topologyDevices.map((d) => ({ id: d.id, type: d.type }));
+  }, [openWindows, topologyDevices]);
+
+  const handleSelectWindow = useCallback(
+    (deviceId: string, deviceType?: string) => {
+      if (deviceType && !isWindowOpen(deviceId)) {
+        openDeviceWindow(deviceId, deviceType);
+      }
+      setActiveWindow(deviceId);
+      closeSwitcher();
+    },
+    [isWindowOpen, openDeviceWindow, setActiveWindow, closeSwitcher]
+  );
+
+  // Global listeners while switcher is open:
+  // Capture keydown for Tab / Shift+Tab to step selection
+  // Release Control / Meta to commit selection and open window
+  useEffect(() => {
+    if (!isSwitcherOpen) return;
+
+    const handleKeyDownCapture = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' || e.code === 'Tab') {
+        e.preventDefault();
+        e.stopPropagation();
+        stepSwitcher(e.shiftKey, displayList.length);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeSwitcher();
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (!e.ctrlKey && !e.metaKey) {
+        const selected = displayList[switcherSelectedIndex];
+        if (selected) {
+          handleSelectWindow(selected.id, selected.type);
+        } else {
+          closeSwitcher();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDownCapture, true);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDownCapture, true);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [isSwitcherOpen, switcherSelectedIndex, displayList, handleSelectWindow, closeSwitcher, stepSwitcher]);
+
+  if (!isSwitcherOpen || displayList.length === 0) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-150 animate-in fade-in"
+      onClick={() => closeSwitcher()}
+    >
+      <div
+        className={cn(
+          'w-full max-w-2xl mx-4 p-5 rounded-2xl border shadow-2xl transition-all select-none',
+          isDark
+            ? 'bg-secondary-950/90 border-secondary-700/80 text-secondary-100 shadow-emerald-950/30'
+            : 'bg-white/95 border-secondary-300 text-secondary-900 shadow-xl'
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex items-center justify-between pb-3 mb-4 border-b border-secondary-700/40">
+          <div className="flex items-center gap-2">
+            <AppWindow className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-sm font-semibold tracking-wide">
+              {language === 'tr' ? 'Görev Yöneticisi Pencere Listesi' : 'Task Switcher Windows'}
+            </h3>
+          </div>
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+            {displayList.length} {language === 'tr' ? 'Öğe' : 'Items'}
+          </span>
+        </div>
+
+        {/* Windows List / Cards Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
+          {displayList.map((item, index) => {
+            const deviceObj = topologyDevices.find((d) => d.id === item.id);
+            const name = deviceObj?.name || item.id;
+            const typeLabel = getDeviceTypeName(item.type, language);
+            const isSelected = index === switcherSelectedIndex;
+            const isOpenAlready = isWindowOpen(item.id);
+
+            return (
+              <div
+                key={item.id}
+                role="button"
+                tabIndex={0}
+                onMouseEnter={() => setSwitcherSelectedIndex(index)}
+                onClick={() => handleSelectWindow(item.id, item.type)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    handleSelectWindow(item.id, item.type);
+                  }
+                }}
+                className={cn(
+                  'flex items-center gap-3.5 p-3.5 rounded-xl border transition-all cursor-pointer outline-none',
+                  isSelected
+                    ? isDark
+                      ? 'bg-emerald-500/15 border-emerald-500 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500 scale-[1.02]'
+                      : 'bg-emerald-50 border-emerald-600 shadow-md ring-1 ring-emerald-600 scale-[1.02]'
+                    : isDark
+                      ? 'bg-secondary-900/60 border-secondary-800 hover:bg-secondary-800/70 hover:border-secondary-700'
+                      : 'bg-secondary-50 border-secondary-200 hover:bg-secondary-100 hover:border-secondary-300'
+                )}
+              >
+                <div
+                  className={cn(
+                    'p-2.5 rounded-lg border shrink-0',
+                    isDark ? 'bg-secondary-900 border-secondary-700/80' : 'bg-white border-secondary-200'
+                  )}
+                >
+                  {getDeviceIcon(item.type)}
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <h4 className="text-sm font-semibold truncate">{name}</h4>
+                    <span
+                      className={cn(
+                        'w-2.5 h-2.5 rounded-full shrink-0',
+                        isOpenAlready ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-secondary-600'
+                      )}
+                      title={isOpenAlready ? (language === 'tr' ? 'Açık' : 'Open') : (language === 'tr' ? 'Kapalı' : 'Closed')}
+                    />
+                  </div>
+                  <p className="text-xs text-secondary-400 truncate mt-0.5">{typeLabel}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Modal Footer / Hints */}
+        <div className="mt-4 pt-3 border-t border-secondary-700/40 flex items-center justify-between text-[11px] text-secondary-400">
+          <div className="flex items-center gap-2">
+            <span className="px-1.5 py-0.5 rounded bg-secondary-800 font-mono text-[10px] text-secondary-300">
+              Ctrl + Tab
+            </span>
+            <span>{language === 'tr' ? 'Sonraki' : 'Next'}</span>
+            <span className="mx-1">·</span>
+            <span className="px-1.5 py-0.5 rounded bg-secondary-800 font-mono text-[10px] text-secondary-300">
+              Ctrl + Shift + Tab
+            </span>
+            <span>{language === 'tr' ? 'Önceki' : 'Previous'}</span>
+          </div>
+
+          <span className="hidden sm:inline italic">
+            {language === 'tr'
+              ? 'Tıklayabilir veya Ctrl tuşunu bırakabilirsiniz'
+              : 'Click or release Ctrl to open'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};

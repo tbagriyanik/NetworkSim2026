@@ -1221,7 +1221,7 @@ export function Terminal({
         setHistoryIndex(-1);
         setInput('');
       }
-    } else if (e.key === 'Tab') {
+    } else if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       if (canUseAutocomplete) {
         completeAutocompleteSelection(autocompleteSuggestions[autocompleteIndex] || autocompleteSuggestions[0]);
@@ -1368,7 +1368,10 @@ export function Terminal({
       )}
       {isMobile && onQuickSettings && (
         <TooltipWrapper title={t.quickSettingsAndTasks}>
-          <Button variant="ghost" size="icon" onClick={onQuickSettings} className={cn("h-9 w-9 rounded-lg text-secondary-600 hover:text-secondary-900", isDark && "text-secondary-300 hover:text-secondary-100")}>
+          <Button variant="ghost" size="icon" onClick={(e) => {
+            e.stopPropagation();
+            onQuickSettings();
+          }} className={cn("h-9 w-9 rounded-lg text-secondary-600 hover:text-secondary-900", isDark && "text-secondary-300 hover:text-secondary-100")}>
             <Settings className="w-4 h-4" aria-hidden="true" />
           </Button>
         </TooltipWrapper>

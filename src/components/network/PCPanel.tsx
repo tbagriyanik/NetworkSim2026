@@ -24,6 +24,8 @@ import { errorHandler } from '@/lib/errors/errorHandler';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
 import { PCPanelNavigation } from './pc-panel/PCPanelNavigation';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
+import { FileEditorModal } from './pc-panel/FileEditorModal';
+import { loadFs, saveFs, writeFile } from './pc-panel/pcFileSystem';
 import { HomeLauncher } from './pc-panel/HomeLauncher';
 import { PowerOffOverlay } from './pc-panel/PowerOffOverlay';
 import { getDefaultPcFiles, getPCConfigDefaults } from './pc-panel/pcPanelFiles';
@@ -146,6 +148,16 @@ export function PCPanel({
   // FTP session state (interactive ftp> mode on PC desktop)
   const [ftpSession, setFtpSession] = useState<FtpSession | null>(null);
   const [isFtpFilePickerOpen, setIsFtpFilePickerOpen] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string>(() => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`pc_cwd_${deviceId}`);
+        if (stored) return stored;
+      } catch { }
+    }
+    return 'C:\\';
+  });
+  const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
 
   // Local files downloaded via FTP get
   const [pcLocalFiles, setPcLocalFiles] = useState<PcFile[]>(() => {
@@ -155,14 +167,19 @@ export function PCPanel({
         if (stored) return JSON.parse(stored);
       } catch { }
     }
-    // First time this PC is used — seed with per-PC default files
     const defaults = getDefaultPcFiles(deviceId);
     try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults)); } catch { }
     return defaults;
   });
 
-  // Keep desktop CMD and console histories separate.
+  // Keep desktop CMD and console histories separate per PC device.
   const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`pc_history_${deviceId}`);
+        if (stored) return JSON.parse(stored);
+      } catch { }
+    }
     return pcHistories?.get(deviceId) || [];
   });
   const [desktopHistoryIndex, setDesktopHistoryIndex] = useState(-1);
@@ -173,24 +190,57 @@ export function PCPanel({
   const [undoStack, setUndoStack] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
 
-  // Load history when component mounts or deviceId changes
+  // Save currentPath per deviceId
   useEffect(() => {
-    const globalHistory = pcHistories?.get(deviceId) || [];
-    setTimeout(() => setDesktopHistory(globalHistory), 0);
-    setTimeout(() => setDesktopHistoryIndex(-1), 0);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(`pc_cwd_${deviceId}`, currentPath);
+      } catch { }
+    }
+  }, [deviceId, currentPath]);
+
+  // Sync files and cwd when deviceId changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const storedFiles = localStorage.getItem(`pc_files_${deviceId}`);
+        if (storedFiles) {
+          setPcLocalFiles(JSON.parse(storedFiles));
+        } else {
+          const defaults = getDefaultPcFiles(deviceId);
+          localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults));
+          setPcLocalFiles(defaults);
+        }
+
+        const storedCwd = localStorage.getItem(`pc_cwd_${deviceId}`);
+        setCurrentPath(storedCwd || 'C:\\');
+      } catch { }
+    }
+  }, [deviceId]);
+
+  // Load and save desktop history per deviceId
+  useEffect(() => {
+    let historyToLoad: string[] = [];
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(`pc_history_${deviceId}`);
+        if (stored) historyToLoad = JSON.parse(stored);
+      } catch { }
+    }
+    if (historyToLoad.length === 0) {
+      historyToLoad = pcHistories?.get(deviceId) || [];
+    }
+    setDesktopHistory(historyToLoad);
+    setDesktopHistoryIndex(-1);
   }, [deviceId, pcHistories]);
 
-  // Sync with global history if it changes externally
   useEffect(() => {
-    const globalHistory = pcHistories?.get(deviceId) || [];
-    setTimeout(() => setDesktopHistory(prevHistory => {
-      if (JSON.stringify(globalHistory) !== JSON.stringify(prevHistory)) {
-        return globalHistory;
-      }
-      return prevHistory;
-    }), 0);
-    setTimeout(() => setDesktopHistoryIndex(-1), 0);
-  }, [pcHistories, deviceId]);
+    if (typeof localStorage !== 'undefined' && desktopHistory.length > 0) {
+      try {
+        localStorage.setItem(`pc_history_${deviceId}`, JSON.stringify(desktopHistory));
+      } catch { }
+    }
+  }, [deviceId, desktopHistory]);
 
   // Reset per-tab command cursor when tab changes.
   useEffect(() => {
@@ -1836,6 +1886,9 @@ export function PCPanel({
     clearPcArpTable,
     openWebPage,
     setPcHostname,
+    currentPath,
+    setCurrentPath,
+    setEditingFile,
   });
 
   const {
@@ -2379,6 +2432,31 @@ export function PCPanel({
         isDark={isDark}
         onGetFile={(fileName) => handleFtpSessionCommand(`get ${fileName}`)}
         onPutFile={executeFtpPut}
+      />
+
+      <FileEditorModal
+        open={!!editingFile}
+        filePath={editingFile?.path || ''}
+        initialContent={editingFile?.content || ''}
+        language={language}
+        isDark={isDark}
+        onSave={(newContent) => {
+          if (editingFile) {
+            const fs = loadFs(deviceId);
+            writeFile(fs, editingFile.path, newContent);
+            saveFs(deviceId, fs);
+          }
+        }}
+        onRunPython={(newContent) => {
+          if (editingFile) {
+            const fs = loadFs(deviceId);
+            writeFile(fs, editingFile.path, newContent);
+            saveFs(deviceId, fs);
+            const fileName = editingFile.path.split(/[\\/]/).pop() || '';
+            void executeCommand(`python ${fileName}`);
+          }
+        }}
+        onClose={() => setEditingFile(null)}
       />
 
       <PCBrowser

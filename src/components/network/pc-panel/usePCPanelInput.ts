@@ -401,7 +401,7 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
         return;
       }
       void executeCommand();
-    } else if (e.key === 'Tab') {
+    } else if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       if (canUseAutocomplete) {
         completeAutocompleteSelection(renderAutocompleteSuggestions[autocompleteIndex] || renderAutocompleteSuggestions[0]);

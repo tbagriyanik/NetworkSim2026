@@ -5,6 +5,8 @@ import type { CanvasDevice, DeviceType } from '@/components/network/networkTopol
 import type { SwitchState } from '@/lib/network/types';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import { useAppStore } from '@/lib/store/appStore';
+import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
+import { useWindowStore } from '@/hooks/useWindowStore';
 
 export function useKeyboardShortcuts({
   showMobileMenu,
@@ -113,6 +115,14 @@ export function useKeyboardShortcuts({
       }
 
       if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'Tab' || e.code === 'Tab') {
+          e.preventDefault();
+          const activeWindowId = useWindowStore.getState().activeWindowId;
+          const fallback = topologyDevices.map((d) => ({ id: d.id, type: d.type }));
+          useMultiWindowStore.getState().openSwitcher(activeWindowId, e.shiftKey, fallback);
+          return;
+        }
+
         const key = e.key.toLowerCase();
 
         const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
@@ -198,11 +208,12 @@ export function useKeyboardShortcuts({
         }
       }
 
-      if (e.key === 'Tab') {
+      if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
         if (showProjectPicker) {
           return;
         }
-        if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showUnifiedDeviceModal) {
+        const hasOpenDeviceWindows = useMultiWindowStore.getState().openWindows.length > 0;
+        if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showUnifiedDeviceModal && !hasOpenDeviceWindows) {
           e.preventDefault();
 
           if (selectedDevice) {
@@ -225,6 +236,10 @@ export function useKeyboardShortcuts({
 
       if (e.key === 'Enter') {
         if (e.defaultPrevented) return;
+        const activeTag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
+        if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) {
+          return;
+        }
         if (showUnifiedDeviceModal || showAboutModal || showPCPanel || showFirewallPanel || showRouterPanel || showProjectPicker || showOnboarding || !!confirmDialog?.show || !!saveDialog?.show) {
           return;
         }

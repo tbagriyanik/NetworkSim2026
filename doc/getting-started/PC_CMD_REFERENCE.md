@@ -31,7 +31,7 @@ ping 192.168.1.1
 ping 192.168.1.1 -n 10
 ping 192.168.1.1 -t
 ping 192.168.1.1 -l 1400 -n 5
-ping google.com -a
+ping [IP_ADDRESS] -a
 ```
 
 ---
@@ -81,10 +81,10 @@ nslookup
 
 **Örnekler:**
 ```
-nslookup google.com
+nslookup [IP_ADDRESS]
 nslookup 192.168.1.1
-nslookup google.com -type=MX
-nslookup google.com server 8.8.8.8
+nslookup [IP_ADDRESS] -type=MX
+nslookup [IP_ADDRESS] server 8.8.8.8
 ```
 
 ---

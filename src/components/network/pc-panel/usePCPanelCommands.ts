@@ -9,6 +9,11 @@ import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { getL3Hops } from '@/lib/network/routing';
 import { errorHandler, DHCP_ERRORS, DEVICE_ERRORS } from '@/lib/errors/errorHandler';
 import { formatMacForArp } from './pcPanelHelpers';
+import {
+  loadFs, saveFs, resolvePath, isDir, listDir, makeDir, removeDir,
+  readFile, deleteFile,
+} from './pcFileSystem';
+import { executePythonScript } from './pcPythonRunner';
 
 export interface UsePCPanelCommandsParams {
   activeTabRef: React.MutableRefObject<PCActiveTab>;
@@ -82,6 +87,9 @@ export interface UsePCPanelCommandsParams {
   clearPcArpTable?: () => void;
   openWebPage: (url: string, target?: string) => void;
   setPcHostname: (hostname: string) => void;
+  currentPath: string;
+  setCurrentPath: React.Dispatch<React.SetStateAction<string>>;
+  setEditingFile: React.Dispatch<React.SetStateAction<{ path: string; content: string } | null>>;
 }
 
 // ---------------------------------------------------------------------------
@@ -183,6 +191,9 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     clearPcArpTable,
     openWebPage,
     setPcHostname,
+    currentPath,
+    setCurrentPath,
+    setEditingFile,
   } = params;
 
   const executeFtpPut = useCallback((fileName: string) => {
@@ -942,7 +953,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           emit('output', '220 FTP server ready.');
           emit('success', language === 'tr' ? 'Dosya transfer ekranı açıldı.' : 'File transfer window opened.');
         } else if (cmd === 'help' || cmd === '?') {
-          emit('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, dir, ver, cls, exit, quit`);
+          emit('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, cd, md, rd, dir, type, del, edit, python, ver, cls, exit, quit`);
         } else if (cmd === 'cls') {
           setPcOutput([]);
         } else if (cmd === 'exit' || cmd === 'quit') {
@@ -965,24 +976,158 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           }
         } else if (cmd === 'ver') {
           emit('output', `OS [Version 10.0.26200.8037]`);
-        } else if (cmd === 'dir' || cmd === 'ls') {
-          const localFiles = pcLocalFiles;
-          let fileLines = '';
-          let totalSize = 0;
-          if (localFiles.length > 0) {
-            fileLines = '\n' + localFiles.map(f => {
-              const d = f.modifiedAt ? new Date(f.modifiedAt) : new Date();
-              const month = (d.getMonth() + 1).toString().padStart(2, '0');
-              const day = d.getDate().toString().padStart(2, '0');
-              const year = d.getFullYear();
-              const mm = d.getMinutes().toString().padStart(2, '0');
-              const ap = d.getHours() >= 12 ? 'PM' : 'AM';
-              const h12 = (d.getHours() % 12 || 12).toString().padStart(2, '0');
-              totalSize += f.size || 0;
-              return `${month}/${day}/${year}  ${h12}:${mm} ${ap}             ${(f.size || 0).toString().padStart(8)} ${f.name}`;
-            }).join('\n');
+        } else if (cmd === 'cd' || cmd === 'chdir') {
+          const targetArg = args.join(' ').trim();
+          if (!targetArg || targetArg === '.') {
+            emit('output', currentPath);
+          } else {
+            const fs = loadFs(deviceId);
+            const targetPath = resolvePath(currentPath, targetArg);
+            if (isDir(fs, targetPath)) {
+              setCurrentPath(targetPath);
+            } else {
+              emit('error', 'The system cannot find the path specified.');
+            }
           }
-          emit('output', ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of C:\\\n03/27/2026  10:00 AM    <DIR>          .\n03/27/2026  10:00 AM    <DIR>          ..\n${fileLines}\n               ${localFiles.length} File(s)          ${totalSize} bytes\n                2 Dir(s)  100,000,000,000 bytes free`);
+        } else if (cmd === 'md' || cmd === 'mkdir') {
+          const folderName = args.join(' ').trim();
+          if (!folderName) {
+            emit('output', 'The syntax of the command is incorrect.');
+          } else {
+            const fs = loadFs(deviceId);
+            const targetPath = resolvePath(currentPath, folderName);
+            const success = makeDir(fs, targetPath);
+            if (success) {
+              saveFs(deviceId, fs);
+              emit('success', `Directory ${folderName} created.`);
+            } else {
+              emit('error', `A subdirectory or file ${folderName} already exists or path is invalid.`);
+            }
+          }
+        } else if (cmd === 'rd' || cmd === 'rmdir') {
+          const folderName = args.join(' ').trim();
+          if (!folderName) {
+            emit('output', 'The syntax of the command is incorrect.');
+          } else {
+            const fs = loadFs(deviceId);
+            const targetPath = resolvePath(currentPath, folderName);
+            const success = removeDir(fs, targetPath);
+            if (success) {
+              saveFs(deviceId, fs);
+              emit('success', `Directory ${folderName} removed.`);
+            } else {
+              emit('error', 'The directory is not empty or cannot be found.');
+            }
+          }
+        } else if (cmd === 'dir' || cmd === 'ls') {
+          const fs = loadFs(deviceId);
+          const entries = listDir(fs, currentPath);
+          let totalFiles = 0;
+          let totalSize = 0;
+          const dirLines: string[] = [];
+          dirLines.push(`08/24/2026  12:00 PM    <DIR>          .`);
+          dirLines.push(`08/24/2026  12:00 PM    <DIR>          ..`);
+
+          for (const entryName of entries) {
+            const fileContent = readFile(fs, resolvePath(currentPath, entryName));
+            if (fileContent !== null) {
+              totalFiles++;
+              const size = fileContent.length;
+              totalSize += size;
+              dirLines.push(`08/24/2026  12:00 PM             ${size.toString().padStart(8)} ${entryName}`);
+            } else {
+              dirLines.push(`08/24/2026  12:00 PM    <DIR>          ${entryName}`);
+            }
+          }
+
+          const isRoot = currentPath === 'C:\\' || currentPath === 'C:';
+          if (isRoot) {
+            for (const f of pcLocalFiles) {
+              if (!entries.includes(f.name)) {
+                totalFiles++;
+                totalSize += f.size || 0;
+                dirLines.push(`08/24/2026  12:00 PM             ${(f.size || 0).toString().padStart(8)} ${f.name}`);
+              }
+            }
+          }
+
+          const dirOutput = ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of ${currentPath}\n\n${dirLines.join('\n')}\n               ${totalFiles} File(s)          ${totalSize} bytes\n                ${dirLines.filter(l => l.includes('<DIR>')).length} Dir(s)  100,000,000,000 bytes free`;
+          emit('output', dirOutput);
+        } else if (cmd === 'type' || cmd === 'cat') {
+          const fileName = args.join(' ').trim();
+          if (!fileName) {
+            emit('output', 'The syntax of the command is incorrect.');
+          } else {
+            const fs = loadFs(deviceId);
+            const targetPath = resolvePath(currentPath, fileName);
+            const content = readFile(fs, targetPath);
+            if (content !== null) {
+              emit('output', content);
+            } else {
+              const isRoot = currentPath === 'C:\\' || currentPath === 'C:';
+              const localFile = isRoot ? pcLocalFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase()) : null;
+              if (localFile) {
+                emit('output', `[File ${localFile.name} (${localFile.size} bytes)]`);
+              } else {
+                emit('error', 'The system cannot find the file specified.');
+              }
+            }
+          }
+        } else if (cmd === 'del' || cmd === 'delete' || cmd === 'rm') {
+          const fileName = args.join(' ').trim();
+          if (!fileName) {
+            emit('output', 'The syntax of the command is incorrect.');
+          } else {
+            const fs = loadFs(deviceId);
+            const targetPath = resolvePath(currentPath, fileName);
+            const deletedFS = deleteFile(fs, targetPath);
+            const isRoot = currentPath === 'C:\\' || currentPath === 'C:';
+            const localFileExists = isRoot && pcLocalFiles.some(f => f.name.toLowerCase() === fileName.toLowerCase());
+            if (localFileExists) {
+              setPcLocalFiles(prev => prev.filter(f => f.name.toLowerCase() !== fileName.toLowerCase()));
+            }
+            if (deletedFS || localFileExists) {
+              if (deletedFS) saveFs(deviceId, fs);
+              emit('success', `File ${fileName} deleted.`);
+            } else {
+              emit('error', 'Could Not Find ' + targetPath);
+            }
+          }
+        } else if (cmd === 'edit' || cmd === 'notepad') {
+          const fileName = args.join(' ').trim() || 'kod.py';
+          const fs = loadFs(deviceId);
+          const targetPath = resolvePath(currentPath, fileName);
+          const existingContent = readFile(fs, targetPath) ?? '';
+          setEditingFile({ path: targetPath, content: existingContent });
+          emit('output', `Opening notepad editor for ${fileName}...`);
+        } else if (cmd === 'python' || cmd === 'python3' || cmd === 'py') {
+          const firstArg = args[0];
+          if (firstArg === '-c' && args.length > 1) {
+            const pyCode = args.slice(1).join(' ').replace(/^["']|["']$/g, '');
+            const result = executePythonScript(pyCode);
+            if (result.error) {
+              emit('error', result.error);
+            } else {
+              emit('output', result.output);
+            }
+          } else if (firstArg) {
+            const fs = loadFs(deviceId);
+            const targetPath = resolvePath(currentPath, firstArg);
+            const fileContent = readFile(fs, targetPath);
+            if (fileContent !== null) {
+              emit('output', `Running Python script ${firstArg}...\n`);
+              const result = executePythonScript(fileContent);
+              if (result.error) {
+                emit('error', result.error);
+              } else {
+                emit('output', result.output);
+              }
+            } else {
+              emit('error', `python: can't open file '${firstArg}': No such file or directory`);
+            }
+          } else {
+            emit('output', 'Python 3.10.0 (netsim-embed, Aug 24 2026)\nType "edit <file.py>" to create or edit scripts, or "python <file.py>" to run.');
+          }
         } else {
           cmdSuccess = false;
           emit('error', `'${cmd}' is not recognized as an internal or external command.`);
@@ -1067,6 +1212,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     normalizeLookupTargetCallback, buildArpTableOutput,
     addPcArpEntry, removePcArpEntry, clearPcArpTable,
     openWebPage, setPcHostname, executeFtpPut, handleFtpSessionCommand,
+    currentPath, setCurrentPath, setEditingFile,
   ]);
 
   return {

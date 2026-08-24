@@ -133,16 +133,14 @@ export function UnifiedDevicePanel({
         if (!isOpen) return;
         const handleMobileBack = () => onOpenChange(false);
         window.addEventListener('mobile-back-pressed', handleMobileBack);
-        window.addEventListener('popstate', handleMobileBack);
         return () => {
             window.removeEventListener('mobile-back-pressed', handleMobileBack);
-            window.removeEventListener('popstate', handleMobileBack);
         };
     }, [isOpen, onOpenChange]);
 
     return (
         <DraggableWindowWrapper
-            id="deviceUnified"
+            id={deviceId || "deviceUnified"}
             className={`liquid-glass-light ${isDark ? '!bg-secondary-950/40 border-emerald-950/80 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]' : '!bg-white/60 border-emerald-950/80 shadow-[0_8px_28px_rgba(15,23,42,0.12)]'} ${className || ''}`}
             title={
                 <div className="flex items-center gap-2 px-2">

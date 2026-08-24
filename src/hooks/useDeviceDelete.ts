@@ -3,6 +3,7 @@ import type { SwitchState } from '@/lib/network/types';
 import type { TerminalOutput } from '@/components/network/Terminal';
 import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import type { PCOutputLine, TabType } from '@/app/page.types';
+import { useMultiWindowStore } from './useMultiWindowStore';
 
 interface UseDeviceDeleteParams {
   showPCDeviceId: string | null;
@@ -48,6 +49,8 @@ export function useDeviceDelete(params: UseDeviceDeleteParams) {
   } = params;
 
   const handleDeviceDelete = useCallback((deviceId: string) => {
+    useMultiWindowStore.getState().closeDeviceWindow(deviceId);
+
     if (showPCDeviceId === deviceId) {
       setShowPCPanel(false);
       setShowPCDeviceId('pc-1');

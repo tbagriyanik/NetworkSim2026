@@ -58,6 +58,9 @@ import { buildRunningConfig } from '@/lib/network/core/configBuilder';
 import { performanceMonitor } from '@/lib/performance/monitoring';
 import { useGuidedMode } from '@/hooks/useGuidedMode';
 import { useExamMode } from '@/hooks/useExamMode';
+import { MultiDeviceWindowManager } from '@/components/network/MultiDeviceWindowManager';
+import { WindowSwitcherModal } from '@/components/network/WindowSwitcherModal';
+import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 
 import { PCInfoPopover, RouterInfoPopover } from '@/components/network/DeviceInfoPopovers';
 import { BasarilarimPanel } from '@/components/ui/BasarilarimPanel';
@@ -1169,26 +1172,19 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   // Handle device double click (Open terminal or PC panel)
   const handleDeviceDoubleClick = useCallback((device: DeviceType, deviceId: string) => {
+    const { openDeviceWindow } = useMultiWindowStore.getState();
+
     if (device === 'pc') {
       // PC - open Home modal
-      setShowUnifiedDeviceModal(false);
-      setShowRouterPanel(false);
-      setShowFirewallPanel(false);
       setShowPCDeviceId(deviceId);
       getOrCreatePCOutputs(deviceId, topologyDevices);
       setPcPanelInitialTab('home');
-      setShowPCPanel(true);
+      openDeviceWindow(deviceId, 'pc', 'home');
     } else if (device === 'firewall') {
-      setShowPCPanel(false);
-      setShowUnifiedDeviceModal(false);
-      setShowRouterPanel(false);
       setActiveFirewallId(deviceId);
-      setShowFirewallPanel(true);
+      openDeviceWindow(deviceId, 'firewall', 'console');
     } else if (device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc') {
       // Switch, Router, or WLC - set as CLI device and open CLI modal
-      setShowPCPanel(false);
-      setShowFirewallPanel(false);
-      setShowRouterPanel(false);
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       const deviceState = getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
       getOrCreateDeviceOutputs(deviceId, deviceState);
@@ -1196,7 +1192,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       setActiveDeviceId(deviceId);
       setActiveDeviceType(device);
       setUnifiedDeviceActiveTab('console');
-      setShowUnifiedDeviceModal(true);
+      openDeviceWindow(deviceId, device, 'console');
     }
   }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setDeviceTabWithHistory, setShowPCDeviceId, setActiveDeviceId, setActiveDeviceType]);
 
@@ -1916,6 +1912,38 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             t={t}
             toggleDevicePower={toggleDevicePower}
             pcDrag={pcDrag}
+          />
+
+          {/* Multi-Window Device Manager (Independent windows for PC, Switch, Router, Firewall, WLC) */}
+          <MultiDeviceWindowManager
+            topologyDevices={topologyDevices}
+            topologyConnections={topologyConnections}
+            cableInfo={cableInfo}
+            deviceStates={deviceStates}
+            deviceOutputs={deviceOutputs}
+            pcOutputs={pcOutputs}
+            setPcOutputs={setPcOutputs as PcOutputsSetter}
+            pcHistories={pcHistories}
+            handleUpdatePCHistory={handleUpdatePCHistory}
+            handleUpdateHistory={handleUpdateHistory}
+            handleExecuteCommand={handleExecuteCommand}
+            handleDeviceDelete={handleDeviceDelete}
+            isDark={isDark}
+            language={language}
+            theme={theme}
+            t={t as any}
+            toggleDevicePower={toggleDevicePower}
+            updateDeviceConfig={updateDeviceConfig}
+            confirmDialog={confirmDialog}
+            setConfirmDialog={setConfirmDialog}
+            isTablet={isTablet}
+          />
+
+          {/* Windows Task Manager Style Switcher Modal for Ctrl+Tab */}
+          <WindowSwitcherModal
+            topologyDevices={topologyDevices}
+            isDark={isDark}
+            language={language}
           />
 
           {/* Router Info Panel Modal */}

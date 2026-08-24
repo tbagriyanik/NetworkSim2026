@@ -31,7 +31,6 @@ export const expandCommandContext = (mode: keyof typeof commandHelp, rawValue: s
     };
 };
 
-/** Available commands in the PC desktop (CMD) terminal */
 export const DESKTOP_COMMANDS = [
     'ipconfig',
     'ping',
@@ -47,7 +46,14 @@ export const DESKTOP_COMMANDS = [
     'wget',
     'arp',
     'hostname',
+    'cd',
+    'md',
+    'rd',
     'dir',
+    'type',
+    'del',
+    'edit',
+    'python',
     'ver',
     'cls',
     'exit',

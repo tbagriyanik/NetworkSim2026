@@ -106,6 +106,12 @@ export function AppFooter({
                         }`}>(Shift) TAB</kbd>
                       <span className="mx-1">{t.tabToNext}</span>
                       <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
+                        }`}>Ctrl+Tab</kbd>
+                      <span className="mx-1">{language === 'tr' ? 'Pencereler' : 'Windows'}</span>
+                      <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
+                        }`}>Ctrl+M</kbd>
+                      <span className="mx-1">{language === 'tr' ? 'Küçült' : 'Min'}</span>
+                      <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
                         }`}>Ctrl+S</kbd>
                       <span className="mx-1">{t.saveLabel}</span>
                       {(topologyDevices?.length || 0) > 0 && (

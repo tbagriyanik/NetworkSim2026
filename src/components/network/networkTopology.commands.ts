@@ -580,6 +580,8 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['Ctrl + X', isTR ? 'Seçili cihazı kes' : 'Cut selected device'],
         ['Ctrl + V', isTR ? 'Yapıştır' : 'Paste'],
         ['Ctrl + A', isTR ? 'Tümünü seç' : 'Select all'],
+        ['Ctrl + Tab / Ctrl + Shift + Tab', isTR ? 'Açık cihaz pencereleri arasında geçiş yap' : 'Loop through open device windows'],
+        ['Ctrl + M', isTR ? 'Aktif pencereyi küçült / büyüt' : 'Minimize / maximize active window'],
         ['Delete / Backspace', isTR ? 'Seçili öğeyi sil' : 'Delete selected'],
         ['Escape', isTR ? 'Seçimi iptal et / Modu kapat' : 'Cancel selection / Close mode'],
         ['F1', isTR ? 'Yardım panelini aç / kapat' : 'Open / close help panel'],
