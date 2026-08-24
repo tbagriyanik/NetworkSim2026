@@ -1,0 +1,191 @@
+import { stripInlineComment, splitOutsideQuotesAndParens } from './pcPythonRunnerHelpers';
+
+export type Statement =
+  | { type: 'line'; text: string }
+  | { type: 'if'; branches: { condition: string | null; body: Statement[] }[] }
+  | { type: 'while'; condition: string; body: Statement[]; elseBody?: Statement[] }
+  | { type: 'for'; varName: string; iterableExpr: string; body: Statement[]; elseBody?: Statement[] }
+  | { type: 'def'; funcName: string; paramNames: string[]; paramDefaults: Record<string, string>; body: Statement[] }
+  | {
+      type: 'try';
+      body: Statement[];
+      exceptBranches: { errorType: string | null; varName: string | null; body: Statement[] }[];
+      elseBody?: Statement[];
+      finallyBody?: Statement[];
+    };
+
+export interface ParsedLine {
+  indent: number;
+  text: string;
+}
+
+export function parseProgramLines(rawLines: string[]): ParsedLine[] {
+  const parsedLines: ParsedLine[] = [];
+  for (const l of rawLines) {
+    const stripped = stripInlineComment(l);
+    if (!stripped.trim() || stripped.trim().startsWith('#')) continue;
+    const indentMatch = stripped.match(/^[ \t]*/);
+    const indent = indentMatch ? indentMatch[0].replace(/\t/g, '    ').length : 0;
+    parsedLines.push({ indent, text: stripped.trim() });
+  }
+  return parsedLines;
+}
+
+export function parseBlockAt(
+  parsedLines: ParsedLine[],
+  index: number,
+  minIndent: number
+): { statements: Statement[]; nextIndex: number } {
+  const statements: Statement[] = [];
+  let i = index;
+
+  while (i < parsedLines.length) {
+    const line = parsedLines[i];
+    if (line.indent < minIndent) break;
+
+    // Handle if / elif / else
+    const ifMatch = /^if(?:\s+|(?=\())(.+):\s*$/.exec(line.text);
+    if (ifMatch) {
+      const branches: { condition: string | null; body: Statement[] }[] = [];
+      const cond = ifMatch[1];
+      const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+      branches.push({ condition: cond, body: bodyRes.statements });
+      i = bodyRes.nextIndex;
+
+      while (i < parsedLines.length && parsedLines[i].indent === line.indent) {
+        const elifMatch = /^elif(?:\s+|(?=\())(.+):\s*$/.exec(parsedLines[i].text);
+        const elseMatch = /^else:\s*$/.exec(parsedLines[i].text);
+
+        if (elifMatch) {
+          const elifBodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+          branches.push({ condition: elifMatch[1], body: elifBodyRes.statements });
+          i = elifBodyRes.nextIndex;
+        } else if (elseMatch) {
+          const elseBodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+          branches.push({ condition: null, body: elseBodyRes.statements });
+          i = elseBodyRes.nextIndex;
+          break;
+        } else {
+          break;
+        }
+      }
+      statements.push({ type: 'if', branches });
+      continue;
+    }
+
+    // Handle while loop
+    const whileMatch = /^while(?:\s+|(?=\())(.+):\s*$/.exec(line.text);
+    if (whileMatch) {
+      const cond = whileMatch[1];
+      const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+      let nextI = bodyRes.nextIndex;
+      let elseBody: Statement[] | undefined = undefined;
+
+      if (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
+        const elseMatch = /^else:\s*$/.exec(parsedLines[nextI].text);
+        if (elseMatch) {
+          const elseRes = parseBlockAt(parsedLines, nextI + 1, line.indent + 1);
+          elseBody = elseRes.statements;
+          nextI = elseRes.nextIndex;
+        }
+      }
+
+      statements.push({ type: 'while', condition: cond, body: bodyRes.statements, elseBody });
+      i = nextI;
+      continue;
+    }
+
+    // Handle for loop (supports single and tuple-unpacked targets: for a, b in items:)
+    const forMatch = /^for(?:\s+|(?=\())(.+?)\s+in\s+(.+):\s*$/.exec(line.text);
+    if (forMatch) {
+      const varName = forMatch[1];
+      const iterableExpr = forMatch[2];
+      const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+      let nextI = bodyRes.nextIndex;
+      let elseBody: Statement[] | undefined = undefined;
+
+      if (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
+        const elseMatch = /^else:\s*$/.exec(parsedLines[nextI].text);
+        if (elseMatch) {
+          const elseRes = parseBlockAt(parsedLines, nextI + 1, line.indent + 1);
+          elseBody = elseRes.statements;
+          nextI = elseRes.nextIndex;
+        }
+      }
+
+      statements.push({ type: 'for', varName, iterableExpr, body: bodyRes.statements, elseBody });
+      i = nextI;
+      continue;
+    }
+
+    // Handle def function definition
+    const defMatch = /^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\):\s*$/.exec(line.text);
+    if (defMatch) {
+      const funcName = defMatch[1];
+      const paramsStr = defMatch[2].trim();
+      const paramNames: string[] = [];
+      const paramDefaults: Record<string, string> = {};
+      if (paramsStr) {
+        const params = splitOutsideQuotesAndParens(paramsStr, ',');
+        for (const p of params) {
+          const eqIdx = p.indexOf('=');
+          const name = (eqIdx >= 0 ? p.slice(0, eqIdx) : p).trim();
+          paramNames.push(name);
+          if (eqIdx >= 0) {
+            paramDefaults[name] = p.slice(eqIdx + 1).trim();
+          }
+        }
+      }
+      const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+      statements.push({ type: 'def', funcName, paramNames, paramDefaults, body: bodyRes.statements });
+      i = bodyRes.nextIndex;
+      continue;
+    }
+
+    // Handle try / except / else / finally
+    const tryMatch = /^try:\s*$/.exec(line.text);
+    if (tryMatch) {
+      const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+      const exceptBranches: { errorType: string | null; varName: string | null; body: Statement[] }[] = [];
+      let nextI = bodyRes.nextIndex;
+      let elseBody: Statement[] | undefined = undefined;
+      let finallyBody: Statement[] | undefined = undefined;
+
+      while (nextI < parsedLines.length && parsedLines[nextI].indent === line.indent) {
+        const exceptMatch = /^except(?:\s+([a-zA-Z0-9_.]+)(?:\s+as\s+([a-zA-Z0-9_]+))?)?\s*:\s*$/.exec(parsedLines[nextI].text);
+        const elseMatch = /^else:\s*$/.exec(parsedLines[nextI].text);
+        const finallyMatch = /^finally:\s*$/.exec(parsedLines[nextI].text);
+
+        if (exceptMatch) {
+          const exBodyRes = parseBlockAt(parsedLines, nextI + 1, line.indent + 1);
+          exceptBranches.push({
+            errorType: exceptMatch[1] || null,
+            varName: exceptMatch[2] || null,
+            body: exBodyRes.statements,
+          });
+          nextI = exBodyRes.nextIndex;
+        } else if (elseMatch) {
+          const elseRes = parseBlockAt(parsedLines, nextI + 1, line.indent + 1);
+          elseBody = elseRes.statements;
+          nextI = elseRes.nextIndex;
+        } else if (finallyMatch) {
+          const finRes = parseBlockAt(parsedLines, nextI + 1, line.indent + 1);
+          finallyBody = finRes.statements;
+          nextI = finRes.nextIndex;
+        } else {
+          break;
+        }
+      }
+
+      statements.push({ type: 'try', body: bodyRes.statements, exceptBranches, elseBody, finallyBody });
+      i = nextI;
+      continue;
+    }
+
+    // Simple line statement
+    statements.push({ type: 'line', text: line.text });
+    i++;
+  }
+
+  return { statements, nextIndex: i };
+}

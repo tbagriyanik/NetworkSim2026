@@ -248,6 +248,31 @@ print(calendar.month(yy, mm))
     expect(res.error).toBeUndefined();
   });
 
+  it('should support recursive Fibonacci sequence with return(expr) and nterms = 10', () => {
+    const script = `
+def recur_fibo(n):
+   if n <= 1:
+       return n
+   else:
+       return(recur_fibo(n-1) + recur_fibo(n-2))
+
+nterms = 10
+
+if nterms <= 0:
+   print("Plese enter a positive integer")
+else:
+   print("Fibonacci sequence:")
+   for i in range(nterms):
+       print(recur_fibo(i))
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('Fibonacci sequence:');
+    expect(res.output).toContain('0');
+    expect(res.output).toContain('1');
+    expect(res.output).toContain('34');
+    expect(res.error).toBeUndefined();
+  });
+
   it('should support string .format(...) method', () => {
     const script = `
 num1 = 5
