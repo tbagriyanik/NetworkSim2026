@@ -75,6 +75,13 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
   useEffect(() => {
     const handleGlobalShortcut = (e: KeyboardEvent) => {
       if (!e.shiftKey || e.ctrlKey || e.metaKey || e.key !== 'Tab') return;
+
+      const focusedElement = typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
+      const isWindowInteriorFocused = Boolean(
+        focusedElement?.closest('[data-code-editor], [data-modal-content], [data-slot="dialog-content"], [role="dialog"], .dialog-content')
+      );
+      if (isWindowInteriorFocused) return;
+
       e.preventDefault();
       e.stopPropagation();
 

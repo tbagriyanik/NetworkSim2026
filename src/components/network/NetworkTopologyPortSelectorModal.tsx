@@ -58,6 +58,7 @@ export function NetworkTopologyPortSelectorModal({
     <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4" onClick={onClose}>
       <div className={graphicsQuality === 'low' ? 'absolute inset-0 bg-transparent' : 'absolute inset-0 bg-secondary-950/10'} />
       <div
+        data-cable-port-selector="true"
         className={`liquid-glass-light relative w-full max-w-2xl rounded-[2.5rem] ${isDark ? 'bg-secondary-900/75 border-white/10 backdrop-blur-xl' : 'bg-white/70 border-white/70 backdrop-blur-xl'} border shadow-2xl overflow-hidden flex flex-col transition-all duration-500`}
         onClick={(e) => e.stopPropagation()}
       >

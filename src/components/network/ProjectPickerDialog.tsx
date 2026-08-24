@@ -119,10 +119,10 @@ export function ProjectPickerDialog({
   }, [projectPickerTab, projectSearchQuery, language, getAvailableProjects, groupedExampleProjects, exampleLevelOrder]);
 
   const handleGridKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Tab') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
       e.preventDefault();
       if (visibleProjectIds.length === 0) return;
-      const direction = e.shiftKey ? -1 : 1;
+      const direction = (e.key === 'ArrowRight' || e.key === 'ArrowDown') ? 1 : -1;
       const currentIdx = selectedProjectId ? visibleProjectIds.indexOf(selectedProjectId) : -1;
       const nextIdx = currentIdx < 0
         ? (direction > 0 ? 0 : visibleProjectIds.length - 1)
@@ -138,29 +138,6 @@ export function ProjectPickerDialog({
       }
     }
   }, [visibleProjectIds, selectedProjectId]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const handleGlobalTab = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
-      e.preventDefault();
-      e.stopPropagation();
-      if (visibleProjectIds.length === 0) return;
-
-      const direction = e.shiftKey ? -1 : 1;
-      const currentIdx = selectedProjectId ? visibleProjectIds.indexOf(selectedProjectId) : -1;
-      const nextIdx = currentIdx < 0
-        ? (direction > 0 ? 0 : visibleProjectIds.length - 1)
-        : (currentIdx + direction + visibleProjectIds.length) % visibleProjectIds.length;
-      const nextId = visibleProjectIds[nextIdx];
-      setSelectedProjectId(nextId);
-      scrollRef.current?.querySelector(`[data-project-id="${CSS.escape(nextId)}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    };
-
-    window.addEventListener('keydown', handleGlobalTab, true);
-    return () => window.removeEventListener('keydown', handleGlobalTab, true);
-  }, [open, visibleProjectIds, selectedProjectId]);
 
   useEffect(() => {
     if (!open) return;

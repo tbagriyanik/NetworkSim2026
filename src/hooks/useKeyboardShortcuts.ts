@@ -35,10 +35,6 @@ export function useKeyboardShortcuts({
   closeEscLikeWindows,
   getOrCreateDeviceState,
   getOrCreateDeviceOutputs,
-  setShowMobileMenu,
-  setShowPCPanel,
-  setShowRouterPanel,
-  setShowProjectPicker,
   setShowAboutModal,
   setTopologyKey,
   setIsTimelineMinimized,
@@ -49,7 +45,6 @@ export function useKeyboardShortcuts({
   setActiveTab,
   setUnifiedDeviceActiveTab,
   setShowUnifiedDeviceModal,
-  tabs,
 }: {
   showMobileMenu: boolean;
   confirmDialog: { show: boolean; onConfirm: () => void } | null;
@@ -95,6 +90,36 @@ export function useKeyboardShortcuts({
 }) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const isAnyModalOpen = Boolean(
+        showAboutModal ||
+        showProjectPicker ||
+        showOnboarding ||
+        showUnifiedDeviceModal ||
+        showPCPanel ||
+        showRouterPanel ||
+        showFirewallPanel ||
+        showMobileMenu ||
+        confirmDialog?.show ||
+        saveDialog?.show ||
+        document.querySelector('[data-cable-port-selector]')
+      );
+
+      const focusedElement = typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
+      const isWindowInteriorFocused = Boolean(
+        focusedElement?.closest('[data-code-editor], [data-modal-content], [data-slot="dialog-content"], [role="dialog"], .dialog-content')
+      );
+
+      const isModalOrWindowActive = isAnyModalOpen || isWindowInteriorFocused;
+
+      if (isModalOrWindowActive && (
+        e.key === 'Tab' || e.code === 'Tab' ||
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm')
+      )) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        return;
+      }
+
       if (e.key === 'F1' || e.code === 'F1') {
         e.preventDefault();
         setShowAboutModal(prev => !prev);
@@ -102,6 +127,7 @@ export function useKeyboardShortcuts({
       }
 
       if (e.key === 'F5') {
+        if (isModalOrWindowActive) return;
         e.preventDefault();
         setTopologyKey(prev => prev + 1);
         handleRefreshNetwork();
@@ -114,14 +140,12 @@ export function useKeyboardShortcuts({
         }
       }
 
-      // Code editors own Tab/Shift+Tab for indentation and completion.
-      const focusedElement = document.activeElement as HTMLElement | null;
-      const isWindowInteriorFocused = Boolean(focusedElement?.closest('[data-code-editor], [data-modal-content], [data-slot="dialog-content"], [role="dialog"]'));
-      if (isWindowInteriorFocused && (e.key === 'Tab' || e.code === 'Tab')) {
-        return;
-      }
-
+      // Tab and Shift+Tab pass through to interior controls when a modal/window is open
       if (e.key === 'Tab' || e.code === 'Tab') {
+        if (isModalOrWindowActive) {
+          return;
+        }
+
         if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           if (useMultiWindowStore.getState().isSwitcherOpen) {
@@ -134,9 +158,11 @@ export function useKeyboardShortcuts({
       }
 
       if (e.ctrlKey || e.metaKey) {
+        if (isModalOrWindowActive) {
+          return;
+        }
 
         const key = e.key.toLowerCase();
-
         const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
         const isEditable = tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
 
@@ -177,6 +203,10 @@ export function useKeyboardShortcuts({
       }
 
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (isModalOrWindowActive) {
+          return;
+        }
+
         const key = e.key.toLowerCase();
         if (key === 'n') {
           e.preventDefault();
@@ -185,18 +215,15 @@ export function useKeyboardShortcuts({
       }
 
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+        if (isModalOrWindowActive) {
+          return;
+        }
+
         const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
         const isEditable = tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
         const isWindowFocused = document.hasFocus();
         const isTopologyOnly = activeTabRef.current === 'topology'
-          && !showPCPanel
-          && !showRouterPanel
-          && !showFirewallPanel
-          && !showUnifiedDeviceModal
-          && !showProjectPicker
-          && !showAboutModal
-          && !showOnboarding
-          && !showMobileMenu;
+          && !isAnyModalOpen;
 
         if (!isEditable && isTopologyOnly) {
           const key = e.key.toLowerCase();
@@ -221,7 +248,7 @@ export function useKeyboardShortcuts({
       }
 
       if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
-        if (showProjectPicker) {
+        if (isModalOrWindowActive) {
           return;
         }
         if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showUnifiedDeviceModal) {
@@ -242,8 +269,6 @@ export function useKeyboardShortcuts({
             setActiveDeviceId(nextDevice.id);
             setActiveDeviceType(nextDevice.type);
 
-            // Tab navigation also restores and focuses an already-open
-            // floating window, regardless of its device type.
             const windowStore = useMultiWindowStore.getState();
             if (windowStore.isWindowOpen(nextDevice.id)) {
               windowStore.restoreWindow(nextDevice.id);
@@ -254,12 +279,9 @@ export function useKeyboardShortcuts({
       }
 
       if (e.key === 'Enter') {
-        if (e.defaultPrevented) return;
+        if (e.defaultPrevented || isModalOrWindowActive) return;
         const activeTag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
         if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) {
-          return;
-        }
-        if (showUnifiedDeviceModal || showAboutModal || showPCPanel || showFirewallPanel || showRouterPanel || showProjectPicker || showOnboarding || !!confirmDialog?.show || !!saveDialog?.show) {
           return;
         }
         if (confirmDialog?.show) {
@@ -291,5 +313,15 @@ export function useKeyboardShortcuts({
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, setActiveTab, activeTab, topologyDevices, handleDeviceDoubleClick, handleRefreshNetwork, closeEscLikeWindows]);
+  }, [
+    showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel,
+    showFirewallPanel, showUnifiedDeviceModal, showAboutModal, showProjectPicker,
+    showOnboarding, isTimelineMinimized, selectedDevice, activeDeviceId, activeTab,
+    topologyDevices, handleSaveProject, handleNewProject, handleUndo, handleRedo,
+    handleDeviceDoubleClick, handleRefreshNetwork, closeEscLikeWindows,
+    getOrCreateDeviceState, getOrCreateDeviceOutputs, setShowAboutModal,
+    setTopologyKey, setIsTimelineMinimized, setClearSelectionTrigger, setSelectedDevice,
+    setActiveDeviceId, setActiveDeviceType, setActiveTab, setUnifiedDeviceActiveTab,
+    setShowUnifiedDeviceModal
+  ]);
 }
