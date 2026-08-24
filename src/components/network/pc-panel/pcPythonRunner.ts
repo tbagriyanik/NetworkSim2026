@@ -188,7 +188,7 @@ function findOperatorIndex(str: string, op: string): number {
 
 function formatPrintfString(template: string, args: unknown[]): string {
   let argIndex = 0;
-  return template.replace(/%([-+0 #]*)(\d+)?(?:\.(\d+))?([sdiXxfgeEG%])/g, (match, flags, widthStr, precStr, type) => {
+  return template.replace(/%([-+0 #]*)(\d+)?(?:\.(\d+))?([sdiXxfgeEG%])/g, (_match, flags, widthStr, precStr, type) => {
     if (type === '%') return '%';
     const val = args[argIndex++];
     if (type === 's') return formatPythonValue(val);
