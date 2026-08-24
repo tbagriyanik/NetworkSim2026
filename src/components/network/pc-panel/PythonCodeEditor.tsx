@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
+import { ClipboardPaste, Copy, ListChecks, Scissors, Trash2 } from 'lucide-react';
 
 interface PythonCodeEditorProps {
   value: string;
@@ -8,6 +9,8 @@ interface PythonCodeEditorProps {
   onKeyDown?: (event: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   isDark: boolean;
   placeholder?: string;
+  fontSize?: number;
+  wordWrap?: boolean;
 }
 
 const CODE_WORDS = [
@@ -70,18 +73,58 @@ function highlightCode(code: string): string {
     lastIndex = match.index + raw.length;
   }
 
-  return output + escapeHtml(code.slice(lastIndex)) + (code.endsWith('\n') ? ' ' : '');
+  const result = output + escapeHtml(code.slice(lastIndex)) + (code.endsWith('\n') ? ' ' : '');
+  return result;
 }
 
-export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placeholder }: PythonCodeEditorProps) {
+export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placeholder, fontSize = 14, wordWrap = true }: PythonCodeEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
+  const gutterRef = useRef<HTMLDivElement>(null);
+  const dragLineRef = useRef<number | null>(null);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [suggestionIndex, setSuggestionIndex] = useState(0);
   const [currentWord, setCurrentWord] = useState('');
   const [caretPos, setCaretPos] = useState({ top: 36, left: 16 });
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+  const [editorWidth, setEditorWidth] = useState(800);
 
+  const wrapThreshold = Math.max(20, Math.floor((editorWidth - 64) / Math.max(1, fontSize * 0.6)));
   const highlighted = useMemo(() => highlightCode(value), [value]);
+  const gutterRows = useMemo(() => {
+    const rows: Array<{ label: string; lineIndex: number }> = [];
+    value.split('\n').forEach((line, lineIndex) => {
+      const visualLines = wordWrap ? Math.max(1, Math.ceil(Math.max(1, line.length) / wrapThreshold)) : 1;
+      rows.push({ label: String(lineIndex + 1), lineIndex });
+      for (let continuation = 1; continuation < visualLines; continuation++) rows.push({ label: '', lineIndex });
+    });
+    return rows;
+  }, [value, wordWrap, wrapThreshold]);
+
+  const selectLine = (lineIndex: number) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const lines = value.split('\n');
+    const start = lines.slice(0, lineIndex).reduce((total, line) => total + line.length + 1, 0);
+    textarea.focus();
+    textarea.selectionStart = start;
+    textarea.selectionEnd = start + lines[lineIndex].length;
+    setContextMenu(null);
+  };
+
+  const selectLineRange = (startLine: number, endLine: number) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const lines = value.split('\n');
+    const first = Math.min(startLine, endLine);
+    const last = Math.max(startLine, endLine);
+    const start = lines.slice(0, first).reduce((total, line) => total + line.length + 1, 0);
+    const end = lines.slice(0, last + 1).reduce((total, line) => total + line.length + 1, 0) - 1;
+    textarea.focus();
+    textarea.selectionStart = start;
+    textarea.selectionEnd = end;
+  };
 
   const suggestions = useMemo(() => {
     if (!currentWord) return [];
@@ -129,6 +172,25 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
       preRef.current.scrollTop = e.currentTarget.scrollTop;
       preRef.current.scrollLeft = e.currentTarget.scrollLeft;
     }
+    if (gutterRef.current) gutterRef.current.scrollTop = e.currentTarget.scrollTop;
+  };
+
+  const edit = async (action: 'cut' | 'copy' | 'paste' | 'delete' | 'selectAll') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (action === 'selectAll') textarea.select();
+    else if (action === 'delete') onChange(value.slice(0, start) + value.slice(end));
+    else if (action === 'copy' || action === 'cut') {
+      await navigator.clipboard?.writeText(value.slice(start, end));
+      if (action === 'cut') onChange(value.slice(0, start) + value.slice(end));
+    } else {
+      const text = await navigator.clipboard?.readText();
+      if (text) onChange(value.slice(0, start) + text + value.slice(end));
+    }
+    setContextMenu(null);
+    textarea.focus();
   };
 
   useEffect(() => {
@@ -137,6 +199,20 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
       preRef.current.scrollLeft = textareaRef.current.scrollLeft;
     }
   }, [value]);
+
+  useEffect(() => {
+    if (!editorRef.current) return;
+    const observer = new ResizeObserver(entries => setEditorWidth(entries[0]?.contentRect.width || 800));
+    observer.observe(editorRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!contextMenu) return;
+    const closeMenu = () => setContextMenu(null);
+    window.addEventListener('mousedown', closeMenu);
+    return () => window.removeEventListener('mousedown', closeMenu);
+  }, [contextMenu]);
 
   useEffect(() => {
     const focusTimer = setTimeout(() => {
@@ -186,14 +262,67 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
   };
 
   return (
-    <div data-code-editor="true" className={`relative flex-1 min-h-0 overflow-hidden ${isDark ? 'bg-secondary-950 text-secondary-100' : 'bg-white text-secondary-900'}`}>
+    <div ref={editorRef} data-code-editor="true" className={`relative flex-1 min-h-0 overflow-hidden ${isDark ? 'bg-secondary-950 text-secondary-100' : 'bg-white text-secondary-900'}`}>
+      <div ref={gutterRef} aria-hidden="true" className={`absolute inset-y-0 left-0 z-20 w-12 overflow-hidden border-r p-4 pr-2 text-right font-mono text-xs leading-relaxed select-none ${isDark ? 'border-secondary-800 bg-secondary-900/70 text-secondary-600' : 'border-secondary-200 bg-secondary-100/70 text-secondary-500'}`} style={{ fontSize, lineHeight: String(Math.round(fontSize * 1.5)) + 'px' }}>
+        {gutterRows.map((row, index) => (
+          <button key={row.lineIndex + '-' + index} type="button" tabIndex={-1}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              dragLineRef.current = row.lineIndex;
+              selectLine(row.lineIndex);
+            }}
+            onPointerEnter={(event) => {
+              if ((event.buttons & 1) === 1 && dragLineRef.current !== null) {
+                selectLineRange(dragLineRef.current, row.lineIndex);
+              }
+            }}
+            onPointerUp={() => { dragLineRef.current = null; }}
+            style={{ height: String(Math.round(fontSize * 1.5)) + 'px', lineHeight: String(Math.round(fontSize * 1.5)) + 'px' }} className={row.label ? 'block w-full cursor-pointer text-right hover:text-primary-500' : 'block w-full cursor-default text-right'}>
+            {row.label}
+          </button>
+        ))}
+      </div>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[5] overflow-hidden pl-16 pt-4">
+        {value.split('\n').map((line, lineIndex) => {
+          const indentation = line.match(/^[ \t]+/)?.[0] || '';
+          const level = Math.floor(indentation.replace(/\t/g, '    ').length / 4);
+          if (level === 0) return null;
+          return (
+            <div key={lineIndex} className="absolute left-16" style={{ top: String(16 + lineIndex * Math.round(fontSize * 1.5)) + 'px', height: String(Math.round(fontSize * 1.5)) + 'px' }}>
+              {Array.from({ length: level }, (_, guideIndex) => (
+                <span key={guideIndex} className="absolute top-0 bottom-0 w-px" style={{ left: String(guideIndex * fontSize * 2.4) + 'px', backgroundColor: isDark ? 'rgba(148,163,184,0.25)' : 'rgba(71,85,105,0.28)' }} />
+              ))}
+            </div>
+          );
+        })}
+      </div>
+      {wordWrap && (
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[6] overflow-hidden pl-16 pt-4">
+          {value.split('\n').map((line, lineIndex) => line.length > wrapThreshold ? (
+            <span
+              key={lineIndex}
+              className="absolute text-xs"
+              style={{
+                top: String(16 + lineIndex * Math.round(fontSize * 1.5)) + 'px',
+                left: String(Math.max(64, editorWidth - 24)) + 'px',
+                color: isDark ? 'rgba(148,163,184,0.7)' : 'rgba(71,85,105,0.7)',
+              }}
+            >↵</span>
+          ) : null)}
+        </div>
+      )}
       <pre
         ref={preRef}
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 m-0 overflow-hidden whitespace-pre-wrap break-words p-4 font-mono text-xs leading-relaxed sm:text-sm ${
+        className={`pointer-events-none absolute inset-0 m-0 overflow-hidden p-4 pl-16 font-mono text-xs leading-relaxed sm:text-sm ${wordWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre' } ${
           isDark ? 'text-secondary-200' : 'text-secondary-900'
         }`}
-        style={{ tabSize: 4 }}
+        style={{
+          tabSize: 4,
+          fontSize,
+          lineHeight: String(Math.round(fontSize * 1.5)) + 'px',
+          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+        }}
         dangerouslySetInnerHTML={{ __html: highlighted }}
       />
       <textarea
@@ -208,17 +337,47 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
         onClick={(event) => updateCompletionContext(event.currentTarget, event.currentTarget.value)}
         onKeyUp={(event) => updateCompletionContext(event.currentTarget, event.currentTarget.value)}
         onKeyDown={handleKeyDown}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          const bounds = editorRef.current?.getBoundingClientRect();
+          if (!bounds) return;
+          const menuWidth = 170;
+          const menuHeight = 210;
+          setContextMenu({
+            x: Math.max(8, Math.min(event.clientX - bounds.left, bounds.width - menuWidth - 8)),
+            y: Math.max(8, Math.min(event.clientY - bounds.top, bounds.height - menuHeight - 8)),
+          });
+        }}
         onScroll={handleScroll}
+        wrap={wordWrap ? 'soft' : 'off'}
         placeholder={placeholder}
         spellCheck={false}
-        style={{ tabSize: 4 }}
-        className={`relative z-10 h-full w-full resize-none bg-transparent p-4 font-mono text-xs leading-relaxed caret-primary-400 outline-none sm:text-sm ${
+        style={{ tabSize: 4, fontSize, lineHeight: String(Math.round(fontSize * 1.5)) + 'px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', color: 'transparent', WebkitTextFillColor: 'transparent' }}
+        className={`relative z-10 h-full w-full resize-none bg-transparent p-4 pl-16 font-mono text-xs leading-relaxed caret-primary-400 outline-none sm:text-sm ${
           isDark
             ? 'text-transparent placeholder:text-secondary-600 selection:bg-primary-800/50'
             : 'text-transparent placeholder:text-secondary-400 selection:bg-primary-200/60'
         }`}
         autoFocus
       />
+      {contextMenu && (
+        <div className="absolute z-[10020] min-w-40 rounded-md border border-secondary-700 bg-secondary-900 p-1 text-xs text-secondary-100 shadow-xl" style={{ left: contextMenu.x, top: contextMenu.y }} onMouseDown={(event) => event.stopPropagation()}>
+          {([
+            ['cut', 'Kes', Scissors],
+            ['copy', 'Kopyala', Copy],
+            ['paste', 'Yapıştır', ClipboardPaste],
+            ['separator', '', null],
+            ['delete', 'Sil', Trash2],
+            ['selectAll', 'Tümünü seç', ListChecks],
+          ] as const).map(([action, label, Icon]) => action === 'separator' ? (
+            <div key={action} className="my-1 border-t border-secondary-700" />
+          ) : (
+            <button key={action} type="button" className="block w-full rounded px-3 py-1.5 text-left hover:bg-primary-500/20" onClick={() => void edit(action)}>
+              <span className="flex items-center gap-2"><Icon className="h-3.5 w-3.5" />{label}</span>
+            </button>
+          ))}
+        </div>
+      )}
       {suggestionsOpen && suggestions.length > 0 && (
         <div
           className={`absolute z-30 min-w-44 overflow-hidden rounded-lg border shadow-2xl transition-all ${

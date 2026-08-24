@@ -111,8 +111,11 @@ export function useKeyboardShortcuts({
 
       const isModalOrWindowActive = isAnyModalOpen || isWindowInteriorFocused;
 
+      const isCodeEditorFocused = Boolean(
+        (e.target as HTMLElement | null)?.closest?.('[data-code-editor]')
+      );
       if (isModalOrWindowActive && (
-        e.key === 'Tab' || e.code === 'Tab' ||
+        ((e.key === 'Tab' || e.code === 'Tab') && !isCodeEditorFocused) ||
         ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm')
       )) {
         e.preventDefault();

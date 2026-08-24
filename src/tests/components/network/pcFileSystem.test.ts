@@ -467,6 +467,31 @@ print(get_permutation('yup'))
     expect(res.output).toContain('puy');
     expect(res.error).toBeUndefined();
   });
+
+  it('should support string methods, sorted on strings, and for-loop tuple unpacking (anagram)', () => {
+    const script = `
+def is_anagram(str1, str2):
+    a = str1.lower()
+    b = str2.lower()
+    if len(a) != len(b):
+        return False
+    sa = "".join(sorted(a))
+    sb = "".join(sorted(b))
+    return sa == sb
+
+pairs = [("race", "care"), ("hello", "world")]
+for x, y in pairs:
+    if is_anagram(x, y):
+        print(x.lower(), "and", y.lower(), "are anagram.")
+    else:
+        print(x.lower(), "and", y.lower(), "are not anagram.")
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('race and care are anagram.');
+    expect(res.output).toContain('hello and world are not anagram.');
+    expect(res.output.trim().split('\n')).toHaveLength(2);
+    expect(res.error).toBeUndefined();
+  });
 });
 
 

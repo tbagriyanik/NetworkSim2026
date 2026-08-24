@@ -762,12 +762,16 @@ function runPythonEngine(
     const sortedMatch = /^sorted\s*\((.*)\)$/.exec(trimmed);
     if (sortedMatch) {
       const val = evaluateExpr(sortedMatch[1]);
+      let arr: unknown[];
       if (Array.isArray(val)) {
-        const copy = [...val];
-        copy.sort((a, b) => (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))));
-        return copy;
+        arr = [...val];
+      } else if (typeof val === 'string') {
+        arr = val.split('');
+      } else {
+        return val;
       }
-      return val;
+      arr.sort((a, b) => (typeof a === 'number' && typeof b === 'number' ? a - b : String(a).localeCompare(String(b))));
+      return arr;
     }
 
     // Handle list(...)
@@ -913,10 +917,59 @@ function runPythonEngine(
       const objName = memberCallMatch[1];
       const methodName = memberCallMatch[2];
       const rawArgs = memberCallMatch[3].trim();
-      const obj = scope[objName] as Record<string, unknown> | undefined;
-      if (obj && typeof obj[methodName] === 'function') {
+      const obj: unknown = scope[objName];
+
+      // Python string methods on JS string values
+      if (typeof obj === 'string') {
+        const sArgs = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
+        switch (methodName) {
+          case 'lower':
+            return obj.toLowerCase();
+          case 'upper':
+            return obj.toUpperCase();
+          case 'strip':
+            return obj.trim();
+          case 'lstrip':
+            return obj.trimStart();
+          case 'rstrip':
+            return obj.trimEnd();
+          case 'capitalize':
+            return obj.charAt(0).toUpperCase() + obj.slice(1).toLowerCase();
+          case 'title':
+            return obj.replace(/\w\S*/g, (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+          case 'replace':
+            return obj.split(String(sArgs[0])).join(String(sArgs[1]));
+          case 'split':
+            return sArgs.length ? obj.split(String(sArgs[0])) : obj.split(/\s+/).filter(Boolean);
+          case 'find':
+            return obj.indexOf(String(sArgs[0]));
+          case 'count': {
+            const sub = String(sArgs[0]);
+            return sub ? obj.split(sub).length - 1 : 0;
+          }
+          case 'startswith':
+            return obj.startsWith(String(sArgs[0]));
+          case 'endswith':
+            return obj.endsWith(String(sArgs[0]));
+          case 'isdigit':
+            return /^\d+$/.test(obj);
+          case 'isalpha':
+            return /^[a-zA-ZçğıöşüÇĞİÖŞÜ]+$/.test(obj);
+          case 'isupper':
+            return obj === obj.toUpperCase() && /[A-ZÇĞİÖŞÜ]/.test(obj);
+          case 'islower':
+            return obj === obj.toLowerCase() && /[a-zçğıöşü]/.test(obj);
+          case 'join':
+            return Array.isArray(sArgs[0]) ? sArgs[0].map(String).join(obj) : String(sArgs[0]);
+          default:
+            break;
+        }
+      }
+
+      const objectValue = obj as Record<string, unknown> | undefined;
+      if (objectValue && typeof objectValue[methodName] === 'function') {
         const argList = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
-        return (obj[methodName] as (...args: unknown[]) => unknown)(...argList);
+        return (objectValue[methodName] as (...args: unknown[]) => unknown)(...argList);
       }
     }
 
@@ -1456,8 +1509,8 @@ function runPythonEngine(
         continue;
       }
 
-      // Handle for loop
-      const forMatch = /^for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+(.+):$/.exec(line.text);
+      // Handle for loop (supports single and tuple-unpacked targets: for a, b in items:)
+      const forMatch = /^for\s+([a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*[a-zA-Z_][a-zA-Z0-9_]*)*)\s+in\s+(.+):$/.exec(line.text);
       if (forMatch) {
         const varName = forMatch[1];
         const iterableExpr = forMatch[2];
@@ -1590,7 +1643,12 @@ function runPythonEngine(
         }
         let brokeOut = false;
         for (const item of items) {
-          scope[stmt.varName] = item;
+          const targets = stmt.varName.split(',').map(t => t.trim());
+          if (targets.length > 1 && Array.isArray(item)) {
+            targets.forEach((t, idx) => { scope[t] = item[idx]; });
+          } else {
+            scope[stmt.varName] = item;
+          }
           const sig = execStatementsSync(stmt.body);
           if (sig === 'break') {
             brokeOut = true;
@@ -1922,7 +1980,12 @@ function runPythonEngine(
         }
         let brokeOut = false;
         for (const item of items) {
-          scope[stmt.varName] = item;
+          const targets = stmt.varName.split(',').map(t => t.trim());
+          if (targets.length > 1 && Array.isArray(item)) {
+            targets.forEach((t, idx) => { scope[t] = item[idx]; });
+          } else {
+            scope[stmt.varName] = item;
+          }
           const sig = await execStatements(stmt.body);
           if (sig === 'break') {
             brokeOut = true;

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Save, Play, FileCode } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Save, Play, FileCode, FilePlus, FolderOpen, Minus, Plus, Scissors, Copy, ClipboardPaste, Trash2, ListChecks, Undo2, Redo2, WrapText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { ResizablePortalWindow } from './ResizablePortalWindow';
@@ -28,10 +28,40 @@ export function FileEditorModal({
   onClose,
 }: FileEditorModalProps) {
   const [content, setContent] = useState(initialContent);
+  const [fontSize, setFontSize] = useState(14);
+  const [wordWrap, setWordWrap] = useState(true);
+  const [history, setHistory] = useState<string[]>([initialContent]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+  const historyReady = useRef(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setContent(initialContent);
+    setHistory([initialContent]);
+    setHistoryIndex(0);
+    historyReady.current = true;
   }, [initialContent, open]);
+
+  const updateContent = (next: string) => {
+    setContent(next);
+    if (!historyReady.current) return;
+    setHistory(previous => [...previous.slice(0, historyIndex + 1), next].slice(-100));
+    setHistoryIndex(previous => Math.min(previous + 1, 99));
+  };
+
+  const undo = () => {
+    if (historyIndex === 0) return;
+    const nextIndex = historyIndex - 1;
+    setHistoryIndex(nextIndex);
+    setContent(history[nextIndex]);
+  };
+
+  const redo = () => {
+    if (historyIndex >= history.length - 1) return;
+    const nextIndex = historyIndex + 1;
+    setHistoryIndex(nextIndex);
+    setContent(history[nextIndex]);
+  };
 
   // The editor is rendered in a portal above the PC panel. Consume Escape at
   // the window capture phase so the PC panel's global Escape navigation does
@@ -75,6 +105,27 @@ export function FileEditorModal({
       onRunPython(content);
     }
     onClose();
+  };
+
+  const handleNewFile = () => updateContent('');
+  const handleOpenFile = () => fileInputRef.current?.click();
+
+  const editSelected = async (action: 'cut' | 'copy' | 'paste' | 'delete' | 'selectAll') => {
+    const textarea = document.querySelector<HTMLTextAreaElement>('div[data-code-editor="true"] textarea');
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    if (action === 'selectAll') textarea.select();
+    if (action === 'delete') updateContent(content.slice(0, start) + content.slice(end));
+    if (action === 'copy' || action === 'cut') {
+      await navigator.clipboard?.writeText(content.slice(start, end));
+      if (action === 'cut') updateContent(content.slice(0, start) + content.slice(end));
+    }
+    if (action === 'paste') {
+      const text = await navigator.clipboard?.readText();
+      if (text) updateContent(content.slice(0, start) + text + content.slice(end));
+    }
+    textarea.focus();
   };
 
   const lineCount = content.split('\n').length;
@@ -191,7 +242,23 @@ export function FileEditorModal({
   );
 
   const headerActions = (
-    <>
+    <div className="flex max-w-[min(70vw,620px)] flex-wrap items-center justify-end gap-0.5">
+      <Button size="sm" variant="ghost" title="Yeni" onClick={handleNewFile} className="h-8 w-8 p-0"><FilePlus className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="ghost" title="Aç" onClick={handleOpenFile} className="h-8 w-8 p-0"><FolderOpen className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="outline" title="Kaydet" onClick={handleSave} className="h-8 w-8 p-0"><Save className="h-3.5 w-3.5" /></Button>
+      <span className="mx-1 h-6 w-px bg-secondary-600/40" aria-hidden="true" />
+      <Button size="sm" variant="ghost" title="Geri al" disabled={historyIndex === 0} onClick={undo} className="h-8 w-8 p-0"><Undo2 className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="ghost" title="Yinele" disabled={historyIndex >= history.length - 1} onClick={redo} className="h-8 w-8 p-0"><Redo2 className="h-3.5 w-3.5" /></Button>
+      <span className="mx-1 h-6 w-px bg-secondary-600/40" aria-hidden="true" />
+      <Button size="sm" variant="ghost" title="Kes" onClick={() => void editSelected('cut')} className="h-8 w-8 p-0"><Scissors className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="ghost" title="Kopyala" onClick={() => void editSelected('copy')} className="h-8 w-8 p-0"><Copy className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="ghost" title="Yapıştır" onClick={() => void editSelected('paste')} className="h-8 w-8 p-0"><ClipboardPaste className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="ghost" title="Sil" onClick={() => void editSelected('delete')} className="h-8 w-8 p-0"><Trash2 className="h-3.5 w-3.5" /></Button>
+      <Button size="sm" variant="ghost" title="Tümünü seç" onClick={() => void editSelected('selectAll')} className="h-8 w-8 p-0"><ListChecks className="h-3.5 w-3.5" /></Button>
+      <span className="mx-1 h-6 w-px bg-secondary-600/40" aria-hidden="true" />
+      <Button size="sm" variant="ghost" title="Yazı küçült" disabled={fontSize <= 12} onClick={() => setFontSize(size => Math.max(12, size - 1))} className="h-8 w-8 p-0"><Minus className="h-3.5 w-3.5" /></Button>
+      <span className="min-w-8 text-center text-xs font-mono">{fontSize}</span>
+      <Button size="sm" variant="ghost" title="Yazı büyüt" disabled={fontSize >= 20} onClick={() => setFontSize(size => Math.min(20, size + 1))} className="h-8 w-8 p-0"><Plus className="h-3.5 w-3.5" /></Button>
       {isPythonFile && (
         <Button
           size="sm"
@@ -204,20 +271,10 @@ export function FileEditorModal({
         </Button>
       )}
 
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={handleSave}
-        className={`h-8 gap-1.5 text-xs px-3 ${
-          isDark
-            ? 'border-secondary-700 hover:bg-secondary-800 text-secondary-200'
-            : 'border-secondary-300 hover:bg-secondary-100'
-        }`}
-      >
-        <Save className="w-3.5 h-3.5" />
-        {language === 'tr' ? 'Kaydet' : 'Save'}
-      </Button>
-    </>
+      <span className="mx-1 h-6 w-px bg-secondary-600/40" aria-hidden="true" />
+      <Button size="sm" variant={wordWrap ? 'default' : 'ghost'} title="Satır kaydırma" onClick={() => setWordWrap(value => !value)} className="h-8 w-8 p-0"><WrapText className="h-7 w-7" /></Button>
+
+    </div>
   );
 
   const footerBar = (
@@ -248,14 +305,36 @@ export function FileEditorModal({
       defaultHeight={620}
       minWidth={320}
       minHeight={240}
-      headerActions={headerActions}
       footerBar={footerBar}
     >
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept=".py,.txt,.json,.js,.ts,.tsx,.html,.css"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          void file.text().then(text => {
+            setContent(text);
+            setHistory([text]);
+            setHistoryIndex(0);
+          });
+          event.target.value = '';
+        }}
+      />
+      <div className={isDark
+        ? 'flex min-h-10 flex-wrap items-center gap-0.5 border-b border-secondary-800 bg-secondary-900/80 px-2 py-1'
+        : 'flex min-h-10 flex-wrap items-center gap-0.5 border-b border-secondary-200 bg-secondary-100 px-2 py-1'}>
+        {headerActions}
+      </div>
       <div data-code-editor="true" className="flex-1 relative flex flex-col font-mono text-sm overflow-hidden">
         <PythonCodeEditor
           value={content}
-          onChange={setContent}
+          onChange={updateContent}
           onKeyDown={handleTextareaKeyDown}
+          fontSize={fontSize}
+          wordWrap={wordWrap}
           isDark={isDark}
           placeholder={
             isPythonFile
