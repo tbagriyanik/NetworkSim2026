@@ -1099,7 +1099,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           const targetPath = resolvePath(currentPath, fileName);
           const existingContent = readFile(fs, targetPath) ?? '';
           setEditingFile({ path: targetPath, content: existingContent });
-          emit('output', `Opening notepad editor for ${fileName}...`);
+          emit('output', `Opening editor for ${fileName}...`);
         } else if (cmd === 'python' || cmd === 'python3' || cmd === 'py') {
           const firstArg = args[0];
           if (firstArg === '-c' && args.length > 1) {

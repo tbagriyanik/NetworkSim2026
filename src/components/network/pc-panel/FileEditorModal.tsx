@@ -27,15 +27,32 @@ export function FileEditorModal({
   onRunPython,
   onClose,
 }: FileEditorModalProps) {
+  const getViewportSize = () => {
+    if (typeof window === 'undefined') return { width: 900, height: 620 };
+    return {
+      width: Math.min(900, Math.max(320, window.innerWidth - 24)),
+      height: Math.min(620, Math.max(240, window.innerHeight - 24)),
+    };
+  };
+
   const [content, setContent] = useState(initialContent);
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState({ width: 900, height: 620 });
+  const [size, setSize] = useState(getViewportSize);
   const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
-  const resizeRef = useRef<{ x: number; y: number; width: number; height: number } | null>(null);
 
   useEffect(() => {
     setContent(initialContent);
   }, [initialContent, open]);
+
+  useEffect(() => () => {
+    dragRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return;
+    setSize(getViewportSize());
+    setPosition({ x: 0, y: 0 });
+  }, [open, filePath]);
 
   const fileName = filePath.split(/[\\/]/).pop() || filePath;
   const isPythonFile = fileName.toLowerCase().endsWith('.py');
@@ -61,11 +78,9 @@ export function FileEditorModal({
   const clampPosition = (x: number, y: number, width = size.width, height = size.height) => {
     if (typeof window === 'undefined') return { x, y };
     const margin = 12;
-    const halfWidth = Math.min(width, window.innerWidth - margin * 2) / 2;
-    const halfHeight = Math.min(height, window.innerHeight - margin * 2) / 2;
     return {
-      x: Math.max(-window.innerWidth / 2 + halfWidth - margin, Math.min(window.innerWidth / 2 - halfWidth + margin, x)),
-      y: Math.max(-window.innerHeight / 2 + halfHeight - margin, Math.min(window.innerHeight / 2 - halfHeight + margin, y)),
+      x: Math.max(-(window.innerWidth - width) / 2 + margin, Math.min((window.innerWidth - width) / 2 - margin, x)),
+      y: Math.max(-(window.innerHeight - height) / 2 + margin, Math.min((window.innerHeight - height) / 2 - margin, y)),
     };
   };
   const handleDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -73,19 +88,6 @@ export function FileEditorModal({
     setPosition(clampPosition(dragRef.current.x + event.clientX - dragRef.current.startX, dragRef.current.y + event.clientY - dragRef.current.startY));
   };
   const handleDragEnd = () => { dragRef.current = null; };
-  const handleResizeStart = (event: React.PointerEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    resizeRef.current = { x: event.clientX, y: event.clientY, width: size.width, height: size.height };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const handleResizeMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!resizeRef.current) return;
-    const nextWidth = Math.min(Math.max(520, resizeRef.current.width + event.clientX - resizeRef.current.x), Math.max(520, window.innerWidth - 24));
-    const nextHeight = Math.min(Math.max(360, resizeRef.current.height + event.clientY - resizeRef.current.y), Math.max(360, window.innerHeight - 24));
-    setSize({ width: nextWidth, height: nextHeight });
-    setPosition((current) => clampPosition(current.x, current.y, nextWidth, nextHeight));
-  };
-  const handleResizeEnd = () => { resizeRef.current = null; };
 
   const lineCount = content.split('\n').length;
   const charCount = content.length;
@@ -191,13 +193,19 @@ export function FileEditorModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => { if (!val) onClose(); }}>
-      <DialogContent showCloseButton={false} style={{ width: `min(${size.width}px, calc(100vw - 2rem))`, height: `min(${size.height}px, calc(100vh - 2rem))`, transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px)` }} className={`max-w-none flex flex-col p-0 gap-0 overflow-hidden ${
-        isDark ? 'bg-secondary-950 text-secondary-100 border-secondary-800' : 'bg-white text-secondary-900 border-secondary-200'
-      }`}>
+      <DialogContent
+        showCloseButton={false}
+        onEscapeKeyDown={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        }}
+        style={{ left: '50%', top: '50%', width: size.width, height: size.height, maxHeight: size.height, boxSizing: 'border-box', transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`, zIndex: 10002 }}
+        className={`max-w-none animate-none flex flex-col p-0 gap-0 overflow-hidden ${isDark ? 'bg-secondary-950 text-secondary-100 border-secondary-800' : 'bg-white text-secondary-900 border-secondary-200'
+          }`}>
         {/* Header */}
-        <DialogHeader onPointerDown={handleDragStart} onPointerMove={handleDragMove} onPointerUp={handleDragEnd} onPointerCancel={handleDragEnd} className={`cursor-move px-4 py-3 flex flex-row items-center justify-between border-b space-y-0 ${
-          isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50'
-        }`}>
+        <DialogHeader onPointerDown={handleDragStart} onPointerMove={handleDragMove} onPointerUp={handleDragEnd} onPointerCancel={handleDragEnd} className={`cursor-move px-4 py-3 flex flex-row items-center justify-between border-b space-y-0 ${isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50'
+          }`}>
           <div className="flex items-center gap-2">
             <FileCode className="w-5 h-5 text-primary-500" />
             <DialogTitle className="text-sm font-semibold tracking-wide font-mono">
@@ -222,9 +230,8 @@ export function FileEditorModal({
               size="sm"
               variant="outline"
               onClick={handleSave}
-              className={`h-8 gap-1.5 text-xs px-3 ${
-                isDark ? 'border-secondary-700 hover:bg-secondary-800 text-secondary-200' : 'border-secondary-300 hover:bg-secondary-100'
-              }`}
+              className={`h-8 gap-1.5 text-xs px-3 ${isDark ? 'border-secondary-700 hover:bg-secondary-800 text-secondary-200' : 'border-secondary-300 hover:bg-secondary-100'
+                }`}
             >
               <Save className="w-3.5 h-3.5" />
               {language === 'tr' ? 'Kaydet' : 'Save'}
@@ -259,20 +266,9 @@ export function FileEditorModal({
           />}
         </div>
 
-        <div
-          role="presentation"
-          aria-label={language === 'tr' ? 'Editör boyutunu değiştir' : 'Resize editor'}
-          onPointerDown={handleResizeStart}
-          onPointerMove={handleResizeMove}
-          onPointerUp={handleResizeEnd}
-          onPointerCancel={handleResizeEnd}
-          className="absolute bottom-0 right-0 z-30 h-5 w-5 cursor-se-resize"
-        />
-
         {/* Footer Status Bar */}
-        <div className={`px-4 py-1.5 flex justify-between items-center text-xs font-mono border-t ${
-          isDark ? 'border-secondary-800 bg-secondary-900/40 text-secondary-400' : 'border-secondary-200 bg-secondary-100/60 text-secondary-600'
-        }`}>
+        <div className={`px-4 py-1.5 flex justify-between items-center text-xs font-mono border-t ${isDark ? 'border-secondary-800 bg-secondary-900/40 text-secondary-400' : 'border-secondary-200 bg-secondary-100/60 text-secondary-600'
+          }`}>
           <span>Dosya: {filePath}</span>
           <div className="flex gap-4">
             <span>Satır: {lineCount}</span>
