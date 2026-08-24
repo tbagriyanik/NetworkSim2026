@@ -939,18 +939,20 @@ export function PCPanel({
     };
   }, [isVisible, activeTab, goHome, onClose, httpAppContent, searchOpen, isMobile]);
 
-  // Sync pcOutput when deviceId changes or pcOutputs prop updates
+  // Load persisted output when switching devices. Do not react to every
+  // pcOutputs update: output is persisted after each streamed chunk, and
+  // reloading here can overwrite newer lines with an older snapshot.
   useEffect(() => {
     if (pcOutputs?.has(deviceId)) {
-      setTimeout(() => setPcOutput(pcOutputs.get(deviceId) ?? []), 0);
+      setPcOutput(pcOutputs.get(deviceId) ?? []);
     } else {
-      setTimeout(() => setPcOutput([{
+      setPcOutput([{
         id: '1',
         type: 'output',
         content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n'
-      }]), 0);
+      }]);
     }
-  }, [deviceId, pcOutputs]);
+  }, [deviceId]);
 
   // Persist CMD output to the shared pcOutputs map so it survives window close
   useEffect(() => {

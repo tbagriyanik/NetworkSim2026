@@ -14,6 +14,7 @@ import {
   formatPythonValue,
   splitOutsideQuotesAndParens,
   parseFormatArgs,
+  assignValueToLhs,
 } from './pcPythonRunnerHelpers';
 import { Statement, parseProgramLines, parseBlockAt } from './pcPythonParser';
 import { createExpressionEvaluator } from './pcPythonEvaluator';
@@ -227,24 +228,27 @@ export function executePythonScript(
       return;
     }
 
-    const augMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
+    const augMatch = /^(.+?)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
     if (augMatch) {
-      const varName = augMatch[1];
+      const lhsStr = augMatch[1].trim();
       const op = augMatch[2];
-      const rhsStr = augMatch[3];
+      const rhsStr = augMatch[3].trim();
+      let newVal: unknown;
       if (op === '//=') {
-        const lNum = Number(evaluateExpr(varName) || 0);
+        const lNum = Number(evaluateExpr(lhsStr) || 0);
         const rNum = Number(evaluateExpr(rhsStr) || 1);
-        scope[varName] = Math.floor(lNum / rNum);
+        newVal = Math.floor(lNum / rNum);
       } else if (op === '**=') {
-        const lNum = Number(evaluateExpr(varName) || 0);
+        const lNum = Number(evaluateExpr(lhsStr) || 0);
         const rNum = Number(evaluateExpr(rhsStr) || 1);
-        scope[varName] = Math.pow(lNum, rNum);
+        newVal = Math.pow(lNum, rNum);
       } else {
         const singleOp = op[0];
-        scope[varName] = evaluateExpr(`${varName} ${singleOp} (${rhsStr})`);
+        newVal = evaluateExpr(`${lhsStr} ${singleOp} (${rhsStr})`);
       }
-      return;
+      if (assignValueToLhs(lhsStr, newVal, scope, evaluateExpr)) {
+        return;
+      }
     }
 
     const eqIdx = trimmed.indexOf('=');
@@ -254,72 +258,15 @@ export function executePythonScript(
       if (prevChar !== '=' && prevChar !== '!' && prevChar !== '<' && prevChar !== '>' && nextChar !== '=') {
         const leftSide = trimmed.slice(0, eqIdx).trim();
         const rightSide = trimmed.slice(eqIdx + 1).trim();
-
-        const targets = splitOutsideQuotesAndParens(leftSide, ',').map(t => t.trim());
-        if (targets.every(t => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(t))) {
-          if (targets.length === 1) {
-            scope[targets[0]] = evaluateExpr(rightSide);
-          } else {
-            const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
-            let rhsValues: unknown[];
-            if (rawRhsParts.length > 1) {
-              rhsValues = rawRhsParts.map(p => evaluateExpr(p));
-            } else {
-              const evalRhs = evaluateExpr(rightSide);
-              rhsValues = Array.isArray(evalRhs) ? (evalRhs as unknown[]) : [evalRhs];
-            }
-
-            for (let i = 0; i < targets.length; i++) {
-              scope[targets[i]] = rhsValues[i];
-            }
-          }
+        const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
+        let rhsVal: unknown;
+        if (rawRhsParts.length > 1) {
+          rhsVal = rawRhsParts.map(p => evaluateExpr(p));
+        } else {
+          rhsVal = evaluateExpr(rightSide);
+        }
+        if (assignValueToLhs(leftSide, rhsVal, scope, evaluateExpr)) {
           return;
-        } else if (leftSide.endsWith(']')) {
-          const rhsVal = evaluateExpr(rightSide);
-          const indexMatches: string[] = [];
-          let varName = '';
-          let k = 0;
-          while (k < leftSide.length && leftSide[k] !== '[') {
-            varName += leftSide[k];
-            k++;
-          }
-          varName = varName.trim();
-
-          if (varName && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
-            while (k < leftSide.length) {
-              if (leftSide[k] === '[') {
-                let depth = 1;
-                let j = k + 1;
-                while (j < leftSide.length && depth > 0) {
-                  if (leftSide[j] === '[') depth++;
-                  else if (leftSide[j] === ']') depth--;
-                  j++;
-                }
-                const idxExpr = leftSide.slice(k + 1, j - 1).trim();
-                indexMatches.push(idxExpr);
-                k = j;
-              } else {
-                k++;
-              }
-            }
-
-            if (indexMatches.length > 0) {
-              const evaluatedIndices = indexMatches.map(idxStr => evaluateExpr(idxStr));
-              let current: any = scope[varName];
-              if (current !== undefined) {
-                for (let m = 0; m < evaluatedIndices.length - 1; m++) {
-                  const idxKey = evaluatedIndices[m];
-                  if (current === null || typeof current !== 'object') break;
-                  current = current[idxKey as any];
-                }
-                if (current !== null && typeof current === 'object') {
-                  const lastKey = evaluatedIndices[evaluatedIndices.length - 1];
-                  current[lastKey as any] = rhsVal;
-                  return;
-                }
-              }
-            }
-          }
         }
       }
     }
@@ -689,24 +636,27 @@ export async function executePythonScriptAsync(
       return;
     }
 
-    const augMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
+    const augMatch = /^(.+?)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
     if (augMatch) {
-      const varName = augMatch[1];
+      const lhsStr = augMatch[1].trim();
       const op = augMatch[2];
-      const rhsStr = augMatch[3];
+      const rhsStr = augMatch[3].trim();
+      let newVal: unknown;
       if (op === '//=') {
-        const lNum = Number(evaluateExpr(varName) || 0);
+        const lNum = Number(evaluateExpr(lhsStr) || 0);
         const rNum = Number(evaluateExpr(rhsStr) || 1);
-        scope[varName] = Math.floor(lNum / rNum);
+        newVal = Math.floor(lNum / rNum);
       } else if (op === '**=') {
-        const lNum = Number(evaluateExpr(varName) || 0);
+        const lNum = Number(evaluateExpr(lhsStr) || 0);
         const rNum = Number(evaluateExpr(rhsStr) || 1);
-        scope[varName] = Math.pow(lNum, rNum);
+        newVal = Math.pow(lNum, rNum);
       } else {
         const singleOp = op[0];
-        scope[varName] = evaluateExpr(`${varName} ${singleOp} (${rhsStr})`);
+        newVal = evaluateExpr(`${lhsStr} ${singleOp} (${rhsStr})`);
       }
-      return;
+      if (assignValueToLhs(lhsStr, newVal, scope, evaluateExpr)) {
+        return;
+      }
     }
 
     const eqIdx = trimmed.indexOf('=');
@@ -716,72 +666,15 @@ export async function executePythonScriptAsync(
       if (prevChar !== '=' && prevChar !== '!' && prevChar !== '<' && prevChar !== '>' && nextChar !== '=') {
         const leftSide = trimmed.slice(0, eqIdx).trim();
         const rightSide = trimmed.slice(eqIdx + 1).trim();
-
-        const targets = splitOutsideQuotesAndParens(leftSide, ',').map(t => t.trim());
-        if (targets.every(t => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(t))) {
-          if (targets.length === 1) {
-            scope[targets[0]] = evaluateExpr(rightSide);
-          } else {
-            const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
-            let rhsValues: unknown[];
-            if (rawRhsParts.length > 1) {
-              rhsValues = rawRhsParts.map(p => evaluateExpr(p));
-            } else {
-              const evalRhs = evaluateExpr(rightSide);
-              rhsValues = Array.isArray(evalRhs) ? (evalRhs as unknown[]) : [evalRhs];
-            }
-
-            for (let i = 0; i < targets.length; i++) {
-              scope[targets[i]] = rhsValues[i];
-            }
-          }
+        const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
+        let rhsVal: unknown;
+        if (rawRhsParts.length > 1) {
+          rhsVal = rawRhsParts.map(p => evaluateExpr(p));
+        } else {
+          rhsVal = evaluateExpr(rightSide);
+        }
+        if (assignValueToLhs(leftSide, rhsVal, scope, evaluateExpr)) {
           return;
-        } else if (leftSide.endsWith(']')) {
-          const rhsVal = evaluateExpr(rightSide);
-          const indexMatches: string[] = [];
-          let varName = '';
-          let k = 0;
-          while (k < leftSide.length && leftSide[k] !== '[') {
-            varName += leftSide[k];
-            k++;
-          }
-          varName = varName.trim();
-
-          if (varName && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
-            while (k < leftSide.length) {
-              if (leftSide[k] === '[') {
-                let depth = 1;
-                let j = k + 1;
-                while (j < leftSide.length && depth > 0) {
-                  if (leftSide[j] === '[') depth++;
-                  else if (leftSide[j] === ']') depth--;
-                  j++;
-                }
-                const idxExpr = leftSide.slice(k + 1, j - 1).trim();
-                indexMatches.push(idxExpr);
-                k = j;
-              } else {
-                k++;
-              }
-            }
-
-            if (indexMatches.length > 0) {
-              const evaluatedIndices = indexMatches.map(idxStr => evaluateExpr(idxStr));
-              let current: any = scope[varName];
-              if (current !== undefined) {
-                for (let m = 0; m < evaluatedIndices.length - 1; m++) {
-                  const idxKey = evaluatedIndices[m];
-                  if (current === null || typeof current !== 'object') break;
-                  current = current[idxKey as any];
-                }
-                if (current !== null && typeof current === 'object') {
-                  const lastKey = evaluatedIndices[evaluatedIndices.length - 1];
-                  current[lastKey as any] = rhsVal;
-                  return;
-                }
-              }
-            }
-          }
         }
       }
     }

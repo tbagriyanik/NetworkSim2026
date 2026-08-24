@@ -321,6 +321,36 @@ for r in result:
     expect(res.error).toBeUndefined();
   });
 
+  it('should support 3D nested loop matrix multiplication with result[i][j] += X[i][k] * Y[k][j]', () => {
+    const script = `
+X = [[12,7,3],
+    [4 ,5,6],
+    [7 ,8,9]]
+
+Y = [[5,8,1,2],
+    [6,7,3,0],
+    [4,5,9,1]]
+
+result = [[0,0,0,0],
+         [0,0,0,0],
+         [0,0,0,0]]
+
+
+for i in range(len(X)):
+   for j in range(len(Y[0])):
+       for k in range(len(Y)):
+           result[i][j] += X[i][k] * Y[k][j]
+
+for r in result:
+   print(r)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('[114, 160, 60, 27]');
+    expect(res.output).toContain('[74, 97, 73, 14]');
+    expect(res.output).toContain('[119, 157, 112, 23]');
+    expect(res.error).toBeUndefined();
+  });
+
   it('should support string .format(...) method', () => {
     const script = `
 num1 = 5

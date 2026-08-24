@@ -771,7 +771,9 @@ export function createExpressionEvaluator(
       if (parts.some(p => p instanceof PyComplex)) {
         return parts.reduce((acc: unknown, val: unknown) => toPyComplex(acc).mul(val), new PyComplex(1, 0));
       }
-      return parts.reduce((acc: number, val: unknown) => acc * Number(val || 1), 1);
+      // Preserve numeric zero: `0` is a valid multiplicand and must not be
+      // replaced by the fallback value 1.
+      return parts.reduce((acc: number, val: unknown) => acc * Number(val ?? 0), 1);
     }
 
     const divParts = splitOutsideQuotesAndParens(trimmed, '/');
