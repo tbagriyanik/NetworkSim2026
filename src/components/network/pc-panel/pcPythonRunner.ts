@@ -352,7 +352,7 @@ function pythonRange(...args: number[]): number[] {
 }
 
 const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
-  random: {
+    random: {
     randint: (a: unknown, b: unknown) => {
       const min = Math.ceil(Number(a || 0));
       const max = Math.floor(Number(b || 0));
@@ -392,6 +392,7 @@ const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
     pi: Math.PI,
     e: Math.E,
     sqrt: (x: unknown) => Math.sqrt(Number(x || 0)),
+    trunc: (x: unknown) => Math.trunc(Number(x || 0)),
     pow: (x: unknown, y: unknown) => Math.pow(Number(x || 0), Number(y || 0)),
     sin: (x: unknown) => Math.sin(Number(x || 0)),
     cos: (x: unknown) => Math.cos(Number(x || 0)),
@@ -506,7 +507,8 @@ function runPythonEngine(
   onOutput?: (chunk: string, replaceLastLine?: boolean) => void,
   asyncMode = false
 ): PythonExecutionResult | Promise<PythonExecutionResult> {
-  const rawLines = code.split('\n');
+  // Ignore Python triple-quoted documentation/comment blocks.
+  const rawLines = code.replace(/'''[\s\S]*?'''|"""[\s\S]*?"""/g, '').split('\n');
   const outputs: string[] = [];
 
   const inputsQueue = [...inputs];
