@@ -62,8 +62,8 @@ describe('Crypto Module', () => {
 
   describe('verifyType7Password', () => {
     it('should correctly verify valid Type 7 password', () => {
-      const encrypted = encryptType7Password('cisco123');
-      expect(verifyType7Password('cisco123', encrypted)).toBe(true);
+      const encrypted = encryptType7Password('net123');
+      expect(verifyType7Password('net123', encrypted)).toBe(true);
       expect(verifyType7Password('wrongpass', encrypted)).toBe(false);
     });
   });

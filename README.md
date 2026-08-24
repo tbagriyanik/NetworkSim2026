@@ -26,9 +26,9 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
-- **Version 2.8.0 Sürümü:** 18 eksik özellik tam dokümante edildi. Topoloji Üretici, Paket Yakalama filtreleri, VRRP, BGP, SPAN, IP Source Guard ve çift tıklama daraltma özellikleri ağ kitapçığı ve kılavuzlara eklendi. Örnek uygulama projeleri sayısı 46'ya çıkarıldı.
 - **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
 - **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.
+- **Çoklu Cihaz Penceresi Kısayolları:** `Tab` ile sonraki cihaza geçin; açık cihaz pencereleri arasında `Shift+Tab` ile geçiş yapın, `Ctrl+M` ile etkin pencereyi küçültün. Alt çubuktaki kısayollar tıklanarak da çalıştırılabilir.
 
 
 ## Stats / İstatistikler
@@ -95,6 +95,9 @@ Simülatör kontrollerine hızlıca göz atmak için aşağıdaki listeyi geniş
 | <kbd>Shift</kbd> + <kbd>Arrow Keys</kbd> | Move selected device(s) faster | Seçili cihaz(lar)ı daha hızlı taşı |
 | <kbd>F1</kbd> | Open / close help panel | Yardım panelini aç / kapat |
 | <kbd>F5</kbd> | Refresh network topology | Ağ topolojisini yenile |
+| <kbd>Tab</kbd> | Focus next device | Sonraki cihaza odaklan |
+| <kbd>Shift</kbd> + <kbd>Tab</kbd> | Open window switcher when windows are open | Açık pencereler arasında geçiş yap |
+| <kbd>Ctrl</kbd> + <kbd>M</kbd> | Minimize active device window | Etkin cihaz penceresini küçült |
 | <kbd>Home</kbd> | Reset topology view | Topoloji görünümünü sıfırla |
 | <kbd>End</kbd> | Focus last element | Son öğeye odaklan |
 | <kbd>Page Up</kbd> | Scroll canvas up | Canvas'ı yukarı kaydır |

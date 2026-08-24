@@ -45,6 +45,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 | **Serial / WAN Interfaces**: HDLC/PPP encapsulation, clock rate, PAP/CHAP authentication, DCE/DTE detection. | **Seri / WAN Arayüzleri**: HDLC/PPP kapsülleme, saat hızı, PAP/CHAP kimlik doğrulama, DCE/DTE tespiti. |
 | **PWA Support**: Service worker, offline caching, "Add to Home Screen" install prompt. | **PWA Desteği**: Servis çalışanı, çevrimdışı önbellekleme, "Ana Ekrana Ekle" kurulum bildirimi. |
 | **Mobile Optimization**: Bottom sheet menus, split-view for tablets, Android back button, visualViewport keyboard fix. | **Mobil Optimizasyon**: Alt sayfa menüleri, tablet bölünmüş ekran, Android geri tuşu, sanal klavye kaydırma düzeltmesi. |
+| **Multi-Window Shortcuts**: `Tab` focuses the next device, `Shift+Tab` opens the window switcher, and `Ctrl+M` minimizes the active device window. Footer shortcut buttons are clickable. | **Çoklu Pencere Kısayolları**: `Tab` sonraki cihaza odaklanır, `Shift+Tab` pencere değiştiriciyi açar, `Ctrl+M` etkin cihaz penceresini küçültür. Alt çubuktaki kısayol düğmeleri tıklanabilir. |
 
 ---
 

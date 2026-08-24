@@ -51,7 +51,7 @@ export function MultiDeviceWindowManager({
   handleDeviceDelete,
   isDark,
   language,
-  theme = 'cisco',
+  theme = 'network',
   t,
   toggleDevicePower,
   updateDeviceConfig,

@@ -90,6 +90,9 @@
 | `Ctrl + P` | Print topology | Topolojiyi yazdır |
 | `Ctrl + F` | Toggle fullscreen | Tam ekrana geç / çık |
 | `Alt + R` | Reset zoom/pan view | Görünümü sıfırla |
+| `Tab` | Focus the next device / window | Sonraki cihazı / pencereyi odakla |
+| `Shift + Tab` | Open the window switcher when device windows are open | Cihaz pencereleri açıkken pencere değiştiriciyi aç |
+| `Ctrl + M` | Minimize the active device window | Etkin cihaz penceresini küçült |
 
 ### Ping Packet Analysis / Ping Paket Analizi
 | Shortcut / Kısayol | EN | TR |
@@ -174,6 +177,8 @@
 - **Shift + Arrow Keys** moves selected devices faster / `Shift + Ok Tuşları` daha hızlı taşır
 - **P** and **N** control ping packet animation playback / `P` ve `N` ping animasyonunu kontrol eder
 - **F5** refreshes the network topology / `F5` topolojiyi yeniler
+- **Tab** focuses the next device; **Shift + Tab** opens the window switcher when floating device windows are open / **Tab** sonraki cihaza, **Shift + Tab** açık yüzen cihaz pencereleri varsa pencere değiştiriciye odaklanır
+- **Ctrl + M** minimizes the active device window / Etkin cihaz penceresini küçültür
 - Config panel shows live `running-config` / Config paneli canlı `running-config` gösterir
 - Windows are auto-positioned and restored on refresh / Pencereler otomatik konumlanır ve yenilemede geri yüklenir
 - For PC CMD parameters → [PC_CMD_REFERENCE.md](PC_CMD_REFERENCE.md)

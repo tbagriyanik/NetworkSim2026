@@ -2,6 +2,12 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v2.9.0 — 2026-08-24
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-24 | **Çoklu Cihaz Penceresi Kısayolları** — `Tab` ile cihaz odaklama, `Shift+Tab` ile açık pencere değiştirici, `Ctrl+M` ile etkin pencereyi küçültme ve alt çubuktan tıklanabilir kısayol çalıştırma eklendi. Pencere geri yükleme akışı iyileştirildi. |
+
 ## v2.8.0 — 2026-08-22
 
 | Tarih | Değişiklik |
