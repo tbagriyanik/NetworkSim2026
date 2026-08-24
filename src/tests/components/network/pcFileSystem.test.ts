@@ -143,8 +143,8 @@ print(len("test"))
     expect(res.output).toContain("<class 'str'>");
     expect(res.output).toContain("25");
     expect(res.output).toContain("100");
-    expect(res.output).toContain("true");
-    expect(res.output).toContain("false");
+    expect(res.output).toContain("True");
+    expect(res.output).toContain("False");
     expect(res.output).toContain("4");
     expect(res.error).toBeUndefined();
   });
@@ -210,12 +210,62 @@ print("Popped:", popped)
 print("Final lst:", lst)
 `;
     const res = executePythonScript(script);
-    expect(res.output).toContain("After append: 5,2,8,1");
-    expect(res.output).toContain("After sort: 1,2,5,8");
-    expect(res.output).toContain("After reverse: 8,5,2,1");
-    expect(res.output).toContain("After remove: 8,2,1");
+    expect(res.output).toContain("After append: [5, 2, 8, 1]");
+    expect(res.output).toContain("After sort: [1, 2, 5, 8]");
+    expect(res.output).toContain("After reverse: [8, 5, 2, 1]");
+    expect(res.output).toContain("After remove: [8, 2, 1]");
     expect(res.output).toContain("Popped: 1");
-    expect(res.output).toContain("Final lst: 8,2");
+    expect(res.output).toContain("Final lst: [8, 2]");
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support user snippet with inline comments, list formatting, sum, type, while break continue', () => {
+    const script = `
+# Veri tipleri & Matematik
+lst = [5, 2, 8]
+lst.append(1)
+lst.sort()
+print("Sıralı liste:", lst) # [1, 2, 5, 8]
+print("Toplam:", sum(lst)) # 16
+print("Tip:", type(lst))   # <class 'list'>
+
+# Döngü & Break / Continue
+i = 0
+while i < 10:
+    i = i + 1
+    if i == 2:
+        continue
+    if i == 5:
+        break
+    print("Sayaç:", i)
+`;
+    const res = executePythonScript(script);
+    const expected = [
+      "Sıralı liste: [1, 2, 5, 8]",
+      "Toplam: 16",
+      "<class 'list'>",
+      "Sayaç: 1",
+      "Sayaç: 3",
+      "Sayaç: 4"
+    ];
+    for (const exp of expected) {
+      expect(res.output).toContain(exp);
+    }
+    expect(res.output).not.toContain("Sayaç: 2");
+    expect(res.output).not.toContain("Sayaç: 5");
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support exponentiation (**) and % printf string formatting without NaN', () => {
+    const script = `
+# Python Program to calculate the square root
+num = 8
+num_sqrt = num ** 0.5
+print('The square root of %0.3f is %0.3f' % (num, num_sqrt))
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('The square root of 8.000 is 2.828');
+    expect(res.output).not.toContain('NaN');
     expect(res.error).toBeUndefined();
   });
 });

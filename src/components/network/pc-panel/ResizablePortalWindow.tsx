@@ -91,6 +91,7 @@ export function ResizablePortalWindow({
   headerBgClass,
   children,
 }: ResizablePortalWindowProps) {
+  const graphicsQuality = useGraphicsQuality();
   const [mounted, setMounted] = useState(false);
 
   const getDefaultState = (): WindowState => {
@@ -277,7 +278,6 @@ export function ResizablePortalWindow({
     };
   };
 
-  const graphicsQuality = useGraphicsQuality();
   const isLowGraphics = graphicsQuality === 'low';
 
   const defaultBorder = isLowGraphics

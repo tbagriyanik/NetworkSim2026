@@ -33,6 +33,23 @@ export function FileEditorModal({
     setContent(initialContent);
   }, [initialContent, open]);
 
+  // The editor is rendered in a portal above the PC panel. Consume Escape at
+  // the window capture phase so the PC panel's global Escape navigation does
+  // not close the panel after closing the editor.
+  useEffect(() => {
+    if (!open) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      onClose();
+    };
+
+    window.addEventListener('keydown', handleEscape, true);
+    return () => window.removeEventListener('keydown', handleEscape, true);
+  }, [open, onClose]);
+
   const fileName = filePath.split(/[\\/]/).pop() || filePath;
   const isPythonFile = fileName.toLowerCase().endsWith('.py');
 

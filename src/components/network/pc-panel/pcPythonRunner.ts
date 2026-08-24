@@ -131,6 +131,88 @@ function getPythonType(val: unknown): string {
   return `<class '${typeof val}'>`;
 }
 
+export function formatPythonValue(val: unknown): string {
+  if (val === null || val === undefined) return 'None';
+  if (val === true) return 'True';
+  if (val === false) return 'False';
+  if (Array.isArray(val)) {
+    return `[${val.map(item => formatPythonValue(item)).join(', ')}]`;
+  }
+  if (typeof val === 'object') {
+    const entries = Object.entries(val as Record<string, unknown>).map(
+      ([k, v]) => `'${k}': ${formatPythonValue(v)}`
+    );
+    return `{${entries.join(', ')}}`;
+  }
+  return String(val);
+}
+
+function stripInlineComment(line: string): string {
+  let inQuotes = false;
+  let quoteChar = '';
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if ((char === '"' || char === "'") && (i === 0 || line[i - 1] !== '\\')) {
+      if (!inQuotes) {
+        inQuotes = true;
+        quoteChar = char;
+      } else if (quoteChar === char) {
+        inQuotes = false;
+      }
+    } else if (char === '#' && !inQuotes) {
+      return line.slice(0, i).trimEnd();
+    }
+  }
+  return line;
+}
+
+function findOperatorIndex(str: string, op: string): number {
+  let inQ = false;
+  let qChar = '';
+  let pDepth = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if ((char === '"' || char === "'") && (i === 0 || str[i - 1] !== '\\')) {
+      if (!inQ) { inQ = true; qChar = char; }
+      else if (qChar === char) { inQ = false; }
+    } else if (!inQ) {
+      if (char === '(' || char === '[' || char === '{') pDepth++;
+      else if (char === ')' || char === ']' || char === '}') pDepth--;
+      else if (pDepth === 0 && str.startsWith(op, i)) {
+        return i;
+      }
+    }
+  }
+  return -1;
+}
+
+function formatPrintfString(template: string, args: unknown[]): string {
+  let argIndex = 0;
+  return template.replace(/%([-+0 #]*)(\d+)?(?:\.(\d+))?([sdiXxfgeEG%])/g, (match, flags, widthStr, precStr, type) => {
+    if (type === '%') return '%';
+    const val = args[argIndex++];
+    if (type === 's') return formatPythonValue(val);
+    if (type === 'd' || type === 'i') {
+      const num = Math.floor(Number(val || 0));
+      return String(num);
+    }
+    if (type === 'f' || type === 'F' || type === 'g' || type === 'e') {
+      const num = Number(val || 0);
+      const prec = precStr !== undefined ? parseInt(precStr, 10) : 6;
+      const str = num.toFixed(prec);
+      const width = widthStr ? parseInt(widthStr, 10) : 0;
+      if (flags.includes('0') && str.length < width) {
+        const isNeg = str.startsWith('-');
+        const digits = isNeg ? str.slice(1) : str;
+        const padded = digits.padStart(width - (isNeg ? 1 : 0), '0');
+        return isNeg ? '-' + padded : padded;
+      }
+      return str;
+    }
+    return String(val ?? '');
+  });
+}
+
 function pythonRange(...args: number[]): number[] {
   let start = 0;
   let stop = 0;
@@ -381,6 +463,64 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       return scope[trimmed];
     }
 
+    // Parenthesized expression or Tuple: (a, b, c) or (expr)
+    if (trimmed.startsWith('(') && trimmed.endsWith(')')) {
+      const inner = trimmed.slice(1, -1).trim();
+      if (!inner) return [];
+      const parts: string[] = [];
+      let current = '';
+      let inQ = false;
+      let qChar = '';
+      let pDepth = 0;
+      for (let i = 0; i < inner.length; i++) {
+        const char = inner[i];
+        if ((char === '"' || char === "'") && (i === 0 || inner[i - 1] !== '\\')) {
+          if (!inQ) { inQ = true; qChar = char; }
+          else if (qChar === char) { inQ = false; }
+        } else if (!inQ) {
+          if (char === '(' || char === '[' || char === '{') pDepth++;
+          else if (char === ')' || char === ']' || char === '}') pDepth--;
+        }
+        if (char === ',' && !inQ && pDepth === 0) {
+          parts.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      if (current.trim()) parts.push(current.trim());
+      if (parts.length > 1) {
+        return parts.map(p => evaluateExpr(p));
+      } else if (parts.length === 1) {
+        return evaluateExpr(parts[0]);
+      }
+    }
+
+    // Handle Python % string formatting or modulo
+    const percentIdx = findOperatorIndex(trimmed, '%');
+    if (percentIdx !== -1) {
+      const leftExpr = trimmed.slice(0, percentIdx).trim();
+      const rightExpr = trimmed.slice(percentIdx + 1).trim();
+      const leftVal = evaluateExpr(leftExpr);
+      const rightVal = evaluateExpr(rightExpr);
+      if (typeof leftVal === 'string') {
+        const argsArray = Array.isArray(rightVal) ? rightVal : [rightVal];
+        return formatPrintfString(leftVal, argsArray);
+      } else {
+        return Number(leftVal) % Number(rightVal);
+      }
+    }
+
+    // Exponentiation **
+    const powIdx = findOperatorIndex(trimmed, '**');
+    if (powIdx !== -1) {
+      const baseExpr = trimmed.slice(0, powIdx).trim();
+      const expExpr = trimmed.slice(powIdx + 2).trim();
+      const baseVal = Number(evaluateExpr(baseExpr));
+      const expVal = Number(evaluateExpr(expExpr));
+      return Math.pow(baseVal, expVal);
+    }
+
     // Handle range(n) or range(start, stop) or range(start, stop, step)
     const rangeMatch = /^range\((.+)\)$/.exec(trimmed);
     if (rangeMatch) {
@@ -397,7 +537,7 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       return parts.reduce((acc: number, val: unknown) => acc + Number(val || 0), 0);
     }
 
-    if (trimmed.includes('*')) {
+    if (trimmed.includes('*') && !trimmed.includes('**')) {
       const parts = trimmed.split('*').map(p => evaluateExpr(p));
       return parts.reduce((acc: number, val: unknown) => acc * Number(val || 1), 1);
     }
@@ -456,7 +596,7 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       }
       if (current) args.push(current);
 
-      const evaluatedArgs = args.map(a => String(evaluateExpr(a) ?? ''));
+      const evaluatedArgs = args.map(a => formatPythonValue(evaluateExpr(a)));
       outputs.push(evaluatedArgs.join(' '));
       return;
     }
@@ -546,10 +686,11 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
   // Structured Block Parser & Executor
   const parsedLines: ParsedLine[] = [];
   for (const l of rawLines) {
-    if (!l.trim() || l.trim().startsWith('#')) continue;
-    const indentMatch = l.match(/^[ \t]*/);
+    const stripped = stripInlineComment(l);
+    if (!stripped.trim() || stripped.trim().startsWith('#')) continue;
+    const indentMatch = stripped.match(/^[ \t]*/);
     const indent = indentMatch ? indentMatch[0].replace(/\t/g, '    ').length : 0;
-    parsedLines.push({ indent, text: l.trim() });
+    parsedLines.push({ indent, text: stripped.trim() });
   }
 
   const getSafeScope = () => {
