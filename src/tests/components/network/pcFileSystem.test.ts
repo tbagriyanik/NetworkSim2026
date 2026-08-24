@@ -273,6 +273,54 @@ else:
     expect(res.error).toBeUndefined();
   });
 
+  it('should support recursive convertToBinary script with print(n % 2, end="")', () => {
+    const script = `
+# Function to print binary number using recursion
+def convertToBinary(n):
+   if n > 1:
+       convertToBinary(n//2)
+   print(n % 2,end = '')
+
+# decimal number
+dec = 34
+
+convertToBinary(dec)
+print()
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('100010');
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support 2D matrix addition with result[i][j] = X[i][j] + Y[i][j]', () => {
+    const script = `
+X = [[12,7,3],
+    [4 ,5,6],
+    [7 ,8,9]]
+
+Y = [[5,8,1],
+    [6,7,3],
+    [4,5,9]]
+
+result = [[0,0,0],
+         [0,0,0],
+         [0,0,0]]
+
+
+for i in range(len(X)):
+   for j in range(len(X[0])):
+       result[i][j] = X[i][j] + Y[i][j]
+
+for r in result:
+   print(r)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('[17, 15, 4]');
+    expect(res.output).toContain('[10, 12, 9]');
+    expect(res.output).toContain('[11, 13, 18]');
+    expect(res.error).toBeUndefined();
+  });
+
   it('should support string .format(...) method', () => {
     const script = `
 num1 = 5
@@ -684,7 +732,3 @@ for x, y in pairs:
     expect(res.error).toBeUndefined();
   });
 });
-
-
-
-

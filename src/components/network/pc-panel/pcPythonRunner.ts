@@ -109,6 +109,7 @@ export function executePythonScript(
       const rawArgs = printMatch[1];
       if (!rawArgs.trim()) {
         outputs.push('');
+        onOutput?.('', false);
         return;
       }
 
@@ -132,14 +133,14 @@ export function executePythonScript(
         } else {
           outputs.push(lineStr);
         }
-        onOutput?.(lineStr, true);
+        onOutput?.(outputs[outputs.length - 1], true);
       } else if (endArg === '' || endArg === ' ') {
         if (outputs.length > 0) {
           outputs[outputs.length - 1] += endArg + lineStr;
         } else {
           outputs.push(lineStr);
         }
-        onOutput?.(lineStr, true);
+        onOutput?.(outputs[outputs.length - 1], true);
       } else {
         outputs.push(lineStr);
         onOutput?.(lineStr, false);
@@ -273,6 +274,52 @@ export function executePythonScript(
             }
           }
           return;
+        } else if (leftSide.endsWith(']')) {
+          const rhsVal = evaluateExpr(rightSide);
+          const indexMatches: string[] = [];
+          let varName = '';
+          let k = 0;
+          while (k < leftSide.length && leftSide[k] !== '[') {
+            varName += leftSide[k];
+            k++;
+          }
+          varName = varName.trim();
+
+          if (varName && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
+            while (k < leftSide.length) {
+              if (leftSide[k] === '[') {
+                let depth = 1;
+                let j = k + 1;
+                while (j < leftSide.length && depth > 0) {
+                  if (leftSide[j] === '[') depth++;
+                  else if (leftSide[j] === ']') depth--;
+                  j++;
+                }
+                const idxExpr = leftSide.slice(k + 1, j - 1).trim();
+                indexMatches.push(idxExpr);
+                k = j;
+              } else {
+                k++;
+              }
+            }
+
+            if (indexMatches.length > 0) {
+              const evaluatedIndices = indexMatches.map(idxStr => evaluateExpr(idxStr));
+              let current: any = scope[varName];
+              if (current !== undefined) {
+                for (let m = 0; m < evaluatedIndices.length - 1; m++) {
+                  const idxKey = evaluatedIndices[m];
+                  if (current === null || typeof current !== 'object') break;
+                  current = current[idxKey as any];
+                }
+                if (current !== null && typeof current === 'object') {
+                  const lastKey = evaluatedIndices[evaluatedIndices.length - 1];
+                  current[lastKey as any] = rhsVal;
+                  return;
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -524,6 +571,7 @@ export async function executePythonScriptAsync(
       const rawArgs = printMatch[1];
       if (!rawArgs.trim()) {
         outputs.push('');
+        onOutput?.('', false);
         return;
       }
 
@@ -547,14 +595,14 @@ export async function executePythonScriptAsync(
         } else {
           outputs.push(lineStr);
         }
-        onOutput?.(lineStr, true);
+        onOutput?.(outputs[outputs.length - 1], true);
       } else if (endArg === '' || endArg === ' ') {
         if (outputs.length > 0) {
           outputs[outputs.length - 1] += endArg + lineStr;
         } else {
           outputs.push(lineStr);
         }
-        onOutput?.(lineStr, true);
+        onOutput?.(outputs[outputs.length - 1], true);
       } else {
         outputs.push(lineStr);
         onOutput?.(lineStr, false);
@@ -688,6 +736,52 @@ export async function executePythonScriptAsync(
             }
           }
           return;
+        } else if (leftSide.endsWith(']')) {
+          const rhsVal = evaluateExpr(rightSide);
+          const indexMatches: string[] = [];
+          let varName = '';
+          let k = 0;
+          while (k < leftSide.length && leftSide[k] !== '[') {
+            varName += leftSide[k];
+            k++;
+          }
+          varName = varName.trim();
+
+          if (varName && /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(varName)) {
+            while (k < leftSide.length) {
+              if (leftSide[k] === '[') {
+                let depth = 1;
+                let j = k + 1;
+                while (j < leftSide.length && depth > 0) {
+                  if (leftSide[j] === '[') depth++;
+                  else if (leftSide[j] === ']') depth--;
+                  j++;
+                }
+                const idxExpr = leftSide.slice(k + 1, j - 1).trim();
+                indexMatches.push(idxExpr);
+                k = j;
+              } else {
+                k++;
+              }
+            }
+
+            if (indexMatches.length > 0) {
+              const evaluatedIndices = indexMatches.map(idxStr => evaluateExpr(idxStr));
+              let current: any = scope[varName];
+              if (current !== undefined) {
+                for (let m = 0; m < evaluatedIndices.length - 1; m++) {
+                  const idxKey = evaluatedIndices[m];
+                  if (current === null || typeof current !== 'object') break;
+                  current = current[idxKey as any];
+                }
+                if (current !== null && typeof current === 'object') {
+                  const lastKey = evaluatedIndices[evaluatedIndices.length - 1];
+                  current[lastKey as any] = rhsVal;
+                  return;
+                }
+              }
+            }
+          }
         }
       }
     }

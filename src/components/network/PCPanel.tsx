@@ -234,7 +234,10 @@ export function PCPanel({
     }
     setDesktopHistory(historyToLoad);
     setDesktopHistoryIndex(-1);
-  }, [deviceId, pcHistories]);
+  // Reload only when switching devices. `pcHistories` changes whenever a
+  // command is recorded; listening to it here would immediately overwrite
+  // the newly recorded local history with the previous snapshot.
+  }, [deviceId]);
 
   useEffect(() => {
     if (typeof localStorage !== 'undefined' && desktopHistory.length > 0) {

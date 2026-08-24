@@ -21,12 +21,30 @@ export interface ParsedLine {
 
 export function parseProgramLines(rawLines: string[]): ParsedLine[] {
   const parsedLines: ParsedLine[] = [];
+  let continuationDepth = 0;
   for (const l of rawLines) {
     const stripped = stripInlineComment(l);
     if (!stripped.trim() || stripped.trim().startsWith('#')) continue;
     const indentMatch = stripped.match(/^[ \t]*/);
     const indent = indentMatch ? indentMatch[0].replace(/\t/g, '    ').length : 0;
-    parsedLines.push({ indent, text: stripped.trim() });
+    const text = stripped.trim();
+    if (continuationDepth > 0 && parsedLines.length > 0) {
+      parsedLines[parsedLines.length - 1].text += ` ${text}`;
+    } else {
+      parsedLines.push({ indent, text });
+    }
+
+    // Keep bracketed list/tuple expressions together across physical lines.
+    // This is needed for common matrix literals formatted over several lines.
+    let inQuote = '';
+    for (const ch of text) {
+      if (inQuote) {
+        if (ch === inQuote) inQuote = '';
+      } else if (ch === '"' || ch === "'") {
+        inQuote = ch;
+      } else if ('([{'.includes(ch)) continuationDepth++;
+      else if (')]}'.includes(ch)) continuationDepth = Math.max(0, continuationDepth - 1);
+    }
   }
   return parsedLines;
 }

@@ -182,9 +182,8 @@ export function createExpressionEvaluator(
     }
 
     // List literal: [value1, value2, ...]
-    const listLiteralMatch = /^\[(.*)\]$/.exec(trimmed);
-    if (listLiteralMatch) {
-      const inner = listLiteralMatch[1].trim();
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      const inner = trimmed.slice(1, -1).trim();
       if (!inner) return [];
       return splitOutsideQuotesAndParens(inner, ',')
         .filter(item => item.trim() !== '')
