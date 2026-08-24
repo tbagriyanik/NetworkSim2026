@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Save, Play, X, FileCode } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, Play, FileCode } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PythonCodeEditor } from './PythonCodeEditor';
+import { ResizablePortalWindow } from './ResizablePortalWindow';
 
 interface FileEditorModalProps {
   open: boolean;
@@ -27,32 +27,11 @@ export function FileEditorModal({
   onRunPython,
   onClose,
 }: FileEditorModalProps) {
-  const getViewportSize = () => {
-    if (typeof window === 'undefined') return { width: 900, height: 620 };
-    return {
-      width: Math.min(900, Math.max(320, window.innerWidth - 24)),
-      height: Math.min(620, Math.max(240, window.innerHeight - 24)),
-    };
-  };
-
   const [content, setContent] = useState(initialContent);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [size, setSize] = useState(getViewportSize);
-  const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
 
   useEffect(() => {
     setContent(initialContent);
   }, [initialContent, open]);
-
-  useEffect(() => () => {
-    dragRef.current = null;
-  }, []);
-
-  useEffect(() => {
-    if (!open || typeof window === 'undefined') return;
-    setSize(getViewportSize());
-    setPosition({ x: 0, y: 0 });
-  }, [open, filePath]);
 
   const fileName = filePath.split(/[\\/]/).pop() || filePath;
   const isPythonFile = fileName.toLowerCase().endsWith('.py');
@@ -69,25 +48,6 @@ export function FileEditorModal({
     }
     onClose();
   };
-
-  const handleDragStart = (event: React.PointerEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest('button')) return;
-    dragRef.current = { x: position.x, y: position.y, startX: event.clientX, startY: event.clientY };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const clampPosition = (x: number, y: number, width = size.width, height = size.height) => {
-    if (typeof window === 'undefined') return { x, y };
-    const margin = 12;
-    return {
-      x: Math.max(-(window.innerWidth - width) / 2 + margin, Math.min((window.innerWidth - width) / 2 - margin, x)),
-      y: Math.max(-(window.innerHeight - height) / 2 + margin, Math.min((window.innerHeight - height) / 2 - margin, y)),
-    };
-  };
-  const handleDragMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragRef.current) return;
-    setPosition(clampPosition(dragRef.current.x + event.clientX - dragRef.current.startX, dragRef.current.y + event.clientY - dragRef.current.startY));
-  };
-  const handleDragEnd = () => { dragRef.current = null; };
 
   const lineCount = content.split('\n').length;
   const charCount = content.length;
@@ -191,92 +151,102 @@ export function FileEditorModal({
     }
   };
 
+  const headerTitle = (
+    <div className="flex items-center gap-2 min-w-0 truncate font-mono text-sm font-semibold tracking-wide">
+      <span className="truncate">{fileName}</span>
+      {isPythonFile && (
+        <span className="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-sans shrink-0">
+          Python Script
+        </span>
+      )}
+    </div>
+  );
+
+  const headerActions = (
+    <>
+      {isPythonFile && (
+        <Button
+          size="sm"
+          variant="default"
+          onClick={handleRun}
+          className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-3"
+        >
+          <Play className="w-3.5 h-3.5 fill-current" />
+          {language === 'tr' ? 'Kaydet & Çalıştır' : 'Save & Run'}
+        </Button>
+      )}
+
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={handleSave}
+        className={`h-8 gap-1.5 text-xs px-3 ${
+          isDark
+            ? 'border-secondary-700 hover:bg-secondary-800 text-secondary-200'
+            : 'border-secondary-300 hover:bg-secondary-100'
+        }`}
+      >
+        <Save className="w-3.5 h-3.5" />
+        {language === 'tr' ? 'Kaydet' : 'Save'}
+      </Button>
+    </>
+  );
+
+  const footerBar = (
+    <div
+      className={`px-4 py-1.5 flex justify-between items-center text-xs font-mono border-t ${
+        isDark
+          ? 'border-secondary-800 bg-secondary-900/40 text-secondary-400'
+          : 'border-secondary-200 bg-secondary-100/60 text-secondary-600'
+      }`}
+    >
+      <span className="truncate mr-2">Dosya: {filePath}</span>
+      <div className="flex gap-4 shrink-0">
+        <span>Satır: {lineCount}</span>
+        <span>Karakter: {charCount}</span>
+        <span>UTF-8</span>
+      </div>
+    </div>
+  );
+
   return (
-    <Dialog open={open} onOpenChange={(val) => { if (!val) onClose(); }}>
-      <DialogContent
-        showCloseButton={false}
-        onEscapeKeyDown={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          onClose();
-        }}
-        style={{ left: '50%', top: '50%', width: size.width, height: size.height, maxHeight: size.height, boxSizing: 'border-box', transform: `translate(calc(-50% + ${position.x}px), calc(-50% + ${position.y}px))`, zIndex: 10002 }}
-        className={`max-w-none animate-none flex flex-col p-0 gap-0 overflow-hidden ${isDark ? 'bg-secondary-950 text-secondary-100 border-secondary-800' : 'bg-white text-secondary-900 border-secondary-200'
-          }`}>
-        {/* Header */}
-        <DialogHeader onPointerDown={handleDragStart} onPointerMove={handleDragMove} onPointerUp={handleDragEnd} onPointerCancel={handleDragEnd} className={`cursor-move px-4 py-3 flex flex-row items-center justify-between border-b space-y-0 ${isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50'
-          }`}>
-          <div className="flex items-center gap-2">
-            <FileCode className="w-5 h-5 text-primary-500" />
-            <DialogTitle className="text-sm font-semibold tracking-wide font-mono">
-              {fileName} {isPythonFile && <span className="text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 font-sans ml-2">Python Script</span>}
-            </DialogTitle>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {isPythonFile && (
-              <Button
-                size="sm"
-                variant="default"
-                onClick={handleRun}
-                className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-3"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                {language === 'tr' ? 'Kaydet & Çalıştır' : 'Save & Run'}
-              </Button>
-            )}
-
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleSave}
-              className={`h-8 gap-1.5 text-xs px-3 ${isDark ? 'border-secondary-700 hover:bg-secondary-800 text-secondary-200' : 'border-secondary-300 hover:bg-secondary-100'
-                }`}
-            >
-              <Save className="w-3.5 h-3.5" />
-              {language === 'tr' ? 'Kaydet' : 'Save'}
-            </Button>
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onClose}
-              className="h-8 w-8 p-0 rounded-md bg-red-600 text-white hover:bg-red-500 focus-visible:ring-red-400"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </div>
-        </DialogHeader>
-
-        {/* Main Editor Body */}
-        <div data-code-editor="true" className="flex-1 relative flex flex-col font-mono text-sm overflow-hidden">
-          {isPythonFile ? <PythonCodeEditor
+    <ResizablePortalWindow
+      isOpen={open}
+      onClose={onClose}
+      title={headerTitle}
+      icon={<FileCode className="w-5 h-5 text-primary-500 shrink-0" />}
+      isDark={isDark}
+      defaultWidth={900}
+      defaultHeight={620}
+      minWidth={320}
+      minHeight={240}
+      headerActions={headerActions}
+      footerBar={footerBar}
+    >
+      <div data-code-editor="true" className="flex-1 relative flex flex-col font-mono text-sm overflow-hidden">
+        {isPythonFile ? (
+          <PythonCodeEditor
             value={content}
             onChange={setContent}
             onKeyDown={handleTextareaKeyDown}
             isDark={isDark}
             placeholder={'# Python kodunuzu buraya yazın...\nprint("Merhaba Dunya!")'}
-          /> : <textarea
+          />
+        ) : (
+          <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleTextareaKeyDown}
-            className={`flex-1 w-full h-full p-4 resize-none outline-none font-mono text-xs sm:text-sm leading-relaxed ${isDark ? 'bg-secondary-950 text-emerald-400 placeholder:text-secondary-600 selection:bg-primary-800' : 'bg-white text-secondary-900 placeholder:text-secondary-400 selection:bg-primary-200'}`}
+            className={`flex-1 w-full h-full p-4 resize-none outline-none font-mono text-xs sm:text-sm leading-relaxed ${
+              isDark
+                ? 'bg-secondary-950 text-emerald-400 placeholder:text-secondary-600 selection:bg-primary-800'
+                : 'bg-white text-secondary-900 placeholder:text-secondary-400 selection:bg-primary-200'
+            }`}
             spellCheck={false}
             autoFocus
-          />}
-        </div>
-
-        {/* Footer Status Bar */}
-        <div className={`px-4 py-1.5 flex justify-between items-center text-xs font-mono border-t ${isDark ? 'border-secondary-800 bg-secondary-900/40 text-secondary-400' : 'border-secondary-200 bg-secondary-100/60 text-secondary-600'
-          }`}>
-          <span>Dosya: {filePath}</span>
-          <div className="flex gap-4">
-            <span>Satır: {lineCount}</span>
-            <span>Karakter: {charCount}</span>
-            <span>UTF-8</span>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          />
+        )}
+      </div>
+    </ResizablePortalWindow>
   );
 }
