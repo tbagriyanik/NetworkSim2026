@@ -271,6 +271,7 @@ export function MultiDeviceWindowManager({
             modalSize={size}
             handlePointerDown={handlePointerDown}
             handleResizeStart={handleResizeStart}
+            restoreRequest={windowRestoreRequests[win.id]}
           />
         );
       })}

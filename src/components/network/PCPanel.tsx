@@ -91,7 +91,8 @@ export function PCPanel({
   // Responsive hooks
   const isMobile = useIsMobile();
 
-  // Ref for click-outside detection
+  // The PC panel is a persistent floating window. Closing it is handled by
+  // its close button, Escape, or an explicit navigation action.
   const panelRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const deviceFromTopology = topologyDevices.find(d => d.id === deviceId);
@@ -846,48 +847,6 @@ export function PCPanel({
 
   const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState<number>(-1);
   const [showUrlSuggestions, setShowUrlSuggestions] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!isVisible) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      // Don't close if web browser is open
-      if (httpAppContent) return;
-
-      const target = event.target as HTMLElement;
-      // Don't close if clicking a portal (like Select dropdown, tooltips, etc.) or detached element
-      if (
-        !target ||
-        !document.body.contains(target) ||
-        target?.closest('[data-radix-portal]') ||
-        target?.closest('[role="listbox"]') ||
-        target?.closest('.radix-select-content') ||
-        target?.closest('.radix-popper-content') ||
-        target?.closest('[data-radix-select-viewport]') ||
-        target?.closest('[data-radix-select-content]') ||
-        target?.closest('[data-radix-select-trigger]') ||
-        target?.closest('[role="combobox"]') ||
-        target?.closest('[data-state="open"]') ||
-        target?.closest('[role="dialog"]')
-      ) {
-        return;
-      }
-
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    // Add listener with a small delay to avoid immediate trigger
-    const timer = setTimeout(() => {
-      document.addEventListener('mousedown', handleClickOutside);
-    }, 100);
-
-    return () => {
-      clearTimeout(timer);
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isVisible, onClose, httpAppContent]);
 
   const { filteredSuggestions, browserWindow, setBrowserWindow } = usePCPanelBrowserState({
     topologyDevices,

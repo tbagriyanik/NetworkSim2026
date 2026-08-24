@@ -23,13 +23,14 @@ interface AppFooterProps {
   showProjectPicker: boolean;
   showOnboarding: boolean;
   setShowAboutModal: (v: boolean) => void;
+  onShortcut: (shortcut: 'next-device' | 'windows' | 'minimize' | 'save') => void;
 }
 
 export function AppFooter({
   t, isDark, language, activeTab, activeDeviceType, activeDeviceId,
   hasUnsavedChanges, lastSaveTime, projectName, totalScore, maxScore,
   topologyDevices, lastTaskEvent, showProjectPicker, showOnboarding,
-  setShowAboutModal
+  setShowAboutModal, onShortcut
 }: AppFooterProps) {
   const getDeviceCountLabel = (count: number) => (
     language === 'tr' ? 'Cihaz' : (count === 1 ? 'Device' : 'Devices')
@@ -102,17 +103,13 @@ export function AppFooter({
                 <span className={`text-[11px] ${isDark ? 'text-secondary-300' : 'text-secondary-700'} whitespace-nowrap`}>
                   {activeTab === 'topology' && (
                     <>
-                      <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
-                        }`}>(Shift) TAB</kbd>
+                      <button type="button" onClick={() => onShortcut('next-device')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>TAB</button>
                       <span className="mx-1">{t.tabToNext}</span>
-                      <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
-                        }`}>Ctrl+Tab</kbd>
+                      <button type="button" onClick={() => onShortcut('windows')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Shift+Tab</button>
                       <span className="mx-1">{language === 'tr' ? 'Pencereler' : 'Windows'}</span>
-                      <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
-                        }`}>Ctrl+M</kbd>
+                      <button type="button" onClick={() => onShortcut('minimize')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Ctrl+M</button>
                       <span className="mx-1">{language === 'tr' ? 'Küçült' : 'Min'}</span>
-                      <kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${isDark ? 'bg-secondary-700 text-secondary-300' : 'bg-secondary-200 text-secondary-700'
-                        }`}>Ctrl+S</kbd>
+                      <button type="button" onClick={() => onShortcut('save')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Ctrl+S</button>
                       <span className="mx-1">{t.saveLabel}</span>
                       {(topologyDevices?.length || 0) > 0 && (
                         <>
@@ -167,23 +164,23 @@ export function AppFooter({
                 </div>
               )}
 
-            {/* Lab Progress */}
-            {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
-              <div className={`hidden md:flex items-center gap-2`}>
-                <span className={`text-[11px] font-bold tracking-wider ${isDark ? 'text-secondary-500' : 'text-secondary-600'}`}>
-                  {t.labProgress}
-                </span>
-                <div className={`w-20 h-1.5 rounded-full ${isDark ? 'bg-secondary-700' : 'bg-secondary-200'} overflow-hidden`}>
-                  <div
-                    className="h-full bg-accent-500 shadow-[0_0_2px_rgba(6,182,212,0.2)] transition-all duration-300"
-                    style={{ width: `${(totalScore / maxScore) * 100}%` }}
-                  />
+              {/* Lab Progress */}
+              {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
+                <div className={`hidden md:flex items-center gap-2`}>
+                  <span className={`text-[11px] font-bold tracking-wider ${isDark ? 'text-secondary-500' : 'text-secondary-600'}`}>
+                    {t.labProgress}
+                  </span>
+                  <div className={`w-20 h-1.5 rounded-full ${isDark ? 'bg-secondary-700' : 'bg-secondary-200'} overflow-hidden`}>
+                    <div
+                      className="h-full bg-accent-500 shadow-[0_0_2px_rgba(6,182,212,0.2)] transition-all duration-300"
+                      style={{ width: `${(totalScore / maxScore) * 100}%` }}
+                    />
+                  </div>
+                  <span className={`text-[11px] font-bold ${isDark ? 'text-accent-400' : 'text-accent-600'}`}>
+                    {Math.round((totalScore / maxScore) * 100)}%
+                  </span>
                 </div>
-                <span className={`text-[11px] font-bold ${isDark ? 'text-accent-400' : 'text-accent-600'}`}>
-                  {Math.round((totalScore / maxScore) * 100)}%
-                </span>
-              </div>
-            )}
+              )}
             </div>
           </div>
         </div>

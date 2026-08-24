@@ -595,6 +595,17 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
     nav.handleDeviceSelectFromMenu(device, deviceId, switchModel, deviceName);
 
+    // If the selected device already has a floating window, selecting it from
+    // the toolbar should also restore and focus that window. Do not create a
+    // new window here; the toolbar remains a topology-selection control.
+    if (deviceId) {
+      const windowStore = useMultiWindowStore.getState();
+      if (windowStore.isWindowOpen(deviceId)) {
+        windowStore.restoreWindow(deviceId);
+        useWindowStore.getState().setActiveWindow(deviceId);
+      }
+    }
+
     // Call checkStepCompletionWithContext for device access check
     if (deviceId) {
       const accessedType =
@@ -2194,6 +2205,31 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             showProjectPicker={showProjectPicker}
             showOnboarding={showOnboarding}
             setShowAboutModal={setShowAboutModal}
+            onShortcut={(shortcut) => {
+              if (shortcut === 'next-device') {
+                if (topologyDevices.length === 0) return;
+                const currentIndex = topologyDevices.findIndex((device) => device.id === activeDeviceId);
+                const nextDevice = topologyDevices[(currentIndex + 1 + topologyDevices.length) % topologyDevices.length];
+                if (nextDevice) {
+                  handleDeviceSelectFromMenu(
+                    nextDevice.type,
+                    nextDevice.id,
+                    nextDevice.switchModel,
+                    nextDevice.name
+                  );
+                }
+                return;
+              }
+              const event = new KeyboardEvent('keydown', {
+                key: shortcut === 'windows' ? 'Tab' : shortcut === 'minimize' ? 'm' : 's',
+                code: shortcut === 'windows' ? 'Tab' : shortcut === 'minimize' ? 'KeyM' : 'KeyS',
+                bubbles: true,
+                cancelable: true,
+                shiftKey: shortcut === 'windows',
+                ctrlKey: shortcut === 'minimize' || shortcut === 'save',
+              });
+              window.dispatchEvent(event);
+            }}
           />
 
 

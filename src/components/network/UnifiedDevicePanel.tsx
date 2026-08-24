@@ -61,6 +61,7 @@ interface UnifiedDevicePanelProps {
     modalSize: ModalSize;
     handlePointerDown: (e: React.PointerEvent, modalType: string) => void;
     handleResizeStart: (e: React.PointerEvent, direction: string, modalType: string) => void;
+    restoreRequest?: number;
     className?: string;
 }
 
@@ -94,7 +95,7 @@ export function UnifiedDevicePanel({
     modalSize,
     handlePointerDown,
     handleResizeStart,
-    className
+    className, restoreRequest
 }: UnifiedDevicePanelProps) {
 
     const [selectedVlan, setSelectedVlan] = React.useState(1);
@@ -180,6 +181,7 @@ export function UnifiedDevicePanel({
             handlePointerDown={handlePointerDown}
             handleResizeStart={handleResizeStart}
             collapsible
+            restoreRequest={restoreRequest}
         >
             <div className="flex-1 overflow-hidden relative">
                 <Tabs value={activeTab} className="h-full">

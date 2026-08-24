@@ -12,6 +12,7 @@ import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { logger } from '@/lib/logger';
+import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 
 export interface UseLoadProjectDataProps {
   setDeviceStates: (states: Map<string, SwitchState>) => void;
@@ -61,6 +62,10 @@ export function useLoadProjectData({
 
   return useCallback((projectData: unknown, options?: { keepActiveDevice?: boolean }) => {
     try {
+      // Project windows belong to the previous workspace and must never leak
+      // into a newly loaded project.
+      useMultiWindowStore.getState().closeAllDeviceWindows();
+
       // Clear packet capture, simulation states, and device state caches
       // Preserve isSimulationMode if it's defined in the loaded data; otherwise default to true for new projects.
       const loadedIsSimMode = (projectData && typeof projectData === 'object' && (projectData as Record<string, unknown>).topology && typeof (projectData as Record<string, unknown>).topology === 'object' && ((projectData as Record<string, unknown>).topology as Record<string, unknown>).isSimulationMode);

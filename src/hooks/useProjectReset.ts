@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { useAppStore } from '@/lib/store/appStore';
+import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
 import { TerminalOutput } from '@/components/network/Terminal';
@@ -58,6 +59,8 @@ export function useProjectReset({
   resetHistory
 }: UseProjectResetProps) {
   const resetToEmptyProject = useCallback(() => {
+    // A new/empty project must not inherit floating windows from the previous project.
+    useMultiWindowStore.getState().closeAllDeviceWindows();
     // Clear packet capture and simulation states (trigger recompile)
     useAppStore.setState(state => ({
       topology: {

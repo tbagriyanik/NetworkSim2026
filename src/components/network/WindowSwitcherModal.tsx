@@ -4,7 +4,7 @@ import React, { useEffect, useCallback, useMemo } from 'react';
 import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 import { useWindowStore } from '@/hooks/useWindowStore';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
-import { Monitor, Server, Router, Shield, Radio, AppWindow } from 'lucide-react';
+import { Monitor, Server, Router, Shield, Radio, AppWindow, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface WindowSwitcherModalProps {
@@ -61,10 +61,38 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
   const setSwitcherSelectedIndex = useMultiWindowStore((state) => state.setSwitcherSelectedIndex);
   const stepSwitcher = useMultiWindowStore((state) => state.stepSwitcher);
   const closeSwitcher = useMultiWindowStore((state) => state.closeSwitcher);
+  const closeDeviceWindow = useMultiWindowStore((state) => state.closeDeviceWindow);
+  const closeAllDeviceWindows = useMultiWindowStore((state) => state.closeAllDeviceWindows);
   const openDeviceWindow = useMultiWindowStore((state) => state.openDeviceWindow);
   const restoreWindow = useMultiWindowStore((state) => state.restoreWindow);
   const isWindowOpen = useMultiWindowStore((state) => state.isWindowOpen);
   const setActiveWindow = useWindowStore((state) => state.setActiveWindow);
+
+  // Keep the shortcut local to the switcher as well as the page shortcut
+  // hook. This ensures Shift+Tab is caught even when focus is inside a device
+  // terminal or another component that stops keyboard propagation.
+  useEffect(() => {
+    const handleGlobalShortcut = (e: KeyboardEvent) => {
+      if (!e.shiftKey || e.ctrlKey || e.metaKey || e.key !== 'Tab') return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      const store = useMultiWindowStore.getState();
+      if (store.isSwitcherOpen) {
+        // The modal's dedicated capture listener handles cycling while open.
+        return;
+      } else {
+        store.openSwitcher(
+          useWindowStore.getState().activeWindowId,
+          e.shiftKey,
+          topologyDevices.map((device) => ({ id: device.id, type: device.type }))
+        );
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalShortcut, true);
+    return () => window.removeEventListener('keydown', handleGlobalShortcut, true);
+  }, [topologyDevices]);
 
   // If openWindows has items, use openWindows. Otherwise, fall back to topologyDevices.
   const displayList = useMemo(() => {
@@ -109,7 +137,7 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
     };
 
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (!e.ctrlKey && !e.metaKey) {
+      if (!e.shiftKey) {
         const selected = displayList[switcherSelectedIndex];
         if (selected) {
           handleSelectWindow(selected.id, selected.type);
@@ -131,15 +159,13 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md transition-opacity duration-150 animate-in fade-in"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/25 backdrop-blur-sm transition-opacity duration-150 animate-in fade-in"
       onClick={() => closeSwitcher()}
     >
       <div
         className={cn(
           'w-full max-w-2xl mx-4 p-5 rounded-2xl border shadow-2xl transition-all select-none',
-          isDark
-            ? 'bg-secondary-950/90 border-secondary-700/80 text-secondary-100 shadow-emerald-950/30'
-            : 'bg-white/95 border-secondary-300 text-secondary-900 shadow-xl'
+          'bg-transparent border-transparent text-secondary-900 dark:text-secondary-100 shadow-none'
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -154,6 +180,19 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
             {displayList.length} {language === 'tr' ? 'Öğe' : 'Items'}
           </span>
+          {openWindows.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                closeAllDeviceWindows();
+                closeSwitcher();
+              }}
+              className="ml-2 inline-flex items-center gap-1 rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+            >
+              <X className="h-3 w-3" />
+              {language === 'tr' ? 'Tümünü kapat' : 'Close all'}
+            </button>
+          )}
         </div>
 
         {/* Windows List / Cards Grid */}
@@ -210,6 +249,20 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
                   </div>
                   <p className="text-xs text-secondary-400 truncate mt-0.5">{typeLabel}</p>
                 </div>
+                {isOpenAlready && (
+                  <button
+                    type="button"
+                    aria-label={language === 'tr' ? `${name} penceresini kapat` : `Close ${name} window`}
+                    title={language === 'tr' ? 'Pencereyi kapat' : 'Close window'}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      closeDeviceWindow(item.id);
+                    }}
+                    className="shrink-0 rounded-md p-1.5 text-secondary-500 transition-colors hover:bg-red-100 hover:text-red-600"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             );
           })}
@@ -219,20 +272,15 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
         <div className="mt-4 pt-3 border-t border-secondary-700/40 flex items-center justify-between text-[11px] text-secondary-400">
           <div className="flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded bg-secondary-800 font-mono text-[10px] text-secondary-300">
-              Ctrl + Tab
+              Shift + Tab
             </span>
-            <span>{language === 'tr' ? 'Sonraki' : 'Next'}</span>
-            <span className="mx-1">·</span>
-            <span className="px-1.5 py-0.5 rounded bg-secondary-800 font-mono text-[10px] text-secondary-300">
-              Ctrl + Shift + Tab
-            </span>
-            <span>{language === 'tr' ? 'Önceki' : 'Previous'}</span>
+            <span>{language === 'tr' ? 'Pencere listesini aç / seç' : 'Open / select window'}</span>
           </div>
 
           <span className="hidden sm:inline italic">
             {language === 'tr'
-              ? 'Tıklayabilir veya Ctrl tuşunu bırakabilirsiniz'
-              : 'Click or release Ctrl to open'}
+              ? 'Tıklayabilir veya Shift tuşunu bırakabilirsiniz'
+              : 'Click or release Shift to open'}
           </span>
         </div>
       </div>

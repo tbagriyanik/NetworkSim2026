@@ -114,8 +114,8 @@ export function useKeyboardShortcuts({
         }
       }
 
-      if (e.ctrlKey || e.metaKey) {
-        if (e.key === 'Tab' || e.code === 'Tab') {
+      if (e.key === 'Tab' || e.code === 'Tab') {
+        if (e.shiftKey && !e.ctrlKey && !e.metaKey) {
           e.preventDefault();
           if (useMultiWindowStore.getState().isSwitcherOpen) {
             return;
@@ -125,6 +125,9 @@ export function useKeyboardShortcuts({
           useMultiWindowStore.getState().openSwitcher(activeWindowId, e.shiftKey, fallback);
           return;
         }
+      }
+
+      if (e.ctrlKey || e.metaKey) {
 
         const key = e.key.toLowerCase();
 
@@ -215,8 +218,7 @@ export function useKeyboardShortcuts({
         if (showProjectPicker) {
           return;
         }
-        const hasOpenDeviceWindows = useMultiWindowStore.getState().openWindows.length > 0;
-        if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showUnifiedDeviceModal && !hasOpenDeviceWindows) {
+        if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showUnifiedDeviceModal) {
           e.preventDefault();
 
           if (selectedDevice) {
@@ -233,6 +235,14 @@ export function useKeyboardShortcuts({
           if (nextDevice) {
             setActiveDeviceId(nextDevice.id);
             setActiveDeviceType(nextDevice.type);
+
+            // Tab navigation also restores and focuses an already-open
+            // floating window, regardless of its device type.
+            const windowStore = useMultiWindowStore.getState();
+            if (windowStore.isWindowOpen(nextDevice.id)) {
+              windowStore.restoreWindow(nextDevice.id);
+              useWindowStore.getState().setActiveWindow(nextDevice.id);
+            }
           }
         }
       }
