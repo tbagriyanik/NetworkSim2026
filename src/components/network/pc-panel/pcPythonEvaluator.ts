@@ -285,8 +285,25 @@ export function createExpressionEvaluator(
       return arr;
     }
 
+    // Handle reversed(...)
+    const reversedMatch = isCompleteCall('reversed') ? /^reversed\s*\((.*)\)$/.exec(trimmed) : null;
+    if (reversedMatch) {
+      const val = evaluateExpr(reversedMatch[1]);
+      let arr: unknown[];
+      if (Array.isArray(val)) {
+        arr = [...val];
+      } else if (typeof val === 'string') {
+        arr = val.split('');
+      } else if (val instanceof Set) {
+        arr = Array.from(val);
+      } else {
+        return val;
+      }
+      return arr.reverse();
+    }
+
     // Handle list(...)
-    const listMatch = /^list\s*\((.*)\)$/.exec(trimmed);
+    const listMatch = isCompleteCall('list') ? /^list\s*\((.*)\)$/.exec(trimmed) : null;
     if (listMatch) {
       const innerArg = listMatch[1].trim();
       if (!innerArg) return [];
@@ -481,6 +498,7 @@ export function createExpressionEvaluator(
           }
           const sArgs = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
           switch (methodName) {
+            case 'casefold':
             case 'lower':
               return obj.toLowerCase();
             case 'upper':
@@ -643,6 +661,10 @@ export function createExpressionEvaluator(
     if (eqEqIdx !== -1) {
       const leftVal = evaluateExpr(trimmed.slice(0, eqEqIdx));
       const rightVal = evaluateExpr(trimmed.slice(eqEqIdx + 2));
+      if (Array.isArray(leftVal) && Array.isArray(rightVal)) {
+        if (leftVal.length !== rightVal.length) return false;
+        return leftVal.every((v, i) => v === rightVal[i] || formatPythonValue(v) === formatPythonValue(rightVal[i]));
+      }
       return leftVal === rightVal || formatPythonValue(leftVal) === formatPythonValue(rightVal);
     }
 
@@ -650,6 +672,10 @@ export function createExpressionEvaluator(
     if (notEqIdx !== -1) {
       const leftVal = evaluateExpr(trimmed.slice(0, notEqIdx));
       const rightVal = evaluateExpr(trimmed.slice(notEqIdx + 2));
+      if (Array.isArray(leftVal) && Array.isArray(rightVal)) {
+        if (leftVal.length !== rightVal.length) return true;
+        return !leftVal.every((v, i) => v === rightVal[i] || formatPythonValue(v) === formatPythonValue(rightVal[i]));
+      }
       return leftVal !== rightVal && formatPythonValue(leftVal) !== formatPythonValue(rightVal);
     }
 

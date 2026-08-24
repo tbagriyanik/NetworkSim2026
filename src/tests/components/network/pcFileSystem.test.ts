@@ -351,6 +351,22 @@ for r in result:
     expect(res.error).toBeUndefined();
   });
 
+  it('should support palindrome check with casefold() and reversed()', () => {
+    const script = `
+my_str = 'asdasdasdasdasddddddddddd'
+my_str = my_str.casefold()
+rev_str = reversed(my_str)
+
+if list(my_str) == list(rev_str):
+   print("The string is a palindrome.")
+else:
+   print("The string is not a palindrome.")
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('The string is not a palindrome.');
+    expect(res.error).toBeUndefined();
+  });
+
   it('should support string .format(...) method', () => {
     const script = `
 num1 = 5
