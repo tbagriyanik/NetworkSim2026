@@ -93,7 +93,7 @@ export interface UsePCPanelCommandsParams {
 }
 
 // ---------------------------------------------------------------------------
-// Helper: apply a Windows-style pipe filter to multi-line output
+// Helper: apply a pipe filter to multi-line output
 // Supports: find /i "pattern", findstr /i "pattern", grep -i pattern
 // ---------------------------------------------------------------------------
 function applyPcPipeFilter(output: string, pipeExpr: string): string {

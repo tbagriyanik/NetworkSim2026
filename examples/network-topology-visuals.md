@@ -405,7 +405,7 @@ graph TB
 ```mermaid
 graph TB
     subgraph "Bulut Servisleri"
-        AWS["☁️ AWS IoT Core<br/>MQTT Broker"]
+        Cloud["☁️ IoT Core<br/>MQTT Broker"]
         DASH["📊 Dashboard<br/>Grafana<br/>Monitoring"]
     end
 
@@ -442,8 +442,8 @@ graph TB
         LOCK["🔐 Elektronik Kilit<br/>192.168.1.30<br/>RFID + PIN"]
     end
 
-    AWS <-->|"HTTPS/MQTT<br/>TLS 1.3"| ROUTER
-    DASH <-->|"HTTPS"| AWS
+    CloudS <-->|"HTTPS/MQTT<br/>TLS 1.3"| ROUTER
+    DASH <-->|"HTTPS"| CloudS
 
     ROUTER <-->|"Trunk"| SWITCH
     SWITCH <-->|"Copper"| PC
@@ -464,7 +464,7 @@ graph TB
     IOT_GW <-.->|"802.15.4"| A3
     IOT_GW <-.->|"802.15.4"| A4
 
-    style AWS fill:#FF9800,color:#fff
+    style CloudS fill:#FF9800,color:#fff
     style DASH fill:#FF9800,color:#fff
     style ROUTER fill:#F44336,color:#fff
     style SWITCH fill:#9C27B0,color:#fff

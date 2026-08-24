@@ -397,14 +397,12 @@ export function PCPanel({
   const [serviceNtpEnabled, setServiceNtpEnabled] = useState(deviceFromTopology?.services?.ntp?.enabled ?? false);
   const [serviceNtpServer, setServiceNtpServer] = useState(deviceFromTopology?.services?.ntp?.server || '');
   const [serviceNtpServerError, setServiceNtpServerError] = useState('');
-  const [, setServiceNtpServerPreset] = useState<'pool.ntp.org' | 'time.cloudflare.com' | 'local-clock' | 'custom'>(
+  const [, setServiceNtpServerPreset] = useState<'pool.ntp.org' | 'local-clock' | 'custom'>(
     (deviceFromTopology?.services?.ntp?.server === 'pool.ntp.org'
       ? 'pool.ntp.org'
-      : deviceFromTopology?.services?.ntp?.server === 'time.cloudflare.com'
-        ? 'time.cloudflare.com'
-        : deviceFromTopology?.services?.ntp?.server === 'local-clock'
-          ? 'local-clock'
-          : 'custom')
+      : deviceFromTopology?.services?.ntp?.server === 'local-clock'
+        ? 'local-clock'
+        : 'custom')
   );
   const [serviceNtpDate, setServiceNtpDate] = useState(deviceFromTopology?.services?.ntp?.date || new Date().toISOString().slice(0, 10));
   const [serviceNtpTime, setServiceNtpTime] = useState(deviceFromTopology?.services?.ntp?.time || new Date().toTimeString().slice(0, 8));
@@ -669,11 +667,9 @@ export function PCPanel({
       setServiceNtpServerPreset(
         deviceFromTopology?.services?.ntp?.server === 'pool.ntp.org'
           ? 'pool.ntp.org'
-          : deviceFromTopology?.services?.ntp?.server === 'time.cloudflare.com'
-            ? 'time.cloudflare.com'
-            : deviceFromTopology?.services?.ntp?.server === 'local-clock'
-              ? 'local-clock'
-              : 'custom'
+          : deviceFromTopology?.services?.ntp?.server === 'local-clock'
+            ? 'local-clock'
+            : 'custom'
       );
       setServiceNtpDate(deviceFromTopology?.services?.ntp?.date || new Date().toISOString().slice(0, 10));
       setServiceNtpTime(deviceFromTopology?.services?.ntp?.time || new Date().toTimeString().slice(0, 8));
