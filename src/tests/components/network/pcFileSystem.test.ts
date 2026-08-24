@@ -234,6 +234,20 @@ for i in range(5):
     expect(res.error).toBeUndefined();
   });
 
+  it('should support calendar module and calendar.month(yy, mm)', () => {
+    const script = `
+import calendar
+yy = 2014
+mm = 11
+print(calendar.month(yy, mm))
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('November 2014');
+    expect(res.output).toContain('Mo Tu We Th Fr Sa Su');
+    expect(res.output).toContain('30');
+    expect(res.error).toBeUndefined();
+  });
+
   it('should support string .format(...) method', () => {
     const script = `
 num1 = 5

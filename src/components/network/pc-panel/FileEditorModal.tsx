@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Play, FileCode, FilePlus, FolderOpen, Minus, Plus, Scissors, Copy, ClipboardPaste, Trash2, ListChecks, Undo2, Redo2, WrapText } from 'lucide-react';
+import { Save, Play, FileCode, File, FolderOpen, Minus, Plus, Scissors, Copy, ClipboardPaste, Trash2, ListChecks, Undo2, Redo2, WrapText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { ResizablePortalWindow } from './ResizablePortalWindow';
 
@@ -250,35 +251,61 @@ export function FileEditorModal({
 
   const headerActions = (
     <div className="flex max-w-[min(70vw,680px)] flex-nowrap items-center justify-end gap-0.5 overflow-x-auto">
-      <Button size="sm" variant="ghost" title="Yeni" onClick={handleNewFile} className="h-8 w-8 p-0 shrink-0"><FilePlus className="h-3.5 w-3.5" /></Button>
-      <Button size="sm" variant="ghost" title="Aç" onClick={handleOpenFile} className="h-8 w-8 p-0 shrink-0"><FolderOpen className="h-3.5 w-3.5" /></Button>
-      <Button size="sm" variant="outline" title="Kaydet" onClick={handleSave} className="h-8 w-8 p-0 shrink-0"><Save className="h-3.5 w-3.5" /></Button>
+      <TooltipWrapper title="Yeni">
+        <Button size="sm" variant="ghost" onClick={handleNewFile} className="h-8 w-8 p-0 shrink-0"><File className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
+      <TooltipWrapper title="Aç">
+        <Button size="sm" variant="ghost" onClick={handleOpenFile} className="h-8 w-8 p-0 shrink-0"><FolderOpen className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
+      <TooltipWrapper title="Kaydet">
+        <Button size="sm" variant="outline" onClick={handleSave} className="h-8 w-8 p-0 shrink-0"><Save className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
       <span className="mx-1 h-6 w-px bg-secondary-600/40 shrink-0" aria-hidden="true" />
-      <Button size="sm" variant="ghost" title="Geri al" disabled={historyIndex === 0} onClick={undo} className="h-8 w-8 p-0 shrink-0"><Undo2 className="h-3.5 w-3.5" /></Button>
-      <Button size="sm" variant="ghost" title="Yinele" disabled={historyIndex >= history.length - 1} onClick={redo} className="h-8 w-8 p-0 shrink-0"><Redo2 className="h-3.5 w-3.5" /></Button>
+      <TooltipWrapper title="Geri al">
+        <Button size="sm" variant="ghost" disabled={historyIndex === 0} onClick={undo} className="h-8 w-8 p-0 shrink-0"><Undo2 className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
+      <TooltipWrapper title="Yinele">
+        <Button size="sm" variant="ghost" disabled={historyIndex >= history.length - 1} onClick={redo} className="h-8 w-8 p-0 shrink-0"><Redo2 className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
       <span className="mx-1 h-6 w-px bg-secondary-600/40 shrink-0" aria-hidden="true" />
-      <Button size="sm" variant="ghost" title="Kes" onClick={() => void editSelected('cut')} className="h-8 w-8 p-0 shrink-0"><Scissors className="h-3.5 w-3.5" /></Button>
-      <Button size="sm" variant="ghost" title="Kopyala" onClick={() => void editSelected('copy')} className="h-8 w-8 p-0 shrink-0"><Copy className="h-3.5 w-3.5" /></Button>
-      <Button size="sm" variant="ghost" title="Yapıştır" onClick={() => void editSelected('paste')} className="h-8 w-8 p-0 shrink-0"><ClipboardPaste className="h-3.5 w-3.5" /></Button>
-      <Button size="sm" variant="ghost" title="Sil" onClick={() => void editSelected('delete')} className="h-8 w-8 p-0 shrink-0"><Trash2 className="h-3.5 w-3.5" /></Button>
-      <Button size="sm" variant="ghost" title="Tümünü seç" onClick={() => void editSelected('selectAll')} className="h-8 w-8 p-0 shrink-0"><ListChecks className="h-3.5 w-3.5" /></Button>
+      <TooltipWrapper title="Kes">
+        <Button size="sm" variant="ghost" onClick={() => void editSelected('cut')} className="h-8 w-8 p-0 shrink-0"><Scissors className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
+      <TooltipWrapper title="Kopyala">
+        <Button size="sm" variant="ghost" onClick={() => void editSelected('copy')} className="h-8 w-8 p-0 shrink-0"><Copy className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
+      <TooltipWrapper title="Yapıştır">
+        <Button size="sm" variant="ghost" onClick={() => void editSelected('paste')} className="h-8 w-8 p-0 shrink-0"><ClipboardPaste className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
+      <TooltipWrapper title="Sil">
+        <Button size="sm" variant="ghost" onClick={() => void editSelected('delete')} className="h-8 w-8 p-0 shrink-0"><Trash2 className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
+      <TooltipWrapper title="Tümünü seç">
+        <Button size="sm" variant="ghost" onClick={() => void editSelected('selectAll')} className="h-8 w-8 p-0 shrink-0"><ListChecks className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
       <span className="mx-1 h-6 w-px bg-secondary-600/40 shrink-0" aria-hidden="true" />
-      <Button size="sm" variant="ghost" title="Yazı küçült" disabled={fontSize <= 12} onClick={() => setFontSize(size => Math.max(12, size - 1))} className="h-8 w-8 p-0 shrink-0"><Minus className="h-3.5 w-3.5" /></Button>
+      <TooltipWrapper title="Yazı küçült">
+        <Button size="sm" variant="ghost" disabled={fontSize <= 12} onClick={() => setFontSize(size => Math.max(12, size - 1))} className="h-8 w-8 p-0 shrink-0"><Minus className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
       <span className="min-w-8 text-center text-xs font-mono shrink-0">{fontSize}</span>
-      <Button size="sm" variant="ghost" title="Yazı büyüt" disabled={fontSize >= 20} onClick={() => setFontSize(size => Math.min(20, size + 1))} className="h-8 w-8 p-0 shrink-0"><Plus className="h-3.5 w-3.5" /></Button>
+      <TooltipWrapper title="Yazı büyüt">
+        <Button size="sm" variant="ghost" disabled={fontSize >= 20} onClick={() => setFontSize(size => Math.min(20, size + 1))} className="h-8 w-8 p-0 shrink-0"><Plus className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
       <span className="mx-1 h-6 w-px bg-secondary-600/40 shrink-0" aria-hidden="true" />
-      <Button size="sm" variant={wordWrap ? 'default' : 'ghost'} title="Satır kaydırma" onClick={() => setWordWrap(value => !value)} className="h-8 w-8 p-0 shrink-0"><WrapText className="h-3.5 w-3.5" /></Button>
+      <TooltipWrapper title="Satır kaydırma">
+        <Button size="sm" variant={wordWrap ? 'default' : 'ghost'} onClick={() => setWordWrap(value => !value)} className="h-8 w-8 p-0 shrink-0"><WrapText className="h-3.5 w-3.5" /></Button>
+      </TooltipWrapper>
       {isPythonFile && (
-        <Button
-          size="sm"
-          variant="default"
-          onClick={handleRun}
-          title={language === 'tr' ? "Kaydet ve CMD'de Çalıştır (F5 / Ctrl+Enter)" : "Save & Run in CMD (F5 / Ctrl+Enter)"}
-          className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-xs px-3 shadow-sm transition-colors shrink-0"
-        >
-          <Play className="w-3.5 h-3.5 fill-current" />
-          {language === 'tr' ? 'Kaydet & Çalıştır' : 'Save & Run'}
-        </Button>
+        <TooltipWrapper title={language === 'tr' ? "Kaydet ve CMD'de Çalıştır (F5 / Ctrl+Enter)" : "Save & Run in CMD (F5 / Ctrl+Enter)"}>
+          <Button
+            size="sm"
+            variant="default"
+            onClick={handleRun}
+            className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-500 text-white shadow-sm transition-colors shrink-0"
+          >
+            <Play className="w-3.5 h-3.5 text-emerald-300 fill-emerald-300 shrink-0" />
+          </Button>
+        </TooltipWrapper>
       )}
     </div>
   );

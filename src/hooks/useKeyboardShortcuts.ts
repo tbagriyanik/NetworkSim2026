@@ -117,13 +117,55 @@ export function useKeyboardShortcuts({
       const isTerminalInputFocused = Boolean(
         (e.target as HTMLElement | null)?.closest?.('[data-terminal-input]')
       );
-      if (isModalOrWindowActive && (
-        ((e.key === 'Tab' || e.code === 'Tab') && !isCodeEditorFocused && !isTerminalInputFocused) ||
-        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm')
-      )) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return;
+      if (isModalOrWindowActive) {
+        const isTabKey = e.key === 'Tab' || e.code === 'Tab';
+        // Shift+Tab inside a CLI/CMD terminal window opens the window switcher
+        // (Tab still passes through for command completion).
+        if (isTabKey && isTerminalInputFocused && e.shiftKey) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          if (!useMultiWindowStore.getState().isSwitcherOpen) {
+            const activeWindowId = useWindowStore.getState().activeWindowId;
+            useMultiWindowStore.getState().openSwitcher(activeWindowId, true);
+          }
+          return;
+        }
+        // Terminal inputs handle Tab themselves (command completion); code editors handle Tab (indent).
+        if (isTabKey && (isCodeEditorFocused || isTerminalInputFocused)) {
+          // pass through to the element's own handler
+        } else if (isTabKey) {
+          // Focus trap for modals/dialogs: cycle Tab/Shift+Tab within the dialog.
+          const container = (e.target as HTMLElement | null)?.closest?.(
+            '[data-modal-content], [data-slot="dialog-content"], [role="dialog"], .dialog-content'
+          );
+          const focusables = container
+            ? Array.from(
+                container.querySelectorAll<HTMLElement>(
+                  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                )
+              ).filter((el) => {
+                const s = getComputedStyle(el);
+                return s.display !== 'none' && s.visibility !== 'hidden';
+              })
+            : [];
+          if (focusables.length > 0) {
+            const idx = focusables.indexOf(document.activeElement as HTMLElement);
+            const nextIdx = e.shiftKey
+              ? idx <= 0 ? focusables.length - 1 : idx - 1
+              : idx === -1 ? 0 : (idx + 1) % focusables.length;
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            focusables[nextIdx]?.focus();
+            return;
+          }
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return;
+        } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm') {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          return;
+        }
       }
 
       if (e.key === 'F1' || e.code === 'F1') {
