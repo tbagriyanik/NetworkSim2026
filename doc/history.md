@@ -2,6 +2,12 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v3.0.0 — 2026-08-24
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-24 | **PC Python Yorumlayıcı İyileştirmeleri** — `def` fonksiyonlarında default parametre desteği, `is` / `is not` karşılaştırma operatörleri, liste eleman takası (`a[i], a[j] = a[j], a[i]`), string metotları (`.lower()`, `.upper()`, `.strip()`, `.replace()`, `.split()` vb.), string'lerde `sorted()`, ve `for a, b in ...` çoklu değişken açılımı (tuple unpacking) eklendi. Async modda özyinelemeli fonksiyonların `Promise` döndürme hatası giderilerek doğru sonuçlar elde edildi. |
+
 ## v2.9.0 — 2026-08-24
 
 | Tarih | Değişiklik |

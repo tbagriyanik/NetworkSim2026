@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Network Simulator API
-  version: 2.9.0
+  version: 3.0.0
   description: API for classroom rooms, student progress, contact messages, and certificates.
 servers:
   - url: /
