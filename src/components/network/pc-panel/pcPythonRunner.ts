@@ -481,7 +481,7 @@ type Statement =
   | { type: 'if'; branches: { condition: string | null; body: Statement[] }[] }
   | { type: 'while'; condition: string; body: Statement[]; elseBody?: Statement[] }
   | { type: 'for'; varName: string; iterableExpr: string; body: Statement[]; elseBody?: Statement[] }
-  | { type: 'def'; funcName: string; paramNames: string[]; body: Statement[] };
+  | { type: 'def'; funcName: string; paramNames: string[]; paramDefaults: Record<string, string>; body: Statement[] };
 
 interface ParsedLine {
   indent: number;
@@ -633,6 +633,47 @@ function runPythonEngine(
       if (Array.isArray(val) || typeof val === 'string') return val.length;
       if (typeof val === 'object' && val !== null) return Object.keys(val).length;
       return 0;
+    }
+
+    // Basic list comprehension: [expression for name in iterable]
+    const comprehensionMatch = /^\[\s*(.+?)\s+for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+(.+?)\s*\]$/.exec(trimmed);
+    if (comprehensionMatch) {
+      const expression = comprehensionMatch[1];
+      const variable = comprehensionMatch[2];
+      const iterable = evaluateExpr(comprehensionMatch[3]);
+      const items = Array.isArray(iterable)
+        ? iterable
+        : typeof iterable === 'string'
+          ? iterable.split('')
+          : [];
+      const previous = scope[variable];
+      const hadPrevious = Object.prototype.hasOwnProperty.call(scope, variable);
+      const result = items.map(item => {
+        scope[variable] = item;
+        return evaluateExpr(expression);
+      });
+      if (hadPrevious) scope[variable] = previous;
+      else delete scope[variable];
+      return result;
+    }
+
+    // List literal: [value1, value2, ...]
+    const listLiteralMatch = /^\[(.*)\]$/.exec(trimmed);
+    if (listLiteralMatch) {
+      const inner = listLiteralMatch[1].trim();
+      if (!inner) return [];
+      return splitOutsideQuotesAndParens(inner, ',').map(item => evaluateExpr(item));
+    }
+
+    // String join: separator.join(iterable)
+    const joinMatch = /^("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')\.join\s*\((.*)\)$/.exec(trimmed);
+    if (joinMatch) {
+      const separator = String(evaluateExpr(joinMatch[1]));
+      const iterable = evaluateExpr(joinMatch[2]);
+      if (Array.isArray(iterable) || typeof iterable === 'string') {
+        return Array.from(iterable as string | unknown[]).map(String).join(separator);
+      }
+      return '';
     }
 
     // Handle abs(...)
@@ -1031,6 +1072,18 @@ function runPythonEngine(
       return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc / Number(val)), 0);
     }
 
+    // User-defined function call.
+    const functionCallMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\)$/.exec(trimmed);
+    if (functionCallMatch) {
+      const fn = scope[functionCallMatch[1]];
+      if (typeof fn === 'function') {
+        const args = functionCallMatch[2].trim()
+          ? splitOutsideQuotesAndParens(functionCallMatch[2], ',').map(arg => evaluateExpr(arg))
+          : [];
+        return fn(...args);
+      }
+    }
+
     // Fallback: JS Function evaluation in isolated scope
     try {
       const { keys, vals } = getSafeScope();
@@ -1100,6 +1153,13 @@ function runPythonEngine(
       }
 
       const { positional, kwargs } = parseFormatArgs(rawArgs, evaluateExpr);
+      if (
+        positional.length === 1 &&
+        positional[0] === undefined &&
+        /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)$/.test(rawArgs.trim())
+      ) {
+        return;
+      }
       const endArg = kwargs['end'] !== undefined ? String(kwargs['end']) : '\n';
       const sepArg = kwargs['sep'] !== undefined ? String(kwargs['sep']) : ' ';
 
@@ -1193,6 +1253,26 @@ function runPythonEngine(
     }
 
     // Handle augmented assignments (+=, -=, *=, /=, %=, //=, **=)
+    const indexedSwapMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*=\s*(.+)$/.exec(trimmed);
+    if (indexedSwapMatch) {
+      const [, firstName, firstIndexExpr, secondName, secondIndexExpr, rhsExpr] = indexedSwapMatch;
+      const firstList = scope[firstName];
+      const secondList = scope[secondName];
+      if (Array.isArray(firstList) && Array.isArray(secondList)) {
+        const firstIndex = Number(evaluateExpr(firstIndexExpr));
+        const secondIndex = Number(evaluateExpr(secondIndexExpr));
+        const rhs = evaluateExpr(rhsExpr);
+        const rhsValues = Array.isArray(rhs)
+          ? rhs
+          : splitOutsideQuotesAndParens(rhsExpr, ',').map(item => evaluateExpr(item));
+        if (rhsValues.length >= 2) {
+          firstList[firstIndex] = rhsValues[0];
+          secondList[secondIndex] = rhsValues[1];
+        }
+      }
+      return;
+    }
+
     const augMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
     if (augMatch) {
       const varName = augMatch[1];
@@ -1300,6 +1380,8 @@ function runPythonEngine(
       const jsCond = condStr
         .replace(/==/g, '===')
         .replace(/!=/g, '!==')
+        .replace(/\bis not\b/g, '!==')
+        .replace(/\bis\b/g, '===')
         .replace(/\bTrue\b/g, 'true')
         .replace(/\bFalse\b/g, 'false')
         .replace(/\bNone\b/g, 'null')
@@ -1402,9 +1484,21 @@ function runPythonEngine(
       if (defMatch) {
         const funcName = defMatch[1];
         const paramsStr = defMatch[2].trim();
-        const paramNames = paramsStr ? splitOutsideQuotesAndParens(paramsStr, ',').map(p => p.trim()) : [];
+        const paramNames: string[] = [];
+        const paramDefaults: Record<string, string> = {};
+        if (paramsStr) {
+          const params = splitOutsideQuotesAndParens(paramsStr, ',');
+          for (const p of params) {
+            const eqIdx = p.indexOf('=');
+            const name = (eqIdx >= 0 ? p.slice(0, eqIdx) : p).trim();
+            paramNames.push(name);
+            if (eqIdx >= 0) {
+              paramDefaults[name] = p.slice(eqIdx + 1).trim();
+            }
+          }
+        }
         const bodyRes = parseBlockAt(i + 1, line.indent + 1);
-        statements.push({ type: 'def', funcName, paramNames, body: bodyRes.statements });
+        statements.push({ type: 'def', funcName, paramNames, paramDefaults, body: bodyRes.statements });
         i = bodyRes.nextIndex;
         continue;
       }
@@ -1432,18 +1526,21 @@ function runPythonEngine(
         }
         processLineSync(stmt.text);
       } else if (stmt.type === 'def') {
-        const { funcName, paramNames, body } = stmt;
+        const { funcName, paramNames, paramDefaults, body } = stmt;
         scope[funcName] = (...fnArgs: unknown[]) => {
-          const savedValues: Record<string, unknown> = {};
+          const savedScope = { ...scope };
           paramNames.forEach((p, idx) => {
-            savedValues[p] = scope[p];
-            scope[p] = fnArgs[idx];
+            if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
+              scope[p] = fnArgs[idx];
+            } else if (p in paramDefaults) {
+              scope[p] = evaluateExpr(paramDefaults[p]);
+            } else {
+              scope[p] = undefined;
+            }
           });
           const sig = execStatementsSync(body);
-          paramNames.forEach(p => {
-            if (savedValues[p] !== undefined) scope[p] = savedValues[p];
-            else delete scope[p];
-          });
+          Object.keys(scope).forEach(key => delete scope[key]);
+          Object.assign(scope, savedScope);
           if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
             return sig.value;
           }
@@ -1565,6 +1662,13 @@ function runPythonEngine(
       }
 
       const { positional, kwargs } = parseFormatArgs(rawArgs, evaluateExpr);
+      if (
+        positional.length === 1 &&
+        positional[0] === undefined &&
+        /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)$/.test(rawArgs.trim())
+      ) {
+        return;
+      }
       const endArg = kwargs['end'] !== undefined ? String(kwargs['end']) : '\n';
       const sepArg = kwargs['sep'] !== undefined ? String(kwargs['sep']) : ' ';
 
@@ -1654,6 +1758,27 @@ function runPythonEngine(
       return;
     }
 
+    // Handle indexed swap: a[x], b[y] = c[z], d[w]
+    const indexedSwapSyncMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*=\s*(.+)$/.exec(trimmed);
+    if (indexedSwapSyncMatch) {
+      const [, firstName, firstIndexExpr, secondName, secondIndexExpr, rhsExpr] = indexedSwapSyncMatch;
+      const firstList = scope[firstName];
+      const secondList = scope[secondName];
+      if (Array.isArray(firstList) && Array.isArray(secondList)) {
+        const firstIndex = Number(evaluateExpr(firstIndexExpr));
+        const secondIndex = Number(evaluateExpr(secondIndexExpr));
+        const rhs = evaluateExpr(rhsExpr);
+        const rhsValues = Array.isArray(rhs)
+          ? rhs
+          : splitOutsideQuotesAndParens(rhsExpr, ',').map(item => evaluateExpr(item));
+        if (rhsValues.length >= 2) {
+          firstList[firstIndex] = rhsValues[0];
+          secondList[secondIndex] = rhsValues[1];
+        }
+      }
+      return;
+    }
+
     // Handle augmented assignments (+=, -=, *=, /=, %=, //=, **=)
     const augMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
     if (augMatch) {
@@ -1728,20 +1853,25 @@ function runPythonEngine(
         }
         await processLine(stmt.text);
       } else if (stmt.type === 'def') {
-        const { funcName, paramNames, body } = stmt;
-        scope[funcName] = async (...fnArgs: unknown[]) => {
-          const savedValues: Record<string, unknown> = {};
+        const { funcName, paramNames, paramDefaults, body } = stmt;
+        // User-defined functions run synchronously (this Python dialect has no
+        // async/await). This keeps recursion and returned values correct in async mode.
+        scope[funcName] = (...fnArgs: unknown[]) => {
+          const savedScope = { ...scope };
           paramNames.forEach((p, idx) => {
-            savedValues[p] = scope[p];
-            scope[p] = fnArgs[idx];
+            if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
+              scope[p] = fnArgs[idx];
+            } else if (p in paramDefaults) {
+              scope[p] = evaluateExpr(paramDefaults[p]);
+            } else {
+              scope[p] = undefined;
+            }
           });
 
-          const sig = await execStatements(body);
+          const sig = execStatementsSync(body);
 
-          paramNames.forEach(p => {
-            if (savedValues[p] !== undefined) scope[p] = savedValues[p];
-            else delete scope[p];
-          });
+          Object.keys(scope).forEach(key => delete scope[key]);
+          Object.assign(scope, savedScope);
 
           if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
             return sig.value;

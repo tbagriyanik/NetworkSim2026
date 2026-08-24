@@ -441,6 +441,32 @@ countdown(5)
     expect(res.output).toContain('stop');
     expect(res.error).toBeUndefined();
   });
+
+  it('should support recursive function with default parameters (permutation)', () => {
+    const script = `
+def get_permutation(string, i=0, result=None):
+    if result is None:
+        result = []
+    if i == len(string):
+        result.append("".join(string))
+        return
+    for j in range(i, len(string)):
+        words = [c for c in string]
+        words[i], words[j] = words[j], words[i]
+        get_permutation(words, i + 1, result)
+    return result
+
+print(get_permutation('yup'))
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('yup');
+    expect(res.output).toContain('ypu');
+    expect(res.output).toContain('uyp');
+    expect(res.output).toContain('upy');
+    expect(res.output).toContain('pyu');
+    expect(res.output).toContain('puy');
+    expect(res.error).toBeUndefined();
+  });
 });
 
 
