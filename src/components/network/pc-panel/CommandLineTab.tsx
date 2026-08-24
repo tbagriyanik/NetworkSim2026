@@ -5,7 +5,7 @@ import { Laptop, CornerDownLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { cn } from '@/lib/utils';
-import type { OutputLine, FtpSession } from './PCPanel.types';
+import type { OutputLine, FtpSession, PythonSession } from './PCPanel.types';
 
 interface CommandLineTabProps {
   isDark: boolean;
@@ -21,6 +21,7 @@ interface CommandLineTabProps {
   internalPcHostname: string;
   currentPath?: string;
   ftpSession: FtpSession | null;
+  pythonSession?: PythonSession | null;
   input: string;
   setInput: (val: string) => void;
   shouldShowAutocomplete: boolean;
@@ -54,6 +55,7 @@ export function CommandLineTab({
   internalPcHostname,
   currentPath,
   ftpSession,
+  pythonSession,
   input,
   shouldShowAutocomplete,
   renderAutocompleteSuggestions,
@@ -176,7 +178,7 @@ export function CommandLineTab({
                   <Laptop className="w-4 h-4" />
                 </span>
                 <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[120px] sm:max-w-none md:max-w-[200px] text-primary">
-                  {ftpSession ? 'ftp>' : `${internalPcHostname} ${currentPath || 'C:\\'}>`}
+                  {pythonSession ? (pythonSession.currentPrompt || '>>> ') : ftpSession ? 'ftp>' : `${internalPcHostname} ${currentPath || 'C:\\'}>`}
                 </span>
                 <input
                   ref={inputRef}

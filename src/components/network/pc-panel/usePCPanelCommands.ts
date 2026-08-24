@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
-import type { OutputLine, FtpSession, PcFile, PCActiveTab } from './PCPanel.types';
+import type { OutputLine, FtpSession, PythonSession, PcFile, PCActiveTab } from './PCPanel.types';
 import { checkConnectivity, getWirelessDistance } from '@/lib/network/connectivity';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { getL3Hops } from '@/lib/network/routing';
@@ -31,6 +31,8 @@ export interface UsePCPanelCommandsParams {
   setAutocompleteNavigated: React.Dispatch<React.SetStateAction<boolean>>;
   ftpSession: FtpSession | null;
   setFtpSession: React.Dispatch<React.SetStateAction<FtpSession | null>>;
+  pythonSession: PythonSession | null;
+  setPythonSession: React.Dispatch<React.SetStateAction<PythonSession | null>>;
   pcLocalFiles: PcFile[];
   setPcLocalFiles: React.Dispatch<React.SetStateAction<PcFile[]>>;
   setIsFtpFilePickerOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -135,6 +137,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     setAutocompleteNavigated,
     ftpSession,
     setFtpSession,
+    pythonSession,
+    setPythonSession,
     pcLocalFiles,
     setPcLocalFiles,
     setIsFtpFilePickerOpen,
@@ -315,6 +319,45 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     setAutocompleteIndex(-1);
     setAutocompleteNavigated(false);
     if (activeTabRef.current === 'desktop') {
+      if (pythonSession) {
+        addLocalOutput('command', command, pythonSession.currentPrompt || '>>> ');
+        if (command.trim() === 'exit' || command.trim() === 'quit') {
+          setPythonSession(null);
+          addLocalOutput('error', 'KeyboardInterrupt');
+          return;
+        }
+
+        const nextInputs = [...pythonSession.inputs, command];
+        const res = executePythonScript(pythonSession.code, nextInputs);
+
+        if (res.waitingForInput) {
+          setPythonSession({
+            ...pythonSession,
+            inputs: nextInputs,
+            currentPrompt: res.inputPrompt || '>>> ',
+          });
+          if (res.output) {
+            const allLines = res.output.split('\n');
+            const newLines = allLines.slice(pythonSession.inputs.length);
+            if (newLines.length > 0) {
+              addLocalOutput('output', newLines.join('\n'));
+            }
+          }
+        } else {
+          setPythonSession(null);
+          if (res.error) {
+            addLocalOutput('error', res.error);
+          } else if (res.output) {
+            const allLines = res.output.split('\n');
+            const newLines = allLines.slice(pythonSession.inputs.length);
+            if (newLines.length > 0) {
+              addLocalOutput('output', newLines.join('\n'));
+            }
+          }
+        }
+        return;
+      }
+
       const baseCmd = command.split(' ')[0].toLowerCase();
       if (ftpSession && baseCmd !== 'ftp') {
         addLocalOutput('command', command, 'ftp>');
@@ -1104,8 +1147,15 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           const firstArg = args[0];
           if (firstArg === '-c' && args.length > 1) {
             const pyCode = args.slice(1).join(' ').replace(/^["']|["']$/g, '');
-            const result = executePythonScript(pyCode);
-            if (result.error) {
+            const result = executePythonScript(pyCode, []);
+            if (result.waitingForInput) {
+              setPythonSession({
+                code: pyCode,
+                inputs: [],
+                currentPrompt: result.inputPrompt || '>>> ',
+              });
+              if (result.output) emit('output', result.output);
+            } else if (result.error) {
               emit('error', result.error);
             } else {
               emit('output', result.output);
@@ -1115,8 +1165,15 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const targetPath = resolvePath(currentPath, firstArg);
             const fileContent = readFile(fs, targetPath);
             if (fileContent !== null) {
-              const result = executePythonScript(fileContent);
-              if (result.error) {
+              const result = executePythonScript(fileContent, []);
+              if (result.waitingForInput) {
+                setPythonSession({
+                  code: fileContent,
+                  inputs: [],
+                  currentPrompt: result.inputPrompt || '>>> ',
+                });
+                if (result.output) emit('output', result.output);
+              } else if (result.error) {
                 emit('error', result.error);
               } else {
                 emit('output', result.output);

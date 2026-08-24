@@ -41,7 +41,7 @@ import { usePCPanelBrowser } from './pc-panel/usePCPanelBrowser';
 import { usePCPanelCommands } from './pc-panel/usePCPanelCommands';
 import { usePCPanelInput } from './pc-panel/usePCPanelInput';
 import { validateIP, validateIPv6, isValidIpAddress, formatMacForArp, highlightText as highlightTextHelper, getInitialPcOutput } from './pc-panel/pcPanelHelpers';
-import type { DhcpPoolConfig, FtpSession, OutputLine, PCActiveTab, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
+import type { DhcpPoolConfig, FtpSession, PythonSession, OutputLine, PCActiveTab, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
 import { usePCPanelState } from './pc-panel/usePCPanelState';
 import { PCDesktop } from './pc-panel/PCDesktop';
 import { PCTerminal } from './pc-panel/PCTerminal';
@@ -146,8 +146,9 @@ export function PCPanel({
   const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
   const [consoleConnectionTime, setConsoleConnectionTime] = useState<number>(0);
 
-  // FTP session state (interactive ftp> mode on PC desktop)
+  // FTP & Python session state (interactive ftp> / python> mode on PC desktop)
   const [ftpSession, setFtpSession] = useState<FtpSession | null>(null);
+  const [pythonSession, setPythonSession] = useState<PythonSession | null>(null);
   const [isFtpFilePickerOpen, setIsFtpFilePickerOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState<string>(() => {
     if (typeof localStorage !== 'undefined') {
@@ -1785,6 +1786,8 @@ export function PCPanel({
     setAutocompleteNavigated,
     ftpSession,
     setFtpSession,
+    pythonSession,
+    setPythonSession,
     pcLocalFiles,
     setPcLocalFiles,
     setIsFtpFilePickerOpen,
@@ -2143,6 +2146,7 @@ export function PCPanel({
                           setInput={setInput}
                           isCmdInputDisabled={isCmdInputDisabled}
                           ftpSession={ftpSession}
+                          pythonSession={pythonSession}
                           internalPcHostname={internalPcHostname}
                           currentPath={currentPath}
                           showCmdSettings={showCmdSettings}

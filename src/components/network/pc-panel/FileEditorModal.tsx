@@ -224,28 +224,17 @@ export function FileEditorModal({
       footerBar={footerBar}
     >
       <div data-code-editor="true" className="flex-1 relative flex flex-col font-mono text-sm overflow-hidden">
-        {isPythonFile ? (
-          <PythonCodeEditor
-            value={content}
-            onChange={setContent}
-            onKeyDown={handleTextareaKeyDown}
-            isDark={isDark}
-            placeholder={'# Python kodunuzu buraya yazın...\nprint("Merhaba Dunya!")'}
-          />
-        ) : (
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={handleTextareaKeyDown}
-            className={`flex-1 w-full h-full p-4 resize-none outline-none font-mono text-xs sm:text-sm leading-relaxed ${
-              isDark
-                ? 'bg-secondary-950 text-emerald-400 placeholder:text-secondary-600 selection:bg-primary-800'
-                : 'bg-white text-secondary-900 placeholder:text-secondary-400 selection:bg-primary-200'
-            }`}
-            spellCheck={false}
-            autoFocus
-          />
-        )}
+        <PythonCodeEditor
+          value={content}
+          onChange={setContent}
+          onKeyDown={handleTextareaKeyDown}
+          isDark={isDark}
+          placeholder={
+            isPythonFile
+              ? '# Python kodunuzu buraya yazın...\nprint("Merhaba Dunya!")'
+              : '# Metin veya kod yazın...'
+          }
+        />
       </div>
     </ResizablePortalWindow>
   );

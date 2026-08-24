@@ -33,6 +33,12 @@ export interface FtpSession {
   files: PcFile[];
 }
 
+export interface PythonSession {
+  code: string;
+  inputs: string[];
+  currentPrompt: string;
+}
+
 export interface PCPanelProps {
   deviceId: string;
   cableInfo: CableInfo;

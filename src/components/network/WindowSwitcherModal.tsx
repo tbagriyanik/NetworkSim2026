@@ -3,6 +3,7 @@
 import React, { useEffect, useCallback, useMemo } from 'react';
 import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 import { useWindowStore } from '@/hooks/useWindowStore';
+import { useGraphicsQuality } from '@/lib/store/appStore';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import { Monitor, Server, Router, Shield, Radio, AppWindow, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -151,17 +152,23 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
     };
   }, [isSwitcherOpen, switcherSelectedIndex, displayList, handleSelectWindow, closeSwitcher, stepSwitcher]);
 
+  const graphicsQuality = useGraphicsQuality();
+  const isLowGraphics = graphicsQuality === 'low';
+
   if (!isSwitcherOpen || displayList.length === 0) return null;
 
   return (
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/25 backdrop-blur-sm transition-opacity duration-150 animate-in fade-in"
+      data-task-switcher="true"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-transparent transition-opacity duration-150 animate-in fade-in"
       onClick={() => closeSwitcher()}
     >
       <div
         className={cn(
-          'w-full max-w-2xl mx-4 p-5 rounded-2xl border shadow-2xl transition-all select-none',
-          'bg-transparent border-transparent text-secondary-900 dark:text-secondary-100 shadow-none'
+          'w-full max-w-2xl mx-4 p-5 rounded-2xl border transition-all select-none',
+          isLowGraphics
+            ? (isDark ? 'bg-secondary-950 border-secondary-800 text-secondary-100 shadow-none' : 'bg-white border-secondary-300 text-secondary-900 shadow-none')
+            : (isDark ? 'bg-secondary-950/90 border-secondary-700/80 text-secondary-100 shadow-2xl backdrop-blur-md' : 'bg-white/90 border-secondary-200 text-secondary-900 shadow-2xl backdrop-blur-md')
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -216,10 +223,10 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
                   'flex items-center gap-3.5 p-3.5 rounded-xl border transition-all cursor-pointer outline-none',
                   isSelected
                     ? isDark
-                      ? 'bg-emerald-500/15 border-emerald-500 shadow-lg shadow-emerald-500/10 ring-1 ring-emerald-500 scale-[1.02]'
-                      : 'bg-emerald-50 border-emerald-600 shadow-md ring-1 ring-emerald-600 scale-[1.02]'
+                      ? 'bg-emerald-500/20 border-emerald-500 shadow-md ring-1 ring-emerald-500'
+                      : 'bg-emerald-50 border-emerald-600 shadow-md ring-1 ring-emerald-600'
                     : isDark
-                      ? 'bg-secondary-900/60 border-secondary-800 hover:bg-secondary-800/70 hover:border-secondary-700'
+                      ? (isLowGraphics ? 'bg-secondary-900 border-secondary-800' : 'bg-secondary-900/60 border-secondary-800 hover:bg-secondary-800/70 hover:border-secondary-700')
                       : 'bg-secondary-50 border-secondary-200 hover:bg-secondary-100 hover:border-secondary-300'
                 )}
               >

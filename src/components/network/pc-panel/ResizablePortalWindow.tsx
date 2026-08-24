@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useGraphicsQuality } from '@/lib/store/appStore';
 
 export type WindowState = {
   x: number;
@@ -276,12 +277,21 @@ export function ResizablePortalWindow({
     };
   };
 
-  const defaultBorder = borderColorClass || (isDark ? 'border-success-500/30 bg-secondary-900' : 'border-success-500 bg-white');
-  const defaultHeaderBg = headerBgClass || (isDark ? 'border-success-500/30 bg-secondary-950 text-secondary-100' : 'border-success-500/50 bg-secondary-50 text-secondary-900');
+  const graphicsQuality = useGraphicsQuality();
+  const isLowGraphics = graphicsQuality === 'low';
+
+  const defaultBorder = isLowGraphics
+    ? (isDark ? 'border-secondary-700 bg-secondary-950 text-secondary-100' : 'border-secondary-300 bg-white text-secondary-900')
+    : (borderColorClass || (isDark ? 'border-success-500/30 bg-secondary-900 text-secondary-100' : 'border-success-500 bg-white text-secondary-900'));
+
+  const defaultHeaderBg = isLowGraphics
+    ? (isDark ? 'border-secondary-800 bg-secondary-900 text-secondary-100' : 'border-secondary-300 bg-secondary-100 text-secondary-900')
+    : (headerBgClass || (isDark ? 'border-success-500/30 bg-secondary-950 text-secondary-100' : 'border-success-500/50 bg-secondary-50 text-secondary-900'));
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] pointer-events-auto bg-black/20"
+      data-portal-window="true"
+      className={`fixed inset-0 z-[9999] pointer-events-auto ${isLowGraphics ? 'bg-black/40' : 'bg-black/20'}`}
       onClick={(e) => {
         e.stopPropagation();
         onClose();
@@ -310,8 +320,8 @@ export function ResizablePortalWindow({
         tabIndex={-1}
       >
         <div
-          className={`h-full w-full rounded-2xl shadow-2xl border ${defaultBorder} flex flex-col overflow-hidden`}
-          style={{ borderWidth: 3, willChange: 'auto', contain: 'layout style paint' }}
+          className={`h-full w-full rounded-2xl border ${defaultBorder} flex flex-col overflow-hidden ${isLowGraphics ? '' : 'shadow-2xl'}`}
+          style={{ borderWidth: isLowGraphics ? 1 : 3, boxShadow: isLowGraphics ? 'none' : undefined, willChange: 'auto', contain: 'layout style paint' }}
         >
           {/* Window Header */}
           <div
@@ -330,7 +340,7 @@ export function ResizablePortalWindow({
             }}
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              {icon || <span className="w-2.5 h-2.5 rounded-full bg-success-500 animate-pulse shrink-0" />}
+              {icon || <span className={`w-2.5 h-2.5 rounded-full bg-success-500 ${isLowGraphics ? '' : 'animate-pulse'} shrink-0`} />}
               {headerContent ? (
                 headerContent
               ) : (
