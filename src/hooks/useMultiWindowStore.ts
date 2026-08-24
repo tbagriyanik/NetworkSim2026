@@ -28,7 +28,7 @@ interface MultiWindowStoreState {
   restoreWindow: (id: string) => void;
   isWindowOpen: (id: string) => boolean;
 
-  openSwitcher: (activeWindowId: string | null, reverse?: boolean, fallbackDevices?: DeviceWindowItem[]) => void;
+  openSwitcher: (activeWindowId: string | null, reverse?: boolean) => void;
   stepSwitcher: (reverse?: boolean, totalCount?: number) => void;
   setSwitcherSelectedIndex: (index: number) => void;
   closeSwitcher: () => void;
@@ -152,9 +152,10 @@ export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => (
     return get().openWindows.some((w) => w.id === id);
   },
 
-  openSwitcher: (activeWindowId: string | null, reverse = false, fallbackDevices: DeviceWindowItem[] = []) => {
+  openSwitcher: (activeWindowId: string | null, reverse = false) => {
     const { openWindows, isSwitcherOpen, stepSwitcher } = get();
-    const list = openWindows.length > 0 ? openWindows : fallbackDevices;
+    // Only open floating windows belong in the task list.
+    const list = openWindows;
     if (list.length === 0) return;
 
     if (isSwitcherOpen) {

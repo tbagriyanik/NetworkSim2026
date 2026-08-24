@@ -82,11 +82,7 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
         // The modal's dedicated capture listener handles cycling while open.
         return;
       } else {
-        store.openSwitcher(
-          useWindowStore.getState().activeWindowId,
-          e.shiftKey,
-          topologyDevices.map((device) => ({ id: device.id, type: device.type }))
-        );
+        store.openSwitcher(useWindowStore.getState().activeWindowId, e.shiftKey);
       }
     };
 
@@ -239,13 +235,6 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-1">
                     <h4 className="text-sm font-semibold truncate">{name}</h4>
-                    <span
-                      className={cn(
-                        'w-2.5 h-2.5 rounded-full shrink-0',
-                        isOpenAlready ? 'bg-emerald-400 shadow-sm shadow-emerald-400/50' : 'bg-secondary-600'
-                      )}
-                      title={isOpenAlready ? (language === 'tr' ? 'Açık' : 'Open') : (language === 'tr' ? 'Kapalı' : 'Closed')}
-                    />
                   </div>
                   <p className="text-xs text-secondary-400 truncate mt-0.5">{typeLabel}</p>
                 </div>

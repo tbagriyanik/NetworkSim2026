@@ -121,8 +121,7 @@ export function useKeyboardShortcuts({
             return;
           }
           const activeWindowId = useWindowStore.getState().activeWindowId;
-          const fallback = topologyDevices.map((d) => ({ id: d.id, type: d.type }));
-          useMultiWindowStore.getState().openSwitcher(activeWindowId, e.shiftKey, fallback);
+          useMultiWindowStore.getState().openSwitcher(activeWindowId, e.shiftKey);
           return;
         }
       }

@@ -1,25 +1,20 @@
 'use client';
 
-import type { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
+import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import type { Translations } from '@/contexts/LanguageContext';
-import { useState, useEffect } from 'react';
 
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
+import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 
 interface AppFooterProps {
   t: Translations;
   isDark: boolean;
   language: 'tr' | 'en';
   activeTab: string;
-  activeDeviceType: DeviceType;
-  activeDeviceId: string;
   hasUnsavedChanges: boolean;
   lastSaveTime: string | null;
   projectName: string;
-  totalScore: number;
-  maxScore: number;
   topologyDevices: CanvasDevice[];
-  lastTaskEvent: { type: 'completed' | 'failed'; taskName: string; timestamp: number } | null;
   showProjectPicker: boolean;
   showOnboarding: boolean;
   setShowAboutModal: (v: boolean) => void;
@@ -27,11 +22,12 @@ interface AppFooterProps {
 }
 
 export function AppFooter({
-  t, isDark, language, activeTab, activeDeviceType, activeDeviceId,
-  hasUnsavedChanges, lastSaveTime, projectName, totalScore, maxScore,
-  topologyDevices, lastTaskEvent, showProjectPicker, showOnboarding,
+  t, isDark, language, activeTab,
+  hasUnsavedChanges, lastSaveTime, projectName,
+  topologyDevices, showProjectPicker, showOnboarding,
   setShowAboutModal, onShortcut
 }: AppFooterProps) {
+  const hasOpenWindows = useMultiWindowStore((state) => state.openWindows.length > 0);
   const getDeviceCountLabel = (count: number) => (
     language === 'tr' ? 'Cihaz' : (count === 1 ? 'Device' : 'Devices')
   );
@@ -43,19 +39,6 @@ export function AppFooter({
 
     return `${count} ${getDeviceCountLabel(count)}`;
   };
-
-  const [isTaskEventRecent, setIsTaskEventRecent] = useState(false);
-
-  useEffect(() => {
-    if (!lastTaskEvent) {
-      setTimeout(() => setIsTaskEventRecent(false), 0);
-      return;
-    }
-    const check = () => setIsTaskEventRecent(Date.now() - lastTaskEvent.timestamp < 5000);
-    check();
-    const id = setInterval(check, 1000);
-    return () => clearInterval(id);
-  }, [lastTaskEvent]);
 
   return (
     <>
@@ -105,10 +88,14 @@ export function AppFooter({
                     <>
                       <button type="button" onClick={() => onShortcut('next-device')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>TAB</button>
                       <span className="mx-1">{t.tabToNext}</span>
-                      <button type="button" onClick={() => onShortcut('windows')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Shift+Tab</button>
-                      <span className="mx-1">{language === 'tr' ? 'Pencereler' : 'Windows'}</span>
-                      <button type="button" onClick={() => onShortcut('minimize')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Ctrl+M</button>
-                      <span className="mx-1">{language === 'tr' ? 'Küçült' : 'Min'}</span>
+                      {hasOpenWindows && (
+                        <>
+                          <button type="button" onClick={() => onShortcut('windows')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Shift+Tab</button>
+                          <span className="mx-1">{language === 'tr' ? 'Pencereler' : 'Windows'}</span>
+                          <button type="button" onClick={() => onShortcut('minimize')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Ctrl+M</button>
+                          <span className="mx-1">{language === 'tr' ? 'Küçült' : 'Min'}</span>
+                        </>
+                      )}
                       <button type="button" onClick={() => onShortcut('save')} className={`px-1.5 py-0.5 rounded text-[10px] font-mono cursor-pointer hover:ring-1 ${isDark ? 'bg-secondary-700 text-secondary-300 hover:ring-secondary-400' : 'bg-secondary-200 text-secondary-700 hover:ring-secondary-400'}`}>Ctrl+S</button>
                       <span className="mx-1">{t.saveLabel}</span>
                       {(topologyDevices?.length || 0) > 0 && (
@@ -138,50 +125,6 @@ export function AppFooter({
 
             </div>
 
-            {/* Right Side: Task Event Notification & Lab Progress */}
-            <div className="flex items-center gap-4">
-              {/* Task Event Notification */}
-              {isTaskEventRecent && lastTaskEvent && (
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border animate-slide-up z-[100] ${lastTaskEvent.type === 'completed'
-                  ? isDark ? 'bg-success-500/10 border-success-500/30' : 'bg-success-50 border-success-200'
-                  : isDark ? 'bg-warning-500/10 border-warning-500/30' : 'bg-warning-50 border-warning-200'
-                  }`}>
-                  <span className={`text-xs font-semibold flex items-center gap-1.5 ${lastTaskEvent.type === 'completed'
-                    ? 'text-success-500'
-                    : 'text-warning-500'
-                    }`}>
-                    <span className={`w-2 h-2 rounded-full ${lastTaskEvent.type === 'completed'
-                      ? 'bg-success-500'
-                      : 'bg-warning-500'
-                      }`} />
-                    {lastTaskEvent.type === 'completed'
-                      ? t.taskCompleted
-                      : t.taskFailed}
-                  </span>
-                  <span className={`text-[11px] font-bold ${isDark ? 'text-secondary-300' : 'text-secondary-700'}`}>
-                    {lastTaskEvent.taskName}
-                  </span>
-                </div>
-              )}
-
-              {/* Lab Progress */}
-              {activeDeviceType !== 'pc' && activeDeviceType !== 'iot' && activeDeviceType !== 'firewall' && topologyDevices && topologyDevices.length > 0 && activeDeviceId && maxScore > 0 && (
-                <div className={`hidden md:flex items-center gap-2`}>
-                  <span className={`text-[11px] font-bold tracking-wider ${isDark ? 'text-secondary-500' : 'text-secondary-600'}`}>
-                    {t.labProgress}
-                  </span>
-                  <div className={`w-20 h-1.5 rounded-full ${isDark ? 'bg-secondary-700' : 'bg-secondary-200'} overflow-hidden`}>
-                    <div
-                      className="h-full bg-accent-500 shadow-[0_0_2px_rgba(6,182,212,0.2)] transition-all duration-300"
-                      style={{ width: `${(totalScore / maxScore) * 100}%` }}
-                    />
-                  </div>
-                  <span className={`text-[11px] font-bold ${isDark ? 'text-accent-400' : 'text-accent-600'}`}>
-                    {Math.round((totalScore / maxScore) * 100)}%
-                  </span>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </footer>
@@ -214,19 +157,6 @@ export function AppFooter({
             )}
           </div>
 
-          {/* Task info / Lab score */}
-          <div className="flex items-center gap-2 shrink-0">
-            {isTaskEventRecent && lastTaskEvent ? (
-              <span className={`font-semibold flex items-center gap-1 text-[10px] ${lastTaskEvent.type === 'completed' ? 'text-success-400' : 'text-warning-400'}`}>
-                <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                <span className="truncate max-w-[100px]">{lastTaskEvent.taskName}</span>
-              </span>
-            ) : maxScore > 0 && topologyDevices && topologyDevices.length > 0 && activeDeviceId ? (
-              <span className={`font-bold text-[10px] ${isDark ? 'text-accent-400' : 'text-accent-600'}`}>
-                {t.labProgress}: {Math.round((totalScore / maxScore) * 100)}%
-              </span>
-            ) : null}
-          </div>
         </div>
       </footer>
     </>

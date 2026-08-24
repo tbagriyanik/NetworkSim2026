@@ -294,7 +294,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     sourceDevice: 'pc',
     targetDevice: 'switchL2',
   });
-  const [lastTaskEvent, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
+  const [, setLastTaskEvent] = useState<{ type: 'completed' | 'failed'; taskName: string; timestamp: number } | null>(null);
   const [isPingPanelOpen, setIsPingPanelOpen] = useState(false);
   const [isExamLoadedFromFile, setIsExamLoadedFromFile] = useState(false);
   const [isTimelineMinimized, setIsTimelineMinimized] = useState(false);
@@ -1775,10 +1775,10 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             setGraphicsQuality={setGraphicsQuality}
             activeDeviceType={activeDeviceType}
             activeDeviceId={activeDeviceId}
-            topologyDevices={topologyDevices}
-            deviceStates={deviceStates}
             totalScore={totalScore}
             maxScore={maxScore}
+            topologyDevices={topologyDevices}
+            deviceStates={deviceStates}
             handleNewProject={handleNewProject}
             handleSaveProject={handleSaveProject}
             handleLoadProject={handleLoadProject}
@@ -2193,15 +2193,10 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             isDark={isDark}
             language={language}
             activeTab={activeTab}
-            activeDeviceType={activeDeviceType}
-            activeDeviceId={activeDeviceId}
             hasUnsavedChanges={hasUnsavedChanges}
             lastSaveTime={lastSaveTime}
             projectName={projectName}
-            totalScore={totalScore}
-            maxScore={maxScore}
             topologyDevices={topologyDevices}
-            lastTaskEvent={lastTaskEvent}
             showProjectPicker={showProjectPicker}
             showOnboarding={showOnboarding}
             setShowAboutModal={setShowAboutModal}
