@@ -56,7 +56,14 @@ export function PCPanelHeader({
           : "border-white/60 bg-white/70 text-secondary-900"
       )}>
         <div className="flex min-w-0 items-center gap-2">
-          <div className="min-w-0">
+          <div
+            className="min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGoHome();
+            }}
+            title={language === 'tr' ? 'Ana Ekrana Dön' : 'Go Home'}
+          >
             <div className={cn("truncate text-xs md:text-sm font-semibold", isDark ? "text-white" : "text-secondary-900")}>
               {internalPcHostname}
             </div>

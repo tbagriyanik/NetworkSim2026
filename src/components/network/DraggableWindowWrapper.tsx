@@ -26,6 +26,7 @@ interface DraggableWindowWrapperProps {
   collapsible?: boolean;
   disableResize?: boolean;
   onHeaderDoubleClick?: () => void;
+  restoreRequest?: number;
 }
 
 export function DraggableWindowWrapper({
@@ -46,9 +47,10 @@ export function DraggableWindowWrapper({
   onEscapeKeyDown,
   mobileFullScreen = true,
   headerActions,
-  collapsible = true,
+  collapsible = false,
   disableResize = false,
   onHeaderDoubleClick,
+  restoreRequest,
 }: DraggableWindowWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -60,6 +62,12 @@ export function DraggableWindowWrapper({
   const zIndex = useWindowStore(state => state.windowZIndices[id] || 100);
 
   const isActive = activeWindowId === id;
+
+  useEffect(() => {
+    if (restoreRequest !== undefined) {
+      setIsCollapsed(false);
+    }
+  }, [restoreRequest]);
 
   // Bring to front on mount and when opened
   useEffect(() => {
@@ -88,8 +96,6 @@ export function DraggableWindowWrapper({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isActive, onClose, onEscapeKeyDown]);
-
-  // Handle Ctrl+M keydown to toggle minimize/maximize when active
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm' && isOpen && isActive) {
@@ -116,6 +122,11 @@ export function DraggableWindowWrapper({
   if (!isOpen) return null;
 
   const isMobileFullScreen = isMobile && mobileFullScreen;
+
+  const handleResizePointerDown = (e: React.PointerEvent, direction: string) => {
+    e.stopPropagation();
+    handleResizeStart?.(e, direction, id);
+  };
 
   // Desktop or floating mobile styles
   const wrapperStyle: React.CSSProperties = isMobileFullScreen
@@ -168,10 +179,10 @@ export function DraggableWindowWrapper({
         onDoubleClick={(e) => {
           const target = e.target as HTMLElement;
           if (target.closest('button, [role="tab"], input, select, textarea, .no-drag')) return;
-          if (onHeaderDoubleClick) {
-            onHeaderDoubleClick();
-          } else if (collapsible && !isMobile) {
+          if (collapsible && !isMobile) {
             setIsCollapsed(prev => !prev);
+          } else if (onHeaderDoubleClick) {
+            onHeaderDoubleClick();
           }
         }}
         className={cn(
@@ -264,22 +275,22 @@ export function DraggableWindowWrapper({
       {(!isMobile || !isMobileFullScreen) && !isCollapsed && !disableResize && (
         <>
           {/* Corners */}
-          <div className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize z-50 flex items-end justify-end select-none" onPointerDown={(e) => handleResizeStart?.(e, 'se', id)}>
+          <div className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize z-50 flex items-end justify-end select-none" onPointerDown={(e) => handleResizePointerDown(e, 'se')}>
             <svg className={cn("h-3 w-3", isDark ? "text-secondary-500" : "text-secondary-400", isActive && "text-success-500")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M6 13L13 6" />
               <path d="M9.5 13L13 9.5" />
               <path d="M12.5 13L13 12.5" />
             </svg>
           </div>
-          <div className="absolute left-0 bottom-0 w-3 h-3 cursor-sw-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizeStart?.(e, 'sw', id)} />
-          <div className="absolute right-0 top-0 w-3 h-3 cursor-ne-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizeStart?.(e, 'ne', id)} />
-          <div className="absolute left-0 top-0 w-3 h-3 cursor-nw-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizeStart?.(e, 'nw', id)} />
+          <div className="absolute left-0 bottom-0 w-3 h-3 cursor-sw-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'sw')} />
+          <div className="absolute right-0 top-0 w-3 h-3 cursor-ne-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'ne')} />
+          <div className="absolute left-0 top-0 w-3 h-3 cursor-nw-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'nw')} />
 
           {/* Edges */}
-          <div className="absolute right-0 top-3 bottom-3 w-2 cursor-e-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizeStart?.(e, 'e', id)} />
-          <div className="absolute left-3 bottom-0 right-3 h-2 cursor-s-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizeStart?.(e, 's', id)} />
-          <div className="absolute left-0 top-3 bottom-3 w-2 cursor-w-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizeStart?.(e, 'w', id)} />
-          <div className="absolute left-3 top-0 right-3 h-2 cursor-n-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizeStart?.(e, 'n', id)} />
+          <div className="absolute right-0 top-3 bottom-3 w-2 cursor-e-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'e')} />
+          <div className="absolute left-3 bottom-0 right-3 h-2 cursor-s-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 's')} />
+          <div className="absolute left-0 top-3 bottom-3 w-2 cursor-w-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'w')} />
+          <div className="absolute left-3 top-0 right-3 h-2 cursor-n-resize z-40 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'n')} />
         </>
       )}
     </div>

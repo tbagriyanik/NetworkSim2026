@@ -19,6 +19,7 @@ interface CommandLineTabProps {
   pcOutput: OutputLine[];
   setPcOutput: (output: OutputLine[]) => void;
   internalPcHostname: string;
+  currentPath?: string;
   ftpSession: FtpSession | null;
   input: string;
   setInput: (val: string) => void;
@@ -51,6 +52,7 @@ export function CommandLineTab({
   pcOutput,
   setPcOutput,
   internalPcHostname,
+  currentPath,
   ftpSession,
   input,
   shouldShowAutocomplete,
@@ -173,8 +175,8 @@ export function CommandLineTab({
                 <span className="shrink-0 text-primary">
                   <Laptop className="w-4 h-4" />
                 </span>
-                <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[80px] sm:max-w-none md:max-w-[150px] text-primary">
-                  {ftpSession ? 'ftp>' : `${internalPcHostname} C:\\>`}
+                <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[120px] sm:max-w-none md:max-w-[200px] text-primary">
+                  {ftpSession ? 'ftp>' : `${internalPcHostname} ${currentPath || 'C:\\'}>`}
                 </span>
                 <input
                   ref={inputRef}

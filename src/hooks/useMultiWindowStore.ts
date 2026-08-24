@@ -16,6 +16,7 @@ interface MultiWindowStoreState {
   openWindows: DeviceWindowItem[];
   windowPositions: Record<string, { x: number; y: number }>;
   windowSizes: Record<string, { width: number; height: number }>;
+  windowRestoreRequests: Record<string, number>;
   isSwitcherOpen: boolean;
   switcherSelectedIndex: number;
 
@@ -24,6 +25,7 @@ interface MultiWindowStoreState {
   closeAllDeviceWindows: () => void;
   updateWindowPosition: (id: string, position: { x: number; y: number }) => void;
   updateWindowSize: (id: string, size: { width: number; height: number }) => void;
+  restoreWindow: (id: string) => void;
   isWindowOpen: (id: string) => boolean;
 
   openSwitcher: (activeWindowId: string | null, reverse?: boolean, fallbackDevices?: DeviceWindowItem[]) => void;
@@ -32,10 +34,34 @@ interface MultiWindowStoreState {
   closeSwitcher: () => void;
 }
 
+const MULTI_WINDOW_STORAGE_KEY = 'netsim_multi_device_windows';
+type PersistedWindowState = Pick<MultiWindowStoreState, 'openWindows' | 'windowPositions' | 'windowSizes'>;
+
+const readPersistedWindowState = (): PersistedWindowState => {
+  if (typeof window === 'undefined') {
+    return { openWindows: [], windowPositions: {}, windowSizes: {} };
+  }
+
+  try {
+    const stored = localStorage.getItem(MULTI_WINDOW_STORAGE_KEY);
+    if (!stored) return { openWindows: [], windowPositions: {}, windowSizes: {} };
+
+    const parsed = JSON.parse(stored) as Partial<PersistedWindowState>;
+    return {
+      openWindows: Array.isArray(parsed.openWindows) ? parsed.openWindows : [],
+      windowPositions: parsed.windowPositions && typeof parsed.windowPositions === 'object' ? parsed.windowPositions : {},
+      windowSizes: parsed.windowSizes && typeof parsed.windowSizes === 'object' ? parsed.windowSizes : {},
+    };
+  } catch {
+    return { openWindows: [], windowPositions: {}, windowSizes: {} };
+  }
+};
+
+const initialWindowState = readPersistedWindowState();
+
 export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => ({
-  openWindows: [],
-  windowPositions: {},
-  windowSizes: {},
+  ...initialWindowState,
+  windowRestoreRequests: {},
   isSwitcherOpen: false,
   switcherSelectedIndex: 0,
 
@@ -50,7 +76,13 @@ export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => (
         type,
         ...(initialTab ? { initialTab } : {}),
       };
-      set({ openWindows: updated });
+      set((state) => ({
+        openWindows: updated,
+        windowRestoreRequests: {
+          ...state.windowRestoreRequests,
+          [id]: (state.windowRestoreRequests[id] || 0) + 1,
+        },
+      }));
     } else {
       const count = openWindows.length;
       const defaultX = typeof window !== 'undefined'
@@ -107,6 +139,15 @@ export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => (
     }));
   },
 
+  restoreWindow: (id: string) => {
+    set((state) => ({
+      windowRestoreRequests: {
+        ...state.windowRestoreRequests,
+        [id]: (state.windowRestoreRequests[id] || 0) + 1,
+      },
+    }));
+  },
+
   isWindowOpen: (id: string) => {
     return get().openWindows.some((w) => w.id === id);
   },
@@ -155,3 +196,18 @@ export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => (
     set({ isSwitcherOpen: false });
   },
 }));
+
+if (typeof window !== 'undefined') {
+  useMultiWindowStore.subscribe((state) => {
+    try {
+      const persistedState: PersistedWindowState = {
+        openWindows: state.openWindows,
+        windowPositions: state.windowPositions,
+        windowSizes: state.windowSizes,
+      };
+      localStorage.setItem(MULTI_WINDOW_STORAGE_KEY, JSON.stringify(persistedState));
+    } catch {
+      // Storage may be unavailable in private or restricted browsing contexts.
+    }
+  });
+}

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { SwitchState } from '@/lib/network/types';
 import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import type { TabType } from '@/app/page.types';
+import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 
 type GuidedModeContext = {
   lastCommand?: string;
@@ -143,7 +144,11 @@ export function usePageGlobalEvents({
           if (device.type === 'pc') {
             setShowPCDeviceId(deviceId);
             setPcPanelInitialTab('desktop');
-            setShowPCPanel(true);
+            if (window.innerWidth >= 641 && window.innerWidth <= 1024) {
+              setShowPCPanel(true);
+            } else {
+              useMultiWindowStore.getState().openDeviceWindow(deviceId, 'pc', 'desktop');
+            }
             setTimeout(() => {
               window.dispatchEvent(new CustomEvent('pc-auto-type', { detail: { deviceId, command: cleanCommand } }));
             }, 600);

@@ -4,50 +4,45 @@ import { DraggableWindowWrapper } from './DraggableWindowWrapper';
 import { PCPanel } from './PCPanel';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
 import { CableInfo, SwitchState } from '@/lib/network/types';
-import { cn } from '@/lib/utils';
-
 import { TerminalOutput } from './Terminal';
-import { OutputLine as PCOutputLine, PCActiveTab, PcOutputsSetter } from './pc-panel/PCPanel.types';
+import { OutputLine as PCOutputLine, PcOutputsSetter } from './pc-panel/PCPanel.types';
+import { cn } from '@/lib/utils';
 
 interface PCWindowProps {
   showPCPanel: boolean;
   setShowPCPanel: (show: boolean) => void;
-  isTablet: boolean;
   showPCDeviceId: string;
-  topologyDevices: CanvasDevice[];
-  topologyConnections: CanvasConnection[];
+  pcDrag: any;
   cableInfo: CableInfo;
-  pcPanelInitialTab: PCActiveTab;
+  pcPanelInitialTab: any;
+  toggleDevicePower: (id: string) => void;
+  topologyDevices?: CanvasDevice[];
+  topologyConnections?: CanvasConnection[];
   deviceStates: Map<string, SwitchState>;
   deviceOutputs: Map<string, TerminalOutput[]>;
   pcOutputs: Map<string, PCOutputLine[]>;
   setPcOutputs: PcOutputsSetter;
   pcHistories: Map<string, string[]>;
-  handleUpdatePCHistory: (deviceId: string, history: string[]) => void;
-  handleExecuteCommand: (deviceId: string, command: string) => Promise<unknown>;
-  handlePCPanelNavigateWrapper: (program: string) => void;
-  handleDeviceDelete: (deviceId: string) => void;
-  focusedOverlay: string;
+  handleUpdatePCHistory: (id: string, history: string[]) => void;
+  handleExecuteCommand: (id: string, cmd: string) => Promise<unknown>;
+  handlePCPanelNavigateWrapper: (deviceId: string, program: any) => void;
+  handleDeviceDelete: (id: string) => void;
+  focusedOverlay: string | null;
+  isTablet?: boolean;
   isDark: boolean;
-  t: Record<string, string>;
-  toggleDevicePower: (deviceId: string) => void;
-  pcDrag: {
-    position: { x: number; y: number };
-    size: { width: number; height: number };
-    handlePointerDown: (e: React.PointerEvent, id: string) => void;
-    handleResizeStart: (e: React.PointerEvent, direction: string, id: string) => void;
-  };
+  t: Record<string, any>;
 }
 
 export function PCWindow({
   showPCPanel,
   setShowPCPanel,
-  isTablet,
   showPCDeviceId,
-  topologyDevices,
-  topologyConnections,
+  pcDrag,
   cableInfo,
   pcPanelInitialTab,
+  toggleDevicePower,
+  topologyDevices,
+  topologyConnections,
   deviceStates,
   deviceOutputs,
   pcOutputs,
@@ -58,10 +53,9 @@ export function PCWindow({
   handlePCPanelNavigateWrapper,
   handleDeviceDelete,
   focusedOverlay,
+  isTablet = false,
   isDark,
   t,
-  toggleDevicePower,
-  pcDrag,
 }: PCWindowProps) {
   if (!showPCPanel || isTablet) return null;
 
@@ -98,7 +92,7 @@ export function PCWindow({
           pcHistories={pcHistories}
           onUpdatePCHistory={handleUpdatePCHistory}
           onExecuteDeviceCommand={handleExecuteCommand}
-          onNavigate={handlePCPanelNavigateWrapper}
+          onNavigate={(program: any) => handlePCPanelNavigateWrapper(showPCDeviceId, program)}
           onDeleteDevice={handleDeviceDelete}
           handleResizeStart={pcDrag.handleResizeStart}
         />

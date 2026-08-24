@@ -62,6 +62,7 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
   const stepSwitcher = useMultiWindowStore((state) => state.stepSwitcher);
   const closeSwitcher = useMultiWindowStore((state) => state.closeSwitcher);
   const openDeviceWindow = useMultiWindowStore((state) => state.openDeviceWindow);
+  const restoreWindow = useMultiWindowStore((state) => state.restoreWindow);
   const isWindowOpen = useMultiWindowStore((state) => state.isWindowOpen);
   const setActiveWindow = useWindowStore((state) => state.setActiveWindow);
 
@@ -75,13 +76,18 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
 
   const handleSelectWindow = useCallback(
     (deviceId: string, deviceType?: string) => {
-      if (deviceType && !isWindowOpen(deviceId)) {
+      const wasOpen = isWindowOpen(deviceId);
+      if (deviceType && !wasOpen) {
         openDeviceWindow(deviceId, deviceType);
       }
+      // Selecting an existing window must also expand it when it was collapsed.
+      // openDeviceWindow already emits this request for newly opened/existing
+      // device windows, but closed-over windows need the explicit restore call.
+      if (wasOpen) restoreWindow(deviceId);
       setActiveWindow(deviceId);
       closeSwitcher();
     },
-    [isWindowOpen, openDeviceWindow, setActiveWindow, closeSwitcher]
+    [isWindowOpen, openDeviceWindow, restoreWindow, setActiveWindow, closeSwitcher]
   );
 
   // Global listeners while switcher is open:

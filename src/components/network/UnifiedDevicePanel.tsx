@@ -179,6 +179,7 @@ export function UnifiedDevicePanel({
             modalSize={modalSize}
             handlePointerDown={handlePointerDown}
             handleResizeStart={handleResizeStart}
+            collapsible
         >
             <div className="flex-1 overflow-hidden relative">
                 <Tabs value={activeTab} className="h-full">

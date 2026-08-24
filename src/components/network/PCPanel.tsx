@@ -2189,6 +2189,7 @@ export function PCPanel({
                           isCmdInputDisabled={isCmdInputDisabled}
                           ftpSession={ftpSession}
                           internalPcHostname={internalPcHostname}
+                          currentPath={currentPath}
                           showCmdSettings={showCmdSettings}
                           handleFontSizeChange={handleFontSizeChange}
                           executeCommand={executeCommand}

@@ -59,7 +59,7 @@ export function MultiDeviceWindowManager({
   setConfirmDialog,
   isTablet = false,
 }: MultiDeviceWindowManagerProps) {
-  const { openWindows, closeDeviceWindow, windowPositions, windowSizes, updateWindowPosition, updateWindowSize } = useMultiWindowStore();
+  const { openWindows, closeDeviceWindow, windowPositions, windowSizes, windowRestoreRequests, updateWindowPosition, updateWindowSize } = useMultiWindowStore();
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
 
   if (openWindows.length === 0 || isTablet) return null;
@@ -150,6 +150,7 @@ export function MultiDeviceWindowManager({
               handlePointerDown={handlePointerDown}
               handleResizeStart={handleResizeStart}
               collapsible
+              restoreRequest={windowRestoreRequests[win.id]}
             >
               <div className="flex-1 overflow-hidden relative rounded-b-2xl">
                 <PCPanel
@@ -193,6 +194,7 @@ export function MultiDeviceWindowManager({
               handlePointerDown={handlePointerDown}
               handleResizeStart={handleResizeStart}
               collapsible
+              restoreRequest={windowRestoreRequests[win.id]}
             >
               <div className="flex-1 overflow-y-auto rounded-b-2xl p-4 custom-scrollbar">
                 <FirewallPanel

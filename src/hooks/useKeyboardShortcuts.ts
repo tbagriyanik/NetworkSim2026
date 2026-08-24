@@ -117,6 +117,9 @@ export function useKeyboardShortcuts({
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 'Tab' || e.code === 'Tab') {
           e.preventDefault();
+          if (useMultiWindowStore.getState().isSwitcherOpen) {
+            return;
+          }
           const activeWindowId = useWindowStore.getState().activeWindowId;
           const fallback = topologyDevices.map((d) => ({ id: d.id, type: d.type }));
           useMultiWindowStore.getState().openSwitcher(activeWindowId, e.shiftKey, fallback);
@@ -267,10 +270,10 @@ export function useKeyboardShortcuts({
         }
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
   }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showProjectPicker, handleSaveProject, handleNewProject, handleUndo, handleRedo, tabs, setShowMobileMenu, setShowPCPanel, setShowRouterPanel, setShowProjectPicker, setActiveTab, activeTab, topologyDevices, handleDeviceDoubleClick, handleRefreshNetwork, closeEscLikeWindows]);
 }

@@ -61,6 +61,7 @@ import { useExamMode } from '@/hooks/useExamMode';
 import { MultiDeviceWindowManager } from '@/components/network/MultiDeviceWindowManager';
 import { WindowSwitcherModal } from '@/components/network/WindowSwitcherModal';
 import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
+import { useWindowStore } from '@/hooks/useWindowStore';
 
 import { PCInfoPopover, RouterInfoPopover } from '@/components/network/DeviceInfoPopovers';
 import { BasarilarimPanel } from '@/components/ui/BasarilarimPanel';
@@ -1172,7 +1173,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   // Handle device double click (Open terminal or PC panel)
   const handleDeviceDoubleClick = useCallback((device: DeviceType, deviceId: string) => {
-    const { openDeviceWindow } = useMultiWindowStore.getState();
+    const { openDeviceWindow, restoreWindow } = useMultiWindowStore.getState();
 
     if (device === 'pc') {
       // PC - open Home modal
@@ -1194,6 +1195,10 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       setUnifiedDeviceActiveTab('console');
       openDeviceWindow(deviceId, device, 'console');
     }
+    // Selecting/opening a device always brings its floating window to the
+    // front and expands it if it was collapsed.
+    restoreWindow(deviceId);
+    useWindowStore.getState().setActiveWindow(deviceId);
   }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setDeviceTabWithHistory, setShowPCDeviceId, setActiveDeviceId, setActiveDeviceType]);
 
 
@@ -2069,14 +2074,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
                         onFocus={() => setFocusedOverlay('pc-info')}
                         zIndex={focusedOverlay === 'pc-info' ? 36 : 25}
                         handleDeviceDoubleClick={handleDeviceDoubleClick}
-                        onOpenPanel={(id) => {
-                          setShowUnifiedDeviceModal(false);
-                          setShowRouterPanel(false);
-                          setShowFirewallPanel(false);
-                          setShowPCDeviceId(id);
-                          setPcPanelInitialTab('settings');
-                          setShowPCPanel(true);
-                        }}
+                        onOpenPanel={(id) => handleDeviceDoubleClick('pc', id)}
                         topologyDevices={topologyDevices}
                         deviceStates={deviceStates}
                       />
@@ -2098,13 +2096,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
                       onFocus={() => setFocusedOverlay('router-info')}
                       zIndex={focusedOverlay === 'router-info' ? 36 : 25}
                       handleDeviceDoubleClick={handleDeviceDoubleClick}
-                      onOpenPanel={(id) => {
-                        setShowPCPanel(false);
-                        setShowUnifiedDeviceModal(false);
-                        setShowFirewallPanel(false);
-                        setShowRouterDeviceId(id);
-                        setShowRouterPanel(true);
-                      }}
+                      onOpenPanel={(id) => handleDeviceDoubleClick('router', id)}
                       topologyConnections={topologyConnections}
                     />
                   )}

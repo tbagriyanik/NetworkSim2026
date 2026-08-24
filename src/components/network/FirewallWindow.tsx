@@ -71,6 +71,7 @@ export function FirewallWindow({
       modalSize={firewallDrag.size}
       handlePointerDown={firewallDrag.handlePointerDown}
       handleResizeStart={firewallDrag.handleResizeStart}
+      collapsible
       onEscapeKeyDown={() => {
         setShowFirewallPanel(false);
         setFirewallActiveTab('console');
