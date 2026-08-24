@@ -119,8 +119,64 @@ function formatStringTemplate(
   });
 }
 
+export class PyComplex {
+  constructor(public real: number, public imag: number) {}
+
+  add(other: unknown): PyComplex {
+    const o = toPyComplex(other);
+    return new PyComplex(this.real + o.real, this.imag + o.imag);
+  }
+
+  sub(other: unknown): PyComplex {
+    const o = toPyComplex(other);
+    return new PyComplex(this.real - o.real, this.imag - o.imag);
+  }
+
+  mul(other: unknown): PyComplex {
+    const o = toPyComplex(other);
+    return new PyComplex(
+      this.real * o.real - this.imag * o.imag,
+      this.real * o.imag + this.imag * o.real
+    );
+  }
+
+  div(other: unknown): PyComplex {
+    const o = toPyComplex(other);
+    const denom = o.real * o.real + o.imag * o.imag;
+    if (denom === 0) return new PyComplex(NaN, NaN);
+    return new PyComplex(
+      (this.real * o.real + this.imag * o.imag) / denom,
+      (this.imag * o.real - this.real * o.imag) / denom
+    );
+  }
+
+  toString(): string {
+    const r = this.real;
+    const i = this.imag;
+    const sign = i >= 0 ? '+' : '-';
+    const absI = Math.abs(i);
+    return `(${r}${sign}${absI}j)`;
+  }
+}
+
+export function toPyComplex(v: unknown): PyComplex {
+  if (v instanceof PyComplex) return v;
+  if (typeof v === 'number') return new PyComplex(v, 0);
+  if (typeof v === 'string') {
+    const match = /^\(?(-?\d+(?:\.\d+)?)\s*([+-])\s*(\d+(?:\.\d+)?)j\)?$/.exec(v.trim());
+    if (match) {
+      const r = parseFloat(match[1]);
+      const sign = match[2] === '-' ? -1 : 1;
+      const i = parseFloat(match[3]) * sign;
+      return new PyComplex(r, i);
+    }
+  }
+  return new PyComplex(Number(v || 0), 0);
+}
+
 function getPythonType(val: unknown): string {
   if (val === null || val === undefined) return "<class 'NoneType'>";
+  if (val instanceof PyComplex) return "<class 'complex'>";
   if (typeof val === 'boolean') return "<class 'bool'>";
   if (typeof val === 'number') {
     return Number.isInteger(val) ? "<class 'int'>" : "<class 'float'>";
@@ -135,6 +191,7 @@ export function formatPythonValue(val: unknown): string {
   if (val === null || val === undefined) return 'None';
   if (val === true) return 'True';
   if (val === false) return 'False';
+  if (val instanceof PyComplex) return val.toString();
   if (Array.isArray(val)) {
     return `[${val.map(item => formatPythonValue(item)).join(', ')}]`;
   }
@@ -184,6 +241,19 @@ function findOperatorIndex(str: string, op: string): number {
     }
   }
   return -1;
+}
+
+function isEnclosedInParens(str: string): boolean {
+  if (!str.startsWith('(') || !str.endsWith(')')) return false;
+  let depth = 0;
+  for (let i = 0; i < str.length; i++) {
+    if (str[i] === '(') depth++;
+    else if (str[i] === ')') depth--;
+    if (depth === 0 && i < str.length - 1) {
+      return false;
+    }
+  }
+  return depth === 0;
 }
 
 function splitOutsideQuotesAndParens(str: string, op: string): string[] {
@@ -269,6 +339,131 @@ function pythonRange(...args: number[]): number[] {
   }
   return result;
 }
+
+const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
+  random: {
+    randint: (a: unknown, b: unknown) => {
+      const min = Math.ceil(Number(a || 0));
+      const max = Math.floor(Number(b || 0));
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    random: () => Math.random(),
+    choice: (seq: unknown) => {
+      const arr = Array.isArray(seq) ? seq : [];
+      if (arr.length === 0) return null;
+      return arr[Math.floor(Math.random() * arr.length)];
+    },
+    shuffle: (seq: unknown) => {
+      if (Array.isArray(seq)) {
+        for (let i = seq.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [seq[i], seq[j]] = [seq[j], seq[i]];
+        }
+      }
+      return seq;
+    },
+    randrange: (start: unknown, stop?: unknown, step?: unknown) => {
+      const nums = pythonRange(
+        Number(start),
+        stop !== undefined ? Number(stop) : undefined as unknown as number,
+        step !== undefined ? Number(step) : 1
+      );
+      if (nums.length === 0) return 0;
+      return nums[Math.floor(Math.random() * nums.length)];
+    },
+    uniform: (a: unknown, b: unknown) => {
+      const min = Number(a || 0);
+      const max = Number(b || 0);
+      return min + Math.random() * (max - min);
+    },
+  },
+  math: {
+    pi: Math.PI,
+    e: Math.E,
+    sqrt: (x: unknown) => Math.sqrt(Number(x || 0)),
+    pow: (x: unknown, y: unknown) => Math.pow(Number(x || 0), Number(y || 0)),
+    sin: (x: unknown) => Math.sin(Number(x || 0)),
+    cos: (x: unknown) => Math.cos(Number(x || 0)),
+    tan: (x: unknown) => Math.tan(Number(x || 0)),
+    asin: (x: unknown) => Math.asin(Number(x || 0)),
+    acos: (x: unknown) => Math.acos(Number(x || 0)),
+    atan: (x: unknown) => Math.atan(Number(x || 0)),
+    log: (x: unknown, base?: unknown) => {
+      const num = Number(x || 0);
+      return base !== undefined ? Math.log(num) / Math.log(Number(base)) : Math.log(num);
+    },
+    log10: (x: unknown) => Math.log10(Number(x || 0)),
+    floor: (x: unknown) => Math.floor(Number(x || 0)),
+    ceil: (x: unknown) => Math.ceil(Number(x || 0)),
+    fabs: (x: unknown) => Math.abs(Number(x || 0)),
+    radians: (deg: unknown) => Number(deg || 0) * (Math.PI / 180),
+    degrees: (rad: unknown) => Number(rad || 0) * (180 / Math.PI),
+  },
+  cmath: {
+    pi: Math.PI,
+    e: Math.E,
+    sqrt: (x: unknown) => {
+      if (x instanceof PyComplex) {
+        const r = x.real;
+        const i = x.imag;
+        const mod = Math.sqrt(r * r + i * i);
+        const real = Math.sqrt((mod + r) / 2);
+        const imag = Math.sign(i || 1) * Math.sqrt((mod - r) / 2);
+        return new PyComplex(real, imag);
+      }
+      const num = Number(x || 0);
+      if (num >= 0) {
+        return new PyComplex(Math.sqrt(num), 0);
+      } else {
+        return new PyComplex(0, Math.sqrt(-num));
+      }
+    },
+  },
+  os: {
+    name: 'nt',
+    getcwd: () => 'C:\\',
+    listdir: () => [],
+    mkdir: () => null,
+    remove: () => null,
+    path: {
+      join: (...args: unknown[]) => args.map(String).join('\\'),
+      exists: () => true,
+      isfile: () => true,
+      isdir: () => true,
+      basename: (p: unknown) => String(p || '').split(/[\\/]/).pop() || '',
+      dirname: (p: unknown) => String(p || '').split(/[\\/]/).slice(0, -1).join('\\') || 'C:\\',
+    },
+  },
+  sys: {
+    version: '3.11.0 (simulated)',
+    platform: 'win32',
+    argv: ['script.py'],
+    exit: (code?: unknown) => {
+      throw new Error(`sys.exit(${code !== undefined ? code : 0})`);
+    },
+  },
+  time: {
+    time: () => Date.now() / 1000,
+    sleep: () => null,
+    ctime: () => new Date().toUTCString(),
+  },
+  datetime: {
+    now: () => ({
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      day: new Date().getDate(),
+      hour: new Date().getHours(),
+      minute: new Date().getMinutes(),
+      second: new Date().getSeconds(),
+      strftime: (fmt?: unknown) => String(fmt || '').replace('%Y', String(new Date().getFullYear())).replace('%m', String(new Date().getMonth() + 1).padStart(2, '0')).replace('%d', String(new Date().getDate()).padStart(2, '0')),
+    }),
+    today: () => ({
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      day: new Date().getDate(),
+    }),
+  },
+};
 
 type Statement =
   | { type: 'line'; text: string }
@@ -491,8 +686,38 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       return scope[trimmed];
     }
 
+    // Member call: obj.method(...)
+    const memberCallMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\.([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\)$/.exec(trimmed);
+    if (memberCallMatch) {
+      const objName = memberCallMatch[1];
+      const methodName = memberCallMatch[2];
+      const rawArgs = memberCallMatch[3].trim();
+      const obj = scope[objName] as Record<string, unknown> | undefined;
+      if (obj && typeof obj[methodName] === 'function') {
+        const argList = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
+        return (obj[methodName] as (...args: unknown[]) => unknown)(...argList);
+      }
+    }
+
+    // Member property access: obj.prop or obj.sub.prop
+    if (trimmed.includes('.') && !trimmed.includes('(')) {
+      const parts = trimmed.split('.').map(p => p.trim());
+      if (parts.every(p => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(p))) {
+        let curr: unknown = scope[parts[0]];
+        for (let i = 1; i < parts.length; i++) {
+          if (curr && typeof curr === 'object' && parts[i] in (curr as Record<string, unknown>)) {
+            curr = (curr as Record<string, unknown>)[parts[i]];
+          } else {
+            curr = undefined;
+            break;
+          }
+        }
+        if (curr !== undefined) return curr;
+      }
+    }
+
     // Parenthesized expression or Tuple: (a, b, c) or (expr)
-    if (trimmed.startsWith('(') && trimmed.endsWith(')')) {
+    if (isEnclosedInParens(trimmed)) {
       const inner = trimmed.slice(1, -1).trim();
       if (!inner) return [];
       const parts: string[] = [];
@@ -563,24 +788,56 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
       if (parts.some(p => typeof p === 'string')) {
         return parts.map(p => String(p ?? '')).join('');
       }
+      if (parts.some(p => p instanceof PyComplex)) {
+        return parts.reduce((acc: unknown, val: unknown) => toPyComplex(acc).add(val), new PyComplex(0, 0));
+      }
       return parts.reduce((acc: number, val: unknown) => acc + Number(val || 0), 0);
     }
 
     const subParts = splitOutsideQuotesAndParens(trimmed, '-');
-    if (subParts.length > 1 && subParts[0] !== '') {
-      const parts = subParts.map(p => evaluateExpr(p));
-      return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc - Number(val)), 0);
+    if (subParts.length > 1) {
+      if (subParts[0] === '') {
+        const realParts = subParts.slice(1).map(p => evaluateExpr(p));
+        if (realParts.length > 0) {
+          const first = realParts[0];
+          const negatedFirst = first instanceof PyComplex
+            ? new PyComplex(-first.real, -first.imag)
+            : typeof first === 'number'
+            ? -first
+            : toPyComplex(first).mul(-1);
+
+          if (realParts.length === 1) {
+            return negatedFirst;
+          }
+          if (realParts.some(p => p instanceof PyComplex) || negatedFirst instanceof PyComplex) {
+            return realParts.slice(1).reduce((acc: unknown, val: unknown) => toPyComplex(acc).sub(val), negatedFirst);
+          }
+          return realParts.slice(1).reduce((acc: number, val: unknown) => acc - Number(val || 0), Number(negatedFirst));
+        }
+      } else {
+        const parts = subParts.map(p => evaluateExpr(p));
+        if (parts.some(p => p instanceof PyComplex)) {
+          return parts.reduce((acc: unknown, val: unknown, idx: number) => (idx === 0 ? toPyComplex(val) : toPyComplex(acc).sub(val)), new PyComplex(0, 0));
+        }
+        return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc - Number(val)), 0);
+      }
     }
 
     const mulParts = splitOutsideQuotesAndParens(trimmed, '*');
     if (mulParts.length > 1 && !trimmed.includes('**')) {
       const parts = mulParts.map(p => evaluateExpr(p));
+      if (parts.some(p => p instanceof PyComplex)) {
+        return parts.reduce((acc: unknown, val: unknown) => toPyComplex(acc).mul(val), new PyComplex(1, 0));
+      }
       return parts.reduce((acc: number, val: unknown) => acc * Number(val || 1), 1);
     }
 
     const divParts = splitOutsideQuotesAndParens(trimmed, '/');
     if (divParts.length > 1) {
       const parts = divParts.map(p => evaluateExpr(p));
+      if (parts.some(p => p instanceof PyComplex)) {
+        return parts.reduce((acc: unknown, val: unknown, idx: number) => (idx === 0 ? toPyComplex(val) : toPyComplex(acc).div(val)), new PyComplex(1, 0));
+      }
       return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc / Number(val)), 0);
     }
 
@@ -598,6 +855,40 @@ export function executePythonScript(code: string, inputs: string[] = []): Python
   const processLine = (line: string): void => {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith('#')) return;
+
+    // Handle import statements: import random, math as m
+    const importMatch = /^import\s+(.+)$/.exec(trimmed);
+    if (importMatch) {
+      const rawMods = splitOutsideQuotesAndParens(importMatch[1], ',');
+      for (const item of rawMods) {
+        const parts = item.split(/\s+as\s+/i);
+        const modName = parts[0].trim();
+        const alias = parts[1] ? parts[1].trim() : modName;
+        if (PYTHON_MODULES[modName]) {
+          scope[alias] = PYTHON_MODULES[modName];
+        } else {
+          scope[alias] = {};
+        }
+      }
+      return;
+    }
+
+    // Handle from ... import ...
+    const fromImportMatch = /^from\s+([a-zA-Z0-9_.]+)\s+import\s+(.+)$/.exec(trimmed);
+    if (fromImportMatch) {
+      const modName = fromImportMatch[1].trim();
+      const rawItems = splitOutsideQuotesAndParens(fromImportMatch[2], ',');
+      const modObj = PYTHON_MODULES[modName] as Record<string, unknown> | undefined;
+      for (const item of rawItems) {
+        const parts = item.split(/\s+as\s+/i);
+        const itemName = parts[0].trim();
+        const alias = parts[1] ? parts[1].trim() : itemName;
+        if (modObj && modObj[itemName] !== undefined) {
+          scope[alias] = modObj[itemName];
+        }
+      }
+      return;
+    }
 
     // Handle print(...)
     const printMatch = /^print\s*\((.*)\)$/.exec(trimmed);

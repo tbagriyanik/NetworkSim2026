@@ -89,7 +89,10 @@ export function CommandLineTab({
 
   // Focus input immediately on mount (e.g. when CMD window opens at startup)
   useEffect(() => {
-    const timer = setTimeout(() => inputRef.current?.focus(), 100);
+    const timer = setTimeout(() => {
+      if (document.activeElement?.closest('[data-portal-window="true"], [data-code-editor="true"]')) return;
+      inputRef.current?.focus();
+    }, 100);
     return () => clearTimeout(timer);
   }, []);
 

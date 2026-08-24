@@ -50,6 +50,17 @@ export function FileEditorModal({
     return () => window.removeEventListener('keydown', handleEscape, true);
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (open) {
+      const timer = setTimeout(() => {
+        const textarea = document.querySelector<HTMLTextAreaElement>('div[data-code-editor="true"] textarea');
+        textarea?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [open]);
+
   const fileName = filePath.split(/[\\/]/).pop() || filePath;
   const isPythonFile = fileName.toLowerCase().endsWith('.py');
 

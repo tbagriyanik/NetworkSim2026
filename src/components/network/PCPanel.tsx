@@ -1022,12 +1022,12 @@ export function PCPanel({
 
   // Auto-focus input when visible, tab changes, command completes, or search closes
   useEffect(() => {
-    if (!isVisible || searchOpen || (activeTab !== 'desktop' && activeTab !== 'terminal')) return;
+    if (!isVisible || searchOpen || Boolean(editingFile) || isFtpFilePickerOpen || (activeTab !== 'desktop' && activeTab !== 'terminal')) return;
     const timer = setTimeout(() => {
       inputRef.current?.focus();
     }, 100);
     return () => clearTimeout(timer);
-  }, [isVisible, searchOpen, activeTab, pcOutput, activeConsoleOutput]);
+  }, [isVisible, searchOpen, editingFile, isFtpFilePickerOpen, activeTab, pcOutput, activeConsoleOutput]);
 
   // Always keep CMD/Console views pinned to the latest output
   useEffect(() => {
@@ -2416,7 +2416,10 @@ export function PCPanel({
             void executeCommand(`python ${fileName}`);
           }
         }}
-        onClose={() => setEditingFile(null)}
+        onClose={() => {
+          setEditingFile(null);
+          setTimeout(() => inputRef.current?.focus(), 50);
+        }}
       />
 
       <PCBrowser

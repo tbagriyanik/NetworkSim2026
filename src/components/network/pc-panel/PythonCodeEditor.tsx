@@ -138,6 +138,15 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
     }
   }, [value]);
 
+  useEffect(() => {
+    const focusTimer = setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 50);
+    return () => clearTimeout(focusTimer);
+  }, []);
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Tab' || (event.ctrlKey && event.code === 'Space') || (event.metaKey && event.code === 'Space')) {
       event.stopPropagation();

@@ -300,6 +300,43 @@ print("y =", y)
     expect(res.output).toContain("y = 5");
     expect(res.error).toBeUndefined();
   });
+
+  it('should support module imports (random, math, os, sys, time, datetime)', () => {
+    const script = `
+import random
+import math
+from math import sqrt, pi
+
+r = random.randint(0, 9)
+print("Random num:", r)
+print("Square root 16:", sqrt(16))
+print("Math pi:", round(pi, 2))
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain("Square root 16: 4");
+    expect(res.output).toContain("Math pi: 3.14");
+    expect(res.output).toMatch(/Random num: [0-9]/);
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should solve quadratic equation ax^2 + bx + c = 0 with cmath module', () => {
+    const script = `
+import cmath
+
+a = 1
+b = 5
+c = 6
+
+d = (b**2) - (4*a*c)
+sol1 = (-b-cmath.sqrt(d))/(2*a)
+sol2 = (-b+cmath.sqrt(d))/(2*a)
+
+print('The solution are {0} and {1}'.format(sol1,sol2))
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain('The solution are (-3+0j) and (-2+0j)');
+    expect(res.error).toBeUndefined();
+  });
 });
 
 
