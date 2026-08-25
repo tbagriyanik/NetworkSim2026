@@ -84,7 +84,9 @@ export function executePythonScript(
         const parts = item.split(/\s+as\s+/i);
         const modName = parts[0].trim();
         const alias = parts[1] ? parts[1].trim() : modName;
-        if (PYTHON_MODULES[modName]) {
+        if (scope[modName]) {
+          if (alias !== modName) scope[alias] = scope[modName];
+        } else if (PYTHON_MODULES[modName]) {
           scope[alias] = PYTHON_MODULES[modName];
         } else {
           scope[alias] = {};
@@ -97,7 +99,7 @@ export function executePythonScript(
     if (fromImportMatch) {
       const modName = fromImportMatch[1].trim();
       const rawItems = splitOutsideQuotesAndParens(fromImportMatch[2], ',');
-      const modObj = PYTHON_MODULES[modName] as Record<string, unknown> | undefined;
+      const modObj = (scope[modName] || PYTHON_MODULES[modName]) as Record<string, unknown> | undefined;
       for (const item of rawItems) {
         const parts = item.split(/\s+as\s+/i);
         const itemName = parts[0].trim();
@@ -232,7 +234,7 @@ export function executePythonScript(
       return;
     }
 
-    const augMatch = /^(.+?)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
+    const augMatch = /^(.+?)\s*(\/\/=|\*\*=|[-+/*%|&=]=)\s*(.+)$/.exec(trimmed);
     if (augMatch) {
       const lhsStr = augMatch[1].trim();
       const op = augMatch[2];
@@ -513,7 +515,9 @@ export async function executePythonScriptAsync(
         const parts = item.split(/\s+as\s+/i);
         const modName = parts[0].trim();
         const alias = parts[1] ? parts[1].trim() : modName;
-        if (PYTHON_MODULES[modName]) {
+        if (scope[modName]) {
+          if (alias !== modName) scope[alias] = scope[modName];
+        } else if (PYTHON_MODULES[modName]) {
           scope[alias] = PYTHON_MODULES[modName];
         } else {
           scope[alias] = {};
@@ -526,7 +530,7 @@ export async function executePythonScriptAsync(
     if (fromImportMatch) {
       const modName = fromImportMatch[1].trim();
       const rawItems = splitOutsideQuotesAndParens(fromImportMatch[2], ',');
-      const modObj = PYTHON_MODULES[modName] as Record<string, unknown> | undefined;
+      const modObj = (scope[modName] || PYTHON_MODULES[modName]) as Record<string, unknown> | undefined;
       for (const item of rawItems) {
         const parts = item.split(/\s+as\s+/i);
         const itemName = parts[0].trim();

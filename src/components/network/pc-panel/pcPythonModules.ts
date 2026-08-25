@@ -237,9 +237,13 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
       }
     },
   },
+  glob: {
+    glob: (_pattern?: unknown) => [],
+  },
   os: {
     name: 'nt',
     getcwd: () => 'C:\\',
+    chdir: (_path?: unknown) => null,
     listdir: () => [],
     mkdir: () => null,
     remove: () => null,

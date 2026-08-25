@@ -32,7 +32,10 @@ export function parseProgramLines(rawLines: string[]): ParsedLine[] {
     if (continuationDepth > 0 && parsedLines.length > 0) {
       parsedLines[parsedLines.length - 1].text += ` ${text}`;
     } else {
-      parsedLines.push({ indent, text });
+      const subStmts = splitOutsideQuotesAndParens(text, ';').map(s => s.trim()).filter(Boolean);
+      for (const sub of subStmts) {
+        parsedLines.push({ indent, text: sub });
+      }
     }
 
     // Keep bracketed list/tuple expressions together across physical lines.

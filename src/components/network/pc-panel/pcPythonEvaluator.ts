@@ -13,19 +13,90 @@ import {
   parseFormatArgs,
   formatStringTemplate,
 } from './pcPythonRunnerHelpers';
-import { loadFs, saveFs, readFile, writeFile, resolvePath } from './pcFileSystem';
+import { loadFs, saveFs, readFile, writeFile, resolvePath, listDir, makeDir, deleteFile, isDir, getNode } from './pcFileSystem';
 
 export function createExpressionEvaluator(
   scope: Record<string, unknown>,
   pythonInput: (promptMsg: unknown) => string,
   deviceId?: string
 ): (expr: string) => unknown {
+  const devId = deviceId || 'pc-default';
+  const cwdRef = { value: 'C:\\' };
+
+  scope['os'] = {
+    name: 'nt',
+    getcwd: () => cwdRef.value,
+    chdir: (dirPath: unknown) => {
+      const fs = loadFs(devId);
+      const target = resolvePath(cwdRef.value, String(dirPath || ''));
+      if (isDir(fs, target)) {
+        cwdRef.value = target;
+      } else {
+        throw new Error(`FileNotFoundError: [WinError 2] The system cannot find the file specified: '${dirPath}'`);
+      }
+    },
+    listdir: (dirPath?: unknown) => {
+      const fs = loadFs(devId);
+      const target = resolvePath(cwdRef.value, dirPath !== undefined ? String(dirPath) : '.');
+      return listDir(fs, target);
+    },
+    mkdir: (dirPath: unknown) => {
+      const fs = loadFs(devId);
+      const target = resolvePath(cwdRef.value, String(dirPath || ''));
+      makeDir(fs, target);
+      saveFs(devId, fs);
+    },
+    remove: (filePath: unknown) => {
+      const fs = loadFs(devId);
+      const target = resolvePath(cwdRef.value, String(filePath || ''));
+      deleteFile(fs, target);
+      saveFs(devId, fs);
+    },
+    path: {
+      join: (...args: unknown[]) => args.map(String).join('\\'),
+      exists: (p: unknown) => getNode(loadFs(devId), resolvePath(cwdRef.value, String(p || ''))) !== null,
+      isfile: (p: unknown) => {
+        const node = getNode(loadFs(devId), resolvePath(cwdRef.value, String(p || '')));
+        return node !== null && node.type === 'file';
+      },
+      isdir: (p: unknown) => isDir(loadFs(devId), resolvePath(cwdRef.value, String(p || ''))),
+      basename: (p: unknown) => String(p || '').split(/[\\/]/).pop() || '',
+      dirname: (p: unknown) => String(p || '').split(/[\\/]/).slice(0, -1).join('\\') || cwdRef.value,
+    },
+  };
+
+  scope['glob'] = {
+    glob: (patternVal: unknown) => {
+      const pattern = String(patternVal || '*');
+      const fs = loadFs(devId);
+      let searchDir = cwdRef.value;
+      let filePattern = pattern;
+
+      const lastSep = Math.max(pattern.lastIndexOf('/'), pattern.lastIndexOf('\\'));
+      if (lastSep !== -1) {
+        const dirPart = pattern.slice(0, lastSep);
+        filePattern = pattern.slice(lastSep + 1);
+        searchDir = resolvePath(cwdRef.value, dirPart);
+      }
+
+      const files = listDir(fs, searchDir);
+      const regexStr = '^' + filePattern.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+      const regex = new RegExp(regexStr);
+
+      const matched = files.filter(f => regex.test(f));
+      if (lastSep !== -1) {
+        const dirPrefix = pattern.slice(0, lastSep + 1);
+        return matched.map(f => dirPrefix + f);
+      }
+      return matched;
+    },
+  };
+
   scope['open'] = (filePathVal: unknown, modeVal: unknown = 'r') => {
     const filePath = String(filePathVal || '');
     const mode = String(modeVal || 'r');
-    const devId = deviceId || 'pc-default';
     const fs = loadFs(devId);
-    const resolvedPath = resolvePath('C:\\', filePath);
+    const resolvedPath = resolvePath(cwdRef.value, filePath);
 
     let initialContent = '';
     if (mode.includes('r') || mode.includes('+')) {
@@ -50,6 +121,104 @@ export function createExpressionEvaluator(
   const evaluateExpr = (expr: string): unknown => {
     const trimmed = expr.trim();
     if (!trimmed) return undefined;
+
+    // List literal or List Comprehension: [expr for var in iter if cond]
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      const inner = trimmed.slice(1, -1).trim();
+      if (!inner) return [];
+
+      let itemExprPart = inner;
+      let ifCondExpr: string | null = null;
+      const ifIdx = findOperatorIndex(inner, ' if ');
+      if (ifIdx !== -1) {
+        ifCondExpr = inner.slice(ifIdx + 4).trim();
+        itemExprPart = inner.slice(0, ifIdx).trim();
+      }
+
+      const compMatch = /^(.+?)\s+for\s+(.+?)\s+in\s+(.+)$/.exec(itemExprPart);
+      if (compMatch) {
+        const itemExpr = compMatch[1].trim();
+        const targetVarStr = compMatch[2].trim();
+        const iterExpr = compMatch[3].trim();
+
+        const rawIterable = evaluateExpr(iterExpr);
+        let items: unknown[] = [];
+        if (Array.isArray(rawIterable)) {
+          items = rawIterable;
+        } else if (typeof rawIterable === 'string') {
+          items = rawIterable.split('');
+        } else if (rawIterable instanceof Set) {
+          items = Array.from(rawIterable);
+        } else if (typeof rawIterable === 'object' && rawIterable !== null) {
+          if (typeof (rawIterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+            items = Array.from(rawIterable as Iterable<unknown>);
+          } else {
+            items = Object.keys(rawIterable);
+          }
+        }
+
+        const targets = targetVarStr.split(',').map(t => t.trim());
+        const resultList: unknown[] = [];
+
+        for (const item of items) {
+          const savedValues: Record<string, unknown> = {};
+          if (targets.length > 1 && Array.isArray(item)) {
+            targets.forEach((t, idx) => {
+              savedValues[t] = scope[t];
+              scope[t] = item[idx];
+            });
+          } else {
+            savedValues[targetVarStr] = scope[targetVarStr];
+            scope[targetVarStr] = item;
+          }
+
+          let shouldInclude = true;
+          if (ifCondExpr) {
+            shouldInclude = Boolean(evaluateExpr(ifCondExpr));
+          }
+
+          if (shouldInclude) {
+            resultList.push(evaluateExpr(itemExpr));
+          }
+
+          if (targets.length > 1 && Array.isArray(item)) {
+            targets.forEach(t => {
+              if (savedValues[t] !== undefined) scope[t] = savedValues[t];
+              else delete scope[t];
+            });
+          } else {
+            if (savedValues[targetVarStr] !== undefined) scope[targetVarStr] = savedValues[targetVarStr];
+            else delete scope[targetVarStr];
+          }
+        }
+
+        return resultList;
+      }
+
+      const parts: string[] = [];
+      let current = '';
+      let inQ = false;
+      let qChar = '';
+      let pDepth = 0;
+      for (let i = 0; i < inner.length; i++) {
+        const char = inner[i];
+        if ((char === '"' || char === "'") && (i === 0 || inner[i - 1] !== '\\')) {
+          if (!inQ) { inQ = true; qChar = char; }
+          else if (qChar === char) { inQ = false; }
+        } else if (!inQ) {
+          if (char === '(' || char === '[' || char === '{') pDepth++;
+          else if (char === ')' || char === ']' || char === '}') pDepth--;
+        }
+        if (char === ',' && !inQ && pDepth === 0) {
+          parts.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      if (current.trim()) parts.push(current.trim());
+      return parts.filter(p => p.trim() !== '').map(p => evaluateExpr(p));
+    }
 
     if (isSingleStringLiteral(trimmed)) {
       const raw = trimmed.slice(1, -1);
@@ -190,39 +359,6 @@ export function createExpressionEvaluator(
       if (val instanceof Set) return val.size;
       if (typeof val === 'object' && val !== null) return Object.keys(val).length;
       return 0;
-    }
-
-    // Basic list comprehension: [expression for name in iterable]
-    const comprehensionMatch = /^\[\s*(.+?)\s+for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+(.+?)\s*\]$/.exec(trimmed);
-    if (comprehensionMatch) {
-      const expression = comprehensionMatch[1];
-      const variable = comprehensionMatch[2];
-      const iterable = evaluateExpr(comprehensionMatch[3]);
-      const items = Array.isArray(iterable)
-        ? iterable
-        : typeof iterable === 'string'
-          ? iterable.split('')
-          : iterable instanceof Set
-            ? Array.from(iterable)
-            : [];
-      const previous = scope[variable];
-      const hadPrevious = Object.prototype.hasOwnProperty.call(scope, variable);
-      const result = items.map(item => {
-        scope[variable] = item;
-        return evaluateExpr(expression);
-      });
-      if (hadPrevious) scope[variable] = previous;
-      else delete scope[variable];
-      return result;
-    }
-
-    // List literal: [value1, value2, ...]
-    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-      const inner = trimmed.slice(1, -1).trim();
-      if (!inner) return [];
-      return splitOutsideQuotesAndParens(inner, ',')
-        .filter(item => item.trim() !== '')
-        .map(item => evaluateExpr(item));
     }
 
     // Handle abs(...)
@@ -371,6 +507,25 @@ export function createExpressionEvaluator(
       return {};
     }
 
+    // Dict literal: {key1: val1, key2: val2, ...}
+    if (trimmed.startsWith('{') && trimmed.endsWith('}') && trimmed.includes(':')) {
+      const inner = trimmed.slice(1, -1).trim();
+      if (!inner) return {};
+      const pairs = splitOutsideQuotesAndParens(inner, ',');
+      const resDict: Record<string, unknown> = {};
+      for (const pair of pairs) {
+        const colonIdx = findOperatorIndex(pair, ':');
+        if (colonIdx !== -1) {
+          const kExpr = pair.slice(0, colonIdx).trim();
+          const vExpr = pair.slice(colonIdx + 1).trim();
+          const kVal = evaluateExpr(kExpr);
+          const vVal = evaluateExpr(vExpr);
+          resDict[String(kVal)] = vVal;
+        }
+      }
+      return resDict;
+    }
+
     // Set or Dict literal: {1, 2, 3} or {}
     if (trimmed.startsWith('{') && trimmed.endsWith('}') && !trimmed.includes(':')) {
       const inner = trimmed.slice(1, -1).trim();
@@ -418,6 +573,62 @@ export function createExpressionEvaluator(
       }
     }
 
+    // Handle enumerate(iterable, start=0)
+    const enumerateMatch = /^enumerate\s*\((.*)\)$/.exec(trimmed);
+    if (enumerateMatch) {
+      const rawArgs = enumerateMatch[1];
+      const parts = splitOutsideQuotesAndParens(rawArgs, ',');
+      if (parts.length > 0) {
+        const iterVal = evaluateExpr(parts[0]);
+        let startVal = 0;
+        if (parts.length > 1) {
+          const secondArg = parts[1].trim();
+          if (secondArg.startsWith('start=')) {
+            startVal = Number(evaluateExpr(secondArg.slice(6)) || 0);
+          } else {
+            startVal = Number(evaluateExpr(secondArg) || 0);
+          }
+        }
+        const items = Array.isArray(iterVal)
+          ? iterVal
+          : iterVal instanceof Set
+            ? Array.from(iterVal)
+            : typeof iterVal === 'string'
+              ? iterVal.split('')
+              : typeof iterVal === 'object' && iterVal !== null && typeof (iterVal as Record<string | symbol, unknown>)[Symbol.iterator] === 'function'
+                ? Array.from(iterVal as Iterable<unknown>)
+                : [];
+        return items.map((item, idx) => [startVal + idx, item]);
+      }
+      return [];
+    }
+
+    // Handle zip(*iterables)
+    const zipMatch = /^zip\s*\((.*)\)$/.exec(trimmed);
+    if (zipMatch) {
+      const rawArgs = zipMatch[1];
+      const parts = splitOutsideQuotesAndParens(rawArgs, ',');
+      if (parts.length > 0) {
+        const iterables = parts.map(p => {
+          const v = evaluateExpr(p);
+          if (Array.isArray(v)) return v;
+          if (v instanceof Set) return Array.from(v);
+          if (typeof v === 'string') return v.split('');
+          if (typeof v === 'object' && v !== null && typeof (v as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+            return Array.from(v as Iterable<unknown>);
+          }
+          return [];
+        });
+        const minLen = Math.min(...iterables.map(it => it.length));
+        const zipped: unknown[][] = [];
+        for (let i = 0; i < minLen; i++) {
+          zipped.push(iterables.map(it => it[i]));
+        }
+        return zipped;
+      }
+      return [];
+    }
+
     // Handle lambda expression: lambda x, y: expr
     const lambdaMatch = /^lambda\s*([^:]*)\s*:\s*(.+)$/.exec(trimmed);
     if (lambdaMatch) {
@@ -438,48 +649,7 @@ export function createExpressionEvaluator(
       };
     }
 
-    // Element indexing / Chained indexing: targetExpr[idxExpr] (e.g. deck[i][0], matrix[r][c], arr[0])
-    if (trimmed.endsWith(']') && !trimmed.startsWith('[')) {
-      let bracketDepth = 0;
-      let openIdx = -1;
-      let inQuote: string | null = null;
-      for (let i = trimmed.length - 1; i >= 0; i--) {
-        const char = trimmed[i];
-        if (inQuote) {
-          if (char === inQuote && (i === 0 || trimmed[i - 1] !== '\\')) {
-            inQuote = null;
-          }
-          continue;
-        }
-        if (char === '"' || char === "'") {
-          inQuote = char;
-          continue;
-        }
-        if (char === ']') {
-          bracketDepth++;
-        } else if (char === '[') {
-          bracketDepth--;
-          if (bracketDepth === 0) {
-            openIdx = i;
-            break;
-          }
-        }
-      }
-      if (openIdx > 0) {
-        const targetExpr = trimmed.slice(0, openIdx).trim();
-        const idxExpr = trimmed.slice(openIdx + 1, -1).trim();
-        const targetVal = evaluateExpr(targetExpr);
-        const idxVal = evaluateExpr(idxExpr);
-        if (Array.isArray(targetVal) || typeof targetVal === 'string') {
-          const idx = Number(idxVal);
-          const realIdx = idx < 0 ? targetVal.length + idx : idx;
-          return targetVal[realIdx];
-        }
-        if (typeof targetVal === 'object' && targetVal !== null) {
-          return (targetVal as Record<string, unknown>)[String(idxVal)];
-        }
-      }
-    }
+
 
     // List method pop(...) as expression
     const popExprMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*pop\s*\((.*)\)$/.exec(trimmed);
@@ -497,35 +667,6 @@ export function createExpressionEvaluator(
     // String literal
     if (isSingleStringLiteral(trimmed)) {
       return trimmed.slice(1, -1);
-    }
-
-    // List literal: [a, b, c]
-    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
-      const inner = trimmed.slice(1, -1).trim();
-      if (!inner) return [];
-      const parts: string[] = [];
-      let current = '';
-      let inQ = false;
-      let qChar = '';
-      let pDepth = 0;
-      for (let i = 0; i < inner.length; i++) {
-        const char = inner[i];
-        if ((char === '"' || char === "'") && (i === 0 || inner[i - 1] !== '\\')) {
-          if (!inQ) { inQ = true; qChar = char; }
-          else if (qChar === char) { inQ = false; }
-        } else if (!inQ) {
-          if (char === '(' || char === '[' || char === '{') pDepth++;
-          else if (char === ')' || char === ']' || char === '}') pDepth--;
-        }
-        if (char === ',' && !inQ && pDepth === 0) {
-          parts.push(current.trim());
-          current = '';
-        } else {
-          current += char;
-        }
-      }
-      if (current.trim()) parts.push(current.trim());
-      return parts.map(p => evaluateExpr(p));
     }
 
     // Number literal
@@ -869,6 +1010,16 @@ export function createExpressionEvaluator(
       }
     }
 
+    // Exponentiation **
+    const powIdx = findOperatorIndex(trimmed, '**');
+    if (powIdx !== -1) {
+      const leftExpr = trimmed.slice(0, powIdx).trim();
+      const rightExpr = trimmed.slice(powIdx + 2).trim();
+      const leftVal = Number(evaluateExpr(leftExpr));
+      const rightVal = Number(evaluateExpr(rightExpr));
+      return Math.pow(leftVal, rightVal);
+    }
+
     // Floor division //
     const floorDivIdx = findOperatorIndex(trimmed, '//');
     if (floorDivIdx !== -1) {
@@ -877,16 +1028,6 @@ export function createExpressionEvaluator(
       const leftVal = Number(evaluateExpr(leftExpr));
       const rightVal = Number(evaluateExpr(rightExpr));
       return Math.floor(leftVal / rightVal);
-    }
-
-    // Exponentiation **
-    const powIdx = findOperatorIndex(trimmed, '**');
-    if (powIdx !== -1) {
-      const baseExpr = trimmed.slice(0, powIdx).trim();
-      const expExpr = trimmed.slice(powIdx + 2).trim();
-      const baseVal = Number(evaluateExpr(baseExpr));
-      const expVal = Number(evaluateExpr(expExpr));
-      return Math.pow(baseVal, expVal);
     }
 
     // Handle range(n) or range(start, stop) or range(start, stop, step)
@@ -946,7 +1087,7 @@ export function createExpressionEvaluator(
       }
     }
 
-    // Handle Set Operators: |, &, ^
+    // Handle Set and Dict Operators: |, &, ^
     const bitOrParts = splitOutsideQuotesAndParens(trimmed, '|');
     if (bitOrParts.length > 1) {
       const parts = bitOrParts.map(p => evaluateExpr(p));
@@ -962,6 +1103,15 @@ export function createExpressionEvaluator(
           }
         }
         return res;
+      }
+      if (parts.some(p => typeof p === 'object' && p !== null && !(p instanceof Set) && !Array.isArray(p))) {
+        const merged: Record<string, unknown> = {};
+        for (const p of parts) {
+          if (typeof p === 'object' && p !== null && !Array.isArray(p) && !(p instanceof Set)) {
+            Object.assign(merged, p);
+          }
+        }
+        return merged;
       }
       return parts.reduce((acc: number, val: unknown) => acc | Number(val || 0), 0);
     }
@@ -1017,6 +1167,103 @@ export function createExpressionEvaluator(
       return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc / Number(val)), 0);
     }
 
+    // Element indexing / Chained indexing: targetExpr[idxExpr] (e.g. deck[i][0], matrix[r][c], arr[0], str[1:])
+    if (trimmed.endsWith(']') && !trimmed.startsWith('[')) {
+      let bracketDepth = 0;
+      let openIdx = -1;
+      let inQuote: string | null = null;
+      for (let i = trimmed.length - 1; i >= 0; i--) {
+        const char = trimmed[i];
+        if (inQuote) {
+          if (char === inQuote && (i === 0 || trimmed[i - 1] !== '\\')) {
+            inQuote = null;
+          }
+          continue;
+        }
+        if (char === '"' || char === "'") {
+          inQuote = char;
+          continue;
+        }
+        if (char === ']') {
+          bracketDepth++;
+        } else if (char === '[') {
+          bracketDepth--;
+          if (bracketDepth === 0) {
+            openIdx = i;
+            break;
+          }
+        }
+      }
+      if (openIdx > 0) {
+        const targetExpr = trimmed.slice(0, openIdx).trim();
+        const idxExpr = trimmed.slice(openIdx + 1, -1).trim();
+        const targetVal = evaluateExpr(targetExpr);
+        if (Array.isArray(targetVal) || typeof targetVal === 'string') {
+          if (idxExpr.includes(':')) {
+            const sliceParts = idxExpr.split(':');
+            const rawStart = sliceParts[0].trim();
+            const rawStop = sliceParts[1]?.trim() ?? '';
+            const rawStep = sliceParts[2]?.trim() ?? '';
+
+            const len = targetVal.length;
+            const step = rawStep ? Number(evaluateExpr(rawStep)) : 1;
+
+            let start: number;
+            if (rawStart) {
+              let parsedStart = Number(evaluateExpr(rawStart));
+              if (parsedStart < 0) parsedStart += len;
+              start = Math.max(0, Math.min(len, parsedStart));
+            } else {
+              start = step < 0 ? len - 1 : 0;
+            }
+
+            let stop: number;
+            if (rawStop) {
+              let parsedStop = Number(evaluateExpr(rawStop));
+              if (parsedStop < 0) parsedStop += len;
+              stop = Math.max(-1, Math.min(len, parsedStop));
+            } else {
+              stop = step < 0 ? -1 : len;
+            }
+
+            if (typeof targetVal === 'string') {
+              if (step === 1) {
+                return targetVal.slice(start, stop);
+              }
+              let res = '';
+              if (step > 0) {
+                for (let i = start; i < stop; i += step) res += targetVal[i];
+              } else if (step < 0) {
+                for (let i = start; i > stop; i += step) res += targetVal[i];
+              }
+              return res;
+            }
+
+            if (Array.isArray(targetVal)) {
+              if (step === 1) {
+                return targetVal.slice(start, stop);
+              }
+              const res: unknown[] = [];
+              if (step > 0) {
+                for (let i = start; i < stop; i += step) res.push(targetVal[i]);
+              } else if (step < 0) {
+                for (let i = start; i > stop; i += step) res.push(targetVal[i]);
+              }
+              return res;
+            }
+          }
+          const idxVal = evaluateExpr(idxExpr);
+          const idx = Number(idxVal);
+          const realIdx = idx < 0 ? targetVal.length + idx : idx;
+          return targetVal[realIdx];
+        }
+        if (typeof targetVal === 'object' && targetVal !== null) {
+          const idxVal = evaluateExpr(idxExpr);
+          return (targetVal as Record<string, unknown>)[String(idxVal)];
+        }
+      }
+    }
+
     // User-defined function call.
     const functionCallMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\)$/.exec(trimmed);
     if (functionCallMatch) {
@@ -1027,6 +1274,15 @@ export function createExpressionEvaluator(
           : [];
         return fn(...args);
       }
+    }
+
+    // Single Identifier variable lookup
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
+      if (trimmed in scope) return scope[trimmed];
+      if (trimmed === 'True' || trimmed === 'true') return true;
+      if (trimmed === 'False' || trimmed === 'false') return false;
+      if (trimmed === 'None' || trimmed === 'none' || trimmed === 'null') return null;
+      throw new Error(`NameError: name '${trimmed}' is not defined`);
     }
 
     // Fallback: JS Function evaluation in isolated scope

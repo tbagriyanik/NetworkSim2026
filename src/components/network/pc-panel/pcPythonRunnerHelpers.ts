@@ -70,7 +70,11 @@ export class PyFile {
     private onSave?: (content: string) => void
   ) {
     this.content = initialContent;
-    this.lines = initialContent ? initialContent.split(/\r?\n/) : [];
+    const split = initialContent ? initialContent.split(/\r?\n/) : [];
+    if (split.length > 0 && split[split.length - 1] === '') {
+      split.pop();
+    }
+    this.lines = split;
   }
 
   read(_size?: number): string {
@@ -82,12 +86,12 @@ export class PyFile {
     if (this.closed) throw new Error('I/O operation on closed file.');
     if (this.lineIdx >= this.lines.length) return '';
     const line = this.lines[this.lineIdx++];
-    return this.lineIdx < this.lines.length ? line + '\n' : line;
+    return line + '\n';
   }
 
   readlines(): string[] {
     if (this.closed) throw new Error('I/O operation on closed file.');
-    const remaining = this.lines.slice(this.lineIdx).map((l, i, arr) => (i < arr.length - 1 ? l + '\n' : l));
+    const remaining = this.lines.slice(this.lineIdx).map(l => l + '\n');
     this.lineIdx = this.lines.length;
     return remaining;
   }
@@ -167,25 +171,26 @@ export function getPythonType(val: unknown): string {
   return `<class '${typeof val}'>`;
 }
 
-export function formatPythonValue(val: unknown): string {
+export function formatPythonValue(val: unknown, inCollection: boolean = false): string {
   if (val === null || val === undefined) return 'None';
   if (val === true) return 'True';
   if (val === false) return 'False';
+  if (typeof val === 'string') return inCollection ? `'${val}'` : val;
   if (val instanceof PyComplex) return val.toString();
   if (val instanceof PyFile) return `<_io.TextIOWrapper name='${val.filePath}' mode='${val.mode}' encoding='utf-8'>`;
   if (val instanceof Set) {
     const items = Array.from(val).sort((a, b) => {
       if (typeof a === 'number' && typeof b === 'number') return a - b;
-      return formatPythonValue(a).localeCompare(formatPythonValue(b));
+      return formatPythonValue(a, true).localeCompare(formatPythonValue(b, true));
     });
-    return `{${items.map(item => formatPythonValue(item)).join(', ')}}`;
+    return `{${items.map(item => formatPythonValue(item, true)).join(', ')}}`;
   }
   if (Array.isArray(val)) {
-    return `[${val.map(item => formatPythonValue(item)).join(', ')}]`;
+    return `[${val.map(item => formatPythonValue(item, true)).join(', ')}]`;
   }
   if (typeof val === 'object') {
     const entries = Object.entries(val as Record<string, unknown>).map(
-      ([k, v]) => `'${k}': ${formatPythonValue(v)}`
+      ([k, v]) => `${/^-?\d+$/.test(k) ? k : `'${k}'`}: ${formatPythonValue(v, true)}`
     );
     return `{${entries.join(', ')}}`;
   }
@@ -381,8 +386,9 @@ export function parseFormatArgs(
       else if (char === ')' || char === ']' || char === '}') parenDepth--;
     }
 
+    const hasOperators = /[|+\-*/%^&=!<>|]|\b(and|or|in|not|is)\b/.test(trimmedRaw);
     const isDelimiter = !inQuotes && parenDepth === 0 && (
-      char === ',' || (trimmedRaw.indexOf(',') === -1 && /\s/.test(char))
+      char === ',' || (!hasOperators && trimmedRaw.indexOf(',') === -1 && /\s/.test(char))
     );
 
     if (isDelimiter) {

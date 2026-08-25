@@ -33,12 +33,26 @@ DOS=HIGH,UMB`,
       },
       'boot.ini': {
         type: 'file',
-        content: `[boot loader]
-timeout=5
-default=multi(0)disk(0)rdisk(0)partition(1)
-[operating systems]
-multi(0)disk(0)rdisk(0)partition(1)="Network Simulator OS" /fastdetect`,
+        content: '[boot loader]\ntimeout=5\ndefault=multi(0)disk(0)rdisk(0)partition(1)\n[operating systems]\nmulti(0)disk(0)rdisk(0)partition(1)="Network Simulator OS" /fastdetect',
         size: 184,
+        modifiedAt: DEFAULT_TIMESTAMP,
+      },
+      'names.txt': {
+        type: 'file',
+        content: 'Ahmet\nMehmet\nAyse\nFatma\n',
+        size: 26,
+        modifiedAt: DEFAULT_TIMESTAMP,
+      },
+      'body.txt': {
+        type: 'file',
+        content: 'Sistem guncelemelerimiz tamamlanmistir. Detaylar icin iletisime gecebilirsiniz.',
+        size: 80,
+        modifiedAt: DEFAULT_TIMESTAMP,
+      },
+      'data_file.txt': {
+        type: 'file',
+        content: 'Python\nNetwork Simulator\nList Comprehension Demo\n',
+        size: 55,
         modifiedAt: DEFAULT_TIMESTAMP,
       },
       'www': {
@@ -47,8 +61,7 @@ multi(0)disk(0)rdisk(0)partition(1)="Network Simulator OS" /fastdetect`,
         children: {
           'index.html': {
             type: 'file',
-            content: `<h1>Merhaba Dünya! / Hello World!</h1>
-  <p>This page is served from C:\\www\\index.html</p>`,
+            content: '<h1>Merhaba Dunya! / Hello World!</h1>\n  <p>This page is served from C:\\www\\index.html</p>',
             size: 384,
             modifiedAt: '2026-08-25T09:00:00.000Z',
           },
@@ -209,6 +222,18 @@ print("First 10 Fibonacci numbers:", fibonacci(10))
             size: 240,
             modifiedAt: '2026-08-25T11:15:00.000Z',
           },
+          'names.txt': {
+            type: 'file',
+            content: 'Ahmet\nMehmet\nAyse\nFatma\n',
+            size: 26,
+            modifiedAt: '2026-08-25T11:20:00.000Z',
+          },
+          'body.txt': {
+            type: 'file',
+            content: 'Sistem guncelemelerimiz tamamlanmistir. Detaylar icin iletisime gecebilirsiniz.',
+            size: 80,
+            modifiedAt: '2026-08-25T11:20:00.000Z',
+          },
         },
       },
     },
@@ -238,8 +263,13 @@ export function ensureDefaultFsEntries(fs: FSNode): void {
   }
 }
 
+const fsStore: Record<string, FSNode> = {};
+
 /** Load the file system for a given deviceId. */
 export function loadFs(deviceId: string): FSNode {
+  if (fsStore[deviceId]) {
+    return fsStore[deviceId];
+  }
   let fs: FSNode | null = null;
   if (typeof localStorage !== 'undefined') {
     try {
@@ -259,11 +289,13 @@ export function loadFs(deviceId: string): FSNode {
     ensureDefaultFsEntries(fs);
   }
 
+  fsStore[deviceId] = fs;
   return fs;
 }
 
 /** Persist the file system for a given deviceId. */
 export function saveFs(deviceId: string, fs: FSNode): void {
+  fsStore[deviceId] = fs;
   if (typeof localStorage !== 'undefined') {
     try {
       localStorage.setItem(`pc_fs_${deviceId}`, JSON.stringify(fs));
@@ -316,7 +348,7 @@ export function resolvePath(cwd: string, input: string): string {
 }
 
 /** Helper to traverse the FS tree and return the node at a given absolute path. */
-function getNode(fs: FSNode, path: string): FSNode | null {
+export function getNode(fs: FSNode, path: string): FSNode | null {
   if (fs.type !== 'dir') return null;
   const pathWithoutDrive = path.replace(/^[a-zA-Z]:/, '');
   const parts = pathWithoutDrive.split(/[\\/]+/).filter(Boolean);

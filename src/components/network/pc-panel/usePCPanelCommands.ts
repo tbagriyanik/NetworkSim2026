@@ -421,10 +421,22 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           continue;
         }
 
-        // --- Pipe detection: split token at first '|' ---
+        // --- Pipe detection: split token at first '|' outside quotes ---
         let activeToken = token;
         let pipeExpr: string | null = null;
-        const pipeIdx = token.indexOf('|');
+        let pipeIdx = -1;
+        let inDouble = false;
+        let inSingle = false;
+        for (let pI = 0; pI < token.length; pI++) {
+          const ch = token[pI];
+          if (ch === '"' && !inSingle) inDouble = !inDouble;
+          else if (ch === "'" && !inDouble) inSingle = !inSingle;
+          else if (ch === '|' && !inDouble && !inSingle) {
+            if (token[pI + 1] === '|') { pI++; continue; }
+            pipeIdx = pI;
+            break;
+          }
+        }
         if (pipeIdx !== -1) {
           activeToken = token.slice(0, pipeIdx).trim();
           pipeExpr = token.slice(pipeIdx + 1).trim();
@@ -1309,7 +1321,7 @@ if (!isDir(fs, targetPath)) {
               emit('error', `python: can't open file '${firstArg}': No such file or directory`);
             }
           } else {
-            emit('output', 'Python 3.10.0 (netsim-embed, Aug 24 2026)\nType "edit <file.py>" to create or edit scripts, or "python <file.py>" to run.');
+            emit('output', 'Python (netsim-embed, Aug 24 2026)\nType "edit <file.py>" to create or edit scripts, or "python <file.py>" to run.');
           }
         } else if (cmd === 'call') {
           const targetScript = args[0] || '';

@@ -45,7 +45,7 @@ describe('pcFileSystem & pcPythonRunner tests', () => {
 
   it('should create and list directories in FS', () => {
     const fs = loadFs('pc-1');
-    expect(listDir(fs, 'C:\\')).toEqual(['autoexec.bat', 'config.sys', 'boot.ini', 'www', 'upload', 'mail', 'code']);
+    expect(listDir(fs, 'C:\\')).toEqual(['autoexec.bat', 'config.sys', 'boot.ini', 'names.txt', 'body.txt', 'data_file.txt', 'www', 'upload', 'mail', 'code']);
 
     makeDir(fs, 'C:\\myfolder');
     expect(listDir(fs, 'C:\\')).toContain('myfolder');
@@ -850,10 +850,133 @@ with open("names.txt", 'r', encoding='utf-8') as names_file:
     expect(mehmetMail).toBe('Hello Mehmet\nSisteme hosgeldiniz!\nIyi calismalar.');
   });
 
+  it('should support dictionary union operator | and |= (Python)', () => {
+    const script = `
+dict_1 = {1: 'a', 2: 'b'}
+dict_2 = {2: 'c', 4: 'd'}
+
+merged = dict_1 | dict_2
+print(merged)
+
+dict_1 |= dict_2
+print(dict_1)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain("{1: 'a', 2: 'c', 4: 'd'}");
+    expect(res.error).toBeUndefined();
+
+    const inlineScript = "dict_1 = {1: 'a', 2: 'b'}; dict_2 = {2: 'c', 4: 'd'}; print(dict_1 | dict_2)";
+    const inlineRes = executePythonScript(inlineScript);
+    expect(inlineRes.output).toContain("{1: 'a', 2: 'c', 4: 'd'}");
+    expect(inlineRes.error).toBeUndefined();
+  });
+
+  it('should support enumerate() with start parameter and zip() built-in functions', () => {
+    const script = `
+my_list = [21, 44, 35, 11]
+for index, val in enumerate(my_list, start=1):
+    print(index, val)
+
+names = ['alice', 'bob']
+ages = [25, 30]
+for name, age in zip(names, ages):
+    print(name, age)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain("1 21\n2 44\n3 35\n4 11");
+    expect(res.output).toContain("alice 25\nbob 30");
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support string and list slicing syntax [start:stop:step]', () => {
+    const script = `
+my_string = "programiz is Lit"
+print(my_string[0].upper() + my_string[1:])
+
+nums = [10, 20, 30, 40, 50]
+print(nums[1:4])
+print(nums[::-1])
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain("Programiz is Lit");
+    expect(res.output).toContain("[20, 30, 40]");
+    expect(res.output).toContain("[50, 40, 30, 20, 10]");
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support glob module and os.chdir for directory navigation and pattern matching', () => {
+    const fs = loadFs('pc-test-glob-fs');
+    makeDir(fs, 'C:\\code');
+    writeFile(fs, 'C:\\code\\script1.py', 'print("hello")');
+    writeFile(fs, 'C:\\code\\script2.py', 'print("world")');
+    writeFile(fs, 'C:\\code\\notes.txt', 'some notes');
+    saveFs('pc-test-glob-fs', fs);
+
+    const script = `
+import glob, os
+
+os.chdir("code")
+
+for file in glob.glob("*.py"):
+    print(file)
+`;
+    const res = executePythonScript(script, [], undefined, 'pc-test-glob-fs');
+    expect(res.output).toContain("script1.py");
+    expect(res.output).toContain("script2.py");
+    expect(res.output).not.toContain("notes.txt");
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should execute Mail Merger script and write output files correctly', () => {
+    const fs = loadFs('pc-test-mail-merger');
+    writeFile(fs, 'C:\\names.txt', 'Alice\nBob\nCharlie\n');
+    writeFile(fs, 'C:\\body.txt', 'Welcome to our platform!');
+    saveFs('pc-test-mail-merger', fs);
+
+    const script = `
+with open("names.txt", 'r', encoding='utf-8') as names_file:
+    with open("body.txt", 'r', encoding='utf-8') as body_file:
+        body = body_file.read()
+        for name in names_file:
+            mail = "Hello " + name.strip() + "\\n" + body
+            with open(name.strip()+".txt", 'w', encoding='utf-8') as mail_file:
+                mail_file.write(mail)
+`;
+    const res = executePythonScript(script, [], undefined, 'pc-test-mail-merger');
+    expect(res.error).toBeUndefined();
+
+    const updatedFs = loadFs('pc-test-mail-merger');
+    expect(readFile(updatedFs, 'C:\\Alice.txt')).toContain('Hello Alice\nWelcome to our platform!');
+    expect(readFile(updatedFs, 'C:\\Bob.txt')).toContain('Hello Bob\nWelcome to our platform!');
+    expect(readFile(updatedFs, 'C:\\Charlie.txt')).toContain('Hello Charlie\nWelcome to our platform!');
+  });
+
+  it('should support List Comprehension [expr for var in iter if cond]', () => {
+    const fs = loadFs('pc-test-list-comp');
+    writeFile(fs, 'C:\\data_file.txt', 'Python\nNetwork Simulator\nList Comprehension Demo\n');
+    saveFs('pc-test-list-comp', fs);
+
+    const script = `
+with open("data_file.txt") as f:
+    content_list = f.readlines()
+
+print(content_list)
+content_list = [x.strip() for x in content_list]
+print(content_list)
+
+even_squares = [x**2 for x in range(10) if x % 2 == 0]
+print(even_squares)
+`;
+    const res = executePythonScript(script, [], undefined, 'pc-test-list-comp');
+    expect(res.error).toBeUndefined();
+    expect(res.output).toContain("['Python', 'Network Simulator', 'List Comprehension Demo']");
+    expect(res.output).toContain("[0, 4, 16, 36, 64]");
+  });
+
   it('should copy, move, and rename files/directories correctly', () => {
     const fs = loadFs('pc-test-fs');
     writeFile(fs, 'C:\\autoexec.bat', '@echo off\necho Test Boot');
-    
+
     // Test copyFile
     const copied = copyFile(fs, 'C:\\autoexec.bat', 'C:\\autoexec.bak');
     expect(copied).toBe(true);
