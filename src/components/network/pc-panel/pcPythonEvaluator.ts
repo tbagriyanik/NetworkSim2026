@@ -611,6 +611,17 @@ export function createExpressionEvaluator(
       }
     }
 
+    // Handle Python ternary expression: <true_expr> if <cond> else <false_expr>
+    const ternaryIfIdx = findOperatorIndex(trimmed, ' if ');
+    const ternaryElseIdx = findOperatorIndex(trimmed, ' else ');
+    if (ternaryIfIdx !== -1 && ternaryElseIdx > ternaryIfIdx) {
+      const trueExpr = trimmed.slice(0, ternaryIfIdx).trim();
+      const condExpr = trimmed.slice(ternaryIfIdx + 4, ternaryElseIdx).trim();
+      const falseExpr = trimmed.slice(ternaryElseIdx + 6).trim();
+      const condVal = evaluateExpr(condExpr);
+      return condVal ? evaluateExpr(trueExpr) : evaluateExpr(falseExpr);
+    }
+
     // Handle Logical Operators: or, and, not
     const orIdx = findOperatorIndex(trimmed, ' or ');
     if (orIdx !== -1) {

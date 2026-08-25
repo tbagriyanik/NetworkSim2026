@@ -136,11 +136,12 @@ export function parseBlockAt(
       continue;
     }
 
-    // Handle def function definition
-    const defMatch = /^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\):\s*$/.exec(line.text);
+    // Handle def function definition (supports both single-line and block defs)
+    const defMatch = /^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*?)\):\s*(.*)$/.exec(line.text);
     if (defMatch) {
       const funcName = defMatch[1];
       const paramsStr = defMatch[2].trim();
+      const inlineRest = defMatch[3].trim();
       const paramNames: string[] = [];
       const paramDefaults: Record<string, string> = {};
       if (paramsStr) {
@@ -154,9 +155,20 @@ export function parseBlockAt(
           }
         }
       }
-      const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
-      statements.push({ type: 'def', funcName, paramNames, paramDefaults, body: bodyRes.statements });
-      i = bodyRes.nextIndex;
+      if (inlineRest) {
+        statements.push({
+          type: 'def',
+          funcName,
+          paramNames,
+          paramDefaults,
+          body: [{ type: 'line', text: inlineRest }],
+        });
+        i++;
+      } else {
+        const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+        statements.push({ type: 'def', funcName, paramNames, paramDefaults, body: bodyRes.statements });
+        i = bodyRes.nextIndex;
+      }
       continue;
     }
 

@@ -35,9 +35,9 @@ DOS=HIGH,UMB`,
         type: 'file',
         content: `[boot loader]
 timeout=5
-default=multi(0)disk(0)rdisk(0)partition(1)\\WINDOWS
+default=multi(0)disk(0)rdisk(0)partition(1)
 [operating systems]
-multi(0)disk(0)rdisk(0)partition(1)\\WINDOWS="Network Simulator OS" /fastdetect`,
+multi(0)disk(0)rdisk(0)partition(1)="Network Simulator OS" /fastdetect`,
         size: 184,
         modifiedAt: DEFAULT_TIMESTAMP,
       },
@@ -47,21 +47,8 @@ multi(0)disk(0)rdisk(0)partition(1)\\WINDOWS="Network Simulator OS" /fastdetect`
         children: {
           'index.html': {
             type: 'file',
-            content: `<!DOCTYPE html>
-<html>
-<head>
-  <title>Network Sim Web Server</title>
-  <style>
-    body { font-family: sans-serif; background: #0f172a; color: #f8fafc; text-align: center; padding: 50px; }
-    h1 { color: #38bdf8; }
-    p { font-size: 1.2rem; color: #94a3b8; }
-  </style>
-</head>
-<body>
-  <h1>Merhaba Dünya! / Hello World!</h1>
-  <p>This page is served from C:\\www\\index.html</p>
-</body>
-</html>`,
+            content: `<h1>Merhaba Dünya! / Hello World!</h1>
+  <p>This page is served from C:\\www\\index.html</p>`,
             size: 384,
             modifiedAt: '2026-08-25T09:00:00.000Z',
           },
@@ -101,9 +88,9 @@ multi(0)disk(0)rdisk(0)partition(1)\\WINDOWS="Network Simulator OS" /fastdetect`
             children: {
               'inbox.txt': {
                 type: 'file',
-                content: `From: admin@network.sim
-To: user@network.sim
-Subject: Welcome to NetworkSim Mail System
+                content: `From: admin@local.lan
+To: user@local.lan
+Subject: Welcome to Local Mail System
 Date: Tue, 25 Aug 2026 10:00:00 +0300
 
 Hello User,
@@ -127,9 +114,9 @@ Your mail account is configured and ready to send/receive messages.`,
           },
           'inbox.txt': {
             type: 'file',
-            content: `From: admin@network.sim
-To: user@network.sim
-Subject: Welcome to NetworkSim Mail System
+            content: `From: admin@local.lan
+To: user@local.lan
+Subject: Welcome to Local Mail System
 Date: Tue, 25 Aug 2026 10:00:00 +0300
 
 Hello User,
@@ -145,8 +132,8 @@ Your mail account is configured and ready to send/receive messages.`,
           },
           'welcome.eml': {
             type: 'file',
-            content: `From: support@netsim.local
-To: client@netsim.local
+            content: `From: support@local.lan
+To: client@local.lan
 Subject: Mail Service Active
 
 Mail files stored safely in C:\\mail\\ directory.`,
@@ -162,7 +149,7 @@ Mail files stored safely in C:\\mail\\ directory.`,
           'hello.py': {
             type: 'file',
             content: `# Hello World Script
-print("Hello from Network Simulator Python Engine!")
+print("Hello from Network Simulator!")
 print("Running in C:\\\\code\\\\hello.py")
 `,
             size: 106,
@@ -171,10 +158,19 @@ print("Running in C:\\\\code\\\\hello.py")
           'calculator.py': {
             type: 'file',
             content: `# Simple Calculator
-def add(a, b): return a + b
-def sub(a, b): return a - b
-def mul(a, b): return a * b
-def div(a, b): return a / b if b != 0 else "Error: Div by zero"
+def add(a, b):
+    return a + b
+
+def sub(a, b):
+    return a - b
+
+def mul(a, b):
+    return a * b
+
+def div(a, b):
+    if b == 0:
+        return "Error: Div by zero"
+    return a / b
 
 print("Calculator demo:")
 print("10 + 5 =", add(10, 5))
@@ -182,7 +178,7 @@ print("20 - 4 =", sub(20, 4))
 print("6 * 7 =", mul(6, 7))
 print("50 / 5 =", div(50, 5))
 `,
-            size: 285,
+            size: 320,
             modifiedAt: '2026-08-25T11:05:00.000Z',
           },
           'network_ping.py': {
