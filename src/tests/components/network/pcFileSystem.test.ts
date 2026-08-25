@@ -13,8 +13,8 @@ import {
   copyFile,
   moveNode,
   renameNode,
-} from '@/components/network/pc-panel/pcFileSystem';
-import { executePythonScript, executePythonScriptAsync } from '@/components/network/pc-panel/pcPythonRunner';
+} from '../../../components/network/pc-panel/pcFileSystem';
+import { executePythonScript, executePythonScriptAsync } from '../../../components/network/pc-panel/pcPythonRunner';
 
 const mockStorage: Record<string, string> = {};
 
@@ -797,6 +797,57 @@ for x, y in pairs:
     expect(res.output).toContain('hello and world are not anagram.');
     expect(res.output.trim().split('\n')).toHaveLength(2);
     expect(res.error).toBeUndefined();
+  });
+
+  it('should support {}.fromkeys(), dict.fromkeys() and vowel counting script', () => {
+    const script = `
+vowels = 'aeiou'
+ip_str = 'Hello, have you tried our tutorial section yet?'
+ip_str = ip_str.casefold()
+count = {}.fromkeys(vowels, 0)
+
+for char in ip_str:
+   if char in count:
+       count[char] += 1
+
+print(count)
+`;
+    const res = executePythonScript(script);
+    expect(res.output).toContain("'a': 2");
+    expect(res.output).toContain("'e': 5");
+    expect(res.output).toContain("'i': 3");
+    expect(res.output).toContain("'o': 5");
+    expect(res.output).toContain("'u': 3");
+    expect(res.error).toBeUndefined();
+  });
+
+  it('should support open(), with open(), f.read(), f.write(), line iteration, and mail merger script', () => {
+    const devId = 'pc-mail-merger-test';
+    const fs = loadFs(devId);
+    writeFile(fs, 'C:\\names.txt', 'Ahmet\n Ayse\nMehmet');
+    writeFile(fs, 'C:\\body.txt', 'Sisteme hosgeldiniz!\nIyi calismalar.');
+    saveFs(devId, fs);
+
+    const script = `
+with open("names.txt", 'r', encoding='utf-8') as names_file:
+    with open("body.txt", 'r', encoding='utf-8') as body_file:
+        body = body_file.read()
+        for name in names_file:
+            mail = "Hello " + name.strip() + "\\n" + body
+            with open(name.strip() + ".txt", 'w', encoding='utf-8') as mail_file:
+                mail_file.write(mail)
+`;
+    const res = executePythonScript(script, [], undefined, devId);
+    expect(res.error).toBeUndefined();
+
+    const updatedFs = loadFs(devId);
+    const ahmetMail = readFile(updatedFs, 'C:\\Ahmet.txt');
+    const ayseMail = readFile(updatedFs, 'C:\\Ayse.txt');
+    const mehmetMail = readFile(updatedFs, 'C:\\Mehmet.txt');
+
+    expect(ahmetMail).toBe('Hello Ahmet\nSisteme hosgeldiniz!\nIyi calismalar.');
+    expect(ayseMail).toBe('Hello Ayse\nSisteme hosgeldiniz!\nIyi calismalar.');
+    expect(mehmetMail).toBe('Hello Mehmet\nSisteme hosgeldiniz!\nIyi calismalar.');
   });
 
   it('should copy, move, and rename files/directories correctly', () => {

@@ -149,8 +149,10 @@ export function usePCPanelMail({
             deviceId: targetDevice.id,
             config: {
               services: {
+                ...targetDevice.services,
                 mail: {
-                  enabled: targetDevice.services?.mail?.enabled ?? false,
+                  ...targetDevice.services?.mail,
+                  enabled: targetDevice.services?.mail?.enabled ?? true,
                   domain: targetDevice.services?.mail?.domain || serviceMailDomain,
                   username: targetDevice.services?.mail?.username || serviceMailUsername,
                   inbox: updatedInbox,
@@ -166,7 +168,9 @@ export function usePCPanelMail({
             deviceId,
             config: {
               services: {
+                ...deviceFromTopology?.services,
                 mail: {
+                  ...deviceFromTopology?.services?.mail,
                   enabled: serviceMailEnabled,
                   domain: serviceMailDomain,
                   username: serviceMailUsername,
@@ -218,10 +222,16 @@ export function usePCPanelMail({
       if (!msg.from) return;
       const emailMatch = msg.from.match(/<([^>]+)>/);
       const senderEmail = emailMatch ? emailMatch[1] : msg.from;
-      const [reqUser, reqDomain] = senderEmail.includes('@') ? senderEmail.split('@') : [senderEmail, ''];
+      const [reqUser, reqDomain] = senderEmail.includes('@')
+        ? senderEmail.split('@')
+        : [senderEmail, serviceMailDomain];
       const targetDevice = topologyDevices.find((d: CanvasDevice) => {
         const mail = d.services?.mail;
-        return mail?.username === reqUser && mail?.domain === reqDomain;
+        if (mail?.username === reqUser && mail?.domain === (reqDomain || serviceMailDomain))
+          return true;
+        const isNameMatch = d.name === reqUser || d.ip === reqUser || d.id === reqUser || d.name === msg.from || d.ip === msg.from;
+        const isDomainMatch = d.ip === reqDomain;
+        return isNameMatch && (isDomainMatch || !reqDomain);
       });
       if (!targetDevice) {
         onError(language === 'tr' ? 'Alıcı cihaz bulunamadı.' : 'Target device not found.');
@@ -267,7 +277,12 @@ export function usePCPanelMail({
       if (typeof window !== 'undefined') {
         try {
           const stored = localStorage.getItem(`mail_inbox_${targetDevice.id}`);
-          if (stored) existingInbox = JSON.parse(stored);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length >= existingInbox.length) {
+              existingInbox = parsed;
+            }
+          }
         } catch {}
       }
       const updatedInbox = [newInboxEntry, ...existingInbox];
@@ -287,10 +302,12 @@ export function usePCPanelMail({
             deviceId: targetDevice.id,
             config: {
               services: {
+                ...targetDevice.services,
                 mail: {
-                  enabled: targetDevice.services?.mail?.enabled ?? false,
-                  domain: targetDevice.services?.mail?.domain || serviceMailDomain,
-                  username: targetDevice.services?.mail?.username || serviceMailUsername,
+                  ...targetDevice.services?.mail,
+                  enabled: targetDevice.services?.mail?.enabled ?? true,
+                  domain: targetDevice.services?.mail?.domain || reqDomain || serviceMailDomain,
+                  username: targetDevice.services?.mail?.username || reqUser || serviceMailUsername,
                   inbox: updatedInbox,
                 },
               },
@@ -304,7 +321,9 @@ export function usePCPanelMail({
             deviceId,
             config: {
               services: {
+                ...deviceFromTopology?.services,
                 mail: {
+                  ...deviceFromTopology?.services?.mail,
                   enabled: serviceMailEnabled,
                   domain: serviceMailDomain,
                   username: serviceMailUsername,

@@ -24,7 +24,8 @@ export { PyComplex, pythonRange, formatPythonValue } from './pcPythonRunnerHelpe
 export function executePythonScript(
   script: string,
   userInputs: string[] = [],
-  onOutput?: (line: string, isAppend?: boolean) => void
+  onOutput?: (line: string, isAppend?: boolean) => void,
+  deviceId?: string
 ): PythonExecutionResult {
   const scope: Record<string, unknown> = {
     print: (...args: unknown[]) => {
@@ -47,7 +48,7 @@ export function executePythonScript(
     throw new PythonInputRequiredException(promptStr || 'Input required: ');
   };
 
-  const evaluateExpr = createExpressionEvaluator(scope, pythonInput);
+  const evaluateExpr = createExpressionEvaluator(scope, pythonInput, deviceId);
 
   const rawLines = script.split(/\r?\n/);
   const parsedLines = parseProgramLines(rawLines);
@@ -353,7 +354,11 @@ export function executePythonScript(
         } else if (iterable instanceof Set) {
           items = Array.from(iterable);
         } else if (typeof iterable === 'object' && iterable !== null) {
-          items = Object.keys(iterable);
+          if (typeof (iterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+            items = Array.from(iterable as Iterable<unknown>);
+          } else {
+            items = Object.keys(iterable);
+          }
         }
         let brokeOut = false;
         for (const item of items) {
@@ -406,6 +411,19 @@ export function executePythonScript(
           }
         }
         if (brokeOrReturn !== 'normal') return brokeOrReturn;
+      } else if (stmt.type === 'with') {
+        const fileObj = evaluateExpr(stmt.contextExpr);
+        if (stmt.varName) {
+          scope[stmt.varName] = fileObj;
+        }
+        try {
+          const sig = execStatementsSync(stmt.body);
+          if (sig !== 'normal') return sig;
+        } finally {
+          if (fileObj && typeof (fileObj as Record<string, unknown>).close === 'function') {
+            (fileObj as { close: () => void }).close();
+          }
+        }
       }
     }
     return 'normal';
@@ -435,7 +453,8 @@ export function executePythonScript(
 export async function executePythonScriptAsync(
   script: string,
   userInputs: string[] = [],
-  onOutput?: (line: string, isAppend?: boolean) => void
+  onOutput?: (line: string, isAppend?: boolean) => void,
+  deviceId?: string
 ): Promise<PythonExecutionResult> {
   const scope: Record<string, unknown> = {
     print: (...args: unknown[]) => {
@@ -458,7 +477,7 @@ export async function executePythonScriptAsync(
     throw new PythonInputRequiredException(promptStr || 'Input required: ');
   };
 
-  const evaluateExpr = createExpressionEvaluator(scope, pythonInput);
+  const evaluateExpr = createExpressionEvaluator(scope, pythonInput, deviceId);
 
   const rawLines = script.split(/\r?\n/);
   const parsedLines = parseProgramLines(rawLines);
@@ -764,7 +783,11 @@ export async function executePythonScriptAsync(
         } else if (iterable instanceof Set) {
           items = Array.from(iterable);
         } else if (typeof iterable === 'object' && iterable !== null) {
-          items = Object.keys(iterable);
+          if (typeof (iterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+            items = Array.from(iterable as Iterable<unknown>);
+          } else {
+            items = Object.keys(iterable);
+          }
         }
         let brokeOut = false;
         for (const item of items) {
@@ -817,6 +840,19 @@ export async function executePythonScriptAsync(
           }
         }
         if (brokeOrReturn !== 'normal') return brokeOrReturn;
+      } else if (stmt.type === 'with') {
+        const fileObj = evaluateExpr(stmt.contextExpr);
+        if (stmt.varName) {
+          scope[stmt.varName] = fileObj;
+        }
+        try {
+          const sig = execStatementsSync(stmt.body);
+          if (sig !== 'normal') return sig;
+        } finally {
+          if (fileObj && typeof (fileObj as Record<string, unknown>).close === 'function') {
+            (fileObj as { close: () => void }).close();
+          }
+        }
       }
     }
     return 'normal';

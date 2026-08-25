@@ -1,5 +1,6 @@
 import {
   PyComplex,
+  PyFile,
   toPyComplex,
   getPythonType,
   formatPythonValue,
@@ -12,14 +13,48 @@ import {
   parseFormatArgs,
   formatStringTemplate,
 } from './pcPythonRunnerHelpers';
+import { loadFs, saveFs, readFile, writeFile, resolvePath } from './pcFileSystem';
 
 export function createExpressionEvaluator(
   scope: Record<string, unknown>,
-  pythonInput: (promptMsg: unknown) => string
+  pythonInput: (promptMsg: unknown) => string,
+  deviceId?: string
 ): (expr: string) => unknown {
+  scope['open'] = (filePathVal: unknown, modeVal: unknown = 'r') => {
+    const filePath = String(filePathVal || '');
+    const mode = String(modeVal || 'r');
+    const devId = deviceId || 'pc-default';
+    const fs = loadFs(devId);
+    const resolvedPath = resolvePath('C:\\', filePath);
+
+    let initialContent = '';
+    if (mode.includes('r') || mode.includes('+')) {
+      const content = readFile(fs, resolvedPath) ?? readFile(fs, `C:\\${filePath}`) ?? readFile(fs, `C:\\code\\${filePath}`);
+      if (content === null || content === undefined) {
+        if (!mode.includes('w') && !mode.includes('a') && !mode.includes('+')) {
+          throw new Error(`FileNotFoundError: [Errno 2] No such file or directory: '${filePath}'`);
+        }
+      } else {
+        initialContent = content;
+      }
+    }
+
+    const onSave = (newContent: string) => {
+      const updatedFs = loadFs(devId);
+      writeFile(updatedFs, resolvedPath, newContent);
+      saveFs(devId, updatedFs);
+    };
+
+    return new PyFile(filePath, mode, initialContent, onSave);
+  };
   const evaluateExpr = (expr: string): unknown => {
     const trimmed = expr.trim();
     if (!trimmed) return undefined;
+
+    if (isSingleStringLiteral(trimmed)) {
+      const raw = trimmed.slice(1, -1);
+      return raw.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
+    }
 
     const isCompleteCall = (name: string): boolean => {
       const prefix = new RegExp(`^${name}\\s*\\(`).exec(trimmed);
@@ -315,10 +350,31 @@ export function createExpressionEvaluator(
       return [val];
     }
 
-    // Set literal: {1, 2, 3}
+    // Handle dict(...)
+    const dictMatch = isCompleteCall('dict') ? /^dict\s*\((.*)\)$/.exec(trimmed) : null;
+    if (dictMatch) {
+      const innerArg = dictMatch[1].trim();
+      if (!innerArg) return {};
+      const evaluated = evaluateExpr(innerArg);
+      if (Array.isArray(evaluated)) {
+        const d: Record<string, unknown> = {};
+        for (const pair of evaluated) {
+          if (Array.isArray(pair) && pair.length >= 2) {
+            d[String(pair[0])] = pair[1];
+          }
+        }
+        return d;
+      }
+      if (typeof evaluated === 'object' && evaluated !== null) {
+        return { ...evaluated };
+      }
+      return {};
+    }
+
+    // Set or Dict literal: {1, 2, 3} or {}
     if (trimmed.startsWith('{') && trimmed.endsWith('}') && !trimmed.includes(':')) {
       const inner = trimmed.slice(1, -1).trim();
-      if (!inner) return new Set();
+      if (!inner) return {};
       return new Set(splitOutsideQuotesAndParens(inner, ',').map(item => evaluateExpr(item)));
     }
 
@@ -496,7 +552,7 @@ export function createExpressionEvaluator(
       if (methodMatch) {
         const methodName = methodMatch[1];
         const rawArgs = methodMatch[2].trim();
-        const obj = evaluateExpr(targetStr);
+        const obj = targetStr === 'dict' ? {} : evaluateExpr(targetStr);
 
         if (typeof obj === 'string') {
           if (methodName === 'format') {
@@ -554,6 +610,75 @@ export function createExpressionEvaluator(
         }
 
         const objectValue = obj as Record<string, unknown> | undefined;
+        if (objectValue && typeof obj === 'object' && obj !== null && !Array.isArray(obj) && !(obj instanceof Set)) {
+          const argList = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
+          switch (methodName) {
+            case 'fromkeys': {
+              const keysIter = argList[0];
+              const defaultVal = argList.length > 1 ? argList[1] : null;
+              const newDict: Record<string, unknown> = {};
+              let keysArray: unknown[] = [];
+              if (typeof keysIter === 'string') {
+                keysArray = keysIter.split('');
+              } else if (Array.isArray(keysIter)) {
+                keysArray = keysIter;
+              } else if (keysIter instanceof Set) {
+                keysArray = Array.from(keysIter);
+              }
+              for (const k of keysArray) {
+                newDict[String(k)] = defaultVal;
+              }
+              return newDict;
+            }
+            case 'get': {
+              const key = String(argList[0]);
+              const defVal = argList.length > 1 ? argList[1] : null;
+              return key in objectValue ? objectValue[key] : defVal;
+            }
+            case 'keys': {
+              return Object.keys(objectValue);
+            }
+            case 'values': {
+              return Object.values(objectValue);
+            }
+            case 'items': {
+              return Object.entries(objectValue);
+            }
+            case 'pop': {
+              const key = String(argList[0]);
+              const val = objectValue[key];
+              delete objectValue[key];
+              return val;
+            }
+            case 'clear': {
+              for (const k of Object.keys(objectValue)) {
+                delete objectValue[k];
+              }
+              return null;
+            }
+            case 'copy': {
+              return { ...objectValue };
+            }
+            case 'setdefault': {
+              const key = String(argList[0]);
+              const defVal = argList.length > 1 ? argList[1] : null;
+              if (!(key in objectValue)) {
+                objectValue[key] = defVal;
+              }
+              return objectValue[key];
+            }
+            case 'update': {
+              const other = argList[0];
+              if (other && typeof other === 'object' && !Array.isArray(other)) {
+                Object.assign(objectValue, other);
+              }
+              return null;
+            }
+            default:
+              break;
+          }
+        }
+
         if (objectValue && typeof objectValue[methodName] === 'function') {
           const argList = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
           return (objectValue[methodName] as (...args: unknown[]) => unknown)(...argList);
@@ -663,6 +788,8 @@ export function createExpressionEvaluator(
       const rightVal = evaluateExpr(trimmed.slice(notInIdx + 8));
       if (Array.isArray(rightVal)) return !rightVal.includes(leftVal);
       if (typeof rightVal === 'string') return !rightVal.includes(String(leftVal));
+      if (rightVal instanceof Set) return !rightVal.has(leftVal);
+      if (rightVal && typeof rightVal === 'object') return !(String(leftVal) in rightVal);
       return true;
     }
 
@@ -672,6 +799,8 @@ export function createExpressionEvaluator(
       const rightVal = evaluateExpr(trimmed.slice(inIdx + 4));
       if (Array.isArray(rightVal)) return rightVal.includes(leftVal);
       if (typeof rightVal === 'string') return rightVal.includes(String(leftVal));
+      if (rightVal instanceof Set) return rightVal.has(leftVal);
+      if (rightVal && typeof rightVal === 'object') return String(leftVal) in rightVal;
       return false;
     }
 

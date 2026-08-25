@@ -12,7 +12,8 @@ export type Statement =
       exceptBranches: { errorType: string | null; varName: string | null; body: Statement[] }[];
       elseBody?: Statement[];
       finallyBody?: Statement[];
-    };
+    }
+  | { type: 'with'; contextExpr: string; varName: string | null; body: Statement[] };
 
 export interface ParsedLine {
   indent: number;
@@ -209,6 +210,17 @@ export function parseBlockAt(
 
       statements.push({ type: 'try', body: bodyRes.statements, exceptBranches, elseBody, finallyBody });
       i = nextI;
+      continue;
+    }
+
+    // Handle with statement: with <expr> [as <var>]:
+    const withMatch = /^with\s+(.+?)(?:\s+as\s+([a-zA-Z0-9_]+))?:\s*$/.exec(line.text);
+    if (withMatch) {
+      const contextExpr = withMatch[1].trim();
+      const varName = withMatch[2] ? withMatch[2].trim() : null;
+      const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+      statements.push({ type: 'with', contextExpr, varName, body: bodyRes.statements });
+      i = bodyRes.nextIndex;
       continue;
     }
 

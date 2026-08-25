@@ -57,9 +57,106 @@ export function toPyComplex(v: unknown): PyComplex {
   return new PyComplex(Number(v || 0), 0);
 }
 
+export class PyFile {
+  public content: string;
+  public lines: string[];
+  public lineIdx = 0;
+  public closed = false;
+
+  constructor(
+    public filePath: string,
+    public mode: string = 'r',
+    initialContent: string = '',
+    private onSave?: (content: string) => void
+  ) {
+    this.content = initialContent;
+    this.lines = initialContent ? initialContent.split(/\r?\n/) : [];
+  }
+
+  read(_size?: number): string {
+    if (this.closed) throw new Error('I/O operation on closed file.');
+    return this.content;
+  }
+
+  readline(): string {
+    if (this.closed) throw new Error('I/O operation on closed file.');
+    if (this.lineIdx >= this.lines.length) return '';
+    const line = this.lines[this.lineIdx++];
+    return this.lineIdx < this.lines.length ? line + '\n' : line;
+  }
+
+  readlines(): string[] {
+    if (this.closed) throw new Error('I/O operation on closed file.');
+    const remaining = this.lines.slice(this.lineIdx).map((l, i, arr) => (i < arr.length - 1 ? l + '\n' : l));
+    this.lineIdx = this.lines.length;
+    return remaining;
+  }
+
+  write(text: string): void {
+    if (this.closed) throw new Error('I/O operation on closed file.');
+    const strText = String(text);
+    if (this.mode.includes('a')) {
+      this.content += strText;
+    } else {
+      if (this.lines.length > 0 && this.content !== '' && !this.mode.includes('w')) {
+        this.content += strText;
+      } else {
+        this.content = strText;
+      }
+    }
+    this.lines = this.content.split(/\r?\n/);
+    this.onSave?.(this.content);
+  }
+
+  writelines(seq: unknown[]): void {
+    if (this.closed) throw new Error('I/O operation on closed file.');
+    if (Array.isArray(seq)) {
+      for (const item of seq) {
+        this.write(String(item));
+      }
+    }
+  }
+
+  close(): void {
+    this.closed = true;
+  }
+
+  seek(_offset: number = 0): void {
+    this.lineIdx = 0;
+  }
+
+  tell(): number {
+    return this.content.length;
+  }
+
+  __enter__(): PyFile {
+    return this;
+  }
+
+  __exit__(): void {
+    this.close();
+  }
+
+  [Symbol.iterator]() {
+    let idx = this.lineIdx;
+    const lines = this.lines;
+    return {
+      next: () => {
+        if (idx < lines.length) {
+          const l = lines[idx++];
+          const val = idx < lines.length ? l + '\n' : l;
+          return { value: val, done: false };
+        }
+        return { value: undefined as unknown, done: true };
+      }
+    };
+  }
+}
+
 export function getPythonType(val: unknown): string {
   if (val === null || val === undefined) return "<class 'NoneType'>";
   if (val instanceof PyComplex) return "<class 'complex'>";
+  if (val instanceof PyFile) return "<class '_io.TextIOWrapper'>";
   if (typeof val === 'boolean') return "<class 'bool'>";
   if (typeof val === 'number') {
     return Number.isInteger(val) ? "<class 'int'>" : "<class 'float'>";
@@ -75,6 +172,7 @@ export function formatPythonValue(val: unknown): string {
   if (val === true) return 'True';
   if (val === false) return 'False';
   if (val instanceof PyComplex) return val.toString();
+  if (val instanceof PyFile) return `<_io.TextIOWrapper name='${val.filePath}' mode='${val.mode}' encoding='utf-8'>`;
   if (val instanceof Set) {
     const items = Array.from(val).sort((a, b) => {
       if (typeof a === 'number' && typeof b === 'number') return a - b;

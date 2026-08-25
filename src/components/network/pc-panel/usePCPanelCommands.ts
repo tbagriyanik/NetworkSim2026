@@ -362,7 +362,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
         }
 
         const nextInputs = [...pythonSession.inputs, command];
-        const res = executePythonScript(pythonSession.code, nextInputs);
+        const res = executePythonScript(pythonSession.code, nextInputs, undefined, deviceId);
 
         if (res.waitingForInput) {
           setPythonSession({
@@ -1280,7 +1280,7 @@ if (!isDir(fs, targetPath)) {
 
           if (firstArg === '-c' && args.length > 1) {
             const pyCode = args.slice(1).join(' ').replace(/^["']|["']$/g, '');
-            const result = await executePythonScriptAsync(pyCode, [], streamOutput);
+            const result = await executePythonScriptAsync(pyCode, [], streamOutput, deviceId);
             if (result.waitingForInput) {
               setPythonSession({
                 code: pyCode,
@@ -1295,7 +1295,7 @@ if (!isDir(fs, targetPath)) {
             const targetPath = resolvePath(currentPath, firstArg);
             const fileContent = readFile(fs, targetPath);
             if (fileContent !== null) {
-              const result = await executePythonScriptAsync(fileContent, [], streamOutput);
+              const result = await executePythonScriptAsync(fileContent, [], streamOutput, deviceId);
               if (result.waitingForInput) {
                 setPythonSession({
                   code: fileContent,
