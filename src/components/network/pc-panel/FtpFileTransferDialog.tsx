@@ -2,6 +2,7 @@ import { Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { FtpSession, PcFile } from './PCPanel.types';
+import { getFtpFilesFromUploadDir } from './pcFileSystem';
 
 interface FtpFileTransferDialogProps {
   open: boolean;
@@ -12,6 +13,13 @@ interface FtpFileTransferDialogProps {
   isDark: boolean;
   onGetFile: (fileName: string) => void;
   onPutFile: (fileName: string) => void;
+}
+
+function formatFileSize(bytes: number = 0): string {
+  if (bytes === 0) return '0 Bytes';
+  if (bytes < 1024) return `${bytes} Bytes`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function FtpFileTransferDialog({
@@ -25,6 +33,9 @@ export function FtpFileTransferDialog({
   onPutFile,
 }: FtpFileTransferDialogProps) {
   if (!session) return null;
+
+  const serverFilesFromFs = session.targetDeviceId ? getFtpFilesFromUploadDir(session.targetDeviceId) : [];
+  const serverFiles = serverFilesFromFs.length > 0 ? serverFilesFromFs : (session.files || []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -42,18 +53,18 @@ export function FtpFileTransferDialog({
         <div className="space-y-4 py-4">
           <div>
             <h4 className="text-sm font-semibold mb-2">
-              {language === 'tr' ? 'Sunucu Dosyaları (İndir)' : 'Server Files (Download)'}
+              {language === 'tr' ? 'Sunucu Dosyaları (İndir - C:\\upload)' : 'Server Files (Download - C:\\upload)'}
             </h4>
             <div className={`rounded-lg border divide-y ${isDark ? 'border-secondary-800 divide-secondary-800' : 'border-secondary-200 divide-secondary-200'}`}>
-              {session.files.length === 0 ? (
+              {serverFiles.length === 0 ? (
                 <div className="p-3 text-sm opacity-50">
                   {language === 'tr' ? '(sunucuda dosya yok)' : '(no files on server)'}
                 </div>
-              ) : session.files.map((file, idx) => (
+              ) : serverFiles.map((file, idx) => (
                 <div key={`srv-${file.name}-${idx}`} className="flex items-center justify-between p-3">
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">{file.name}</span>
-                    <span className="text-xs opacity-50">{Math.round((file.size || 0) / 1024)} KB</span>
+                    <span className="text-xs opacity-50">{formatFileSize(file.size || 0)}</span>
                   </div>
                   <Button
                     size="sm"
@@ -71,7 +82,7 @@ export function FtpFileTransferDialog({
           </div>
           <div>
             <h4 className="text-sm font-semibold mb-2">
-              {language === 'tr' ? 'Yerel Dosyaları Yükle' : 'Upload Local Files'}
+              {language === 'tr' ? 'Yerel Dosyaları Yükle (C:\\upload)' : 'Upload Local Files (C:\\upload)'}
             </h4>
             <div className={`rounded-lg border divide-y ${isDark ? 'border-secondary-800 divide-secondary-800' : 'border-secondary-200 divide-secondary-200'}`}>
               {localFiles.length === 0 ? (
@@ -80,7 +91,7 @@ export function FtpFileTransferDialog({
                 <div key={`upl-${file.name}-${file.size}`} className="flex items-center justify-between p-3">
                   <div className="flex flex-col">
                     <span className="text-sm font-medium">{file.name}</span>
-                    <span className="text-xs opacity-50">{Math.round(file.size / 1024)} KB</span>
+                    <span className="text-xs opacity-50">{formatFileSize(file.size || 0)}</span>
                   </div>
                   <Button
                     size="sm"

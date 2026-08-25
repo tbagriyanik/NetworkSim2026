@@ -96,7 +96,7 @@ export function PCPanelHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => openWebPage('about:home')}
+                onClick={() => openWebPage(`http://${internalPcHostname || deviceId}`)}
                 disabled={isPcPoweredOff}
                 className={cn(
                   "h-7 w-7 md:h-9 md:w-9 rounded-full",

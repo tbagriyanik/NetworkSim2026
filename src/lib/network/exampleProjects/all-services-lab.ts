@@ -29,9 +29,7 @@ const example = (isTr: boolean): ExampleProject => {
   servicesLabDevices[1].services = {
     http: {
       enabled: true,
-      content: isTr
-        ? '<b>Laboratuvar Web Sayfası</b> <u>HTTP servisi çalışıyor!</u>'
-        : '<b>Lab Web Page</b><u>HTTP service is running!</u>',
+      content: '<h1>Merhaba Dünya! / Hello World!</h1>\n<p>Bu sayfa C:\\www\\index.html dosyasından sunulmaktadır.</p>',
     }
   };
 
@@ -52,6 +50,7 @@ const example = (isTr: boolean): ExampleProject => {
   servicesLabDevices[3].services = {
     ftp: {
       enabled: true,
+      rootDirectory: 'C:\\upload',
       files: [
         { name: 'welcome.txt', size: 512, modifiedAt: new Date().toISOString() },
         { name: 'data.csv', size: 2048, modifiedAt: new Date().toISOString() }

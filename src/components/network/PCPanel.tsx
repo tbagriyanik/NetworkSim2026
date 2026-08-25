@@ -2416,7 +2416,7 @@ export function PCPanel({
         open={isFtpFilePickerOpen}
         onOpenChange={setIsFtpFilePickerOpen}
         session={ftpSession}
-        localFiles={pcLocalFiles}
+        localFiles={getFtpFilesFromUploadDir(deviceId)}
         language={language}
         isDark={isDark}
         onGetFile={(fileName) => handleFtpSessionCommand(`get ${fileName}`)}
@@ -2434,6 +2434,9 @@ export function PCPanel({
             const fs = loadFs(deviceId);
             writeFile(fs, editingFile.path, newContent);
             saveFs(deviceId, fs);
+            if (editingFile.path.replace(/\\/g, '/').toLowerCase().includes('www/index.html')) {
+              setServiceHttpContent(newContent);
+            }
           }
         }}
         onRunPython={(newContent) => {
@@ -2441,14 +2444,20 @@ export function PCPanel({
             const fs = loadFs(deviceId);
             writeFile(fs, editingFile.path, newContent);
             saveFs(deviceId, fs);
+            if (editingFile.path.replace(/\\/g, '/').toLowerCase().includes('www/index.html')) {
+              setServiceHttpContent(newContent);
+            }
             const fileName = editingFile.path.split(/[\\/]/).pop() || '';
             setActiveTab('desktop');
-            setTimeout(() => {
-              void executeCommand(`python ${fileName}`);
-            }, 50);
+            setTimeout(() => { void executeCommand(`python ${fileName}`); }, 50);
           }
         }}
         onClose={() => {
+          if (editingFile && editingFile.path.replace(/\\/g, '/').toLowerCase().includes('www/index.html')) {
+            const fs = loadFs(deviceId);
+            const wwwIndex = readFile(fs, 'C:\\www\\index.html') || readFile(fs, 'www/index.html');
+            if (wwwIndex !== null) setServiceHttpContent(wwwIndex);
+          }
           setEditingFile(null);
           setTimeout(() => inputRef.current?.focus(), 50);
         }}
@@ -2484,9 +2493,3 @@ export function PCPanel({
     </>
   );
 }
-
-
-
-
-
-

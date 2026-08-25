@@ -131,9 +131,9 @@ const example = (isTr: boolean): ExampleProject => {
     serverPc.services = {
       dns: { enabled: true, records: [{ domain: 'intranet.hq.local', address: '10.10.20.10' }, { domain: 'mail.hq.local', address: '10.10.20.10' }] },
       dhcp: { enabled: true, pools: [{ poolName: 'OFFICE-VLAN10', defaultGateway: '10.10.10.1', dnsServer: '10.10.20.10', startIp: '10.10.10.100', subnetMask: '255.255.255.0', maxUsers: 100 }] },
-      http: { enabled: true, mode: 'simple', content: 'HQ Intranet - Network Operations Center' },
-      ftp: { enabled: true, username: 'netadmin', password: 'Lab-Ftp-2026', rootDirectory: '/srv/ftp', anonymousAccess: false, files: [{ name: 'topology.txt', size: 2048 }] },
-      mail: { enabled: true, domain: 'hq.local', username: 'netadmin', password: 'Mail-2026' }
+      http: { enabled: true, mode: 'simple', content: '<h1>Merhaba Dünya! / Hello World!</h1>\n<p>HQ Intranet - Network Operations Center (C:\\www\\index.html)</p>' },
+      ftp: { enabled: true, username: 'netadmin', password: 'Lab-Ftp-2026', rootDirectory: 'C:\\upload', anonymousAccess: false, files: [{ name: 'topology.txt', size: 2048 }] },
+      mail: { enabled: true, domain: 'local.lan', username: 'user', password: 'mail123' }
     };
   }
   const core = devices.find(d => d.id === 'core-switch');

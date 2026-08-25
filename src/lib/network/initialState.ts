@@ -247,21 +247,23 @@ export function createInitialState(
     services: {
       http: {
         enabled: true,
-        content: '',
+        content: '<h1>Merhaba Dünya! / Hello World!</h1>\n<p>This page is served from C:\\www\\index.html</p>',
         fontSize: 16
       },
       ftp: {
         enabled: false,
         anonymousAccess: true,
-        rootDirectory: '/flash',
+        rootDirectory: 'C:\\upload',
         files: [
-          { name: 'readme.txt', size: 1280, modifiedAt: now.toISOString() },
+          { name: 'welcome.txt', size: 1280, modifiedAt: now.toISOString() },
           { name: 'config.backup', size: 4096, modifiedAt: now.toISOString() }
         ]
       },
       mail: {
         enabled: false,
         domain: 'local.lan',
+        username: 'user',
+        password: 'mail123',
         inbox: [],
         sent: []
       },
