@@ -253,6 +253,27 @@ ipconfig
 
 ---
 
+## 🐍 Python Betikleri & Yorumlayıcı (python)
+
+PC Komut İstemi'nde dahili Python 3 yorumlayıcısı ile betik çalıştırabilir veya interaktif REPL moduna girebilirsiniz.
+
+### Çalıştırma Sözdizimi
+```
+python script.py [parametreler]
+python -c "print('Merhaba')"
+python
+```
+
+### Öne Çıkan Özellikler & Müfredat Uyumları
+- **Nesne Yönelimli Programlama (OOP):** `class`, `__init__`, `self`, Kalıtım (Inheritance), `super()`, `isinstance()`.
+- **Nitelik Kapsülleme (Decorators):** `@property`, `@<name>.setter`, `@staticmethod`, `@classmethod` ve kullanıcı tanımlı decorator'lar.
+- **Generator'lar:** `yield` ve `yield from` ile lazy iterator'lar.
+- **Standart Modüller:** `json`, `re`, `os.path`, simüle `socket` (ağ betikleri için), `math`, `random`, `datetime`, `sys`, `itertools`.
+
+Detaylı kullanım rehberi ve kod örnekleri için **[PYTHON_PROGRAMMING_GUIDE.md](PYTHON_PROGRAMMING_GUIDE.md)** dokümanını inceleyin.
+
+---
+
 ## 🔧 Bağlantı Sorunlarını Giderme Akışı
 
 ```
@@ -268,6 +289,7 @@ ipconfig
 
 ## 📘 İlgili Dokümanlar
 
+- [PYTHON_PROGRAMMING_GUIDE.md](PYTHON_PROGRAMMING_GUIDE.md) — Python Programlama ve Yorumlayıcı Kılavuzu
 - [USAGE.md](USAGE.md) — Genel kullanım kılavuzu
 - [CLI_COMMANDS.md](../cli/CLI_COMMANDS.md) — Router/Switch CLI komutları
 - [CLI_GUIDED_TUTORIAL.md](../cli/CLI_GUIDED_TUTORIAL.md) — Rehberli CLI dersleri

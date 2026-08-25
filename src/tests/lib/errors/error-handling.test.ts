@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 describe('Error Handling', () => {
-  it('should handle CLI command errors with IOS error messages', () => {
+  it('should handle CLI command errors with CLI error messages', () => {
     const errors = [
       { cmd: 'enable', error: '% Invalid input detected at "^" marker.' },
       { cmd: 'configure terminal', error: '% Ambiguous command: "con"' },

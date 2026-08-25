@@ -1,6 +1,9 @@
 import {
   PyComplex,
   PyFile,
+  PyClass,
+  PyInstance,
+  PySuper,
   toPyComplex,
   getPythonType,
   formatPythonValue,
@@ -283,6 +286,39 @@ export function createExpressionEvaluator(
     if (typeMatch) {
       const val = evaluateExpr(typeMatch[1]);
       return getPythonType(val);
+    }
+
+    // Handle isinstance(...)
+    const isinstanceMatch = /^isinstance\s*\((.*)\)$/.exec(trimmed);
+    if (isinstanceMatch) {
+      const parts = splitOutsideQuotesAndParens(isinstanceMatch[1], ',');
+      const obj = evaluateExpr(parts[0]);
+      const cls = evaluateExpr(parts[1]);
+      if (obj instanceof PyInstance && cls instanceof PyClass) {
+        let current: PyClass | undefined = obj.pyClass;
+        while (current) {
+          if (current === cls || current.name === cls.name) return true;
+          current = current.baseClasses.length > 0 ? current.baseClasses[0] : undefined;
+        }
+        return false;
+      }
+      const typeStr = getPythonType(obj);
+      if (cls === 'str' || cls === scope['str']) return typeStr === "<class 'str'>";
+      if (cls === 'int' || cls === scope['int']) return typeStr === "<class 'int'>";
+      if (cls === 'float' || cls === scope['float']) return typeStr === "<class 'float'>";
+      if (cls === 'list' || cls === scope['list']) return typeStr === "<class 'list'>";
+      if (cls === 'dict' || cls === scope['dict']) return typeStr === "<class 'dict'>";
+      if (cls === 'bool' || cls === scope['bool']) return typeStr === "<class 'bool'>";
+      return false;
+    }
+
+    // Handle super()
+    if (/^super\s*\(\s*\)$/.test(trimmed)) {
+      const selfObj = scope['self'];
+      if (selfObj instanceof PyInstance) {
+        return new PySuper(selfObj);
+      }
+      return null;
     }
 
     // Handle set(...)
@@ -1264,10 +1300,21 @@ export function createExpressionEvaluator(
       }
     }
 
-    // User-defined function call.
+    // User-defined function call or PyClass constructor
     const functionCallMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\)$/.exec(trimmed);
     if (functionCallMatch) {
       const fn = scope[functionCallMatch[1]];
+      if (fn instanceof PyClass) {
+        const args = functionCallMatch[2].trim()
+          ? splitOutsideQuotesAndParens(functionCallMatch[2], ',').map(arg => evaluateExpr(arg))
+          : [];
+        const instance = new PyInstance(fn);
+        const initMethod = fn.findMethod('__init__');
+        if (typeof initMethod === 'function') {
+          initMethod(instance, ...args);
+        }
+        return instance;
+      }
       if (typeof fn === 'function') {
         const args = functionCallMatch[2].trim()
           ? splitOutsideQuotesAndParens(functionCallMatch[2], ',').map(arg => evaluateExpr(arg))

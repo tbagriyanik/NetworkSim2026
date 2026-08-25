@@ -796,7 +796,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `domain-name <name>` | Set domain name for clients |
 
 ### Firewall Configuration Commands
-> **Note**: These commands are valid on **ASA / Firewall devices only**. They are not available on IOS routers or switches.
+> **Note**: These commands are valid on **Firewall devices only**. They are not available on standard routers or switches.
 
 | Command | Description |
 |---------|-------------|
@@ -6620,7 +6620,7 @@ Network Simulator v2.4 ile birlikte tuval üzerindeki tüm ağ kablolarında can
 
 ## 🏢 Sektörel Ağ Senaryoları (Release v1.9.5)
 
-Bu bölümde, CCNA müfredatındaki teorik bilgilerin gerçek dünya projelerine nasıl dönüştürüleceği adım adım anlatılmaktadır.
+Bu bölümde, müfredattaki teorik bilgilerin gerçek dünya projelerine nasıl dönüştürüleceği adım adım anlatılmaktadır.
 
 ### 1. SOHO (Small Office Home Office) Kurulumu
 **Senaryo:** Küçük bir ofis için hem kablolu hem de kablosuz ağ altyapısının kurulması.
@@ -6742,7 +6742,7 @@ Router'lar arasında varsayılan ağ geçidi yedekliliği:
 - `show vrrp`: VRRP gruplarını ve durumlarını listeler.
 
 ### 15. QoS (Quality of Service) Stub Komutları
-- IOS uyumluluğu açısından eklenen `mls qos`, `policy-map <name>`, `class-map <name>` komutları CLI parser tarafından tanınmakta ve konfigürasyona eklenebilmektedir (Simülasyon düzeyinde stub olarak çalışırlar).
+- CLI uyumluluğu açısından eklenen `mls qos`, `policy-map <name>`, `class-map <name>` komutları CLI parser tarafından tanınmakta ve konfigürasyona eklenebilmektedir (Simülasyon düzeyinde stub olarak çalışırlar).
 
 ### 16. Spatial Partitioning (Uzamsal Bölümleme)
 - Topolojide 100+ cihaz ve kablo olduğunda render performansının düşmesini engellemek için, tuval alanı sanal karelere bölünür (spatial hashing). Sadece ekranda görünür olan (viewport) cihazlar ve kablolar çizilerek yüksek FPS korunur.
@@ -6757,4 +6757,14 @@ Kabloları mantıksal tek bir hatta birleştirme:
 
 ### 18. Çift Tıklama ile Daraltılabilir Cihaz Paneli
 - Tuval üzerinde herhangi bir cihaza çift tıklandığında açılan cihaz paneli, yan taraftaki ok simgesi kullanılarak veya ekran kenarından tutularak tamamen daraltılabilir (collapsed). Böylece kullanıcı terminal komutlarını yazarken tuval alanını rahatlıkla görebilir.
+
+### 19. Tam Kapsamlı Python 3 Yorumlayıcısı & MEB Müfredatı OOP Desteği
+PC cihaz panellerinde (CMD ve Dosya Düzenleyici) doğrudan tarayıcı içinde çalışan gelişmiş Python 3 motoru:
+- **Çalıştırma Modları:** `python script.py`, `python -c "..."`, interaktif REPL (`python`) ve Dosya Düzenleyicisi'nden **Play (▶)** butonu ile çalıştırma.
+- **MEB Müfredatı OOP:** `class ClassName(Base):`, kurucu `__init__`, nitelik bağlama (`self`), kalıtım, `super()`, `isinstance()`.
+- **Nitelik & Metot Decorator'ları:** `@property`, `@<prop>.setter` getter/setter kapsülleme, `@staticmethod`, `@classmethod` ve özel wrapper decorator'lar.
+- **Tembel İteratörler (Generators):** `yield` ve `yield from` ile bellek dostu generator fonksiyonları.
+- **Standart Modüller:** `json`, `re` (regex match nesneleri dahil), `os.path`, simüle edilmiş `socket` (ağ betikleri testi için), `math`, `random`, `datetime`, `sys`, `itertools`.
+- **Güvenlik Mimarisi:** İstemci tarafı JS sandbox koruması ve dunder (`__class__`, `__mro__`, `__subclasses__` vb.) engelleme katmanı.
+
 

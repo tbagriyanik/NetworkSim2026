@@ -5,7 +5,9 @@ export type Statement =
   | { type: 'if'; branches: { condition: string | null; body: Statement[] }[] }
   | { type: 'while'; condition: string; body: Statement[]; elseBody?: Statement[] }
   | { type: 'for'; varName: string; iterableExpr: string; body: Statement[]; elseBody?: Statement[] }
-  | { type: 'def'; funcName: string; paramNames: string[]; paramDefaults: Record<string, string>; body: Statement[] }
+  | { type: 'def'; funcName: string; paramNames: string[]; paramDefaults: Record<string, string>; body: Statement[]; decorators?: string[] }
+  | { type: 'class'; className: string; baseClasses: string[]; body: Statement[]; decorators?: string[] }
+  | { type: 'yield'; expr: string; isYieldFrom?: boolean }
   | {
       type: 'try';
       body: Statement[];
@@ -38,8 +40,6 @@ export function parseProgramLines(rawLines: string[]): ParsedLine[] {
       }
     }
 
-    // Keep bracketed list/tuple expressions together across physical lines.
-    // This is needed for common matrix literals formatted over several lines.
     let inQuote = '';
     for (const ch of text) {
       if (inQuote) {
@@ -62,8 +62,56 @@ export function parseBlockAt(
   let i = index;
 
   while (i < parsedLines.length) {
+    if (parsedLines[i].indent < minIndent) break;
+
+    const decorators: string[] = [];
+    while (i < parsedLines.length && parsedLines[i].indent === minIndent && parsedLines[i].text.startsWith('@')) {
+      decorators.push(parsedLines[i].text.slice(1).trim());
+      i++;
+    }
+    if (i >= parsedLines.length || parsedLines[i].indent < minIndent) break;
+
     const line = parsedLines[i];
-    if (line.indent < minIndent) break;
+
+    // Handle class definition
+    const classMatch = /^class\s+([a-zA-Z_][a-zA-Z0-9_]*)(?:\((.*?)\))?:\s*(.*)$/.exec(line.text);
+    if (classMatch) {
+      const className = classMatch[1];
+      const basesStr = classMatch[2] ? classMatch[2].trim() : '';
+      const inlineRest = classMatch[3].trim();
+      const baseClasses = basesStr ? splitOutsideQuotesAndParens(basesStr, ',').map(b => b.trim()).filter(Boolean) : [];
+      if (inlineRest) {
+        statements.push({
+          type: 'class',
+          className,
+          baseClasses,
+          body: [{ type: 'line', text: inlineRest }],
+          decorators: decorators.length > 0 ? decorators : undefined,
+        });
+        i++;
+      } else {
+        const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
+        statements.push({
+          type: 'class',
+          className,
+          baseClasses,
+          body: bodyRes.statements,
+          decorators: decorators.length > 0 ? decorators : undefined,
+        });
+        i = bodyRes.nextIndex;
+      }
+      continue;
+    }
+
+    // Handle yield statement
+    const yieldMatch = /^yield(?:\s+from)?(?:\s+(.*))?$/.exec(line.text);
+    if (yieldMatch) {
+      const isYieldFrom = line.text.startsWith('yield from');
+      const expr = yieldMatch[1] ? yieldMatch[1].trim() : 'None';
+      statements.push({ type: 'yield', expr, isYieldFrom });
+      i++;
+      continue;
+    }
 
     // Handle if / elif / else
     const ifMatch = /^if(?:\s+|(?=\())(.+):\s*$/.exec(line.text);
@@ -117,7 +165,7 @@ export function parseBlockAt(
       continue;
     }
 
-    // Handle for loop (supports single and tuple-unpacked targets: for a, b in items:)
+    // Handle for loop
     const forMatch = /^for(?:\s+|(?=\())(.+?)\s+in\s+(.+):\s*$/.exec(line.text);
     if (forMatch) {
       const varName = forMatch[1];
@@ -140,7 +188,7 @@ export function parseBlockAt(
       continue;
     }
 
-    // Handle def function definition (supports both single-line and block defs)
+    // Handle def function definition
     const defMatch = /^def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*?)\):\s*(.*)$/.exec(line.text);
     if (defMatch) {
       const funcName = defMatch[1];
@@ -166,11 +214,19 @@ export function parseBlockAt(
           paramNames,
           paramDefaults,
           body: [{ type: 'line', text: inlineRest }],
+          decorators: decorators.length > 0 ? decorators : undefined,
         });
         i++;
       } else {
         const bodyRes = parseBlockAt(parsedLines, i + 1, line.indent + 1);
-        statements.push({ type: 'def', funcName, paramNames, paramDefaults, body: bodyRes.statements });
+        statements.push({
+          type: 'def',
+          funcName,
+          paramNames,
+          paramDefaults,
+          body: bodyRes.statements,
+          decorators: decorators.length > 0 ? decorators : undefined,
+        });
         i = bodyRes.nextIndex;
       }
       continue;

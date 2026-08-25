@@ -8,18 +8,17 @@ export interface PythonExecutionResult {
   inputPrompt?: string;
 }
 
-import { PYTHON_MODULES } from './pcPythonModules';
 import {
   PythonInputRequiredException,
+  PyClass,
+  PyGenerator,
   formatPythonValue,
-  splitOutsideQuotesAndParens,
-  parseFormatArgs,
-  assignValueToLhs,
 } from './pcPythonRunnerHelpers';
 import { Statement, parseProgramLines, parseBlockAt } from './pcPythonParser';
 import { createExpressionEvaluator } from './pcPythonEvaluator';
+import { executeSinglePythonLine } from './pcPythonStatementParser';
 
-export { PyComplex, pythonRange, formatPythonValue } from './pcPythonRunnerHelpers';
+export { PyComplex, pythonRange, formatPythonValue, PyClass, PyInstance, PySuper, PyGenerator } from './pcPythonRunnerHelpers';
 
 export function executePythonScript(
   script: string,
@@ -69,219 +68,7 @@ export function executePythonScript(
   };
 
   const processLineSync = (line: string): void => {
-    let trimmed = line.trim();
-    if (trimmed.endsWith(';')) {
-      trimmed = trimmed.replace(/;+$/, '').trim();
-    }
-    if (!trimmed || trimmed.startsWith('#')) return;
-
-    if (/^time\.sleep\s*\((.*)\)$/.test(trimmed)) return;
-
-    const importMatch = /^import\s+(.+)$/.exec(trimmed);
-    if (importMatch) {
-      const rawMods = splitOutsideQuotesAndParens(importMatch[1], ',');
-      for (const item of rawMods) {
-        const parts = item.split(/\s+as\s+/i);
-        const modName = parts[0].trim();
-        const alias = parts[1] ? parts[1].trim() : modName;
-        if (scope[modName]) {
-          if (alias !== modName) scope[alias] = scope[modName];
-        } else if (PYTHON_MODULES[modName]) {
-          scope[alias] = PYTHON_MODULES[modName];
-        } else {
-          scope[alias] = {};
-        }
-      }
-      return;
-    }
-
-    const fromImportMatch = /^from\s+([a-zA-Z0-9_.]+)\s+import\s+(.+)$/.exec(trimmed);
-    if (fromImportMatch) {
-      const modName = fromImportMatch[1].trim();
-      const rawItems = splitOutsideQuotesAndParens(fromImportMatch[2], ',');
-      const modObj = (scope[modName] || PYTHON_MODULES[modName]) as Record<string, unknown> | undefined;
-      for (const item of rawItems) {
-        const parts = item.split(/\s+as\s+/i);
-        const itemName = parts[0].trim();
-        const alias = parts[1] ? parts[1].trim() : itemName;
-        if (modObj && modObj[itemName] !== undefined) {
-          scope[alias] = modObj[itemName];
-        }
-      }
-      return;
-    }
-
-    const printMatch = /^print\s*\((.*)\)$/.exec(trimmed);
-    if (printMatch) {
-      const rawArgs = printMatch[1];
-      if (!rawArgs.trim()) {
-        outputs.push('');
-        onOutput?.('', false);
-        return;
-      }
-
-      const { positional, kwargs } = parseFormatArgs(rawArgs, evaluateExpr);
-      if (
-        positional.length === 1 &&
-        positional[0] === undefined &&
-        /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)$/.test(rawArgs.trim())
-      ) {
-        return;
-      }
-      const endArg = kwargs['end'] !== undefined ? String(kwargs['end']) : '\n';
-      const sepArg = kwargs['sep'] !== undefined ? String(kwargs['sep']) : ' ';
-
-      const formattedArgs = positional.map(a => formatPythonValue(a));
-      const lineStr = formattedArgs.join(sepArg);
-
-      if (endArg === '\r') {
-        if (outputs.length > 0) {
-          outputs[outputs.length - 1] = lineStr;
-        } else {
-          outputs.push(lineStr);
-        }
-        onOutput?.(outputs[outputs.length - 1], true);
-      } else if (endArg === '' || endArg === ' ') {
-        if (outputs.length > 0) {
-          outputs[outputs.length - 1] += endArg + lineStr;
-        } else {
-          outputs.push(lineStr);
-        }
-        onOutput?.(outputs[outputs.length - 1], true);
-      } else {
-        outputs.push(lineStr);
-        onOutput?.(lineStr, false);
-      }
-      return;
-    }
-
-    const appendMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*append\s*\((.*)\)$/.exec(trimmed);
-    if (appendMatch) {
-      const listVar = appendMatch[1];
-      const val = evaluateExpr(appendMatch[2]);
-      if (Array.isArray(scope[listVar])) {
-        (scope[listVar] as unknown[]).push(val);
-      } else {
-        scope[listVar] = [val];
-      }
-      return;
-    }
-
-    const removeMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*remove\s*\((.*)\)$/.exec(trimmed);
-    if (removeMatch) {
-      const listVar = removeMatch[1];
-      const val = evaluateExpr(removeMatch[2]);
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        const idx = arr.indexOf(val);
-        if (idx !== -1) arr.splice(idx, 1);
-      }
-      return;
-    }
-
-    const popMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*pop\s*\((.*)\)$/.exec(trimmed);
-    if (popMatch) {
-      const listVar = popMatch[1];
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        const argStr = popMatch[2].trim();
-        const idx = argStr ? Number(evaluateExpr(argStr)) : arr.length - 1;
-        arr.splice(idx, 1);
-      }
-      return;
-    }
-
-    const sortMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*sort\s*\((.*)\)$/.exec(trimmed);
-    if (sortMatch) {
-      const listVar = sortMatch[1];
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        arr.sort((a, b) => {
-          if (typeof a === 'number' && typeof b === 'number') return a - b;
-          return String(a).localeCompare(String(b));
-        });
-      }
-      return;
-    }
-
-    const reverseMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*reverse\s*\((.*)\)$/.exec(trimmed);
-    if (reverseMatch) {
-      const listVar = reverseMatch[1];
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        arr.reverse();
-      }
-      return;
-    }
-
-    const indexedSwapSyncMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*=\s*(.+)$/.exec(trimmed);
-    if (indexedSwapSyncMatch) {
-      const [, firstName, firstIndexExpr, secondName, secondIndexExpr, rhsExpr] = indexedSwapSyncMatch;
-      const firstList = scope[firstName];
-      const secondList = scope[secondName];
-      if (Array.isArray(firstList) && Array.isArray(secondList)) {
-        const firstIndex = Number(evaluateExpr(firstIndexExpr));
-        const secondIndex = Number(evaluateExpr(secondIndexExpr));
-        const rhs = evaluateExpr(rhsExpr);
-        const rhsValues = Array.isArray(rhs)
-          ? rhs
-          : splitOutsideQuotesAndParens(rhsExpr, ',').map(item => evaluateExpr(item));
-        if (rhsValues.length >= 2) {
-          firstList[firstIndex] = rhsValues[0];
-          secondList[secondIndex] = rhsValues[1];
-        }
-      }
-      return;
-    }
-
-    const augMatch = /^(.+?)\s*(\/\/=|\*\*=|[-+/*%|&=]=)\s*(.+)$/.exec(trimmed);
-    if (augMatch) {
-      const lhsStr = augMatch[1].trim();
-      const op = augMatch[2];
-      const rhsStr = augMatch[3].trim();
-      let newVal: unknown;
-      if (op === '//=') {
-        const lNum = Number(evaluateExpr(lhsStr) || 0);
-        const rNum = Number(evaluateExpr(rhsStr) || 1);
-        newVal = Math.floor(lNum / rNum);
-      } else if (op === '**=') {
-        const lNum = Number(evaluateExpr(lhsStr) || 0);
-        const rNum = Number(evaluateExpr(rhsStr) || 1);
-        newVal = Math.pow(lNum, rNum);
-      } else {
-        const singleOp = op[0];
-        newVal = evaluateExpr(`${lhsStr} ${singleOp} (${rhsStr})`);
-      }
-      if (assignValueToLhs(lhsStr, newVal, scope, evaluateExpr)) {
-        return;
-      }
-    }
-
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx !== -1) {
-      const prevChar = trimmed[eqIdx - 1];
-      const nextChar = trimmed[eqIdx + 1];
-      if (prevChar !== '=' && prevChar !== '!' && prevChar !== '<' && prevChar !== '>' && nextChar !== '=') {
-        const leftSide = trimmed.slice(0, eqIdx).trim();
-        const rightSide = trimmed.slice(eqIdx + 1).trim();
-        const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
-        let rhsVal: unknown;
-        if (rawRhsParts.length > 1) {
-          rhsVal = rawRhsParts.map(p => evaluateExpr(p));
-        } else {
-          rhsVal = evaluateExpr(rightSide);
-        }
-        if (assignValueToLhs(leftSide, rhsVal, scope, evaluateExpr)) {
-          return;
-        }
-      }
-    }
-
-    try {
-      evaluateExpr(trimmed);
-    } catch {
-      // ignore
-    }
+    executeSinglePythonLine(line, scope, evaluateExpr, outputs, onOutput);
   };
 
   const execStatementsSync = (stmts: Statement[]): ExecResult => {
@@ -295,27 +82,145 @@ export function executePythonScript(
           return { type: 'return', value: retVal };
         }
         processLineSync(stmt.text);
-      } else if (stmt.type === 'def') {
-        const { funcName, paramNames, paramDefaults, body } = stmt;
-        scope[funcName] = (...fnArgs: unknown[]) => {
-          const savedScope = { ...scope };
-          paramNames.forEach((p, idx) => {
-            if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
-              scope[p] = fnArgs[idx];
-            } else if (p in paramDefaults) {
-              scope[p] = evaluateExpr(paramDefaults[p]);
+      } else if (stmt.type === 'class') {
+        const { className, baseClasses: baseNames, body, decorators } = stmt;
+        const baseClasses: PyClass[] = [];
+        for (const b of baseNames) {
+          const resolved = scope[b];
+          if (resolved instanceof PyClass) baseClasses.push(resolved);
+        }
+        const createdMethods: Record<string, unknown> = {};
+        const staticProps: Record<string, unknown> = {};
+        const propertyGetters: Record<string, unknown> = {};
+        const propertySetters: Record<string, unknown> = {};
+        const staticMethods = new Set<string>();
+        const classMethods = new Set<string>();
+
+        const savedScope = { ...scope };
+        execStatementsSync(body);
+        for (const [k, v] of Object.entries(scope)) {
+          if (!Object.prototype.hasOwnProperty.call(savedScope, k) || savedScope[k] !== v) {
+            if (typeof v === 'function') {
+              const fnObj = (v as unknown) as Record<string, unknown>;
+              if (fnObj.__isPropertyGetter) {
+                propertyGetters[k] = v;
+              } else if (fnObj.__isPropertySetterFor) {
+                propertySetters[String(fnObj.__isPropertySetterFor)] = v;
+              } else {
+                createdMethods[k] = v;
+                if (fnObj.__isStaticMethod) staticMethods.add(k);
+                if (fnObj.__isClassMethod) classMethods.add(k);
+              }
             } else {
-              scope[p] = undefined;
+              staticProps[k] = v;
             }
-          });
-          const sig = execStatementsSync(body);
-          Object.keys(scope).forEach(key => delete scope[key]);
-          Object.assign(scope, savedScope);
-          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
-            return sig.value;
           }
-          return undefined;
+        }
+        Object.keys(scope).forEach(k => delete scope[k]);
+        Object.assign(scope, savedScope);
+
+        const pyClass = new PyClass(className, baseClasses, createdMethods);
+        pyClass.staticProps = staticProps;
+        pyClass.propertyGetters = propertyGetters;
+        pyClass.propertySetters = propertySetters;
+        pyClass.staticMethods = staticMethods;
+        pyClass.classMethods = classMethods;
+
+        let targetCls: unknown = pyClass;
+        if (decorators) {
+          for (const dec of decorators) {
+            const decFn = scope[dec];
+            if (typeof decFn === 'function') {
+              targetCls = decFn(targetCls);
+            }
+          }
+        }
+        scope[className] = targetCls;
+      } else if (stmt.type === 'yield') {
+        const retVal = evaluateExpr(stmt.expr);
+        return { type: 'return', value: retVal };
+      } else if (stmt.type === 'def') {
+        const { funcName, paramNames, paramDefaults, body, decorators } = stmt;
+
+        const isGen = (sList: Statement[]): boolean => {
+          for (const s of sList) {
+            if (s.type === 'yield') return true;
+            if (s.type === 'if' && s.branches.some(b => isGen(b.body))) return true;
+            if (s.type === 'while' && isGen(s.body)) return true;
+            if (s.type === 'for' && isGen(s.body)) return true;
+          }
+          return false;
         };
+
+        let rawFunc: unknown;
+
+        if (isGen(body)) {
+          rawFunc = (...fnArgs: unknown[]) => {
+            return new PyGenerator(function* () {
+              const savedScope = { ...scope };
+              paramNames.forEach((p, idx) => {
+                if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
+                  scope[p] = fnArgs[idx];
+                } else if (p in paramDefaults) {
+                  scope[p] = evaluateExpr(paramDefaults[p]);
+                } else {
+                  scope[p] = undefined;
+                }
+              });
+
+              for (const subStmt of body) {
+                if (subStmt.type === 'yield') {
+                  yield evaluateExpr(subStmt.expr);
+                } else if (subStmt.type === 'line') {
+                  processLineSync(subStmt.text);
+                }
+              }
+
+              Object.keys(scope).forEach(key => delete scope[key]);
+              Object.assign(scope, savedScope);
+            });
+          };
+        } else {
+          rawFunc = (...fnArgs: unknown[]) => {
+            const savedScope = { ...scope };
+            paramNames.forEach((p, idx) => {
+              if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
+                scope[p] = fnArgs[idx];
+              } else if (p in paramDefaults) {
+                scope[p] = evaluateExpr(paramDefaults[p]);
+              } else {
+                scope[p] = undefined;
+              }
+            });
+            const sig = execStatementsSync(body);
+            Object.keys(scope).forEach(key => delete scope[key]);
+            Object.assign(scope, savedScope);
+            if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+              return sig.value;
+            }
+            return undefined;
+          };
+        }
+
+        if (decorators) {
+          for (const dec of decorators) {
+            if (dec === 'property') {
+              (rawFunc as Record<string, unknown>).__isPropertyGetter = true;
+            } else if (dec === 'staticmethod') {
+              (rawFunc as Record<string, unknown>).__isStaticMethod = true;
+            } else if (dec === 'classmethod') {
+              (rawFunc as Record<string, unknown>).__isClassMethod = true;
+            } else if (dec.endsWith('.setter')) {
+              (rawFunc as Record<string, unknown>).__isPropertySetterFor = dec.slice(0, -7).trim();
+            } else {
+              const decFn = scope[dec];
+              if (typeof decFn === 'function') {
+                rawFunc = decFn(rawFunc);
+              }
+            }
+          }
+        }
+        scope[funcName] = rawFunc;
       } else if (stmt.type === 'if') {
         let branchToExec: Statement[] | null = null;
         for (const branch of stmt.branches) {
@@ -500,219 +405,7 @@ export async function executePythonScriptAsync(
   };
 
   const processLineSync = (line: string): void => {
-    let trimmed = line.trim();
-    if (trimmed.endsWith(';')) {
-      trimmed = trimmed.replace(/;+$/, '').trim();
-    }
-    if (!trimmed || trimmed.startsWith('#')) return;
-
-    if (/^time\.sleep\s*\((.*)\)$/.test(trimmed)) return;
-
-    const importMatch = /^import\s+(.+)$/.exec(trimmed);
-    if (importMatch) {
-      const rawMods = splitOutsideQuotesAndParens(importMatch[1], ',');
-      for (const item of rawMods) {
-        const parts = item.split(/\s+as\s+/i);
-        const modName = parts[0].trim();
-        const alias = parts[1] ? parts[1].trim() : modName;
-        if (scope[modName]) {
-          if (alias !== modName) scope[alias] = scope[modName];
-        } else if (PYTHON_MODULES[modName]) {
-          scope[alias] = PYTHON_MODULES[modName];
-        } else {
-          scope[alias] = {};
-        }
-      }
-      return;
-    }
-
-    const fromImportMatch = /^from\s+([a-zA-Z0-9_.]+)\s+import\s+(.+)$/.exec(trimmed);
-    if (fromImportMatch) {
-      const modName = fromImportMatch[1].trim();
-      const rawItems = splitOutsideQuotesAndParens(fromImportMatch[2], ',');
-      const modObj = (scope[modName] || PYTHON_MODULES[modName]) as Record<string, unknown> | undefined;
-      for (const item of rawItems) {
-        const parts = item.split(/\s+as\s+/i);
-        const itemName = parts[0].trim();
-        const alias = parts[1] ? parts[1].trim() : itemName;
-        if (modObj && modObj[itemName] !== undefined) {
-          scope[alias] = modObj[itemName];
-        }
-      }
-      return;
-    }
-
-    const printMatch = /^print\s*\((.*)\)$/.exec(trimmed);
-    if (printMatch) {
-      const rawArgs = printMatch[1];
-      if (!rawArgs.trim()) {
-        outputs.push('');
-        onOutput?.('', false);
-        return;
-      }
-
-      const { positional, kwargs } = parseFormatArgs(rawArgs, evaluateExpr);
-      if (
-        positional.length === 1 &&
-        positional[0] === undefined &&
-        /^[a-zA-Z_][a-zA-Z0-9_]*\s*\(.*\)$/.test(rawArgs.trim())
-      ) {
-        return;
-      }
-      const endArg = kwargs['end'] !== undefined ? String(kwargs['end']) : '\n';
-      const sepArg = kwargs['sep'] !== undefined ? String(kwargs['sep']) : ' ';
-
-      const formattedArgs = positional.map(a => formatPythonValue(a));
-      const lineStr = formattedArgs.join(sepArg);
-
-      if (endArg === '\r') {
-        if (outputs.length > 0) {
-          outputs[outputs.length - 1] = lineStr;
-        } else {
-          outputs.push(lineStr);
-        }
-        onOutput?.(outputs[outputs.length - 1], true);
-      } else if (endArg === '' || endArg === ' ') {
-        if (outputs.length > 0) {
-          outputs[outputs.length - 1] += endArg + lineStr;
-        } else {
-          outputs.push(lineStr);
-        }
-        onOutput?.(outputs[outputs.length - 1], true);
-      } else {
-        outputs.push(lineStr);
-        onOutput?.(lineStr, false);
-      }
-      return;
-    }
-
-    const appendMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*append\s*\((.*)\)$/.exec(trimmed);
-    if (appendMatch) {
-      const listVar = appendMatch[1];
-      const val = evaluateExpr(appendMatch[2]);
-      if (Array.isArray(scope[listVar])) {
-        (scope[listVar] as unknown[]).push(val);
-      } else {
-        scope[listVar] = [val];
-      }
-      return;
-    }
-
-    const removeMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*remove\s*\((.*)\)$/.exec(trimmed);
-    if (removeMatch) {
-      const listVar = removeMatch[1];
-      const val = evaluateExpr(removeMatch[2]);
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        const idx = arr.indexOf(val);
-        if (idx !== -1) arr.splice(idx, 1);
-      }
-      return;
-    }
-
-    const popMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*pop\s*\((.*)\)$/.exec(trimmed);
-    if (popMatch) {
-      const listVar = popMatch[1];
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        const argStr = popMatch[2].trim();
-        const idx = argStr ? Number(evaluateExpr(argStr)) : arr.length - 1;
-        arr.splice(idx, 1);
-      }
-      return;
-    }
-
-    const sortMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*sort\s*\((.*)\)$/.exec(trimmed);
-    if (sortMatch) {
-      const listVar = sortMatch[1];
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        arr.sort((a, b) => {
-          if (typeof a === 'number' && typeof b === 'number') return a - b;
-          return String(a).localeCompare(String(b));
-        });
-      }
-      return;
-    }
-
-    const reverseMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\.\s*reverse\s*\((.*)\)$/.exec(trimmed);
-    if (reverseMatch) {
-      const listVar = reverseMatch[1];
-      const arr = scope[listVar];
-      if (Array.isArray(arr)) {
-        arr.reverse();
-      }
-      return;
-    }
-
-    const indexedSwapSyncMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*,\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\[(.+)\]\s*=\s*(.+)$/.exec(trimmed);
-    if (indexedSwapSyncMatch) {
-      const [, firstName, firstIndexExpr, secondName, secondIndexExpr, rhsExpr] = indexedSwapSyncMatch;
-      const firstList = scope[firstName];
-      const secondList = scope[secondName];
-      if (Array.isArray(firstList) && Array.isArray(secondList)) {
-        const firstIndex = Number(evaluateExpr(firstIndexExpr));
-        const secondIndex = Number(evaluateExpr(secondIndexExpr));
-        const rhs = evaluateExpr(rhsExpr);
-        const rhsValues = Array.isArray(rhs)
-          ? rhs
-          : splitOutsideQuotesAndParens(rhsExpr, ',').map(item => evaluateExpr(item));
-        if (rhsValues.length >= 2) {
-          firstList[firstIndex] = rhsValues[0];
-          secondList[secondIndex] = rhsValues[1];
-        }
-      }
-      return;
-    }
-
-    const augMatch = /^(.+?)\s*(\/\/=|\*\*=|[-+/*%]=)\s*(.+)$/.exec(trimmed);
-    if (augMatch) {
-      const lhsStr = augMatch[1].trim();
-      const op = augMatch[2];
-      const rhsStr = augMatch[3].trim();
-      let newVal: unknown;
-      if (op === '//=') {
-        const lNum = Number(evaluateExpr(lhsStr) || 0);
-        const rNum = Number(evaluateExpr(rhsStr) || 1);
-        newVal = Math.floor(lNum / rNum);
-      } else if (op === '**=') {
-        const lNum = Number(evaluateExpr(lhsStr) || 0);
-        const rNum = Number(evaluateExpr(rhsStr) || 1);
-        newVal = Math.pow(lNum, rNum);
-      } else {
-        const singleOp = op[0];
-        newVal = evaluateExpr(`${lhsStr} ${singleOp} (${rhsStr})`);
-      }
-      if (assignValueToLhs(lhsStr, newVal, scope, evaluateExpr)) {
-        return;
-      }
-    }
-
-    const eqIdx = trimmed.indexOf('=');
-    if (eqIdx !== -1) {
-      const prevChar = trimmed[eqIdx - 1];
-      const nextChar = trimmed[eqIdx + 1];
-      if (prevChar !== '=' && prevChar !== '!' && prevChar !== '<' && prevChar !== '>' && nextChar !== '=') {
-        const leftSide = trimmed.slice(0, eqIdx).trim();
-        const rightSide = trimmed.slice(eqIdx + 1).trim();
-        const rawRhsParts = splitOutsideQuotesAndParens(rightSide, ',');
-        let rhsVal: unknown;
-        if (rawRhsParts.length > 1) {
-          rhsVal = rawRhsParts.map(p => evaluateExpr(p));
-        } else {
-          rhsVal = evaluateExpr(rightSide);
-        }
-        if (assignValueToLhs(leftSide, rhsVal, scope, evaluateExpr)) {
-          return;
-        }
-      }
-    }
-
-    try {
-      evaluateExpr(trimmed);
-    } catch {
-      // ignore
-    }
+    executeSinglePythonLine(line, scope, evaluateExpr, outputs, onOutput);
   };
 
   const execStatementsSync = (stmts: Statement[]): ExecResult => {
@@ -726,27 +419,145 @@ export async function executePythonScriptAsync(
           return { type: 'return', value: retVal };
         }
         processLineSync(stmt.text);
-      } else if (stmt.type === 'def') {
-        const { funcName, paramNames, paramDefaults, body } = stmt;
-        scope[funcName] = (...fnArgs: unknown[]) => {
-          const savedScope = { ...scope };
-          paramNames.forEach((p, idx) => {
-            if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
-              scope[p] = fnArgs[idx];
-            } else if (p in paramDefaults) {
-              scope[p] = evaluateExpr(paramDefaults[p]);
+      } else if (stmt.type === 'class') {
+        const { className, baseClasses: baseNames, body, decorators } = stmt;
+        const baseClasses: PyClass[] = [];
+        for (const b of baseNames) {
+          const resolved = scope[b];
+          if (resolved instanceof PyClass) baseClasses.push(resolved);
+        }
+        const createdMethods: Record<string, unknown> = {};
+        const staticProps: Record<string, unknown> = {};
+        const propertyGetters: Record<string, unknown> = {};
+        const propertySetters: Record<string, unknown> = {};
+        const staticMethods = new Set<string>();
+        const classMethods = new Set<string>();
+
+        const savedScope = { ...scope };
+        execStatementsSync(body);
+        for (const [k, v] of Object.entries(scope)) {
+          if (!Object.prototype.hasOwnProperty.call(savedScope, k) || savedScope[k] !== v) {
+            if (typeof v === 'function') {
+              const fnObj = (v as unknown) as Record<string, unknown>;
+              if (fnObj.__isPropertyGetter) {
+                propertyGetters[k] = v;
+              } else if (fnObj.__isPropertySetterFor) {
+                propertySetters[String(fnObj.__isPropertySetterFor)] = v;
+              } else {
+                createdMethods[k] = v;
+                if (fnObj.__isStaticMethod) staticMethods.add(k);
+                if (fnObj.__isClassMethod) classMethods.add(k);
+              }
             } else {
-              scope[p] = undefined;
+              staticProps[k] = v;
             }
-          });
-          const sig = execStatementsSync(body);
-          Object.keys(scope).forEach(key => delete scope[key]);
-          Object.assign(scope, savedScope);
-          if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
-            return sig.value;
           }
-          return undefined;
+        }
+        Object.keys(scope).forEach(k => delete scope[k]);
+        Object.assign(scope, savedScope);
+
+        const pyClass = new PyClass(className, baseClasses, createdMethods);
+        pyClass.staticProps = staticProps;
+        pyClass.propertyGetters = propertyGetters;
+        pyClass.propertySetters = propertySetters;
+        pyClass.staticMethods = staticMethods;
+        pyClass.classMethods = classMethods;
+
+        let targetCls: unknown = pyClass;
+        if (decorators) {
+          for (const dec of decorators) {
+            const decFn = scope[dec];
+            if (typeof decFn === 'function') {
+              targetCls = decFn(targetCls);
+            }
+          }
+        }
+        scope[className] = targetCls;
+      } else if (stmt.type === 'yield') {
+        const retVal = evaluateExpr(stmt.expr);
+        return { type: 'return', value: retVal };
+      } else if (stmt.type === 'def') {
+        const { funcName, paramNames, paramDefaults, body, decorators } = stmt;
+
+        const isGen = (sList: Statement[]): boolean => {
+          for (const s of sList) {
+            if (s.type === 'yield') return true;
+            if (s.type === 'if' && s.branches.some(b => isGen(b.body))) return true;
+            if (s.type === 'while' && isGen(s.body)) return true;
+            if (s.type === 'for' && isGen(s.body)) return true;
+          }
+          return false;
         };
+
+        let rawFunc: unknown;
+
+        if (isGen(body)) {
+          rawFunc = (...fnArgs: unknown[]) => {
+            return new PyGenerator(function* () {
+              const savedScope = { ...scope };
+              paramNames.forEach((p, idx) => {
+                if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
+                  scope[p] = fnArgs[idx];
+                } else if (p in paramDefaults) {
+                  scope[p] = evaluateExpr(paramDefaults[p]);
+                } else {
+                  scope[p] = undefined;
+                }
+              });
+
+              for (const subStmt of body) {
+                if (subStmt.type === 'yield') {
+                  yield evaluateExpr(subStmt.expr);
+                } else if (subStmt.type === 'line') {
+                  processLineSync(subStmt.text);
+                }
+              }
+
+              Object.keys(scope).forEach(key => delete scope[key]);
+              Object.assign(scope, savedScope);
+            });
+          };
+        } else {
+          rawFunc = (...fnArgs: unknown[]) => {
+            const savedScope = { ...scope };
+            paramNames.forEach((p, idx) => {
+              if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
+                scope[p] = fnArgs[idx];
+              } else if (p in paramDefaults) {
+                scope[p] = evaluateExpr(paramDefaults[p]);
+              } else {
+                scope[p] = undefined;
+              }
+            });
+            const sig = execStatementsSync(body);
+            Object.keys(scope).forEach(key => delete scope[key]);
+            Object.assign(scope, savedScope);
+            if (typeof sig === 'object' && sig !== null && sig.type === 'return') {
+              return sig.value;
+            }
+            return undefined;
+          };
+        }
+
+        if (decorators) {
+          for (const dec of decorators) {
+            if (dec === 'property') {
+              (rawFunc as Record<string, unknown>).__isPropertyGetter = true;
+            } else if (dec === 'staticmethod') {
+              (rawFunc as Record<string, unknown>).__isStaticMethod = true;
+            } else if (dec === 'classmethod') {
+              (rawFunc as Record<string, unknown>).__isClassMethod = true;
+            } else if (dec.endsWith('.setter')) {
+              (rawFunc as Record<string, unknown>).__isPropertySetterFor = dec.slice(0, -7).trim();
+            } else {
+              const decFn = scope[dec];
+              if (typeof decFn === 'function') {
+                rawFunc = decFn(rawFunc);
+              }
+            }
+          }
+        }
+        scope[funcName] = rawFunc;
       } else if (stmt.type === 'if') {
         let branchToExec: Statement[] | null = null;
         for (const branch of stmt.branches) {

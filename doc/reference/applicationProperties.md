@@ -340,7 +340,7 @@ The following are marked as **stubs** (not fully implemented) in the codebase:
 | **Onboarding Dialog** | First-time user tutorial |
 | **Multi-Tab Warning** | Detects multiple tabs open |
 | **Performance Monitoring** | `performance/monitoring.ts` |
-| **Error Handling** | `errors/errorHandler.ts` with formatted IOS-like errors |
+| **Error Handling** | `errors/errorHandler.ts` with formatted CLI errors |
 | **Zustand State Management** | Persistent store with tab-specific storage |
 | **Graphics Quality Toggle** | High/Low quality mode |
 | **Undo/Redo** | Canvas operations undo/redo |
@@ -552,7 +552,7 @@ Defines `CommandContext` interface (language, devices, connections, deviceStates
 Helper for PVST+ (Per-VLAN Spanning Tree) recalculation across devices.
 
 ### `\src\lib\network\core\iosErrors.ts` (31 lines)
-Standard IOS error messages (`invalidInput`, `incomplete`, `ambiguous`, `unknown`, etc.) and `iosModeError()` helper.
+Standard CLI error messages (`invalidInput`, `incomplete`, `ambiguous`, `unknown`, etc.) and `iosModeError()` helper.
 
 ### `\src\lib\network\core\L3Validation.ts` (269 lines)
 Validation utilities for L3 switch features: `validateNoSwitchportSupport()`, `validateIpRoutingSupport()`, `validateSviStatus()`.
@@ -597,7 +597,7 @@ React component rendering the interactive CLI terminal for PC/device command inp
 | `\src\tests\lib\network\core\firewallCommands.test.ts` (127 lines) | Tests for firewall command handlers (`same-security-traffic`, `nameif`) |
 | `\src\tests\lib\network\core\wirelessCommands.test.ts` (115 lines) | Tests for wireless command handlers (AP config, auth-mac, rf-channel, world-mode, SSID) |
 | `\src\tests\lib\network\core\L3Validation.test.ts` | Tests for L3 validation utilities |
-| `\src\tests\lib\network\core\iosErrors.test.ts` | Tests for IOS error messages |
+| `\src\tests\lib\network\core\iosErrors.test.ts` | Tests for CLI error messages |
 
 ### For parser and executor (in `src/tests/lib/network/`):
 

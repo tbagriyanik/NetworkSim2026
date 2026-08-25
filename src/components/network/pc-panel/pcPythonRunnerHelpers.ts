@@ -159,6 +159,9 @@ export class PyFile {
 
 export function getPythonType(val: unknown): string {
   if (val === null || val === undefined) return "<class 'NoneType'>";
+  if (val instanceof PyInstance) return `<class '${val.pyClass.name}'>`;
+  if (val instanceof PyClass) return "<class 'type'>";
+  if (val instanceof PyGenerator) return "<class 'generator'>";
   if (val instanceof PyComplex) return "<class 'complex'>";
   if (val instanceof PyFile) return "<class '_io.TextIOWrapper'>";
   if (typeof val === 'boolean') return "<class 'bool'>";
@@ -176,6 +179,9 @@ export function formatPythonValue(val: unknown, inCollection: boolean = false): 
   if (val === true) return 'True';
   if (val === false) return 'False';
   if (typeof val === 'string') return inCollection ? `'${val}'` : val;
+  if (val instanceof PyInstance) return `<${val.pyClass.name} object>`;
+  if (val instanceof PyClass) return `<class '${val.name}'>`;
+  if (val instanceof PyGenerator) return `<generator object>`;
   if (val instanceof PyComplex) return val.toString();
   if (val instanceof PyFile) return `<_io.TextIOWrapper name='${val.filePath}' mode='${val.mode}' encoding='utf-8'>`;
   if (val instanceof Set) {
@@ -467,6 +473,152 @@ export function formatStringTemplate(
   });
 }
 
+const FORBIDDEN_DUNDERS = new Set([
+  '__class__',
+  '__mro__',
+  '__subclasses__',
+  '__globals__',
+  '__builtins__',
+  '__import__',
+  '__proto__',
+  'constructor',
+  'prototype',
+]);
+
+export function isForbiddenDunderProperty(prop: string): boolean {
+  return FORBIDDEN_DUNDERS.has(prop);
+}
+
+export class PyClass {
+  public name: string;
+  public baseClasses: PyClass[];
+  public methods: Record<string, unknown>;
+  public staticProps: Record<string, unknown>;
+  public staticMethods: Set<string>;
+  public classMethods: Set<string>;
+  public propertyGetters: Record<string, unknown>;
+  public propertySetters: Record<string, unknown>;
+
+  constructor(name: string, baseClasses: PyClass[] = [], methods: Record<string, unknown> = {}) {
+    this.name = name;
+    this.baseClasses = baseClasses;
+    this.methods = methods;
+    this.staticProps = {};
+    this.staticMethods = new Set();
+    this.classMethods = new Set();
+    this.propertyGetters = {};
+    this.propertySetters = {};
+  }
+
+  findMethod(methodName: string): unknown | undefined {
+    if (this.methods[methodName] !== undefined) return this.methods[methodName];
+    for (const base of this.baseClasses) {
+      const found = base.findMethod(methodName);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+
+  findPropertyGetter(propName: string): unknown | undefined {
+    if (this.propertyGetters[propName] !== undefined) return this.propertyGetters[propName];
+    for (const base of this.baseClasses) {
+      const found = base.findPropertyGetter(propName);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+}
+
+export class PyInstance {
+  public pyClass: PyClass;
+  public fields: Record<string, unknown>;
+
+  constructor(pyClass: PyClass, fields: Record<string, unknown> = {}) {
+    this.pyClass = pyClass;
+    this.fields = fields;
+  }
+
+  getAttribute(attrName: string): unknown {
+    if (isForbiddenDunderProperty(attrName)) {
+      throw new Error(`AttributeError: Security restriction: access to '${attrName}' is blocked.`);
+    }
+    const getter = this.pyClass.findPropertyGetter(attrName);
+    if (getter && typeof getter === 'function') {
+      return getter(this);
+    }
+    if (Object.prototype.hasOwnProperty.call(this.fields, attrName)) {
+      return this.fields[attrName];
+    }
+    const method = this.pyClass.findMethod(attrName);
+    if (method !== undefined) {
+      if (this.pyClass.staticMethods.has(attrName)) {
+        return method;
+      }
+      if (this.pyClass.classMethods.has(attrName)) {
+        return (method as Function).bind(null, this.pyClass);
+      }
+      if (typeof method === 'function') {
+        return (...args: unknown[]) => method(this, ...args);
+      }
+      return method;
+    }
+    if (this.pyClass.staticProps[attrName] !== undefined) {
+      return this.pyClass.staticProps[attrName];
+    }
+    throw new Error(`AttributeError: '${this.pyClass.name}' object has no attribute '${attrName}'`);
+  }
+
+  setAttribute(attrName: string, value: unknown): void {
+    if (isForbiddenDunderProperty(attrName)) {
+      throw new Error(`AttributeError: Security restriction: access to '${attrName}' is blocked.`);
+    }
+    const setter = this.pyClass.propertySetters[attrName];
+    if (setter && typeof setter === 'function') {
+      setter(this, value);
+      return;
+    }
+    this.fields[attrName] = value;
+  }
+}
+
+export class PySuper {
+  constructor(public instance: PyInstance, public targetClass?: PyClass) {}
+
+  getAttribute(methodName: string): unknown {
+    const startBases = this.targetClass ? this.targetClass.baseClasses : this.instance.pyClass.baseClasses;
+    for (const base of startBases) {
+      const method = base.findMethod(methodName);
+      if (method !== undefined) {
+        if (typeof method === 'function') {
+          return (...args: unknown[]) => method(this.instance, ...args);
+        }
+        return method;
+      }
+    }
+    throw new Error(`AttributeError: 'super' object has no attribute '${methodName}'`);
+  }
+}
+
+export class PyGenerator {
+  private iterator: Iterator<unknown> | null = null;
+
+  constructor(private generatorFn: () => Iterator<unknown>) {}
+
+  [Symbol.iterator]() {
+    if (!this.iterator) {
+      this.iterator = this.generatorFn();
+    }
+    return this.iterator;
+  }
+
+  next(val?: unknown) {
+    if (!this.iterator) {
+      this.iterator = this.generatorFn();
+    }
+    return this.iterator.next(val);
+  }
+}
+
 export function assignValueToLhs(
   leftSide: string,
   rhsVal: unknown,
@@ -484,6 +636,23 @@ export function assignValueToLhs(
       }
     }
     return true;
+  } else if (leftSide.includes('.') && !leftSide.includes('[')) {
+    const dotIdx = leftSide.lastIndexOf('.');
+    const objExpr = leftSide.slice(0, dotIdx).trim();
+    const attrName = leftSide.slice(dotIdx + 1).trim();
+    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(attrName)) {
+      const targetObj = evaluateExpr(objExpr);
+      if (targetObj instanceof PyInstance) {
+        targetObj.setAttribute(attrName, rhsVal);
+        return true;
+      } else if (targetObj && typeof targetObj === 'object') {
+        if (isForbiddenDunderProperty(attrName)) {
+          throw new Error(`Security restriction: setting forbidden property '${attrName}' is blocked.`);
+        }
+        (targetObj as Record<string, unknown>)[attrName] = rhsVal;
+        return true;
+      }
+    }
   } else if (leftSide.endsWith(']')) {
     const indexMatches: string[] = [];
     let varName = '';

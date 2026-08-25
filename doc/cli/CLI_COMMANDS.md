@@ -574,7 +574,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 
 ### Firewall Configuration Commands
 
-> **Note**: These commands are valid on **ASA / Firewall devices only**. They are not available on IOS routers or switches.
+> **Note**: These commands are valid on **Firewall devices only**. They are not available on standard routers or switches.
 
 | Command | Description |
 |---------|-------------|

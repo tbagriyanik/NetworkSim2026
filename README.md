@@ -26,6 +26,8 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
+- **Gelişmiş Python Yorumlayıcısı & OOP Desteği:** PC Python ortamında nesne yönelimli programlama (`class`, `__init__`, kalıtım, `super()`, `isinstance()`, `@property`, `@staticmethod`, `@classmethod`), generator (`yield` / `yield from`), modül eklentileri (`json`, `re`, `socket`, `os.path`) ve dunder korumalı güvenlik katmanı aktif edildi.
+- **Protocol & CLI Kapsam Notu:** PPPoE, IP SLA, MSTP, OSPF, EIGRP vb. protokolleri için tam CLI konfigürasyon ve `show` komutu desteği sunulmaktadır. Paket-seviyesi durum makineleri (state machines) öğretim simülasyonu odağında optimize edilmiştir.
 - **Kullanıcı Tanımlı Batch (.bat) Yığın Dosyaları:** PC Komut İstemi'nde (CMD) kullanıcı tanımlı `.bat` ve `.cmd` dosyalarını çalıştırma, değişken ikamesi (`%VAR%`, `%1`), `@echo off`, `set`, `goto`, `call` desteği ve Dosya Düzenleyici başlığında `Batch Yığın Dosyası` rozeti entegre edildi.
 - **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
 - **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.

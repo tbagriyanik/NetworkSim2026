@@ -12,9 +12,15 @@
 - Spatial partitioning (100+ cihazda yüksek performans optimizasyonu).
 
 ### ⌨️ CLI / Terminal
-- Gerçek IOS benzeri komut satırı (user, privileged, global-config, interface, line, vlan, router-config ve adlandırılmış-ACL modları).
+- Gerçekçi CLI komut satırı (user, privileged, global-config, interface, line, vlan, router-config ve adlandırılmış-ACL modları).
+- PC CMD ve Dosya Düzenleyici ortamında tam kapsamlı **Python 3 yorumlayıcısı**:
+  - **MEB Müfredatı OOP:** Sınıflar (`class`), kurucu metot (`__init__`), nitelik bağlama (`self`), kalıtım (inheritance), `super()`, `isinstance()`.
+  - **Decorator'lar:** `@property`, `@<name>.setter`, `@staticmethod`, `@classmethod` ve kullanıcı tanımlı decorator fonksiyonları.
+  - **Generator'lar:** `yield` ve `yield from` ile tembel iterasyon (lazy evaluation).
+  - **Modül Desteği:** `json`, `re` (regex), `os.path`, simüle edilmiş `socket` (ağ programlama betikleri için), `math`, `random`, `datetime`, `sys`.
+  - **Güvenlik Katmanı:** Tarayıcı sandbox koruması ve dunder nitelik bloklaması.
 - PC CMD'de kullanıcı tanımlı `.bat` ve `.cmd` yığın dosyaları çalıştırma (`@echo off`, `set`, `%VAR%`, `%1`, `goto`, `call`).
-- Dosya Düzenleyici (File Editor) pencerelerinde `Batch Yığın Dosyası` rozet etiketi ve tek tıkla kaydetip CMD'de çalıştırma (Play).
+- Dosya Düzenleyici (File Editor) pencerelerinde `Batch Yığın Dosyası` ve `Python Betiği` rozet etiketleri ile tek tıkla kaydedip CMD'de çalıştırma (Play).
 - Tab tuşu ile otomatik komut ve dosya tamamlama.
 - Komut geçmişi (Yukarı/Aşağı ok tuşları, kalıcı state).
 - Pipe filtreleme (`show run | include`, `ping | find` vb.).
@@ -105,7 +111,7 @@
 - Spatial partitioning (optimized high performance for 100+ devices).
 
 ### ⌨️ CLI / Terminal
-- Realistic IOS-like command-line interface (user, privileged, global-config, interface, line, vlan, router-config, and named-ACL modes).
+- Realistic CLI command-line interface (user, privileged, global-config, interface, line, vlan, router-config, and named-ACL modes).
 - Tab completion for command auto-suggest.
 - Command history (Arrow Up/Down, persisted state).
 - Pipe filtering (e.g., `show run | include`).

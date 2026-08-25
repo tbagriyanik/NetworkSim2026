@@ -41,6 +41,25 @@ Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve iç
 
 ---
 
+### 🐍 getting-started/PYTHON_PROGRAMMING_GUIDE.md
+**Amaç**: Python programlama dili temelleri, MEB müfredatı OOP, Decorator'lar ve Modül rehberi  
+**Okuma Süresi**: 25 dakika  
+**İçerik**:
+- Python betiklerini CMD ve Dosya Düzenleyici'de çalıştırma (`python script.py`, REPL)
+- Temel Veri Tipleri (`int`, `float`, `str`, `list`, `dict`, `set`, `tuple`, `complex`)
+- Kontrol akışı (`if/elif/else`, `for`, `while`, `try/except/finally`, `with open`)
+- Fonksiyonlar ve Generator'lar (`yield` / `yield from`)
+- Nesne Yönelimli Programlama (`class`, `__init__`, `self`, kalıtım, `super()`, `isinstance()`)
+- Decorator'lar (`@property`, `@setter`, `@staticmethod`, `@classmethod`, özel wrapper'lar)
+- Standart Modüller (`json`, `re`, `os.path`, simüle `socket` ve matematik modülleri)
+- Tarayıcı içi güvenlik ve dunder koruma mimarisi
+
+**Ne Zaman Okuyacağım?**
+- MEB müfredatındaki Python OOP ve algoritmaları pratik yapmak istiyorsanız
+- PC üzerinde Python betikleri yazmak veya ağ socket simülasyonunu incelemek istiyorsanız
+
+---
+
 ### ⚡ getting-started/QUICK_REFERENCE.md
 **Amaç**: Hızlı referans ve kod parçacıkları  
 **Okuma Süresi**: 5 dakika  

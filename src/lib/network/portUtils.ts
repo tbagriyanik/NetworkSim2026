@@ -1,6 +1,6 @@
 const portNormalizeCache = new Map<string, string | null>();
 
-/** Canonicalizes IOS-style interface names used by the simulator. */
+/** Canonicalizes interface names used by the simulator. */
 export function normalizePortId(input: string): string | null {
   if (!input) return null;
   const cached = portNormalizeCache.get(input);

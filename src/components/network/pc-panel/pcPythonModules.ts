@@ -237,6 +237,142 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
       }
     },
   },
+  json: {
+    loads: (s: unknown) => {
+      try {
+        return JSON.parse(String(s || ''));
+      } catch (err) {
+        throw new Error(`json.decoder.JSONDecodeError: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    },
+    dumps: (obj: unknown, indent?: unknown) => {
+      try {
+        const space = indent ? Number(indent) : undefined;
+        return JSON.stringify(obj, null, space);
+      } catch (err) {
+        throw new Error(`TypeError: ${err instanceof Error ? err.message : String(err)}`);
+      }
+    },
+  },
+  re: {
+    search: (pattern: unknown, stringVal: unknown) => {
+      const pat = String(pattern || '');
+      const str = String(stringVal || '');
+      const rx = new RegExp(pat);
+      const m = rx.exec(str);
+      if (!m) return null;
+      return {
+        group: (...args: unknown[]) => (args.length === 0 || Number(args[0]) === 0 ? m[0] : m[Number(args[0])] ?? null),
+        groups: () => m.slice(1).map(g => g ?? null),
+        start: () => m.index,
+        end: () => m.index + m[0].length,
+        span: () => [m.index, m.index + m[0].length],
+      };
+    },
+    match: (pattern: unknown, stringVal: unknown) => {
+      const pat = String(pattern || '');
+      const str = String(stringVal || '');
+      const rx = new RegExp(`^${pat}`);
+      const m = rx.exec(str);
+      if (!m) return null;
+      return {
+        group: (...args: unknown[]) => (args.length === 0 || Number(args[0]) === 0 ? m[0] : m[Number(args[0])] ?? null),
+        groups: () => m.slice(1).map(g => g ?? null),
+        start: () => m.index,
+        end: () => m.index + m[0].length,
+        span: () => [m.index, m.index + m[0].length],
+      };
+    },
+    findall: (pattern: unknown, stringVal: unknown) => {
+      const pat = String(pattern || '');
+      const str = String(stringVal || '');
+      const rx = new RegExp(pat, 'g');
+      const results: unknown[] = [];
+      let m: RegExpExecArray | null;
+      while ((m = rx.exec(str)) !== null) {
+        if (m.length > 2) {
+          results.push(m.slice(1).map(g => g ?? ''));
+        } else if (m.length === 2) {
+          results.push(m[1] ?? '');
+        } else {
+          results.push(m[0]);
+        }
+      }
+      return results;
+    },
+    sub: (pattern: unknown, repl: unknown, stringVal: unknown, count?: unknown) => {
+      const pat = String(pattern || '');
+      const str = String(stringVal || '');
+      const replacement = String(repl || '');
+      if (count && Number(count) > 0) {
+        let n = Number(count);
+        const rx = new RegExp(pat);
+        let res = str;
+        while (n > 0 && rx.test(res)) {
+          res = res.replace(rx, replacement);
+          n--;
+        }
+        return res;
+      }
+      return str.replace(new RegExp(pat, 'g'), replacement);
+    },
+    split: (pattern: unknown, stringVal: unknown) => {
+      const pat = String(pattern || '');
+      const str = String(stringVal || '');
+      return str.split(new RegExp(pat));
+    },
+  },
+  socket: {
+    AF_INET: 2,
+    SOCK_STREAM: 1,
+    SOCK_DGRAM: 2,
+    socket: (family?: unknown, type?: unknown) => {
+      let connected = false;
+      let peerHost = '';
+      let peerPort = 0;
+      const buffer: string[] = [];
+      return {
+        family: Number(family || 2),
+        type: Number(type || 1),
+        connect: (address: unknown) => {
+          connected = true;
+          if (Array.isArray(address)) {
+            peerHost = String(address[0] || '127.0.0.1');
+            peerPort = Number(address[1] || 80);
+          }
+          buffer.push(`HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\n\r\nConnected to ${peerHost}:${peerPort}`);
+        },
+        bind: () => null,
+        listen: () => null,
+        accept: () => [
+          {
+            recv: () => 'GET / HTTP/1.1\r\n\r\n',
+            send: (d: unknown) => String(d || '').length,
+            close: () => null,
+          },
+          ['192.168.1.100', 49152],
+        ],
+        send: (data: unknown) => String(data || '').length,
+        sendall: (data: unknown) => String(data || '').length,
+        recv: (bufsize?: unknown) => {
+          const size = Number(bufsize || 1024);
+          if (buffer.length > 0) {
+            return (buffer.shift() || '').slice(0, size);
+          }
+          return connected ? 'ACK' : '';
+        },
+        close: () => {
+          connected = false;
+        },
+        settimeout: () => null,
+      };
+    },
+    gethostbyname: (hostname: unknown) => {
+      const name = String(hostname || '');
+      if (name === 'localhost') return '127.0.0.1';
+      return '192.168.1.1';
+    },
+  },
   glob: {
     glob: (_pattern?: unknown) => [],
   },
@@ -248,12 +384,44 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
     mkdir: () => null,
     remove: () => null,
     path: {
-      join: (...args: unknown[]) => args.map(String).join('\\'),
+      join: (...args: unknown[]) => {
+        const parts = args.map(a => String(a || '')).filter(Boolean);
+        if (parts.length === 0) return '';
+        return parts.join('\\').replace(/\\+/g, '\\');
+      },
       exists: () => true,
       isfile: () => true,
       isdir: () => true,
-      basename: (p: unknown) => String(p || '').split(/[\\/]/).pop() || '',
-      dirname: (p: unknown) => String(p || '').split(/[\\/]/).slice(0, -1).join('\\') || 'C:\\',
+      basename: (p: unknown) => {
+        const s = String(p || '').replace(/[\\/]+$/, '');
+        const idx = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+        return idx >= 0 ? s.slice(idx + 1) : s;
+      },
+      dirname: (p: unknown) => {
+        const s = String(p || '').replace(/[\\/]+$/, '');
+        const idx = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+        return idx >= 0 ? s.slice(0, idx) : '.';
+      },
+      abspath: (p: unknown) => {
+        const s = String(p || '');
+        if (s.startsWith('C:') || s.startsWith('/')) return s;
+        return `C:\\${s.replace(/^[\\/]+/, '')}`;
+      },
+      split: (p: unknown) => {
+        const s = String(p || '');
+        const idx = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+        if (idx >= 0) return [s.slice(0, idx), s.slice(idx + 1)];
+        return ['', s];
+      },
+      splitext: (p: unknown) => {
+        const s = String(p || '');
+        const dotIdx = s.lastIndexOf('.');
+        const sepIdx = Math.max(s.lastIndexOf('/'), s.lastIndexOf('\\'));
+        if (dotIdx > sepIdx && dotIdx > 0) {
+          return [s.slice(0, dotIdx), s.slice(dotIdx)];
+        }
+        return [s, ''];
+      },
     },
   },
   sys: {

@@ -31,6 +31,15 @@ function escapeHtml(value: string): string {
   ));
 }
 
+export const SYNTAX_COLORS = {
+  keyword: '#c084fc',
+  builtin: '#38bdf8',
+  string: '#4ade80',
+  number: '#fbbf24',
+  constant: '#fb7185',
+  comment: '#94a3b8',
+} as const;
+
 function highlightCode(code: string): string {
   const token = /(#.*$|\/\/.*$|(?:"""[\s\S]*?"""|'''[\s\S]*?'''|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*')|\b\d+(?:\.\d+)?\b|\b(?:True|False|None|true|false|null|undefined)\b|\b(?:and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|not|or|pass|raise|return|try|while|with|yield|function|const|let|var)\b|\b(?:print|len|range|str|int|float|bool|list|dict|set|tuple|enumerate|zip|open|input|sum|min|max|abs|round|sorted|reversed|type|isinstance|console|log|echo)\b)/gm;
 
@@ -56,18 +65,7 @@ function highlightCode(code: string): string {
       kind = 'builtin';
     }
 
-    const color =
-      kind === 'keyword'
-        ? '#c084fc'
-        : kind === 'builtin'
-        ? '#38bdf8'
-        : kind === 'string'
-        ? '#4ade80'
-        : kind === 'number'
-        ? '#fbbf24'
-        : kind === 'constant'
-        ? '#fb7185'
-        : '#94a3b8';
+    const color = SYNTAX_COLORS[kind as keyof typeof SYNTAX_COLORS] || SYNTAX_COLORS.comment;
 
     output += `<span style="color:${color}${kind === 'comment' ? ';font-style:italic;opacity:0.8' : ''}">${text}</span>`;
     lastIndex = match.index + raw.length;

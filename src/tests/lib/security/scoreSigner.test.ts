@@ -6,7 +6,7 @@ describe('scoreSigner Security Unit Tests', () => {
     score: 100,
     totalScore: 100,
     studentName: 'Alice Student',
-    projectTitle: 'CCNA Final Exam',
+    projectTitle: 'Final Exam',
   };
 
   it('should generate and verify valid score token', () => {
