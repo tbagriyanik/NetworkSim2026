@@ -5,7 +5,7 @@ import type { KeyboardEvent } from 'react';
 import type { PCActiveTab, OutputLine } from './PCPanel.types';
 import { expandCommandContext, DESKTOP_COMMANDS } from '../pcPanel.utils';
 import { resolveAliases, expandKeywordPrefixes } from '@/lib/network/parser';
-import { loadFs, listDir } from './pcFileSystem';
+import { loadFs, listDir, isDir, resolvePath } from './pcFileSystem';
 
 export interface UsePCPanelInputParams {
   input: string;
@@ -35,6 +35,8 @@ export interface UsePCPanelInputParams {
   consoleConfirmDialog: { show: boolean; message: string } | null;
   consoleReloadPending: boolean;
   connectedDeviceId: string | null;
+  deviceId?: string;
+  currentPath?: string;
   onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<unknown>;
   setConsolePasswordAttempted: (value: boolean) => void;
   setIsConsoleConnected: (value: boolean) => void;
@@ -79,6 +81,8 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
     consoleConfirmDialog,
     consoleReloadPending,
     connectedDeviceId,
+    deviceId,
+    currentPath,
     onExecuteDeviceCommand,
     setConsolePasswordAttempted,
     setIsConsoleConnected,
@@ -95,6 +99,29 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
   } = params;
 
   const buildCompletedInput = useCallback((selected: string) => {
+    if (activeTab === 'desktop') {
+      const trimmedVal = input.trimStart();
+      const parts = trimmedVal.split(/\s+/);
+      const firstCmd = parts[0]?.toLowerCase() || '';
+      const fileCmds = ['python', 'py', 'python3', 'edit', 'notepad', 'cat', 'del', 'delete', 'rm', 'type', 'dir', 'ls', 'cd', 'chdir', 'rd', 'rmdir', 'md', 'mkdir', 'copy', 'move', 'ren', 'rename'];
+      const isFileCmd = fileCmds.includes(firstCmd);
+      const hasSpaceAfterCmd = input.includes(' ');
+
+      if (isFileCmd && hasSpaceAfterCmd) {
+        const tokens = input.endsWith(' ') ? parts.filter(Boolean) : parts.slice(0, -1).filter(Boolean);
+        const commandPrefix = tokens.join(' ');
+        return commandPrefix ? `${commandPrefix} ${selected}` : `${parts[0]} ${selected}`;
+      }
+
+      if (parts.length > 1 || hasSpaceAfterCmd) {
+        const tokens = input.endsWith(' ') ? parts.filter(Boolean) : parts.slice(0, -1).filter(Boolean);
+        const commandPrefix = tokens.join(' ');
+        return commandPrefix ? `${commandPrefix} ${selected}` : `${parts[0]} ${selected}`;
+      }
+
+      return selected;
+    }
+
     const mode = getCommandMode();
     const resolvedInput = expandKeywordPrefixes(resolveAliases(input), mode as any);
     const { contextTokens, currentWord } = expandCommandContext(mode, resolvedInput.length > 0 ? resolvedInput : input);
@@ -106,7 +133,7 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
     }
     const prefix = contextTokens.join(' ');
     return prefix ? `${prefix} ${selected}` : selected;
-  }, [input, getCommandMode]);
+  }, [input, activeTab, getCommandMode]);
 
   const completeAutocompleteSelection = useCallback((selected: string) => {
     const completed = buildCompletedInput(selected);
@@ -196,14 +223,42 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
       const trimmedVal = value.trimStart();
       const parts = trimmedVal.split(/\s+/);
       const firstCmd = parts[0]?.toLowerCase() || '';
-      const isFileCmd = ['python', 'py', 'edit', 'cat', 'del', 'delete', 'type', 'dir'].includes(firstCmd);
+      const fileCmds = ['python', 'py', 'python3', 'edit', 'notepad', 'cat', 'del', 'delete', 'rm', 'type', 'dir', 'ls', 'cd', 'chdir', 'rd', 'rmdir', 'md', 'mkdir', 'copy', 'move', 'ren', 'rename'];
+      const isFileCmd = fileCmds.includes(firstCmd);
       const hasSpaceAfterCmd = value.includes(' ');
+      const targetDevId = connectedDeviceId || deviceId;
 
-      if (isFileCmd && hasSpaceAfterCmd && connectedDeviceId) {
-        const currentArg = value.endsWith(' ') ? '' : (parts[parts.length - 1] || '');
-        const fs = loadFs(connectedDeviceId);
-        const files = listDir(fs, '/');
-        matches = files.filter(f => f.toLowerCase().startsWith(currentArg.toLowerCase()));
+      if (isFileCmd && hasSpaceAfterCmd && targetDevId) {
+        const rawArg = value.endsWith(' ') ? '' : (parts[parts.length - 1] || '');
+        const fs = loadFs(targetDevId);
+
+        let dirPrefix = '';
+        let searchPrefix = rawArg;
+        let searchDir = currentPath || 'C:\\';
+
+        const lastSlash = Math.max(rawArg.lastIndexOf('/'), rawArg.lastIndexOf('\\'));
+        if (lastSlash !== -1) {
+          dirPrefix = rawArg.substring(0, lastSlash + 1);
+          searchPrefix = rawArg.substring(lastSlash + 1);
+          searchDir = resolvePath(currentPath || 'C:\\', rawArg.substring(0, lastSlash));
+        }
+
+        if (isDir(fs, searchDir)) {
+          const entries = listDir(fs, searchDir);
+          const isDirOnly = ['cd', 'chdir', 'rd', 'rmdir'].includes(firstCmd);
+
+          const filtered = entries.filter(entry => {
+            const entryPath = resolvePath(searchDir, entry);
+            if (isDirOnly && !isDir(fs, entryPath)) return false;
+            return entry.toLowerCase().startsWith(searchPrefix.toLowerCase());
+          });
+
+          matches = filtered.map(entry => {
+            const entryPath = resolvePath(searchDir, entry);
+            const trailing = isDir(fs, entryPath) ? '/' : '';
+            return `${dirPrefix}${entry}${trailing}`;
+          });
+        }
         contextTokens = value.endsWith(' ') ? parts.filter(Boolean) : parts.slice(0, -1).filter(Boolean);
       } else {
         const tokens = value.trim().split(/\s+/).filter(Boolean);
@@ -249,14 +304,18 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
         setTabCycleIndex(0);
         const completion = matches[0];
         const prefix = contextTokens.join(' ');
-        setInput(prefix ? `${prefix} ${completion}` : completion);
+        const fallbackPrefix = (activeTab === 'desktop' && value.includes(' ')) ? value.trim().split(/\s+/)[0] : '';
+        const effectivePrefix = prefix || fallbackPrefix;
+        setInput(effectivePrefix ? `${effectivePrefix} ${completion}` : completion);
       } else {
         const nextIndex = (tabCycleIndex + 1) % matches.length;
         setTabCycleIndex(nextIndex);
         const originalParts = lastTabInput.split(/\s+/);
         const originalContext = lastTabInput.endsWith(' ') ? lastTabInput.trim() : originalParts.slice(0, -1).join(' ');
         const completion = matches[nextIndex];
-        setInput(originalContext ? `${originalContext} ${completion}` : completion);
+        const fallbackPrefix = (activeTab === 'desktop' && lastTabInput.includes(' ')) ? lastTabInput.trim().split(/\s+/)[0] : '';
+        const effectiveContext = originalContext || fallbackPrefix;
+        setInput(effectiveContext ? `${effectiveContext} ${completion}` : completion);
       }
     } else if (value.trim() && activeTab === 'terminal' && isConsoleConnected) {
       void executeCommand(value.trim() + ' ?');

@@ -55,10 +55,51 @@ export function highlightText({ text, searchQuery, isDark }: HighlightTextParams
   return <>{out}</>;
 }
 
-export function getInitialPcOutput(deviceFromTopology?: { ip?: string; subnet?: string; gateway?: string; ipv6?: string }): OutputLine[] {
+import { loadFs, readFile } from './pcFileSystem';
+
+export function getInitialPcOutput(
+  deviceFromTopology?: { ip?: string; subnet?: string; gateway?: string; ipv6?: string },
+  deviceId?: string
+): OutputLine[] {
+  let autoexecBanner = '';
+  if (deviceId) {
+    const fs = loadFs(deviceId);
+    const autoexecContent = readFile(fs, 'C:\\autoexec.bat') || readFile(fs, 'autoexec.bat') || '';
+    if (autoexecContent.trim()) {
+      const lines = autoexecContent.split(/\r?\n/);
+      const outputLines: string[] = ['Executing C:\\autoexec.bat...\n'];
+      let echoOn = true;
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) continue;
+        if (line.toUpperCase() === '@ECHO OFF') {
+          echoOn = false;
+        } else if (line.toUpperCase() === '@ECHO ON') {
+          echoOn = true;
+        } else if (line.toUpperCase().startsWith('ECHO ')) {
+          outputLines.push(line.slice(5));
+        } else {
+          if (echoOn) {
+            outputLines.push(`C:\\> ${line}`);
+          }
+        }
+      }
+      autoexecBanner = outputLines.join('\n') + '\n\n';
+    }
+  }
+
+  const sysInfo =
+    'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n\n' +
+    'Ethernet adapter Ethernet connection:\n' +
+    '   IPv4 Address. . . . . . . . . . . : ' + (deviceFromTopology?.ip || '0.0.0.0') + '\n' +
+    '   Subnet Mask . . . . . . . . . . : ' + (deviceFromTopology?.subnet || '255.255.255.0') + '\n' +
+    '   Default Gateway . . . . . . . . . : ' + (deviceFromTopology?.gateway || '0.0.0.0') + '\n' +
+    '   IPv6 Address. . . . . . . . . . : ' + (deviceFromTopology?.ipv6 || '2001:db8:acad:1::10') + '\n';
+
   return [{
     id: '1',
     type: 'output',
-    content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (deviceFromTopology?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (deviceFromTopology?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (deviceFromTopology?.gateway || '0.0.0.0') + '\n   IPv6 Address. . . . . . . . . . : ' + (deviceFromTopology?.ipv6 || '2001:db8:acad:1::10') + '\n'
+    content: autoexecBanner + sysInfo,
   }];
 }
+

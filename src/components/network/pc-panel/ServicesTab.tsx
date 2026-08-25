@@ -9,9 +9,12 @@ import { HttpServiceConfig } from './HttpServiceConfig';
 import { DhcpServiceConfig } from './DhcpServiceConfig';
 import { NtpServiceConfig } from './NtpServiceConfig';
 import { MailServiceConfig } from './MailServiceConfig';
+import { getFtpFilesFromUploadDir, deleteFile, loadFs, saveFs } from './pcFileSystem';
 import type { DhcpPoolConfig, PcFile } from './PCPanel.types';
 
 interface ServicesTabProps {
+  deviceId?: string;
+  onEditFile?: (filePath: string) => void;
   isDark: boolean;
   language: string;
   t: Record<string, string>;
@@ -86,6 +89,8 @@ interface ServicesTabProps {
 }
 
 export function ServicesTab({
+  deviceId,
+  onEditFile,
   isDark,
   language,
   t,
@@ -255,6 +260,7 @@ export function ServicesTab({
 
         {activeServiceTab === 'http' && (
           <HttpServiceConfig
+            deviceId={deviceId}
             isDark={isDark}
             language={language}
             t={t}
@@ -342,7 +348,7 @@ export function ServicesTab({
                   {language === 'tr' ? 'Dosya Listesi' : 'File List'}
                 </div>
                 <div className={`rounded-lg border divide-y ${isDark ? 'border-secondary-800 divide-secondary-800' : 'border-secondary-200 divide-secondary-200'}`}>
-                  {(serviceFtpFiles.length > 0 ? serviceFtpFiles : []).map((file, idx) => (
+                  {((deviceId ? getFtpFilesFromUploadDir(deviceId) : serviceFtpFiles).length > 0 ? (deviceId ? getFtpFilesFromUploadDir(deviceId) : serviceFtpFiles) : []).map((file, idx) => (
                     <div key={`${file.name}-${idx}`} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
                       <div className="min-w-0">
                         <div className="font-mono truncate">{file.name}</div>
@@ -350,26 +356,46 @@ export function ServicesTab({
                           {file.size} B{file.modifiedAt ? ` · ${new Date(file.modifiedAt).toLocaleString()}` : ''}
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          const nextFiles = serviceFtpFiles.filter((f) => f.name !== file.name);
-                          setServiceFtpFiles(nextFiles);
-                          dispatchDeviceConfig({
-                            services: {
-                              dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
-                              http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
-                              ftp: { enabled: serviceFtpEnabled, files: nextFiles },
-                              mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
-                              ntp: { enabled: serviceNtpEnabled, server: serviceNtpServer, date: serviceNtpDate, time: serviceNtpTime },
-                              dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (deviceId) {
+                              const fs = loadFs(deviceId);
+                              deleteFile(fs, `C:\\upload\\${file.name}`);
+                              saveFs(deviceId, fs);
+                              setServiceFtpFiles(getFtpFilesFromUploadDir(deviceId));
+                            } else {
+                              const nextFiles = serviceFtpFiles.filter((f) => f.name !== file.name);
+                              setServiceFtpFiles(nextFiles);
                             }
-                          });
-                        }}
-                      >
-                        {language === 'tr' ? 'Sil' : 'Delete'}
-                      </Button>
+                            dispatchDeviceConfig({
+                              services: {
+                                dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
+                                http: { enabled: serviceHttpEnabled, content: serviceHttpContent },
+                                ftp: { enabled: serviceFtpEnabled, files: serviceFtpFiles.filter((f) => f.name !== file.name) },
+                                mail: { enabled: serviceMailEnabled, domain: serviceMailDomain, username: serviceMailUsername, password: serviceMailPassword, inbox: serviceMailInbox, sent: serviceMailSent },
+                                ntp: { enabled: serviceNtpEnabled, server: serviceNtpServer, date: serviceNtpDate, time: serviceNtpTime },
+                                dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools }
+                              }
+                            });
+                          }}
+                        >
+                          {language === 'tr' ? 'Sil' : 'Delete'}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            if (onEditFile) {
+                              onEditFile(`C:\\upload\\${file.name}`);
+                            }
+                          }}
+                        >
+                          {language === 'tr' ? 'Düzenle' : 'Edit'}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   {serviceFtpFiles.length === 0 && (

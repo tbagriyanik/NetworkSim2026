@@ -10,6 +10,8 @@ import { getAutocompleteSuggestions } from './pcTerminal.utils';
 export interface UsePCPanelTerminalSyncParams {
   isConsoleConnected: boolean;
   connectedDeviceId: string | null;
+  deviceId?: string;
+  currentPath?: string;
   deviceOutputs: Map<string, TerminalOutput[]>;
   consoleConnectionTime: number;
   activeTab: PCActiveTab;
@@ -24,6 +26,8 @@ export interface UsePCPanelTerminalSyncParams {
 export function usePCPanelTerminalSync({
   isConsoleConnected,
   connectedDeviceId,
+  deviceId,
+  currentPath,
   deviceOutputs,
   consoleConnectionTime,
   activeTab,
@@ -79,9 +83,11 @@ export function usePCPanelTerminalSync({
       activeTab,
       topologyDevices,
       deviceStates,
-      getCommandMode
+      getCommandMode,
+      deviceId: connectedDeviceId || deviceId,
+      currentPath,
     });
-  }, [activeTab, getCommandMode, topologyDevices, deviceStates]);
+  }, [activeTab, getCommandMode, topologyDevices, deviceStates, connectedDeviceId, deviceId, currentPath]);
 
   const renderAutocompleteSuggestions = useMemo(
     () => getAutocompleteSuggestionsCallback(input),

@@ -8,6 +8,7 @@ import { checkConnectivity } from '@/lib/network/connectivity';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { isRouterDevice, generateRouterAdminPage } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
+import { loadFs, readFile } from './pcFileSystem';
 
 interface ConnectedIoTDevice {
   id: string;
@@ -220,8 +221,13 @@ export function usePCPanelBrowser({
         ? 'HTTP sayfası yeni pencerede açıldı.'
         : 'HTTP page opened in a new window.');
     } else {
-      setHttpAppDeviceId(null);
-      addLocalOutput('html', httpServer.services?.http?.content || t.helloWorld);
+      setHttpAppDeviceId(httpServer.id);
+      const serverFs = loadFs(httpServer.id);
+      const indexHtml = readFile(serverFs, 'C:\\www\\index.html') || readFile(serverFs, 'www/index.html');
+      const pageContent = indexHtml || httpServer.services?.http?.content || t.helloWorld;
+      setHttpAppContent(pageContent);
+      setHttpAppTitle(`${httpServer.name || httpServer.id} Web Page`);
+      addLocalOutput('html', pageContent);
     }
   }, [addLocalOutput, deviceStates, findHttpServerByTargetCallback, getAvailableIotDevices, getConnectedIotDevices, hasGatewayForTargetCallback, isLoopbackTarget, isValidIpv4, isValidIpv6, language, normalizeLookupTargetCallback, pcDNS, resolveDeviceNameTargetCallback, t, iotDevices, topologyDevices, generateIotWebPanelContent, generateIotDevicePageContent, httpAppDeviceId, topologyConnections, pcIPv6, addPcArpEntry]);
 

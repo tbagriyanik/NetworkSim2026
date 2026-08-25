@@ -62,6 +62,10 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `nbtstat [-n] [-c] [-r] [-R] [-RR] [-S] [-s] [-a name] [-A ip] [-L name]` | NetBIOS status / statistics |
 | `hostname` | Display computer name |
 | `dir` | List directory contents |
+| `type <file>` | Display text file contents |
+| `copy <src> <dest>` | Copy file to another location |
+| `move <src> <dest>` | Move file or directory |
+| `ren <old> <new>` | Rename file or directory |
 | `ver` | Display OS version |
 | `cls` | Clear the screen |
 | `help` / `?` | Display command help |

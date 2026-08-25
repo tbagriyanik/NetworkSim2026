@@ -1,5 +1,6 @@
-import { CanvasDevice, CanvasConnection } from '../networkTopology.types';
-import { SwitchState, Port } from '@/lib/network/types';
+import { loadFs, listDir, isDir, resolvePath } from './pcFileSystem';
+import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
+import type { SwitchState, Port } from '@/lib/network/types';
 import { expandCommandContext, DESKTOP_COMMANDS } from '../pcPanel.utils';
 
 export function getConsoleDevice({
@@ -37,12 +38,16 @@ export function getAutocompleteSuggestions({
   topologyDevices,
   deviceStates,
   getCommandMode,
+  deviceId,
+  currentPath,
 }: {
   value: string;
   activeTab: 'desktop' | 'terminal' | string;
   topologyDevices: CanvasDevice[];
   deviceStates?: Map<string, SwitchState>;
   getCommandMode: () => string;
+  deviceId?: string;
+  currentPath?: string;
 }): string[] {
   const isIpv4 = (raw: string) => /^(25[0-5]|2[0-4]\d|1?\d?\d)(\.(25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(raw);
   const collectKnownIps = () => {
@@ -62,6 +67,50 @@ export function getAutocompleteSuggestions({
     || /^(?:telnet|ssh|ping|curl|wget|ip\s+default-gateway|default-router|dns-server)\s*$/i.test(trimmed);
 
   if (activeTab === 'desktop') {
+    const trimmedVal = value.trimStart();
+    const parts = trimmedVal.split(/\s+/);
+    const firstCmd = parts[0]?.toLowerCase() || '';
+    const fileCmds = ['python', 'py', 'python3', 'edit', 'notepad', 'cat', 'del', 'delete', 'rm', 'type', 'dir', 'ls', 'cd', 'chdir', 'rd', 'rmdir', 'md', 'mkdir', 'copy', 'move', 'ren', 'rename'];
+    const isFileCmd = fileCmds.includes(firstCmd);
+    const hasSpaceAfterCmd = value.includes(' ');
+
+    if (isFileCmd && hasSpaceAfterCmd && deviceId) {
+      const rawArg = value.endsWith(' ') ? '' : (parts[parts.length - 1] || '');
+      const fs = loadFs(deviceId);
+
+      let dirPrefix = '';
+      let searchPrefix = rawArg;
+      let searchDir = currentPath || 'C:\\';
+
+      const lastSlash = Math.max(rawArg.lastIndexOf('/'), rawArg.lastIndexOf('\\'));
+      if (lastSlash !== -1) {
+        dirPrefix = rawArg.substring(0, lastSlash + 1);
+        searchPrefix = rawArg.substring(lastSlash + 1);
+        searchDir = resolvePath(currentPath || 'C:\\', rawArg.substring(0, lastSlash));
+      }
+
+      if (isDir(fs, searchDir)) {
+        const entries = listDir(fs, searchDir);
+        const isDirOnly = ['cd', 'chdir', 'rd', 'rmdir'].includes(firstCmd);
+
+        const filtered = entries.filter(entry => {
+          const entryPath = resolvePath(searchDir, entry);
+          if (isDirOnly && !isDir(fs, entryPath)) return false;
+          return entry.toLowerCase().startsWith(searchPrefix.toLowerCase());
+        });
+
+        const fileSuggestions = filtered.map(entry => {
+          const entryPath = resolvePath(searchDir, entry);
+          const trailing = isDir(fs, entryPath) ? '/' : '';
+          return `${dirPrefix}${entry}${trailing}`;
+        });
+
+        if (fileSuggestions.length > 0) {
+          return fileSuggestions.slice(0, 8);
+        }
+      }
+    }
+
     const base = DESKTOP_COMMANDS
       .filter((cmd) => cmd !== '?' && cmd.startsWith(currentWord))
       .slice(0, 8);
@@ -79,3 +128,4 @@ export function getAutocompleteSuggestions({
   const ipSuggestions = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(ctxCurrentWord || currentWord));
   return Array.from(new Set([...ipSuggestions, ...suggestions])).slice(0, 8);
 }
+

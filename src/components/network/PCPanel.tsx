@@ -25,7 +25,7 @@ import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
 import { PCPanelNavigation } from './pc-panel/PCPanelNavigation';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
 import { FileEditorModal } from './pc-panel/FileEditorModal';
-import { loadFs, saveFs, writeFile } from './pc-panel/pcFileSystem';
+import { loadFs, saveFs, writeFile, readFile, getFtpFilesFromUploadDir, syncMailFilesToFs, syncHttpContentToFs } from './pc-panel/pcFileSystem';
 import { HomeLauncher } from './pc-panel/HomeLauncher';
 import { PowerOffOverlay } from './pc-panel/PowerOffOverlay';
 import { getDefaultPcFiles, getPCConfigDefaults } from './pc-panel/pcPanelFiles';
@@ -352,12 +352,13 @@ export function PCPanel({
   }, [dnsFormDomain, dnsFormAddress, serviceDnsRecords, deviceId, serviceDnsEnabled]);
 
   const [serviceHttpEnabled, setServiceHttpEnabled] = useState(deviceFromTopology?.services?.http?.enabled ?? false);
-  const [serviceHttpContent, setServiceHttpContent] = useState(deviceFromTopology?.services?.http?.content || t.helloWorld);
+  const [serviceHttpContent, setServiceHttpContent] = useState(() => {
+    const fs = loadFs(deviceId);
+    const wwwIndex = readFile(fs, 'C:\\www\\index.html') || readFile(fs, 'www/index.html');
+    return wwwIndex || deviceFromTopology?.services?.http?.content || t.helloWorld;
+  });
   const [serviceFtpEnabled, setServiceFtpEnabled] = useState(deviceFromTopology?.services?.ftp?.enabled ?? false);
-
-  const [serviceFtpFiles, setServiceFtpFiles] = useState(deviceFromTopology?.services?.ftp?.files || [
-    { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
-  ]);
+  const [serviceFtpFiles, setServiceFtpFiles] = useState<PcFile[]>(() => getFtpFilesFromUploadDir(deviceId));
   const [serviceMailEnabled, setServiceMailEnabled] = useState(deviceFromTopology?.services?.mail?.enabled ?? false);
   const [serviceMailDomain, setServiceMailDomain] = useState(deviceFromTopology?.services?.mail?.domain || 'local.lan');
   const [serviceMailUsername, setServiceMailUsername] = useState(deviceFromTopology?.services?.mail?.username || 'user');
@@ -385,13 +386,19 @@ export function PCPanel({
     if (typeof window !== 'undefined') {
       localStorage.setItem(`mail_inbox_${deviceId}`, JSON.stringify(serviceMailInbox));
     }
-  }, [serviceMailInbox, deviceId]);
+    syncMailFilesToFs(deviceId, serviceMailInbox, serviceMailSent);
+  }, [serviceMailInbox, serviceMailSent, deviceId]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
     }
-  }, [serviceMailSent, deviceId]);
+    syncMailFilesToFs(deviceId, serviceMailInbox, serviceMailSent);
+  }, [serviceMailSent, serviceMailInbox, deviceId]);
+
+  useEffect(() => {
+    syncHttpContentToFs(deviceId, serviceHttpContent);
+  }, [serviceHttpContent, deviceId]);
   const mailPop3Blocked = useMemo(() => {
     if (activeServiceTab !== 'mail' || !pcIP) return false;
     const result = checkConnectivity(deviceId, pcIP, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '110' });
@@ -646,9 +653,7 @@ export function PCPanel({
       setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? false);
       setServiceHttpContent(deviceFromTopology?.services?.http?.content || t.helloWorld);
       setServiceFtpEnabled(deviceFromTopology?.services?.ftp?.enabled ?? false);
-      setServiceFtpFiles(deviceFromTopology?.services?.ftp?.files || [
-        { name: 'readme.txt', size: 1280, modifiedAt: new Date().toISOString() },
-      ]);
+      setServiceFtpFiles(getFtpFilesFromUploadDir(deviceId));
       setServiceMailEnabled(deviceFromTopology?.services?.mail?.enabled ?? false);
       setServiceMailDomain(deviceFromTopology?.services?.mail?.domain || 'local.lan');
       setServiceMailUsername(deviceFromTopology?.services?.mail?.username || 'user');
@@ -837,8 +842,16 @@ export function PCPanel({
     if (pcOutputs?.has(deviceId)) {
       return pcOutputs.get(deviceId) as OutputLine[];
     }
-    return getInitialPcOutput(deviceFromTopology);
+    return getInitialPcOutput(deviceFromTopology, deviceId);
   });
+
+  const prevPoweredOffRef = useRef<boolean>(isPcPoweredOff);
+  useEffect(() => {
+    if (prevPoweredOffRef.current && !isPcPoweredOff) {
+      setPcOutput(getInitialPcOutput(deviceFromTopology, deviceId));
+    }
+    prevPoweredOffRef.current = isPcPoweredOff;
+  }, [isPcPoweredOff, deviceFromTopology, deviceId]);
   const [httpAppContent, setHttpAppContent] = useState<string | null>(null);
   const [httpAppUrl, setHttpAppUrl] = useState<string>('');
   const [httpAppTitle, setHttpAppTitle] = useState<string>('HTTP Page');
@@ -1014,6 +1027,8 @@ export function PCPanel({
   const { activeConsoleOutput, handleCopyAll, getCommandMode, getAutocompleteSuggestionsCallback, renderAutocompleteSuggestions, shouldShowAutocomplete } = usePCPanelTerminalSync({
     isConsoleConnected,
     connectedDeviceId,
+    deviceId,
+    currentPath,
     deviceOutputs: deviceOutputs || new Map(),
     consoleConnectionTime,
     activeTab,
@@ -1886,6 +1901,8 @@ export function PCPanel({
     consoleConfirmDialog,
     consoleReloadPending,
     connectedDeviceId,
+    deviceId,
+    currentPath,
     onExecuteDeviceCommand,
     setConsolePasswordAttempted,
     setIsConsoleConnected,
@@ -2258,6 +2275,12 @@ export function PCPanel({
 
                       {activeTab === 'services' && (
                         <PCServices
+                          deviceId={deviceId}
+                          onEditFile={(filePath) => {
+                            const fs = loadFs(deviceId);
+                            const content = readFile(fs, filePath) ?? '';
+                            setEditingFile({ path: filePath, content });
+                          }}
                           isDark={isDark}
                           language={language}
                           t={t}

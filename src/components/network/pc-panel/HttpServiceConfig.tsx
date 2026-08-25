@@ -3,8 +3,10 @@
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
+import { syncHttpContentToFs } from './pcFileSystem';
 
 interface HttpServiceConfigProps {
+  deviceId?: string;
   isDark: boolean;
   language: string;
   t: Record<string, string>;
@@ -27,6 +29,7 @@ interface HttpServiceConfigProps {
 }
 
 export function HttpServiceConfig({
+  deviceId,
   isDark,
   language,
   t,
@@ -49,6 +52,13 @@ export function HttpServiceConfig({
 }: HttpServiceConfigProps) {
   const httpContentRef = useRef<HTMLTextAreaElement>(null);
 
+  const updateContent = (val: string) => {
+    setServiceHttpContent(val);
+    if (deviceId) {
+      syncHttpContentToFs(deviceId, val);
+    }
+  };
+
   const applyHttpFormatting = (tag: 'b' | 'i' | 'u') => {
     const el = httpContentRef.current;
     if (!el) return;
@@ -58,7 +68,7 @@ export function HttpServiceConfig({
     const selected = text.substring(start, end);
     const formatted = `<${tag}>${selected}</${tag}>`;
     const nextValue = text.substring(0, start) + formatted + text.substring(end);
-    setServiceHttpContent(nextValue);
+    updateContent(nextValue);
     dispatchDeviceConfig({
       services: {
         dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
@@ -136,7 +146,7 @@ export function HttpServiceConfig({
           <textarea
             ref={httpContentRef}
             value={serviceHttpContent}
-            onChange={(e) => setServiceHttpContent(e.target.value)}
+            onChange={(e) => updateContent(e.target.value)}
             placeholder={t.helloWorld}
             rows={6}
             className={`w-full rounded-lg border px-3 py-2 text-sm font-mono resize-y ${isDark ? 'bg-secondary-900 border-secondary-700 text-secondary-200' : 'bg-white border-secondary-300 text-secondary-700'}`}

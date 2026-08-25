@@ -10,6 +10,9 @@ import {
   readFile,
   writeFile,
   deleteFile,
+  copyFile,
+  moveNode,
+  renameNode,
 } from '@/components/network/pc-panel/pcFileSystem';
 import { executePythonScript, executePythonScriptAsync } from '@/components/network/pc-panel/pcPythonRunner';
 
@@ -42,7 +45,7 @@ describe('pcFileSystem & pcPythonRunner tests', () => {
 
   it('should create and list directories in FS', () => {
     const fs = loadFs('pc-1');
-    expect(listDir(fs, 'C:\\')).toEqual([]);
+    expect(listDir(fs, 'C:\\')).toEqual(['autoexec.bat', 'config.sys', 'boot.ini', 'www', 'upload', 'mail', 'code']);
 
     makeDir(fs, 'C:\\myfolder');
     expect(listDir(fs, 'C:\\')).toContain('myfolder');
@@ -794,5 +797,32 @@ for x, y in pairs:
     expect(res.output).toContain('hello and world are not anagram.');
     expect(res.output.trim().split('\n')).toHaveLength(2);
     expect(res.error).toBeUndefined();
+  });
+
+  it('should copy, move, and rename files/directories correctly', () => {
+    const fs = loadFs('pc-test-fs');
+    writeFile(fs, 'C:\\autoexec.bat', '@echo off\necho Test Boot');
+    
+    // Test copyFile
+    const copied = copyFile(fs, 'C:\\autoexec.bat', 'C:\\autoexec.bak');
+    expect(copied).toBe(true);
+    expect(readFile(fs, 'C:\\autoexec.bak')).toBe('@echo off\necho Test Boot');
+
+    // Test copyFile into directory
+    const copyDir = copyFile(fs, 'C:\\autoexec.bat', 'C:\\code');
+    expect(copyDir).toBe(true);
+    expect(readFile(fs, 'C:\\code\\autoexec.bat')).toBe('@echo off\necho Test Boot');
+
+    // Test moveNode
+    const moved = moveNode(fs, 'C:\\autoexec.bak', 'C:\\code\\autoexec.ren');
+    expect(moved).toBe(true);
+    expect(readFile(fs, 'C:\\autoexec.bak')).toBeNull();
+    expect(readFile(fs, 'C:\\code\\autoexec.ren')).toBe('@echo off\necho Test Boot');
+
+    // Test renameNode
+    const renamed = renameNode(fs, 'C:\\code\\autoexec.ren', 'boot.old');
+    expect(renamed.success).toBe(true);
+    expect(readFile(fs, 'C:\\code\\autoexec.ren')).toBeNull();
+    expect(readFile(fs, 'C:\\code\\boot.old')).toBe('@echo off\necho Test Boot');
   });
 });

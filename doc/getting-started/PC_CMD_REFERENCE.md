@@ -199,6 +199,10 @@ ipconfig /displaydns
 
 | Komut | Açıklama |
 |---|---|
+| `copy <source> [destination]` | Dosyayı aynı klasörde veya farklı bir konuma kopyalar |
+| `move <source> [destination]` | Dosya veya klasörü taşır/yeniden adlandırır |
+| `ren <oldname> <newname>` | Dosya veya klasörün adını değiştirir |
+| `type <dosya>` | Metin dosyasının içeriğini ekranda gösterir |
 | `ping6 <ipv6-adresi>` | IPv6 ping |
 | `curl <url>` | HTTP GET isteği (PC HTTP browser simülasyonu) |
 | `wget <url>` | Dosya veya web sayfası indir (IoT Web Panel erişimi için) |

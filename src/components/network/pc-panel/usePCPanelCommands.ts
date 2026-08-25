@@ -11,7 +11,8 @@ import { errorHandler, DHCP_ERRORS, DEVICE_ERRORS } from '@/lib/errors/errorHand
 import { formatMacForArp } from './pcPanelHelpers';
 import {
   loadFs, saveFs, resolvePath, isDir, listDir, makeDir, removeDir,
-  readFile, deleteFile,
+  readFile, deleteFile, getNodeDetails, getFtpFilesFromUploadDir, writeFile,
+  copyFile, moveNode, renameNode,
 } from './pcFileSystem';
 import { executePythonScript, executePythonScriptAsync } from './pcPythonRunner';
 
@@ -203,11 +204,20 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
   const executeFtpPut = useCallback((fileName: string) => {
     const session = ftpSession;
     if (!session) return;
-    const newFile = { name: fileName, size: 1024, modifiedAt: new Date().toISOString() };
-    const nextFiles = [...(session.files || []), newFile];
-    setFtpSession({ ...session, files: nextFiles });
+
+    const clientFs = loadFs(deviceId);
+    const content = readFile(clientFs, `C:\\upload\\${fileName}`) || readFile(clientFs, `C:\\${fileName}`) || 'Sample FTP Data';
+    writeFile(clientFs, `C:\\upload\\${fileName}`, content);
+    saveFs(deviceId, clientFs);
 
     if (session.targetDeviceId) {
+      const serverFs = loadFs(session.targetDeviceId);
+      writeFile(serverFs, `C:\\upload\\${fileName}`, content);
+      saveFs(session.targetDeviceId, serverFs);
+
+      const serverFiles = getFtpFilesFromUploadDir(session.targetDeviceId);
+      setFtpSession({ ...session, files: serverFiles });
+
       const targetDev = topologyDevices.find(d => d.id === session.targetDeviceId);
       if (targetDev) {
         window.dispatchEvent(new CustomEvent('update-topology-device-config', {
@@ -219,7 +229,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
                 ftp: {
                   ...targetDev.services?.ftp,
                   enabled: true,
-                  files: [...((targetDev.services?.ftp?.files || []).filter((f: { name: string }) => f.name !== fileName)), newFile]
+                  files: serverFiles,
                 }
               }
             }
@@ -229,7 +239,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     }
 
     addLocalOutput('output', `150 Opening BINARY mode data connection for ${fileName}\n226 Transfer complete.`);
-  }, [ftpSession, addLocalOutput, topologyDevices, setFtpSession]);
+  }, [ftpSession, addLocalOutput, topologyDevices, setFtpSession, deviceId]);
 
   const handleFtpSessionCommand = useCallback((cmdLine: string) => {
     const session = ftpSession;
@@ -245,7 +255,9 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
       return;
     }
     if (cmd === 'ls' || cmd === 'dir') {
-      const files = session.files;
+      const files = session.targetDeviceId
+        ? getFtpFilesFromUploadDir(session.targetDeviceId)
+        : (session.files || []);
       if (!files || files.length === 0) {
         addLocalOutput('output', '(empty)');
       } else {
@@ -257,13 +269,18 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     const getMatch = cmdLine.trim().match(/^(get|recv|mget)\s+(.+)/i);
     if (getMatch) {
       const fileName = getMatch[2];
-      const serverFile = session.files?.find(f => f.name.toLowerCase() === fileName.toLowerCase());
-      const localFile = { name: fileName, size: serverFile?.size || 0, modifiedAt: new Date().toISOString() };
-      setPcLocalFiles(prev => {
-        const updated = prev.filter(f => f.name !== fileName).concat(localFile);
-        try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(updated)); } catch { /* ignore */ }
-        return updated;
-      });
+      const targetDevId = session.targetDeviceId;
+      let content = 'Sample FTP File Content';
+      if (targetDevId) {
+        const serverFs = loadFs(targetDevId);
+        content = readFile(serverFs, `C:\\upload\\${fileName}`) || readFile(serverFs, `C:\\${fileName}`) || content;
+      }
+      const clientFs = loadFs(deviceId);
+      writeFile(clientFs, `C:\\upload\\${fileName}`, content);
+      saveFs(deviceId, clientFs);
+
+      const localFile = { name: fileName, size: content.length, modifiedAt: new Date().toISOString() };
+      setPcLocalFiles(prev => prev.filter(f => f.name !== fileName).concat(localFile));
       addLocalOutput('output', `150 Opening BINARY mode data connection for ${fileName}\n226 Transfer complete.`);
       return;
     }
@@ -271,19 +288,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     if (putMatch) {
       if (putMatch[2]) {
         const fileName = putMatch[2];
-        const localFile = pcLocalFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
-        if (localFile) {
-          executeFtpPut(localFile.name);
-        } else {
-          addLocalOutput('error', `Local file '${fileName}' not found.`);
-        }
+        executeFtpPut(fileName);
       } else {
         setIsFtpFilePickerOpen(true);
       }
       return;
     }
     addLocalOutput('output', '200 Command okay.');
-  }, [ftpSession, addLocalOutput, topologyDevices, setFtpSession, deviceId, setIsFtpFilePickerOpen, pcLocalFiles, executeFtpPut, setPcLocalFiles]);
+  }, [ftpSession, addLocalOutput, setFtpSession, deviceId, setIsFtpFilePickerOpen, executeFtpPut, setPcLocalFiles]);
 
   const executeCommand = useCallback(async (cmdToExecute?: string) => {
     const command = (cmdToExecute || input).trim();
@@ -996,7 +1008,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           emit('output', '220 FTP server ready.');
           emit('success', language === 'tr' ? 'Dosya transfer ekranı açıldı.' : 'File transfer window opened.');
         } else if (cmd === 'help' || cmd === '?') {
-          emit('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, cd, md, rd, dir, type, del, edit, python, ver, cls, exit, quit`);
+          emit('output', `Available commands: ipconfig, ping, tracert, traceroute, telnet, ssh, ftp, netstat, nbtstat, getmac, nslookup, curl, wget, arp, hostname, cd, md, rd, dir, type, copy, move, ren, rename, del, edit, python, ver, cls, exit, quit`);
         } else if (cmd === 'cls') {
           setPcOutput([]);
         } else if (cmd === 'exit' || cmd === 'quit') {
@@ -1064,38 +1076,63 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           }
         } else if (cmd === 'dir' || cmd === 'ls') {
           const fs = loadFs(deviceId);
-          const entries = listDir(fs, currentPath);
-          let totalFiles = 0;
-          let totalSize = 0;
-          const dirLines: string[] = [];
-          dirLines.push(`08/24/2026  12:00 PM    <DIR>          .`);
-          dirLines.push(`08/24/2026  12:00 PM    <DIR>          ..`);
+          const targetArg = args.join(' ').trim();
+          const targetPath = targetArg ? resolvePath(currentPath, targetArg) : currentPath;
 
-          for (const entryName of entries) {
-            const fileContent = readFile(fs, resolvePath(currentPath, entryName));
-            if (fileContent !== null) {
-              totalFiles++;
-              const size = fileContent.length;
-              totalSize += size;
-              dirLines.push(`08/24/2026  12:00 PM             ${size.toString().padStart(8)} ${entryName}`);
-            } else {
-              dirLines.push(`08/24/2026  12:00 PM    <DIR>          ${entryName}`);
-            }
-          }
+          if (!isDir(fs, targetPath)) {
+            emit('error', 'The system cannot find the path specified.');
+          } else {
+            const entries = listDir(fs, targetPath);
+            let totalFiles = 0;
+            let totalSize = 0;
+            let totalDirs = 2; // '.' and '..'
+            const dirLines: string[] = [];
 
-          const isRoot = currentPath === 'C:\\' || currentPath === 'C:';
-          if (isRoot) {
-            for (const f of pcLocalFiles) {
-              if (!entries.includes(f.name)) {
-                totalFiles++;
-                totalSize += f.size || 0;
-                dirLines.push(`08/24/2026  12:00 PM             ${(f.size || 0).toString().padStart(8)} ${f.name}`);
+            const formatDate = (isoStr?: string) => {
+              if (!isoStr) return '08/25/2026  08:00 AM';
+              try {
+                const d = new Date(isoStr);
+                if (isNaN(d.getTime())) return '08/25/2026  08:00 AM';
+                const mm = String(d.getMonth() + 1).padStart(2, '0');
+                const dd = String(d.getDate()).padStart(2, '0');
+                const yyyy = d.getFullYear();
+                let hours = d.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12 || 12;
+                const hh = String(hours).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                return `${mm}/${dd}/${yyyy}  ${hh}:${min} ${ampm}`;
+              } catch {
+                return '08/25/2026  08:00 AM';
+              }
+            };
+
+            const rootDetails = getNodeDetails(fs, targetPath);
+            const parentDetails = getNodeDetails(fs, resolvePath(targetPath, '..'));
+
+            dirLines.push(`${formatDate(rootDetails?.modifiedAt)}    <DIR>          .`);
+            dirLines.push(`${formatDate(parentDetails?.modifiedAt)}    <DIR>          ..`);
+
+            for (const entryName of entries) {
+              const fullEntryPath = resolvePath(targetPath, entryName);
+              const details = getNodeDetails(fs, fullEntryPath);
+              if (details) {
+                const dateStr = formatDate(details.modifiedAt);
+                if (details.type === 'file') {
+                  totalFiles++;
+                  totalSize += details.size;
+                  dirLines.push(`${dateStr}             ${details.size.toString().padStart(12)} ${entryName}`);
+                } else {
+                  totalDirs++;
+                  dirLines.push(`${dateStr}    <DIR>          ${entryName}`);
+                }
               }
             }
-          }
 
-          const dirOutput = ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of ${currentPath}\n\n${dirLines.join('\n')}\n               ${totalFiles} File(s)          ${totalSize} bytes\n                ${dirLines.filter(l => l.includes('<DIR>')).length} Dir(s)  100,000,000,000 bytes free`;
-          emit('output', dirOutput);
+            const displayDir = targetPath.endsWith('\\') ? targetPath : `${targetPath}\\`;
+            const dirOutput = ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of ${displayDir}\n\n${dirLines.join('\n')}\n               ${totalFiles} File(s)          ${totalSize.toLocaleString()} bytes\n               ${totalDirs} Dir(s)  100,000,000,000 bytes free`;
+            emit('output', dirOutput);
+          }
         } else if (cmd === 'type' || cmd === 'cat') {
           const fileName = args.join(' ').trim();
           if (!fileName) {
@@ -1134,6 +1171,51 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               emit('success', `File ${fileName} deleted.`);
             } else {
               emit('error', 'Could Not Find ' + targetPath);
+            }
+          }
+        } else if (cmd === 'copy') {
+          if (args.length < 2) {
+            emit('output', 'The syntax of the command is incorrect.');
+          } else {
+            const fs = loadFs(deviceId);
+            const srcPath = resolvePath(currentPath, args[0]);
+            const destPath = resolvePath(currentPath, args[1]);
+            const copied = copyFile(fs, srcPath, destPath);
+            if (copied) {
+              saveFs(deviceId, fs);
+              emit('output', '        1 file(s) copied.');
+            } else {
+              emit('error', 'The system cannot find the file specified.');
+            }
+          }
+        } else if (cmd === 'move') {
+          if (args.length < 2) {
+            emit('output', 'The syntax of the command is incorrect.');
+          } else {
+            const fs = loadFs(deviceId);
+            const srcPath = resolvePath(currentPath, args[0]);
+            const destPath = resolvePath(currentPath, args[1]);
+            const moved = moveNode(fs, srcPath, destPath);
+            if (moved) {
+              saveFs(deviceId, fs);
+              emit('output', '        1 file(s) moved.');
+            } else {
+              emit('error', 'The system cannot find the file specified.');
+            }
+          }
+        } else if (cmd === 'ren' || cmd === 'rename') {
+          if (args.length < 2) {
+            emit('output', 'The syntax of the command is incorrect.');
+          } else {
+            const fs = loadFs(deviceId);
+            const targetPath = resolvePath(currentPath, args[0]);
+            const res = renameNode(fs, targetPath, args[1]);
+            if (res.success) {
+              saveFs(deviceId, fs);
+            } else if (res.error === 'exists') {
+              emit('error', 'A duplicate file name exists, or the file cannot be found.');
+            } else {
+              emit('error', 'The system cannot find the file specified.');
             }
           }
         } else if (cmd === 'edit' || cmd === 'notepad') {

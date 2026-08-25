@@ -129,6 +129,10 @@
 | `nbtstat [-n] [-c] [-r] [-R] [-RR] [-S] [-s] [-a name] [-A ip] [-L name]` | NetBIOS status | NetBIOS durumu |
 | `hostname` | Computer name | Bilgisayar adı |
 | `dir` | Directory listing | Dosya listesi |
+| `type <file>` | Display file contents | Dosya içeriğini göster |
+| `copy <src> <dest>` | Copy file | Dosya kopyala |
+| `move <src> <dest>` | Move file or directory | Dosya/klasör taşı |
+| `ren <old> <new>` | Rename file or directory | Yeniden adlandır |
 | `ver` | Version info | Versiyon bilgisi |
 | `cls` | Clear screen | Ekranı temizle |
 | `help` / `?` | Desktop command help | PC komut yardımı |

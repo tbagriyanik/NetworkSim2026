@@ -6,6 +6,7 @@ import type { SwitchState } from '@/lib/network/types';
 import type { OutputLine } from './PCPanel.types';
 import { checkConnectivity } from '@/lib/network/connectivity';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
+import { syncMailFilesToFs } from './pcFileSystem';
 
 interface UsePCPanelMailOptions {
   language: string;
@@ -130,7 +131,13 @@ export function usePCPanelMail({
       if (typeof window !== 'undefined')
         localStorage.setItem(`mail_inbox_${targetDevice.id}`, JSON.stringify(updatedInbox));
       const newSentEntry = { from, to: recipient, subject: subj, body: bdy, timestamp };
-      setServiceMailSent((prev) => [newSentEntry, ...prev]);
+      const nextSent = [newSentEntry, ...serviceMailSent];
+      setServiceMailSent(nextSent);
+
+      // Sync mail files to FS for target and local device
+      syncMailFilesToFs(targetDevice.id, updatedInbox, targetDevice.services?.mail?.sent || []);
+      syncMailFilesToFs(deviceId, serviceMailInbox, nextSent);
+
       window.dispatchEvent(
         new CustomEvent('update-topology-device-config', {
           detail: {
@@ -160,7 +167,7 @@ export function usePCPanelMail({
                   username: serviceMailUsername,
                   password: serviceMailPassword,
                   inbox: serviceMailInbox,
-                  sent: [newSentEntry, ...serviceMailSent],
+                  sent: nextSent,
                 },
               },
             },
@@ -320,6 +327,7 @@ export function usePCPanelMail({
     (idx: number) => {
       const updated = serviceMailInbox.filter((_, i) => i !== idx);
       setServiceMailInbox(updated);
+      syncMailFilesToFs(deviceId, updated, serviceMailSent);
       dispatchDeviceConfig({
         services: {
           dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
@@ -352,6 +360,7 @@ export function usePCPanelMail({
       serviceDhcpEnabled,
       serviceDhcpPools,
       dispatchDeviceConfig,
+      deviceId,
     ]
   );
 
@@ -359,6 +368,7 @@ export function usePCPanelMail({
     (idx: number) => {
       const updated = serviceMailSent.filter((_, i) => i !== idx);
       setServiceMailSent(updated);
+      syncMailFilesToFs(deviceId, serviceMailInbox, updated);
       dispatchDeviceConfig({
         services: {
           dns: { enabled: serviceDnsEnabled, records: serviceDnsRecords },
@@ -391,6 +401,7 @@ export function usePCPanelMail({
       serviceDhcpEnabled,
       serviceDhcpPools,
       dispatchDeviceConfig,
+      deviceId,
     ]
   );
 
