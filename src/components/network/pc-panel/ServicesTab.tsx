@@ -261,6 +261,7 @@ export function ServicesTab({
         {activeServiceTab === 'http' && (
           <HttpServiceConfig
             deviceId={deviceId}
+            onEditFile={onEditFile}
             isDark={isDark}
             language={language}
             t={t}

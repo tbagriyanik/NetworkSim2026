@@ -58,7 +58,7 @@ multi(0)disk(0)rdisk(0)partition(1)\\WINDOWS="Network Simulator OS" /fastdetect`
   </style>
 </head>
 <body>
-  <h1>Welcome to Network Simulator PC Web Server</h1>
+  <h1>Merhaba Dünya! / Hello World!</h1>
   <p>This page is served from C:\\www\\index.html</p>
 </body>
 </html>`,
@@ -537,6 +537,7 @@ export function renameNode(fs: FSNode, targetPath: string, newName: string): { s
 /** Sync HTTP Service content with C:\www\index.html */
 export function syncHttpContentToFs(deviceId: string, content: string): void {
   const fs = loadFs(deviceId);
+  makeDir(fs, 'C:\\www');
   writeFile(fs, 'C:\\www\\index.html', content);
   saveFs(deviceId, fs);
 }

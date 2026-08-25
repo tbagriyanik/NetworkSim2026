@@ -12,6 +12,26 @@ import { colors } from '@/lib/design-tokens/colors';
 const inriaSans = localFont({
   src: [
     {
+      path: "../../public/fonts/InriaSans-LatinExt-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/InriaSans-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/InriaSans-LatinExt-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/InriaSans-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+    {
       path: "../../public/fonts/InriaSans-Regular.woff",
       weight: "400",
       style: "normal",

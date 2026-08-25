@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Save, Play, FileCode, File, FolderOpen, Minus, Plus, Scissors, Copy, ClipboardPaste, Trash2, ListChecks, Undo2, Redo2, WrapText } from 'lucide-react';
+import {
+  Save, Play, FileCode, File, FolderOpen, Minus, Plus, Scissors, Copy,
+  ClipboardPaste, Trash2, ListChecks, Undo2, Redo2, WrapText,
+  Bold, Italic, Underline, Code, Image, Link as LinkIcon, Heading1, Heading2, Heading3
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { PythonCodeEditor } from './PythonCodeEditor';
@@ -94,6 +98,45 @@ export function FileEditorModal({
 
   const fileName = filePath.split(/[\\/]/).pop() || filePath;
   const isPythonFile = fileName.toLowerCase().endsWith('.py');
+  const isHtmlFile = fileName.toLowerCase().endsWith('.html') || fileName.toLowerCase().endsWith('.htm');
+
+  const applyHtmlTag = (tag: string, selfClosing = false) => {
+    const textarea = document.querySelector<HTMLTextAreaElement>('div[data-code-editor="true"] textarea');
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = content.substring(start, end);
+
+    let replacement = '';
+
+    if (selfClosing) {
+      if (tag === 'a') {
+        replacement = `<a href="#">${selected || 'Link'}</a>`;
+      } else if (tag === 'img') {
+        replacement = `<img src="#" alt="${selected || 'image'}" />`;
+      } else if (tag === 'br') {
+        replacement = `<br />`;
+      } else if (tag === 'hr') {
+        replacement = `<hr />`;
+      }
+    } else {
+      replacement = `<${tag}>${selected}</${tag}>`;
+    }
+
+    const newContent = content.substring(0, start) + replacement + content.substring(end);
+    updateContent(newContent);
+
+    setTimeout(() => {
+      textarea.focus();
+      if (start === end && !selfClosing) {
+        const insidePos = start + tag.length + 2;
+        textarea.setSelectionRange(insidePos, insidePos);
+      } else {
+        const nextPos = start + replacement.length;
+        textarea.setSelectionRange(nextPos, nextPos);
+      }
+    }, 50);
+  };
 
   const handleSave = () => {
     onSave(content);
@@ -246,6 +289,11 @@ export function FileEditorModal({
           Python Script
         </span>
       )}
+      {isHtmlFile && (
+        <span className="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 font-sans shrink-0">
+          HTML Page
+        </span>
+      )}
     </div>
   );
 
@@ -361,6 +409,96 @@ export function FileEditorModal({
         : 'flex min-h-10 flex-wrap items-center gap-0.5 border-b border-secondary-200 bg-secondary-100 px-2 py-1'}>
         {headerActions}
       </div>
+      {isHtmlFile && (
+        <div className={isDark
+          ? 'flex min-h-9 flex-wrap items-center gap-1 border-b border-secondary-800 bg-secondary-950/90 px-3 py-1 text-xs select-none'
+          : 'flex min-h-9 flex-wrap items-center gap-1 border-b border-secondary-200 bg-secondary-50 px-3 py-1 text-xs select-none'}>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-secondary-500 mr-1">
+            HTML:
+          </span>
+          <TooltipWrapper title="Kalın <b>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('b')} className="h-7 px-2 font-black text-xs shrink-0">
+              <Bold className="w-3.5 h-3.5 mr-0.5" /> B
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="İtalik <i>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('i')} className="h-7 px-2 italic text-xs shrink-0">
+              <Italic className="w-3.5 h-3.5 mr-0.5" /> I
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Altı Çizili <u>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('u')} className="h-7 px-2 underline text-xs shrink-0">
+              <Underline className="w-3.5 h-3.5 mr-0.5" /> U
+            </Button>
+          </TooltipWrapper>
+
+          <span className="mx-1 h-4 w-px bg-secondary-600/40 shrink-0" aria-hidden="true" />
+
+          <TooltipWrapper title="Başlık 1 <h1>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('h1')} className="h-7 px-2 font-bold text-xs shrink-0">
+              <Heading1 className="w-3.5 h-3.5 mr-0.5" /> H1
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Başlık 2 <h2>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('h2')} className="h-7 px-2 font-bold text-xs shrink-0">
+              <Heading2 className="w-3.5 h-3.5 mr-0.5" /> H2
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Başlık 3 <h3>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('h3')} className="h-7 px-2 font-bold text-xs shrink-0">
+              <Heading3 className="w-3.5 h-3.5 mr-0.5" /> H3
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Paragraf <p>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('p')} className="h-7 px-2 font-semibold text-xs shrink-0">
+              P
+            </Button>
+          </TooltipWrapper>
+
+          <span className="mx-1 h-4 w-px bg-secondary-600/40 shrink-0" aria-hidden="true" />
+
+          <TooltipWrapper title="Bağlantı <a>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('a', true)} className="h-7 px-2 text-xs shrink-0">
+              <LinkIcon className="w-3.5 h-3.5 mr-0.5" /> a
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Resim <img>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('img', true)} className="h-7 px-2 text-xs shrink-0">
+              <Image className="w-3.5 h-3.5 mr-0.5" /> img
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Kod <code>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('code')} className="h-7 px-2 text-xs shrink-0 font-mono">
+              <Code className="w-3.5 h-3.5 mr-0.5" /> code
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Bölüm <div>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('div')} className="h-7 px-2 text-xs shrink-0 font-mono">
+              div
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Satır İçi <span>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('span')} className="h-7 px-2 text-xs shrink-0 font-mono">
+              span
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Alt Satır <br>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('br', true)} className="h-7 px-2 text-xs shrink-0 font-mono">
+              br
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Liste <ul>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('ul')} className="h-7 px-2 text-xs shrink-0 font-mono">
+              ul
+            </Button>
+          </TooltipWrapper>
+          <TooltipWrapper title="Liste Elemanı <li>">
+            <Button size="sm" variant="ghost" onClick={() => applyHtmlTag('li')} className="h-7 px-2 text-xs shrink-0 font-mono">
+              li
+            </Button>
+          </TooltipWrapper>
+        </div>
+      )}
       <div data-code-editor="true" className="flex-1 relative flex flex-col font-mono text-sm overflow-hidden">
         <PythonCodeEditor
           value={content}

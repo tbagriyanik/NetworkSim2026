@@ -2,11 +2,13 @@
 
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { FileCode } from 'lucide-react';
 import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { syncHttpContentToFs } from './pcFileSystem';
 
 interface HttpServiceConfigProps {
   deviceId?: string;
+  onEditFile?: (filePath: string) => void;
   isDark: boolean;
   language: string;
   t: Record<string, string>;
@@ -30,6 +32,7 @@ interface HttpServiceConfigProps {
 
 export function HttpServiceConfig({
   deviceId,
+  onEditFile,
   isDark,
   language,
   t,
@@ -134,7 +137,21 @@ export function HttpServiceConfig({
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs font-bold tracking-wide text-secondary-500">HTTP Content</label>
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <label className="text-xs font-bold tracking-wide text-secondary-500">HTTP Content (C:\www\index.html)</label>
+            {onEditFile && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => onEditFile('C:\\www\\index.html')}
+                className="h-7 px-2.5 text-xs font-semibold gap-1.5 bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 border-sky-500/30 shrink-0"
+              >
+                <FileCode className="w-3.5 h-3.5" />
+                {language === 'tr' ? 'Gelişmiş Düzenleyici' : 'Advanced Editor'}
+              </Button>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
               <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black" onClick={() => applyHttpFormatting('b')}>B</Button>

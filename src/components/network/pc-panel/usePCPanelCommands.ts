@@ -1041,13 +1041,13 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             if (isDir(fs, targetPath)) {
               setCurrentPath(targetPath);
             } else {
-              emit('error', 'The system cannot find the path specified.');
+              emit('error', t.pathNotFound);
             }
           }
         } else if (cmd === 'md' || cmd === 'mkdir') {
           const folderName = args.join(' ').trim();
           if (!folderName) {
-            emit('output', 'The syntax of the command is incorrect.');
+            emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
             const targetPath = resolvePath(currentPath, folderName);
@@ -1062,7 +1062,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
         } else if (cmd === 'rd' || cmd === 'rmdir') {
           const folderName = args.join(' ').trim();
           if (!folderName) {
-            emit('output', 'The syntax of the command is incorrect.');
+            emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
             const targetPath = resolvePath(currentPath, folderName);
@@ -1071,7 +1071,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               saveFs(deviceId, fs);
               emit('success', `Directory ${folderName} removed.`);
             } else {
-              emit('error', 'The directory is not empty or cannot be found.');
+              emit('error', 'Directory not empty or cannot be found.');
             }
           }
         } else if (cmd === 'dir' || cmd === 'ls') {
@@ -1079,8 +1079,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           const targetArg = args.join(' ').trim();
           const targetPath = targetArg ? resolvePath(currentPath, targetArg) : currentPath;
 
-          if (!isDir(fs, targetPath)) {
-            emit('error', 'The system cannot find the path specified.');
+if (!isDir(fs, targetPath)) {
+              emit('error', t.pathNotFound);
           } else {
             const entries = listDir(fs, targetPath);
             let totalFiles = 0;
@@ -1133,10 +1133,10 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const dirOutput = ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of ${displayDir}\n\n${dirLines.join('\n')}\n               ${totalFiles} File(s)          ${totalSize.toLocaleString()} bytes\n               ${totalDirs} Dir(s)  100,000,000,000 bytes free`;
             emit('output', dirOutput);
           }
-        } else if (cmd === 'type' || cmd === 'cat') {
+} else if (cmd === 'type' || cmd === 'cat') {
           const fileName = args.join(' ').trim();
           if (!fileName) {
-            emit('output', 'The syntax of the command is incorrect.');
+            emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
             const targetPath = resolvePath(currentPath, fileName);
@@ -1149,14 +1149,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               if (localFile) {
                 emit('output', `[File ${localFile.name} (${localFile.size} bytes)]`);
               } else {
-                emit('error', 'The system cannot find the file specified.');
+                emit('error', t.fileNotFound);
               }
             }
           }
-        } else if (cmd === 'del' || cmd === 'delete' || cmd === 'rm') {
+} else if (cmd === 'del' || cmd === 'delete' || cmd === 'rm') {
           const fileName = args.join(' ').trim();
           if (!fileName) {
-            emit('output', 'The syntax of the command is incorrect.');
+            emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
             const targetPath = resolvePath(currentPath, fileName);
@@ -1168,14 +1168,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             }
             if (deletedFS || localFileExists) {
               if (deletedFS) saveFs(deviceId, fs);
-              emit('success', `File ${fileName} deleted.`);
+              emit('success', 'File deleted successfully.');
             } else {
-              emit('error', 'Could Not Find ' + targetPath);
+              emit('error', t.fileNotFound);
             }
           }
         } else if (cmd === 'copy') {
           if (args.length < 2) {
-            emit('output', 'The syntax of the command is incorrect.');
+            emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
             const srcPath = resolvePath(currentPath, args[0]);
@@ -1183,14 +1183,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const copied = copyFile(fs, srcPath, destPath);
             if (copied) {
               saveFs(deviceId, fs);
-              emit('output', '        1 file(s) copied.');
+              emit('output', t.copySuccess);
             } else {
-              emit('error', 'The system cannot find the file specified.');
+              emit('error', t.fileNotFound);
             }
           }
         } else if (cmd === 'move') {
           if (args.length < 2) {
-            emit('output', 'The syntax of the command is incorrect.');
+            emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
             const srcPath = resolvePath(currentPath, args[0]);
@@ -1198,14 +1198,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             const moved = moveNode(fs, srcPath, destPath);
             if (moved) {
               saveFs(deviceId, fs);
-              emit('output', '        1 file(s) moved.');
+              emit('output', t.moveSuccess);
             } else {
-              emit('error', 'The system cannot find the file specified.');
+              emit('error', t.fileNotFound);
             }
           }
         } else if (cmd === 'ren' || cmd === 'rename') {
           if (args.length < 2) {
-            emit('output', 'The syntax of the command is incorrect.');
+            emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
             const targetPath = resolvePath(currentPath, args[0]);
@@ -1213,9 +1213,9 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             if (res.success) {
               saveFs(deviceId, fs);
             } else if (res.error === 'exists') {
-              emit('error', 'A duplicate file name exists, or the file cannot be found.');
+              emit('error', t.duplicateFileError);
             } else {
-              emit('error', 'The system cannot find the file specified.');
+              emit('error', t.fileNotFound);
             }
           }
         } else if (cmd === 'edit' || cmd === 'notepad') {

@@ -150,15 +150,7 @@ export function PCPanel({
   const [ftpSession, setFtpSession] = useState<FtpSession | null>(null);
   const [pythonSession, setPythonSession] = useState<PythonSession | null>(null);
   const [isFtpFilePickerOpen, setIsFtpFilePickerOpen] = useState(false);
-  const [currentPath, setCurrentPath] = useState<string>(() => {
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(`pc_cwd_${deviceId}`);
-        if (stored) return stored;
-      } catch { }
-    }
-    return 'C:\\';
-  });
+  const [currentPath, setCurrentPath] = useState<string>('C:\\');
   const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
 
   // Local files downloaded via FTP get
@@ -214,8 +206,8 @@ export function PCPanel({
           setPcLocalFiles(defaults);
         }
 
-        const storedCwd = localStorage.getItem(`pc_cwd_${deviceId}`);
-        setCurrentPath(storedCwd || 'C:\\');
+        setCurrentPath('C:\\');
+        localStorage.setItem(`pc_cwd_${deviceId}`, 'C:\\');
       } catch { }
     }
   }, [deviceId]);
@@ -385,19 +377,25 @@ export function PCPanel({
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(`mail_inbox_${deviceId}`, JSON.stringify(serviceMailInbox));
+      localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
     }
     syncMailFilesToFs(deviceId, serviceMailInbox, serviceMailSent);
   }, [serviceMailInbox, serviceMailSent, deviceId]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
+    if (deviceId) {
+      const fs = loadFs(deviceId);
+      const wwwIndex = readFile(fs, 'C:\\www\\index.html') || readFile(fs, 'www/index.html');
+      if (wwwIndex !== null) {
+        setServiceHttpContent(wwwIndex);
+      }
     }
-    syncMailFilesToFs(deviceId, serviceMailInbox, serviceMailSent);
-  }, [serviceMailSent, serviceMailInbox, deviceId]);
+  }, [deviceId]);
 
   useEffect(() => {
-    syncHttpContentToFs(deviceId, serviceHttpContent);
+    if (deviceId && serviceHttpContent) {
+      syncHttpContentToFs(deviceId, serviceHttpContent);
+    }
   }, [serviceHttpContent, deviceId]);
   const mailPop3Blocked = useMemo(() => {
     if (activeServiceTab !== 'mail' || !pcIP) return false;
@@ -650,8 +648,9 @@ export function PCPanel({
       setIpConfigMode(deviceFromTopology?.ipConfigMode || 'static');
       setServiceDnsEnabled(deviceFromTopology?.services?.dns?.enabled ?? false);
       setServiceDnsRecords(deviceFromTopology?.services?.dns?.records || []);
-      setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? false);
-      setServiceHttpContent(deviceFromTopology?.services?.http?.content || t.helloWorld);
+      const fs = loadFs(deviceId);
+      const wwwIndex = readFile(fs, 'C:\\www\\index.html') || readFile(fs, 'www/index.html');
+      setServiceHttpContent(wwwIndex || deviceFromTopology?.services?.http?.content || t.helloWorld);
       setServiceFtpEnabled(deviceFromTopology?.services?.ftp?.enabled ?? false);
       setServiceFtpFiles(getFtpFilesFromUploadDir(deviceId));
       setServiceMailEnabled(deviceFromTopology?.services?.mail?.enabled ?? false);
@@ -849,6 +848,8 @@ export function PCPanel({
   useEffect(() => {
     if (prevPoweredOffRef.current && !isPcPoweredOff) {
       setPcOutput(getInitialPcOutput(deviceFromTopology, deviceId));
+      setCurrentPath('C:\\');
+      try { localStorage.setItem(`pc_cwd_${deviceId}`, 'C:\\'); } catch { }
     }
     prevPoweredOffRef.current = isPcPoweredOff;
   }, [isPcPoweredOff, deviceFromTopology, deviceId]);
