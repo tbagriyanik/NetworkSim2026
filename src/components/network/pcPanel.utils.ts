@@ -58,6 +58,7 @@ export const DESKTOP_COMMANDS = [
     'del',
     'edit',
     'python',
+    'call',
     'ver',
     'cls',
     'exit',

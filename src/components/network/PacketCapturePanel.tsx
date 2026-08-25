@@ -158,6 +158,17 @@ export const PacketCapturePanel = ({
     ARP: '0x0806',
     RARP: '0x8035',
     STP: '0x4242',
+    HTTP: '80',
+    HTTPS: '443',
+    FTP: '21',
+    SMTP: '25',
+    POP3: '110',
+    IMAP: '143',
+    DNS: '53',
+    DHCP: '67',
+    SSH: '22',
+    TELNET: '23',
+    NTP: '123',
   };
 
   const protocolWithNumber = (protocol: string): string => {
@@ -297,8 +308,28 @@ export const PacketCapturePanel = ({
                           return <td className="px-2 py-1 font-mono" key="source">{pkt.sourceIp}</td>;
                         case 'dest':
                           return <td className="px-2 py-1 font-mono" key="dest">{pkt.targetIp}</td>;
-                        case 'protocol':
-                          return <td className={`px-2 py-1 font-bold ${pkt.protocol === 'ICMP' ? 'text-primary-500' : pkt.protocol === 'ARP' ? 'text-amber-500' : pkt.protocol === 'STP' ? 'text-emerald-500' : 'text-purple-500'}`} key="proto">{protocolWithNumber(pkt.protocol)}</td>;
+                        case 'protocol': {
+                          const getProtocolColor = (proto: string) => {
+                            switch (proto.toUpperCase()) {
+                              case 'ICMP': return 'text-primary-500';
+                              case 'ARP': return 'text-amber-500';
+                              case 'STP': return 'text-emerald-500';
+                              case 'HTTP': return 'text-sky-500 dark:text-sky-400';
+                              case 'HTTPS': return 'text-blue-500 dark:text-blue-400';
+                              case 'FTP': return 'text-cyan-500 dark:text-cyan-400';
+                              case 'SMTP':
+                              case 'POP3':
+                              case 'IMAP':
+                              case 'MAIL': return 'text-rose-500 dark:text-rose-400';
+                              case 'DNS': return 'text-indigo-500 dark:text-indigo-400';
+                              case 'DHCP': return 'text-orange-500 dark:text-orange-400';
+                              case 'SSH':
+                              case 'TELNET': return 'text-teal-500 dark:text-teal-400';
+                              default: return 'text-purple-500';
+                            }
+                          };
+                          return <td className={`px-2 py-1 font-bold ${getProtocolColor(pkt.protocol)}`} key="proto">{protocolWithNumber(pkt.protocol)}</td>;
+                        }
                         case 'info':
                           return <td className="px-2 py-1 italic opacity-80" key="info">{pkt.info}</td>;
                         default:

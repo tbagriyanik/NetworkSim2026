@@ -99,6 +99,7 @@ export function FileEditorModal({
   const fileName = filePath.split(/[\\/]/).pop() || filePath;
   const isPythonFile = fileName.toLowerCase().endsWith('.py');
   const isHtmlFile = fileName.toLowerCase().endsWith('.html') || fileName.toLowerCase().endsWith('.htm');
+  const isBatFile = fileName.toLowerCase().endsWith('.bat') || fileName.toLowerCase().endsWith('.cmd');
 
   const applyHtmlTag = (tag: string, selfClosing = false) => {
     const textarea = document.querySelector<HTMLTextAreaElement>('div[data-code-editor="true"] textarea');
@@ -294,6 +295,11 @@ export function FileEditorModal({
           HTML Page
         </span>
       )}
+      {isBatFile && (
+        <span className="text-xs px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-sans shrink-0">
+          {language === 'tr' ? 'Batch Yığın Dosyası' : 'Batch Script'}
+        </span>
+      )}
     </div>
   );
 
@@ -343,7 +349,7 @@ export function FileEditorModal({
       <TooltipWrapper title="Satır kaydırma">
         <Button size="sm" variant={wordWrap ? 'default' : 'ghost'} onClick={() => setWordWrap(value => !value)} className="h-8 w-8 p-0 shrink-0"><WrapText className="h-3.5 w-3.5" /></Button>
       </TooltipWrapper>
-      {isPythonFile && (
+      {(isPythonFile || isBatFile) && (
         <TooltipWrapper title={language === 'tr' ? "Kaydet ve CMD'de Çalıştır (F5 / Ctrl+Enter)" : "Save & Run in CMD (F5 / Ctrl+Enter)"}>
           <Button
             size="sm"
@@ -510,6 +516,8 @@ export function FileEditorModal({
           placeholder={
             isPythonFile
               ? '# Python kodunuzu buraya yazın...\nprint("Merhaba Dunya!")'
+              : isBatFile
+              ? '@echo off\necho Network Simulator Batch Script\nset TARGET=192.168.1.1\nping %TARGET%'
               : '# Metin veya kod yazın...'
           }
         />

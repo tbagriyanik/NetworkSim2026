@@ -170,9 +170,13 @@ export function usePCPanelBrowser({
       }
     }
 
-    // Check firewall for HTTP traffic
     const connectivityResult = checkConnectivity(deviceId, resolvedTargetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
-    dispatchCapturedPackets(connectivityResult.capturedPackets);
+    const httpPackets = (connectivityResult.capturedPackets || []).map(p => ({
+      ...p,
+      protocol: 'HTTP',
+      info: `HTTP GET http://${displayUrl} (HTTP/1.1 200 OK)`
+    }));
+    dispatchCapturedPackets(httpPackets.length > 0 ? httpPackets : connectivityResult.capturedPackets);
     if (!connectivityResult.success && connectivityResult.error?.includes('firewall')) {
       setHttpAppDeviceId(null);
       setHttpAppTitle('Access Denied');

@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-3.0.0-blue)
+![Version](https://img.shields.io/badge/version-3.1.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.2-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -26,6 +26,7 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
+- **Kullanıcı Tanımlı Batch (.bat) Yığın Dosyaları:** PC Komut İstemi'nde (CMD) kullanıcı tanımlı `.bat` ve `.cmd` dosyalarını çalıştırma, değişken ikamesi (`%VAR%`, `%1`), `@echo off`, `set`, `goto`, `call` desteği ve Dosya Düzenleyici başlığında `Batch Yığın Dosyası` rozeti entegre edildi.
 - **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
 - **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.
 - **Çoklu Cihaz Penceresi Kısayolları:** `Tab` ile sonraki cihaza geçin; açık cihaz pencereleri arasında `Shift+Tab` ile geçiş yapın, `Ctrl+M` ile etkin pencereyi küçültün. Alt çubuktaki kısayollar tıklanarak da çalıştırılabilir.
@@ -35,7 +36,7 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.0.0 |
+| Version / Sürüm | 3.1.0 |
 | Total Lines / Toplam Satır (src/) | 133,810 |
 | Source Files / Kaynak Dosya | 546 |
 | Documentation Files / Dokümantasyon Dosya | 22 |

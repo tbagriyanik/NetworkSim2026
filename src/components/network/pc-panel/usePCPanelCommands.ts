@@ -15,6 +15,8 @@ import {
   copyFile, moveNode, renameNode,
 } from './pcFileSystem';
 import { executePythonScript, executePythonScriptAsync } from './pcPythonRunner';
+import { resolveBatchFilePath, executeBatchScript } from './pcBatchRunner';
+
 
 export interface UsePCPanelCommandsParams {
   activeTabRef: React.MutableRefObject<PCActiveTab>;
@@ -211,6 +213,16 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     saveFs(deviceId, clientFs);
 
     if (session.targetDeviceId) {
+      const serverDev = topologyDevices.find(d => d.id === session.targetDeviceId);
+      if (serverDev?.ip) {
+        const connectivity = checkConnectivity(deviceId, serverDev.ip, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '20' });
+        const ftpPackets = (connectivity.capturedPackets || []).map(p => ({
+          ...p,
+          protocol: 'FTP',
+          info: `FTP: STOR ${fileName} (150 Opening BINARY connection)`
+        }));
+        dispatchCapturedPackets(ftpPackets);
+      }
       const serverFs = loadFs(session.targetDeviceId);
       writeFile(serverFs, `C:\\upload\\${fileName}`, content);
       saveFs(session.targetDeviceId, serverFs);
@@ -272,6 +284,16 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
       const targetDevId = session.targetDeviceId;
       let content = 'Sample FTP File Content';
       if (targetDevId) {
+        const serverDev = topologyDevices.find(d => d.id === targetDevId);
+        if (serverDev?.ip) {
+          const connectivity = checkConnectivity(deviceId, serverDev.ip, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '20' });
+          const ftpPackets = (connectivity.capturedPackets || []).map(p => ({
+            ...p,
+            protocol: 'FTP',
+            info: `FTP: RETR ${fileName} (226 Transfer complete)`
+          }));
+          dispatchCapturedPackets(ftpPackets);
+        }
         const serverFs = loadFs(targetDevId);
         content = readFile(serverFs, `C:\\upload\\${fileName}`) || readFile(serverFs, `C:\\${fileName}`) || content;
       }
@@ -620,6 +642,15 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             emit('error', t.dnsGatewayRequired);
           } else {
             const dnsResult = resolveDomainWithDnsServicesCallback(targetDomain);
+            if (dnsResult?.server?.ip) {
+              const connectivity = checkConnectivity(deviceId, dnsResult.server.ip, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'udp', port: '53' });
+              const dnsPackets = (connectivity.capturedPackets || []).map(p => ({
+                ...p,
+                protocol: 'DNS',
+                info: `DNS Query: ${queryType} ${targetDomain} -> ${dnsResult.address}`
+              }));
+              dispatchCapturedPackets(dnsPackets);
+            }
             if (!dnsResult) {
               await emitMulti('output', `*** DNS request timed out\n*** Can't find ${targetDomain}: Non-existent domain`, 80);
             } else {
@@ -952,7 +983,12 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
 
           const result = checkConnectivity(deviceId, targetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '21' });
 
-          dispatchCapturedPackets(result.capturedPackets);
+          const ftpPackets = (result.capturedPackets || []).map(p => ({
+            ...p,
+            protocol: 'FTP',
+            info: `FTP: Connect ${targetIp}:21 (220 FTP server ready)`
+          }));
+          dispatchCapturedPackets(ftpPackets.length > 0 ? ftpPackets : result.capturedPackets);
 
           // ARP güncelle: FTP bağlantısı da ARP tablosunu günceller
           if (result.success && result.targetId) {
@@ -1275,9 +1311,54 @@ if (!isDir(fs, targetPath)) {
           } else {
             emit('output', 'Python 3.10.0 (netsim-embed, Aug 24 2026)\nType "edit <file.py>" to create or edit scripts, or "python <file.py>" to run.');
           }
+        } else if (cmd === 'call') {
+          const targetScript = args[0] || '';
+          const batchArgs = args.slice(1);
+          const fs = loadFs(deviceId);
+          const resolvedBat = resolveBatchFilePath(fs, currentPath, targetScript);
+          if (resolvedBat) {
+            const batContent = readFile(fs, resolvedBat);
+            if (batContent !== null) {
+              await executeBatchScript({
+                fs,
+                scriptPath: resolvedBat,
+                content: batContent,
+                args: batchArgs,
+                runSingleCommand: (singleCmd) => executeCommand(singleCmd),
+                emitOutput: (type, content, prompt) => emit(type, content, prompt),
+                clearOutput: () => setPcOutput([]),
+              });
+            } else {
+              cmdSuccess = false;
+              emit('error', `The system cannot find the file specified: ${targetScript}`);
+            }
+          } else {
+            cmdSuccess = false;
+            emit('error', `The system cannot find the batch file specified: ${targetScript}`);
+          }
         } else {
-          cmdSuccess = false;
-          emit('error', `'${cmd}' is not recognized as an internal or external command.`);
+          const fs = loadFs(deviceId);
+          const resolvedBat = resolveBatchFilePath(fs, currentPath, parts[0]);
+          if (resolvedBat) {
+            const batContent = readFile(fs, resolvedBat);
+            if (batContent !== null) {
+              await executeBatchScript({
+                fs,
+                scriptPath: resolvedBat,
+                content: batContent,
+                args,
+                runSingleCommand: (singleCmd) => executeCommand(singleCmd),
+                emitOutput: (type, content, prompt) => emit(type, content, prompt),
+                clearOutput: () => setPcOutput([]),
+              });
+            } else {
+              cmdSuccess = false;
+              emit('error', `'${cmd}' is not recognized as an internal or external command.`);
+            }
+          } else {
+            cmdSuccess = false;
+            emit('error', `'${cmd}' is not recognized as an internal or external command.`);
+          }
         }
 
         const nextOp = i + 1 < tokens.length ? tokens[i + 1] : null;

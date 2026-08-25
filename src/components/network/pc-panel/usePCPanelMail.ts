@@ -100,7 +100,12 @@ export function usePCPanelMail({
           language as 'tr' | 'en',
           { protocol: 'tcp', port: '25' }
         );
-        dispatchCapturedPackets(connectivity.capturedPackets);
+        const smtpPackets = (connectivity.capturedPackets || []).map(p => ({
+          ...p,
+          protocol: 'SMTP',
+          info: `SMTP: MAIL FROM:<${serviceMailUsername}@${serviceMailDomain}> RCPT TO:<${recipient}>`
+        }));
+        dispatchCapturedPackets(smtpPackets.length > 0 ? smtpPackets : connectivity.capturedPackets);
         if (!connectivity.success) {
           onError(
             language === 'tr'
@@ -232,7 +237,12 @@ export function usePCPanelMail({
           language as 'tr' | 'en',
           { protocol: 'tcp', port: '25' }
         );
-        dispatchCapturedPackets(connectivity.capturedPackets);
+        const smtpPackets = (connectivity.capturedPackets || []).map(p => ({
+          ...p,
+          protocol: 'SMTP',
+          info: `SMTP: MAIL FROM:<${serviceMailUsername}@${serviceMailDomain}> RCPT TO:<${msg.from}>`
+        }));
+        dispatchCapturedPackets(smtpPackets.length > 0 ? smtpPackets : connectivity.capturedPackets);
         if (!connectivity.success) {
           onError(
             language === 'tr'
@@ -264,7 +274,13 @@ export function usePCPanelMail({
       if (typeof window !== 'undefined')
         localStorage.setItem(`mail_inbox_${targetDevice.id}`, JSON.stringify(updatedInbox));
       const newSentEntry = { from, to: msg.from, subject, body: replyBody, timestamp };
-      setServiceMailSent((prev) => [newSentEntry, ...prev]);
+      const nextSent = [newSentEntry, ...serviceMailSent];
+      setServiceMailSent(nextSent);
+
+      // Sync mail files to FS for target and local device
+      syncMailFilesToFs(targetDevice.id, updatedInbox, targetDevice.services?.mail?.sent || []);
+      syncMailFilesToFs(deviceId, serviceMailInbox, nextSent);
+
       window.dispatchEvent(
         new CustomEvent('update-topology-device-config', {
           detail: {
@@ -294,7 +310,7 @@ export function usePCPanelMail({
                   username: serviceMailUsername,
                   password: serviceMailPassword,
                   inbox: serviceMailInbox,
-                  sent: [newSentEntry, ...serviceMailSent],
+                  sent: nextSent,
                 },
               },
             },

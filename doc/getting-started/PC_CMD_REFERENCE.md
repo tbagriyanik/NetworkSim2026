@@ -203,12 +203,53 @@ ipconfig /displaydns
 | `move <source> [destination]` | Dosya veya klasörü taşır/yeniden adlandırır |
 | `ren <oldname> <newname>` | Dosya veya klasörün adını değiştirir |
 | `type <dosya>` | Metin dosyasının içeriğini ekranda gösterir |
+| `call <script.bat> [args]` | Başka bir batch yığın dosyasını iç içe çalıştırır |
 | `ping6 <ipv6-adresi>` | IPv6 ping |
 | `curl <url>` | HTTP GET isteği (PC HTTP browser simülasyonu) |
 | `wget <url>` | Dosya veya web sayfası indir (IoT Web Panel erişimi için) |
 | `cls` / `clear` | Terminali temizle |
 | `help` | Komut yardımını listele |
 | `exit` | CMD penceresini kapat |
+
+---
+
+## 📜 Batch (.bat / .cmd) Yığın Dosyaları
+
+PC Komut İstemi'nde kullanıcı tanımlı `.bat` ve `.cmd` dosyaları doğrudan dosya adı girilerek çalıştırılabilir.
+
+### Çalıştırma Sözdizimi
+```
+script.bat [parametre1] [parametre2] ...
+script [parametre1] [parametre2] ...
+call script.bat [parametreler]
+C:\code\setup.bat
+```
+
+### Desteklenen Komut ve Direktifler
+
+| Direktif / Komut | Açıklama |
+|---|---|
+| `@echo off` / `@echo on` | Satır komutlarının ekrana basılmasını kapatır/açar |
+| `echo <mesaj>` / `echo.` | Ekrana metin yazar veya boş satır bırakır |
+| `set VAR=değer` | Ortam değişkeni tanımlar (`%VAR%` ile erişilir) |
+| `set` | Tüm ortam değişkenlerini listeler |
+| `rem <yorum>` / `::<yorum>` | Yorum satırı (çalıştırılmaz) |
+| `pause` | Kullanıcıdan devam etmek için girdi bekler (`Press any key to continue . . .`) |
+| `cls` | Ekrani temizler |
+| `goto :etiket` / `:etiket` | Belirtilen etikete atlar |
+| `call <script.bat>` | İç içe başka bir yığın dosyasını çalıştırır |
+| `%0` .. `%9` | Dosya adı (`%0`) ve girilen sıra numaralı parametreler (`%1`, `%2` vb.) |
+| `%*` | Girilen tüm parametrelerin birleşimi |
+
+**Örnek Batch Dosyası (`test.bat`):**
+```bat
+@echo off
+rem Ağ tanı testi betiği
+set TARGET=192.168.1.1
+echo Hedef IP: %TARGET%
+ping %TARGET%
+ipconfig
+```
 
 ---
 

@@ -2449,7 +2449,8 @@ export function PCPanel({
             }
             const fileName = editingFile.path.split(/[\\/]/).pop() || '';
             setActiveTab('desktop');
-            setTimeout(() => { void executeCommand(`python ${fileName}`); }, 50);
+            const isBat = fileName.toLowerCase().endsWith('.bat') || fileName.toLowerCase().endsWith('.cmd');
+            setTimeout(() => { void executeCommand(isBat ? fileName : `python ${fileName}`); }, 50);
           }
         }}
         onClose={() => {

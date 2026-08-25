@@ -70,7 +70,7 @@ export function getAutocompleteSuggestions({
     const trimmedVal = value.trimStart();
     const parts = trimmedVal.split(/\s+/);
     const firstCmd = parts[0]?.toLowerCase() || '';
-    const fileCmds = ['python', 'py', 'python3', 'edit', 'notepad', 'cat', 'del', 'delete', 'rm', 'type', 'dir', 'ls', 'cd', 'chdir', 'rd', 'rmdir', 'md', 'mkdir', 'copy', 'move', 'ren', 'rename'];
+    const fileCmds = ['python', 'py', 'python3', 'edit', 'notepad', 'cat', 'del', 'delete', 'rm', 'type', 'dir', 'ls', 'cd', 'chdir', 'rd', 'rmdir', 'md', 'mkdir', 'copy', 'move', 'ren', 'rename', 'call'];
     const isFileCmd = fileCmds.includes(firstCmd);
     const hasSpaceAfterCmd = value.includes(' ');
 
@@ -111,9 +111,24 @@ export function getAutocompleteSuggestions({
       }
     }
 
-    const base = DESKTOP_COMMANDS
-      .filter((cmd) => cmd !== '?' && cmd.startsWith(currentWord))
-      .slice(0, 8);
+    const batSuggestions: string[] = [];
+    if (deviceId && !hasSpaceAfterCmd && currentWord) {
+      const fs = loadFs(deviceId);
+      const searchDir = currentPath || 'C:\\';
+      if (isDir(fs, searchDir)) {
+        const entries = listDir(fs, searchDir);
+        for (const entry of entries) {
+          if (/\.(bat|cmd)$/i.test(entry) && entry.toLowerCase().startsWith(currentWord)) {
+            batSuggestions.push(entry);
+          }
+        }
+      }
+    }
+
+    const base = Array.from(new Set([
+      ...batSuggestions,
+      ...DESKTOP_COMMANDS.filter((cmd) => cmd !== '?' && cmd.startsWith(currentWord))
+    ])).slice(0, 8);
     if (!expectsIpArg) return base;
     const ipSuggestions = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(currentWord));
     return Array.from(new Set([...ipSuggestions, ...base])).slice(0, 8);

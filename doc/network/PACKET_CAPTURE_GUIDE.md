@@ -34,6 +34,14 @@ Protokol sütununda protokol adının yanında standart numara parantez içinde 
 | ICMP | `ICMP (1)` | IPv4 kontrol mesajları |
 | TCP | `TCP (6)` | İletim kontrolü |
 | UDP | `UDP (17)` | Kullanıcı datagram |
+| HTTP | `HTTP (80)` | Web tarayıcı / HTTP istek ve yanıtları |
+| FTP | `FTP (21)` | Dosya transfer istemci/sunucu istekleri |
+| SMTP | `SMTP (25)` | E-posta gönderme istekleri |
+| POP3 | `POP3 (110)` | E-posta alma/görüntüleme istekleri |
+| DNS | `DNS (53)` | Domain isim sorgusu (A, AAAA, MX, PTR) |
+| DHCP | `DHCP (67)` | Otomatik IP kiralama (Discover, Offer, Request, ACK) |
+| SSH | `SSH (22)` | Güvenli kabuk erişimi |
+| TELNET | `TELNET (23)` | Uzaktan komut satırı erişimi |
 | OSPF | `OSPF (89)` | OSPF yönlendirme |
 | EIGRP | `EIGRP (88)` | EIGRP yönlendirme |
 | GRE | `GRE (47)` | Tünel kapsülleme |

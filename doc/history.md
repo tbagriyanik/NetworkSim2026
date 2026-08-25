@@ -2,10 +2,12 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
-## v3.0.0 — 2026-08-24
+## v3.1.0 — 2026-08-25
 
 | Tarih | Değişiklik |
 |---|---|
+| 2026-08-25 | **Paket Analiz Paneline HTTP, Mail, FTP ve DNS Hizmet İstekleri Entegrasyonu** — Canlı Paket Yakalama (Packet Capture) paneline `HTTP` (Web tarayıcı/curl/wget), `SMTP` / `POP3` (E-posta gönderme ve alma), `FTP` (Dosya transferi STOR/RETR), `DNS` (Alan adı sorguları) hizmet paketleri entegre edildi. Protokol sütununa `HTTP (80)`, `FTP (21)`, `SMTP (25)`, `POP3 (110)`, `DNS (53)` port numaraları ve özel protokol renk rozetleri eklendi. |
+| 2026-08-25 | **Kullanıcı Tanımlı Batch (.bat / .cmd) Yığın Dosyası Desteği & Düzenleyici Entegrasyonu** — PC Komut İstemi'nde (CMD) kullanıcı tanımlı `.bat` ve `.cmd` dosyalarını çalıştırma, `@echo off`, `set VAR=value`, `%VAR%`, `%0`..`%9`, `%*`, `goto :etiket` ve `call` ile iç içe yığın dosyası çağırma desteği eklendi. Dosya Düzenleyici penceresinin başlığına `Batch Yığın Dosyası` rozeti ve editörden doğrudan kaydetip CMD'de çalıştırma (Play butonu) entegre edildi. |
 | 2026-08-24 | **PC Python Yorumlayıcı İyileştirmeleri** — `def` fonksiyonlarında default parametre desteği, `is` / `is not` karşılaştırma operatörleri, liste eleman takası (`a[i], a[j] = a[j], a[i]`), string metotları (`.lower()`, `.upper()`, `.strip()`, `.replace()`, `.split()` vb.), string'lerde `sorted()`, ve `for a, b in ...` çoklu değişken açılımı (tuple unpacking) eklendi. Async modda özyinelemeli fonksiyonların `Promise` döndürme hatası giderilerek doğru sonuçlar elde edildi. |
 
 ## v2.9.0 — 2026-08-24

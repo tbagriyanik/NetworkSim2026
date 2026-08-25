@@ -13,9 +13,11 @@
 
 ### ⌨️ CLI / Terminal
 - Gerçek IOS benzeri komut satırı (user, privileged, global-config, interface, line, vlan, router-config ve adlandırılmış-ACL modları).
-- Tab tuşu ile otomatik komut tamamlama.
+- PC CMD'de kullanıcı tanımlı `.bat` ve `.cmd` yığın dosyaları çalıştırma (`@echo off`, `set`, `%VAR%`, `%1`, `goto`, `call`).
+- Dosya Düzenleyici (File Editor) pencerelerinde `Batch Yığın Dosyası` rozet etiketi ve tek tıkla kaydetip CMD'de çalıştırma (Play).
+- Tab tuşu ile otomatik komut ve dosya tamamlama.
 - Komut geçmişi (Yukarı/Aşağı ok tuşları, kalıcı state).
-- Pipe filtreleme (`show run | include` vb.).
+- Pipe filtreleme (`show run | include`, `ping | find` vb.).
 - Aktif moda göre değişen, mobil odaklı hızlı komut butonları.
 - Renk kodlu gerçekçilik seviyesi göstergesi (`real` / `stub` / `sim-only`).
 - Eğitici ve ipuçları içeren hata mesajları.
