@@ -143,6 +143,9 @@ export function usePageGlobalEvents({
       if (deviceId) {
         const device = topologyDevices.find(d => d.id === deviceId);
         if (device) {
+          // "Show Me" must focus the lesson target exclusively. Remove all
+          // previously open floating device windows before presenting it.
+          useMultiWindowStore.getState().closeAllDeviceWindows();
           if (device.type === 'pc') {
             setShowPCDeviceId(deviceId);
             setPcPanelInitialTab('desktop');
@@ -155,10 +158,6 @@ export function usePageGlobalEvents({
               window.dispatchEvent(new CustomEvent('pc-auto-type', { detail: { deviceId, command: cleanCommand } }));
             }, 600);
           } else {
-            // The guided "Show Me" panel is the single presentation for
-            // network devices. Close any floating instance first so the same
-            // router/switch cannot appear twice at the same time.
-            useMultiWindowStore.getState().closeDeviceWindow(deviceId);
             setActiveDeviceId(deviceId);
             setActiveDeviceType(device.type);
             setUnifiedDeviceActiveTab('console');

@@ -30,7 +30,7 @@ export const teachMeIntermediateSteps: GuidedStep[] = [
     description: { tr: 'GigabitEthernet 0/0 arayüzünün konfigürasyonuna girin.', en: 'Enter configuration of GigabitEthernet 0/0 interface.' },
     hint: { tr: 'interface gi0/0', en: 'interface gi0/0' },
     checkType: 'command',
-    checkParams: { commandPattern: 'interface gi0/0' },
+    checkParams: { commandPattern: 'interface gi0/0|int gi0/0' },
     completed: false,
     points: 10
   },

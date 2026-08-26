@@ -26,9 +26,9 @@ export const servicesGuidedSteps: GuidedStep[] = [
   {
     id: 'srv-open-dns',
     order: 3,
-    title: { tr: 'DNS Sunucu', en: 'DNS Server' },
-    description: { tr: 'DNS sunucusunu açın', en: 'Open the DNS server' },
-    hint: { tr: 'DNS-Server üzerine çift tıklayın.', en: 'Double-click on DNS-Server.' },
+    title: { tr: 'DNS Sunucusu Paneli', en: 'DNS Server Panel' },
+    description: { tr: 'DNS-Server cihazının panelini açın', en: 'Open the DNS-Server device panel' },
+    hint: { tr: 'DNS-Server cihazına çift tıklayın; sonraki adımda DNS sekmesinden On seçin.', en: 'Double-click the DNS-Server device; in the next step, select On in the DNS tab.' },
     checkType: 'deviceAccess',
     checkParams: { targetDeviceId: 'dns-server-1' },
     completed: false,

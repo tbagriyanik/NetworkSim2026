@@ -57,19 +57,30 @@ export const vlanGuidedSteps: GuidedStep[] = [
     points: 10
   },
   {
-    id: 'vlan-int-fa01',
+    id: 'vlan-exit-mode',
     order: 6,
+    title: { tr: 'VLAN Modundan Çık', en: 'Exit VLAN Mode' },
+    description: { tr: 'Arayüz seçmeden önce VLAN yapılandırma modundan çıkın', en: 'Exit VLAN configuration mode before selecting the interface' },
+    hint: { tr: 'exit', en: 'exit' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'exit' },
+    completed: false,
+    points: 5
+  },
+  {
+    id: 'vlan-int-fa01',
+    order: 7,
     title: { tr: 'Arayüz Seçimi', en: 'Interface Selection' },
     description: { tr: 'FastEthernet 0/1 arayüzüne girin', en: 'Enter FastEthernet 0/1 interface' },
     hint: { tr: '"int fa0/1" yazın.', en: 'Type "int fa0/1".' },
     checkType: 'command',
-    checkParams: { commandPattern: 'interface fa0/1' },
+    checkParams: { commandPattern: 'interface fa0/1|int fa0/1' },
     completed: false,
     points: 5
   },
   {
     id: 'vlan-assign-10',
-    order: 7,
+    order: 8,
     title: { tr: 'VLAN Atama', en: 'Assign VLAN' },
     description: { tr: 'Arayüzü VLAN 10\'a atayın', en: 'Assign the interface to VLAN 10' },
     hint: { tr: '"switchport access vlan 10" yazın.', en: 'Type "switchport access vlan 10".' },

@@ -486,7 +486,12 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
     }
   ];
 
-  return projects;
+  // Recommended display order: original lessons 4, 5, then 6.
+  const priority = ['guided-add-devices', 'guided-pc-cmd', 'guided-cli-basics'];
+  return [
+    ...priority.map((id) => projects.find((project) => project.id === id)).filter((project): project is GuidedProject => Boolean(project)),
+    ...projects.filter((project) => !priority.includes(project.id)),
+  ];
 };
 
 // Key'i karakter kodları şeklinde tutarak daha zor okunur hale getiriyoruz

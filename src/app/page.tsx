@@ -1504,6 +1504,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const tabs = [{ ...ALL_TABS[0], label: t.networkTopology }];
 
   // Automatically trigger DHCP refresh when wireless clients connect
+  const dhcpRefreshAttemptRef = useRef<string | null>(null);
   useEffect(() => {
     const dhcpClients = topologyDevices.filter(d => (d.type === 'pc' || d.type === 'iot') && d.ipConfigMode === 'dhcp');
     if (dhcpClients.length === 0) return;
@@ -1524,6 +1525,19 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     });
 
     if (needsDhcp) {
+      // Prevent an unsuccessful refresh from retriggering itself forever.
+      // A changed client/IP/connection signature allows a later retry.
+      const refreshSignature = [
+        ...dhcpClients.map(d => `${d.id}:${d.ip || ''}:${d.wifi?.ssid || ''}`),
+        ...topologyConnections
+          .filter(c => c.active !== false)
+          .map(c => `${c.id}:${c.sourceDeviceId}:${c.targetDeviceId}`)
+      ].sort().join('|');
+      if (dhcpRefreshAttemptRef.current === refreshSignature) return;
+      // Mark the attempt before scheduling it. The refresh itself can change
+      // topology state and clean up this effect before the timer fires.
+      dhcpRefreshAttemptRef.current = refreshSignature;
+
       const timer = setTimeout(() => {
         handleRefreshNetwork();
       }, 2000); // Debounce refresh by 2 seconds

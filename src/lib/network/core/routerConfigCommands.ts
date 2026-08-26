@@ -7,6 +7,7 @@ import type { SwitchState, CommandResult } from '../types';
 
 export const routerConfigHandlers: Record<string, CommandHandler> = {
     'network': cmdRouterNetwork,
+    'version': cmdRoutingVersion,
     'neighbor remote-as': cmdNeighborRemoteAs,
     'no auto-summary': cmdNoAutoSummary,
     'router-id': cmdRouterId,
@@ -32,6 +33,20 @@ export const routerConfigHandlers: Record<string, CommandHandler> = {
     'redistribute': cmdRedistribute,
     'no redistribute': cmdNoRedistribute,
 };
+
+function cmdRoutingVersion(state: SwitchState, input: string): CommandResult {
+    const match = input.match(/^version\s+([12])$/i);
+    if (!match) return { success: false, error: '% Invalid routing protocol version.' };
+    if (state.routingProtocol !== 'rip') {
+        return { success: false, error: iosModeError() };
+    }
+
+    return {
+        success: true,
+        output: `RIP version ${match[1]} configured`,
+        newState: { ripVersion: Number(match[1]) as 1 | 2 }
+    };
+}
 
 // Router subcommands in OSPF/RIP config mode
 

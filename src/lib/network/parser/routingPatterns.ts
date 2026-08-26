@@ -82,6 +82,12 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 4
   },
+  'version': {
+    pattern: /^version\s+[12]$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'neighbor remote-as': {
     pattern: /^neighbor\s+([0-9.]+)\s+remote-as\s+(\d+)$/i,
     modes: ['router-config'],

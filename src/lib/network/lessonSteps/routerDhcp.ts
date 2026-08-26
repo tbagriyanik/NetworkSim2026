@@ -41,7 +41,7 @@ export const routerDhcpGuidedSteps: GuidedStep[] = [
     description: { tr: 'GigabitEthernet 0/0 arayüzüne girin', en: 'Enter GigabitEthernet 0/0 interface' },
     hint: { tr: '"int gi0/0" yazın.', en: 'Type "int gi0/0".' },
     checkType: 'command',
-    checkParams: { commandPattern: 'interface gi0/0' },
+    checkParams: { commandPattern: 'interface gi0/0|int gi0/0' },
     completed: false,
     points: 5
   },

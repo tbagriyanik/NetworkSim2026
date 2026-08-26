@@ -136,7 +136,7 @@ export const cliGuidedLessons: GuidedStep[] = [
     description: { tr: 'GigabitEthernet 1/0/1 arayüzüne girin', en: 'Enter GigabitEthernet 1/0/1 interface' },
     hint: { tr: 'switch-1: interface gi1/0/1 yazın', en: 'switch-1: Type interface gi1/0/1' },
     checkType: 'command',
-    checkParams: { commandPattern: 'interface gi1/0/1|interface fa0/1' },
+    checkParams: { commandPattern: 'interface gi1/0/1|int gi1/0/1|interface fa0/1|int fa0/1' },
     completed: false,
     points: 10
   },
@@ -220,8 +220,19 @@ export const cliGuidedLessons: GuidedStep[] = [
     points: 10
   },
   {
-    id: 'cli-lesson-3-2',
+    id: 'cli-lesson-4-exit-vlan',
     order: 20,
+    title: { tr: 'VLAN Modundan Çık', en: 'Exit VLAN Mode' },
+    description: { tr: 'Arayüz seçimine geçmeden önce VLAN yapılandırma modundan çıkın', en: 'Exit VLAN configuration mode before selecting interfaces' },
+    hint: { tr: 'exit', en: 'exit' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'exit' },
+    completed: false,
+    points: 5
+  },
+  {
+    id: 'cli-lesson-3-2',
+    order: 21,
     title: { tr: 'Arayüz Aralığı', en: 'Interface Range' },
     description: { tr: 'Birden fazla arayüzü aynı anda seçin', en: 'Select multiple interfaces at once' },
     hint: { tr: 'switch-1: interface range gi1/0/1 - 5 yazın', en: 'switch-1: Type interface range gi1/0/1 - 5' },
@@ -242,8 +253,30 @@ export const cliGuidedLessons: GuidedStep[] = [
     points: 15
   },
   {
-    id: 'cli-lesson-4-2b',
+    id: 'cli-lesson-4-exit-interface-range',
     order: 22,
+    title: { tr: 'Arayüz Modundan Çık', en: 'Exit Interface Mode' },
+    description: { tr: 'Trunk yapılandırmasına geçmeden önce arayüz modundan çıkın', en: 'Exit interface mode before configuring the trunk' },
+    hint: { tr: 'exit', en: 'exit' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'exit' },
+    completed: false,
+    points: 5
+  },
+  {
+    id: 'cli-lesson-4-select-trunk-interface',
+    order: 23,
+    title: { tr: 'Trunk Arayüzünü Seç', en: 'Select Trunk Interface' },
+    description: { tr: 'Trunk ayarları için gi1/0/24 arayüzüne geçin', en: 'Enter interface gi1/0/24 for trunk configuration' },
+    hint: { tr: 'interface gi1/0/24', en: 'interface gi1/0/24' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'interface gi1/0/24|int gi1/0/24' },
+    completed: false,
+    points: 5
+  },
+  {
+    id: 'cli-lesson-4-2b',
+    order: 24,
     title: { tr: 'Trunk Kapsülleme', en: 'Trunk Encapsulation' },
     description: { tr: 'gi1/0/24 için Trunk kapsülleme protokolünü 802.1Q olarak ayarlayın', en: 'Set trunk encapsulation to 802.1Q for gi1/0/24' },
     hint: { tr: 'switch-1: switchport trunk encapsulation dot1q yazın', en: 'switch-1: Type switchport trunk encapsulation dot1q' },
@@ -351,7 +384,7 @@ export const cliGuidedLessons: GuidedStep[] = [
     description: { tr: 'GigabitEthernet 1/0/1 arayüzüne girin', en: 'Enter GigabitEthernet 1/0/1 interface' },
     hint: { tr: 'switch-1: interface gi1/0/1 yazın', en: 'switch-1: Type interface gi1/0/1' },
     checkType: 'command',
-    checkParams: { commandPattern: 'interface gi1/0/1|interface gi0/1' },
+    checkParams: { commandPattern: 'interface gi1/0/1|int gi1/0/1|interface gi0/1|int gi0/1' },
     completed: false,
     points: 10
   },
@@ -938,7 +971,7 @@ export const cliGuidedLessons: GuidedStep[] = [
     description: { tr: 'GigabitEthernet 0/0 arayüzüne girin', en: 'Enter GigabitEthernet 0/0 interface' },
     hint: { tr: 'router-1: interface gi0/0 yazın', en: 'router-1: Type interface gi0/0' },
     checkType: 'command',
-    checkParams: { commandPattern: 'interface gi0/0' },
+    checkParams: { commandPattern: 'interface gi0/0|int gi0/0' },
     completed: false,
     points: 10
   },

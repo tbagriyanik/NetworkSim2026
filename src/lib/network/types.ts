@@ -69,7 +69,7 @@ export interface Port {
     };
   };
   staticMacs?: string[]; // Static MAC addresses for port security
-  ipv6Address?: string;         
+  ipv6Address?: string;
   ipv6Prefix?: number;
   ipv6LinkLocal?: string;
   ipv6Rip?: {
@@ -416,6 +416,7 @@ export interface SwitchState {
   ipv6StaticRoutes?: Route[];      // IPv6 static routing table
   ipv6DynamicRoutes?: Route[];     // IPv6 dynamic routing table
   routingProtocol?: 'none' | 'rip' | 'ospf' | 'ripng' | 'ospfv3' | 'eigrp' | 'bgp'; // Routing protocol
+  ripVersion?: 1 | 2;                 // RIP version configured in router mode
   autoSummary?: boolean;           // Auto-summary for routing protocols
   ospfNeighbors?: string[];        // OSPF neighbor IDs/IPs
   eigrpAs?: string;                // EIGRP AS number

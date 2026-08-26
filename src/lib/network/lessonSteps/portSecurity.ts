@@ -41,7 +41,7 @@ export const portSecurityGuidedSteps: GuidedStep[] = [
     description: { tr: 'FastEthernet 0/1 arayüzüne girin', en: 'Enter FastEthernet 0/1 interface' },
     hint: { tr: '"int fa0/1" yazın.', en: 'Type "int fa0/1".' },
     checkType: 'command',
-    checkParams: { commandPattern: 'interface fa0/1' },
+    checkParams: { commandPattern: 'interface fa0/1|int fa0/1' },
     completed: false,
     points: 5
   },

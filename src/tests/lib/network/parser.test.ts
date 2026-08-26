@@ -152,6 +152,14 @@ describe('Command Parser Functions', () => {
       expect(result.matchedPattern).toBe('exit');
     });
 
+    it('should validate RIP version 2 in router configuration mode', () => {
+      const ripState = { ...mockState, currentMode: 'router-config' as const, routingProtocol: 'rip' as const };
+      const parsed = parseCommand('version 2', 'router-config', ripState);
+      const result = validateCommand(parsed!, 'router-config', ripState);
+      expect(result.valid).toBe(true);
+      expect(result.matchedPattern).toBe('version');
+    });
+
     it('should reject commands for wrong mode', () => {
       const parsed: ParsedCommand = { command: 'enable', args: [], rawInput: 'enable', resolvedInput: 'enable' };
       const result = validateCommand(parsed, 'config', mockState);

@@ -56,7 +56,18 @@ export function ProjectPickerDialog({
 }: ProjectPickerDialogProps) {
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const convertInputRef = useRef<HTMLInputElement>(null);
+  const focusSearchInput = useCallback(() => {
+    window.setTimeout(() => searchInputRef.current?.focus(), 0);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    // Dialog focus management can run after autoFocus and steal focus.
+    const timer = window.setTimeout(() => searchInputRef.current?.focus(), 50);
+    return () => window.clearTimeout(timer);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -259,7 +270,7 @@ export function ProjectPickerDialog({
             {/* Tab Buttons */}
             <div className={`flex items-end gap-0.5 md:gap-1 border-b overflow-x-auto flex-nowrap no-scrollbar ${isDark ? 'border-secondary-700/50' : 'border-secondary-200'}`}>
               <button
-                onClick={() => setProjectPickerTab('all')}
+                onClick={() => { setProjectPickerTab('all'); focusSearchInput(); }}
                 className={cn(
                   'relative inline-flex items-center gap-1.5 md:gap-2 rounded-t-lg border border-b-0 px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate flex-shrink-0',
                   projectPickerTab === 'all'
@@ -277,7 +288,7 @@ export function ProjectPickerDialog({
                 <span className="tracking-wide text-xs">{t.allProjects}</span>
               </button>
               <button
-                onClick={() => setProjectPickerTab('guided')}
+                onClick={() => { setProjectPickerTab('guided'); focusSearchInput(); }}
                 className={cn(
                   'relative inline-flex items-center gap-1.5 md:gap-2 rounded-t-lg border border-b-0 px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate flex-shrink-0',
                   projectPickerTab === 'guided'
@@ -295,7 +306,7 @@ export function ProjectPickerDialog({
                 <span className="tracking-wide text-xs">{t.guidedMode}</span>
               </button>
               <button
-                onClick={() => setProjectPickerTab('exam')}
+                onClick={() => { setProjectPickerTab('exam'); focusSearchInput(); }}
                 className={cn(
                   'relative inline-flex items-center gap-1.5 md:gap-2 rounded-t-lg border border-b-0 px-3 md:px-4 py-2 md:py-2.5 text-[11px] md:text-sm font-semibold transition-all duration-200 ease-out focus-ring-animate flex-shrink-0',
                   projectPickerTab === 'exam'
@@ -318,6 +329,7 @@ export function ProjectPickerDialog({
             <div className={`relative rounded-xl border px-4 py-2.5 flex items-center gap-2 ${isDark ? 'bg-secondary-900/40 border-secondary-800/60' : 'bg-white/50 border-secondary-200/60'}`}>
               <Search className="w-4 h-4 text-secondary-400" />
               <input
+                ref={searchInputRef}
                 type="text"
                 value={projectSearchQuery}
                 placeholder={language === 'tr' ? 'Ara...' : 'Search...'}
@@ -378,7 +390,7 @@ export function ProjectPickerDialog({
                             (guidedProject.detail && guidedProject.detail.toLowerCase().includes(q)) ||
                             String(idx + 1).includes(q);
                         })
-                        .map((guidedProject: GuidedProject, idx) => (
+                        .map((guidedProject: GuidedProject) => (
                           <Button
                             key={guidedProject.id}
                             data-project-id={guidedProject.id}
@@ -395,7 +407,7 @@ export function ProjectPickerDialog({
                             <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
                               <div className="flex flex-col gap-1 flex-1 min-w-0">
                                 <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words ${isDark ? 'group-hover:text-success-400 text-success-100' : 'group-hover:text-success-600 text-black'}`}>
-                                  <span className={`${isDark ? 'text-secondary-500' : 'text-secondary-400'} mr-2`}>{idx + 1}.</span>{guidedProject.title}
+                                  <span className={`${isDark ? 'text-secondary-500' : 'text-secondary-400'} mr-2`}>{getAvailableProjects(language).findIndex((project) => project.id === guidedProject.id) + 1}.</span>{guidedProject.title}
                                 </span>
                               </div>
                               <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-success-500/20 text-success-400 border-success-500/30' : 'bg-success-100 text-success-600 border-success-200'}`}>
@@ -486,7 +498,7 @@ export function ProjectPickerDialog({
                             (examProject.detail && examProject.detail.toLowerCase().includes(q)) ||
                             String(idx + 1).includes(q);
                         })
-                        .map((examProject: ExamProject, idx) => (
+                        .map((examProject: ExamProject) => (
                           <Button
                             key={examProject.id}
                             data-project-id={examProject.id}
@@ -502,7 +514,7 @@ export function ProjectPickerDialog({
                           >
                             <div className='flex items-center justify-between w-full gap-4 overflow-hidden flex-nowrap'>
                               <span className={`font-black text-base md:text-2xl leading-none transition-colors duration-300 break-words flex-1 min-w-0 ${isDark ? 'group-hover:text-error-400 text-error-100' : 'group-hover:text-error-600 text-black'}`}>
-                                <span className={`${isDark ? 'text-secondary-500' : 'text-secondary-400'} mr-2`}>{idx + 1}.</span>{examProject.title}
+                                <span className={`${isDark ? 'text-secondary-500' : 'text-secondary-400'} mr-2`}>{getAvailableExams(language).filter((project) => project.id !== 'exam-template-blank').findIndex((project) => project.id === examProject.id) + 1}.</span>{examProject.title}
                               </span>
                               <span className={`text-[8px] md:text-[10px] font-black tracking-[0.2em] px-3 py-1.5 rounded-full whitespace-nowrap border shrink-0 flex-shrink-0 ${isDark ? 'bg-error-500/20 text-error-400 border-error-500/30' : 'bg-error-100 text-error-600 border-error-200'}`}>
                                 {examProject.tag}

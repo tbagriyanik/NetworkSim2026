@@ -72,11 +72,22 @@ export const basicSwitchGuidedSteps: GuidedStep[] = [
     points: 15
   },
   {
-    id: 'save-config',
+    id: 'exit-config-mode',
     order: 7,
+    title: { tr: 'Yapılandırma Modundan Çık', en: 'Exit Configuration Mode' },
+    description: { tr: 'Global yapılandırma modundan çıkmak için exit komutunu kullanın', en: 'Use exit to leave global configuration mode' },
+    hint: { tr: 'exit', en: 'exit' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'exit' },
+    completed: false,
+    points: 5
+  },
+  {
+    id: 'save-config',
+    order: 8,
     title: { tr: 'Yapılandırmayı Kaydet', en: 'Save Configuration' },
     description: { tr: 'Yaptığınız değişiklikleri kaydedin', en: 'Save your changes' },
-    hint: { tr: 'exit yapıp "write memory" yazın.', en: 'Type exit then "write memory".' },
+    hint: { tr: 'write memory', en: 'write memory' },
     checkType: 'command',
     checkParams: { commandPattern: 'write|copy' },
     completed: false,
