@@ -144,6 +144,14 @@ describe('Command Parser Functions', () => {
       expect(result.valid).toBe(true);
     });
 
+    it('should validate abbreviated mode commands using the resolved input', () => {
+      const parsed = parseCommand('ex', 'interface', mockState);
+      const result = validateCommand(parsed!, 'interface', mockState);
+      expect(parsed?.resolvedInput).toBe('exit');
+      expect(result.valid).toBe(true);
+      expect(result.matchedPattern).toBe('exit');
+    });
+
     it('should reject commands for wrong mode', () => {
       const parsed: ParsedCommand = { command: 'enable', args: [], rawInput: 'enable', resolvedInput: 'enable' };
       const result = validateCommand(parsed, 'config', mockState);
@@ -182,7 +190,7 @@ describe('Command Parser Functions', () => {
     it('should reject commands longer than 256 characters in validateCommand', () => {
       const longInput = 'a'.repeat(257);
       const parsed = parseCommand(longInput, 'user');
-       
+
       const validation = validateCommand(parsed!, 'user');
       expect(validation.valid).toBe(false);
       expect(validation.reason).toBe('unknown-command');

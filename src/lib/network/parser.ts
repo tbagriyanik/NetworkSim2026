@@ -324,7 +324,7 @@ export function validateCommand(
     };
   }
 
-  const resolvedInput = resolveAliases(parsed.rawInput, state);
+  const resolvedInput = parsed.resolvedInput || resolveAliases(parsed.rawInput, state);
   const inferredDeviceType = state
     ? (state.deviceType === 'switch'
       ? (state.switchLayer === 'L3' ? 'switchL3' : 'switchL2')

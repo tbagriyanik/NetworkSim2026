@@ -153,6 +153,9 @@ export function Terminal({
   const [fontSize, setFontSize] = useState<number>(() => {
     try { return parseInt(localStorage.getItem('terminal-font-size') || '13', 10); } catch { return 13; }
   });
+  const currentPrompt = state
+    ? getModePrompt(state.currentMode, state.hostname || 'Switch')
+    : prompt;
 
   // Mobile virtual keyboard height handling
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -226,7 +229,6 @@ export function Terminal({
   // Autocomplete state
   const [showAutocomplete, setShowAutocomplete] = useState(false);
   const [autocompleteIndex, setAutocompleteIndex] = useState(-1);
-  const [autocompleteNavigated, setAutocompleteNavigated] = useState(false);
   const [localPasswordPrompt, setLocalPasswordPrompt] = useState(false);
 
   const isDark = theme === 'dark';
@@ -407,7 +409,6 @@ export function Terminal({
       if (autocompleteRef.current && target && !autocompleteRef.current.contains(target)) {
         setShowAutocomplete(false);
         setAutocompleteIndex(-1);
-        setAutocompleteNavigated(false);
       }
     };
 
@@ -1003,7 +1004,6 @@ export function Terminal({
     setUndoStack([...undoStack, input]);
     setRedoStack([]);
     setInput(newValue);
-    setAutocompleteNavigated(false);
 
     // Autocomplete logic
     if (newValue.trim().length > 0) {
@@ -1036,7 +1036,6 @@ export function Terminal({
     setInput(completed);
     setShowAutocomplete(false);
     setAutocompleteIndex(-1);
-    setAutocompleteNavigated(false);
     return completed;
   }, [buildCompletedInput]);
 
@@ -1050,7 +1049,6 @@ export function Terminal({
       setInput('');
       setShowAutocomplete(false);
       setAutocompleteIndex(-1);
-      setAutocompleteNavigated(false);
       clearTerminalView();
       return;
     }
@@ -1072,7 +1070,7 @@ export function Terminal({
     }
 
     if (e.key === 'Enter') {
-      if (canUseAutocomplete && autocompleteNavigated) {
+      if (canUseAutocomplete && autocompleteIndex >= 0) {
         e.preventDefault();
         const completed = completeAutocompleteSelection(autocompleteSuggestions[autocompleteIndex] || autocompleteSuggestions[0]);
         void handleSubmit(completed);
@@ -1171,10 +1169,10 @@ export function Terminal({
         const end = inputRef.current.selectionEnd || 0;
         if (start !== end) {
           const selectedText = input.substring(start, end);
-          navigator.clipboard?.writeText(selectedText)?.catch?.(() => {});
+          navigator.clipboard?.writeText(selectedText)?.catch?.(() => { });
         } else if (input) {
           // If no selection, copy all
-          navigator.clipboard?.writeText(input)?.catch?.(() => {});
+          navigator.clipboard?.writeText(input)?.catch?.(() => { });
         }
       }
       return;
@@ -1202,12 +1200,12 @@ export function Terminal({
             }
           }, 0);
         }
-      })?.catch?.(() => {});
+      })?.catch?.(() => { });
       return;
     }
 
     if (e.key === 'ArrowUp') {
-      if (canUseAutocomplete && autocompleteNavigated) {
+      if (canUseAutocomplete) {
         e.preventDefault();
         setAutocompleteIndex(prev => {
           if (prev === -1) return autocompleteSuggestions.length - 1;
@@ -1225,7 +1223,7 @@ export function Terminal({
         setInput(currentHist[ni]);
       }
     } else if (e.key === 'ArrowDown') {
-      if (canUseAutocomplete && autocompleteNavigated) {
+      if (canUseAutocomplete) {
         e.preventDefault();
         setAutocompleteIndex(prev => {
           if (prev === -1) return 0;
@@ -1257,7 +1255,6 @@ export function Terminal({
         e.preventDefault();
         setShowAutocomplete(false);
         setAutocompleteIndex(-1);
-        setAutocompleteNavigated(false);
         return;
       }
       e.preventDefault();
@@ -1504,7 +1501,7 @@ export function Terminal({
                           )}
                         </span>
                       )}
-                      <span className="shrink-0 opacity-40 select-none font-geist-mono">{line.prompt || prompt}</span>
+                      <span className="shrink-0 opacity-40 select-none font-geist-mono">{line.prompt || currentPrompt}</span>
                       <span className={isDark ? "text-secondary-100" : "text-secondary-900"}>{highlightCommand(line.content)}</span>
                     </div>
                   ) : (
@@ -1525,7 +1522,7 @@ export function Terminal({
                         <span className={cn(
                           "font-bold text-xs tracking-widest opacity-80",
                           line.realismLevel === 'stub' ? "text-warning-500" :
-                          line.realismLevel === 'sim-only' ? "text-primary-500" : "text-accent-500"
+                            line.realismLevel === 'sim-only' ? "text-primary-500" : "text-accent-500"
                         )}>{highlightText(line.content)}</span>
                       )}
                       {line.type === 'password-prompt' && (
@@ -1628,7 +1625,7 @@ export function Terminal({
                     ? t.passwordLabel
                     : confirmDialog?.show || isReloadConfirmationPending
                       ? '[confirm]'
-                      : (prompt || (state ? getModePrompt(state.currentMode, state.hostname || 'Switch') : 'Switch#'))}
+                      : currentPrompt}
                 </span>
                 <input
                   ref={inputRef}
