@@ -798,6 +798,8 @@ export function getModePrompt(mode: CommandMode, hostname: string, _context?: st
       return `${hostname}(config-ext-nacl)#`;
     case 'config-ipv6-acl':
       return `${hostname}(config-ipv6-acl)#`;
+    case 'config-mst':
+      return `${hostname}(config-mst)#`;
     case 'dhcp-config':
       return `${hostname}(dhcp-config)#`;
     case 'ssid-config':

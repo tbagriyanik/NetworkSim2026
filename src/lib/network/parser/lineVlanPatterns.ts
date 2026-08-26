@@ -5,7 +5,7 @@ export const lineVlanPatterns: Record<string, CommandPattern> = {
   // VLAN config komutları
   'name': {
     pattern: /^name\s+(.+)$/i,
-    modes: ['vlan'],
+    modes: ['vlan', 'config-mst'],
     minArgs: 1,
     maxArgs: 1
   },

@@ -143,6 +143,19 @@ export const routingPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
 
+  'redistribute': {
+    pattern: /^redistribute\s+(ospf|rip|eigrp|bgp|static|connected)(?:\s+(\d+))?(?:\s+metric\s+(\d+))?(\s+subnets)?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 4
+  },
+  'no redistribute': {
+    pattern: /^no\s+redistribute\s+(ospf|rip|eigrp|bgp|static|connected)(?:\s+(\d+))?$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 3
+  },
+
 
   'cdp timer': {
     pattern: /^cdp\s+timer\s+(\d+)$/i,
@@ -179,6 +192,48 @@ export const routingPatterns: Record<string, CommandPattern> = {
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1
+  },
+  'spanning-tree mst configuration': {
+    pattern: /^spanning-tree\s+mst\s+configuration$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'spanning-tree mst priority': {
+    pattern: /^spanning-tree\s+mst\s+(\d+)\s+priority\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 3,
+    maxArgs: 3
+  },
+  'name': {
+    pattern: /^name\s+(\S+)$/i,
+    modes: ['config-mst'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'revision': {
+    pattern: /^revision\s+(\d+)$/i,
+    modes: ['config-mst'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'instance': {
+    pattern: /^instance\s+(\d+)\s+vlan\s+([0-9,-]+)$/i,
+    modes: ['config-mst'],
+    minArgs: 3,
+    maxArgs: 3
+  },
+  'no instance': {
+    pattern: /^no\s+instance\s+(\d+)$/i,
+    modes: ['config-mst'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'show pending': {
+    pattern: /^show\s+pending$/i,
+    modes: ['config-mst'],
+    minArgs: 0,
+    maxArgs: 0
   },
   'spanning-tree vlan': {
     pattern: /^spanning-tree\s+vlan\s+(\d+)(?:\s+(priority|root)(?:\s+(primary|secondary|\d+))?)?$/i,

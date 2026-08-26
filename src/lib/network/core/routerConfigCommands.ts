@@ -29,6 +29,8 @@ export const routerConfigHandlers: Record<string, CommandHandler> = {
     'area nssa no-summary': cmdAreaNssaNoSummary,
     'no area stub': cmdNoAreaStub,
     'no area nssa': cmdNoAreaNssa,
+    'redistribute': cmdRedistribute,
+    'no redistribute': cmdNoRedistribute,
 };
 
 // Router subcommands in OSPF/RIP config mode
@@ -419,4 +421,67 @@ function cmdNoAreaNssa(state: SwitchState, input: string): CommandResult {
         } as unknown as Partial<SwitchState>
     };
 }
+
+/**
+ * redistribute - Redistribute routes from another protocol
+ */
+function cmdRedistribute(state: SwitchState, input: string): CommandResult {
+    if (state.currentMode !== 'router-config') return { success: false, error: iosModeError() };
+    if (!state.routingProtocol || state.routingProtocol === 'none') {
+        return { success: false, error: '% No routing protocol active' };
+    }
+
+    const match = input.match(/^redistribute\s+(ospf|rip|eigrp|bgp|static|connected)(?:\s+(\d+))?(?:\s+metric\s+(\d+))?(\s+subnets)?/i);
+    if (!match) {
+        return { success: false, error: '% Invalid redistribute command syntax. Usage: redistribute <protocol> [pid] [metric <val>] [subnets]' };
+    }
+
+    const sourceProtocol = match[1].toLowerCase() as 'ospf' | 'rip' | 'eigrp' | 'bgp' | 'static' | 'connected';
+    const processId = match[2];
+    const metric = match[3] ? parseInt(match[3], 10) : undefined;
+    const subnets = !!match[4];
+
+    const targetProtocol = state.routingProtocol;
+
+    const existingRules = state.redistributeRules || [];
+    const filteredRules = existingRules.filter(r => !(r.targetProtocol === targetProtocol && r.sourceProtocol === sourceProtocol));
+    const newRule = {
+        targetProtocol,
+        sourceProtocol,
+        processId,
+        metric,
+        subnets
+    };
+
+    return {
+        success: true,
+        output: `Redistributing ${sourceProtocol}${processId ? ' ' + processId : ''} into ${targetProtocol}`,
+        newState: {
+            redistributeRules: [...filteredRules, newRule]
+        }
+    };
+}
+
+/**
+ * no redistribute
+ */
+function cmdNoRedistribute(state: SwitchState, input: string): CommandResult {
+    if (state.currentMode !== 'router-config') return { success: false, error: iosModeError() };
+    const match = input.match(/^no\s+redistribute\s+(ospf|rip|eigrp|bgp|static|connected)/i);
+    if (!match) return { success: false, error: '% Invalid no redistribute command syntax' };
+
+    const sourceProtocol = match[1].toLowerCase();
+    const targetProtocol = state.routingProtocol;
+    const existingRules = state.redistributeRules || [];
+    const updatedRules = existingRules.filter(r => !(r.targetProtocol === targetProtocol && r.sourceProtocol === sourceProtocol));
+
+    return {
+        success: true,
+        output: `Removed redistribution of ${sourceProtocol} from ${targetProtocol}`,
+        newState: {
+            redistributeRules: updatedRules
+        }
+    };
+}
+
 

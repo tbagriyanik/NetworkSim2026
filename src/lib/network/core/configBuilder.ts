@@ -50,8 +50,6 @@ export function buildRunningConfig(state: SwitchState): string[] {
     } else {
         lines.push('! Changed settings: none');
     }
-    lines.push('!');
-
     // Header
     lines.push('!');
     lines.push(`! Last configuration change at ${TIMESTAMP}`);
@@ -94,10 +92,37 @@ export function buildRunningConfig(state: SwitchState): string[] {
     }
 
     state.security.users.forEach(user => {
-        // ALWAYS uses 'secret 5' for passwords created with 'secret' keyword.
         lines.push(`username ${user.username} privilege ${user.privilege} secret 5 ${encryptMd5Password(user.password)}`);
     });
     if (state.security.users.length > 0) {
+        lines.push('!');
+    }
+
+    if (state.aaaNewModel) {
+        lines.push('aaa new-model');
+    }
+    if (state.aaaAuthentication && state.aaaAuthentication.length > 0) {
+        state.aaaAuthentication.forEach(auth => {
+            lines.push(`aaa authentication login ${auth}`);
+        });
+    }
+    if (state.radiusServers && state.radiusServers.length > 0) {
+        state.radiusServers.forEach(s => {
+            lines.push(`radius-server host ${s.host}${s.key ? ` key ${s.key}` : ''}`);
+        });
+    }
+    if (state.tacacsServers && state.tacacsServers.length > 0) {
+        state.tacacsServers.forEach(s => {
+            lines.push(`tacacs-server host ${s.host}${s.key ? ` key ${s.key}` : ''}`);
+        });
+    }
+    if (state.radiusKey) {
+        lines.push(`radius-server key ${state.radiusKey}`);
+    }
+    if (state.tacacsKey) {
+        lines.push(`tacacs-server key ${state.tacacsKey}`);
+    }
+    if (state.aaaNewModel || (state.radiusServers && state.radiusServers.length > 0) || (state.tacacsServers && state.tacacsServers.length > 0)) {
         lines.push('!');
     }
 
@@ -145,6 +170,23 @@ export function buildRunningConfig(state: SwitchState): string[] {
     // Spanning Tree (only for switches, not routers)
     if (!isRouterLike) {
         lines.push(`spanning-tree mode ${state.spanningTreeMode || 'pvst'}`);
+
+        if (state.spanningTreeMode === 'mst' && state.mstConfig) {
+            lines.push('spanning-tree mst configuration');
+            if (state.mstConfig.name) lines.push(` name ${state.mstConfig.name}`);
+            if (state.mstConfig.revision !== undefined) lines.push(` revision ${state.mstConfig.revision}`);
+            if (state.mstConfig.instances) {
+                Object.entries(state.mstConfig.instances).forEach(([instId, vlans]) => {
+                    lines.push(` instance ${instId} vlan ${vlans.join(',')}`);
+                });
+            }
+            lines.push('!');
+        }
+        if (state.mstConfig?.instancePriorities) {
+            Object.entries(state.mstConfig.instancePriorities).forEach(([instId, pri]) => {
+                lines.push(`spanning-tree mst ${instId} priority ${pri}`);
+            });
+        }
 
         if (state.spanningTreePriority !== undefined) {
             lines.push(`spanning-tree priority ${state.spanningTreePriority}`);
@@ -400,6 +442,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
         (state.dynamicRoutes || []).forEach(r => {
             if (r.type === 'dynamic') lines.push(`  network ${r.destination}`);
         });
+        (state.redistributeRules || []).filter(r => r.targetProtocol === 'rip').forEach(r => {
+            lines.push(`  redistribute ${r.sourceProtocol}${r.processId ? ' ' + r.processId : ''}${r.metric !== undefined ? ' metric ' + r.metric : ''}`);
+        });
         if (state.autoSummary === false) lines.push(' no auto-summary');
         lines.push('!');
     } else if (state.routingProtocol === 'ospf') {
@@ -410,11 +455,17 @@ export function buildRunningConfig(state: SwitchState): string[] {
                 lines.push(`  network ${r.destination} ${wildcardMask} area ${r.metric || 0}`);
             }
         });
+        (state.redistributeRules || []).filter(r => r.targetProtocol === 'ospf').forEach(r => {
+            lines.push(`  redistribute ${r.sourceProtocol}${r.processId ? ' ' + r.processId : ''}${r.metric !== undefined ? ' metric ' + r.metric : ''}${r.subnets ? ' subnets' : ''}`);
+        });
         lines.push('!');
     } else if (state.routingProtocol === 'eigrp') {
         lines.push(`router eigrp ${state.eigrpAs || '1'}`);
         (state.dynamicRoutes || []).forEach(r => {
             if (r.type === 'dynamic' && r.destination && r.subnetMask) lines.push(`  network ${r.destination} ${r.subnetMask}`);
+        });
+        (state.redistributeRules || []).filter(r => r.targetProtocol === 'eigrp').forEach(r => {
+            lines.push(`  redistribute ${r.sourceProtocol}${r.processId ? ' ' + r.processId : ''}${r.metric !== undefined ? ' metric ' + r.metric : ''}`);
         });
         if (state.autoSummary === false) lines.push(' no auto-summary');
         lines.push('!');
@@ -425,6 +476,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
         });
         (state.bgpNeighbors || []).forEach((n: { ip: string; as: string }) => {
             lines.push(`  neighbor ${n.ip} remote-as ${n.as}`);
+        });
+        (state.redistributeRules || []).filter(r => r.targetProtocol === 'bgp').forEach(r => {
+            lines.push(`  redistribute ${r.sourceProtocol}${r.processId ? ' ' + r.processId : ''}${r.metric !== undefined ? ' metric ' + r.metric : ''}`);
         });
         lines.push('!');
     }

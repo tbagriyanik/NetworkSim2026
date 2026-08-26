@@ -18,7 +18,8 @@ export type CommandMode =
   | 'ap-config'      // AP configuration mode
   | 'config-std-nacl'  // Router(config-std-nacl)# - Named standard ACL
   | 'config-ext-nacl'  // Router(config-ext-nacl)# - Named extended ACL
-  | 'config-ipv6-acl'; // Router(config-ipv6-acl)# - Named IPv6 ACL
+  | 'config-ipv6-acl'  // Router(config-ipv6-acl)# - Named IPv6 ACL
+  | 'config-mst';      // Switch(config-mst)# - MST configuration mode
 
 type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | 'err-disabled' | 'disconnected';
 type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
@@ -79,6 +80,7 @@ export interface Port {
     processId?: string;
     area?: string;
   };
+  ipv6NdSuppressRa?: boolean;
   ospfEnabled?: boolean;
   ospfProcessId?: string;
   ospfArea?: string;
@@ -644,6 +646,42 @@ export interface SwitchState {
   syslogHost?: string;
   syslogTrapLevel?: string;
   currentSlaId?: string;
+
+  // Route redistribution rules
+  redistributeRules?: RedistributeRule[];
+
+  // MSTP configuration state
+  mstConfig?: MstConfig;
+
+  // SLAAC / Host IPv6 Auto-config
+  ipv6UnicastRouting?: boolean;
+  ipv6Autoconfig?: boolean;
+
+  // AAA, RADIUS, TACACS+ state
+  aaaNewModel?: boolean;
+  aaaAuthentication?: string[];
+  radiusServers?: Array<{ host: string; key?: string }>;
+  tacacsServers?: Array<{ host: string; key?: string }>;
+  radiusKey?: string;
+  tacacsKey?: string;
+}
+
+export interface RedistributeRule {
+  targetProtocol: string; // 'ospf' | 'rip' | 'eigrp' | 'bgp'
+  sourceProtocol: 'ospf' | 'rip' | 'eigrp' | 'bgp' | 'static' | 'connected';
+  processId?: string;
+  metric?: number;
+  subnets?: boolean;
+}
+
+export interface MstConfig {
+  name?: string;
+  revision?: number;
+  instances?: Record<number, number[]>; // instanceId -> vlanIds
+  instancePriorities?: Record<number, number>; // instanceId -> priority
+  pendingInstances?: Record<number, number[]>;
+  pendingName?: string;
+  pendingRevision?: number;
 }
 
 export interface StartupConfig {
@@ -841,4 +879,6 @@ export interface Route {
   type: 'connected' | 'static' | 'dynamic'; // Route type
   area?: number;            // For OSPF
   ospfRouteType?: 'E1' | 'E2' | 'N1' | 'N2';
+  code?: string;
+  administrativeDistance?: number;
 }

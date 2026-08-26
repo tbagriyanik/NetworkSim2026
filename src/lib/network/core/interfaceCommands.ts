@@ -64,6 +64,8 @@ import {
   cmdNoIpDhcpSnoopingTrust,
   cmdIpArpInspectionTrust,
   cmdNoIpArpInspectionTrust,
+  cmdIpv6NdSuppressRa,
+  cmdNoIpv6NdSuppressRa,
 } from './interface/cmd.ipAddress';
 
 import {
@@ -206,6 +208,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'no spanning-tree cost': cmdNoSpanningTreeCost,
   'spanning-tree priority': cmdSpanningTreePriority,
   'ipv6 address': cmdIpv6Address,
+  'ipv6 nd suppress-ra': cmdIpv6NdSuppressRa,
+  'no ipv6 nd suppress-ra': cmdNoIpv6NdSuppressRa,
   'ipv6 rip enable': cmdIpv6Rip,
   'ipv6 ospf area': cmdIpv6Ospf,
   'ip ospf area': cmdIpOspfArea,

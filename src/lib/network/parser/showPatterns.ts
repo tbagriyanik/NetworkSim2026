@@ -69,6 +69,12 @@ export const showPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'show logging': {
+    pattern: /^show\s+logging$/i,
+    modes: ['user', 'privileged', 'config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'show mac address-table': {
     pattern: /^show\s+mac(?:\s*(?:address-table|address|addr))?(\s+(.+)?)?$/i,
     modes: ['user', 'privileged'],

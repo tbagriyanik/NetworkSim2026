@@ -380,6 +380,23 @@ export function cmdIpv6Address(state: SwitchState, input: string, _ctx: CommandC
 }
 
 /**
+ * Configure IPv6 ND Suppress RA
+ */
+export function cmdIpv6NdSuppressRa(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatePort = (port: Port) => ({ ...port, ipv6NdSuppressRa: true });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+export function cmdNoIpv6NdSuppressRa(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatePort = (port: Port) => ({ ...port, ipv6NdSuppressRa: false });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
  * IPv6 Traffic Filter (Inbound/Outbound IPv6 ACL)
  */
 export function cmdIpv6TrafficFilter(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {

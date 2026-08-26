@@ -189,6 +189,18 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 3
   },
+  'ipv6 nd suppress-ra': {
+    pattern: /^ipv6\s+nd\s+suppress-ra$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no ipv6 nd suppress-ra': {
+    pattern: /^no\s+ipv6\s+nd\s+suppress-ra$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'ipv6 traffic-filter': {
     pattern: /^ipv6\s+traffic-filter\s+(\S+)\s+(in|out)$/i,
     modes: ['interface', 'config-if-range'],

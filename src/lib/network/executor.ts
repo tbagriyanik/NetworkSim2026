@@ -42,6 +42,8 @@ export function getPrompt(state: SwitchState): string {
       return `${hostname}(config-std-nacl)#`;
     case 'config-ext-nacl':
       return `${hostname}(config-ext-nacl)#`;
+    case 'config-mst':
+      return `${hostname}(config-mst)#`;
     case 'dot11-config':
       return `${hostname}(config-if)#`;
     case 'ap-config':

@@ -128,6 +128,11 @@ export function recalculateStp(
       if (state.vlans) {
         Object.keys(state.vlans).forEach(v => allVlanIds.add(Number(v)));
       }
+      if (state.mstConfig?.instances) {
+        Object.values(state.mstConfig.instances).forEach(vlans => {
+          if (Array.isArray(vlans)) vlans.forEach(v => allVlanIds.add(v));
+        });
+      }
       updatedStates.set(id, clonedState);
     } else {
       // For non-switches, we can keep the reference or do a shallow clone
@@ -158,6 +163,36 @@ export function recalculateStp(
   return updatedStates;
 }
 
+function getMstInstanceForVlan(state: SwitchState, vlanId: number): number {
+  if (!state.mstConfig?.instances) return 0;
+  for (const [instStr, vlans] of Object.entries(state.mstConfig.instances)) {
+    if (Array.isArray(vlans) && vlans.includes(vlanId)) {
+      return parseInt(instStr, 10);
+    }
+  }
+  return 0;
+}
+
+function getVlanPriority(state: SwitchState, vlanId: number): number {
+  if (state.spanningTreeMode === 'mst') {
+    const instId = getMstInstanceForVlan(state, vlanId);
+    if (state.mstConfig?.instancePriorities?.[instId] !== undefined) {
+      return state.mstConfig.instancePriorities[instId];
+    }
+    return state.spanningTreePriority || 32768;
+  }
+  const vlanConfig = state.spanningTreeVlans?.[vlanId];
+  return vlanConfig?.priority ? parseInt(vlanConfig.priority, 10) : (state.spanningTreePriority || 32768);
+}
+
+function getBridgePriority(state: SwitchState, vlanId: number): number {
+  const priority = getVlanPriority(state, vlanId);
+  if (state.spanningTreeMode === 'mst') {
+    return priority;
+  }
+  return priority + vlanId;
+}
+
 function runStpForVlan(
   vlanId: number,
   switchIds: string[],
@@ -175,8 +210,7 @@ function runStpForVlan(
       const vlanConfig = state.spanningTreeVlans?.[vlanId];
       if (vlanConfig?.enabled === false) return;
 
-      const vlanPriority = vlanConfig?.priority ? parseInt(vlanConfig.priority) : (state.spanningTreePriority || 32768);
-      const bridgeId = calculateBridgeId(vlanPriority + vlanId, state.macAddress);
+      const bridgeId = calculateBridgeId(getBridgePriority(state, vlanId), state.macAddress);
 
       const vlanStpState: StpVlanState = {
         vlanId,
@@ -222,8 +256,7 @@ function runStpForVlan(
     const vlanConfig = state.spanningTreeVlans?.[vlanId];
     if (vlanConfig?.enabled === false) return;
 
-    const vlanPriority = vlanConfig?.priority ? parseInt(vlanConfig.priority) : (state.spanningTreePriority || 32768);
-    const bridgeId = calculateBridgeId(vlanPriority + vlanId, state.macAddress);
+    const bridgeId = calculateBridgeId(getBridgePriority(state, vlanId), state.macAddress);
 
     const initialBpdu: Bpdu = {
       rootBridgeId: bridgeId,
@@ -269,20 +302,14 @@ function runStpForVlan(
         };
 
         // Standard STP: BPDU sent by a bridge uses its own Bridge ID as sender
-        const vlanPriority = srcState.spanningTreeVlans?.[vlanId]?.priority
-          ? parseInt(srcState.spanningTreeVlans[vlanId].priority)
-          : (srcState.spanningTreePriority || 32768);
-        bpToSend.senderBridgeId = calculateBridgeId(vlanPriority + vlanId, srcState.macAddress);
+        bpToSend.senderBridgeId = calculateBridgeId(getBridgePriority(srcState, vlanId), srcState.macAddress);
 
         const currentPortBp = portBestBpdu.get(dstId)?.get(dstPort);
         if (!currentPortBp || isBpduSuperior(bpToSend, currentPortBp)) {
           portBestBpdu.get(dstId)?.set(dstPort, bpToSend);
 
           // Re-evaluate device's best BPDU
-          const dstVlanPriority = dstState.spanningTreeVlans?.[vlanId]?.priority
-            ? parseInt(dstState.spanningTreeVlans[vlanId].priority)
-            : (dstState.spanningTreePriority || 32768);
-          const dstBridgeId = calculateBridgeId(dstVlanPriority + vlanId, dstState.macAddress);
+          const dstBridgeId = calculateBridgeId(getBridgePriority(dstState, vlanId), dstState.macAddress);
 
           let bestBpForDst: Bpdu = {
             rootBridgeId: dstBridgeId,
@@ -329,17 +356,12 @@ function runStpForVlan(
     const bestBp = deviceBestBpdu.get(deviceId);
     if (!bestBp) return;
     const rootPortId = rootPortIdMap.get(deviceId);
-    const isRoot = bestBp.rootBridgeId === calculateBridgeId(
-      (state.spanningTreeVlans?.[vlanId]?.priority ? parseInt(state.spanningTreeVlans[vlanId].priority) : (state.spanningTreePriority || 32768)) + vlanId,
-      state.macAddress
-    );
+    const myBridgePriority = getBridgePriority(state, vlanId);
+    const isRoot = bestBp.rootBridgeId === calculateBridgeId(myBridgePriority, state.macAddress);
 
     const vlanStpState: StpVlanState = {
       vlanId,
-      bridgeId: calculateBridgeId(
-        (state.spanningTreeVlans?.[vlanId]?.priority ? parseInt(state.spanningTreeVlans[vlanId].priority) : (state.spanningTreePriority || 32768)) + vlanId,
-        state.macAddress
-      ),
+      bridgeId: calculateBridgeId(myBridgePriority, state.macAddress),
       rootBridgeId: bestBp.rootBridgeId,
       isRoot,
       rootCost: bestBp.rootPathCost,
@@ -415,10 +437,7 @@ function runStpForVlan(
             isDesignated = true;
           } else if (myBestBp.rootPathCost === peerBestBp.rootPathCost) {
             const myBridgeId = vlanStpState.bridgeId;
-            const peerVlanPriority = (peerState.spanningTreeVlans?.[vlanId]?.priority
-              ? parseInt(peerState.spanningTreeVlans[vlanId].priority)
-              : (peerState.spanningTreePriority || 32768));
-            const peerBridgeId = calculateBridgeId(peerVlanPriority + vlanId, peerState.macAddress);
+            const peerBridgeId = calculateBridgeId(getBridgePriority(peerState, vlanId), peerState.macAddress);
 
             if (myBridgeId < peerBridgeId) {
               isDesignated = true;

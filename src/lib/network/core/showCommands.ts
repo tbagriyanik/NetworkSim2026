@@ -45,6 +45,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show running-config interface': cmdShowRunningConfigInterface,
   'show startup-config': cmdShowStartupConfig,
   'show version': cmdShowVersion,
+  'show logging': cmdShowLogging,
   'show interfaces': cmdShowInterfaces,
   'show interface': cmdShowInterface,
   'show interface trunk': cmdShowInterfaceTrunk,
@@ -1283,9 +1284,20 @@ function cmdShowQueuingInterface(state: SwitchState, input: string, _ctx: Comman
 
 
 
-/**
- * Show Dot11 Associations (wireless clients)
- */
+export function cmdShowLogging(state: SwitchState): CommandResult {
+  const loggingStatus = state.loggingEnabled !== false ? 'enabled' : 'disabled';
+  const trapLevel = state.syslogTrapLevel || 'informational';
+  const host = state.syslogHost ? `Logging to ${state.syslogHost}` : 'Logging to console/buffer';
+
+  const output = `Syslog logging: ${loggingStatus}
+Console logging: level debugging, 0 messages logged
+Buffer logging: level debugging, 0 messages logged
+Trap logging: level ${trapLevel}, 0 message lines logged
+${host}
+`;
+  return { success: true, output };
+}
+
 
 
 

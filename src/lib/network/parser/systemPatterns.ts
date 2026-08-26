@@ -525,6 +525,18 @@ export const systemPatterns: Record<string, CommandPattern> = {
   },
 
   //  DHCP Pool (config mode) 
+  'logging trap': {
+    pattern: /^logging\s+trap\s+(\w+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'logging host': {
+    pattern: /^logging\s+(?:host\s+)?([0-9.]+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'ip dhcp pool': {
     pattern: /^ip\s+dhcp\s+pool\s+(\S+)$/i,
     modes: ['config'],

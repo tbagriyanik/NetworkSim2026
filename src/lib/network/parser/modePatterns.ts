@@ -59,13 +59,13 @@ export const modePatterns: Record<string, CommandPattern> = {
   },
   'exit': {
     pattern: /^exit$/i,
-    modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config', 'dot11-config', 'ssid-config'],
+    modes: ['privileged', 'config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config', 'dot11-config', 'ssid-config', 'config-mst'],
     minArgs: 0,
     maxArgs: 0
   },
   'end': {
     pattern: /^end$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config', 'dot11-config', 'ssid-config'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'dhcp-config', 'router-config', 'config-std-nacl', 'config-ext-nacl', 'ap-config', 'dot11-config', 'ssid-config', 'config-mst'],
     minArgs: 0,
     maxArgs: 0
   },
@@ -97,6 +97,48 @@ export const modePatterns: Record<string, CommandPattern> = {
   },
   'no vlan': {
     pattern: /^no\s+vlan\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'aaa new-model': {
+    pattern: /^aaa\s+new-model$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no aaa new-model': {
+    pattern: /^no\s+aaa\s+new-model$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'aaa authentication login': {
+    pattern: /^aaa\s+authentication\s+login\s+(.+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 4
+  },
+  'radius-server host': {
+    pattern: /^radius-server\s+host\s+([0-9.]+)(?:\s+key\s+(\S+))?$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 3
+  },
+  'tacacs-server host': {
+    pattern: /^tacacs-server\s+host\s+([0-9.]+)(?:\s+key\s+(\S+))?$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 3
+  },
+  'radius-server key': {
+    pattern: /^radius-server\s+key\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'tacacs-server key': {
+    pattern: /^tacacs-server\s+key\s+(\S+)$/i,
     modes: ['config'],
     minArgs: 1,
     maxArgs: 1

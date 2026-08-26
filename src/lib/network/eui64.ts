@@ -50,3 +50,47 @@ export function calculateEui64(macAddress: string | undefined, prefixStr: string
   const prefixFormatted = prefixParts.join(':');
   return `${prefixFormatted}:${interfaceId}`;
 }
+
+import type { SwitchState } from './types';
+import type { CanvasConnection } from '@/components/network/networkTopology.types';
+
+/**
+ * Evaluate SLAAC (IPv6 Router Advertisement auto-configuration) for a device
+ */
+export function evaluateSlaacForDevice(
+  deviceId: string,
+  deviceStates: Map<string, SwitchState>,
+  connections: CanvasConnection[]
+): { ipv6Address?: string; ipv6Prefix?: number; ipv6Gateway?: string } | null {
+  const state = deviceStates.get(deviceId);
+  if (!state) return null;
+
+  const deviceConns = connections.filter(c => c.active && (c.sourceDeviceId === deviceId || c.targetDeviceId === deviceId));
+
+  for (const conn of deviceConns) {
+    const remoteDeviceId = conn.sourceDeviceId === deviceId ? conn.targetDeviceId : conn.sourceDeviceId;
+    const remotePortId = conn.sourceDeviceId === deviceId ? conn.targetPort : conn.sourcePort;
+
+    const remoteState = deviceStates.get(remoteDeviceId);
+    if (!remoteState) continue;
+
+    const isRouter = remoteState.deviceType === 'router' || remoteState.isLayer3Switch || remoteState.ipv6UnicastRouting || remoteState.ipv6Enabled;
+    if (!isRouter) continue;
+    if (remoteState.ipv6UnicastRouting === false) continue;
+
+    const remotePort = remoteState.ports[remotePortId];
+    if (!remotePort || remotePort.shutdown) continue;
+
+    if (remotePort.ipv6Address && remotePort.ipv6Prefix && !remotePort.ipv6NdSuppressRa) {
+      const mac = state.macAddress || '0050.56a1.b2c3';
+      const autoIpv6 = calculateEui64(mac, remotePort.ipv6Address);
+      return {
+        ipv6Address: autoIpv6,
+        ipv6Prefix: remotePort.ipv6Prefix || 64,
+        ipv6Gateway: remotePort.ipv6Address
+      };
+    }
+  }
+
+  return null;
+}

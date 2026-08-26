@@ -14,6 +14,9 @@ export interface Route {
   type: 'connected' | 'static' | 'dynamic'; // Route type
   area?: number;            // For OSPF
   ospfRouteType?: 'E1' | 'E2' | 'N1' | 'N2';
+  code?: string;
+  interfaceId?: string;
+  administrativeDistance?: number;
 }
 
 /**
@@ -146,7 +149,75 @@ function buildRoutingTable(
     });
   }
 
-  return routes;
+  return applyRouteRedistribution(deviceId, deviceStates, routes);
+}
+
+/**
+ * Apply route redistribution rules across protocols for a device
+ */
+function applyRouteRedistribution(
+  deviceId: string,
+  deviceStates: Map<string, SwitchState>,
+  routes: Route[]
+): Route[] {
+  const state = deviceStates.get(deviceId);
+  if (!state || !state.redistributeRules || state.redistributeRules.length === 0) return routes;
+
+  const result = [...routes];
+
+  state.redistributeRules.forEach(rule => {
+    let sourceRoutes: Route[] = [];
+
+    if (rule.sourceProtocol === 'connected') {
+      sourceRoutes = routes.filter(r => r.type === 'connected');
+    } else if (rule.sourceProtocol === 'static') {
+      sourceRoutes = routes.filter(r => r.type === 'static');
+    } else if (rule.sourceProtocol === 'rip') {
+      sourceRoutes = calculateRipRoutes(deviceId, deviceStates);
+    } else if (rule.sourceProtocol === 'ospf') {
+      const ospfRoutes = calculateOSPFRoutes(deviceId, deviceStates);
+      sourceRoutes = ospfRoutes;
+    } else if (rule.sourceProtocol === 'eigrp') {
+      const eigrpRoutes = calculateEigrpRoutes(deviceId, deviceStates);
+      sourceRoutes = eigrpRoutes;
+    } else if (rule.sourceProtocol === 'bgp') {
+      sourceRoutes = (state.dynamicRoutes || []).filter(r => r.code === 'B' || r.type === 'dynamic');
+    }
+
+    sourceRoutes.forEach(srcRoute => {
+      const existsInTable = result.some(r => r.destination === srcRoute.destination && (r.type === 'connected' || r.type === 'static'));
+      if (existsInTable) return;
+
+      const codeMap: Record<string, string> = {
+        ospf: 'O E2',
+        rip: 'R',
+        eigrp: 'D EX',
+        bgp: 'B'
+      };
+
+      const defaultMetricMap: Record<string, number> = {
+        ospf: 20,
+        rip: 1,
+        eigrp: 100,
+        bgp: 1
+      };
+
+      const redistributedRoute: Route = {
+        destination: srcRoute.destination,
+        subnetMask: srcRoute.subnetMask,
+        nextHop: srcRoute.nextHop || 'directly connected',
+        interfaceId: srcRoute.interfaceId,
+        metric: rule.metric !== undefined ? rule.metric : (defaultMetricMap[rule.targetProtocol] || 20),
+        type: 'dynamic',
+        code: codeMap[rule.targetProtocol] || 'O E2',
+        administrativeDistance: rule.targetProtocol === 'ospf' ? 110 : rule.targetProtocol === 'rip' ? 120 : rule.targetProtocol === 'eigrp' ? 170 : 20
+      };
+
+      result.push(redistributedRoute);
+    });
+  });
+
+  return result;
 }
 
 
