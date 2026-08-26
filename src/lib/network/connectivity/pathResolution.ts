@@ -20,7 +20,7 @@ import {
 } from '@/lib/network/connectivity.utils';
 import { portsFormTrunk, getVlanSpecificSTPBlocking } from './vlanAndSwitching';
 import { checkPortSecurityViolation, checkSerialEncapsulation } from './security';
-import { evaluateAcl } from './acl';
+import { evaluateAcl, evaluateIpv6Acl } from './acl';
 
 /**
  * Robust Network connectivity checker for simulation
@@ -1123,6 +1123,27 @@ export function checkConnectivity(
         }
       }
 
+      if (ingressPort?.ipv6TrafficFilterIn && currentSourceIp.includes(':')) {
+        const aclResult = evaluateIpv6Acl(
+          ingressPort.ipv6TrafficFilterIn,
+          state,
+          currentSourceIp,
+          currentTargetIp,
+          options?.protocol || 'ipv6'
+        );
+        if (aclResult === 'deny') {
+          return {
+            success: false,
+            hops: hopNames.slice(0, i + 1),
+            hopIds: path.slice(0, i + 1),
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Paket ${device?.name} ingress port ${ingressPortId} IPv6 ACL kuralı nedeniyle engellendi.`
+              : `Packet blocked by inbound IPv6 ACL on ${device?.name} interface ${ingressPortId}.`
+          };
+        }
+      }
+
       // 7.1.5 NAT Logic (Inside -> Outside or Outside -> Inside)
       if (ingressPort?.natSide && egressPort?.natSide && ingressPort.natSide !== egressPort.natSide) {
         if (ingressPort.natSide === 'inside' && egressPort.natSide === 'outside') {
@@ -1226,6 +1247,27 @@ export function checkConnectivity(
             error: language === 'tr'
               ? `Paket ${device?.name} egress port ${egressPortId} ACL kuralı nedeniyle engellendi.`
               : `Packet blocked by outbound ACL on ${device?.name} interface ${egressPortId}.`
+          };
+        }
+      }
+
+      if (egressPort?.ipv6TrafficFilterOut && currentSourceIp.includes(':')) {
+        const aclResult = evaluateIpv6Acl(
+          egressPort.ipv6TrafficFilterOut,
+          state,
+          currentSourceIp,
+          currentTargetIp,
+          options?.protocol || 'ipv6'
+        );
+        if (aclResult === 'deny') {
+          return {
+            success: false,
+            hops: hopNames.slice(0, i + 1),
+            hopIds: path.slice(0, i + 1),
+            targetId: targetDevice.id,
+            error: language === 'tr'
+              ? `Paket ${device?.name} egress port ${egressPortId} IPv6 ACL kuralı nedeniyle engellendi.`
+              : `Packet blocked by outbound IPv6 ACL on ${device?.name} interface ${egressPortId}.`
           };
         }
       }

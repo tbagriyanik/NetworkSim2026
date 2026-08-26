@@ -108,3 +108,59 @@ export function evaluateAcl(
 
   return 'deny'; // Implicit deny
 }
+
+/**
+ * Evaluate IPv6 ACL
+ */
+export function evaluateIpv6Acl(
+  aclId: string,
+  state: SwitchState,
+  sourceIp: string,
+  targetIp: string,
+  protocol: string = 'ipv6'
+): 'permit' | 'deny' | 'none' {
+  const rules = state.ipv6AccessLists?.[aclId];
+  if (!rules || rules.length === 0) return 'none';
+
+  for (let ruleIdx = 0; ruleIdx < rules.length; ruleIdx++) {
+    const rule = rules[ruleIdx];
+    const seqMatch = rule.match(/^\d+\s+(.+)$/);
+    const ruleContent = seqMatch ? seqMatch[1] : rule;
+    const parts = ruleContent.trim().split(/\s+/);
+    const action = parts[0].toLowerCase() as 'permit' | 'deny';
+    const ruleProto = parts[1]?.toLowerCase() || 'ipv6';
+
+    if (ruleProto !== 'ipv6' && ruleProto !== protocol && protocol !== 'ipv6') {
+      continue;
+    }
+
+    let idx = 2;
+    let srcSpec = parts[idx++] || 'any';
+    if (srcSpec === 'host') {
+      srcSpec = parts[idx++] || '';
+    }
+
+    let dstSpec = parts[idx++] || 'any';
+    if (dstSpec === 'host') {
+      dstSpec = parts[idx++] || '';
+    }
+
+    const matchSpec = (addr: string, spec: string) => {
+      if (!spec || spec.toLowerCase() === 'any') return true;
+      const cleanSpec = spec.toLowerCase().replace(/^host\s+/, '');
+      const cleanAddr = addr.toLowerCase();
+      if (cleanSpec.includes('/')) {
+        const prefix = cleanSpec.split('/')[0].replace(/::$/, '');
+        return cleanAddr.startsWith(prefix);
+      }
+      return cleanAddr === cleanSpec;
+    };
+
+    if (!matchSpec(sourceIp, srcSpec)) continue;
+    if (!matchSpec(targetIp, dstSpec)) continue;
+
+    return action;
+  }
+
+  return 'deny'; // Implicit deny
+}

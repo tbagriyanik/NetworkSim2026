@@ -208,7 +208,7 @@ export function MultiDeviceWindowManager({
                   deviceStates={deviceStates}
                   deviceOutputs={deviceOutputs}
                   onExecuteCommand={(cmd) => handleExecuteCommand(win.id, cmd)}
-                  onUpdateHistory={(hist) => handleUpdateHistory(win.id, Array.isArray(hist) ? hist : [hist])}
+                  onUpdateHistory={(devId, hist) => handleUpdateHistory(win.id, Array.isArray(hist) ? hist : (Array.isArray(devId) ? devId : []))}
                   setConfirmDialog={setConfirmDialog as any}
                   confirmDialog={confirmDialog as any}
                   topologyDevices={topologyDevices}
@@ -253,7 +253,7 @@ export function MultiDeviceWindowManager({
             handleClearTerminal={() => {
               deviceOutputs.set(win.id, []);
             }}
-            handleUpdateHistory={(history) => handleUpdateHistory(win.id, Array.isArray(history) ? history : [history])}
+            handleUpdateHistory={(devId, hist) => handleUpdateHistory(win.id, Array.isArray(hist) ? hist : (Array.isArray(devId) ? devId : []))}
             confirmDialog={confirmDialog as any}
             setConfirmDialog={setConfirmDialog as any}
             t={t as any}

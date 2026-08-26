@@ -14,7 +14,7 @@
 ### ⌨️ CLI / Terminal
 - Gerçekçi CLI komut satırı (user, privileged, global-config, interface, line, vlan, router-config ve adlandırılmış-ACL modları).
 - PC CMD ve Dosya Düzenleyici ortamında tam kapsamlı **Python 3 yorumlayıcısı**:
-  - **MEB Müfredatı OOP:** Sınıflar (`class`), kurucu metot (`__init__`), nitelik bağlama (`self`), kalıtım (inheritance), `super()`, `isinstance()`.
+  - **OOP:** Sınıflar (`class`), kurucu metot (`__init__`), nitelik bağlama (`self`), kalıtım (inheritance), `super()`, `isinstance()`.
   - **Decorator'lar:** `@property`, `@<name>.setter`, `@staticmethod`, `@classmethod` ve kullanıcı tanımlı decorator fonksiyonları.
   - **Generator'lar:** `yield` ve `yield from` ile tembel iterasyon (lazy evaluation).
   - **Modül Desteği:** `json`, `re` (regex), `os.path`, simüle edilmiş `socket` (ağ programlama betikleri için), `math`, `random`, `datetime`, `sys`.

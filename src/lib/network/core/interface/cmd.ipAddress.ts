@@ -4,6 +4,7 @@ import type { SwitchState, CommandResult, Port } from '../../types';
 import { buildRunningConfig } from '../configBuilder';
 import { canAssignIPToPhysicalPort, isLayer3Switch } from '../../switchModels';
 import { validateSviStatus } from '../L3Validation';
+import { calculateEui64 } from '../../eui64';
 import {
   isInInterfaceMode,
   isVlanInterfaceName,
@@ -153,7 +154,6 @@ export function cmdNoIpAddress(state: SwitchState, _input: string, _ctx: Command
     return { success: false, error: '% No interface selected' };
   }
 
-  // VLAN interface'i için IP kaldırma
   if (isVlanInterfaceName(state.currentInterface)) {
     const vlanPortKey = getVlanPortKey(state.currentInterface);
     const newPorts = { ...state.ports };
@@ -173,7 +173,6 @@ export function cmdNoIpAddress(state: SwitchState, _input: string, _ctx: Command
     };
   }
 
-  // Fiziksel port'tan IP kaldırma
   const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, ipAddress: undefined, subnetMask: undefined, mode: 'access' }));
 
   const updatedState = { ...state, ports: newPorts };
@@ -181,6 +180,32 @@ export function cmdNoIpAddress(state: SwitchState, _input: string, _ctx: Command
     success: true,
     newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) }
   };
+}
+
+/**
+ * IP ARP Inspection Trust
+ */
+export function cmdIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: true });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'ARP inspection trust configured', newState: { ports: newPorts } };
+}
+
+/**
+ * No IP ARP Inspection Trust
+ */
+export function cmdNoIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: false });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, output: 'ARP inspection trust removed', newState: { ports: newPorts } };
 }
 
 /**
@@ -215,6 +240,7 @@ export function cmdNoIpDefaultGateway(state: SwitchState, _input: string, _ctx: 
     newState: { defaultGateway: undefined }
   };
 }
+
 export function cmdNoIpProxyArp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };
@@ -229,7 +255,7 @@ export function cmdNoIpProxyArp(state: SwitchState, _input: string, _ctx: Comman
 }
 
 /**
- * No Keepalive - Disable keepalive
+ * IP Access-Group - Apply ACL to interface
  */
 export function cmdIpAccessGroup(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
@@ -280,7 +306,7 @@ export function cmdNoIpAccessGroup(state: SwitchState, input: string, _ctx: Comm
 }
 
 /**
- * Channel-Group - Assign interface to EtherChannel
+ * IP Helper-Address - Configure DHCP relay address
  */
 export function cmdIpHelperAddress(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) {
@@ -327,13 +353,56 @@ export function cmdNoIpHelperAddress(state: SwitchState, input: string, _ctx: Co
 }
 
 /**
- * Switchport Nonegotiate - Disable DTP negotiation
+ * Configure IPv6 Address (supports standard prefix and eui-64)
  */
 export function cmdIpv6Address(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+
+  // Check EUI-64 variant
+  const euiMatch = input.match(/^ipv6\s+address\s+([0-9a-fA-F:]+)(?:\/(\d+))?\s+eui-64$/i);
+  if (euiMatch) {
+    const prefixStr = euiMatch[1];
+    const prefixLen = euiMatch[2] ? parseInt(euiMatch[2]) : 64;
+    const updatePort = (port: Port) => {
+      const mac = port.macAddress || '0050.56a1.b2c3';
+      const fullIpv6 = calculateEui64(mac, prefixStr);
+      return { ...port, ipv6Address: fullIpv6, ipv6Prefix: prefixLen };
+    };
+    const newPorts = applyToSelectedPorts(state, updatePort);
+    return { success: true, newState: { ports: newPorts } };
+  }
+
   const match = input.match(/^ipv6\s+address\s+([0-9a-fA-F:]+)\/(\d+)$/i);
   if (!match) return { success: false, error: '% Invalid IPv6 address' };
   const updatePort = (port: Port) => ({ ...port, ipv6Address: match[1], ipv6Prefix: parseInt(match[2]) });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * IPv6 Traffic Filter (Inbound/Outbound IPv6 ACL)
+ */
+export function cmdIpv6TrafficFilter(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+
+  if (input.toLowerCase().startsWith('no ')) {
+    const updatePort = (port: Port) => ({ ...port, ipv6TrafficFilterIn: undefined, ipv6TrafficFilterOut: undefined });
+    const newPorts = applyToSelectedPorts(state, updatePort);
+    return { success: true, newState: { ports: newPorts } };
+  }
+
+  const match = input.match(/^ipv6\s+traffic-filter\s+(\S+)\s+(in|out)$/i);
+  if (!match) return { success: false, error: '% Invalid ipv6 traffic-filter command' };
+
+  const aclName = match[1];
+  const direction = match[2].toLowerCase();
+  const updatePort = (port: Port) => {
+    if (direction === 'in') {
+      return { ...port, ipv6TrafficFilterIn: aclName };
+    } else {
+      return { ...port, ipv6TrafficFilterOut: aclName };
+    }
+  };
   const newPorts = applyToSelectedPorts(state, updatePort);
   return { success: true, newState: { ports: newPorts } };
 }
@@ -374,6 +443,19 @@ export function cmdIpv6Rip(state: SwitchState, input: string, _ctx: CommandConte
 }
 
 /**
+ * No IPv6 RIP
+ */
+export function cmdNoIpv6Rip(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipv6Rip: { enabled: false }
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
  * IPv6 OSPF Area
  */
 export function cmdIpv6Ospf(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
@@ -408,6 +490,19 @@ export function cmdIpv6Ospf(state: SwitchState, input: string, _ctx: CommandCont
   });
 
   return { success: true, newState: { ports: newPorts, ipv6DynamicRoutes } };
+}
+
+/**
+ * No IPv6 OSPF Area
+ */
+export function cmdNoIpv6Ospf(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatePort = (port: Port) => ({
+    ...port,
+    ipv6Ospf: { enabled: false }
+  });
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
 }
 
 /**
@@ -451,103 +546,7 @@ export function cmdNoIpOspfArea(state: SwitchState, input: string, _ctx: Command
 }
 
 /**
- * No IPv6 RIP
- */
-export function cmdNoIpv6Rip(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
-  const updatePort = (port: Port) => ({
-    ...port,
-    ipv6Rip: { enabled: false }
-  });
-  const newPorts = applyToSelectedPorts(state, updatePort);
-  return { success: true, newState: { ports: newPorts } };
-}
-
-/**
- * IPv6 DHCP Server
- */
-export function cmdIpv6DhcpServer(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
-  const match = input.match(/^ipv6\s+dhcp\s+server\s+(\S+)$/i);
-  if (!match) return { success: false, error: '% Invalid command' };
-
-  const poolName = match[1];
-  const updatePort = (port: Port) => ({
-    ...port,
-    ipv6DhcpServer: poolName
-  });
-  const newPorts = applyToSelectedPorts(state, updatePort);
-  const updatedState = { ...state, ports: newPorts };
-  return { success: true, newState: { ports: newPorts, runningConfig: buildRunningConfig(updatedState) } };
-}
-
-/**
- * No IPv6 OSPF
- */
-export function cmdNoIpv6Ospf(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
-  const updatePort = (port: Port) => ({
-    ...port,
-    ipv6Ospf: { enabled: false }
-  });
-  const newPorts = applyToSelectedPorts(state, updatePort);
-  return { success: true, newState: { ports: newPorts } };
-}
-
-/**
- * Spanning-Tree Priority - Set STP port priority
- */
-export function cmdIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: Port) => ({ ...port, dhcpSnoopingTrust: true });
-  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
-  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
-  return { success: true, output: 'DHCP snooping trust configured', newState: { ports: newPorts } };
-}
-
-/**
- * No IP DHCP Snooping Trust
- */
-export function cmdNoIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: Port) => ({ ...port, dhcpSnoopingTrust: false });
-  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
-  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
-  return { success: true, output: 'DHCP snooping trust removed', newState: { ports: newPorts } };
-}
-
-/**
- * IP ARP Inspection Trust
- */
-export function cmdIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: true });
-  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
-  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
-  return { success: true, output: 'ARP inspection trust configured', newState: { ports: newPorts } };
-}
-
-/**
- * No IP ARP Inspection Trust
- */
-export function cmdNoIpArpInspectionTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: Port) => ({ ...port, arpInspectionTrust: false });
-  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
-  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
-  const newPorts = { ...state.ports };
-  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
-  return { success: true, output: 'ARP inspection trust removed', newState: { ports: newPorts } };
-}
-
-/**
- * Bandwidth
+ * IP Proxy ARP
  */
 export function cmdIpProxyArp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
@@ -578,7 +577,7 @@ export function cmdIpVerifySource(state: SwitchState, input: string, _ctx: Comma
 }
 
 /**
- * UDLD Enable / Port
+ * IP NAT Inside
  */
 export function cmdIpNatInside(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
@@ -613,6 +612,23 @@ export function cmdNoIpNatOutside(state: SwitchState, _input: string, _ctx: Comm
   return { success: true, newState: { ports: newPorts } };
 }
 
-/**
- * Switchport Port-Security Aging Type
- */
+export function cmdIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, dhcpSnoopingTrust: true }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+export function cmdNoIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, dhcpSnoopingTrust: false }));
+  return { success: true, newState: { ports: newPorts } };
+}
+
+export function cmdIpv6DhcpServer(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^ipv6\s+dhcp\s+server\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid ipv6 dhcp server command' };
+  const poolName = match[1];
+  const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, ipv6DhcpServerPool: poolName }));
+  return { success: true, newState: { ports: newPorts } };
+}

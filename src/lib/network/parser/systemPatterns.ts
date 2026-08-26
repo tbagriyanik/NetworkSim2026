@@ -361,6 +361,30 @@ export const systemPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 2
   },
+  'ipv6 access-list': {
+    pattern: /^ipv6\s+access-list\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no ipv6 access-list': {
+    pattern: /^no\s+ipv6\s+access-list\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'permit (ipv6-acl)': {
+    pattern: /^(?:(\d+)\s+)?permit\s+(ipv6|icmp|tcp|udp|ip)\s+(.+)$/i,
+    modes: ['config-ipv6-acl'],
+    minArgs: 3,
+    maxArgs: 10
+  },
+  'deny (ipv6-acl)': {
+    pattern: /^(?:(\d+)\s+)?deny\s+(ipv6|icmp|tcp|udp|ip)\s+(.+)$/i,
+    modes: ['config-ipv6-acl'],
+    minArgs: 3,
+    maxArgs: 10
+  },
   'ip access-group': {
     pattern: /^ip\s+access-group\s+(\S+)\s+(in|out)$/i,
     modes: ['interface', 'config-if-range'],
@@ -500,7 +524,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
-  // â”€â”€ DHCP Pool (config mode) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  DHCP Pool (config mode) 
   'ip dhcp pool': {
     pattern: /^ip\s+dhcp\s+pool\s+(\S+)$/i,
     modes: ['config'],
@@ -526,7 +550,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 2
   },
 
-  // â”€â”€ DHCP Pool sub-commands (dhcp-config mode) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  DHCP Pool sub-commands (dhcp-config mode) 
   'default-router': {
     pattern: /^default-router\s+\d+\.\d+\.\d+\.\d+(?:\s+\d+\.\d+\.\d+\.\d+)*$/i,
     modes: ['dhcp-config'],
@@ -619,8 +643,8 @@ export const systemPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
-  
-  // â”€â”€ Interface NAT commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+  //  Interface NAT commands 
   'ip nat inside': {
     pattern: /^ip\s+nat\s+inside$/i,
     modes: ['interface', 'config-if-range'],
@@ -634,7 +658,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 0
   },
 
-  // â”€â”€ Interface MTU â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Interface MTU 
   'mtu': {
     pattern: /^mtu\s+(\d+)$/i,
     modes: ['interface', 'config-if-range'],
@@ -642,7 +666,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
-  // â”€â”€ Router config negation commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  Router config negation commands 
   'no network': {
     pattern: /^no\s+network\s+(.+)$/i,
     modes: ['router-config', 'dhcp-config'],
@@ -674,7 +698,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 2
   },
 
-  // â”€â”€ DHCP config negation commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  DHCP config negation commands 
   'no default-router': {
     pattern: /^no\s+default-router(?:\s+\d+\.\d+\.\d+\.\d+)?$/i,
     modes: ['dhcp-config'],
@@ -700,7 +724,7 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
-  // â”€â”€ NAT configuration commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  //  NAT configuration commands 
   'ip nat pool': {
     pattern: /^ip\s+nat\s+pool\s+(\S+)\s+(\d+\.\d+\.\d+\.\d+)\s+(\d+\.\d+\.\d+\.\d+)\s+(netmask\s+\d+\.\d+\.\d+\.\d+|prefix-length\s+\d+)$/i,
     modes: ['config'],
@@ -713,240 +737,112 @@ export const systemPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 2
   },
-  'ip nat inside source list': {
-    pattern: /^ip\s+nat\s+inside\s+source\s+list\s+(\S+)\s+(pool\s+\S+|interface\s+\S+)(?:\s+overload)?$/i,
-    modes: ['config'],
-    minArgs: 2,
-    maxArgs: 3
-  },
 
-  // â”€â”€ Additional show commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  'show running-config interface': {
-    pattern: /^show\s+(?:running-config|run|running)\s+interface\s+(\S+)$/i,
-    modes: ['privileged'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'show spanning-tree interface': {
-    pattern: /^show\s+spanning-tree\s+interface\s+(\S+)$/i,
-    modes: ['user', 'privileged'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'show ip nat translations': {
-    pattern: /^show\s+ip\s+nat\s+translations$/i,
-    modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-  'show ip nat statistics': {
-    pattern: /^show\s+ip\s+nat\s+statistics$/i,
-    modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-  'show policy-map interface': {
-    pattern: /^show\s+policy-map\s+interface\s+(\S+)$/i,
-    modes: ['privileged'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'show qos interface': {
-    pattern: /^show\s+qos\s+interface\s+(\S+)$/i,
-    modes: ['privileged'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'show queuing interface': {
-    pattern: /^show\s+queuing\s+interface\s+(\S+)$/i,
-    modes: ['privileged'],
-    minArgs: 1,
-    maxArgs: 1
-  },
 
-  // â”€â”€ Wireless / WLC show commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  'dot11 ssid binding': {
-    pattern: /^ssid\s+(\S+)$/i,
-    modes: ['dot11-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'show ap config': {
-    pattern: /^show\s+ap\s+config(?:\s+(.+))?$/i,
-    modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1
-  },
-  'show ap join statistics': {
-    pattern: /^show\s+ap\s+join\s+statistics$/i,
-    modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-  'show ap join stats': {
-    pattern: /^show\s+ap\s+join\s+stats$/i,
-    modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-
-  // â”€â”€ Firewall commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  'no nameif': {
-    pattern: /^no\s+nameif$/i,
+// ── Firewall commands ────────────────────────────────────────────────────────────
+'no nameif': {
+  pattern: /^no\s+nameif$/i,
     modes: ['interface'],
-    minArgs: 0,
-    maxArgs: 0,
-    capability: 'firewall'
-  },
-  'show nameif': {
-    pattern: /^show\s+nameif$/i,
+      minArgs: 0,
+        maxArgs: 0,
+          capability: 'firewall'
+},
+'show nameif': {
+  pattern: /^show\s+nameif$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0,
-    capability: 'firewall'
-  },
-  'show ip access-group': {
-    pattern: /^show\s+ip\s+access-group(?:\s+(\S+))?$/i,
+      minArgs: 0,
+        maxArgs: 0,
+          capability: 'firewall'
+},
+'show ip access-group': {
+  pattern: /^show\s+ip\s+access-group(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1,
-    capability: 'firewall'
-  },
-
-  // â”€â”€ Wireless show commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  'show dot11 associations': {
-    pattern: /^show\s+dot11\s+associations(?:\s+(\S+))?$/i,
+      minArgs: 0,
+        maxArgs: 1,
+          capability: 'firewall'
+},
+'show dot11 associations': {
+  pattern: /^show\s+dot11\s+associations(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1,
-    capability: 'routing'
-  },
-  'show dot11 statistics': {
-    pattern: /^show\s+dot11\s+statistics(?:\s+(\S+))?$/i,
+      minArgs: 0,
+        maxArgs: 1,
+          capability: 'routing'
+},
+'show dot11 statistics': {
+  pattern: /^show\s+dot11\s+statistics(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1,
-    capability: 'routing'
-  },
-  'show wlan': {
-    pattern: /^show\s+wlan\s+(\d+)$/i,
+      minArgs: 0,
+        maxArgs: 1,
+          capability: 'routing'
+},
+'show wlan': {
+  pattern: /^show\s+wlan\s+(\d+)$/i,
     modes: ['privileged'],
-    minArgs: 1,
-    maxArgs: 1,
-    capability: 'routing'
-  },
-  'no wlan': {
-    pattern: /^no\s+wlan\s+(\d+)$/i,
+      minArgs: 1,
+        maxArgs: 1,
+          capability: 'routing'
+},
+'no wlan': {
+  pattern: /^no\s+wlan\s+(\d+)$/i,
     modes: ['config'],
-    minArgs: 1,
-    maxArgs: 1,
-    capability: 'routing'
-  },
-  // â”€â”€ Additional show commands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  'show vtp password': {
-    pattern: /^show\s+vtp\s+password$/i,
+      minArgs: 1,
+        maxArgs: 1,
+          capability: 'routing'
+},
+'show vtp password': {
+  pattern: /^show\s+vtp\s+password$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-  'show ip eigrp neighbors': {
-    pattern: /^show\s+ip\s+eigrp\s+neighbors(?:\s+(\S+))?$/i,
+      minArgs: 0,
+        maxArgs: 0
+},
+'show ip eigrp neighbors': {
+  pattern: /^show\s+ip\s+eigrp\s+neighbors(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1
-  },
-  'show ip bgp summary': {
-    pattern: /^show\s+ip\s+bgp\s+summary$/i,
+      minArgs: 0,
+        maxArgs: 1
+},
+'show ip bgp summary': {
+  pattern: /^show\s+ip\s+bgp\s+summary$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-  'show ip bgp': {
-    pattern: /^show\s+ip\s+bgp(?:\s+(\S+))?$/i,
+      minArgs: 0,
+        maxArgs: 0
+},
+'show ip bgp': {
+  pattern: /^show\s+ip\s+bgp(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1
-  },
-  'show ipv6 rip': {
-    pattern: /^show\s+ipv6\s+rip\s+(\S+)?$/i,
+      minArgs: 0,
+        maxArgs: 1
+},
+'show ipv6 rip': {
+  pattern: /^show\s+ipv6\s+rip(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1
-  },
-  'show ipv6 ospf': {
-    pattern: /^show\s+ipv6\s+ospf(?:\s+(\S+))?$/i,
+      minArgs: 0,
+        maxArgs: 1
+},
+'show ipv6 ospf': {
+  pattern: /^show\s+ipv6\s+ospf(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-    minArgs: 0,
-    maxArgs: 1
-  },
+      minArgs: 0,
+        maxArgs: 1
+},
+'show vrrp brief': {
+  pattern: /^show\s+vrrp\s+brief$/i,
+    modes: ['privileged'],
+      minArgs: 0,
+        maxArgs: 0
+},
+'show vrrp': {
+  pattern: /^show\s+vrrp(?:\s+(\d+|\S+))?$/i,
+    modes: ['privileged'],
+      minArgs: 0,
+        maxArgs: 1
+},
+'show ipv6 access-list': {
+  pattern: /^show\s+ipv6\s+access-list(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+      minArgs: 0,
+        maxArgs: 1
+},
 
-  // â”€â”€ Router config subcommands â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  'eigrp router-id': {
-    pattern: /^eigrp\s+router-id\s+([0-9.]+)$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'no eigrp router-id': {
-    pattern: /^no\s+eigrp\s+router-id$/i,
-    modes: ['router-config'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-  'bgp router-id': {
-    pattern: /^bgp\s+router-id\s+([0-9.]+)$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'auto-summary': {
-    pattern: /^auto-summary$/i,
-    modes: ['router-config'],
-    minArgs: 0,
-    maxArgs: 0
-  },
-  'area range': {
-    pattern: /^area\s+(\d+)\s+range\s+([0-9.]+)\s+([0-9.]+)$/i,
-    modes: ['router-config'],
-    minArgs: 3,
-    maxArgs: 3
-  },
-  'area stub': {
-    pattern: /^area\s+(\d+)\s+stub$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'area nssa': {
-    pattern: /^area\s+(\d+)\s+nssa$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'area stub no-summary': {
-    pattern: /^area\s+(\d+)\s+stub\s+no-summary$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'area nssa no-summary': {
-    pattern: /^area\s+(\d+)\s+nssa\s+no-summary$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'no area stub': {
-    pattern: /^no\s+area\s+(\d+)\s+stub$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-  'no area nssa': {
-    pattern: /^no\s+area\s+(\d+)\s+nssa$/i,
-    modes: ['router-config'],
-    minArgs: 1,
-    maxArgs: 1
-  },
-
-  // â”€â”€ End of Configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── End of Configuration ─────────────────────────────────────────────────────────
 };

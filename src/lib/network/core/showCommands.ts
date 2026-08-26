@@ -35,6 +35,7 @@ import {
   cmdShowIpArpInspection,
   cmdShowIpEigrpNeighbors, cmdShowIpBgpSummary,
   cmdShowIpBgp, cmdShowIpv6Rip, cmdShowIpv6Ospf,
+  cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
 } from './showRoutingDisplay';
 
 // Show komutları (show running-config, show vlan, show ip route, vs.)
@@ -145,6 +146,10 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip bgp': cmdShowIpBgp,
   'show ipv6 rip': cmdShowIpv6Rip,
   'show ipv6 ospf': cmdShowIpv6Ospf,
+  'show vrrp': cmdShowVrrp,
+  'show vrrp brief': cmdShowVrrpBrief,
+  'show ipv6 access-list': cmdShowIpv6AccessList,
+  'show ipv6 access-lists': cmdShowIpv6AccessList,
 };
 
 /**

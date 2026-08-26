@@ -47,7 +47,7 @@ describe('getModePrompt', () => {
   });
 
   it('should default to user prompt for unknown modes', () => {
-    expect(getModePrompt('dot11-config' as never, 'Switch')).toBe('Switch>');
+    expect(getModePrompt('unknown-mode' as never, 'Switch')).toBe('Switch>');
   });
 });
 

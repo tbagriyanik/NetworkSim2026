@@ -44,6 +44,7 @@ export function runFhrpElection(deviceStates: Map<string, SwitchState>): Map<str
 
   // Gather all HSRP groups
   const hsrpInterfaces: HInterface[] = [];
+  const vrrpInterfaces: HInterface[] = [];
 
   nextStates.forEach((state, deviceId) => {
     const device = devices.find(d => d.id === deviceId);
@@ -68,25 +69,42 @@ export function runFhrpElection(deviceStates: Map<string, SwitchState>): Map<str
           }
         });
       }
+
+      if (port.vrrp?.groups) {
+        Object.entries(port.vrrp.groups).forEach(([gIdStr, groupConfig]) => {
+          const groupId = parseInt(gIdStr, 10);
+          const virtualIp = groupConfig.virtualIp;
+          if (virtualIp) {
+            vrrpInterfaces.push({
+              deviceId,
+              portId,
+              virtualIp,
+              groupId,
+              priority: groupConfig.priority ?? 100,
+              preempt: groupConfig.preempt ?? true,
+              physicalIp: port.ipAddress || port.ipv6Address,
+              isOnline: isOnline && !port.shutdown
+            });
+          }
+        });
+      }
     });
   });
 
   // Group by (groupId, virtualIp)
-  const grouped = new Map<string, HInterface[]>();
+  const groupedHsrp = new Map<string, HInterface[]>();
   hsrpInterfaces.forEach(inter => {
     const key = `${inter.groupId}-${inter.virtualIp}`;
-    const list = grouped.get(key) || [];
+    const list = groupedHsrp.get(key) || [];
     list.push(inter);
-    grouped.set(key, list);
+    groupedHsrp.set(key, list);
   });
 
-  // Run election for each group
-  grouped.forEach((interfaces) => {
-    // Separate online and offline interfaces
+  // Run election for each HSRP group
+  groupedHsrp.forEach((interfaces) => {
     const online = interfaces.filter(i => i.isOnline);
     const offline = interfaces.filter(i => !i.isOnline);
 
-    // Set offline interfaces to Initial state
     offline.forEach(inter => {
       const state = nextStates.get(inter.deviceId);
       if (state) {
@@ -102,7 +120,6 @@ export function runFhrpElection(deviceStates: Map<string, SwitchState>): Map<str
 
     if (online.length === 0) return;
 
-    // Sort online interfaces: priority desc, physical IP desc
     online.sort((a, b) => {
       if (a.priority !== b.priority) {
         return b.priority - a.priority;
@@ -110,7 +127,6 @@ export function runFhrpElection(deviceStates: Map<string, SwitchState>): Map<str
       return compareIps(b.physicalIp, a.physicalIp);
     });
 
-    // The winner is Active, runner-up is Standby, the rest are Listen
     online.forEach((inter, index) => {
       const state = nextStates.get(inter.deviceId);
       if (state) {
@@ -125,6 +141,56 @@ export function runFhrpElection(deviceStates: Map<string, SwitchState>): Map<str
 
           port.hsrp.groups[inter.groupId] = {
             ...port.hsrp.groups[inter.groupId],
+            state: roleState
+          };
+        }
+      }
+    });
+  });
+
+  // Group and election for VRRP
+  const groupedVrrp = new Map<string, HInterface[]>();
+  vrrpInterfaces.forEach(inter => {
+    const key = `${inter.groupId}-${inter.virtualIp}`;
+    const list = groupedVrrp.get(key) || [];
+    list.push(inter);
+    groupedVrrp.set(key, list);
+  });
+
+  groupedVrrp.forEach((interfaces) => {
+    const online = interfaces.filter(i => i.isOnline);
+    const offline = interfaces.filter(i => !i.isOnline);
+
+    offline.forEach(inter => {
+      const state = nextStates.get(inter.deviceId);
+      if (state) {
+        const port = state.ports[inter.portId];
+        if (port?.vrrp?.groups?.[inter.groupId]) {
+          port.vrrp.groups[inter.groupId] = {
+            ...port.vrrp.groups[inter.groupId],
+            state: 'Init'
+          };
+        }
+      }
+    });
+
+    if (online.length === 0) return;
+
+    online.sort((a, b) => {
+      if (a.priority !== b.priority) {
+        return b.priority - a.priority;
+      }
+      return compareIps(b.physicalIp, a.physicalIp);
+    });
+
+    online.forEach((inter, index) => {
+      const state = nextStates.get(inter.deviceId);
+      if (state) {
+        const port = state.ports[inter.portId];
+        if (port?.vrrp?.groups?.[inter.groupId]) {
+          const roleState = index === 0 ? 'Master' : 'Backup';
+          port.vrrp.groups[inter.groupId] = {
+            ...port.vrrp.groups[inter.groupId],
             state: roleState
           };
         }

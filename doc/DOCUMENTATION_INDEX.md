@@ -42,7 +42,7 @@ Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve iç
 ---
 
 ### 🐍 getting-started/PYTHON_PROGRAMMING_GUIDE.md
-**Amaç**: Python programlama dili temelleri, MEB müfredatı OOP, Decorator'lar ve Modül rehberi  
+**Amaç**: Python programlama dili temelleri, OOP, Decorator'lar ve Modül rehberi  
 **Okuma Süresi**: 25 dakika  
 **İçerik**:
 - Python betiklerini CMD ve Dosya Düzenleyici'de çalıştırma (`python script.py`, REPL)
@@ -55,7 +55,7 @@ Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve iç
 - Tarayıcı içi güvenlik ve dunder koruma mimarisi
 
 **Ne Zaman Okuyacağım?**
-- MEB müfredatındaki Python OOP ve algoritmaları pratik yapmak istiyorsanız
+- Python OOP ve algoritmaları pratik yapmak istiyorsanız
 - PC üzerinde Python betikleri yazmak veya ağ socket simülasyonunu incelemek istiyorsanız
 
 ---

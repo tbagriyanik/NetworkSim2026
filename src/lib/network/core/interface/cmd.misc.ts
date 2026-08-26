@@ -92,6 +92,71 @@ export function cmdStandbyPreempt(state: SwitchState, input: string, _ctx: Comma
   return { success: true, newState: { ports: newPorts } };
 }
 
+/**
+ * vrrp <group> ip <virtual-ip>
+ */
+export function cmdVrrpIp(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^vrrp\s+(\d+)\s+ip\s+([0-9.]+)$/i);
+  if (!match) return { success: false, error: '% Invalid vrrp command' };
+
+  const group = parseInt(match[1]);
+  const virtualIp = match[2];
+
+  const updatePort = (port: Port) => {
+    const vrrp = port.vrrp || { groups: {} };
+    const groups = vrrp.groups || {};
+    groups[group] = { priority: 100, preempt: true, ...groups[group], virtualIp, state: 'Master' };
+    return { ...port, vrrp: { ...vrrp, groups } };
+  };
+
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * vrrp <group> priority <priority>
+ */
+export function cmdVrrpPriority(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^vrrp\s+(\d+)\s+priority\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid vrrp command' };
+
+  const group = parseInt(match[1]);
+  const priority = parseInt(match[2]);
+
+  const updatePort = (port: Port) => {
+    const vrrp = port.vrrp || { groups: {} };
+    const groups = vrrp.groups || {};
+    groups[group] = { preempt: true, ...groups[group], priority };
+    return { ...port, vrrp: { ...vrrp, groups } };
+  };
+
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
+/**
+ * vrrp <group> preempt
+ */
+export function cmdVrrpPreempt(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^vrrp\s+(\d+)\s+preempt$/i);
+  if (!match) return { success: false, error: '% Invalid vrrp command' };
+
+  const group = parseInt(match[1]);
+
+  const updatePort = (port: Port) => {
+    const vrrp = port.vrrp || { groups: {} };
+    const groups = vrrp.groups || {};
+    groups[group] = { priority: 100, ...groups[group], preempt: true };
+    return { ...port, vrrp: { ...vrrp, groups } };
+  };
+
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return { success: true, newState: { ports: newPorts } };
+}
+
 export function cmdSsid(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: '% No interface selected' };

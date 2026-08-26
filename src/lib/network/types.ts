@@ -17,7 +17,8 @@ export type CommandMode =
   | 'dot11-config'   // Router(config-if)# [dot11Radio]
   | 'ap-config'      // AP configuration mode
   | 'config-std-nacl'  // Router(config-std-nacl)# - Named standard ACL
-  | 'config-ext-nacl'; // Router(config-ext-nacl)# - Named extended ACL
+  | 'config-ext-nacl'  // Router(config-ext-nacl)# - Named extended ACL
+  | 'config-ipv6-acl'; // Router(config-ipv6-acl)# - Named IPv6 ACL
 
 type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | 'err-disabled' | 'disconnected';
 type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
@@ -244,6 +245,16 @@ export interface Port {
       state?: 'Initial' | 'Listen' | 'Speak' | 'Standby' | 'Active';
     }>;
   };
+  vrrp?: {
+    groups?: Record<number, {
+      virtualIp?: string;
+      priority?: number;
+      preempt?: boolean;
+      state?: 'Init' | 'Backup' | 'Master';
+    }>;
+  };
+  ipv6TrafficFilterIn?: string;
+  ipv6TrafficFilterOut?: string;
   natSide?: 'inside' | 'outside';
   // Serial interface properties (WAN)
   serialEncapsulation?: 'hdlc' | 'ppp';
@@ -530,9 +541,11 @@ export interface SwitchState {
   dhcpSnoopingBindings?: DhcpSnoopingBinding[];
   arpInspectionVlans?: string[];
   accessLists?: Record<string, string[]>;
+  ipv6AccessLists?: Record<string, string[]>;
   namedAclTypes?: Record<string, 'standard' | 'extended'>;  // Track named ACL types for display
   currentNamedAcl?: string;  // Current named standard ACL being configured
   currentExtendedAcl?: string;  // Current named extended ACL being configured
+  currentIpv6Acl?: string;  // Current named IPv6 ACL being configured
   aclMatchCounters?: Record<string, Record<string, number>>;  // ACL name → rule index → match count
   currentSsid?: string;
   currentRadio?: string;

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, KeyboardEvent, useCallback, useMemo, ClipboardEvent } from 'react';
 import { SwitchState, CommandMode } from '@/lib/network/types';
+import { getModePrompt } from '@/lib/network/initialState';
 import { Translations } from '@/contexts/LanguageContext';
 import { getDeviceWifiConfig, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
@@ -1206,16 +1207,17 @@ export function Terminal({
     }
 
     if (e.key === 'ArrowUp') {
-      if (canUseAutocomplete) {
+      if (canUseAutocomplete && autocompleteNavigated) {
         e.preventDefault();
         setAutocompleteIndex(prev => {
           if (prev === -1) return autocompleteSuggestions.length - 1;
           return prev <= 0 ? autocompleteSuggestions.length - 1 : prev - 1;
         });
-        setAutocompleteNavigated(true);
         return;
       }
       e.preventDefault();
+      setShowAutocomplete(false);
+      setAutocompleteIndex(-1);
       const currentHist = history;
       if (currentHist.length > 0 && historyIndex < currentHist.length - 1) {
         const ni = historyIndex + 1;
@@ -1223,16 +1225,17 @@ export function Terminal({
         setInput(currentHist[ni]);
       }
     } else if (e.key === 'ArrowDown') {
-      if (canUseAutocomplete) {
+      if (canUseAutocomplete && autocompleteNavigated) {
         e.preventDefault();
         setAutocompleteIndex(prev => {
           if (prev === -1) return 0;
           return (prev + 1) % autocompleteSuggestions.length;
         });
-        setAutocompleteNavigated(true);
         return;
       }
       e.preventDefault();
+      setShowAutocomplete(false);
+      setAutocompleteIndex(-1);
       const currentHist = history;
       if (historyIndex > 0) {
         const ni = historyIndex - 1;
@@ -1618,16 +1621,14 @@ export function Terminal({
                   </span>
                 )}
                 <span className={cn(
-                  "font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[80px] sm:max-w-none md:max-w-[150px]",
-                  state.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending
-                    ? "text-warning-400"
-                    : "text-primary"
+                  "font-geist-mono font-bold text-xs sm:text-sm select-none shrink-0 text-primary whitespace-nowrap",
+                  (state?.awaitingPassword || localPasswordPrompt || confirmDialog?.show || isReloadConfirmationPending) && "text-warning-400"
                 )}>
-                  {state.awaitingPassword || localPasswordPrompt
+                  {state?.awaitingPassword || localPasswordPrompt
                     ? t.passwordLabel
                     : confirmDialog?.show || isReloadConfirmationPending
                       ? '[confirm]'
-                      : prompt}
+                      : (prompt || (state ? getModePrompt(state.currentMode, state.hostname || 'Switch') : 'Switch#'))}
                 </span>
                 <input
                   ref={inputRef}

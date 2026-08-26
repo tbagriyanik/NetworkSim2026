@@ -876,15 +876,132 @@ export function cmdShowIpEigrpNeighbors(_state: SwitchState, _input: string, _ct
 /**
  * Show IP BGP Summary
  */
-export function cmdShowIpBgpSummary(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return { success: true, output: '\n% BGP is not configured on this device\n' };
+export function cmdShowIpBgpSummary(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const routerId = state.routerId || state.defaultGateway || '1.1.1.1';
+  const localAs = state.bgpAs || 65000;
+  const neighbors = state.bgpNeighbors || {};
+
+  const neighborKeys = Object.keys(neighbors);
+  if (neighborKeys.length === 0) {
+    return { success: true, output: '\n% BGP is not configured on this device\n' };
+  }
+
+  let output = `BGP router identifier ${routerId}, local AS number ${localAs}\n`;
+  output += `BGP table version is 1, main routing table version 1\n\n`;
+  output += `Neighbor        V           AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd\n`;
+
+  neighborKeys.forEach(ip => {
+    const neighbor = (neighbors as Record<string, { remoteAs?: number; state?: string }>)[ip] || {};
+    const nAs = neighbor.remoteAs || localAs;
+    const nState = neighbor.state || 'Established';
+    output += `${ip.padEnd(15)} 4 ${String(nAs).padEnd(12)} 12      12        1    0    0 00:15:20 ${nState}\n`;
+  });
+
+  return { success: true, output };
 }
 
 /**
- * Show IP BGP
+ * Show IP BGP Table
  */
-export function cmdShowIpBgp(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return { success: true, output: '\n% BGP table is empty\n' };
+export function cmdShowIpBgp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const routerId = state.routerId || state.defaultGateway || '1.1.1.1';
+  const routes = state.dynamicRoutes || [];
+
+  let output = `BGP table version is 1, local router ID ${routerId}\n`;
+  output += `Status codes: s suppressed, d damped, h history, * valid, > best, i - internal\n`;
+  output += `Origin codes: i - IGP, e - EGP, ? - incomplete\n\n`;
+  output += `   Network          Next Hop            Metric LocPrf Weight Path\n`;
+
+  if (routes.length === 0) {
+    output += `*> 10.0.0.0/24      0.0.0.0                  0         32768 i\n`;
+  } else {
+    routes.forEach(r => {
+      const netStr = `${r.destination}/${r.prefixLength || 24}`;
+      const nextHop = r.nextHop || '0.0.0.0';
+      const metric = r.metric ?? 0;
+      output += `*> ${netStr.padEnd(16)} ${nextHop.padEnd(20)} ${String(metric).padEnd(6)}     0 32768 i\n`;
+    });
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show VRRP
+ */
+export function cmdShowVrrp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  let output = '';
+  let found = false;
+
+  Object.entries(state.ports || {}).forEach(([portName, port]) => {
+    if (port.vrrp?.groups) {
+      Object.entries(port.vrrp.groups).forEach(([groupId, config]) => {
+        found = true;
+        output += `${portName} - Group ${groupId}\n`;
+        output += `  State is ${config.state || 'Init'}\n`;
+        output += `  Virtual IP address is ${config.virtualIp || '0.0.0.0'}\n`;
+        output += `  Master Router IP address is ${config.state === 'Master' ? (port.ipAddress || 'self') : '192.168.1.1'}\n`;
+        output += `  Priority is ${config.priority ?? 100}\n`;
+        output += `  Preemption ${config.preempt !== false ? 'enabled' : 'disabled'}\n`;
+      });
+    }
+  });
+
+  if (!found) {
+    output = '% VRRP not configured on any interface\n';
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show VRRP Brief
+ */
+export function cmdShowVrrpBrief(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  let output = 'Interface          Grp  Pri Time  Own Pre State   Master addr     Group addr\n';
+  let found = false;
+
+  Object.entries(state.ports || {}).forEach(([portName, port]) => {
+    if (port.vrrp?.groups) {
+      Object.entries(port.vrrp.groups).forEach(([groupId, config]) => {
+        found = true;
+        const stateStr = (config.state || 'Init').padEnd(7);
+        const priStr = String(config.priority ?? 100).padEnd(4);
+        const preStr = config.preempt !== false ? 'Y' : 'N';
+        const masterIp = config.state === 'Master' ? (port.ipAddress || 'local') : '192.168.1.1';
+        const vIp = config.virtualIp || '0.0.0.0';
+        output += `${portName.padEnd(18)} ${groupId.padEnd(4)} ${priStr} 3609  N   ${preStr}   ${stateStr} ${masterIp.padEnd(15)} ${vIp}\n`;
+      });
+    }
+  });
+
+  if (!found) {
+    output = '% VRRP not configured on any interface\n';
+  }
+
+  return { success: true, output };
+}
+
+/**
+ * Show IPv6 Access-Lists
+ */
+export function cmdShowIpv6AccessList(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const aclMap = state.ipv6AccessLists || {};
+  const keys = Object.keys(aclMap);
+  if (keys.length === 0) {
+    return { success: true, output: '% No IPv6 access lists configured\n' };
+  }
+
+  let output = '';
+  keys.forEach(name => {
+    output += `IPv6 access list ${name}\n`;
+    const rules = aclMap[name] || [];
+    rules.forEach((rule, idx) => {
+      output += `    sequence ${(idx + 1) * 10} ${rule}\n`;
+    });
+  });
+
+  return { success: true, output };
 }
 
 /**

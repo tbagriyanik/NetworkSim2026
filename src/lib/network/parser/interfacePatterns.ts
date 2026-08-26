@@ -184,10 +184,52 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
   'ipv6 address': {
-    pattern: /^ipv6\s+address\s+([0-9a-fA-F:]+)\/(\d+)$/i,
+    pattern: /^ipv6\s+address\s+([0-9a-fA-F:]+)(?:\/(\d+))?(?:\s+(eui-64))?$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 3
+  },
+  'ipv6 traffic-filter': {
+    pattern: /^ipv6\s+traffic-filter\s+(\S+)\s+(in|out)$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 2,
     maxArgs: 2
+  },
+  'no ipv6 traffic-filter': {
+    pattern: /^no\s+ipv6\s+traffic-filter(?:\s+(\S+)\s+(in|out))?$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'vrrp ip': {
+    pattern: /^vrrp\s+(\d+)\s+ip\s+([0-9.]+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 3,
+    maxArgs: 3
+  },
+  'vrrp priority': {
+    pattern: /^vrrp\s+(\d+)\s+priority\s+(\d+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 3,
+    maxArgs: 3
+  },
+  'vrrp preempt': {
+    pattern: /^vrrp\s+(\d+)\s+preempt$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no vrrp preempt': {
+    pattern: /^no\s+vrrp\s+(\d+)\s+preempt$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no vrrp': {
+    pattern: /^no\s+vrrp\s+(\d+)(?:\s+(ip|priority|preempt)(?:\s+\S+)?)?$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 3
   },
   'no shutdown': {
     pattern: /^no\s+shutdown$/i,

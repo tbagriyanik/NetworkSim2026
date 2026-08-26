@@ -41,6 +41,7 @@ import {
   cmdIpDefaultGateway,
   cmdNoIpDefaultGateway,
   cmdIpv6Address,
+  cmdIpv6TrafficFilter,
   cmdIpv6Rip,
   cmdIpv6Ospf,
   cmdIpOspfArea,
@@ -125,6 +126,9 @@ import {
   cmdLoadInterval,
   cmdPowerInline,
   cmdPowerInlineConsumption,
+  cmdVrrpIp,
+  cmdVrrpPriority,
+  cmdVrrpPreempt,
 } from './interface/cmd.misc';
 
 // Interface-level komutlar (interface, shutdown, speed, duplex, switchport, ip address, vs.)
@@ -257,6 +261,12 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'standby priority': cmdStandbyPriority,
   'standby ipv6': cmdStandbyIpv6,
   'standby preempt': cmdStandbyPreempt,
+  'vrrp ip': cmdVrrpIp,
+  'vrrp priority': cmdVrrpPriority,
+  'vrrp preempt': cmdVrrpPreempt,
+  'vrrp': cmdVrrpIp,
+  'ipv6 traffic-filter': cmdIpv6TrafficFilter,
+  'no ipv6 traffic-filter': cmdIpv6TrafficFilter,
   'ip nat inside': cmdIpNatInside,
   'no ip nat inside': cmdNoIpNatInside,
   'ip nat outside': cmdIpNatOutside,

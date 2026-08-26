@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import type { TerminalOutput } from '../Terminal';
 import type { CanvasDevice } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
+import { getModePrompt } from '@/lib/network/initialState';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 
 interface ConsoleTerminalTabProps {
@@ -245,17 +246,7 @@ export function ConsoleTerminalTab({
                   const state = ensureDeviceStatesMap(deviceStates).get(connectedDeviceId);
                   const hostname = state?.hostname || 'Device';
                   const mode = state?.currentMode || 'user';
-                  const modeSuffix: Record<string, string> = {
-                    'user': '>',
-                    'privileged': '#',
-                    'config': '(config)#',
-                    'interface': '(config-if)#',
-                    'line': '(config-line)#',
-                    'vlan': '(config-vlan)#',
-                    'router-config': '(config)#'
-                  };
-                  const suffix = modeSuffix[mode] || '>';
-                  return `${hostname}${suffix}`;
+                  return getModePrompt(mode, hostname);
                 })()}
               </span>
               <input
