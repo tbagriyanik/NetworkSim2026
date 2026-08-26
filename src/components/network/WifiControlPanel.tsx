@@ -91,7 +91,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   const safeLeaseTime = String(dhcpPool?.maxUsers || 24);
   // JSON stringified versions for use in <script> blocks to prevent logic corruption and XSS
   // Admin credentials: default admin:admin unless explicitly configured (persisted in services.http)
-  const adminUsername = username || 'admin';
+  const adminUsername = username?.trim() || 'admin';
   const adminPassword = password || 'admin';
   const jsUsername = safeJSONForHTML(adminUsername);
   const jsPassword = safeJSONForHTML(adminPassword);
@@ -188,7 +188,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           <div class="form-group">
             <label for="login-username">${isTurkish ? 'Kullanıcı Adı' : 'Username'}</label>
 
-            <input type="text" id="login-username" placeholder="${isTurkish ? 'Kullanıcı adını girin' : 'Enter username'}" required autocomplete="off">
+          <input type="text" id="login-username" value="${jsUsername}" placeholder="${isTurkish ? 'Kullanıcı adını girin' : 'Enter username'}" required autocomplete="off">
           </div>
           <div class="form-group">
             <label for="login-password">${isTurkish ? 'Şifre' : 'Password'}</label>
@@ -390,7 +390,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       
       <h2 class="panel-title">${isTurkish ? 'Temel Kablosuz Ayarları (Ana SSID)' : 'Basic Wireless Settings (Primary SSID)'}</h2>
       
-      <form id="wifi-form">
+      <form id="wifi-form" onsubmit="handleSavePrimarySettings(event)">
         <div class="form-group">
           <label for="wifi-ssid">${isTurkish ? 'Ana Ağ Adı (Primary SSID)' : 'Primary Network Name (SSID)'}</label>
           <input type="text" id="wifi-ssid" name="ssid" value="${safeSsid}" placeholder="${isTurkish ? 'WiFi ağ adınızı girin' : 'Enter your WiFi network name'}" maxlength="32" aria-describedby="wifi-ssid-hint">
@@ -1019,6 +1019,13 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       if (get('cred-confirm-password')) get('cred-confirm-password').value = '';
       if (get('cred-error')) get('cred-error').style.display = 'none';
       if (get('cred-success')) get('cred-success').style.display = 'none';
+    };
+
+    window.handleSavePrimarySettings = function(event) {
+      if (event) event.preventDefault();
+      saveAllWifiSettings();
+      alert('✅ ' + (isTurkish ? 'Ana kablosuz ayarlar kaydedildi.' : 'Primary wireless settings saved.'));
+      return false;
     };
 
     window.handleSaveCredentials = function(event) {

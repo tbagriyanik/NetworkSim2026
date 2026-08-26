@@ -8,6 +8,7 @@ import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
 import { logger } from '@/lib/logger';
 import { useAppStore } from '@/lib/store/appStore';
+import { getDeviceWifiConfig } from '@/lib/network/wireless';
 
 interface ConnectedIoTDevice {
   id: string;
@@ -184,6 +185,40 @@ export function usePCPanelRouterAdmin({
           ssids: Array.isArray(payload.ssids) ? payload.ssids : (device?.wifi?.ssids || []),
           bssid: device?.wifi?.bssid || '',
         };
+
+        // Changing the AP channel drops every associated wireless client.
+        // Clear the client association as well as its DHCP data so the WLC
+        // page cannot continue to show stale connected devices.
+        const previousWifi = getDeviceWifiConfig(device, deviceStates);
+        const channelChanged = Boolean(previousWifi?.channel && previousWifi.channel !== nextWifi.channel);
+        if (channelChanged && httpAppDeviceId) {
+          getConnectedIotDevices(httpAppDeviceId).forEach((client) => {
+            const clientDevice = topologyDevices.find((candidate) => candidate.id === client.id);
+            const disconnectedWifi = {
+              enabled: false,
+              ssid: '',
+              security: 'open' as const,
+              password: '',
+              channel: '2.4GHz' as const,
+              mode: 'client' as const,
+              bssid: undefined,
+            };
+            window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+              detail: {
+                deviceId: client.id,
+                config: {
+                  wifi: disconnectedWifi,
+                  ip: '',
+                  subnet: '',
+                  gateway: '',
+                  ports: clientDevice?.ports?.map((port) => port.id === 'wlan0'
+                    ? { ...port, status: 'disconnected' as const, ipAddress: undefined, subnetMask: undefined, wifi: disconnectedWifi }
+                    : port),
+                },
+              },
+            }));
+          });
+        }
 
         const nextDhcp = payload.dhcp ? {
           enabled: Boolean(payload.dhcp.enabled),

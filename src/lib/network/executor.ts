@@ -1429,7 +1429,7 @@ export function executeCommand(
   const isSwitchOnlyCmd = switchOnlyCommands.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));
   const isFirewallOnlyCmd = firewallOnlyCommands.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));
   const wlcOnlyCommands = [
-    'show wlan summary', 'show ap summary', 'show ap config', 'show ap join statistics',
+    'show ap summary', 'show ap config', 'show ap join statistics',
     'show ap join stats', 'ap', 'auth-mac', 'rf-channel', 'dot11 5ghz'
   ];
   const isWlcOnlyCmd = wlcOnlyCommands.some(prefix => commandName === prefix || commandName.startsWith(`${prefix} `));

@@ -302,7 +302,7 @@ export function useCanvasActions({
         type === 'pc' || type === 'iot'
           ? [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) },
-            { id: 'console', label: 'Console', status: 'disconnected' as const },
+            ...(type === 'pc' ? [{ id: 'console', label: 'Console', status: 'disconnected' as const }] : []),
             ...(type === 'iot' ? [{
               id: 'wlan0',
               label: 'WLAN0',

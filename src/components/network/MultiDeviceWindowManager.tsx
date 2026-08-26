@@ -57,12 +57,12 @@ export function MultiDeviceWindowManager({
   updateDeviceConfig,
   confirmDialog,
   setConfirmDialog,
-  isTablet = false,
 }: MultiDeviceWindowManagerProps) {
   const { openWindows, closeDeviceWindow, windowPositions, windowSizes, windowRestoreRequests, updateWindowPosition, updateWindowSize } = useMultiWindowStore();
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
 
-  if (openWindows.length === 0 || isTablet) return null;
+  // Tablet uses the same floating-window presentation as desktop.
+  if (openWindows.length === 0) return null;
 
   return (
     <>
