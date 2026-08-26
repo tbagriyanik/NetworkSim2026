@@ -8,6 +8,8 @@ import type { PCOutputLine } from '@/app/page.types';
 import type { RefreshNetworkReport } from '@/hooks/useRefreshReport';
 import { isSwitchDeviceType, isWirelessMatch, validateTopologyConnections, releaseDisconnectedPorts, getEffectiveWifi, hasValidIp, isIpInPoolRange, buildRefreshDeviceSummaries, propagateVtpVlans } from '@/app/refreshNetworkUtils';
 import { recalculateStp } from '@/lib/network/stp';
+import { evaluateSlaacForDevice } from '@/lib/network/eui64';
+import { recalculateBgpNeighbors } from '@/lib/network/routing';
 import { normalizeMAC } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
 
@@ -146,6 +148,7 @@ export function useRefreshNetwork({
 
       const vtpUpdatedStates = propagateVtpVlans(refreshedDevices, releasedDeviceStates, sanitizedConnections);
       const stpUpdatedStates = recalculateStp(vtpUpdatedStates, sanitizedConnections);
+      const bgpUpdatedStates = recalculateBgpNeighbors(stpUpdatedStates);
       const stpUpdatedCount = Array.from(vtpUpdatedStates.keys()).filter(id => {
         const d = refreshedDevices.find(dev => dev.id === id);
         return d && (d.type === 'switchL2' || d.type === 'switchL3');
@@ -154,6 +157,22 @@ export function useRefreshNetwork({
       const dhcpClients = refreshedDevices.filter(d => (d.type === 'pc' || d.type === 'iot') && d.ipConfigMode === 'dhcp');
       const dhcpAssignments: Array<{ name: string, ip: string }> = [];
       const finalDevicesForRefresh = [...refreshedDevices];
+
+      // Evaluate SLAAC for PCs attached to routers configured with RA enabled (no ipv6 nd suppress-ra)
+      refreshedDevices.forEach(d => {
+        if (d.type === 'pc' || d.type === 'iot') {
+          const slaac = evaluateSlaacForDevice(d.id, bgpUpdatedStates, sanitizedConnections);
+          if (slaac?.ipv6Address) {
+            const idx = finalDevicesForRefresh.findIndex(dev => dev.id === d.id);
+            if (idx !== -1) {
+              finalDevicesForRefresh[idx] = {
+                ...finalDevicesForRefresh[idx],
+                ipv6: slaac.ipv6Address
+              };
+            }
+          }
+        }
+      });
 
       if (dhcpClients.length > 0) {
         dhcpClients.forEach(pc => {
@@ -213,7 +232,7 @@ export function useRefreshNetwork({
         }
       }
 
-      const portSecurityUpdatedStates = new Map(stpUpdatedStates);
+      const portSecurityUpdatedStates = new Map(bgpUpdatedStates);
       let portSecurityViolationCount = 0;
       let portSecurityRecoveredCount = 0;
 

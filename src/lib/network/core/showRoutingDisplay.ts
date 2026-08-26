@@ -2,6 +2,7 @@ import type { CommandContext } from './commandTypes';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult, Route, Port, DhcpSnoopingBinding } from '../types';
 import { buildOSPFLinkStateDatabase } from '../ospf';
+import { recalculateBgpNeighbors } from '../routing';
 import { ensureDeviceStatesMap } from '../networkUtils';
 import {
   getPrefixLength, getNetworkAddress, formatPortName, isIpInNetwork, getSTPCost,
@@ -90,58 +91,7 @@ export function cmdShowStandby(state: SwitchState, _input: string, _ctx: Command
   return { success: true, output };
 }
 
-/**
- * Show IP NAT Translations
- */
-export function cmdShowIpNatTranslations(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  let output = '\nPro Inside global      Inside local       Outside local      Outside global\n';
-  const translations = state.natTranslations || [];
-  const staticTranslations = state.natStaticTranslations || [];
-
-  staticTranslations.forEach(t => {
-    output += `--- ${t.globalIp.padEnd(18)} ${t.localIp.padEnd(18)} ---                ---\n`;
-  });
-
-  translations.forEach(t => {
-    const proto = t.protocol || 'tcp';
-    output += `${proto.toLowerCase().padEnd(3)} ${t.globalIp}:${t.globalPort}`.padEnd(23);
-    output += ` ${t.localIp}:${t.localPort}`.padEnd(19);
-    output += ` ${t.remoteIp || '---'}:${t.remotePort || '---'}`.padEnd(19);
-    output += ` ${t.remoteIp || '---'}:${t.remotePort || '---'}\n`;
-  });
-
-  if (staticTranslations.length === 0 && translations.length === 0) {
-    output = '\n% No NAT translations active\n';
-  }
-
-  return { success: true, output };
-}
-
-/**
- * Show IP NAT Statistics
- */
-export function cmdShowIpNatStatistics(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  let output = '\nTotal active translations: ' + (state.natTranslations?.length || 0) + ' (0 static, 0 dynamic; 0 extended)\n';
-  output += 'Peak translations: 0, occurred 00:00:00 ago\n';
-  output += 'Outside interfaces:\n';
-  Object.keys(state.ports).forEach(pId => {
-    if (state.ports[pId].natSide === 'outside') output += `  ${pId}\n`;
-  });
-  output += 'Inside interfaces:\n';
-  Object.keys(state.ports).forEach(pId => {
-    if (state.ports[pId].natSide === 'inside') output += `  ${pId}\n`;
-  });
-  output += 'Hits: 0  Misses: 0\n';
-  output += 'CEF Translated packets: 0, CEF Punted packets: 0\n';
-  output += 'Expired translations: 0\n';
-  output += 'Dynamic mappings:\n';
-  (state.natDynamicRules || []).forEach(r => {
-    output += `-- Inside Source\n`;
-    output += `   access-list ${r.aclId} interface ${r.interface || 'pool ' + r.poolName} refcount 0\n`;
-  });
-
-  return { success: true, output };
-}
+export { cmdShowIpNatTranslations, cmdShowIpNatStatistics } from './showNatDisplay';
 
 /**
  * Show Hosts - Display DNS host mapping
@@ -876,13 +826,41 @@ export function cmdShowIpEigrpNeighbors(_state: SwitchState, _input: string, _ct
 /**
  * Show IP BGP Summary
  */
-export function cmdShowIpBgpSummary(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  const routerId = state.routerId || state.defaultGateway || '1.1.1.1';
-  const localAs = state.bgpAs || 65000;
-  const neighbors = state.bgpNeighbors || {};
+export function cmdShowIpBgpSummary(state: SwitchState, _input: string, ctx?: CommandContext): CommandResult {
+  let currentState = state;
+  if (ctx?.deviceStates && ctx?.sourceDeviceId) {
+    const updatedStates = recalculateBgpNeighbors(ctx.deviceStates);
+    const updatedMyState = updatedStates.get(ctx.sourceDeviceId);
+    if (updatedMyState) {
+      currentState = updatedMyState;
+    }
+  }
 
-  const neighborKeys = Object.keys(neighbors);
-  if (neighborKeys.length === 0) {
+  const routerId = currentState.routerId || currentState.defaultGateway || '1.1.1.1';
+  const localAs = currentState.bgpAs || 65000;
+  const rawNeighbors = currentState.bgpNeighbors;
+
+  const neighborList: Array<{ ip: string; as: string | number; state?: string }> = [];
+
+  if (Array.isArray(rawNeighbors)) {
+    rawNeighbors.forEach(n => {
+      neighborList.push({
+        ip: n.ip,
+        as: n.as,
+        state: n.state || currentState.bgpNeighborState?.[n.ip]
+      });
+    });
+  } else if (rawNeighbors && typeof rawNeighbors === 'object') {
+    Object.entries(rawNeighbors as Record<string, { remoteAs?: number | string; as?: number | string; state?: string }>).forEach(([ip, val]) => {
+      neighborList.push({
+        ip,
+        as: val.as || val.remoteAs || localAs,
+        state: val.state || currentState.bgpNeighborState?.[ip]
+      });
+    });
+  }
+
+  if (neighborList.length === 0) {
     return { success: true, output: '\n% BGP is not configured on this device\n' };
   }
 
@@ -890,11 +868,9 @@ export function cmdShowIpBgpSummary(state: SwitchState, _input: string, _ctx: Co
   output += `BGP table version is 1, main routing table version 1\n\n`;
   output += `Neighbor        V           AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd\n`;
 
-  neighborKeys.forEach(ip => {
-    const neighbor = (neighbors as Record<string, { remoteAs?: number; state?: string }>)[ip] || {};
-    const nAs = neighbor.remoteAs || localAs;
-    const nState = neighbor.state || 'Established';
-    output += `${ip.padEnd(15)} 4 ${String(nAs).padEnd(12)} 12      12        1    0    0 00:15:20 ${nState}\n`;
+  neighborList.forEach(n => {
+    const nState = n.state || currentState.bgpNeighborState?.[n.ip] || 'Idle';
+    output += `${n.ip.padEnd(15)} 4 ${String(n.as).padEnd(12)} 12      12        1    0    0 00:15:20 ${nState}\n`;
   });
 
   return { success: true, output };

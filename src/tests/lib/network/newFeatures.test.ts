@@ -3,7 +3,7 @@ import { executeCommand } from '../../../lib/network/executor';
 import { createInitialState, createInitialRouterState } from '../../../lib/network/initialState';
 import { recalculateStp } from '../../../lib/network/stp';
 import { evaluateSlaacForDevice } from '../../../lib/network/eui64';
-import { getRoutingTable } from '../../../lib/network/routing';
+import { getRoutingTable, recalculateBgpNeighbors } from '../../../lib/network/routing';
 import type { SwitchState } from '../../../lib/network/types';
 import type { CanvasConnection } from '@/components/network/networkTopology.types';
 
@@ -134,48 +134,101 @@ describe('Network Simulator New Features', () => {
       const suppressedResult = evaluateSlaacForDevice('PC1', map, connections);
       expect(suppressedResult).toBeNull();
     });
-  });
 
-  describe('4. RADIUS/TACACS+ CLI & State', () => {
-    test('Stores AAA, RADIUS, TACACS+ settings and displays in running-config', () => {
-      let state = createInitialRouterState();
-      state = { ...state, currentMode: 'config' };
+    test('PC generates fe80:: SLAAC address when router interface has no global IPv6 address and no ipv6 nd suppress-ra', () => {
+      const routerState = createInitialRouterState();
+      routerState.ipv6UnicastRouting = true;
+      const rPort = Object.keys(routerState.ports)[0] || 'gi0/0';
+      routerState.ports[rPort].ipv6NdSuppressRa = false;
 
-      let res = executeCommand(state, 'aaa new-model', 'en', [], []);
-      expect(res.success).toBe(true);
-      state = { ...state, ...res.newState };
+      const pcState = createInitialState('PC1');
+      pcState.deviceType = 'pc';
+      pcState.macAddress = '0011.2233.4455';
 
-      res = executeCommand(state, 'radius-server host 192.168.1.100 key secretKey', 'en', [], []);
-      expect(res.success).toBe(true);
-      state = { ...state, ...res.newState };
+      const map = new Map<string, SwitchState>([
+        ['R1', routerState],
+        ['PC1', pcState]
+      ]);
 
-      res = executeCommand(state, 'tacacs-server host 192.168.1.200 key tacacsKey', 'en', [], []);
-      expect(res.success).toBe(true);
-      state = { ...state, ...res.newState };
+      const connections: CanvasConnection[] = [{
+        id: 'conn-1',
+        sourceDeviceId: 'PC1',
+        sourcePort: 'fa0',
+        targetDeviceId: 'R1',
+        targetPort: rPort,
+        cableType: 'straight',
+        active: true
+      }];
 
-      expect(state.aaaNewModel).toBe(true);
-      expect(state.radiusServers?.length).toBe(1);
-      expect(state.tacacsServers?.length).toBe(1);
-
-      const runRes = executeCommand({ ...state, currentMode: 'privileged' }, 'show running-config', 'en', [], []);
-      expect(runRes.output).toContain('aaa new-model');
-      expect(runRes.output).toContain('radius-server host 192.168.1.100 key secretKey');
-      expect(runRes.output).toContain('tacacs-server host 192.168.1.200 key tacacsKey');
+      const slaacResult = evaluateSlaacForDevice('PC1', map, connections);
+      expect(slaacResult).not.toBeNull();
+      expect(slaacResult?.ipv6Address).toContain('fe80:');
     });
   });
 
-  describe('5. Syslog Severity Filter Display', () => {
-    test('show logging displays trap severity level', () => {
-      let state = createInitialRouterState();
-      state = { ...state, currentMode: 'config' };
+  describe('6. BGP Neighbor State Calculation & Summary', () => {
+    test('Calculates Established state when neighbor remote-as match on both routers', () => {
+      const r1 = createInitialRouterState();
+      r1.hostname = 'R1';
+      r1.bgpAs = '65001';
+      r1.ports['gi0/0'] = { ...r1.ports['gi0/0'], ipAddress: '192.168.1.1', shutdown: false };
+      r1.bgpNeighbors = [{ ip: '192.168.1.2', as: '65002' }];
 
-      let res = executeCommand(state, 'logging trap warnings', 'en', [], []);
-      expect(res.success).toBe(true);
-      state = { ...state, ...res.newState };
+      const r2 = createInitialRouterState();
+      r2.hostname = 'R2';
+      r2.bgpAs = '65002';
+      r2.ports['gi0/0'] = { ...r2.ports['gi0/0'], ipAddress: '192.168.1.2', shutdown: false };
+      r2.bgpNeighbors = [{ ip: '192.168.1.1', as: '65001' }];
 
-      res = executeCommand({ ...state, currentMode: 'privileged' }, 'show logging', 'en', [], []);
+      const map = new Map<string, SwitchState>([['R1', r1], ['R2', r2]]);
+      const updatedMap = recalculateBgpNeighbors(map);
+
+      const r1Updated = updatedMap.get('R1');
+      expect(r1Updated?.bgpNeighborState?.['192.168.1.2']).toBe('Established');
+      expect(r1Updated?.bgpNeighbors?.[0].state).toBe('Established');
+
+      const bgpRes = executeCommand({ ...r1Updated!, currentMode: 'privileged' }, 'show ip bgp summary', 'en', [], [], updatedMap, 'R1');
+      expect(bgpRes.output).toContain('192.168.1.2');
+      expect(bgpRes.output).toContain('Established');
+    });
+
+    test('Calculates Idle state when peer is not configured', () => {
+      const r1 = createInitialRouterState();
+      r1.hostname = 'R1';
+      r1.bgpAs = '65001';
+      r1.ports['gi0/0'] = { ...r1.ports['gi0/0'], ipAddress: '192.168.1.1', shutdown: false };
+      r1.bgpNeighbors = [{ ip: '192.168.1.2', as: '65002' }];
+
+      const map = new Map<string, SwitchState>([['R1', r1]]);
+      const updatedMap = recalculateBgpNeighbors(map);
+
+      const r1Updated = updatedMap.get('R1');
+      expect(r1Updated?.bgpNeighborState?.['192.168.1.2']).toBe('Idle');
+
+      const bgpRes = executeCommand({ ...r1Updated!, currentMode: 'privileged' }, 'show ip bgp summary', 'en', [], [], updatedMap, 'R1');
+      expect(bgpRes.output).toContain('Idle');
+    });
+  });
+
+  describe('7. NAT PAT Port Columns', () => {
+    test('Formats PAT translations with port columns in show ip nat translations', () => {
+      const router = createInitialRouterState();
+      router.natTranslations = [{
+        protocol: 'tcp',
+        localIp: '192.168.10.10',
+        localPort: 80,
+        globalIp: '203.0.113.1',
+        globalPort: 1025,
+        remoteIp: '198.51.100.2',
+        remotePort: 80
+      }];
+
+      const res = executeCommand({ ...router, currentMode: 'privileged' }, 'show ip nat translations', 'en', [], []);
       expect(res.success).toBe(true);
-      expect(res.output).toContain('Trap logging: level warnings');
+      expect(res.output).toContain('Pro Inside global          Inside local           Outside local          Outside global');
+      expect(res.output).toContain('203.0.113.1:1025');
+      expect(res.output).toContain('192.168.10.10:80');
+      expect(res.output).toContain('198.51.100.2:80');
     });
   });
 

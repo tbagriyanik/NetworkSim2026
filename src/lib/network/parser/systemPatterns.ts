@@ -821,9 +821,21 @@ export const systemPatterns: Record<string, CommandPattern> = {
 },
 'show ip bgp': {
   pattern: /^show\s+ip\s+bgp(?:\s+(\S+))?$/i,
-    modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1
+  modes: ['privileged'],
+  minArgs: 0,
+  maxArgs: 1
+},
+'show ip nat translations': {
+  pattern: /^show\s+ip\s+nat\s+translations$/i,
+  modes: ['privileged'],
+  minArgs: 0,
+  maxArgs: 0
+},
+'show ip nat statistics': {
+  pattern: /^show\s+ip\s+nat\s+statistics$/i,
+  modes: ['privileged'],
+  minArgs: 0,
+  maxArgs: 0
 },
 'show ipv6 rip': {
   pattern: /^show\s+ipv6\s+rip(?:\s+(\S+))?$/i,

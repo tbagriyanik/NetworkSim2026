@@ -71,6 +71,7 @@ export interface Port {
   staticMacs?: string[]; // Static MAC addresses for port security
   ipv6Address?: string;         
   ipv6Prefix?: number;
+  ipv6LinkLocal?: string;
   ipv6Rip?: {
     enabled: boolean;
     processName?: string;
@@ -420,7 +421,8 @@ export interface SwitchState {
   eigrpAs?: string;                // EIGRP AS number
   eigrpNeighbors?: string[];       // EIGRP neighbor IDs/IPs
   bgpAs?: string;                  // BGP AS number
-  bgpNeighbors?: { ip: string; as: string }[];  // BGP neighbor configurations
+  bgpNeighbors?: { ip: string; as: string; state?: string }[];  // BGP neighbor configurations
+  bgpNeighborState?: Record<string, string>; // BGP neighbor dynamic state mapping (e.g. 'Established', 'Idle')
   passiveInterfaces?: string[];    // Interfaces that should not send updates
   routerId?: string;               // Router identifier (for routing)
   defaultInformation?: string;     // Default route information configuration

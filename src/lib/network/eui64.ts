@@ -81,13 +81,14 @@ export function evaluateSlaacForDevice(
     const remotePort = remoteState.ports[remotePortId];
     if (!remotePort || remotePort.shutdown) continue;
 
-    if (remotePort.ipv6Address && remotePort.ipv6Prefix && !remotePort.ipv6NdSuppressRa) {
+    if (remotePort.ipv6NdSuppressRa === false) {
       const mac = state.macAddress || '0050.56a1.b2c3';
-      const autoIpv6 = calculateEui64(mac, remotePort.ipv6Address);
+      const prefixStr = remotePort.ipv6Address || remotePort.ipv6LinkLocal || 'fe80::';
+      const autoIpv6 = calculateEui64(mac, prefixStr);
       return {
         ipv6Address: autoIpv6,
         ipv6Prefix: remotePort.ipv6Prefix || 64,
-        ipv6Gateway: remotePort.ipv6Address
+        ipv6Gateway: remotePort.ipv6Address || remotePort.ipv6LinkLocal || 'fe80::1'
       };
     }
   }

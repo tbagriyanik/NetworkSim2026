@@ -795,3 +795,73 @@ export function getL3Hops(
 
   return hops;
 }
+
+/**
+ * Recalculate BGP neighbor states across devices in the topology.
+ * When neighbor remote-as match on both sides, state is 'Established', otherwise 'Idle'.
+ */
+export function recalculateBgpNeighbors(
+  deviceStates: Map<string, SwitchState>
+): Map<string, SwitchState> {
+  const updatedStates = new Map<string, SwitchState>(deviceStates);
+
+  // Helper to collect all active IP addresses of a device
+  const getActiveDeviceIps = (st: SwitchState): string[] => {
+    const ips: string[] = [];
+    Object.values(st.ports || {}).forEach(port => {
+      if (!port.shutdown && port.ipAddress) {
+        ips.push(port.ipAddress);
+      }
+    });
+    return ips;
+  };
+
+  deviceStates.forEach((state, deviceId) => {
+    if (!state.bgpNeighbors || state.bgpNeighbors.length === 0) return;
+
+    const localAs = String(state.bgpAs || '');
+    const localIps = getActiveDeviceIps(state);
+    const newNeighborStateMap: Record<string, string> = { ...state.bgpNeighborState };
+
+    const newNeighbors = state.bgpNeighbors.map(n => {
+      const neighborIp = n.ip;
+      const targetAs = String(n.as || '');
+      let isEstablished = false;
+
+      // Search for peer router matching targetAs and neighborIp
+      deviceStates.forEach((peerState, peerId) => {
+        if (peerId === deviceId) return;
+        if (String(peerState.bgpAs || '') !== targetAs) return;
+
+        const peerIps = getActiveDeviceIps(peerState);
+        if (!peerIps.includes(neighborIp)) return;
+
+        // Peer must have neighbor pointing back to one of localIps with matching localAs
+        const peerHasMatchingNeighbor = (peerState.bgpNeighbors || []).some(
+          pn => localIps.includes(pn.ip) && String(pn.as || '') === localAs
+        );
+
+        if (peerHasMatchingNeighbor) {
+          isEstablished = true;
+        }
+      });
+
+      const nState = isEstablished ? 'Established' : 'Idle';
+      newNeighborStateMap[neighborIp] = nState;
+
+      return {
+        ...n,
+        state: nState
+      };
+    });
+
+    updatedStates.set(deviceId, {
+      ...state,
+      bgpNeighbors: newNeighbors,
+      bgpNeighborState: newNeighborStateMap
+    });
+  });
+
+  return updatedStates;
+}
+
