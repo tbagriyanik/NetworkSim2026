@@ -177,6 +177,89 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       ]
     },
     {
+      id: 'examples-nat',
+      icon: Globe,
+      title: isTR ? 'Örnek: NAT & PAT' : 'Example: NAT & PAT',
+      type: 'examples',
+      cmds: [
+        ['access-list 1 permit 192.168.1.0 0.0.0.255', isTR ? '1. İç ağ için ACL tanımla' : '1. Define ACL for internal network', '(config)#'],
+        ['ip nat inside source list 1 interface gi0/0 overload', isTR ? '2. PAT (Overload) kuralı ekle' : '2. Add PAT (Overload) rule', '(config)#'],
+        ['interface gi0/1', isTR ? '3. İç arayüze gir' : '3. Select inside interface', '(config)#'],
+        ['ip nat inside', isTR ? '4. İç arayüz olarak işaretle' : '4. Mark as inside interface', '(config-if)#'],
+        ['interface gi0/0', isTR ? '5. Dış (internet) arayüzüne gir' : '5. Select outside interface', '(config)#'],
+        ['ip nat outside', isTR ? '6. Dış arayüz olarak işaretle' : '6. Mark as outside interface', '(config-if)#'],
+        ['show ip nat translations', isTR ? '7. NAT çeviri tablosunu gör' : '7. View NAT translations', '#'],
+      ]
+    },
+    {
+      id: 'examples-router-on-a-stick',
+      icon: Router,
+      title: isTR ? 'Örnek: Router-on-a-Stick' : 'Example: Router-on-a-Stick',
+      type: 'examples',
+      cmds: [
+        ['interface gi0/0.10', isTR ? '1. VLAN 10 alt-arayüzünü oluştur' : '1. Create VLAN 10 subinterface', '(config)#'],
+        ['encapsulation dot1q 10', isTR ? '2. Dot1Q kapsülleme & VLAN 10 ataması' : '2. Set Dot1Q encapsulation & VLAN 10', '(config-subif)#'],
+        ['ip address 192.168.10.1 255.255.255.0', isTR ? '3. VLAN 10 ağ geçidi IP\'sini ata' : '3. Set VLAN 10 gateway IP', '(config-subif)#'],
+        ['interface gi0/0.20', isTR ? '4. VLAN 20 alt-arayüzünü oluştur' : '4. Create VLAN 20 subinterface', '(config)#'],
+        ['encapsulation dot1q 20', isTR ? '5. Dot1Q kapsülleme & VLAN 20 ataması' : '5. Set Dot1Q encapsulation & VLAN 20', '(config-subif)#'],
+        ['ip address 192.168.20.1 255.255.255.0', isTR ? '6. VLAN 20 ağ geçidi IP\'sini ata' : '6. Set VLAN 20 gateway IP', '(config-subif)#'],
+        ['interface gi0/0', isTR ? '7. Ana fiziksel arayüze gir ve aç' : '7. Enter main physical interface & enable', '(config)#'],
+        ['no shutdown', isTR ? '8. Fiziksel arayüzü etkinleştir' : '8. Enable physical interface', '(config-if)#'],
+      ]
+    },
+    {
+      id: 'examples-etherchannel',
+      icon: Layers,
+      title: isTR ? 'Örnek: EtherChannel (LACP)' : 'Example: EtherChannel (LACP)',
+      type: 'examples',
+      cmds: [
+        ['interface range fa0/1 - 2', isTR ? '1. Bağlanacak fiziksel portları seç' : '1. Select physical ports to bundle', '(config)#'],
+        ['channel-group 1 mode active', isTR ? '2. LACP active modunda grupla' : '2. Group in LACP active mode', '(config-if-range)#'],
+        ['interface port-channel 1', isTR ? '3. Oluşan Port-Channel arayüzüne gir' : '3. Select created Port-Channel interface', '(config)#'],
+        ['switchport mode trunk', isTR ? '4. Mantıksal portu Trunk yap' : '4. Set logical port to Trunk mode', '(config-if)#'],
+        ['show etherchannel summary', isTR ? '5. Gruba dahil durumunu kontrol et' : '5. Verify EtherChannel summary status', '#'],
+      ]
+    },
+    {
+      id: 'examples-hsrp',
+      icon: Server,
+      title: isTR ? 'Örnek: HSRP Ağ Geçidi Yedekleme' : 'Example: HSRP Gateway Redundancy',
+      type: 'examples',
+      cmds: [
+        ['interface gi0/0', isTR ? '1. LAN tarafındaki arayüze gir' : '1. Enter LAN-facing interface', '(config)#'],
+        ['standby 1 ip 192.168.1.254', isTR ? '2. Sanal IP (Virtual IP) adresini ata' : '2. Set Virtual IP address', '(config-if)#'],
+        ['standby 1 priority 110', isTR ? '3. Önceliği artır (Birincil Router yap)' : '3. Increase priority (Make Active Router)', '(config-if)#'],
+        ['standby 1 preempt', isTR ? '4. Geri devralma (preempt) modunu aç' : '4. Enable preemption mode', '(config-if)#'],
+        ['show standby brief', isTR ? '5. HSRP aktif/beklemede durumunu kontrol et' : '5. Verify HSRP status', '#'],
+      ]
+    },
+    {
+      id: 'examples-ospf',
+      icon: Network,
+      title: isTR ? 'Örnek: OSPF Yönlendirme' : 'Example: OSPF Routing',
+      type: 'examples',
+      cmds: [
+        ['router ospf 1', isTR ? '1. OSPF sürecini başlat (Process ID 1)' : '1. Enable OSPF process 1', '(config)#'],
+        ['router-id 1.1.1.1', isTR ? '2. Router ID kimliğini belirle' : '2. Set Router ID', '(config-router)#'],
+        ['network 192.168.1.0 0.0.0.255 area 0', isTR ? '3. Yerel LAN ağını Area 0\'a duyur' : '3. Advertise LAN network in Area 0', '(config-router)#'],
+        ['network 10.0.0.0 0.0.0.3 area 0', isTR ? '4. WAN bağlantısını Area 0\'a duyur' : '4. Advertise WAN link in Area 0', '(config-router)#'],
+        ['show ip ospf neighbor', isTR ? '5. OSPF komşuluk durumunu doğrula' : '5. Verify OSPF neighbor adjacency', '#'],
+      ]
+    },
+    {
+      id: 'examples-acl',
+      icon: Shield,
+      title: isTR ? 'Örnek: Genişletilmiş ACL' : 'Example: Extended ACL',
+      type: 'examples',
+      cmds: [
+        ['access-list 100 deny tcp 192.168.1.0 0.0.0.255 host 10.0.0.5 eq 80', isTR ? '1. 192.168.1.0/24 ağının 10.0.0.5 web sunucusuna (HTTP/80) erişimini engelle' : '1. Block HTTP traffic from 192.168.1.0/24 to 10.0.0.5', '(config)#'],
+        ['access-list 100 permit ip any any', isTR ? '2. Diğer tüm trafiğe izin ver' : '2. Permit all other IP traffic', '(config)#'],
+        ['interface gi0/0', isTR ? '3. Trafiğin girdiği arayüze gir' : '3. Select inbound interface', '(config)#'],
+        ['ip access-group 100 in', isTR ? '4. ACL kuralını arayüzün girişine uygula' : '4. Apply ACL to inbound interface', '(config-if)#'],
+        ['show access-lists', isTR ? '5. ACL kurallarını ve eşleşmelerini denetle' : '5. Verify ACL rules and hit count', '#'],
+      ]
+    },
+    {
       id: 'knowledge-stp',
       icon: Book,
       title: isTR ? 'Bilgi: STP Nedir?' : 'Knowledge: What is STP?',
@@ -201,6 +284,69 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       type: 'info',
       cmds: [
         ['Virtual Local Area Network', isTR ? 'VLAN, fiziksel bir yerel ağı mantıksal olarak daha küçük parçalara bölen teknolojidir. Aynı switch üzerindeki kullanıcıları farklı VLAN\'lara ayırarak güvenliği artırabilir ve ağ trafiğini (broadcast) optimize edebilirsiniz. Farklı VLAN\'lar arasındaki iletişim için bir Router veya L3 Switch gerekir.' : 'VLAN is a technology that logically partitions a physical LAN into smaller segments. By placing users on the same switch into different VLANs, you can improve security and optimize network traffic (broadcast). Communication between different VLANs requires a Router or L3 Switch.'],
+      ]
+    },
+    {
+      id: 'knowledge-nat',
+      icon: Globe,
+      title: isTR ? 'Bilgi: NAT & PAT Nedir?' : 'Knowledge: What is NAT & PAT?',
+      type: 'info',
+      cmds: [
+        ['Network Address Translation', isTR ? 'NAT, yerel ağdaki özel (private) IP adreslerini (örn. 192.168.x.x) kamuya açık (public) IP adreslerine dönüştürerek internet erişimi sağlar. Statik NAT birebir eşleşme yaparken, PAT (Port Address Translation / Overload) tek bir public IP üzerinden port numaralarını kullanarak binlerce cihazın aynı anda internete çıkmasını sağlar.' : 'NAT translates private IP addresses (e.g. 192.168.x.x) to public IP addresses for internet access. While Static NAT provides 1-to-1 mapping, PAT (Port Address Translation / Overload) uses unique port numbers on a single public IP to allow thousands of internal hosts to access the internet simultaneously.'],
+      ]
+    },
+    {
+      id: 'knowledge-etherchannel',
+      icon: Layers,
+      title: isTR ? 'Bilgi: EtherChannel Nedir?' : 'Knowledge: What is EtherChannel?',
+      type: 'info',
+      cmds: [
+        ['Link Aggregation / Port Channel', isTR ? 'EtherChannel, 2 ila 8 arasındaki fiziksel Ethernet bağlantısını mantıksal tek bir yüksek hızlı hat (Port-Channel) olarak birleştiren teknolojidir. Hem bant genişliğini artırır hem de fiziksel bir kablo koptuğunda kesintisiz veri akışı (yedeklilik) sağlar. Standart LACP (802.3ad) veya Cisco özel PAgP protokolleri ile dinamik kurulabilir.' : 'EtherChannel combines 2 to 8 physical Ethernet links into a single logical high-speed link (Port-Channel). It increases aggregate bandwidth and provides seamless failover redundancy if a link drops. It can be negotiated dynamically using standard LACP (802.3ad) or Cisco proprietary PAgP.'],
+      ]
+    },
+    {
+      id: 'knowledge-hsrp',
+      icon: Server,
+      title: isTR ? 'Bilgi: HSRP Nedir?' : 'Knowledge: What is HSRP?',
+      type: 'info',
+      cmds: [
+        ['Hot Standby Router Protocol', isTR ? 'HSRP, birinci ağ geçidinin (Default Gateway) arızalanması durumunda ağ erişiminin kesilmemesi için kullanılan bir Cisco yedeklilik protokolüdür. İki veya daha fazla router tek bir Sanal IP (Virtual IP) ve Sanal MAC adresi paylaşır. Aktif (Active) router çöktüğünde Bekleyen (Standby) router milisaniyeler içinde görevi devralır.' : 'HSRP is a Cisco redundancy protocol designed to ensure uninterrupted default gateway connectivity. Two or more routers share a single Virtual IP and Virtual MAC address. If the Active router fails, the Standby router seamlessly takes over within milliseconds.'],
+      ]
+    },
+    {
+      id: 'knowledge-ospf',
+      icon: Network,
+      title: isTR ? 'Bilgi: OSPF Nedir?' : 'Knowledge: What is OSPF?',
+      type: 'info',
+      cmds: [
+        ['Open Shortest Path First', isTR ? 'OSPF, açık kaynaklı ve popüler bir Link-State (Bağlantı Durumu) dinamik yönlendirme protokolüdür. En kısa rotayı hesaplamak için Dijkstra (SPF) algoritmasını kullanır. Ağ yapılarını alanlara (Area) bölerek ölçeklenebilirlik sağlar (Area 0 omurgadır). Hızlı uyum sağlama (fast convergence) süresi ile büyük ağlarda tercih edilir.' : 'OSPF is an open standard Link-State dynamic routing protocol using Dijkstra\'s Shortest Path First algorithm. It hierarchically partitions networks into Areas (Area 0 being the backbone) for scalability and provides fast convergence in enterprise networks.'],
+      ]
+    },
+    {
+      id: 'knowledge-acl',
+      icon: Shield,
+      title: isTR ? 'Bilgi: ACL (Erişim Listesi) Nedir?' : 'Knowledge: What is ACL?',
+      type: 'info',
+      cmds: [
+        ['Access Control List', isTR ? 'ACL, ağ cihazlarında geçen paketlerin izin verilip (permit) engelleneceğini (deny) belirleyen kurallar dizisidir. Standart ACL (1-99) sadece kaynak IP adresine bakarken; Genişletilmiş ACL (100-199) kaynak IP, hedef IP, protokol (TCP/UDP/ICMP) ve port numaralarına göre detaylı filtreleme yapar. Her ACL sonuna yazılmayan bir "implicit deny" (örtülü engelleme) kuralı dahildir.' : 'ACL is a set of security rules that filter network traffic by specifying permit or deny conditions. Standard ACLs (1-99) evaluate source IP address only; Extended ACLs (100-199) inspect source IP, destination IP, protocol (TCP/UDP/ICMP), and port numbers. Every ACL has an unwritten "implicit deny" rule at the end.'],
+      ]
+    },
+    {
+      id: 'knowledge-ipv6',
+      icon: Globe,
+      title: isTR ? 'Bilgi: IPv6 & SLAAC Nedir?' : 'Knowledge: What is IPv6 & SLAAC?',
+      type: 'info',
+      cmds: [
+        ['IPv6 & Autoconfiguration', isTR ? 'IPv6, 128-bitlik genişletilmiş adres alanı sunan yeni nesil internet protokolüdür. SLAAC (Stateless Address Autoconfiguration) yöntemi sayesinde cihazlar DHCP sunucusuna ihtiyaç duymadan router önek mesajları (RA) ile otomatik IP yapılandırması alırlar. EUI-64 yöntemi ise cihazın 48-bitlik MAC adresinden benzersiz 64-bitlik Host IP\'si üretir.' : 'IPv6 is the next-generation internet protocol providing a 128-bit address space. With SLAAC (Stateless Address Autoconfiguration), devices receive automatic IP configuration directly via router advertisement (RA) messages without a DHCP server. The EUI-64 mechanism derives a unique 64-bit host address from the device\'s 48-bit MAC address.'],
+      ]
+    },
+    {
+      id: 'knowledge-simulation',
+      icon: Eye,
+      title: isTR ? 'Bilgi: Simülatör ve Araç Kullanımı' : 'Knowledge: Simulator Tools',
+      type: 'info',
+      cmds: [
+        ['NetworkSimulator Kullanım İpuçları', isTR ? 'NetworkSimulator tuvalinde cihazları sürükleyip bırakabilir, portlar arası kablo türünü seçerek (Bakır Düz/Çapraz, Fiber, Seri) bağlayabilirsiniz. Alt paneldeki Paket Yakalama (Packet Capture) sekmesi ile paketlerin OSI katman detaylarını inceleyebilir, Güdümlü Mod (Guided Mode) ile adım adım pratik senaryoları çözebilirsiniz.' : 'In NetworkSimulator, drag-and-drop devices onto the canvas and connect them using appropriate cabling (Copper Straight/Cross, Fiber, Serial). Use the Packet Capture tab to inspect OSI layer encapsulation details, or complete interactive exercises via Guided Mode.'],
       ]
     },
 {
@@ -614,6 +760,37 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['ver', isTR ? 'Versiyon bilgisi' : 'Version info'],
         ['cls', isTR ? 'Ekranı temizle' : 'Clear screen'],
         ['help / ?', isTR ? 'PC komut yardımı' : 'Desktop command help'],
+      ]
+    },
+    {
+      id: 'python-commands',
+      icon: Terminal,
+      title: isTR ? 'Python Yorumlayıcısı & Komutlar' : 'Python Interpreter & Commands',
+      type: 'commands',
+      cmds: [
+        ['python <script.py> [args]', isTR ? 'Python betik dosyasını çalıştır' : 'Run Python script file'],
+        ['python -c "<code>"', isTR ? 'Tek satırlık Python kodu çalıştır' : 'Execute inline Python code'],
+        ['python', isTR ? 'İnteraktif Python kabuğunu (REPL) başlat' : 'Start interactive Python REPL shell'],
+        ['print(value, ...)', isTR ? 'Ekrana metin/değer yazdır' : 'Print text/value to stdout'],
+        ['input([prompt])', isTR ? 'Kullanıcıdan metin girdisi oku' : 'Read input from user'],
+        ['len(sequence)', isTR ? 'Dizi/liste/metin uzunluğunu al' : 'Get sequence/list/string length'],
+        ['type(object)', isTR ? 'Nesnenin veri tipini döndür' : 'Return data type of object'],
+        ['range([start], stop, [step])', isTR ? 'Sayı dizisi üretecini oluştur' : 'Create sequence generator'],
+        ['int() / float() / str() / bool()', isTR ? 'Veri tipi dönüştürme fonksiyonları' : 'Data type casting functions'],
+        ['list() / dict() / set() / tuple()', isTR ? 'Koleksiyon dönüştürme fonksiyonları' : 'Collection casting functions'],
+        ['sum() / min() / max() / abs()', isTR ? 'Matematiksel dâhilî fonksiyonlar' : 'Built-in math utility functions'],
+        ['sorted(iterable) / reversed(seq)', isTR ? 'Sıralama ve tersine çevirme' : 'Sorting and reversing iterables'],
+        ['import json / math / sys / os / socket', isTR ? 'Dâhilî Python modüllerini içe aktar' : 'Import built-in Python modules'],
+        ['exit() / quit()', isTR ? 'İnteraktif REPL kabuğundan çık' : 'Exit interactive REPL shell'],
+      ]
+    },
+    {
+      id: 'knowledge-python',
+      icon: FileText,
+      title: isTR ? 'Bilgi: Python Yorumlayıcısı Nedir?' : 'Knowledge: What is Python Engine?',
+      type: 'info',
+      cmds: [
+        ['Python 3 Engine', isTR ? 'NetworkSimulator PC cihazlarında yerleşik tam teşekküllü bir Python 3 yorumlayıcısı bulunur. CMD terminalinden "python script.py" yazarak veya Dosya Düzenleyici üzerindeki "Çalıştır" butonuyla betiklerinizi çalıştırabilirsiniz. Nesne Yönelimli Programlama (OOP), Decorator\'lar, Generator\'lar (yield), Hata Yakalama (try/except) ve ağ soket simülasyonu (socket, json, requests) tam desteklenir.' : 'NetworkSimulator PC devices feature an integrated Python 3 engine. You can execute scripts via CMD using "python script.py" or via the File Editor "Run" button. OOP (classes/inheritance), Decorators, Generators (yield), Exception handling (try/except), and network socket simulation (socket, json, requests) are fully supported.'],
       ]
     },
     {

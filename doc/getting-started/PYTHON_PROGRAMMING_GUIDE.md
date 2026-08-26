@@ -53,8 +53,23 @@ Yorumlayıcı tüm standart Python ilkel ve koleksiyon veri tiplerini destekler:
 | `tuple` | `coords = (10, 20)` | Değiştirilemez demet |
 | `complex` | `z = 3 + 4j` | Karmaşık sayı |
 
-**Dahili Dönüşüm Fonksiyonları:**
+**Dahili Dönüşüm ve Yardımcı Fonksiyonlar:**
 `int()`, `float()`, `str()`, `bool()`, `list()`, `dict()`, `set()`, `type()`, `len()`, `range()`, `sum()`, `min()`, `max()`, `abs()`, `round()`, `sorted()`, `reversed()`.
+
+### 🛠️ Temel Python Komut ve Dahili Fonksiyon Özeti
+
+| Komut / Fonksiyon | Sözdizimi Örneği | Açıklama |
+|---|---|---|
+| `print()` | `print("Çıktı:", x)` | Standart çıktıya metin veya değişken yazdırır |
+| `input()` | `name = input("Adınız: ")` | Kullanıcıdan metin girdisi alır |
+| `type()` | `type("123")` | Değişkenin veya nesnenin veri tipini öğrenir (`str`) |
+| `len()` | `len([10, 20, 30])` | Liste, metin veya koleksiyon eleman sayısını verir |
+| `range()` | `range(0, 10, 2)` | Sayısal aralık üreteci oluşturur |
+| `str.split()` | `"192.168.1.1".split(".")` | Metni belirtilen ayraca göre böler (`['192','168','1','1']`) |
+| `str.join()` | `"-".join(["a", "b"])` | Liste elemanlarını metin olarak birleştirir (`"a-b"`) |
+| `list.append()` | `ports.append(8080)` | Listeye yeni eleman ekler |
+| `dict.get()` | `host.get("ip", "N/A")` | Sözlükten güvenli değer okur |
+| `import` | `import math, json, os, socket` | Standard kütüphane veya ağ modülünü yükler |
 
 ---
 

@@ -264,6 +264,23 @@ python -c "print('Merhaba')"
 python
 ```
 
+### ⚡ Temel Python Komutları Referansı
+
+| Komut / Fonksiyon | Açıklama | Kullanım Örneği |
+|---|---|---|
+| `python <script.py>` | Belirtilen betik dosyasını çalıştırır | `python main.py` |
+| `python -c "<code>"` | Komut satırından doğrudan kod çalıştırır | `python -c "print(2**10)"` |
+| `print(value, ...)` | Çıktıyı ekrana yazdırır | `print("IP:", "192.168.1.1")` |
+| `input([prompt])` | Kullanıcıdan klavye girdisi alır | `name = input("Cihaz adı: ")` |
+| `len(s)` | Dizi, liste, sözlük veya metnin uzunluğunu döndürür | `count = len(devices)` |
+| `type(obj)` | Nesnenin veri tipini döndürür (`int`, `str`, `list` vb.) | `print(type(x))` |
+| `range(start, stop)` | Belirtilen aralıkta sayı üreteci oluşturur | `for i in range(1, 5):` |
+| `int()`, `str()`, `float()` | Veri tipi dönüştürme fonksiyonları | `port = int("80")` |
+| `list()`, `dict()`, `set()` | Koleksiyon dönüştürme fonksiyonları | `unique = set([1, 1, 2])` |
+| `open(file, mode)` | Dosya okuma/yazma nesnesi döndürür | `f = open("log.txt", "w")` |
+| `import <module>` | Dahili kütüphaneyi içe aktarır (`json`, `math`, `os`, `socket`) | `import socket` |
+| `exit()` / `quit()` | İnteraktif Python (REPL) ortamından çıkar | `exit()` |
+
 ### Öne Çıkan Özellikler & Müfredat Uyumları
 - **Nesne Yönelimli Programlama (OOP):** `class`, `__init__`, `self`, Kalıtım (Inheritance), `super()`, `isinstance()`.
 - **Nitelik Kapsülleme (Decorators):** `@property`, `@<name>.setter`, `@staticmethod`, `@classmethod` ve kullanıcı tanımlı decorator'lar.
