@@ -24,6 +24,7 @@ export function useProjectApplication({
   toggleEditor,
   setIsExamLoadedFromFile,
   resetWorkspaceUiState,
+  resetToEmptyProject,
   groupedExampleProjects,
   exampleLevelOrder,
   projectName,
@@ -43,6 +44,7 @@ export function useProjectApplication({
   startGuidedProject: (project: GuidedProject) => void;
   toggleEditor: (v: boolean) => void;
   resetWorkspaceUiState: () => void;
+  resetToEmptyProject: () => void;
   setIsExamLoadedFromFile: (v: boolean) => void;
   groupedExampleProjects: Record<string, ExampleProject[]>;
   exampleLevelOrder: string[];
@@ -204,8 +206,10 @@ export function useProjectApplication({
   const startExamFromCatalog = useCallback((project: ExamProject) => {
     setIsExamLoadedFromFile(false);
     closeGuidedMode();
+    resetWorkspaceUiState();
+    resetToEmptyProject();
     startExamProject(project);
-  }, [startExamProject, closeGuidedMode, setIsExamLoadedFromFile]);
+  }, [startExamProject, closeGuidedMode, setIsExamLoadedFromFile, resetWorkspaceUiState, resetToEmptyProject]);
 
   const handleConvertProjectToExam = useCallback((projectData: unknown) => {
     document.body.style.cursor = 'wait';
@@ -225,8 +229,9 @@ export function useProjectApplication({
   const handleStartGuidedProject = useCallback((project: GuidedProject) => {
     closeExam();
     resetWorkspaceUiState();
+    resetToEmptyProject();
     startGuidedProject(project);
-  }, [startGuidedProject, closeExam, resetWorkspaceUiState]);
+  }, [startGuidedProject, closeExam, resetWorkspaceUiState, resetToEmptyProject]);
 
   return {
     applyExampleProjectAsTemplate,

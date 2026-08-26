@@ -128,7 +128,9 @@ export function usePageGlobalEvents({
         .replace(/^type\s+/i, '')
         .replace(/\s+(yazın|yazin)\.?$/i, '')
         .replace(/\s+(and press enter|press enter)\.?$/i, '');
-      cleanCommand = cleanCommand.trim();
+      // Show Me must inject the command itself, not the surrounding prose
+      // punctuation (e.g. `"enable".` must become `enable`).
+      cleanCommand = cleanCommand.replace(/^["'“”]+|["'“”.,!?]+$/g, '').trim();
 
       if (!deviceId) {
         if (cleanCommand.includes('ipconfig') || cleanCommand.includes('ping') || cleanCommand.includes('ftp') || cleanCommand.includes('tracert')) {
@@ -153,6 +155,10 @@ export function usePageGlobalEvents({
               window.dispatchEvent(new CustomEvent('pc-auto-type', { detail: { deviceId, command: cleanCommand } }));
             }, 600);
           } else {
+            // The guided "Show Me" panel is the single presentation for
+            // network devices. Close any floating instance first so the same
+            // router/switch cannot appear twice at the same time.
+            useMultiWindowStore.getState().closeDeviceWindow(deviceId);
             setActiveDeviceId(deviceId);
             setActiveDeviceType(device.type);
             setUnifiedDeviceActiveTab('console');
@@ -172,4 +178,3 @@ export function usePageGlobalEvents({
     setPcPanelInitialTab, setShowPCPanel, setUnifiedDeviceActiveTab
   ]);
 }
-

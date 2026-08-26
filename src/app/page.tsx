@@ -303,6 +303,9 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const setActiveTab = useAppStore((state) => state.setActiveTab);
 
   const resetWorkspaceUiState = useCallback(() => {
+    // Do not carry floating device windows from the previous project into
+    // guided lessons or exams.
+    useMultiWindowStore.getState().closeAllDeviceWindows();
     setActiveDeviceId('');
     setActiveDeviceType('switchL2');
     setSelectedDevice(null);
@@ -1621,6 +1624,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     toggleEditor,
     setIsExamLoadedFromFile,
     resetWorkspaceUiState,
+    resetToEmptyProject,
     groupedExampleProjects,
     exampleLevelOrder,
     projectName,

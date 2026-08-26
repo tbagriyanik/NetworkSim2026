@@ -9,7 +9,7 @@ export const cliGuidedLessons: GuidedStep[] = [
     sectionTitle: { tr: 'Bölüm 1: Temel Mod Komutları (Switch)', en: 'Section 1: Basic Mode Commands (Switch)' },
     title: { tr: 'Enable Komutu', en: 'Enable Command' },
     description: { tr: 'Ayrıcalıklı moda geçmek için enable komutunu kullanın', en: 'Use enable command to enter privileged mode' },
-    hint: { tr: 'switch-1: enable yazın', en: 'switch-1: Type enable' },
+    hint: { tr: 'enable', en: 'enable' },
     checkType: 'command',
     checkParams: { commandPattern: 'enable' },
     completed: false,
@@ -88,7 +88,7 @@ export const cliGuidedLessons: GuidedStep[] = [
     order: 8,
     title: { tr: 'Enable Secret Ayarla', en: 'Set Enable Secret' },
     description: { tr: 'Enable secret komutunu kullanın', en: 'Learn enable secret command' },
-    hint: { tr: 'switch-1: enable secret password yazın', en: 'switch-1: Type enable secret password' },
+    hint: { tr: 'enable secret password', en: 'enable secret password' },
     checkType: 'command',
     checkParams: { commandPattern: 'enable secret' },
     completed: false,
@@ -972,6 +972,41 @@ export const cliGuidedLessons: GuidedStep[] = [
     hint: { tr: 'router-1: reload yazın', en: 'router-1: Type reload' },
     checkType: 'command',
     checkParams: { commandPattern: 'reload' },
+    completed: false,
+    points: 10
+  },
+  // Bölüm 13: AAA Kimlik Doğrulama
+  {
+    id: 'cli-lesson-10-1a',
+    order: 86,
+    sectionTitle: { tr: 'Bölüm 13: AAA Kimlik Doğrulama', en: 'Section 13: AAA Authentication' },
+    title: { tr: 'AAA Etkinleştir', en: 'Enable AAA' },
+    description: { tr: 'AAA yeni modelini etkinleştirin', en: 'Enable the AAA new model' },
+    hint: { tr: 'router-1: aaa new-model yazın', en: 'router-1: Type aaa new-model' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'aaa new-model' },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'cli-lesson-10-1b',
+    order: 87,
+    title: { tr: 'Yerel Kullanıcı Oluştur', en: 'Create Local User' },
+    description: { tr: 'Yerel kimlik doğrulama için kullanıcı oluşturun', en: 'Create a user for local authentication' },
+    hint: { tr: 'router-1: username admin privilege 15 secret password yazın', en: 'router-1: Type username admin privilege 15 secret password' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'username admin' },
+    completed: false,
+    points: 10
+  },
+  {
+    id: 'cli-lesson-10-1c',
+    order: 88,
+    title: { tr: 'AAA Login Listesi', en: 'AAA Login List' },
+    description: { tr: 'Login için yerel kullanıcı veritabanını seçin', en: 'Use the local user database for login' },
+    hint: { tr: 'router-1: aaa authentication login default local yazın', en: 'router-1: Type aaa authentication login default local' },
+    checkType: 'command',
+    checkParams: { commandPattern: 'aaa authentication login' },
     completed: false,
     points: 10
   }

@@ -128,11 +128,16 @@ export function getLevenshteinDistance(a: string, b: string): number {
 
 // Komut parse et
 export function parseCommand(input: string, currentMode: CommandMode, state?: Partial<SwitchState>): ParsedCommand | null {
-  if (input && input.length > 256) {
+  // Guided lesson text may be copied with surrounding quotation marks or a
+  // sentence-ending period. Treat those as presentation punctuation, not as
+  // part of the CLI command (e.g. `"enable".` -> `enable`).
+  const normalizedInput = input.trim().replace(/^["'“”]+|["'“”.,!?]+$/g, '').trim();
+
+  if (normalizedInput && normalizedInput.length > 256) {
     return {
       command: '',
       args: [],
-      rawInput: input,
+      rawInput: normalizedInput,
       resolvedInput: '',
       intent: { family: 'other', action: 'unknown' }
     };
@@ -144,7 +149,7 @@ export function parseCommand(input: string, currentMode: CommandMode, state?: Pa
       : state.deviceType || (state.switchLayer === 'FW' ? 'firewall' : state.switchLayer === 'L3' ? 'switchL3' : 'switchL2'))
     : 'switchL2';
   const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType as DeviceType }, state.switchModel) : undefined;
-  const resolvedInput = expandKeywordPrefixes(resolveAliases(input, state), currentMode, capabilities);
+  const resolvedInput = expandKeywordPrefixes(resolveAliases(normalizedInput, state), currentMode, capabilities);
 
   if (!resolvedInput) return null;
 
@@ -157,7 +162,7 @@ export function parseCommand(input: string, currentMode: CommandMode, state?: Pa
   return {
     command: command.toLowerCase(),
     args: args.map(a => a.toLowerCase()),
-    rawInput: input,
+    rawInput: normalizedInput,
     resolvedInput: resolvedInput,  // Store resolved input for executor
     intent
   };
