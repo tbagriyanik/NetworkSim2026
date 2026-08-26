@@ -34,21 +34,30 @@
 - EIGRP (DUAL motoru ve Feasibility Condition kontrolü).
 - RIP ve RIPng yönlendirme protokolleri.
 - HSRP ve VRRP yedeklilik protokolleri.
-- BGP (Başlangıç düzey: neighbor remote-as, network, show ip bgp summary).
-- ACL (standard + extended, gerçek zamanlı eşleşme sayıçları).
-- NAT/PAT (static, dynamic ve overload/PAT desteği).
+- BGP (Dinamik komşuluk durumu: Established / Idle eşleşmesi, remote-as, show ip bgp summary, show ip bgp).
+- ACL (standard + extended, gerçek zamanlı eşleşme sayaçları).
+- NAT/PAT (static, dynamic ve overload/PAT desteği, port kolonlu show ip nat translations çıktısı).
+- SLAAC (no ipv6 nd suppress-ra ile bağlı PC'lerde EUI-64 otomatik IPv6 adres üretimi).
 - DHCP sunucu ve istemci simülasyonu.
 - Port Security (MAC kısıtlama, sticky MAC, ihlal eylemleri).
 - DHCP Snooping (trusted/untrusted port, rate-limit, Option 82, VLAN kapsamlı).
 - Dynamic ARP Inspection (ip arp inspection).
 - IP Source Guard (ip verify source, ip source binding).
+- AAA (aaa new-model, RADIUS ve TACACS+ sunucu konfigürasyonu).
 - SPAN Port Monitoring (monitor session, kaynak/hedef, rx/tx/both).
 - EtherChannel: LACP (active/passive), PAgP (desirable/auto), static (on).
 - Kablosuz Ağ (SSID, WPA şifreleme, AP ve WLC yönetimi).
 - ARP, MAC öğrenme, TTL/Hop simülasyonu.
-- PPP/HDLC WAN enkapsülasön, PAP/CHAP kimlik doğrulaması.
+- PPP/HDLC WAN enkapsülasyonu, PAP/CHAP kimlik doğrulaması.
 - SSH (v1/v2) ve Telnet oturum yönetimi.
 - `switchport trunk allowed vlan add/remove/except/all` sözdizimi ile VLAN filtreleme.
+
+### 🎓 CCNA 200-301 Müfredat Konuları Envanteri
+- **Ağ Temelleri (Network Fundamentals):** IPv4/IPv6 Adresleme, Subnetting, VLSM, Link-Local IPv6 (`fe80::`), EUI-64 Host Adresi türetme, SLAAC (`no ipv6 nd suppress-ra`), Düz/Çapraz/Fiber/Seri kablolama.
+- **Ağ Erişimi (Network Access / Switching):** VLANs (1-4094, 802.1Q, Native VLAN, Voice VLAN, Allowed VLAN listeleri), VTP v1/v2 (Server/Client/Transparent), STP / PVST+ / MSTP (802.1s — `spanning-tree mode mst`, `spanning-tree mst configuration`, instance-VLAN eşleme), EtherChannel (LACP/PAgP/Static), Port Security (Sticky MAC, Violation protect/restrict/shutdown), Kablosuz (WLC AIR-CT2504-K9, Lightweight AP, CAPWAP, WPA2/WPA3 PSK/Enterprise).
+- **IP Bağlantısı (IP Connectivity / Routing):** Statik IPv4/IPv6 Yönlendirme (Default & Floating static routes), RIPv2 & RIPng (Split horizon, Passive interface, Auto-summary), OSPFv2 & OSPFv3 (Multi-area Area 0/10/20, Router-ID, ABR, NSSA/Stub, Passive-interface, Default-information originate, SPF Dijkstra), EIGRP (DUAL motoru, Feasibility Condition, AS, Router-ID, Auto-summary, Metrik hesabı), BGP (eBGP/iBGP, `router bgp <as>`, `neighbor <ip> remote-as <asn>`, dinamik `Established` / `Idle` komşuluk durumu, `show ip bgp summary`, `show ip bgp`), Rota Yeniden Dağıtımı (`redistribute ospf/rip/eigrp/bgp/static/connected`).
+- **IP Servisleri (IP Services):** NAT / PAT (Statik NAT, Dinamik NAT, Overload / PAT, `show ip nat translations` port kolonları `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port`, `show ip nat statistics`), SLAAC IPv6 (Router Advertisements `no ipv6 nd suppress-ra` ile otomatik adresleme), DHCP Sunucu & Relay (`ip dhcp pool`, `default-router`, `dns-server`, `excluded-address`, `ip helper-address`, IPv6 DHCP pool), FHRP (HSRPv1/v2 Active/Standby/Preempt, VRRP Master/Backup), QoS (MLS QoS, class-map, policy-map), Yönetim (Syslog level `logging trap`, SNMP, NTP, SSH v1/v2, Telnet, CDP/LLDP, SPAN, IP SLA).
+- **Güvenlik Temelleri (Security Fundamentals):** ACLs (Standart 1-99, Genişletilmiş 100-199 IPv4 ACL'ler, IPv6 `ipv6 traffic-filter`), Katman 2 Güvenlik (DHCP Snooping, Dynamic ARP Inspection DAI, IP Source Guard), AAA & Kimlik Doğrulama (`aaa new-model`, RADIUS `radius-server host`, TACACS+ `tacacs-server host`), Kriptografi (`crypto key generate rsa`, `enable secret`, `service password-encryption`).
 
 ### 📚 Eğitim Modülleri
 - 19 Rehberli ders (Guided Mode) — adım adım yönergeler ve otomatik doğrulama; "Bana Öğret" modülü dahil.
@@ -125,14 +134,16 @@
 - EIGRP (DUAL engine and Feasibility Condition validation).
 - RIP and RIPng routing protocols.
 - HSRP and VRRP redundancy protocols.
-- BGP (basic: neighbor remote-as, network statements, show ip bgp summary).
+- BGP (Dynamic neighbor state matching Established/Idle, remote-as, show ip bgp summary, show ip bgp).
 - ACLs (standard + extended, real-time match counters).
-- NAT/PAT (static, dynamic, and overload/PAT support).
+- NAT/PAT (static, dynamic, overload/PAT, and port-column formatted show ip nat translations output).
+- SLAAC (IPv6 Router Advertisements `no ipv6 nd suppress-ra` for automatic host EUI-64 address generation).
 - DHCP server and client simulation.
 - Port Security (MAC limits, sticky MAC, violation actions).
 - DHCP Snooping (trusted/untrusted ports, rate-limit, Option 82, VLAN-scoped).
 - Dynamic ARP Inspection (ip arp inspection).
 - IP Source Guard (ip verify source, ip source binding).
+- AAA (aaa new-model, RADIUS & TACACS+ server configuration).
 - SPAN Port Monitoring (monitor session, source/destination, rx/tx/both).
 - EtherChannel: LACP (active/passive), PAgP (desirable/auto), static (on).
 - Wireless Networking (SSID, WPA encryption, AP and WLC management).
@@ -140,6 +151,13 @@
 - PPP/HDLC WAN encapsulation with PAP/CHAP authentication.
 - SSH (v1/v2) and Telnet session management.
 - `switchport trunk allowed vlan add/remove/except/all` syntax for granular VLAN filtering.
+
+### 🎓 CCNA 200-301 Curriculum & Protocol Inventory
+- **Network Fundamentals:** IPv4/IPv6 Addressing, Subnetting, VLSM, Link-Local IPv6 (`fe80::`), EUI-64 Host Address derivation, SLAAC (`no ipv6 nd suppress-ra`), Straight-through/Crossover/Fiber/Serial cabling.
+- **Network Access / Switching:** VLANs (1-4094, 802.1Q, Native VLAN, Voice VLAN, Trunk allowed VLAN lists), VTP v1/v2 (Server/Client/Transparent), STP / PVST+ / MSTP (802.1s — `spanning-tree mode mst`, `spanning-tree mst configuration`, instance-VLAN mapping), EtherChannel (LACP/PAgP/Static), Port Security (Sticky MAC, Violation protect/restrict/shutdown), Wireless (WLC AIR-CT2504-K9, Lightweight AP, CAPWAP, WPA2/WPA3 PSK/Enterprise).
+- **IP Connectivity / Routing:** Static IPv4/IPv6 Routing (Default & Floating static routes), RIPv2 & RIPng (Split horizon, Passive interface, Auto-summary), OSPFv2 & OSPFv3 (Multi-area Area 0/10/20, Router-ID, ABR, NSSA/Stub, Passive-interface, Default-information originate, SPF Dijkstra), EIGRP (DUAL engine, Feasibility Condition, AS, Router-ID, Auto-summary, Metric calculation), BGP (eBGP/iBGP, `router bgp <as>`, `neighbor <ip> remote-as <asn>`, dynamic `Established` / `Idle` neighbor state, `show ip bgp summary`, `show ip bgp`), Route Redistribution (`redistribute ospf/rip/eigrp/bgp/static/connected`).
+- **IP Services:** NAT / PAT (Static NAT, Dynamic NAT, Overload / PAT, `show ip nat translations` port columns `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port`, `show ip nat statistics`), SLAAC IPv6 (Router Advertisements `no ipv6 nd suppress-ra` for automatic host EUI-64 address generation), DHCP Server & Relay (`ip dhcp pool`, `default-router`, `dns-server`, `excluded-address`, `ip helper-address`, IPv6 DHCP pool), FHRP (HSRPv1/v2 Active/Standby/Preempt, VRRP Master/Backup), QoS (MLS QoS, class-map, policy-map), Management (Syslog level `logging trap`, SNMP, NTP, SSH v1/v2, Telnet, CDP/LLDP, SPAN, IP SLA).
+- **Security Fundamentals:** ACLs (Standard 1-99, Extended 100-199 IPv4 ACLs, IPv6 `ipv6 traffic-filter`), Layer 2 Security (DHCP Snooping, Dynamic ARP Inspection DAI, IP Source Guard), AAA & Authentication (`aaa new-model`, RADIUS `radius-server host`, TACACS+ `tacacs-server host`), Cryptography (`crypto key generate rsa`, `enable secret`, `service password-encryption`).
 
 ### 📚 Education & Training
 - 19 Guided Lessons — step-by-step instructions and automated verification, including "Teach Me" tracks.

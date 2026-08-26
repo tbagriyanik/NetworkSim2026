@@ -26,18 +26,21 @@ Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve iç
 ---
 
 ### 💻 cli/CLI_COMMANDS.md
-**Amaç**: CLI komut referansı  
+**Amaç**: CCNA 200-301 Desteklenen Tüm Komutlar ve CLI Referansı  
 **Okuma Süresi**: 15 dakika  
 **İçerik**:
-- Kapsamlı CLI komutları
-- Tüm modlar (User EXEC, Privileged, Global, Interface, VLAN, Routing, SSID, Dot11, WLAN, DHCP)
-- Seri/WAN, IoT, güvenlik duvarı komutları
-- Klavye kısayolları
-- Komut sözdizimi
+- Kapsamlı CLI komutları (CCNA 200-301 müfredat uyumlu)
+- Tüm modlar (User EXEC, Privileged, Global, Interface, VLAN, Router Config, MST Config, SSID, Dot11, WLAN, DHCP)
+- BGP (Eşleşen komşuluklarda dinamik `Established` / `Idle` durumu), OSPFv2/OSPFv3, EIGRP DUAL, RIP/RIPng, Rota Yeniden Dağıtımı
+- NAT/PAT (`show ip nat translations` port kolonlu çıktı `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port`)
+- SLAAC IPv6 otomatik adresleme (`no ipv6 nd suppress-ra` & EUI-64)
+- AAA (`aaa new-model`, RADIUS & TACACS+ sunucu yapılandırması)
+- Seri/WAN, IoT, Güvenlik Duvarı, Port Security, DHCP Snooping, DAI, IP Source Guard komutları
+- Klavye kısayolları ve komut sözdizimi
 
 **Ne Zaman Okuyacağım?**
 - Belirli bir komutun sözdizimini arıyorsanız
-- CLI komutlarına hızlı başvuru yapmak istiyorsanız
+- CCNA 200-301 komutlarına hızlı başvuru yapmak istiyorsanız
 
 ---
 

@@ -185,6 +185,12 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no spanning-tree` | Disable spanning-tree |
 | `username <name> [privilege <lvl>] [password\|secret] <pass>` | Create user |
 | `no username <name>` | Remove user |
+| `aaa new-model` | Enable AAA (Authentication, Authorization, Accounting) |
+| `no aaa new-model` | Disable AAA |
+| `radius-server host <ip> key <key>` | Configure RADIUS server host and shared key |
+| `no radius-server host <ip>` | Remove RADIUS server host |
+| `tacacs-server host <ip> key <key>` | Configure TACACS+ server host and shared key |
+| `no tacacs-server host <ip>` | Remove TACACS+ server host |
 | `cdp run` | Enable CDP globally |
 | `no cdp run` | Disable CDP |
 | `cdp timer <sec>` | ⚠️ Stub - Set CDP update interval |
@@ -229,6 +235,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `ip sla <id>` | Create IP SLA monitoring operation |
 | `spanning-tree mode mst` | Set Spanning Tree mode to Multiple Spanning Tree (MST) |
 | `spanning-tree mst configuration` | Enter MST configuration mode |
+| `spanning-tree mst <instance-id> priority <val>` | Set MST instance bridge priority (in config mode) |
 | `default interface <name>` | ⚠️ Stub - Reset interface to default configuration |
 | `mac access-list extended <name>` | ⚠️ Stub - Create named MAC access list |
 | `class-map [match-all\|match-any] <name>` | ⚠️ Stub - Create QoS class map |
@@ -337,6 +344,17 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `ip helper-address <ip>` | Set DHCP relay |
 | `no ip helper-address` | Remove DHCP relay |
 | `ip verify source` | Enable IP Source Guard |
+
+#### IPv6 Interface Configuration
+
+| Command | Description |
+|---------|-------------|
+| `ipv6 address <prefix::/len>` / `<addr/len>` | Configure IPv6 address and prefix length |
+| `ipv6 address autoconfig` / `eui-64` | Configure IPv6 address via SLAAC / EUI-64 |
+| `no ipv6 address` | Remove IPv6 address configuration |
+| `no ipv6 nd suppress-ra` | Enable Router Advertisements (RA) for SLAAC auto-addressing on attached hosts (`fe80::` / interface prefix with EUI-64) |
+| `ipv6 nd suppress-ra` | Suppress IPv6 Router Advertisements on interface |
+| `ipv6 traffic-filter <acl-name> {in\|out}` | Apply IPv6 ACL to interface |
 
 #### NAT Configuration
 
@@ -526,6 +544,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `area <id> range <ip> <mask>` | Summarize routes at area boundary |
 | `area <id> stub` | Configure area as stub |
 | `area <id> nssa` | Configure area as NSSA |
+| `redistribute <protocol> [<process-id>] [metric <val>] [subnets]` | Redistribute routes from another protocol (ospf, rip, eigrp, bgp, static, connected) into the active routing process |
+| `no redistribute <protocol> [<process-id>]` | Remove a redistribution rule |
 
 ### Router Configuration Commands (EIGRP)
 
@@ -553,6 +573,18 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no network <ip> mask <mask>` | Remove BGP network |
 | `neighbor <ip> remote-as <asn>` | Configure BGP neighbor |
 | `no neighbor <ip>` | Remove BGP neighbor |
+
+### MST Configuration Submode Commands (`config-mst` mode)
+
+> **Note**: Entered via `spanning-tree mst configuration` (from global config). These commands define the MST region (name, revision) and map VLANs to MST instances.
+
+| Command | Description |
+|---------|-------------|
+| `name <region-name>` | Set MST region name |
+| `revision <n>` | Set MST configuration revision number |
+| `instance <id> vlan <vlan-list>` | Map VLAN(s) to an MST instance (e.g. `instance 1 vlan 10-20`) |
+| `no instance <id>` | Remove an MST instance mapping |
+| `show pending` | Display pending (uncommitted) MST configuration |
 
 ### IPv6 Routing (RIPng / OSPFv3)
 
@@ -782,7 +814,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `show queuing interface <name>` | Display interface queuing statistics |
 | `show ipv6 dhcp pool` | Display IPv6 DHCP pools |
 | `show ip eigrp neighbors [<type>]` | Display EIGRP neighbor table |
-| `show ip bgp summary` | Display BGP summary |
+| `show ip bgp summary` | Display BGP summary (dynamic `Established` / `Idle` neighbor state) |
 | `show ip bgp` | Display BGP routing table |
 | `show ipv6 rip` | Display IPv6 RIP (RIPng) processes |
 | `show ipv6 ospf` | Display OSPFv3 processes |
@@ -820,13 +852,14 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `show system mtu` | Display MTU settings |
 | `show ntp status` | Display NTP status |
 | `show ntp associations` | Display NTP associations |
+| `show logging` | Display logging (syslog) configuration and trap severity level |
 | `show snmp` | Display SNMP info |
 | `show archive` | Display archive status |
 | `show alias` | Display command aliases |
 | `show diagnostic` | Display diagnostic results |
 | `show lldp` | Display LLDP neighbors |
 | `show authentication` | Display auth sessions |
-| `show ip nat translations` | Display active NAT translations |
+| `show ip nat translations` | Display active NAT/PAT translations formatted with `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port` columns |
 | `show ip nat statistics` | Display NAT statistics |
 | `show ip ospf` | Display OSPF information and ABR status |
 | `show standby [brief]` | Display HSRP status |
@@ -839,6 +872,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 - **Line Mode** `(config-line)#` - Line configuration (console, VTY)
 - **VLAN Mode** `(config-vlan)#` - VLAN configuration
 - **Router Config Mode** `(config-router)#` - Routing protocol config (OSPF, RIP, EIGRP, BGP)
+- **MST Config Mode** `(config-mst)#` - MST region configuration (name, revision, instance) — entered via `spanning-tree mst configuration`
 - **DHCP Pool Mode** `(dhcp-config)#` - DHCP pool configuration
 - **SSID Config Mode** `(config-ssid)#` - SSID security parameters (authentication, guest-mode, mbssid)
 - **Dot11 Config Mode** `(config-dot11)#` - Wireless radio/dot11 interface configuration (channel, speed, power, station-role)

@@ -175,17 +175,21 @@ Kaynak kodları inceleyin
 ✅ Sınav Modu & Sınav İçe Aktarma
 ✅ Başarım Sistemi (Rozetler)
 
-**Ağ & Protokol**
-✅ ACL Standard & Extended
-✅ NAT Static/Dynamic/PAT
-✅ OSPF Multi-Area (Area 0/10/20)
-✅ EIGRP Dinamik Yönlendirme
-✅ HSRP Yedeklilik
-✅ IPv6 Adresleme, DHCPv6 & OSPFv3
-✅ BGP Temel, RIPng
+**Ağ & Protokol (CCNA 200-301 Destekli)**
+✅ ACL Standard (1-99) & Extended (100-199), IPv6 ACLs
+✅ NAT Static/Dynamic/PAT (port kolonlu `show ip nat translations`)
+✅ SLAAC IPv6 Otomatik Adresleme (`no ipv6 nd suppress-ra` & EUI-64)
+✅ AAA New Model, RADIUS & TACACS+ Sunucu Yönetimi
+✅ OSPF Multi-Area (Area 0/10/20, ABR, NSSA/Stub)
+✅ EIGRP Dinamik Yönlendirme (DUAL Motoru & Feasibility Condition)
+✅ BGP Dinamik Komşuluk Durumu (`Established` / `Idle` Eşleşmesi)
+✅ Rota Yeniden Dağıtımı (Redistribute OSPF/RIP/EIGRP/BGP/Static/Connected)
+✅ HSRP & VRRP Birinci Hop Yedeklilik Protocols
+✅ IPv6 Adresleme, DHCPv6, RIPng & OSPFv3
 ✅ Seri / WAN (HDLC, PPP, PAP/CHAP, DCE/DTE)
-✅ WLC & AP Yönetimi (dot11, WLAN, auth-mac)
-✅ L3 Anahtarlama & STP PVST
+✅ WLC & AP Yönetimi (dot11, WLAN, auth-mac, WPA2/WPA3)
+✅ L3 Anahtarlama, STP / PVST+ & MSTP (Multiple Spanning Tree)
+✅ Port Security (Sticky MAC), DHCP Snooping, DAI, IP Source Guard
 
 **Servisler**
 ✅ PC Servisler (FTP, Mail, NTP, DNS, HTTP, DHCP)
