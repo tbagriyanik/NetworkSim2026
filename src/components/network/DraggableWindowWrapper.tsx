@@ -98,15 +98,20 @@ export function DraggableWindowWrapper({
   }, [isOpen, isActive, onClose, onEscapeKeyDown]);
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm' && isOpen && isActive) {
+      const isMinimizeShortcut = (e.ctrlKey || e.metaKey)
+        && (e.key.toLowerCase() === 'm' || e.code === 'KeyM');
+
+      if (isMinimizeShortcut && collapsible && isOpen && isActive) {
         e.preventDefault();
+        e.stopPropagation();
         setIsCollapsed(prev => !prev);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, isActive]);
+    // Capture the shortcut before a focused CLI/editor can consume it.
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [collapsible, isOpen, isActive]);
 
   const [isMobile, setIsMobile] = useState(false);
 

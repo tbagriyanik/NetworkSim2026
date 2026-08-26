@@ -5,6 +5,9 @@ import type { Translations } from '@/contexts/LanguageContext';
 
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
+import { useWindowStore } from '@/hooks/useWindowStore';
+import { DeviceIcon } from '@/components/network/DeviceIcon';
+import type { DeviceType } from '@/components/network/networkTopology.types';
 
 interface AppFooterProps {
   t: Translations;
@@ -27,7 +30,16 @@ export function AppFooter({
   topologyDevices, showProjectPicker, showOnboarding,
   setShowAboutModal, onShortcut
 }: AppFooterProps) {
-  const hasOpenWindows = useMultiWindowStore((state) => state.openWindows.length > 0);
+  const openWindows = useMultiWindowStore((state) => state.openWindows);
+  const restoreWindow = useMultiWindowStore((state) => state.restoreWindow);
+  const activeWindowId = useWindowStore((state) => state.activeWindowId);
+  const setActiveWindow = useWindowStore((state) => state.setActiveWindow);
+  const hasOpenWindows = openWindows.length > 0;
+
+  const focusWindow = (id: string) => {
+    restoreWindow(id);
+    setActiveWindow(id);
+  };
   const getDeviceCountLabel = (count: number) => (
     language === 'tr' ? 'Cihaz' : (count === 1 ? 'Device' : 'Devices')
   );
@@ -43,8 +55,35 @@ export function AppFooter({
   return (
     <>
       {/* Desktop Footer */}
-      <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-2 border-t backdrop-blur-xl transition-all h-[44px] pb-[50px] ${isDark ? 'bg-secondary-950/95 border-secondary-900' : 'bg-white/95 border-secondary-200'
+      <footer className={`hidden md:block fixed bottom-0 inset-x-0 z-40 border-t transition-all h-[44px] pb-[50px] ${isDark ? 'bg-secondary-950/95 border-secondary-900' : 'bg-white/95 border-secondary-200'
         } ${showProjectPicker || showOnboarding ? 'hidden' : ''}`}>
+        {hasOpenWindows && (
+          <div className={`fixed left-0 top-1/2 z-50 flex -translate-y-1/2 flex-col items-center gap-1 rounded-r-lg border border-l-0 px-1.5 py-2 shadow-lg backdrop-blur-xl ${isDark ? 'bg-secondary-950/95 border-secondary-800' : 'bg-white/95 border-secondary-200'}`}>
+            {openWindows.map((win) => {
+              const device = topologyDevices.find((item) => item.id === win.id);
+              const label = device?.name || win.id;
+              return (
+                <TooltipWrapper key={win.id} title={label}>
+                  <button
+                    type="button"
+                    aria-label={label}
+                    onClick={() => focusWindow(win.id)}
+                    className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${activeWindowId === win.id
+                      ? (isDark ? 'bg-success-900/60 text-success-300 ring-1 ring-success-500/70' : 'bg-success-100 text-success-700 ring-1 ring-success-500/70')
+                      : (isDark ? 'text-secondary-300 hover:bg-secondary-800 hover:text-success-400' : 'text-secondary-600 hover:bg-secondary-100 hover:text-success-600')}`}
+                  >
+                    <DeviceIcon
+                      type={(device?.type || win.type) as DeviceType}
+                      switchModel={device?.switchModel}
+                      size={18}
+                      active={activeWindowId === win.id}
+                    />
+                  </button>
+                </TooltipWrapper>
+              );
+            })}
+          </div>
+        )}
         <div className="w-full px-5 py-2 pb-[10px]">
           <div className="flex items-center justify-between gap-4">
             {/* Save Status */}
