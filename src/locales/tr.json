@@ -89,6 +89,7 @@
   "commandHistory": "komut geçmişi",
   "commandModes": "Komut Modları:",
   "commandPromptTab": "Komut İstemi",
+  "terminalLabel": "Terminal",
   "commandReference": "Yardım",
   "commandsFound": "komut bulundu",
   "completeWithTab": "ile tamamla",

@@ -89,6 +89,7 @@
   "commandHistory": "command history",
   "commandModes": "Command Modes",
   "commandPromptTab": "Command Prompt",
+  "terminalLabel": "Terminal",
   "commandReference": "Command Reference",
   "commandsFound": "commands found",
   "completeWithTab": "to complete",

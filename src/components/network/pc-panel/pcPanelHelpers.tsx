@@ -89,7 +89,7 @@ export function getInitialPcOutput(
   }
 
   const sysInfo =
-    'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n\n' +
+    'NOS [Version 3.2]\nNOS Network Operation System\n\n' +
     'Ethernet adapter Ethernet connection:\n' +
     '   IPv4 Address. . . . . . . . . . . : ' + (deviceFromTopology?.ip || '0.0.0.0') + '\n' +
     '   Subnet Mask . . . . . . . . . . : ' + (deviceFromTopology?.subnet || '255.255.255.0') + '\n' +

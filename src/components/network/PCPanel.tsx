@@ -833,10 +833,6 @@ export function PCPanel({
     syncToGlobalRef.current = syncToGlobal;
   }, [syncToGlobal]);
 
-
-
-
-
   const [pcOutput, setPcOutput] = useState<OutputLine[]>(() => {
     if (pcOutputs?.has(deviceId)) {
       return pcOutputs.get(deviceId) as OutputLine[];
@@ -963,7 +959,7 @@ export function PCPanel({
       setPcOutput([{
         id: '1',
         type: 'output',
-        content: 'OS [Version 10.0.26200.8037]\n(c) OS Corporation. All rights reserved.\n'
+        content: 'NOS [Version 3.2]\nNOS Network Operation System\n'
       }]);
     }
   }, [deviceId]);
@@ -1925,11 +1921,11 @@ export function PCPanel({
   const launcherApps = useMemo(() => [
     {
       tab: 'desktop' as const,
-      label: 'CMD',
+      label: t.terminalLabel,
       subtitle: language === 'tr' ? 'Komut İstemi' : 'Command Prompt',
       icon: TerminalIcon,
-      accent: isDark ? 'from-primary-500 to-accent-400' : 'from-primary-600 to-accent-500',
-      buttonClass: isDark ? 'text-primary-300 border-primary-400/20 bg-primary-500/10' : 'text-primary-700 border-primary-200 bg-primary-50/90',
+      accent: isDark ? 'from-orange-500 to-orange-400' : 'from-orange-600 to-orange-500',
+      buttonClass: isDark ? 'text-orange-300 border-orange-400/20 bg-orange-500/10' : 'text-orange-700 border-orange-200 bg-orange-50/90',
     },
     {
       tab: 'terminal' as const,
@@ -1971,7 +1967,7 @@ export function PCPanel({
       accent: isDark ? 'from-accent-500 to-primary-400' : 'from-accent-600 to-primary-500',
       buttonClass: isDark ? 'text-accent-300 border-accent-400/20 bg-accent-500/10' : 'text-accent-700 border-accent-200 bg-accent-50/90',
     },
-  ], [language, isDark]);
+  ], [language, isDark, t.terminalLabel]);
 
 
   const {
@@ -2075,7 +2071,12 @@ export function PCPanel({
                 </div>
                 <ModernPanel
                   id={deviceId}
-                  title={internalPcHostname}
+                  title={activeTab === 'desktop' ? t.terminalLabel : internalPcHostname}
+                  headerStart={activeTab === 'desktop' ? (
+                    <span className={cn("shrink-0", isDark ? "text-orange-300" : "text-orange-600")}>
+                      <TerminalIcon className="w-4 h-4" />
+                    </span>
+                  ) : undefined}
                   // The outer PC window already owns collapse/close actions.
                   // Keep the inner panel as a content-only surface.
                   collapsible={false}
@@ -2187,6 +2188,17 @@ export function PCPanel({
                           handleResizeStart={handleResizeStart}
                           highlightText={highlightText}
                           mobileVerticalScrollStyle={mobileVerticalScrollStyle}
+                          deviceId={deviceId}
+                          pcIP={pcIP}
+                          pcSubnet={pcSubnet}
+                          pcMAC={pcMAC}
+                          pcGateway={pcGateway}
+                          pcDNS={pcDNS}
+                          pcIPv6={pcIPv6}
+                          wifiEnabled={wifiEnabled}
+                          setCurrentPath={setCurrentPath}
+                          canReachTargetIp={canReachTargetIp}
+                          resolveDeviceNameTargetCallback={resolveDeviceNameTargetCallback}
                         />
                       )}
 

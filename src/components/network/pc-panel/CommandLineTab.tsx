@@ -1,11 +1,12 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
-import { Laptop, CornerDownLeft, Trash2 } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { Laptop, Terminal as TerminalIcon, CornerDownLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { cn } from '@/lib/utils';
 import type { OutputLine, FtpSession, PythonSession } from './PCPanel.types';
+import { executeLinuxCommand, LINUX_SUGGESTIONS, formatLinuxPath } from './pcLinuxExecutor';
 
 interface CommandLineTabProps {
   isDark: boolean;
@@ -40,10 +41,23 @@ interface CommandLineTabProps {
   highlightText: (text: string) => React.ReactNode;
   isMobile: boolean;
   t: Record<string, string>;
+  // Optional Linux network props
+  deviceId?: string;
+  pcIP?: string;
+  pcSubnet?: string;
+  pcMAC?: string;
+  pcGateway?: string;
+  pcDNS?: string;
+  pcIPv6?: string;
+  wifiEnabled?: boolean;
+  setCurrentPath?: (path: string) => void;
+  canReachTargetIp?: (targetIp: string) => boolean;
+  resolveDeviceNameTargetCallback?: (raw: string) => { ip: string; label?: string } | null;
 }
 
 export function CommandLineTab({
   isDark,
+  language,
   isPcPoweredOff,
   isCmdInputDisabled,
   fontSize,
@@ -53,10 +67,11 @@ export function CommandLineTab({
   pcOutput,
   setPcOutput,
   internalPcHostname,
-  currentPath,
+  currentPath = 'C:\\',
   ftpSession,
   pythonSession,
   input,
+  setInput,
   shouldShowAutocomplete,
   renderAutocompleteSuggestions,
   autocompleteIndex,
@@ -71,33 +86,154 @@ export function CommandLineTab({
   t,
   inputRef: externalInputRef,
   outputRef,
+  deviceId = 'pc-1',
+  pcIP = '192.168.1.10',
+  pcSubnet = '255.255.255.0',
+  pcMAC = '00:50:79:66:68:00',
+  pcGateway = '192.168.1.1',
+  pcDNS = '8.8.8.8',
+  pcIPv6 = 'fe80::1',
+  wifiEnabled = false,
+  setCurrentPath = () => {},
+  canReachTargetIp = () => true,
+  resolveDeviceNameTargetCallback = () => null,
 }: CommandLineTabProps) {
   const inputRef = externalInputRef;
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
+  // Terminal active tab state: 'cmd' vs 'linux'
+  const [activeTerminalTab, setActiveTerminalTab] = useState<'cmd' | 'linux'>('cmd');
+
+  // Separate Linux output state
+  const [linuxOutput, setLinuxOutput] = useState<OutputLine[]>(() => [
+    {
+      id: 'linux-welcome',
+      type: 'output',
+      content: `Linux ${internalPcHostname.toLowerCase()}\nType 'help' for available commands.\n`,
+    },
+  ]);
+
+  // Current displayed output based on active tab
+  const activeOutput = activeTerminalTab === 'cmd' ? pcOutput : linuxOutput;
+
   // Auto-scroll output area
   useEffect(() => {
-    if (outputRef.current) {
+    if (outputRef?.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
-  }, [pcOutput]);
+  }, [activeOutput, outputRef]);
 
-  // Focus input when clicked
+  // Focus input when container clicked
   const handleContainerClick = () => {
     inputRef.current?.focus();
   };
 
-  // Focus input immediately on mount (e.g. when CMD window opens at startup)
+  // Focus input immediately on mount or tab switch
   useEffect(() => {
     const timer = setTimeout(() => {
       if (document.activeElement?.closest('[data-portal-window="true"], [data-code-editor="true"]')) return;
       inputRef.current?.focus();
     }, 100);
     return () => clearTimeout(timer);
+  }, [activeTerminalTab, inputRef]);
+
+  // Add local output for Linux mode
+  const addLinuxOutput = useCallback((type: OutputLine['type'], content: string, prompt?: string) => {
+    const newLine: OutputLine = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      type,
+      content,
+      prompt,
+    };
+    setLinuxOutput(prev => [...prev, newLine]);
   }, []);
+
+  // Filter Linux suggestions
+  const linuxFilteredSuggestions = input.trim()
+    ? LINUX_SUGGESTIONS.filter(s => s.toLowerCase().startsWith(input.trim().toLowerCase()))
+    : LINUX_SUGGESTIONS;
+
+  const currentSuggestions = activeTerminalTab === 'cmd' ? renderAutocompleteSuggestions : linuxFilteredSuggestions;
+  const isAutocompleteVisible = activeTerminalTab === 'cmd' ? shouldShowAutocomplete : (input.trim().length > 0 && linuxFilteredSuggestions.length > 0);
+
+  // Submit command based on active tab
+  const handleSubmitForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isCmdInputDisabled) return;
+
+    if (activeTerminalTab === 'cmd') {
+      await executeCommand();
+    } else {
+      const cmdToRun = input;
+      setInput('');
+      await executeLinuxCommand(cmdToRun, {
+        deviceId,
+        internalPcHostname,
+        pcIP,
+        pcSubnet,
+        pcMAC,
+        pcGateway,
+        pcDNS,
+        pcIPv6,
+        wifiEnabled,
+        currentPath,
+        setCurrentPath,
+        canReachTargetIp,
+        resolveDeviceNameTargetCallback,
+        addLocalOutput: addLinuxOutput,
+        setLinuxOutput,
+      });
+    }
+  };
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden relative">
+      {/* 2-Tab Selection Header */}
+      <div className={cn(
+        "flex items-center justify-between px-3 py-1.5 border-b shrink-0 z-10",
+        isDark ? "bg-secondary-900/90 border-secondary-800" : "bg-secondary-100/90 border-secondary-200"
+      )}>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTerminalTab('cmd');
+              setInput('');
+            }}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm",
+              activeTerminalTab === 'cmd'
+                ? (isDark ? "bg-orange-500/20 text-orange-300 border border-orange-500/40" : "bg-white text-orange-700 border border-orange-200 shadow")
+                : (isDark ? "text-secondary-400 hover:text-secondary-200 hover:bg-white/5" : "text-secondary-600 hover:text-secondary-900 hover:bg-secondary-200/60")
+            )}
+          >
+            <TerminalIcon className="w-3.5 h-3.5" />
+            <span>{language === 'tr' ? 'Command Prompt' : 'Command Prompt'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTerminalTab('linux');
+              setInput('');
+            }}
+            className={cn(
+              "flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm",
+              activeTerminalTab === 'linux'
+                ? (isDark ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-white text-emerald-700 border border-emerald-200 shadow")
+                : (isDark ? "text-secondary-400 hover:text-secondary-200 hover:bg-white/5" : "text-secondary-600 hover:text-secondary-900 hover:bg-secondary-200/60")
+            )}
+          >
+            <TerminalIcon className="w-3.5 h-3.5" />
+            <span>{language === 'tr' ? 'Linux Terminali' : 'Linux Terminal'}</span>
+          </button>
+        </div>
+
+        <div className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-muted/50 text-muted-foreground hidden sm:block">
+          {activeTerminalTab === 'cmd' ? 'CMD Command Prompt' : 'Linux Bash Terminal'}
+        </div>
+      </div>
+
       {/* Settings Bar */}
       {showCmdSettings && (
         <div className="px-3 md:px-4 py-2 border-b bg-muted/30 flex items-center gap-4 animate-in slide-in-from-top-2 shrink-0">
@@ -110,14 +246,20 @@ export function CommandLineTab({
             onChange={(e) => handleFontSizeChange(parseInt(e.target.value, 10))}
             className="flex-1 h-1 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
           />
-          <Button variant="ghost" size="sm" onClick={() => setPcOutput([])} className="h-7 text-[10px] font-black tracking-widest text-error-500 gap-1.5">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => activeTerminalTab === 'cmd' ? setPcOutput([]) : setLinuxOutput([])}
+            className="h-7 text-[10px] font-black tracking-widest text-error-500 gap-1.5"
+          >
             <Trash2 className="w-3 h-3" />
             {t.clearTerminalBtn}
             <ShortcutBadge shortcut="Ctrl+L" variant="danger" className="scale-75 origin-right" />
           </Button>
         </div>
       )}
-      {/* Output Area - Scrollable */}
+
+      {/* Output History Area - Font size slider applies HERE ONLY */}
       <div
         ref={outputRef}
         role="log"
@@ -143,75 +285,120 @@ export function CommandLineTab({
             </svg>
           </div>
         ) : (
-          pcOutput.map((line) => (
-            <div key={line.id} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
+          activeOutput.map((line) => (
+            <div key={line.id} style={{ fontSize: `${fontSize}px` }} className="break-all animate-in fade-in slide-in-from-left-1 duration-200">
               {line.type === 'command' && (
-                <div className="flex items-start gap-2 text-accent-500 font-bold">
-                  <Laptop className="w-4 h-4 shrink-0 text-primary-400" />
-                  <span className="shrink-0 opacity-40 select-none font-geist-mono">
-                    {line.prompt || `${internalPcHostname} C:\\>`}
-                  </span>
-                  <span className={isDark ? "text-secondary-100" : "text-secondary-900"}>{highlightText(line.content)}</span>
+                <div style={{ fontSize: `${fontSize}px` }} className="flex items-start gap-2 font-bold">
+                  {activeTerminalTab === 'cmd' ? (
+                    <>
+                      <Laptop className="w-4 h-4 shrink-0 text-orange-400 mt-0.5" />
+                      <span style={{ fontSize: `${fontSize}px` }} className="shrink-0 opacity-40 select-none font-geist-mono">
+                        {line.prompt || `${internalPcHostname} C:\\>`}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <TerminalIcon className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
+                      <span style={{ fontSize: `${fontSize}px` }} className="shrink-0 font-geist-mono select-none">
+                        <span className="text-emerald-400 font-bold">{line.prompt?.split(':')[0] || `user@${internalPcHostname.toLowerCase()}`}</span>
+                        <span className="text-secondary-400">:</span>
+                        <span className="text-sky-400">{line.prompt?.split(':')[1] || `~$`}</span>{' '}
+                      </span>
+                    </>
+                  )}
+                  <span style={{ fontSize: `${fontSize}px` }} className={isDark ? "text-secondary-100" : "text-secondary-900"}>{highlightText(line.content)}</span>
                 </div>
               )}
               {line.type === 'output' && (
-                <div className={cn(textColor, "whitespace-pre-wrap")}>
+                <div style={{ fontSize: `${fontSize}px` }} className={cn(textColor, "whitespace-pre-wrap")}>
                   <span>{highlightText(line.content)}</span>
                 </div>
               )}
-              {line.type === 'error' && <span className="text-error-500 font-bold italic">{highlightText(line.content)}</span>}
-              {line.type === 'success' && <span className="text-accent-500 font-bold text-xs tracking-widest opacity-80">{highlightText(line.content)}</span>}
+              {line.type === 'error' && <span style={{ fontSize: `${fontSize}px` }} className="text-error-500 font-bold italic">{highlightText(line.content)}</span>}
+              {line.type === 'success' && <span style={{ fontSize: `${fontSize}px` }} className="text-emerald-500 font-bold tracking-widest opacity-90">{highlightText(line.content)}</span>}
             </div>
           ))
         )}
       </div>
 
-      {/* Input Area - Pinned to bottom in flex flow */}
+      {/* Input Entry Prompt Area - Standard Fixed Size */}
       {!isPcPoweredOff && (
         <div onClick={handleContainerClick} className={cn("shrink-0 border-t bg-muted/95 backdrop-blur-sm z-20", isMobile ? "p-2 pb-safe" : "p-3")}>
-          <form onSubmit={(e) => { e.preventDefault(); void executeCommand(); }} className="flex items-center gap-3 relative">
-              <div
-                className={cn(
-                  "flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner overflow-hidden",
-                  "border-input focus-within:ring-primary/50",
-                  isMobile && "px-3 py-2"
+          <form onSubmit={handleSubmitForm} className="flex items-center gap-3 relative">
+            <div
+              className={cn(
+                "flex items-center gap-2 sm:gap-3 px-2 sm:px-3 py-2 bg-background rounded-lg border flex-1 group focus-within:ring-1 transition-all shadow-inner overflow-hidden",
+                activeTerminalTab === 'cmd' ? "focus-within:ring-orange-500/50" : "focus-within:ring-emerald-500/50",
+                isMobile && "px-3 py-2"
+              )}
+            >
+              <span className="shrink-0">
+                {activeTerminalTab === 'cmd' ? (
+                  <Laptop className="w-4 h-4 text-orange-400" />
+                ) : (
+                  <TerminalIcon className="w-4 h-4 text-emerald-400" />
                 )}
-              >
-                <span className="shrink-0 text-primary">
-                  <Laptop className="w-4 h-4" />
-                </span>
-                <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-40 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[120px] sm:max-w-none md:max-w-[200px] text-primary">
-                  {pythonSession ? (pythonSession.currentPrompt || '>>> ') : ftpSession ? 'ftp>' : `${internalPcHostname} ${currentPath || 'C:\\'}>`}
-                </span>
-                <input
-                  ref={inputRef}
-                  data-terminal-input
-                  type="text"
-                  value={input}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onPaste={(e) => {
-                    const pastedData = e.clipboardData.getData('text');
-                    if (pastedData && pastedData.includes('\n')) {
-                      e.preventDefault();
-                      const lines = pastedData.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-                      void (async () => {
-                        for (const line of lines) {
+              </span>
+              <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-60 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[140px] sm:max-w-none md:max-w-[240px]">
+                {activeTerminalTab === 'cmd' ? (
+                  pythonSession ? (pythonSession.currentPrompt || '>>> ') : ftpSession ? 'ftp>' : `${internalPcHostname} ${currentPath || 'C:\\'}>`
+                ) : (
+                  <span className="text-emerald-400">user@{internalPcHostname.toLowerCase()}:<span className="text-sky-400">{formatLinuxPath(currentPath)}</span>$</span>
+                )}
+              </span>
+              <input
+                ref={inputRef}
+                data-terminal-input
+                type="text"
+                value={input}
+                onChange={(e) => handleInputChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (activeTerminalTab === 'cmd') {
+                    handleKeyDown(e);
+                  }
+                }}
+                onPaste={(e) => {
+                  const pastedData = e.clipboardData.getData('text');
+                  if (pastedData && pastedData.includes('\n')) {
+                    e.preventDefault();
+                    const lines = pastedData.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                    void (async () => {
+                      for (const line of lines) {
+                        if (activeTerminalTab === 'cmd') {
                           await executeCommand(line);
+                        } else {
+                          await executeLinuxCommand(line, {
+                            deviceId,
+                            internalPcHostname,
+                            pcIP,
+                            pcSubnet,
+                            pcMAC,
+                            pcGateway,
+                            pcDNS,
+                            pcIPv6,
+                            wifiEnabled,
+                            currentPath,
+                            setCurrentPath,
+                            canReachTargetIp,
+                            resolveDeviceNameTargetCallback,
+                            addLocalOutput: addLinuxOutput,
+                            setLinuxOutput,
+                          });
                         }
-                      })();
-                    }
-                  }}
-                  className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px] placeholder:text-muted-foreground/50 min-w-0"
-                  placeholder={t.typeCommand}
-                  aria-label={t.typeCommand}
-                  autoComplete="off"
-                  spellCheck={false}
-                  disabled={isCmdInputDisabled}
-                />
-              </div>
+                      }
+                    })();
+                  }
+                }}
+                className="flex-1 bg-transparent border-none outline-none font-geist-mono text-[16px] sm:text-[13px] placeholder:text-muted-foreground/50 min-w-0"
+                placeholder={activeTerminalTab === 'cmd' ? t.typeCommand : (language === 'tr' ? 'Linux komutu yazın... (örn: ls, ifconfig, ping)' : 'Type linux command... (e.g. ls, ifconfig, ping)')}
+                aria-label={t.typeCommand}
+                autoComplete="off"
+                spellCheck={false}
+                disabled={isCmdInputDisabled}
+              />
+            </div>
 
-            {shouldShowAutocomplete && (
+            {isAutocompleteVisible && (
               <div
                 ref={autocompleteRef}
                 className="absolute bottom-20 left-4 z-20 w-[min(420px,calc(100%-2rem))]"
@@ -224,18 +411,22 @@ export function CommandLineTab({
                     "flex items-center justify-between px-3 py-2 text-[11px] font-geist-mono font-semibold",
                     isDark ? 'text-secondary-200 bg-secondary-900/60' : 'text-secondary-700 bg-secondary-50'
                   )}>
-                    <span>{t.cmdSuggestions}</span>
+                    <span>{activeTerminalTab === 'cmd' ? t.cmdSuggestions : (language === 'tr' ? 'Linux Komut Önerileri' : 'Linux Suggestions')}</span>
                     <span className={cn("text-[10px] font-bold", isDark ? 'text-accent-300' : 'text-accent-700')}>
                       Tab ↹ {t.completeWithTab}
                     </span>
                   </div>
                   <div className="max-h-40 overflow-y-auto overflow-x-hidden mobile-scroll custom-scrollbar font-geist-mono">
-                    {renderAutocompleteSuggestions.map((cmd, idx) => (
+                    {currentSuggestions.map((cmd, idx) => (
                       <button
                         key={`${cmd}-${idx}`}
                         type="button"
                         onClick={() => {
-                          completeAutocompleteSelection(cmd);
+                          if (activeTerminalTab === 'cmd') {
+                            completeAutocompleteSelection(cmd);
+                          } else {
+                            setInput(cmd);
+                          }
                           inputRef.current?.focus();
                         }}
                         className={cn(
@@ -258,12 +449,15 @@ export function CommandLineTab({
               disabled={isCmdInputDisabled}
               aria-label={t.typeCommand}
               className={cn(
-                "shrink-0 rounded-xl shadow-lg px-3 bg-secondary-800 text-white hover:bg-secondary-700 dark:bg-white dark:text-secondary-900 dark:hover:bg-secondary-200",
+                "shrink-0 rounded-xl shadow-lg px-3 text-white transition-colors",
+                activeTerminalTab === 'cmd'
+                  ? "bg-secondary-800 hover:bg-secondary-700 dark:bg-orange-600 dark:hover:bg-orange-500"
+                  : "bg-emerald-700 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500",
                 isMobile ? "h-9 text-xs" : "h-11 text-sm"
               )}
             >
               <span className="rounded-md p-1">
-                <CornerDownLeft className={cn("w-4 h-4 text-white dark:text-secondary-900", isMobile && "w-3 h-3")} />
+                <CornerDownLeft className={cn("w-4 h-4 text-white", isMobile && "w-3 h-3")} />
               </span>
             </Button>
           </form>
