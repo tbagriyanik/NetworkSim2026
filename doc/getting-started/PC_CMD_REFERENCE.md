@@ -253,6 +253,50 @@ ipconfig
 
 ---
 
+## 🐧 Linux Bash Terminali & Shell Betikleri
+
+PC panelindeki **Linux Terminal** sekmesinde kullanılabilen komutlar, dosya izinleri ve betik çalıştırma sistemi.
+
+### Desteklenen Linux Komutları
+
+| Komut | Açıklama | Kullanım Örneği |
+|---|---|---|
+| `ls [-l] [-la]` | Dizin içeriğini listeler (izinler, boyut, tarih) | `ls -la` |
+| `pwd` | Çalışılan dizin yolını gösterir | `pwd` |
+| `cd <dizin>` | Dizin değiştirir (`~`, `..`, `/home/user`) | `cd upload` |
+| `cat <dosya>` | Dosya içeriğini ekranda gösterir | `cat script.sh` |
+| `nano` / `vim` / `edit` | Metin düzenleyici penceresini açar | `nano test.py` |
+| `touch <dosya>` | Boş dosya oluşturur | `touch app.py` |
+| `mkdir <dizin>` | Yeni dizin oluşturur | `mkdir code` |
+| `rm <dosya>` | Dosya veya dizini siler | `rm data.txt` |
+| `cp <kaynak> <hedef>` | Dosya kopyalar | `cp a.txt b.txt` |
+| `mv <kaynak> <hedef>` | Dosya taşır veya adını değiştirir | `mv old.txt new.txt` |
+| `chmod <mod> <dosya>` | Çalıştırma / erişim izni değiştirir (`+x`, `-x`, `755`, `644`) | `chmod +x script.sh` |
+| `chown <sahip> <dosya>` | Dosya sahipliğini değiştirir | `chown root script.sh` |
+| `grep [-i] [-c] <pattern>` | Metin / akış içinde filtreleme yapar | `ifconfig | grep inet` |
+| `wc [-l]` | Satır, kelime veya bayt sayar | `cat data.txt | wc -l` |
+| `cmd > file` / `cmd >> file` | Çıktıyı dosyaya yönlendirir / sonuna ekler | `ifconfig > net_info.txt` |
+| `cmd1 | cmd2` | Pipe: İlk komutun çıktısını ikinciye aktarır | `history | grep ping` |
+| `history` | Daha önce çalıştırılan komut geçmişini listeler | `history` |
+| `ifconfig` / `ip a` | Ağ arayüzleri ve IP yapılandırmalarını gösterir | `ifconfig` |
+| `ip route` | Yönlendirme tablosunu gösterir | `ip route` |
+| `ping <host>` | ICMP Echo isteği gönderir | `ping 192.168.1.1` |
+| `traceroute <host>` | Paket geçiş yolunu izler | `traceroute 8.8.8.8` |
+| `nslookup <domain>` | DNS çözümlemesi yapar | `nslookup google.com` |
+| `netstat` / `arp` | Ağ istatistikleri ve ARP tablosunu gösterir | `arp` |
+| `ftp <server>` | Uzak FTP sunucusuna bağlanır | `ftp 192.168.1.50` |
+| `ssh <user@host>` | Uzak sunucuya SSH bağlantısı kurar | `ssh admin@192.168.1.1` |
+| `telnet <host>` | Uzak sunucuya Telnet bağlantısı kurar | `telnet 192.168.1.1` |
+| `whoami` / `hostname` | Kullanıcı adı ve sistem adını gösterir/değiştirir | `hostname web-server` |
+| `uname -a` / `date` / `uptime` | Sistem bilgisi, tarih ve çalışma süresi gösterir | `uname -a` |
+| `clear` / `Ctrl+L` | Terminal ekranını temizler | `clear` |
+
+### Shell Betiği Çalıştırma (`.sh` / `./script.sh`)
+- **İzin Ver:** `chmod +x script.sh` ile dosyaya çalıştırma izni verin (`ls -l` çıktısında `-rwxr-xr-x` olarak görünür).
+- **Çalıştır:** `./script.sh` veya `bash script.sh` komutu ile betiği yürütün. Çalıştırma izni yoksa `Permission denied` uyarısı alınır.
+
+---
+
 ## 🐍 Python Betikleri & Yorumlayıcı (python)
 
 PC Komut İstemi'nde dahili Python 3 yorumlayıcısı ile betik çalıştırabilir veya interaktif REPL moduna girebilirsiniz.

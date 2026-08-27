@@ -3,7 +3,7 @@
 
 export type FSNode =
   | { type: 'dir'; children: Record<string, FSNode>; modifiedAt?: string }
-  | { type: 'file'; content: string; size?: number; modifiedAt?: string };
+  | { type: 'file'; content: string; size?: number; modifiedAt?: string; isExecutable?: boolean };
 
 const DEFAULT_TIMESTAMP = '2026-08-25T08:00:00.000Z';
 
@@ -167,6 +167,29 @@ print("Running in C:\\\\code\\\\hello.py")
 `,
             size: 106,
             modifiedAt: '2026-08-25T11:00:00.000Z',
+          },
+          'script.sh': {
+            type: 'file',
+            content: `#!/bin/bash
+# Network Scan & Ping Test Script
+echo "Starting System & Network Check..."
+whoami
+pwd
+for i in 1 2 3; do ping 127.0.0.$i; done
+echo "Network Check Complete."`,
+            size: 168,
+            isExecutable: true,
+            modifiedAt: '2026-08-25T11:00:00.000Z',
+          },
+          'backup.sh': {
+            type: 'file',
+            content: `#!/bin/bash
+echo "Creating backup of configuration files..."
+date
+uptime`,
+            size: 78,
+            isExecutable: false,
+            modifiedAt: '2026-08-25T11:02:00.000Z',
           },
           'calculator.py': {
             type: 'file',
@@ -477,11 +500,14 @@ export function writeFile(fs: FSNode, path: string, content: string): boolean {
   const parent = getNode(fs, parentPath);
   if (!parent || parent.type !== 'dir') return false;
   const now = new Date().toISOString();
+  const existingNode = parent.children[name];
+  const existingExec = existingNode && existingNode.type === 'file' ? existingNode.isExecutable : undefined;
   parent.children[name] = {
     type: 'file',
     content,
     size: content.length,
     modifiedAt: now,
+    ...(existingExec !== undefined ? { isExecutable: existingExec } : {}),
   };
   return true;
 }
@@ -523,6 +549,7 @@ export function copyFile(fs: FSNode, srcPath: string, destPath: string): boolean
     content: srcNode.content,
     size: srcNode.size ?? srcNode.content.length,
     modifiedAt: now,
+    ...(srcNode.isExecutable !== undefined ? { isExecutable: srcNode.isExecutable } : {}),
   };
   return true;
 }

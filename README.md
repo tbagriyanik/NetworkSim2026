@@ -26,6 +26,7 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
+- **Linux Bash Terminali & Betik/İzin Desteği:** PC panelindeki Linux Terminal sekmesinde `ftp`, `ssh`, `telnet` ağ bağlantı komutları, `history`, dosya izin yönetimi (`chmod +x`, `chmod 755`, `chown`), `ls -l` detaylı görünümü ve `./script.sh` şeklinde doğrudan yetkili betik çalıştırma desteği eklendi. Ayrıca `Ctrl+L` ekran temizleme ve cihaz yeniden başlatıldığında terminal sıfırlanması sağlandı.
 - **Gelişmiş Python Yorumlayıcısı & OOP Desteği:** PC Python ortamında nesne yönelimli programlama (`class`, `__init__`, kalıtım, `super()`, `isinstance()`, `@property`, `@staticmethod`, `@classmethod`), generator (`yield` / `yield from`), modül eklentileri (`json`, `re`, `socket`, `os.path`) ve dunder korumalı güvenlik katmanı aktif edildi.
 - **Protocol & CLI Kapsam Notu:** PPPoE, IP SLA, MSTP, OSPF, EIGRP vb. protokolleri için tam CLI konfigürasyon ve `show` komutu desteği sunulmaktadır. Paket-seviyesi durum makineleri (state machines) öğretim simülasyonu odağında optimize edilmiştir.
 - **Kullanıcı Tanımlı Batch (.bat) Yığın Dosyaları:** PC Komut İstemi'nde (CMD) kullanıcı tanımlı `.bat` ve `.cmd` dosyalarını çalıştırma, değişken ikamesi (`%VAR%`, `%1`), `@echo off`, `set`, `goto`, `call` desteği ve Dosya Düzenleyici başlığında `Batch Yığın Dosyası` rozeti entegre edildi.

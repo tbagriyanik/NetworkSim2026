@@ -163,6 +163,27 @@ export function CommandLineTab({
 
   const [linuxHistoryIndex, setLinuxHistoryIndex] = useState(-1);
 
+  // Reset Linux terminal output when PC powers back on (reboots)
+  const prevPoweredOffRef = useRef<boolean>(isPcPoweredOff);
+  useEffect(() => {
+    if (prevPoweredOffRef.current && !isPcPoweredOff) {
+      const defaultOutput: OutputLine[] = [
+        {
+          id: 'linux-welcome',
+          type: 'output',
+          content: `Linux ${internalPcHostname.toLowerCase()}\nType 'help' for available commands.\n`,
+        },
+      ];
+      setLinuxOutput(defaultOutput);
+      if (typeof localStorage !== 'undefined') {
+        try {
+          localStorage.removeItem(`pc_linux_output_${deviceId}`);
+        } catch { }
+      }
+    }
+    prevPoweredOffRef.current = isPcPoweredOff;
+  }, [isPcPoweredOff, internalPcHostname, deviceId]);
+
   // Persist Linux output history to localStorage when changed
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
@@ -317,6 +338,8 @@ export function CommandLineTab({
         resolveDeviceNameTargetCallback,
         addLocalOutput: addLinuxOutput,
         setLinuxOutput,
+        executeCommand,
+        linuxHistory: [cmdToRun, ...linuxHistory.filter(c => c !== cmdToRun)].slice(0, 50),
       });
     }
   };
@@ -536,6 +559,19 @@ export function CommandLineTab({
                   setIsLinuxAutocompleteDismissed(false);
                 }}
                 onKeyDown={(e) => {
+                  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
+                    e.preventDefault();
+                    if (activeTerminalTab === 'cmd') {
+                      setPcOutput([]);
+                    } else {
+                      setLinuxOutput([]);
+                    }
+                    setInput('');
+                    setLinuxAutocompleteIndex(-1);
+                    setIsLinuxAutocompleteDismissed(false);
+                    return;
+                  }
+
                   if (activeTerminalTab === 'cmd') {
                     handleKeyDown(e);
                   } else {
@@ -564,45 +600,39 @@ export function CommandLineTab({
                       }
                     }
 
+                    // Arrow keys navigate command history (dismissing autocomplete dropdown)
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setIsLinuxAutocompleteDismissed(true);
+                      setLinuxAutocompleteIndex(-1);
+                      if (linuxHistory.length > 0) {
+                        const nextIdx = Math.min(linuxHistoryIndex + 1, linuxHistory.length - 1);
+                        setLinuxHistoryIndex(nextIdx);
+                        setInput(linuxHistory[nextIdx] || '');
+                      }
+                      return;
+                    }
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setIsLinuxAutocompleteDismissed(true);
+                      setLinuxAutocompleteIndex(-1);
+                      if (linuxHistoryIndex > 0) {
+                        const nextIdx = linuxHistoryIndex - 1;
+                        setLinuxHistoryIndex(nextIdx);
+                        setInput(linuxHistory[nextIdx] || '');
+                      } else if (linuxHistoryIndex === 0) {
+                        setLinuxHistoryIndex(-1);
+                        setInput('');
+                      }
+                      return;
+                    }
+
                     if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        setLinuxAutocompleteIndex((prev) => (prev + 1) % linuxFilteredSuggestions.length);
-                        return;
-                      }
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        setLinuxAutocompleteIndex((prev) => (prev - 1 + linuxFilteredSuggestions.length) % linuxFilteredSuggestions.length);
-                        return;
-                      }
                       if (e.key === 'Enter' && linuxAutocompleteIndex >= 0) {
                         e.preventDefault();
                         const selected = linuxFilteredSuggestions[linuxAutocompleteIndex];
                         if (selected) {
                           completeLinuxSelection(selected);
-                        }
-                        return;
-                      }
-                    } else {
-                      // Autocomplete dropdown is not active -> Arrow keys navigate command history
-                      if (e.key === 'ArrowUp') {
-                        e.preventDefault();
-                        if (linuxHistory.length > 0) {
-                          const nextIdx = Math.min(linuxHistoryIndex + 1, linuxHistory.length - 1);
-                          setLinuxHistoryIndex(nextIdx);
-                          setInput(linuxHistory[nextIdx] || '');
-                        }
-                        return;
-                      }
-                      if (e.key === 'ArrowDown') {
-                        e.preventDefault();
-                        if (linuxHistoryIndex > 0) {
-                          const nextIdx = linuxHistoryIndex - 1;
-                          setLinuxHistoryIndex(nextIdx);
-                          setInput(linuxHistory[nextIdx] || '');
-                        } else if (linuxHistoryIndex === 0) {
-                          setLinuxHistoryIndex(-1);
-                          setInput('');
                         }
                         return;
                       }

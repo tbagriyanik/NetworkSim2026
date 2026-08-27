@@ -2,9 +2,11 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
-## v3.1.0 — 2026-08-25
+## v3.2.0 — 2026-08-27
 
 | Tarih | Değişiklik |
+|---|---|
+| 2026-08-27 | **Gelişmiş Linux Bash Terminali & Ağ Protokol / İzin Entegrasyonları** — Linux Terminal sekmesine (`CommandLineTab`) `ftp`, `ssh`, `telnet` ağ servisi bağlantı komutları, komut geçmişini listeleyen `history`, dosya çalışma izinlerini yöneten `chmod` (`+x`, `-x`, `755`, `644`) ve sahiplik komutu `chown` eklendi. `ls -l` çıktısında `-rwxr-xr-x` izinleri ve Sade `ls` görünümünde `*` belirteci desteklendi. `chmod +x` yetkili `.sh` ve `.py` betiklerinin `./script.sh` şeklinde doğrudan çalıştırılabilmesi ve çalıştırma izni yoksa `Permission denied` denetimi sağlandı. Cihaz yeniden başlatıldığında Linux çıktısının sıfırlanması ve `Ctrl+L` ekran temizleme kısayolu entegre edildi. |
 |---|---|
 | 2026-08-25 | **PC Python Yorumlayıcısı Liste Üretimi (List Comprehension `[expr for var in iter if cond]`) Desteği** — `[x.strip() for x in content_list]`, `[x**2 for x in range(10) if x % 2 == 0]` ve demet/tuple açılımlı (`[(a, b) for a, b in zip(...)]`) liste üretimi yapıları entegre edildi. Koşul ifadeleri (`if`), üyelik kontrolleri ve üs alma (`**`) operatörü ile tam uyumlu çalışması sağlandı. Varsayılan dosya sistemine `data_file.txt` eklendi. |
 | 2026-08-25 | **PC Python Sanal Dosya Sistemine Varsayılan `names.txt` ve `body.txt` Entegrasyonu** — Mail birleştirme (`Mail Merger`) betiklerinin doğrudan çalışabilmesi için varsayılan sanal dosya sistemine (`pcFileSystem`) `names.txt` ve `body.txt` dosyaları eklendi. `with open(...)` bloklarının dosya oluşturma (`'w'`), okuma (`'r'`) ve satır yineleme davranışları doğrulanarak test edildi. |

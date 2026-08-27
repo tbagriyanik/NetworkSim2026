@@ -379,8 +379,7 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'l') {
       e.preventDefault();
-      if (activeTab === 'desktop') setPcOutput([]);
-      else if (activeTab === 'terminal') setConsoleConnectionTime(Date.now());
+      setPcOutput([]);
       setInput('');
       setShowAutocomplete(false);
       setAutocompleteIndex(-1);
@@ -389,16 +388,6 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
     }
 
     const canUseAutocomplete = showAutocomplete && renderAutocompleteSuggestions.length > 0;
-
-    if (e.ctrlKey && e.key.toLowerCase() === 'l') {
-      e.preventDefault();
-      if (activeTab === 'desktop') {
-        setPcOutput([]);
-      } else if (activeTab === 'terminal') {
-        setConsoleConnectionTime(Date.now());
-      }
-      return;
-    }
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();

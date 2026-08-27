@@ -22,17 +22,20 @@ export interface LinuxExecutorParams {
   resolveDeviceNameTargetCallback: (raw: string) => { ip: string; label?: string } | null;
   addLocalOutput: (type: OutputLine['type'], content: string, prompt?: string) => void;
   setLinuxOutput: React.Dispatch<React.SetStateAction<OutputLine[]>>;
+  executeCommand?: (cmdToExecute?: string) => Promise<void>;
+  linuxHistory?: string[];
+  silent?: boolean;
 }
 
 export const LINUX_SUGGESTIONS = [
-  'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'nano', 'vim', 'vi', 'edit', 'notepad',
-  'ifconfig', 'ip addr', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp',
-  'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'echo', 'sudo', 'help', 'date', 'uptime',
-  'python3', 'python'
+  'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'grep', 'wc', 'nano', 'vim', 'vi', 'edit', 'notepad',
+  'ifconfig', 'ip addr', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp', 'ftp', 'ssh', 'telnet',
+  'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'history', 'echo', 'sudo', 'help', 'date', 'uptime',
+  'for', 'while', 'if', 'python3', 'python'
 ];
 
 const FILE_COMMANDS = new Set([
-  'cd', 'ls', 'dir', 'cat', 'type', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'nano', 'vim', 'vi', 'edit', 'notepad', 'python', 'python3', 'sh'
+  'cd', 'ls', 'dir', 'cat', 'type', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'nano', 'vim', 'vi', 'edit', 'notepad', 'python', 'python3', 'sh', 'bash'
 ]);
 
 export function getLinuxSuggestions(
@@ -162,12 +165,184 @@ export async function executeLinuxCommand(
 
   const linuxPrompt = `${isSudo ? 'root' : 'user'}@${internalPcHostname.toLowerCase()}:${formatLinuxPath(currentPath)}${isSudo ? '#' : '$'}`;
 
-  // Log command entry
-  addLocalOutput('command', rawCmd, linuxPrompt);
+  // 1. Handle Pipe (|) Pipelines (e.g. ifconfig | grep inet, cat file.txt | grep -i test | wc -l)
+  if (cleanCmd.includes('|') && !params.silent) {
+    const pipeline = cleanCmd.split('|').map(c => c.trim()).filter(Boolean);
+    if (pipeline.length > 1) {
+      addLocalOutput('command', rawCmd, linuxPrompt);
+      let pipeData = '';
+
+      for (let i = 0; i < pipeline.length; i++) {
+        const stageCmd = pipeline[i];
+        let stageOutput = '';
+        let stageError = '';
+
+        const stageAddOutput = (type: OutputLine['type'], content: string) => {
+          if (type === 'error') stageError += (stageError ? '\n' : '') + content;
+          else stageOutput += (stageOutput ? '\n' : '') + content;
+        };
+
+        const stageParts = stageCmd.split(/\s+/);
+        const stageName = stageParts[0].toLowerCase();
+        const stageArgs = stageParts.slice(1);
+
+        if (stageName === 'grep') {
+          const isCaseInsensitive = stageArgs.some(a => a === '-i' || a === '-ic' || a === '-ci');
+          const isCountOnly = stageArgs.some(a => a === '-c' || a === '-ic' || a === '-ci');
+          const patternArg = stageArgs.find(a => !a.startsWith('-')) || '';
+          const cleanPattern = patternArg.replace(/^["']|["']$/g, '');
+
+          if (!cleanPattern) {
+            stageError = 'grep: option requires an argument';
+          } else {
+            const lines = pipeData.split(/\r?\n/);
+            const regex = new RegExp(cleanPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), isCaseInsensitive ? 'i' : '');
+            const matched = lines.filter(l => regex.test(l));
+
+            if (isCountOnly) {
+              stageOutput = matched.length.toString();
+            } else {
+              stageOutput = matched.join('\n');
+            }
+          }
+        } else if (stageName === 'wc') {
+          const lines = pipeData.split(/\r?\n/).filter(l => l.length > 0 || pipeData.includes('\n'));
+          if (stageArgs.includes('-l')) {
+            stageOutput = lines.length.toString();
+          } else {
+            const words = pipeData.split(/\s+/).filter(Boolean).length;
+            const bytes = pipeData.length;
+            stageOutput = `  ${lines.length}  ${words}  ${bytes}`;
+          }
+        } else {
+          // Execute stage command collecting output
+          await executeLinuxCommand(stageCmd, {
+            ...params,
+            silent: true,
+            addLocalOutput: stageAddOutput
+          });
+        }
+
+        if (stageError) {
+          addLocalOutput('error', stageError);
+          return;
+        }
+        pipeData = stageOutput;
+      }
+
+      if (pipeData) {
+        addLocalOutput('output', pipeData);
+      }
+      return;
+    }
+  }
+
+  // 2. Handle Output Redirection (> and >>) for any command (e.g., ifconfig > ifconfig.txt, ping 127.0.0.1 >> log.txt)
+  if ((cleanCmd.includes(' > ') || cleanCmd.includes(' >> ') || cleanCmd.includes('>') || cleanCmd.includes('>>')) && !cleanCmd.startsWith('echo ')) {
+    const isAppend = cleanCmd.includes('>>');
+    const splitToken = isAppend ? '>>' : '>';
+    const lastTokenIdx = cleanCmd.lastIndexOf(splitToken);
+    const targetCmdStr = cleanCmd.substring(0, lastTokenIdx).trim();
+    const targetFileArg = cleanCmd.substring(lastTokenIdx + splitToken.length).trim().split(/\s+/)[0];
+
+    if (targetCmdStr && targetFileArg) {
+      if (!params.silent) {
+        addLocalOutput('command', rawCmd, linuxPrompt);
+      }
+      let capturedOut = '';
+      let capturedErr = '';
+      const redirectAddOutput = (type: OutputLine['type'], content: string) => {
+        if (type === 'error') capturedErr += (capturedErr ? '\n' : '') + content;
+        else capturedOut += (capturedOut ? '\n' : '') + content;
+      };
+
+      await executeLinuxCommand(targetCmdStr, {
+        ...params,
+        silent: true,
+        addLocalOutput: redirectAddOutput
+      });
+
+      if (capturedErr) {
+        addLocalOutput('error', capturedErr);
+        return;
+      }
+
+      const fs = loadFs(deviceId);
+      const targetPath = resolvePath(currentPath, targetFileArg);
+      const existingContent = isAppend ? (readFile(fs, targetPath) || '') : '';
+      const newContent = isAppend ? (existingContent ? `${existingContent}\n${capturedOut}` : capturedOut) : capturedOut;
+      writeFile(fs, targetPath, newContent);
+      saveFs(deviceId, fs);
+      return;
+    }
+  }
+
+  // Log command entry (unless running sub-command inside loop/script silently)
+  if (!params.silent) {
+    addLocalOutput('command', rawCmd, linuxPrompt);
+  }
 
   if (command === 'clear') {
     setLinuxOutput([]);
     return;
+  }
+
+  // Handle Bash For Loops (e.g., for i in 1 2 3; do ping 192.168.1.$i; done OR for i in {1..5}; do echo $i; done)
+  if (cleanCmd.startsWith('for ')) {
+    const forMatch = cleanCmd.match(/^for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+(.+?)\s*;\s*do\s+(.+?)\s*;\s*done$/i)
+      || cleanCmd.match(/^for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+(.+?)\s*\n\s*do\s*\n\s*(.+?)\s*\n\s*done$/i);
+
+    if (forMatch) {
+      const varName = forMatch[1];
+      const itemsRaw = forMatch[2].trim();
+      const loopBody = forMatch[3].trim();
+
+      let items: string[] = [];
+      const rangeMatch = itemsRaw.match(/^\{(\d+)\.\.(\d+)\}$/);
+      if (rangeMatch) {
+        const start = parseInt(rangeMatch[1], 10);
+        const end = parseInt(rangeMatch[2], 10);
+        for (let n = start; n <= end; n++) items.push(n.toString());
+      } else {
+        items = itemsRaw.split(/\s+/).filter(Boolean);
+      }
+
+      for (const item of items) {
+        // Replace $varName or ${varName} in body with current item value
+        const subCmd = loopBody.replace(new RegExp(`\\$${varName}\\b|\\$\\{${varName}\\}`, 'g'), item);
+        await executeLinuxCommand(subCmd, { ...params, silent: false });
+      }
+      return;
+    }
+  }
+
+  // Handle Bash If Conditionals (e.g. if [ "$x" = "1" ]; then echo yes; else echo no; fi)
+  if (cleanCmd.startsWith('if ')) {
+    const ifMatch = cleanCmd.match(/^if\s+\[\s*(.+?)\s*\]\s*;\s*then\s+(.+?)(?:\s*;\s*else\s+(.+?))?\s*;\s*fi$/i);
+    if (ifMatch) {
+      const cond = ifMatch[1].trim();
+      const thenBody = ifMatch[2].trim();
+      const elseBody = ifMatch[3]?.trim();
+
+      // Simple condition evaluator
+      let condResult = false;
+      const eqMatch = cond.match(/^"?(.*?)"?\s*(==|=|!=)\s*"?(.*?)"?$/);
+      if (eqMatch) {
+        const left = eqMatch[1];
+        const op = eqMatch[2];
+        const right = eqMatch[3];
+        if (op === '=' || op === '==') condResult = left === right;
+        else if (op === '!=') condResult = left !== right;
+      } else if (cond) {
+        condResult = cond !== '0' && cond !== 'false';
+      }
+
+      const targetCmd = condResult ? thenBody : elseBody;
+      if (targetCmd) {
+        await executeLinuxCommand(targetCmd, { ...params, silent: false });
+      }
+      return;
+    }
   }
 
   if (command === 'help') {
@@ -186,6 +361,10 @@ These shell commands are defined internally. Type 'help' to see this list.
     rm <file>         Remove file or directory
     cp <src> <dest>   Copy file
     mv <src> <dest>   Move or rename file
+    chmod <mode> <f>  Change file mode permissions (e.g. chmod +x, 755)
+    grep [-i] [-c]    Search pattern in file or stream (e.g. grep inet, cat f | grep -i test)
+    cmd > file        Redirect command output to file (overwrites or >> appends)
+    cmd1 | cmd2       Pipe output from cmd1 as input to cmd2 (e.g. ifconfig | grep inet)
     echo "text" > f   Write or append (>>) text to file
 
   Network Commands:
@@ -195,12 +374,18 @@ These shell commands are defined internally. Type 'help' to see this list.
     traceroute <host> Trace network packet route to destination
     nslookup <domain> Perform DNS lookup for domain name
     netstat / arp     Display network statistics & ARP cache
+    ftp <server>      Connect to remote FTP server
+    ssh <user@host>   Connect securely to remote host via SSH
+    telnet <host>     Connect to remote host via Telnet
 
   System & Execution:
     whoami            Display current user
     hostname <name>   Display or change system hostname (e.g. hostname aa)
     uname [-a]        Print system kernel & OS information
     date / uptime     Print current date & system uptime / load
+    history           Display list of previously executed commands
+    for i in ...; do  Bash for loop execution (e.g. for i in 1 2 3; do ping -n 1 192.168.1.$i; done)
+    if [ cond ]; then Bash conditional branching execution (if/elif/else)
     python3 <file.py> Execute Python script on PC file system
     clear             Clear terminal screen output`;
     addLocalOutput('output', helpText);
@@ -263,6 +448,48 @@ These shell commands are defined internally. Type 'help' to see this list.
     return;
   }
 
+  if (command === 'history') {
+    const historyList = params.linuxHistory || [];
+    if (historyList.length === 0) {
+      addLocalOutput('output', '   1  history');
+    } else {
+      // Reverse array so oldest commands are at top (standard history order)
+      const formatted = [...historyList].reverse().map((hCmd, idx) => ` ${(idx + 1).toString().padStart(4)}  ${hCmd}`).join('\n');
+      addLocalOutput('output', formatted);
+    }
+    return;
+  }
+
+  if (command === 'chmod' || command === 'chown') {
+    if (args.length < 2) {
+      addLocalOutput('error', `${command}: missing operand`);
+      return;
+    }
+    const modeOrOwner = args[0];
+    const targetFile = args[1];
+    const fs = loadFs(deviceId);
+    const targetPath = resolvePath(currentPath, targetFile);
+    const node = getNode(fs, targetPath);
+    if (!node) {
+      addLocalOutput('error', `${command}: cannot access '${targetFile}': No such file or directory`);
+      return;
+    }
+
+    if (command === 'chmod' && node.type === 'file') {
+      const isGrantingX = modeOrOwner.includes('+x') || modeOrOwner === '755' || modeOrOwner === '777' || modeOrOwner === '700' || modeOrOwner === '750';
+      const isRemovingX = modeOrOwner.includes('-x') || modeOrOwner === '644' || modeOrOwner === '600' || modeOrOwner === '400';
+      if (isGrantingX) {
+        node.isExecutable = true;
+        saveFs(deviceId, fs);
+      } else if (isRemovingX) {
+        node.isExecutable = false;
+        saveFs(deviceId, fs);
+      }
+    }
+    addLocalOutput('output', '');
+    return;
+  }
+
   if (command === 'date') {
     addLocalOutput('output', new Date().toUTCString());
     return;
@@ -321,15 +548,16 @@ These shell commands are defined internally. Type 'help' to see this list.
       return;
     }
 
-    const items: { name: string; isDir: boolean; size: number; modifiedAt: string }[] = [];
+    const items: { name: string; isDir: boolean; isExec: boolean; size: number; modifiedAt: string }[] = [];
 
     if (showAll) {
-      items.push({ name: '.', isDir: true, size: 4096, modifiedAt: 'Aug 27 12:00' });
-      items.push({ name: '..', isDir: true, size: 4096, modifiedAt: 'Aug 27 12:00' });
+      items.push({ name: '.', isDir: true, isExec: false, size: 4096, modifiedAt: 'Aug 27 12:00' });
+      items.push({ name: '..', isDir: true, isExec: false, size: 4096, modifiedAt: 'Aug 27 12:00' });
     }
 
     Object.entries(targetNode.children).forEach(([name, child]) => {
       const isDir = child.type === 'dir';
+      const isExec = child.type === 'file' && (child.isExecutable !== undefined ? child.isExecutable : (name.endsWith('.sh') || name.endsWith('.py')));
       const size = child.type === 'file' ? (child.size || child.content.length || 0) : 4096;
       let dateStr = 'Aug 27 12:00';
       if (child.modifiedAt) {
@@ -338,18 +566,18 @@ These shell commands are defined internally. Type 'help' to see this list.
           dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
         } catch { }
       }
-      items.push({ name, isDir, size, modifiedAt: dateStr });
+      items.push({ name, isDir, isExec, size, modifiedAt: dateStr });
     });
 
     if (isLong) {
       const formatted = items.map(item => {
-        const perms = item.isDir ? 'drwxr-xr-x 2 user user' : '-rw-r--r-- 1 user user';
+        const perms = item.isDir ? 'drwxr-xr-x 2 user user' : (item.isExec ? '-rwxr-xr-x 1 user user' : '-rw-r--r-- 1 user user');
         const sz = item.size.toString().padStart(6);
         return `${perms} ${sz} ${item.modifiedAt} ${item.name}`;
       }).join('\n');
       addLocalOutput('output', `total ${items.length * 4}\n${formatted}`);
     } else {
-      const formatted = items.map(i => i.isDir ? `${i.name}/` : i.name).join('  ');
+      const formatted = items.map(i => i.isDir ? `${i.name}/` : (i.isExec ? `${i.name}*` : i.name)).join('  ');
       addLocalOutput('output', formatted || '(empty)');
     }
     return;
@@ -400,6 +628,46 @@ These shell commands are defined internally. Type 'help' to see this list.
       addLocalOutput('output', content);
     } else {
       addLocalOutput('error', `cat: ${fileName}: No such file or directory`);
+    }
+    return;
+  }
+
+  // Standalone grep command (e.g. grep "inet" config.txt, grep -i "test" file.txt)
+  if (command === 'grep') {
+    const isCaseInsensitive = args.some(a => a === '-i' || a === '-ic' || a === '-ci');
+    const isCountOnly = args.some(a => a === '-c' || a === '-ic' || a === '-ci');
+    const nonFlags = args.filter(a => !a.startsWith('-'));
+
+    if (nonFlags.length < 1) {
+      addLocalOutput('error', 'grep: option requires an argument');
+      return;
+    }
+
+    const pattern = nonFlags[0].replace(/^["']|["']$/g, '');
+    const fileArg = nonFlags[1];
+
+    if (!fileArg) {
+      addLocalOutput('error', 'grep: missing target file');
+      return;
+    }
+
+    const fs = loadFs(deviceId);
+    const fullPath = resolvePath(currentPath, fileArg);
+    const content = readFile(fs, fullPath);
+
+    if (content === null) {
+      addLocalOutput('error', `grep: ${fileArg}: No such file or directory`);
+      return;
+    }
+
+    const lines = content.split(/\r?\n/);
+    const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), isCaseInsensitive ? 'i' : '');
+    const matched = lines.filter(l => regex.test(l));
+
+    if (isCountOnly) {
+      addLocalOutput('output', matched.length.toString());
+    } else {
+      addLocalOutput('output', matched.join('\n'));
     }
     return;
   }
@@ -483,6 +751,60 @@ These shell commands are defined internally. Type 'help' to see this list.
       saveFs(deviceId, fs);
     } else {
       addLocalOutput('error', `mv: cannot stat '${src}': No such file or directory`);
+    }
+    return;
+  }
+
+  // Execute Shell / Bash / Direct executable scripts on PC file system
+  if (command === 'bash' || command === 'sh' || command.startsWith('./') || command.startsWith('.\\')) {
+    const scriptArg = (command === 'bash' || command === 'sh') ? args[0] : command;
+    if (!scriptArg) {
+      addLocalOutput('output', `GNU bash, version 5.2.15(1)-release (x86_64-pc-linux-gnu)`);
+      return;
+    }
+
+    const fs = loadFs(deviceId);
+    const scriptPath = resolvePath(currentPath, scriptArg);
+    const node = getNode(fs, scriptPath);
+
+    if (!node) {
+      addLocalOutput('error', `bash: ${scriptArg}: No such file or directory`);
+      return;
+    }
+
+    if (node.type === 'dir') {
+      addLocalOutput('error', `bash: ${scriptArg}: Is a directory`);
+      return;
+    }
+
+    // Direct invocation (./script.sh) requires executable permission unless explicit bash/sh or root (sudo)
+    const isDirectExec = command.startsWith('./') || command.startsWith('.\\');
+    if (isDirectExec && !isSudo) {
+      const hasExecPerm = node.isExecutable !== undefined ? node.isExecutable : (scriptArg.endsWith('.sh') || scriptArg.endsWith('.py'));
+      if (!hasExecPerm) {
+        addLocalOutput('error', `bash: ${scriptArg}: Permission denied`);
+        return;
+      }
+    }
+
+    const content = node.content.trim();
+    if (!content) return;
+
+    // Check if it is a python script or has python shebang
+    const isPython = scriptArg.endsWith('.py') || content.startsWith('#!/usr/bin/env python') || content.startsWith('#!/usr/bin/python');
+    if (isPython) {
+      const res = executePythonScript(content, args.slice(command === 'bash' || command === 'sh' ? 1 : 0), undefined, deviceId);
+      if (res.error) addLocalOutput('error', res.error);
+      else if (res.output) addLocalOutput('output', res.output);
+      return;
+    }
+
+    // Process line by line for shell script commands
+    const lines = content.split(/\r?\n/);
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine || trimmedLine.startsWith('#')) continue;
+      await executeLinuxCommand(trimmedLine, params);
     }
     return;
   }
@@ -573,7 +895,8 @@ ${wifiEnabled ? `wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
     const resolved = resolveDeviceNameTargetCallback(rawTarget);
     if (resolved) targetIp = resolved.ip;
 
-    const reachable = canReachTargetIp(targetIp);
+    const isLoopback = targetIp.startsWith('127.') || targetIp === '::1' || targetIp.toLowerCase() === 'localhost';
+    const reachable = isLoopback || canReachTargetIp(targetIp);
     if (reachable) {
       const out =
 `PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
@@ -589,8 +912,8 @@ rtt min/avg/max/mdev = 0.76/0.80/0.84/0.03 ms`;
     } else {
       const out =
 `PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
-From ${pcIP} icmp_seq=1 Destination Host Unreachable
-From ${pcIP} icmp_seq=2 Destination Host Unreachable
+From ${pcIP || '127.0.0.1'} icmp_seq=1 Destination Host Unreachable
+From ${pcIP || '127.0.0.1'} icmp_seq=2 Destination Host Unreachable
 
 --- ${rawTarget} ping statistics ---
 4 packets transmitted, 0 received, +2 errors, 100% packet loss, time 3008ms`;
@@ -643,6 +966,13 @@ Address: 142.250.180.206`;
   if (command === 'netstat' || command === 'arp') {
     addLocalOutput('output', `Address                  HWtype  HWaddress           Flags Mask            Iface\n${pcGateway || '192.168.1.1'}          ether   00:11:22:33:44:55   C                     eth0`);
     return;
+  }
+
+  if (command === 'ftp' || command === 'ssh' || command === 'telnet') {
+    if (params.executeCommand) {
+      await params.executeCommand(cleanCmd);
+      return;
+    }
   }
 
   // Command not recognized
