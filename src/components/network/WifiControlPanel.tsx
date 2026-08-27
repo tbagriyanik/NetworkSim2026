@@ -3,6 +3,11 @@
 import { CanvasDevice } from './networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { getRouterWifiConfig } from './wifiAdminConfig';
+import type { WifiAdminConfig, ConnectedIoTDevice, AvailableIoTDevice } from './wifiAdminTypes';
+import { renderWifiAdminLoginTemplate } from './wifiAdminLoginTemplate';
+import { renderWifiAdminIotTemplate } from './wifiAdminIotTemplate';
+import { renderWifiAdminAccountTemplate } from './wifiAdminAccountTemplate';
+import { renderWifiConfigFieldTemplates } from './wifiAdminConfigTemplate';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 import { colors } from '@/lib/design-tokens/colors';
 import {
@@ -10,43 +15,9 @@ import {
   WIRELESS_CHANNELS_5GHZ,
   formatChannelDisplay,
   normalizeChannel,
-  type DeviceWifiSsidProfile,
 } from '@/lib/network/wireless';
 
-interface WifiAdminConfig {
-  enabled: boolean;
-  ssid: string;
-  security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
-  password?: string;
-  channel: '2.4GHz' | '5GHz' | string;
-  mode: 'ap' | 'client';
-  hidden?: boolean;
-  maxClients?: number;
-  macFilterEnabled?: boolean;
-  macFilterMode?: 'allow' | 'deny';
-  macFilterList?: string[];
-  ssids?: DeviceWifiSsidProfile[];
-}
-
-export interface ConnectedIoTDevice {
-  id: string;
-  name: string;
-  sensorType: string;
-  connected: boolean;
-  ip?: string;
-  isWired?: boolean;
-  mac?: string;
-  ssid?: string;
-  signalPercent?: number;
-  rssiDbm?: number;
-}
-
-export interface AvailableIoTDevice {
-  id: string;
-  name: string;
-  sensorType: string;
-  currentSsid?: string;
-}
+export type { ConnectedIoTDevice, AvailableIoTDevice } from './wifiAdminTypes';
 
 interface RouterWebConfig {
   wifi: WifiAdminConfig;
@@ -150,60 +121,9 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .map(opt => `<option value="${opt.value}" ${wifi.mode === opt.value ? 'selected' : ''}>${opt.label}</option>`)
     .join('');
 
-  const isWepMode = wifi.security === 'wep';
-  const passwordField = `
-    <div class="form-group">
-      <label for="wifi-password">${isTurkish ? 'Kablosuz Ağ Parolası' : 'Wireless Network Password'}</label>
-      <input type="password" id="wifi-password" name="password" value="${safeWifiPassword}" placeholder="${isWepMode ? (isTurkish ? 'WEP anahtarı girin' : 'Enter WEP key') : (isTurkish ? 'En az 8 karakter girin' : 'Enter at least 8 characters')}" minlength="${isWepMode ? 5 : 8}" aria-describedby="wifi-password-hint">
-      <span class="hint" id="wifi-password-hint">${isTurkish ? 'WPA2/WPA3 güvenliği için güçlü bir parola kullanın' : 'Use a strong password for WPA2/WPA3 security'}</span>
-    </div>
-  `;
+  const { passwordField, hiddenCheckbox, maxClientsField } = renderWifiConfigFieldTemplates(wifi, isTurkish, safeWifiPassword);
 
-  const hiddenCheckbox = `
-    <div class="form-group checkbox-group">
-      <label class="checkbox-label">
-        <input type="checkbox" id="wifi-hidden" name="hidden" ${wifi.hidden ? 'checked' : ''}>
-        <span>${isTurkish ? 'SSID Gizle (Gizli Ağ)' : 'Hide SSID (Hidden Network)'}</span>
-      </label>
-      <span class="hint">${isTurkish ? 'Gizli ağlar istemci aramasında taranmaz' : 'Hidden networks are not visible in client scans'}</span>
-    </div>
-  `;
-
-  const maxClientsField = `
-    <div class="form-group">
-      <label for="max-clients">${isTurkish ? 'Maksimum Bağlı İstemci Sayısı' : 'Maximum Connected Clients'}</label>
-      <input type="number" id="max-clients" name="maxClients" value="${wifi.maxClients ?? 32}" min="1" max="128" step="1">
-      <span class="hint">${isTurkish ? 'Ağa aynı anda bağlanabilecek istemci sayısı' : 'Number of clients that can connect simultaneously'}</span>
-    </div>
-  `;
-
-  const loginFormHTML = `
-    <div id="login-form" class="login-overlay" style="display:flex;">
-      <div class="login-card">
-        <div class="login-header">
-          <div class="login-icon">🔒</div>
-          <h2>${safeDeviceName}</h2>
-          <p>${isTurkish ? 'Yönetici Paneli Girişi' : 'Admin Panel Login'}</p>
-        </div>
-        <form onsubmit="handleLogin(event)">
-          <div class="form-group">
-            <label for="login-username">${isTurkish ? 'Kullanıcı Adı' : 'Username'}</label>
-
-          <input type="text" id="login-username" value="${jsUsername}" placeholder="${isTurkish ? 'Kullanıcı adını girin' : 'Enter username'}" required autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label for="login-password">${isTurkish ? 'Şifre' : 'Password'}</label>
-            <input type="password" id="login-password" placeholder="${isTurkish ? 'Şifrenizi girin' : 'Enter password'}" required>
-          </div>
-          <div id="login-error" class="error-message" style="display:none;">
-            ❌ ${isTurkish ? 'Hatalı kullanıcı adı veya şifre!' : 'Invalid username or password!'}
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">🔓 ${isTurkish ? 'Giriş Yap' : 'Login'}</button>
-          <span class="hint" style="display:block;text-align:center;margin-top:10px;">${isTurkish ? 'Varsayılan: admin / admin' : 'Default: admin / admin'}</span>
-        </form>
-      </div>
-    </div>
-  `;
+  const loginFormHTML = renderWifiAdminLoginTemplate({ deviceName: safeDeviceName, isTurkish, username: jsUsername });
 
   const mainContent = `
     <div id="main-content" style="display:none;">
@@ -509,118 +429,14 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       </div>
     </div>
       
-    <!-- IoT Devices Tab -->
-    <div id="iot-tab" class="content" style="display:${activeTab === 'iot' ? 'block' : 'none'};">
-      <h2 class="panel-title" style="margin-bottom:20px;">🛜 ${isTurkish ? 'Bağlı IoT Cihazları' : 'Connected IoT Devices'}</h2>
-      
-      <div class="status-card" style="margin-bottom:20px;">
-        <div class="status-info">
-          <h3>${isTurkish ? 'IoT Ağı' : 'IoT Network'}</h3>
-          <p>${onlyIotConnectedDevices.length} ${isTurkish ? "cihaz bu AP'ye bağlı" : pluralize(onlyIotConnectedDevices.length, 'device connected to this AP', 'devices connected to this AP')}</p>
-        </div>
-        <span class="status-badge">${onlyIotConnectedDevices.filter(d => d.connected).length} ${isTurkish ? 'Aktif' : 'Active'}</span>
-      </div>
-      
-      ${onlyIotConnectedDevices.length > 0 ? `
-      <div class="iot-device-list" style="margin-bottom:25px;">
-        <p style="color:var(--color-secondary-500);margin-bottom:15px;font-size:13px;">${isTurkish ? 'Bağlı IoT cihazlarını yönetin:' : 'Manage connected IoT devices:'}</p>
-        ${onlyIotConnectedDevices.map(device => {
-          const safeIotName = sanitizeHTML(device.name);
-          const safeIotId = sanitizeHTML(device.id);
-          const safeIotIp = sanitizeHTML(device.ip || '');
-          const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
-          return `
-          <div class="iot-device-card connected" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:15px;background:${colors.neutral['50']};border-radius:10px;margin-bottom:10px;border:1px solid var(--color-secondary-200);cursor:pointer;">
-            <div style="display:flex;align-items:center;gap:12px;">               
-              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg, ${device.isWired ? 'var(--color-success-500) 0%, var(--color-success-600) 100%' : 'var(--color-warning-400) 0%, var(--color-warning-600) 100%'});display:flex;align-items:center;justify-content:center;color:white;font-size:18px;">
-                ${device.isWired ? '🔌' : '🛜'}
-              </div>
-              <div>
-                <div style="font-weight:600;color:var(--color-secondary-900);">${safeIotName}</div>
-                <div style="font-size:12px;color:var(--color-secondary-500);">
-                  ${isTurkish ? 'Sensör' : 'Sensor'}: ${sanitizeHTML(device.sensorType)}
-                  ${device.ip ? `<span style="margin-left:8px;padding:2px 6px;background:var(--color-primary-100);border-radius:4px;color:var(--color-primary-700);font-family:monospace;">${safeIotIp}</span>` : ''}
-                </div>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600;background:${device.connected ? colors.green['100'] : 'var(--color-warning-100)'};color:${device.connected ? 'var(--color-success-700)' : 'var(--color-warning-700)'};">
-                ${device.connected ? (isTurkish ? '● Bağlı' : '● Connected') : (isTurkish ? '○ Bağlı Değil' : '○ Disconnected')}
-              </span>
-              <button type="button" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:none;border-radius:6px;background:var(--color-primary-500);color:white;cursor:pointer;" onclick="event.stopPropagation();renewIotDevice(${jsIotId})" title="${isTurkish ? 'IP Yenile' : 'IP Renew'}" aria-label="${isTurkish ? 'IP Yenile' : 'IP Renew'}">
-                🔄
-              </button>
-              <button type="button" style="display:flex; align-items:center; justify-content:center; width:32px; height:32px; padding:0; border:none; border-radius:6px; background:var(--color-error-500); color:white; cursor:pointer;" onclick="event.stopPropagation();disconnectIotDevice(${jsIotId})" title="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}" aria-label="${isTurkish ? 'Bağlantıyı Kes' : 'Disconnect'}">
-                🔌
-              </button>               
-            </div>
-          </div>
-        `;
-        }).join('')}
-      </div>
-      ` : ''}
-      ${availableIotDevices.length > 0 ? `
-      <h3 class="panel-title" style="margin-top:24px;">📡 ${isTurkish ? 'Bağlanabilir IoT Cihazları' : 'Available IoT Devices'}</h3>
-      <div class="available-iot-list" style="margin-bottom:20px;">
-        ${availableIotDevices.map(device => {
-          const safeIotName = sanitizeHTML(device.name);
-          const safeIotId = sanitizeHTML(device.id);
-          const jsIotId = safeJSONForHTML(device.id).replace(/"/g, '&quot;');
-          return `
-          <div class="iot-device-card available" data-device-id="${safeIotId}" style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:${colors.topology.deviceText};border-radius:8px;margin-bottom:8px;border:1px solid var(--color-secondary-200);cursor:pointer;" onclick="toggleIotDeviceSelection(${jsIotId})">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <input type="checkbox" class="iot-checkbox" data-device-id="${safeIotId}">
-              <span style="font-weight:600;">${safeIotName}</span>
-            </div>
-            <span class="badge">${sanitizeHTML(device.sensorType)}</span>
-          </div>
-        `;
-        }).join('')}
-        <div style="margin-top:12px;">
-          <button type="button" class="btn btn-primary" id="save-iot-btn" onclick="saveSelectedIotDevices()">
-            💾 ${isTurkish ? 'Seçili IoT Cihazlarını Bağla' : 'Connect Selected IoT Devices'}
-          </button>
-        </div>
-      </div>
-      ` : ''}
-    </div>
+    ${renderWifiAdminIotTemplate({
+      activeTab,
+      isTurkish,
+      connectedDevices: onlyIotConnectedDevices,
+      availableDevices: availableIotDevices,
+    })}
 
-    <!-- Admin Tab -->
-    <div id="admin-tab" class="content" style="display:${activeTab === 'admin' ? 'block' : 'none'};">
-      <h2 class="panel-title">👤 ${isTurkish ? 'Yönetici Hesabı' : 'Administrator Account'}</h2>
-      <p style="color:var(--color-secondary-500);margin-bottom:20px;">${isTurkish ? 'Yönetici paneli giriş bilgilerini güncelleyin. Şifre değiştirildiğinde bir sonraki girişte yeni bilgiler istenir.' : 'Update admin panel login credentials. After changing the password, the new credentials are required on next login.'}</p>
-
-      <div style="background:${colors.topology.deviceText};padding:20px;border-radius:10px;border:1px solid var(--color-secondary-200);max-width:520px;">
-        <h3 style="margin:0 0 16px 0;font-size:15px;color:var(--color-secondary-900);">🔑 ${isTurkish ? 'Şifre Değiştir' : 'Change Password'}</h3>
-        <form id="admin-credentials-form" onsubmit="handleSaveCredentials(event)">
-          <div class="form-group">
-            <label for="cred-current-password">${isTurkish ? 'Mevcut Şifre (Doğrulama)' : 'Current Password (Verification)'}</label>
-            <input type="password" id="cred-current-password" placeholder="${isTurkish ? 'Mevcut şifrenizi girin' : 'Enter your current password'}" required autocomplete="off">
-          </div>
-          <div class="form-group">
-            <label for="cred-new-username">${isTurkish ? 'Yeni Kullanıcı Adı' : 'New Username'}</label>
-            <input type="text" id="cred-new-username" value="${jsUsername}" required autocomplete="off">
-          </div>
-          <div class="grid-2">
-            <div class="form-group">
-              <label for="cred-new-password">${isTurkish ? 'Yeni Şifre' : 'New Password'}</label>
-              <input type="password" id="cred-new-password" minlength="4" placeholder="${isTurkish ? 'En az 4 karakter' : 'At least 4 characters'}" required autocomplete="new-password">
-            </div>
-            <div class="form-group">
-              <label for="cred-confirm-password">${isTurkish ? 'Yeni Şifre (Tekrar)' : 'Confirm New Password'}</label>
-              <input type="password" id="cred-confirm-password" minlength="4" placeholder="${isTurkish ? 'Şifreyi tekrar girin' : 'Repeat the password'}" required autocomplete="new-password">
-            </div>
-          </div>
-          <div id="cred-error" class="error-message" style="display:none;"></div>
-          <div id="cred-success" class="success-message" style="display:none;">✅ ${isTurkish ? 'Yönetici bilgileri güncellendi!' : 'Admin credentials updated!'}</div>
-          <div class="actions">
-            <button type="submit" class="btn btn-primary">💾 ${isTurkish ? 'Bilgileri Kaydet' : 'Save Credentials'}</button>
-            <button type="button" class="btn btn-secondary" onclick="resetCredentialsForm()">↺ ${isTurkish ? 'Sıfırla' : 'Reset'}</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
+    ${renderWifiAdminAccountTemplate(activeTab, isTurkish, jsUsername)}
     <!-- Status Tab -->
     <div id="status-tab" class="content" style="display:${activeTab === 'status' ? 'block' : 'none'};">
       <h2 class="panel-title">${isTurkish ? 'Ağ Durumu & Bağlı Cihazlar' : 'Network Status & Connected Devices'}</h2>

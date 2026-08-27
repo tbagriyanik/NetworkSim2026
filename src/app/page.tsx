@@ -122,6 +122,10 @@ const TopologyGeneratorDialog = dynamic(() => import('@/components/network/topol
 import { TabType, ALL_TABS, exampleLevelOrder } from './page.types';
 import { useHistory, ProjectState } from '@/hooks/useHistory';
 import { serializeState } from './page.utils';
+import { usePageProjectStorage } from './usePageProjectStorage';
+import { usePageModalManagement } from './usePageModalManagement';
+import { handlePageShortcut } from './pageKeyboardShortcuts';
+import { usePageTopologyCallbacks } from './usePageTopologyCallbacks';
 
 export default function Home({ initialProjectId }: { initialProjectId?: string }) {
   const { t, language, setLanguage } = useLanguage();
@@ -175,7 +179,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     focusDeviceId, setFocusDeviceId,
   } = useDeviceSelection();
 
-  const [loadedExampleId, setLoadedExampleId] = useState<string | null>(null);
+  const { projectName, setProjectName, loadedExampleId, setLoadedExampleId } = usePageProjectStorage();
   const [topologyKey, setTopologyKey] = useState(0);
   // Track last executed command and its output for guided mode
   const [lastCommand, setLastCommand] = useState<string>('');
@@ -186,38 +190,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
-  const [projectName, setProjectName] = useState<string>('Untitled');
-
-  // Load project name and loadedExampleId from localStorage on mount
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    try {
-      const savedName = localStorage.getItem('lastProjectName');
-      if (savedName) timer = setTimeout(() => setProjectName(savedName), 0);
-    } catch { /* ignore */ }
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    try {
-      const savedExampleId = localStorage.getItem('lastLoadedExampleId');
-      if (savedExampleId) {
-        timer = setTimeout(() => setLoadedExampleId(savedExampleId), 0);
-      }
-    } catch { /* ignore */ }
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    try {
-      if (loadedExampleId) {
-        localStorage.setItem('lastLoadedExampleId', loadedExampleId);
-      } else {
-        localStorage.removeItem('lastLoadedExampleId');
-      }
-    } catch { /* ignore */ }
-  }, [loadedExampleId]);
   const [projectSearchQuery, setProjectSearchQuery] = useState('');
   const [showBasarilarim, setShowBasarilarim] = useState(false);
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false);
@@ -375,13 +347,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   ]);
 
 
-
-  // Persist project name across refreshes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('lastProjectName', projectName);
-    }
-  }, [projectName]);
 
   // Record session duration on unload
   useEffect(() => {
@@ -561,70 +526,25 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     toast
   });
 
-  const handleDeviceSelectFromCanvas = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string, isNew?: boolean, deviceData?: CanvasDevice) => {
-    if (device === 'pc') {
-      setShowUnifiedDeviceModal(false);
-      setShowRouterPanel(false);
-      setShowFirewallPanel(false);
-    } else if (device === 'switchL2' || device === 'switchL3' || device === 'router' || device === 'firewall' || device === 'wlc') {
-      setShowPCPanel(false);
-    }
-    nav.handleDeviceSelectFromCanvas(device, deviceId, switchModel, deviceName, isNew, deviceData);
-
-    // Call checkStepCompletionWithContext for device access check
-    if (deviceId) {
-      const accessedType =
-        device === 'switchL2' || device === 'switchL3' ? 'switch' :
-          device === 'router' ? 'router' :
-            device === 'pc' ? 'pc' : null;
-
-      checkStepCompletionWithContext({
-        deviceAccessed: accessedType,
-        deviceAccessedId: deviceId,
-        deviceStates,
-        topologyConnections,
-        topologyDevices
-      });
-    }
-  }, [nav, setShowUnifiedDeviceModal, setShowRouterPanel, setShowFirewallPanel, setShowPCPanel, checkStepCompletionWithContext, deviceStates, topologyConnections, topologyDevices]);
-
-  const handleDeviceSelectFromMenu = useCallback((device: DeviceType, deviceId?: string, switchModel?: string, deviceName?: string) => {
-    if (device === 'pc') {
-      setShowUnifiedDeviceModal(false);
-      setShowRouterPanel(false);
-      setShowFirewallPanel(false);
-    } else if (device === 'switchL2' || device === 'switchL3' || device === 'router' || device === 'firewall' || device === 'wlc') {
-      setShowPCPanel(false);
-    }
-    nav.handleDeviceSelectFromMenu(device, deviceId, switchModel, deviceName);
-
-    // If the selected device already has a floating window, selecting it from
-    // the toolbar should also restore and focus that window. Do not create a
-    // new window here; the toolbar remains a topology-selection control.
-    if (deviceId) {
+  const { handleDeviceSelectFromCanvas, handleDeviceSelectFromMenu } = usePageTopologyCallbacks({
+    selectFromCanvas: nav.handleDeviceSelectFromCanvas,
+    selectFromMenu: nav.handleDeviceSelectFromMenu,
+    restoreSelectedWindow: (deviceId) => {
       const windowStore = useMultiWindowStore.getState();
       if (windowStore.isWindowOpen(deviceId)) {
         windowStore.restoreWindow(deviceId);
         useWindowStore.getState().setActiveWindow(deviceId);
       }
-    }
-
-    // Call checkStepCompletionWithContext for device access check
-    if (deviceId) {
-      const accessedType =
-        device === 'switchL2' || device === 'switchL3' ? 'switch' :
-          device === 'router' ? 'router' :
-            device === 'pc' ? 'pc' : null;
-
-      checkStepCompletionWithContext({
-        deviceAccessed: accessedType,
-        deviceAccessedId: deviceId,
-        deviceStates,
-        topologyConnections,
-        topologyDevices
-      });
-    }
-  }, [nav, setShowUnifiedDeviceModal, setShowRouterPanel, setShowFirewallPanel, setShowPCPanel, checkStepCompletionWithContext, deviceStates, topologyConnections, topologyDevices]);
+    },
+    closeUnified: setShowUnifiedDeviceModal,
+    closeRouter: setShowRouterPanel,
+    closeFirewall: setShowFirewallPanel,
+    closePC: setShowPCPanel,
+    checkStepCompletion: checkStepCompletionWithContext,
+    deviceStates,
+    topologyConnections,
+    topologyDevices,
+  });
   // Wrapper to match PCPanel's single-arg onNavigate signature
   const handlePCPanelNavigateWrapper = useCallback((program: string) => {
     handlePCPanelNavigate(program, activeDeviceId);
@@ -658,6 +578,31 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     window.addEventListener('mobile-back-pressed', handleMobileBack as EventListener);
     return () => window.removeEventListener('mobile-back-pressed', handleMobileBack as EventListener);
   }, [closeAllPanels, closeEscLikeWindows]);
+
+  usePageModalManagement({
+    hasUnsavedChanges,
+    modalHistoryPushedRef,
+    showMobileMenu,
+    confirmDialog,
+    saveDialog,
+    showPCPanel,
+    showFirewallPanel,
+    showRouterPanel,
+    showUnifiedDeviceModal,
+    showAboutModal,
+    showProjectPicker,
+    showOnboarding,
+    setShowMobileMenu,
+    setConfirmDialog,
+    setSaveDialog,
+    setShowPCPanel,
+    setShowRouterPanel,
+    setShowUnifiedDeviceModal,
+    setShowAboutModal,
+    setShowProjectPicker,
+    setShowOnboarding,
+    setShowBasarilarim,
+  });
 
   useEffect(() => {
     const timer = setTimeout(() => setHasHydrated(true), 0);
@@ -1450,56 +1395,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
   }, [deviceStates, topologyDevices, setTopologyDevices, setHasUnsavedChanges]);
 
-  // Beforeunload event for unsaved changes warning
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [hasUnsavedChanges]);
-
-  // Handle back/forward navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      setShowMobileMenu(false);
-      setConfirmDialog(null);
-      setSaveDialog(null);
-      if (!showPCPanel) {
-        setShowPCPanel(false);
-      }
-      setShowRouterPanel(false);
-      setShowUnifiedDeviceModal(false);
-      setShowAboutModal(false);
-      setShowProjectPicker(false);
-      setShowOnboarding(false);
-      setShowBasarilarim(false);
-      window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'back' } }));
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [showPCPanel, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding, setShowBasarilarim]);
-
-  // History pushState for back button tracking
-  useEffect(() => {
-    const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel || showFirewallPanel || showRouterPanel || showUnifiedDeviceModal || showAboutModal || showProjectPicker || showOnboarding;
-    if (anyModalOpen && !modalHistoryPushedRef.current) {
-      window.history.pushState({ modal: true }, '');
-      modalHistoryPushedRef.current = true;
-    }
-    if (!anyModalOpen) {
-      modalHistoryPushedRef.current = false;
-    }
-  }, [showMobileMenu, confirmDialog, saveDialog, showPCPanel, showRouterPanel, showUnifiedDeviceModal, showAboutModal, showProjectPicker, showOnboarding]);
-
-
-
-
   // Derive visible tabs based on current state
   const tabs = [{ ...ALL_TABS[0], label: t.networkTopology }];
 
@@ -2231,31 +2126,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             showProjectPicker={showProjectPicker}
             showOnboarding={showOnboarding}
             setShowAboutModal={setShowAboutModal}
-            onShortcut={(shortcut) => {
-              if (shortcut === 'next-device') {
-                if (topologyDevices.length === 0) return;
-                const currentIndex = topologyDevices.findIndex((device) => device.id === activeDeviceId);
-                const nextDevice = topologyDevices[(currentIndex + 1 + topologyDevices.length) % topologyDevices.length];
-                if (nextDevice) {
-                  handleDeviceSelectFromMenu(
-                    nextDevice.type,
-                    nextDevice.id,
-                    nextDevice.switchModel,
-                    nextDevice.name
-                  );
-                }
-                return;
-              }
-              const event = new KeyboardEvent('keydown', {
-                key: shortcut === 'windows' ? 'Tab' : shortcut === 'minimize' ? 'm' : 's',
-                code: shortcut === 'windows' ? 'Tab' : shortcut === 'minimize' ? 'KeyM' : 'KeyS',
-                bubbles: true,
-                cancelable: true,
-                shiftKey: shortcut === 'windows',
-                ctrlKey: shortcut === 'minimize' || shortcut === 'save',
-              });
-              window.dispatchEvent(event);
-            }}
+            onShortcut={(shortcut) => handlePageShortcut(shortcut, topologyDevices, activeDeviceId, handleDeviceSelectFromMenu)}
           />
 
 

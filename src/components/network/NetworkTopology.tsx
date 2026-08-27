@@ -11,7 +11,7 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 import { useNetworkRefreshWithPositions } from '@/hooks/useNetworkRefreshWithPositions';
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { toast } from "@/hooks/use-toast";
-import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, ContextMenuState, ContextMenuMode, NetworkTopologyProps } from './networkTopology.types';
+import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, ContextMenuState, NetworkTopologyProps } from './networkTopology.types';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 
@@ -50,6 +50,7 @@ import { useTopologyTooltipHandlers } from './hooks/useTopologyTooltipHandlers';
 import { useTopologyNoteActions } from './hooks/useTopologyNoteActions';
 import { useTopologyPortConnection } from './hooks/useTopologyPortConnection';
 import { useTopologyEventListeners } from './hooks/useTopologyEventListeners';
+import { useTopologyContextMenu } from './hooks/useTopologyContextMenu';
 import { useDeviceNavigation } from './hooks/useDeviceNavigation';
 import { CanvasToolbar } from './topology/CanvasToolbar';
 import { TopologyDeviceRenderer } from './topology/TopologyDeviceRenderer';
@@ -945,29 +946,10 @@ export function NetworkTopology({
     };
   }, []);
 
-  // Handle right-click context menu with viewport clamping
-  const openContextMenu = useCallback((clientX: number, clientY: number, deviceId: string | null = null, mode: ContextMenuMode = deviceId ? 'device' : 'canvas', noteId: string | null = null) => {
-    const menuWidth = 180;
-    const menuHeight = deviceId ? 400 : 200;
-
-    let x = clientX;
-    let y = clientY;
-
-    if (x + menuWidth > window.innerWidth) {
-      x = window.innerWidth - menuWidth - 10;
-    }
-
-    if (y + menuHeight > window.innerHeight) {
-      y = window.innerHeight - menuHeight - 10;
-    }
-
-    x = Math.max(10, x);
-    y = Math.max(10, y);
-
-    window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    setContextMenu({ x, y, deviceId, noteId, mode });
-  }, []);
-
+  const { openContextMenu, handleContextMenu } = useTopologyContextMenu({
+    setContextMenu,
+    pingMode,
+  });
   const getDeviceIdsInSelectionBox = useCallback((box: { start: { x: number; y: number }; current: { x: number; y: number } }) => {
     const x1 = Math.min(box.start.x, box.current.x);
     const y1 = Math.min(box.start.y, box.current.y);
@@ -1219,42 +1201,6 @@ export function NetworkTopology({
 
     handleDeviceMouseDown(e as unknown as ReactMouseEvent, deviceId);
   }, [handleDeviceMouseDown, deviceMap, handleDeviceDoubleClick]);
-
-  // Handle right-click context menu with viewport clamping
-  const handleContextMenu = useCallback((e: ReactMouseEvent, deviceId?: string) => {
-    // If in ping mode, don't show context menu to avoid interfering with target selection
-    if (pingMode) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Estimate menu dimensions (approximate)
-    const menuWidth = 180;
-    const menuHeight = deviceId ? 400 : 200;
-
-    // Clamp coordinates to stay within viewport
-    let x = e.clientX;
-    let y = e.clientY;
-
-    if (x + menuWidth > window.innerWidth) {
-      x = window.innerWidth - menuWidth - 10;
-    }
-
-    if (y + menuHeight > window.innerHeight) {
-      y = window.innerHeight - menuHeight - 10;
-    }
-
-    // Ensure it doesn't go off the top/left either
-    x = Math.max(10, x);
-    y = Math.max(10, y);
-
-    window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'topology' } }));
-    openContextMenu(x, y, deviceId || null, deviceId ? 'device' : 'canvas');
-  }, [openContextMenu, pingMode]);
 
   const {
     handleDeviceTouchStart,

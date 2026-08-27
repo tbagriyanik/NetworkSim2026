@@ -1,10 +1,11 @@
 import type { OutputLine } from './PCPanel.types';
 import {
-  loadFs, saveFs, readFile, writeFile, deleteFile, removeDir, makeDir, getNode, resolvePath, copyFile, moveNode
+  loadFs, saveFs, readFile, writeFile, getNode, resolvePath
 } from './pcFileSystem';
-import type { FSNode } from './pcFileSystem';
 import { executePythonScript } from './pcPythonRunner';
 import { formatLinuxPath, formatWinToUnixPath } from './pcLinuxPathUtils';
+import { expandShellVariables, parseOutputRedirection, parseShellAssignment, setShellVariable, splitPipeline, splitShellWords } from './pcLinuxShellParser';
+import { executeLinuxFileCommand } from './pcLinuxFileCommands';
 export { formatLinuxPath, formatWinToUnixPath } from './pcLinuxPathUtils';
 
 export interface LinuxExecutorParams {
@@ -36,16 +37,6 @@ export const LINUX_SUGGESTIONS = [
   'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'history', 'echo', 'sudo', 'help', 'date', 'uptime',
   'for', 'while', 'if', 'python3', 'python'
 ];
-
-const shellVariables = new Map<string, Record<string, string>>();
-
-function expandShellVariables(input: string, deviceId: string, currentPath?: string, hostname?: string): string {
-  const vars = shellVariables.get(deviceId) || {};
-  const withSubstitution = input.replace(/\$\((pwd|hostname|whoami)\)/g, (_, command) =>
-    command === 'pwd' ? formatWinToUnixPath(currentPath || 'C:\\') : command === 'hostname' ? (hostname || '') : 'user');
-  return withSubstitution.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)/g,
-    (_, braced, plain) => vars[braced || plain] ?? '');
-}
 
 const FILE_COMMANDS = new Set([
   'cd', 'ls', 'dir', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'nano', 'vim', 'vi', 'notepad', 'python', 'python3', 'sh', 'bash'
@@ -133,20 +124,6 @@ export function getLinuxSuggestions(
   return candidates;
 }
 
-function removeTree(fs: FSNode, path: string): boolean {
-  const parts = path.replace(/\\/g, '/').split('/').filter(Boolean);
-  if (parts.length === 0) return false;
-  const name = parts.pop() as string;
-  let parent: FSNode = fs;
-  for (const part of parts) {
-    if (parent.type !== 'dir' || !parent.children[part]) return false;
-    parent = parent.children[part];
-  }
-  if (parent.type !== 'dir' || !parent.children[name]) return false;
-  delete parent.children[name];
-  return true;
-}
-
 export async function executeLinuxCommand(
   cmdLine: string,
   params: LinuxExecutorParams
@@ -176,7 +153,7 @@ export async function executeLinuxCommand(
 
   const isSudo = rawCmd.startsWith('sudo ');
   const cleanCmd = isSudo ? rawCmd.substring(5).trim() : rawCmd;
-  const parts = cleanCmd.split(/\s+/);
+  const parts = splitShellWords(cleanCmd);
   const command = parts[0].toLowerCase();
   const args = parts.slice(1);
 
@@ -189,7 +166,7 @@ export async function executeLinuxCommand(
 
   // 1. Handle Pipe (|) Pipelines (e.g. ifconfig | grep inet, cat file.txt | grep -i test | wc -l)
   if (cleanCmd.includes('|') && !params.silent) {
-    const pipeline = cleanCmd.split('|').map(c => c.trim()).filter(Boolean);
+    const pipeline = splitPipeline(cleanCmd);
     if (pipeline.length > 1) {
       addLocalOutput('command', rawCmd, linuxPrompt);
       let pipeData = '';
@@ -204,7 +181,7 @@ export async function executeLinuxCommand(
           else stageOutput += (stageOutput ? '\n' : '') + content;
         };
 
-        const stageParts = stageCmd.split(/\s+/);
+        const stageParts = splitShellWords(stageCmd);
         const stageName = stageParts[0].toLowerCase();
         const stageArgs = stageParts.slice(1);
 
@@ -262,12 +239,11 @@ export async function executeLinuxCommand(
   }
 
   // 2. Handle Output Redirection (> and >>) for any command (e.g., ifconfig > ifconfig.txt, ping 127.0.0.1 >> log.txt)
-  if ((cleanCmd.includes(' > ') || cleanCmd.includes(' >> ') || cleanCmd.includes('>') || cleanCmd.includes('>>')) && !cleanCmd.startsWith('echo ')) {
-    const isAppend = cleanCmd.includes('>>');
-    const splitToken = isAppend ? '>>' : '>';
-    const lastTokenIdx = cleanCmd.lastIndexOf(splitToken);
-    const targetCmdStr = cleanCmd.substring(0, lastTokenIdx).trim();
-    const targetFileArg = cleanCmd.substring(lastTokenIdx + splitToken.length).trim().split(/\s+/)[0];
+  const redirection = parseOutputRedirection(cleanCmd);
+  if (redirection && !cleanCmd.startsWith('echo ')) {
+    const targetCmdStr = redirection.command;
+    const targetFileArg = redirection.target;
+    const isAppend = redirection.operator === '>>';
 
     if (targetCmdStr && targetFileArg) {
       if (!params.silent) {
@@ -312,21 +288,17 @@ export async function executeLinuxCommand(
   }
 
   // Shell variable assignment: NAME=value, export NAME=value
-  const assignment = cleanCmd.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+  const assignment = parseShellAssignment(cleanCmd);
   if (assignment) {
-    const vars = shellVariables.get(deviceId) || {};
-    vars[assignment[1]] = assignment[2].replace(/^['"]|['"]$/g, '');
-    shellVariables.set(deviceId, vars);
+    setShellVariable(deviceId, assignment.name, assignment.value);
     return;
   }
 
   if (command === 'export') {
     const exportArg = args[0] || '';
-    const exportMatch = exportArg.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    const exportMatch = parseShellAssignment(exportArg);
     if (exportMatch) {
-      const vars = shellVariables.get(deviceId) || {};
-      vars[exportMatch[1]] = exportMatch[2].replace(/^['"]|['"]$/g, '');
-      shellVariables.set(deviceId, vars);
+      setShellVariable(deviceId, exportMatch.name, exportMatch.value);
     }
     return;
   }
@@ -552,281 +524,14 @@ These shell commands are defined internally. Type 'help' to see this list.
     return;
   }
 
-  // Handle echo & file redirection (e.g. echo "hello" > test.txt)
-  if (command === 'echo') {
-    const redirGtIdx = args.indexOf('>');
-    const redirAgtIdx = args.indexOf('>>');
-    if (redirGtIdx !== -1 || redirAgtIdx !== -1) {
-      const isAppend = redirAgtIdx !== -1;
-      const splitIdx = isAppend ? redirAgtIdx : redirGtIdx;
-      const textToEcho = args.slice(0, splitIdx).join(' ').replace(/^["']|["']$/g, '');
-      const targetFileName = args[splitIdx + 1];
-      if (!targetFileName) {
-        addLocalOutput('error', 'bash: syntax error near unexpected token \'newline\'');
-        return;
-      }
-      const fs = loadFs(deviceId);
-      const targetPath = resolvePath(currentPath, targetFileName);
-      const existingContent = isAppend ? (readFile(fs, targetPath) || '') : '';
-      const newContent = isAppend ? (existingContent ? `${existingContent}\n${textToEcho}` : textToEcho) : textToEcho;
-      writeFile(fs, targetPath, newContent);
-      saveFs(deviceId, fs);
-      return;
-    }
-
-    addLocalOutput('output', args.join(' '));
+  if (executeLinuxFileCommand(command, args, {
+    deviceId,
+    currentPath,
+    setCurrentPath,
+    addLocalOutput,
+  })) {
     return;
   }
-
-  // List directory contents using exact PC file system
-  if (command === 'ls' || command === 'dir') {
-    const fs = loadFs(deviceId);
-    const flags = args.filter(a => a.startsWith('-')).join('').replace(/^-+/g, '');
-    const targetArg = args.find(a => !a.startsWith('-')) || '';
-    const isLong = flags.includes('l');
-    const showAll = flags.includes('a');
-    const humanSize = flags.includes('h');
-
-    const targetWinPath = targetArg ? resolvePath(currentPath, targetArg) : currentPath;
-    const targetNode = getNode(fs, targetWinPath);
-
-    if (!targetNode) {
-      addLocalOutput('error', `ls: cannot access '${targetArg || formatLinuxPath(currentPath)}': No such file or directory`);
-      return;
-    }
-
-    if (targetNode.type === 'file') {
-      addLocalOutput('output', targetArg || targetWinPath.split('\\').pop() || 'file');
-      return;
-    }
-
-    const items: { name: string; isDir: boolean; isExec: boolean; size: number; modifiedAt: string }[] = [];
-
-    if (showAll) {
-      items.push({ name: '.', isDir: true, isExec: false, size: 4096, modifiedAt: 'Aug 27 12:00' });
-      items.push({ name: '..', isDir: true, isExec: false, size: 4096, modifiedAt: 'Aug 27 12:00' });
-    }
-
-    Object.entries(targetNode.children).forEach(([name, child]) => {
-      const isDir = child.type === 'dir';
-      const isExec = child.type === 'file' && (child.isExecutable !== undefined ? child.isExecutable : (name.endsWith('.sh') || name.endsWith('.py')));
-      const size = child.type === 'file' ? (child.size || child.content.length || 0) : 4096;
-      let dateStr = 'Aug 27 12:00';
-      if (child.modifiedAt) {
-        try {
-          const d = new Date(child.modifiedAt);
-          dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) + ' ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-        } catch { }
-      }
-      items.push({ name, isDir, isExec, size, modifiedAt: dateStr });
-    });
-
-    if (flags.includes('t')) items.sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt));
-    if (flags.includes('r')) items.reverse();
-    if (isLong) {
-      const formatted = items.map(item => {
-        const perms = item.isDir ? 'drwxr-xr-x 2 user user' : (item.isExec ? '-rwxr-xr-x 1 user user' : '-rw-r--r-- 1 user user');
-        const sizeText = humanSize && item.size >= 1024 ? `${(item.size / 1024).toFixed(1)}K` : item.size.toString();
-        const sz = sizeText.padStart(6);
-        return `${perms} ${sz} ${item.modifiedAt} ${item.name}`;
-      }).join('\n');
-      addLocalOutput('output', `total ${items.length * 4}\n${formatted}`);
-    } else {
-      const formatted = items.map(i => i.isDir ? `${i.name}/` : (i.isExec ? `${i.name}*` : i.name)).join('  ');
-      addLocalOutput('output', formatted || '(empty)');
-    }
-    return;
-  }
-
-  // Change directory using resolvePath on PC file system
-  if (command === 'cd') {
-    const targetArg = args[0] || '~';
-    if (targetArg === '~' || targetArg === '/home/user' || targetArg === '/') {
-      setCurrentPath('C:\\');
-      return;
-    }
-    if (targetArg === '..') {
-      const parentPath = resolvePath(currentPath, '..');
-      setCurrentPath(parentPath);
-      return;
-    }
-
-    const fs = loadFs(deviceId);
-    const targetWinPath = resolvePath(currentPath, targetArg);
-    const targetNode = getNode(fs, targetWinPath);
-
-    if (!targetNode) {
-      addLocalOutput('error', `bash: cd: ${targetArg}: No such file or directory`);
-      return;
-    }
-
-    if (targetNode.type !== 'dir') {
-      addLocalOutput('error', `bash: cd: ${targetArg}: Not a directory`);
-      return;
-    }
-
-    setCurrentPath(targetWinPath);
-    return;
-  }
-
-  // Read file from PC file system
-  if (command === 'cat') {
-    const fileName = args[0];
-    if (!fileName) {
-      addLocalOutput('error', 'cat: missing file operand');
-      return;
-    }
-    const fs = loadFs(deviceId);
-    const fullPath = resolvePath(currentPath, fileName);
-    const content = readFile(fs, fullPath);
-    if (content !== null) {
-      addLocalOutput('output', content);
-    } else {
-      addLocalOutput('error', `cat: ${fileName}: No such file or directory`);
-    }
-    return;
-  }
-
-  // Standalone grep command (e.g. grep "inet" config.txt, grep -i "test" file.txt)
-  if (command === 'grep') {
-    const isCaseInsensitive = args.some(a => a === '-i' || a === '-ic' || a === '-ci');
-    const isCountOnly = args.some(a => a === '-c' || a === '-ic' || a === '-ci');
-    const nonFlags = args.filter(a => !a.startsWith('-'));
-
-    if (nonFlags.length < 1) {
-      addLocalOutput('error', 'grep: option requires an argument');
-      return;
-    }
-
-    const pattern = nonFlags[0].replace(/^["']|["']$/g, '');
-    const fileArg = nonFlags[1];
-
-    if (!fileArg) {
-      addLocalOutput('error', 'grep: missing target file');
-      return;
-    }
-
-    const fs = loadFs(deviceId);
-    const fullPath = resolvePath(currentPath, fileArg);
-    const content = readFile(fs, fullPath);
-
-    if (content === null) {
-      addLocalOutput('error', `grep: ${fileArg}: No such file or directory`);
-      return;
-    }
-
-    const lines = content.split(/\r?\n/);
-    let regex: RegExp;
-    try { regex = new RegExp(pattern, isCaseInsensitive ? 'i' : ''); }
-    catch {
-      addLocalOutput('error', `grep: invalid regular expression: ${pattern}`);
-      return;
-    }
-    const matched = lines.filter(l => regex.test(l));
-
-    if (isCountOnly) {
-      addLocalOutput('output', matched.length.toString());
-    } else {
-      addLocalOutput('output', matched.join('\n'));
-    }
-    return;
-  }
-
-  // Create empty file in PC file system
-  if (command === 'touch') {
-    const fileName = args[0];
-    if (!fileName) {
-      addLocalOutput('error', 'touch: missing file operand');
-      return;
-    }
-    const fs = loadFs(deviceId);
-    const fullPath = resolvePath(currentPath, fileName);
-    writeFile(fs, fullPath, '');
-    saveFs(deviceId, fs);
-    return;
-  }
-
-  // Create folder in PC file system
-  if (command === 'mkdir') {
-    const dirName = args.find(a => !a.startsWith('-'));
-    if (!dirName) {
-      addLocalOutput('error', 'mkdir: missing operand');
-      return;
-    }
-    const fs = loadFs(deviceId);
-    const fullPath = resolvePath(currentPath, dirName);
-    if (!makeDir(fs, fullPath)) {
-      addLocalOutput('error', `mkdir: cannot create directory '${dirName}'`);
-      return;
-    }
-    saveFs(deviceId, fs);
-    return;
-  }
-
-  // Remove file or folder in PC file system
-  if (command === 'rm') {
-    const recursive = args.some(a => a === '-r' || a === '-R');
-    const force = args.includes('-f');
-    const fileName = args.filter(a => !a.startsWith('-'))[0];
-    if (!fileName) {
-      addLocalOutput('error', 'rm: missing operand');
-      return;
-    }
-    const fs = loadFs(deviceId);
-    const fullPath = resolvePath(currentPath, fileName);
-    const node = getNode(fs, fullPath);
-    if (!node) {
-      if (force) return;
-      addLocalOutput('error', `rm: cannot remove '${fileName}': No such file or directory`);
-      return;
-    }
-    const removed = node.type === 'dir'
-      ? (recursive ? removeTree(fs, fullPath) : removeDir(fs, fullPath))
-      : deleteFile(fs, fullPath);
-    if (!removed) {
-      addLocalOutput('error', `rm: cannot remove '${fileName}': ${node.type === 'dir' ? 'Is a directory or directory is not empty' : 'Operation not permitted'}`);
-      return;
-    }
-    saveFs(deviceId, fs);
-    return;
-  }
-
-  // Copy file in PC file system
-  if (command === 'cp') {
-    const [src, dest] = args;
-    if (!src || !dest) {
-      addLocalOutput('error', 'cp: missing file operand');
-      return;
-    }
-    const fs = loadFs(deviceId);
-    const srcPath = resolvePath(currentPath, src);
-    const destPath = resolvePath(currentPath, dest);
-    if (copyFile(fs, srcPath, destPath)) {
-      saveFs(deviceId, fs);
-    } else {
-      addLocalOutput('error', `cp: cannot stat '${src}': No such file or directory`);
-    }
-    return;
-  }
-
-  // Move / Rename file in PC file system
-  if (command === 'mv') {
-    const [src, dest] = args;
-    if (!src || !dest) {
-      addLocalOutput('error', 'mv: missing file operand');
-      return;
-    }
-    const fs = loadFs(deviceId);
-    const srcPath = resolvePath(currentPath, src);
-    const destPath = resolvePath(currentPath, dest);
-    if (moveNode(fs, srcPath, destPath)) {
-      saveFs(deviceId, fs);
-    } else {
-      addLocalOutput('error', `mv: cannot stat '${src}': No such file or directory`);
-    }
-    return;
-  }
-
   // Execute Shell / Bash / Direct executable scripts on PC file system
   if (command === 'bash' || command === 'sh' || command.startsWith('./') || command.startsWith('.\\')) {
     const scriptArg = (command === 'bash' || command === 'sh') ? args[0] : command;
