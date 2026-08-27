@@ -47,7 +47,7 @@ Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik 
 
 ---
 
-## Latest Updates (v2.7.0)
+## Latest Updates (v3.3.3)
 
 | English | Türkçe |
 | --- | --- |

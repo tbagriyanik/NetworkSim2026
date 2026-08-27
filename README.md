@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-3.3.0-blue)
+![Version](https://img.shields.io/badge/version-3.3.3-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.2-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -26,13 +26,12 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
-- **Linux Bash Shell & Standart Modüler Pencere UI/UX (v3.3.0):** Linux Terminaline `for` döngüleri, `if/else` koşul blokları, Pipe (`|`) boru hattı, Çıktı yönlendirmeleri (`>` ve `>>`), `grep` ve `wc` filtreleme komutları eklendi. `ping 127.0.0.1` döngü adresi ve `chmod -x` izin mantığı düzeltildi. Uygulamadaki tüm modallar (`ModernPanel`, `TeacherRoomPanel`, `RoomJoinDialog`, `BasarilarimPanel`) standart kırmızı daire içinde beyaz X kapatma butonlarına ve tutarlı pencere mimarisine kavuşturuldu.
+- **Linux Bash Shell & Standart Modüler Pencere UI/UX:** Linux Terminaline `for` döngüleri, `if/else` koşul blokları, Pipe (`|`) boru hattı, Çıktı yönlendirmeleri (`>` ve `>>`), `grep` ve `wc` filtreleme komutları eklendi. `ping 127.0.0.1` döngü adresi ve `chmod -x` izin mantığı düzeltildi. Uygulamadaki tüm modallar (`ModernPanel`, `TeacherRoomPanel`, `RoomJoinDialog`, `BasarilarimPanel`) standart kırmızı daire içinde beyaz X kapatma butonlarına ve tutarlı pencere mimarisine kavuşturuldu.
 - **Linux Bash Terminali & Betik/İzin Desteği:** PC panelindeki Linux Terminal sekmesinde `ftp`, `ssh`, `telnet` ağ bağlantı komutları, `history`, dosya izin yönetimi (`chmod +x`, `chmod 755`, `chown`), `ls -l` detaylı görünümü ve `./script.sh` şeklinde doğrudan yetkili betik çalıştırma desteği eklendi. Ayrıca `Ctrl+L` ekran temizleme ve cihaz yeniden başlatıldığında terminal sıfırlanması sağlandı.
 - **Gelişmiş Python Yorumlayıcısı & OOP Desteği:** PC Python ortamında nesne yönelimli programlama (`class`, `__init__`, kalıtım, `super()`, `isinstance()`, `@property`, `@staticmethod`, `@classmethod`), generator (`yield` / `yield from`), modül eklentileri (`json`, `re`, `socket`, `os.path`) ve dunder korumalı güvenlik katmanı aktif edildi.
 - **Protocol & CLI Kapsam Notu:** PPPoE, IP SLA, MSTP, OSPF, EIGRP vb. protokolleri için tam CLI konfigürasyon ve `show` komutu desteği sunulmaktadır. Paket-seviyesi durum makineleri (state machines) öğretim simülasyonu odağında optimize edilmiştir.
 - **Kullanıcı Tanımlı Batch (.bat) Yığın Dosyaları:** PC Komut İstemi'nde (CMD) kullanıcı tanımlı `.bat` ve `.cmd` dosyalarını çalıştırma, değişken ikamesi (`%VAR%`, `%1`), `@echo off`, `set`, `goto`, `call` desteği ve Dosya Düzenleyici başlığında `Batch Yığın Dosyası` rozeti entegre edildi.
 - **Gelişmiş Paket Yakalama & Analizi (Packet Capture):** Paket yakalama paneline canlı IP/protokol/içerik arama, sayfalama (pagination) ve virgül/boşluk ile çoklu dışlama filtresi (`cdp, stp, arp` vb.) eklendi.
-- **Arka Plan Ağ Hareketliliği Kaydı:** DHCP DORA akışı (`Discover`, `Offer`, `Request`, `ACK`), `STP BPDU`, `CDP`, `OSPF Hello`, `RIP`, `EIGRP` güncellemeleri ve `WLAN Beacon` paketleri canlı paket yakalama tablosuna otomatik olarak entegre edildi.
 - **Çoklu Cihaz Penceresi Kısayolları:** `Tab` ile sonraki cihaza geçin; açık cihaz pencereleri arasında `Shift+Tab` ile geçiş yapın, `Ctrl+M` ile etkin pencereyi küçültün. Alt çubuktaki kısayollar tıklanarak da çalıştırılabilir.
 
 
@@ -40,7 +39,7 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.3.0 |
+| Version / Sürüm | 3.3.3 |
 | Total Lines / Toplam Satır (src/) | 140,463 |
 | Source Files / Kaynak Dosya | 593 |
 | Documentation Files / Dokümantasyon Dosya | 22 |
@@ -51,22 +50,22 @@ npm install && npm run dev
 
 ## Documentation / Dokümantasyon
 
-| Document / Doküman | Description / Açıklama |
-| --- | --- |
-| [INSTALL.md](INSTALL.md) | Kurulum & derleme / Installation & build |
-| [USAGE.md](doc/getting-started/USAGE.md) | Kullanım kılavuzu & klavye kısayolları / Usage guide & shortcuts |
-| [PC_CMD_REFERENCE.md](doc/getting-started/PC_CMD_REFERENCE.md) | PC CMD komut parametreleri / PC CMD command parameters |
-| [TOPOLOGY_GENERATOR.md](doc/getting-started/TOPOLOGY_GENERATOR.md) | Topoloji üretici sihirbazı / Topology generator guide |
-| [CLI_COMMANDS.md](doc/cli/CLI_COMMANDS.md) | CLI komut referansı / CLI command reference |
-| [CLI_GUIDED_TUTORIAL.md](doc/cli/CLI_GUIDED_TUTORIAL.md) | Rehberli CLI dersleri / Guided CLI lessons |
-| [WIRELESS_CONFIGURATION_GUIDE.md](doc/network/WIRELESS_CONFIGURATION_GUIDE.md) | Kablosuz ağ yapılandırma / Wireless configuration |
-| [L3_SWITCH_CONFIGURATION.md](doc/network/L3_SWITCH_CONFIGURATION.md) | L3 switch yapılandırma / L3 switch configuration |
-| [PACKET_CAPTURE_GUIDE.md](doc/network/PACKET_CAPTURE_GUIDE.md) | Paket yakalama paneli / Packet capture guide |
-| [ProjeOzellikleri.md](doc/training/ProjeOzellikleri.md) | Tüm özellikler envanteri / Full features inventory (TR/EN) |
-| [NETWORK_SIMULATOR_KITAPCIK.md](doc/training/NETWORK_SIMULATOR_KITAPCIK.md) | Türkçe eğitim kitapçığı / Turkish training booklet |
-| [history.md](doc/history.md) | Sürüm geçmişi / Full changelog |
-| [DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Tüm belgeler için indeks / Full documentation index |
-| [CONTRIBUTING.md](doc/development/CONTRIBUTING.md) | Katkı rehberi & agent konvansiyonları / Contribution guide |
+| Bölüm / Section | Doküman / Document | Açıklama / Description |
+| --- | --- | --- |
+| **Ana kaynak / Main guide** | [NETWORK_SIMULATOR_KITAPCIK.md](doc/training/NETWORK_SIMULATOR_KITAPCIK.md) | Tüm özellikler, eğitim ve laboratuvarlar / Complete guide, features and labs |
+| **Kurulum / Setup** | [INSTALL.md](INSTALL.md) | Kurulum ve derleme / Installation and build |
+| **Başlangıç / Getting started** | [USAGE.md](doc/getting-started/USAGE.md) | Kullanım ve klavye kısayolları / Usage and shortcuts |
+|  | [PC_CMD_REFERENCE.md](doc/getting-started/PC_CMD_REFERENCE.md) | PC CMD komutları / PC CMD commands |
+|  | [TOPOLOGY_GENERATOR.md](doc/getting-started/TOPOLOGY_GENERATOR.md) | Topoloji üretici sihirbazı / Topology generator |
+| **CLI** | [CLI_COMMANDS.md](doc/cli/CLI_COMMANDS.md) | CLI komut referansı / CLI command reference |
+|  | [CLI_GUIDED_TUTORIAL.md](doc/cli/CLI_GUIDED_TUTORIAL.md) | Rehberli CLI dersleri / Guided CLI lessons |
+| **Ağ / Networking** | [WIRELESS_CONFIGURATION_GUIDE.md](doc/network/WIRELESS_CONFIGURATION_GUIDE.md) | Kablosuz ağ yapılandırması / Wireless configuration |
+|  | [L3_SWITCH_CONFIGURATION.md](doc/network/L3_SWITCH_CONFIGURATION.md) | L3 switch yapılandırması / L3 switch configuration |
+|  | [PACKET_CAPTURE_GUIDE.md](doc/network/PACKET_CAPTURE_GUIDE.md) | Paket yakalama paneli / Packet capture panel |
+| **Referans / Reference** | [ProjeOzellikleri.md](doc/training/ProjeOzellikleri.md) | Özellik envanteri / Feature inventory |
+|  | [DOCUMENTATION_INDEX.md](doc/DOCUMENTATION_INDEX.md) | Tüm belgelerin indeksi / Documentation index |
+|  | [history.md](doc/history.md) | Sürüm geçmişi / Changelog |
+| **Geliştirme / Development** | [CONTRIBUTING.md](doc/development/CONTRIBUTING.md) | Katkı ve geliştirme rehberi / Contribution guide |
 
 ## Keyboard Shortcuts / Klavye Kısayolları
 

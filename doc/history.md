@@ -294,3 +294,7 @@ Yeniden eskiye, tarih ve özellik listesi.
 ---
 
 *Bu dosya [doc/history.md](history.md) — Network Simulator proje değişiklik günlüğü.*
+# 3.3.3
+
+- Dokümantasyon kitapçığı tek güncel ana belge olarak düzenlendi.
+- Paket yakalama OSI katman ayrıştırması, GRE Tunnel ve PPPoE CHAP yapılandırmaları güncellendi.
