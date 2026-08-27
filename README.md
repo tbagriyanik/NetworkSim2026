@@ -40,7 +40,7 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.2.0 |
+| Version / Sürüm | 3.3.0 |
 | Total Lines / Toplam Satır (src/) | 139,445 |
 | Source Files / Kaynak Dosya | 554 |
 | Documentation Files / Dokümantasyon Dosya | 22 |

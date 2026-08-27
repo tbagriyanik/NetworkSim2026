@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { DraggableWindowWrapper } from '../DraggableWindowWrapper';
 import { useDrag } from '@/hooks/useDrag';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface NetworkEventLogPanelProps {
   isOpen: boolean;
@@ -97,29 +98,25 @@ export function NetworkEventLogPanel({ isOpen, onClose, isDark }: NetworkEventLo
         )}>
           <div className="flex items-center gap-1 flex-1 min-w-0">
             <Filter className={cn("w-4 h-4 mr-1 shrink-0", isDark ? "text-slate-400" : "text-slate-500")} />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as 'all' | 'error' | 'warning' | 'info')}
-              className={cn(
-                "text-xs font-medium rounded-lg border px-2.5 py-1 h-8 outline-none flex-1 min-w-0 font-[family-name:var(--font-inria-sans)] cursor-pointer transition-colors shadow-sm tracking-wide",
+            <Select value={filter} onValueChange={(val) => setFilter(val as 'all' | 'error' | 'warning' | 'info')}>
+              <SelectTrigger className={cn(
+                "h-8 text-xs font-medium border px-2.5 py-1 flex-1 min-w-0 cursor-pointer shadow-sm tracking-wide",
                 isDark
-                  ? "bg-slate-900 border-slate-700 text-slate-100 hover:border-slate-600 focus:border-primary/60"
-                  : "bg-white border-slate-300 text-slate-800 hover:border-slate-400 focus:border-primary/60"
-              )}
-            >
-              <option value="all" className={cn("font-[family-name:var(--font-inria-sans)]", isDark ? "bg-slate-900 text-slate-100" : "bg-white text-slate-800")}>
-                {language === 'tr' ? 'Tümü' : 'All'}
-              </option>
-              <option value="info" className={cn("font-[family-name:var(--font-inria-sans)]", isDark ? "bg-slate-900 text-slate-100" : "bg-white text-slate-800")}>
-                {language === 'tr' ? 'Sadece Bilgilendirme' : 'Info Only'}
-              </option>
-              <option value="warning" className={cn("font-[family-name:var(--font-inria-sans)]", isDark ? "bg-slate-900 text-slate-100" : "bg-white text-slate-800")}>
-                {language === 'tr' ? 'Sadece Uyarılar' : 'Warnings Only'}
-              </option>
-              <option value="error" className={cn("font-[family-name:var(--font-inria-sans)]", isDark ? "bg-slate-900 text-slate-100" : "bg-white text-slate-800")}>
-                {language === 'tr' ? 'Sadece Hatalar' : 'Errors Only'}
-              </option>
-            </select>
+                  ? "bg-slate-900 border-slate-700 text-slate-100 hover:border-slate-600 focus:ring-1 focus:ring-primary/60"
+                  : "bg-white border-slate-300 text-slate-800 hover:border-slate-400 focus:ring-1 focus:ring-primary/60"
+              )}>
+                <SelectValue placeholder={language === 'tr' ? 'Filtrele...' : 'Filter...'} />
+              </SelectTrigger>
+              <SelectContent className={cn(
+                "z-[10002] text-xs font-medium border shadow-xl rounded-lg overflow-hidden",
+                isDark ? "bg-slate-900 border-slate-700 text-slate-100" : "bg-white border-slate-200 text-slate-900"
+              )}>
+                <SelectItem value="all" className="cursor-pointer text-xs py-1.5">{language === 'tr' ? 'Tümü' : 'All'}</SelectItem>
+                <SelectItem value="info" className="cursor-pointer text-xs py-1.5">{language === 'tr' ? 'Sadece Bilgilendirme' : 'Info Only'}</SelectItem>
+                <SelectItem value="warning" className="cursor-pointer text-xs py-1.5">{language === 'tr' ? 'Sadece Uyarılar' : 'Warnings Only'}</SelectItem>
+                <SelectItem value="error" className="cursor-pointer text-xs py-1.5">{language === 'tr' ? 'Sadece Hatalar' : 'Errors Only'}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button
             variant="outline"

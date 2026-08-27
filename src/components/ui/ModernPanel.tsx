@@ -393,13 +393,10 @@ export function ModernPanel({
             {/* Resize Handle - Minimal */}
             {canResize && (
                 <div
-                    className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize flex items-end justify-end p-0.5 opacity-30 hover:opacity-100 transition-opacity"
+                    className="absolute bottom-1 right-1 w-4 h-4 cursor-se-resize flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity z-50 select-none"
                     onMouseDown={handleResizeStart}
                 >
-                    <div className={cn(
-                        "w-1.5 h-1.5 rounded-full",
-                        isDark ? "bg-secondary-600" : "bg-secondary-400"
-                    )} />
+                    <div className={cn("w-2.5 h-2.5 rounded-br-full border-b-2 border-r-2 bg-transparent", isDark ? "border-secondary-400" : "border-secondary-600")} />
                 </div>
             )}
         </div>

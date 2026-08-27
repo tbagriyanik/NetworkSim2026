@@ -38,7 +38,7 @@ const cachedSortedAliases = Object.entries(commandAliases || {})
 export function resolveAliases(input: string, state?: Partial<SwitchState>): string {
   const trimmed = input.trim().toLowerCase();
 
-  // Cisco IOS abbreviation: "int gi0/0" is equivalent to
+  // Abbreviation: "int gi0/0" is equivalent to
   // "interface gi0/0". Keep the shorthand valid for all interface steps.
   if (/^int\s+\S+/i.test(trimmed)) {
     return `interface${trimmed.substring(3)}`;

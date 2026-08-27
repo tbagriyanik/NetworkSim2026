@@ -331,7 +331,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       title: isTR ? 'Bilgi: EtherChannel Nedir?' : 'Knowledge: What is EtherChannel?',
       type: 'info',
       cmds: [
-        ['Link Aggregation / Port Channel', isTR ? 'EtherChannel, 2 ila 8 arasındaki fiziksel Ethernet bağlantısını mantıksal tek bir yüksek hızlı hat (Port-Channel) olarak birleştiren teknolojidir. Hem bant genişliğini artırır hem de fiziksel bir kablo koptuğunda kesintisiz veri akışı (yedeklilik) sağlar. Standart LACP (802.3ad) veya Cisco özel PAgP protokolleri ile dinamik kurulabilir.' : 'EtherChannel combines 2 to 8 physical Ethernet links into a single logical high-speed link (Port-Channel). It increases aggregate bandwidth and provides seamless failover redundancy if a link drops. It can be negotiated dynamically using standard LACP (802.3ad) or Cisco proprietary PAgP.'],
+        ['Link Aggregation / Port Channel', isTR ? 'EtherChannel, 2 ila 8 arasındaki fiziksel Ethernet bağlantısını mantıksal tek bir yüksek hızlı hat (Port-Channel) olarak birleştiren teknolojidir. Hem bant genişliğini artırır hem de fiziksel bir kablo koptuğunda kesintisiz veri akışı (yedeklilik) sağlar. Standart LACP (802.3ad) veya özel PAgP protokolleri ile dinamik kurulabilir.' : 'EtherChannel combines 2 to 8 physical Ethernet links into a single logical high-speed link (Port-Channel). It increases aggregate bandwidth and provides seamless failover redundancy if a link drops. It can be negotiated dynamically using standard LACP (802.3ad) or proprietary PAgP.'],
       ]
     },
     {
@@ -340,7 +340,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       title: isTR ? 'Bilgi: HSRP Nedir?' : 'Knowledge: What is HSRP?',
       type: 'info',
       cmds: [
-        ['Hot Standby Router Protocol', isTR ? 'HSRP, birinci ağ geçidinin (Default Gateway) arızalanması durumunda ağ erişiminin kesilmemesi için kullanılan bir Cisco yedeklilik protokolüdür. İki veya daha fazla router tek bir Sanal IP (Virtual IP) ve Sanal MAC adresi paylaşır. Aktif (Active) router çöktüğünde Bekleyen (Standby) router milisaniyeler içinde görevi devralır.' : 'HSRP is a Cisco redundancy protocol designed to ensure uninterrupted default gateway connectivity. Two or more routers share a single Virtual IP and Virtual MAC address. If the Active router fails, the Standby router seamlessly takes over within milliseconds.'],
+        ['Hot Standby Router Protocol', isTR ? 'HSRP, birinci ağ geçidinin (Default Gateway) arızalanması durumunda ağ erişiminin kesilmemesi için kullanılan bir yedeklilik protokolüdür. İki veya daha fazla router tek bir Sanal IP (Virtual IP) ve Sanal MAC adresi paylaşır. Aktif (Active) router çöktüğünde Bekleyen (Standby) router milisaniyeler içinde görevi devralır.' : 'HSRP is a redundancy protocol designed to ensure uninterrupted default gateway connectivity. Two or more routers share a single Virtual IP and Virtual MAC address. If the Active router fails, the Standby router seamlessly takes over within milliseconds.'],
       ]
     },
     {

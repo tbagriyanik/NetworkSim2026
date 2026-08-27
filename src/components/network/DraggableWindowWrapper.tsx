@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useRef, useState } from 'react';
 import { X, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -96,6 +98,7 @@ export function DraggableWindowWrapper({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, isActive, onClose, onEscapeKeyDown]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isMinimizeShortcut = (e.ctrlKey || e.metaKey)
@@ -280,12 +283,8 @@ export function DraggableWindowWrapper({
       {(!isMobile || !isMobileFullScreen) && !isCollapsed && !disableResize && (
         <>
           {/* Corners */}
-          <div className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize z-50 flex items-end justify-end select-none" onPointerDown={(e) => handleResizePointerDown(e, 'se')}>
-            <svg className={cn("h-3 w-3", isDark ? "text-secondary-500" : "text-secondary-400", isActive && "text-success-500")} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M6 13L13 6" />
-              <path d="M9.5 13L13 9.5" />
-              <path d="M12.5 13L13 12.5" />
-            </svg>
+          <div className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize z-50 flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity select-none" onPointerDown={(e) => handleResizePointerDown(e, 'se')}>
+            <div className={cn("w-2.5 h-2.5 rounded-br-full border-b-2 border-r-2 bg-transparent", isDark ? "border-secondary-400" : "border-secondary-600", isActive && "border-success-500")} />
           </div>
           <div className="absolute left-0 bottom-0 w-3 h-3 cursor-sw-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'sw')} />
           <div className="absolute right-0 top-0 w-3 h-3 cursor-ne-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'ne')} />

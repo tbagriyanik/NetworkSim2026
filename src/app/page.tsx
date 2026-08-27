@@ -2104,6 +2104,12 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
                         zIndex={focusedOverlay === 'pc-info' ? 36 : 25}
                         handleDeviceDoubleClick={handleDeviceDoubleClick}
                         onOpenPanel={(id) => handleDeviceDoubleClick('pc', id)}
+                        onOpenSettings={(id) => {
+                          setShowPCDeviceId(id);
+                          getOrCreatePCOutputs(id, topologyDevices);
+                          setPcPanelInitialTab('settings');
+                          useMultiWindowStore.getState().openDeviceWindow(id, 'pc', 'settings');
+                        }}
                         topologyDevices={topologyDevices}
                         deviceStates={deviceStates}
                       />
@@ -2126,6 +2132,13 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
                       zIndex={focusedOverlay === 'router-info' ? 36 : 25}
                       handleDeviceDoubleClick={handleDeviceDoubleClick}
                       onOpenPanel={(id) => handleDeviceDoubleClick('router', id)}
+                      onOpenSettings={(id) => {
+                        setActiveDeviceId(id);
+                        const device = topologyDevices?.find(d => d.id === id);
+                        if (device) setActiveDeviceType(device.type);
+                        setUnifiedDeviceActiveTab('settings');
+                        useMultiWindowStore.getState().openDeviceWindow(id, device?.type || 'router', 'settings');
+                      }}
                       topologyConnections={topologyConnections}
                     />
                   )}

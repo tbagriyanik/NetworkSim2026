@@ -25,6 +25,7 @@ interface RouterInfoPopoverProps {
   isFocused?: boolean;
   handleDeviceDoubleClick: (type: DeviceType, id: string) => void;
   onOpenPanel: (id: string) => void;
+  onOpenSettings?: (id: string) => void;
   topologyConnections: CanvasConnection[];
 }
 
@@ -39,11 +40,12 @@ interface PCInfoPopoverProps {
   isFocused?: boolean;
   handleDeviceDoubleClick: (type: DeviceType, id: string) => void;
   onOpenPanel: (id: string) => void;
+  onOpenSettings?: (id: string) => void;
   topologyDevices: CanvasDevice[];
   deviceStates: Map<string, SwitchState>;
 }
 
-export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zIndex, isFocused = false, handleDeviceDoubleClick, onOpenPanel, topologyDevices, deviceStates }: PCInfoPopoverProps) {
+export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zIndex, isFocused = false, handleDeviceDoubleClick, onOpenPanel, onOpenSettings, topologyDevices, deviceStates }: PCInfoPopoverProps) {
   const { containerRef, handleDragStart, position } = useDrag({
     storageKey: `pc-info-pos-${pc.id}`,
     defaultPosition: { x: 16, y: 96 },
@@ -262,7 +264,11 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
             <button
               onClick={() => {
                 if (pc?.id) {
-                  onOpenPanel(pc.id);
+                  if (onOpenSettings) {
+                    onOpenSettings(pc.id);
+                  } else {
+                    onOpenPanel(pc.id);
+                  }
                 }
               }}
               disabled={!pc?.id}
@@ -280,7 +286,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
   );
 }
 
-export function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, onFocus, zIndex, handleDeviceDoubleClick, onOpenPanel, topologyConnections }: RouterInfoPopoverProps) {
+export function RouterInfoPopover({ router, routerState, t, language, isDark, onClose, onFocus, zIndex, handleDeviceDoubleClick, onOpenPanel, onOpenSettings, topologyConnections }: RouterInfoPopoverProps) {
   const { containerRef, handleDragStart, position } = useDrag({
     storageKey: `router-info-pos-${router.id}`,
     defaultPosition: { x: 16, y: 96 },
@@ -469,7 +475,11 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
             <TooltipWrapper title={t.details}>
               <button
                 onClick={() => {
-                  onOpenPanel(router.id);
+                  if (onOpenSettings) {
+                    onOpenSettings(router.id);
+                  } else {
+                    onOpenPanel(router.id);
+                  }
                 }}
                 className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-secondary-700 hover:bg-secondary-600 text-secondary-200' : 'bg-secondary-100 hover:bg-secondary-200 text-secondary-700'}`}
               >

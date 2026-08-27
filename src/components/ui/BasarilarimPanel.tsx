@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Trophy, X, Clock, BookOpen, FileText, GraduationCap } from 'lucide-react';
 import { useDrag } from '@/hooks/useDrag';
 import { useIsMobile } from '@/hooks/use-breakpoint';
@@ -137,6 +137,44 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
     exam: GraduationCap,
   };
 
+  const [size, setSize] = useState({ width: 340, height: 320 });
+  const isResizingRef = useRef(false);
+  const resizeStartRef = useRef({ startX: 0, startY: 0, startW: 340, startH: 320 });
+
+  const handleResizeStart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizingRef.current = true;
+    resizeStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      startW: size.width,
+      startH: size.height,
+    };
+    document.body.style.cursor = 'se-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (moveEvt: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const deltaX = moveEvt.clientX - resizeStartRef.current.startX;
+      const deltaY = moveEvt.clientY - resizeStartRef.current.startY;
+      const newW = Math.max(260, Math.min(600, resizeStartRef.current.startW + deltaX));
+      const newH = Math.max(200, Math.min(600, resizeStartRef.current.startH + deltaY));
+      setSize({ width: newW, height: newH });
+    };
+
+    const handleMouseUp = () => {
+      isResizingRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+  };
+
   return (
     <div
       ref={containerRef}
@@ -147,11 +185,14 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
         bottom: `${position.y}px`,
         left: `${position.x}px`,
         zIndex: isMobile ? 9999 : zIndex,
-        width: isMobile ? 'calc(100vw - 32px)' : undefined,
+        width: isMobile ? 'calc(100vw - 32px)' : `${size.width}px`,
         maxWidth: isMobile ? '360px' : undefined,
       }}
     >
-      <div className={`rounded-2xl overflow-hidden border shadow-2xl ${isMobile ? 'w-full max-h-[70vh]' : 'w-[340px]'} flex flex-col backdrop-blur-lg ${isDark ? 'bg-secondary-950/75 border-success-500/30 shadow-black/40' : 'bg-white/75 border-success-500/50 shadow-secondary-200/50'}`}>
+      <div
+        className={`rounded-2xl overflow-hidden border shadow-2xl ${isMobile ? 'w-full max-h-[70vh]' : 'w-full'} flex flex-col backdrop-blur-lg relative ${isDark ? 'bg-secondary-950/75 border-success-500/30 shadow-black/40' : 'bg-white/75 border-success-500/50 shadow-secondary-200/50'}`}
+        style={{ height: isMobile ? undefined : `${size.height}px` }}
+      >
         <div
           className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none shrink-0 ${isDark ? 'bg-white/5 border-success-500/20' : 'bg-black/5 border-success-500/30'}`}
           onPointerDown={handleDragStart}
@@ -166,7 +207,7 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
             </button>
           </TooltipWrapper>
         </div>
-        <div className={cn("overflow-y-auto custom-scrollbar", isMobile ? "flex-1" : "max-h-[280px]")}>
+        <div className={cn("flex-1 overflow-y-auto custom-scrollbar", isMobile ? "max-h-[280px]" : "")}>
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
               <Trophy className="w-8 h-8 text-secondary-400 mb-2" />
@@ -199,6 +240,17 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
             </div>
           )}
         </div>
+
+        {/* Resize Handle for Desktop */}
+        {!isMobile && (
+          <div
+            className="absolute bottom-1 right-1 w-4 h-4 cursor-se-resize flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity z-50 select-none"
+            onMouseDown={handleResizeStart}
+            title="Boyutlandır"
+          >
+            <div className={cn("w-2.5 h-2.5 rounded-br-full border-b-2 border-r-2 bg-transparent", isDark ? "border-secondary-400" : "border-secondary-600")} />
+          </div>
+        )}
       </div>
     </div>
   );

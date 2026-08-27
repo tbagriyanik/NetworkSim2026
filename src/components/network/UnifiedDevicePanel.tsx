@@ -12,6 +12,7 @@ import {
     Network,
     Layers,
     Cpu,
+    Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import dynamic from 'next/dynamic';
@@ -20,7 +21,7 @@ import type { SwitchState } from '@/lib/network/types';
 import type { TerminalOutput } from './Terminal';
 import type { Translations } from '@/contexts/LanguageContext';
 import type { TaskDefinition, TaskContext } from '@/lib/network/taskDefinitions';
-
+import { getRoutingTable } from '@/lib/network/routing';
 
 const Terminal = dynamic(() => import('./Terminal').then(m => m.Terminal), { ssr: false });
 const PortPanel = dynamic(() => import('./PortPanel').then(m => m.PortPanel), { ssr: false });
@@ -95,10 +96,12 @@ export function UnifiedDevicePanel({
     modalSize,
     handlePointerDown,
     handleResizeStart,
-    className, restoreRequest
+    className,
+    restoreRequest
 }: UnifiedDevicePanelProps) {
 
     const [selectedVlan, setSelectedVlan] = React.useState(1);
+    const [routeSearch, setRouteSearch] = React.useState('');
     const isNarrow = modalSize.width < 1100;
 
     const deviceName = useMemo(() => {
@@ -155,10 +158,10 @@ export function UnifiedDevicePanel({
                                 <Settings className="w-3 h-3" />
                                 <span className="hidden sm:inline">{t.quickSettingsAndTasks}</span>
                             </TabsTrigger>
-                            {(deviceType === 'switchL2' || deviceType === 'switchL3') && (
+                            {(deviceType === 'switchL2' || deviceType === 'switchL3' || deviceType === 'router') && (
                                 <TabsTrigger value="stp" className="flex items-center gap-1.5 px-2 h-6 text-xs">
                                     <Layers className="w-3 h-3 text-warning-500" />
-                                    <span className="hidden sm:inline">{t.stpTab}</span>
+                                    <span className="hidden sm:inline">{deviceType === 'router' ? (language === 'tr' ? 'Ağ & Detaylar' : 'Network & Details') : t.stpTab}</span>
                                 </TabsTrigger>
                             )}
                         </TabsList>
@@ -321,8 +324,112 @@ export function UnifiedDevicePanel({
 
                     <TabsContent value="stp" className="h-full m-0 p-0 overflow-y-auto custom-scrollbar">
                         <div className="p-4 sm:p-6 space-y-6">
-                            {/* VLAN Selector & STP info */}
-                            {(() => {
+                            {deviceType === 'router' ? (() => {
+                                const routingTable = getRoutingTable(deviceId, deviceStates, topologyDevices, topologyConnections);
+                                const filteredRoutes = routeSearch.trim()
+                                    ? routingTable.filter(r =>
+                                        r.destination.toLowerCase().includes(routeSearch.toLowerCase()) ||
+                                        (r.subnetMask && r.subnetMask.toLowerCase().includes(routeSearch.toLowerCase())) ||
+                                        (r.prefixLength !== undefined && String(r.prefixLength).includes(routeSearch.toLowerCase())) ||
+                                        r.nextHop.toLowerCase().includes(routeSearch.toLowerCase()) ||
+                                        r.type.toLowerCase().includes(routeSearch.toLowerCase())
+                                    )
+                                    : routingTable;
+
+                                return (
+                                    <div className="space-y-6">
+                                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                            <div>
+                                                <h3 className="text-sm font-semibold flex items-center gap-2 text-primary">
+                                                    <Network className="w-4 h-4 text-primary" />
+                                                    {language === 'tr' ? 'Yönlendirme Tablosu (Routing Table)' : 'Routing Table'}
+                                                </h3>
+                                                <p className="text-xs text-muted-foreground mt-0.5">
+                                                    {language === 'tr' ? 'Cihazın aktif IP rotaları ve ağ yönlendirme bilgileri.' : 'Active IP routes and network forwarding table for this router.'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        {/* Routing Table Card */}
+                                        <div className={cn("rounded-lg border overflow-hidden", isDark ? "bg-secondary-900 border-secondary-800/80" : "bg-secondary-50 border-secondary-200")}>
+                                            <div className="p-3 border-b border-secondary-200 dark:border-secondary-800/80 flex items-center justify-between gap-3 bg-secondary-100/30 dark:bg-secondary-950/10">
+                                                <h3 className="font-semibold text-xs flex items-center gap-2 shrink-0">
+                                                    <Network className="w-4 h-4 text-primary" />
+                                                    {language === 'tr' ? 'Toplam Rota' : 'Total Routes'} ({filteredRoutes.length})
+                                                </h3>
+                                                <div className="relative w-48 shrink-0">
+                                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                                                    <input
+                                                        type="text"
+                                                        value={routeSearch}
+                                                        onChange={(e) => setRouteSearch(e.target.value)}
+                                                        placeholder={language === 'tr' ? 'Ara...' : 'Search...'}
+                                                        className={cn(
+                                                            "w-full pl-8 pr-3 py-1.5 rounded-md text-[11px] border outline-none",
+                                                            isDark ? "bg-secondary-950 border-secondary-800 text-white focus:border-purple-500" : "bg-white border-secondary-300 text-secondary-900 focus:border-purple-600"
+                                                        )}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div className="overflow-x-auto max-h-[400px]">
+                                                <table className="w-full text-xs text-left">
+                                                    <thead className={cn("border-b text-[10px] uppercase tracking-wider font-semibold sticky top-0 z-10", isDark ? "bg-secondary-950 border-secondary-800 text-secondary-400" : "bg-secondary-100 border-secondary-200 text-secondary-600")}>
+                                                        <tr>
+                                                            <th className="p-3 w-24">{language === 'tr' ? 'Tip' : 'Type'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Hedef Ağ' : 'Destination Network'}</th>
+                                                            <th className="p-3 w-32">{language === 'tr' ? 'Metrik [AD/Metrik]' : 'Metric [AD/Metric]'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Sonraki Hop / Arayüz' : 'Next Hop / Interface'}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {filteredRoutes.length > 0 ? (
+                                                            filteredRoutes.map((route, idx) => (
+                                                                <tr
+                                                                    key={idx}
+                                                                    className={cn(
+                                                                        "border-b last:border-0 transition-colors",
+                                                                        isDark ? "border-secondary-800 hover:bg-secondary-800/40" : "border-secondary-200 hover:bg-secondary-100/50"
+                                                                    )}
+                                                                >
+                                                                    <td className="p-3">
+                                                                        <span className={cn(
+                                                                            "px-2 py-0.5 rounded-md text-[9px] font-bold uppercase border",
+                                                                            route.type === 'connected'
+                                                                                ? "bg-success-500/10 text-success-500 border-success-500/20"
+                                                                                : route.type === 'static'
+                                                                                    ? "bg-primary-500/10 text-primary-500 border-primary-500/20"
+                                                                                    : "bg-warning-500/10 text-warning-500 border-warning-500/20"
+                                                                        )}>
+                                                                            {route.type === 'connected' ? (language === 'tr' ? 'Bağlı' : 'Connected') : route.type}
+                                                                        </span>
+                                                                    </td>
+                                                                    <td className="p-3 font-mono">
+                                                                        {route.destination}
+                                                                        {route.subnetMask ? `/${route.subnetMask}` : route.prefixLength ? `/${route.prefixLength}` : ''}
+                                                                    </td>
+                                                                    <td className="p-3 text-muted-foreground font-mono">
+                                                                        {route.type === 'connected' ? '0/0' : `[${route.metric ?? 1}/0]`}
+                                                                    </td>
+                                                                    <td className="p-3 font-semibold font-mono">
+                                                                        {route.nextHop}
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        ) : (
+                                                            <tr>
+                                                                <td colSpan={4} className="p-6 text-center text-muted-foreground italic">
+                                                                    {language === 'tr' ? 'Kayıtlı rota bulunamadı.' : 'No routes found.'}
+                                                                </td>
+                                                            </tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })() : (() => {
                                 const deviceState = deviceStates.get(deviceId);
                                 const stpStateMap = deviceState?.stpState || {};
                                 const vlanIds = Object.keys(stpStateMap).map(Number).sort((a, b) => a - b);
@@ -518,7 +625,6 @@ export function UnifiedDevicePanel({
                     </TabsContent>
                 </Tabs>
             </div>
-
         </DraggableWindowWrapper>
     );
 }
