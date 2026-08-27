@@ -250,7 +250,13 @@ export function cmdIpDhcpSnoopingVlan(state: SwitchState, input: string, _ctx: C
   const match = input.match(/^ip\s+dhcp\s+snooping\s+vlan\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
   const vlans = match[1].split(',').map((v: string) => v.trim());
-  return { success: true, output: `DHCP snooping enabled on VLAN(s): ${vlans.join(', ')}`, newState: { dhcpSnoopingVlans: vlans } };
+  return {
+    success: true,
+    output: `DHCP snooping enabled on VLAN(s): ${vlans.join(', ')}`,
+    // IOS enables snooping for the configured VLAN scope. Without this flag
+    // the path resolver would never enforce the untrusted-port check.
+    newState: { dhcpSnoopingEnabled: true, dhcpSnoopingVlans: vlans }
+  };
 }
 
 /**
@@ -1490,6 +1496,5 @@ export function cmdTacacsServerKey(state: SwitchState, input: string, _ctx: Comm
     newState: { tacacsKey: match[1] }
   };
 }
-
 
 

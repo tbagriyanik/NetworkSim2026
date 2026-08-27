@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { cmdIpDhcpSnoopingTrust, cmdNoIpDhcpSnoopingTrust } from '@/lib/network/core/interface/cmd.ipAddress';
+import { cmdIpDhcpSnoopingVlan } from '@/lib/network/core/globalConfigExtraCommands';
 import { SwitchState, Port, SwitchModel, SwitchLayer, Vlan, SecurityConfig } from '@/lib/network/types';
 import type { CommandContext } from '@/lib/network/core/commandTypes';
 
@@ -44,5 +45,14 @@ describe('DHCP Snooping Trust Command Support', () => {
     const res = cmdNoIpDhcpSnoopingTrust(state, 'no ip dhcp snooping trust', commandContext);
     expect(res.success).toBe(true);
     expect(res.newState?.ports?.['gi0/1']?.dhcpSnoopingTrust).toBe(false);
+  });
+
+  it('enables snooping when a VLAN scope is configured', () => {
+    const state = createMockState();
+    state.currentMode = 'config';
+    const res = cmdIpDhcpSnoopingVlan(state, 'ip dhcp snooping vlan 10', commandContext);
+    expect(res.success).toBe(true);
+    expect(res.newState?.dhcpSnoopingEnabled).toBe(true);
+    expect(res.newState?.dhcpSnoopingVlans).toEqual(['10']);
   });
 });

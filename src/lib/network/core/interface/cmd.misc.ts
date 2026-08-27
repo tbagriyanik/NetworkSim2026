@@ -762,6 +762,16 @@ export function cmdPppAuthChap(state: SwitchState, _input: string, _ctx: Command
   return { success: true, output: 'PPP CHAP authentication enabled', newState: { ports: newPorts } };
 }
 
+/** PPPoE CHAP credentials (Dialer/serial interfaces). */
+export function cmdPppChapCredentials(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const port = state.ports[state.currentInterface];
+  const hostname = input.match(/^ppp\s+chap\s+hostname\s+(\S+)$/i);
+  const password = input.match(/^ppp\s+chap\s+password\s+(?:0\s+)?(\S+)$/i);
+  if (!hostname && !password) return { success: false, error: '% Invalid PPP CHAP command' };
+  return { success: true, newState: { ports: { ...state.ports, [state.currentInterface]: { ...port, pppAuth: 'chap', ...(hostname ? { pppPapUsername: hostname[1] } : { pppPapPassword: password![1] }) } } } };
+}
+
 /**
  * No PPP Authentication - Remove PPP authentication
  */
@@ -850,6 +860,14 @@ export function cmdMlsQosCos(state: SwitchState, input: string, _ctx: CommandCon
   const newPorts = { ...state.ports };
   newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
   return { success: true, output: `QoS CoS ${match[1]} configured`, newState: { ports: newPorts } };
+}
+
+export function cmdQosSetDscp(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
+  const match = input.match(/^set\s+dscp\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid DSCP value' };
+  const port = state.ports[state.currentInterface];
+  return { success: true, output: `DSCP marked ${match[1]}`, newState: { ports: { ...state.ports, [state.currentInterface]: { ...port, qosDscp: match[1], qos: { ...port?.qos, enabled: true } } } } };
 }
 
 /**

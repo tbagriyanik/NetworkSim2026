@@ -2,6 +2,21 @@
 
 Bu klasör, Network Simulator projesi için hiyerarşik olarak düzenlenmiş tüm dokümantasyon dosyalarını içerir.
 
+## Kanonik içerik düzeni
+
+Benzer içerikler için tek birincil kaynak kullanılır; diğer belgeler aynı konunun kullanım senaryosu veya kısa özeti olarak değerlendirilir:
+
+| Konu | Birincil kaynak | Tamamlayıcı kaynak |
+|---|---|---|
+| Uygulama kullanımı ve kısayollar | [USAGE.md](getting-started/USAGE.md) | [QUICK_REFERENCE.md](getting-started/QUICK_REFERENCE.md) |
+| CLI komutları | [CLI_COMMANDS.md](cli/CLI_COMMANDS.md) | [CLI_GUIDED_TUTORIAL.md](cli/CLI_GUIDED_TUTORIAL.md) |
+| Ağ yapılandırma rehberleri | `network/` altındaki konu dosyaları | [examples.md](reference/examples.md) |
+| Tümleşik eğitim ve güncel özellikler | [NETWORK_SIMULATOR_KITAPCIK.md](training/NETWORK_SIMULATOR_KITAPCIK.md) | [ORNEK_LABLAR.md](training/ORNEK_LABLAR.md) |
+| Özellik envanteri | [ProjeOzellikleri.md](training/ProjeOzellikleri.md) | [details.md](reference/details.md) |
+| Geliştirici belgeleri | `development/` altındaki rehberler | [CONTRIBUTING.md](development/CONTRIBUTING.md) |
+
+Yeni bilgi eklerken önce birincil kaynağa ekleyin; tamamlayıcı dosyada aynı metni kopyalamak yerine bağlantı ve kısa bağlam kullanın. Böylece komut, özellik ve örnek açıklamaları zamanla birbirinden ayrışmaz.
+
 ```
 doc/
 ├── README.md                  ← Bu dosya (giriş ve harita)

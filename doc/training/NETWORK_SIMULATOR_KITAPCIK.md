@@ -18,6 +18,33 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 **Live app:** [network2026.vercel.app](https://network2026.vercel.app)
 
+## Güncel Ana Belge Notu
+
+Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
+
+### Güncel özellik durumu
+
+- **Güvenlik:** DHCP Snooping VLAN etkinleştirme, trusted interface ve rogue DHCP paketlerinin engellenmesi; DAI VLAN yapılandırması.
+- **SSH:** RSA anahtarı, SSH v2, local login ve VTY transport zinciriyle simüle edilmiş SSH oturumu.
+- **Subnetting:** PC IP ayarları panelinde network, broadcast ve kullanılabilir host aralığı hesaplama.
+- **Paket analizi:** Paket yakalama satırına tıklayarak L2 Ethernet → L3 IP → L4 TCP/UDP/ICMP ayrıştırması.
+- **GRE:** `interface Tunnel0`, IP adresi, `tunnel source` ve `tunnel destination` state yapılandırması.
+- **PPPoE/Dialer:** `interface Dialer0`, PPP encapsulation ve CHAP hostname/password yapılandırması.
+- **QoS:** `mls qos`, interface QoS seçenekleri ve DSCP işaretleme state/çıktı desteği.
+- **SNMP/Syslog:** Community, contact/location, logging host ve ilgili `show` çıktıları.
+- **EtherChannel:** LACP/PAgP channel-group yapılandırması ve `show etherchannel summary`.
+- **BGP:** eBGP neighbor, network ilanı ve `show ip bgp summary` temel durumu.
+- **Henüz tamamlanmamış:** Gerçek IPv6 NDP NS/NA komşuluk akışı, NMS cihazı/OID sorgusu ve ayrı Syslog Server PC görünümü.
+
+### Doküman sahipliği
+
+| İçerik | Bu kitapçıktaki bölüm | Tamamlayıcı dosya |
+|---|---|---|
+| CLI sözdizimi | CLI Komut Referansı | `doc/cli/CLI_COMMANDS.md` |
+| Uygulama adımları | Rehberli Dersler ve Örnek Projeler | `doc/cli/CLI_GUIDED_TUTORIAL.md`, `doc/training/ORNEK_LABLAR.md` |
+| Kısa başvuru | Kullanım ve kısayollar | `doc/getting-started/USAGE.md`, `QUICK_REFERENCE.md` |
+| Teknik kurulum | Ağ ve geliştirme rehberleri | `doc/network/`, `doc/development/` |
+
 ---
 
 ## Latest Updates (v2.7.0)

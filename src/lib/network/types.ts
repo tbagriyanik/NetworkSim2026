@@ -88,6 +88,11 @@ export interface Port {
   ipv6DhcpServer?: string;
   isRoutedPort?: boolean;       // For L3 switch routed ports
   isSubinterface?: boolean;     // For subinterfaces (e.g., gi0/0.10)
+  tunnel?: {
+    source?: string;
+    destination?: string;
+    protocol?: 'gre';
+  };
   parentInterface?: string;     // Parent interface for subinterfaces
   dot1qVlan?: number;           // Dot1q VLAN for subinterfaces
   nameif?: string;              // ASA interface name (inside, outside, etc.)
@@ -141,6 +146,7 @@ export interface Port {
       burst?: number;
     };
   };
+  qosDscp?: string;
   bandwidth?: number;               // Bandwidth in kbps (for routing protocols)
   delay?: number;                   // Delay in microseconds (for routing protocols)
   stpPriority?: number;

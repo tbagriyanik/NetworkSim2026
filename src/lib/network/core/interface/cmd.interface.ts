@@ -26,6 +26,22 @@ export function cmdInterface(state: SwitchState, input: string, _ctx: CommandCon
 
   const interfaceName = match[1].trim();
 
+  // GRE tunnel interface (virtual routed interface)
+  const tunnelMatch = interfaceName.match(/^tunnel\s*(\d+)$/i);
+  if (tunnelMatch) {
+    const tunnelId = tunnelMatch[1];
+    const tunnelPortId = `tunnel${tunnelId}`;
+    const newPorts = { ...state.ports };
+    if (!newPorts[tunnelPortId]) {
+      newPorts[tunnelPortId] = {
+        id: tunnelPortId, name: `Tunnel${tunnelId}`, type: 'gigabitethernet', vlan: 1,
+        status: 'notconnect', shutdown: false, mode: 'routed', duplex: 'auto', speed: 'auto',
+        isRoutedPort: true, tunnel: { protocol: 'gre' }
+      } as Port;
+    }
+    return { success: true, newState: { currentMode: 'interface', currentInterface: tunnelPortId, selectedInterfaces: [tunnelPortId], ports: newPorts } };
+  }
+
   if (/^range\s+/i.test(interfaceName)) {
     const rangeSpec = interfaceName.replace(/^range\s+/i, '').trim();
     const selectedInterfaces = expandInterfaceRange(rangeSpec, state);

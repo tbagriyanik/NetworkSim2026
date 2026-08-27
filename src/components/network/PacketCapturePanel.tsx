@@ -6,6 +6,7 @@ import { CABLE_COLORS } from './networkTopology.constants';
 import { getConnectionStatusMessage } from './networkTopology.helpers';
 import { DraggableWindowWrapper } from './DraggableWindowWrapper';
 import { useDrag } from '@/hooks/useDrag';
+import { PacketLayerDetails } from './PacketLayerDetails';
 
 interface PacketCapturePanelProps {
   activeCaptureConnectionId: string;
@@ -61,6 +62,7 @@ export const PacketCapturePanel = ({
   });
 
   const rawPackets = capturedPacketsMap[activeCaptureConnectionId] || [];
+  const [selectedPacket, setSelectedPacket] = useState<typeof rawPackets[number] | null>(null);
 
   // Reset page when connection or search/exclude query changes (adjust state during render)
   const resetKey = `${activeCaptureConnectionId}|${searchQuery}|${excludeQuery}`;
@@ -296,7 +298,7 @@ export const PacketCapturePanel = ({
             <tbody>
               {paginatedPackets.length ? (
                 paginatedPackets.map((pkt: { id: string; timestamp: number; sourceIp: string; targetIp: string; protocol: string; info: string; }) => (
-                  <tr key={pkt.id} className={`border-b last:border-0 ${isDark ? 'border-secondary-800/40 hover:bg-secondary-800/35' : 'border-secondary-100/30 hover:bg-secondary-50/40'}`}>
+                  <tr key={pkt.id} onClick={() => setSelectedPacket(pkt)} title={language === 'tr' ? 'OSI katmanlarını görmek için tıklayın' : 'Click to inspect OSI layers'} className={`border-b last:border-0 cursor-pointer ${isDark ? 'border-secondary-800/40 hover:bg-secondary-800/35' : 'border-secondary-100/30 hover:bg-secondary-50/40'}`}>
                     {columnOrder.map(col => {
                       switch (col) {
                         case 'time': {
@@ -379,6 +381,7 @@ export const PacketCapturePanel = ({
           </div>
         )}
       </div>
+      {selectedPacket && <PacketLayerDetails packet={selectedPacket} onClose={() => setSelectedPacket(null)} isDark={isDark} language={language} />}
     </DraggableWindowWrapper>
   );
 };

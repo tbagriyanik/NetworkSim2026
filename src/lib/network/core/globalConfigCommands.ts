@@ -597,14 +597,14 @@ function cmdUsername(state: SwitchState, input: string, _ctx: CommandContext): C
     return { success: false, error: iosModeError() };
   }
 
-  const match = input.match(/^username\s+(\S+)(\s+(privilege\s+(\d+)|password|secret)\s+(.+))?$/i);
+  const match = input.match(/^username\s+(\S+)(?:\s+privilege\s+(\d+))?(?:\s+(secret|password)\s+(.+))?$/i);
   if (!match) {
     return { success: false, error: IOS_ERRORS.invalidInput };
   }
 
   const username = match[1];
-  const privilege = match[4] ? parseInt(match[4]) : 0;
-  const password = match[5] || '';
+  const privilege = match[2] ? parseInt(match[2]) : 0;
+  const password = match[4] || '';
   const currentUsers = Array.isArray(state.security?.users) ? state.security.users : [];
   const normalizedUsername = username.toLowerCase();
   const newUsers = currentUsers.filter((user: { username: string; password: string; privilege: number }) => (user?.username || '').toLowerCase() !== normalizedUsername);

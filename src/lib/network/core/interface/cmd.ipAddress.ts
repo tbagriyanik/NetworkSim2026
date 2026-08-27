@@ -635,6 +635,22 @@ export function cmdIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx:
   return { success: true, newState: { ports: newPorts } };
 }
 
+export function cmdTunnelSource(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface?.startsWith('tunnel')) return { success: false, error: iosModeError() };
+  const match = input.match(/^tunnel\s+source\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid tunnel source command' };
+  const port = state.ports[state.currentInterface];
+  return { success: true, newState: { ports: { ...state.ports, [state.currentInterface]: { ...port, tunnel: { ...port?.tunnel, protocol: 'gre', source: match[1] } } } } };
+}
+
+export function cmdTunnelDestination(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface?.startsWith('tunnel')) return { success: false, error: iosModeError() };
+  const match = input.match(/^tunnel\s+destination\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid tunnel destination command' };
+  const port = state.ports[state.currentInterface];
+  return { success: true, newState: { ports: { ...state.ports, [state.currentInterface]: { ...port, tunnel: { ...port?.tunnel, protocol: 'gre', destination: match[1] } } } } };
+}
+
 export function cmdNoIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
   const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, dhcpSnoopingTrust: false }));

@@ -49,8 +49,8 @@
 - Kablosuz Ağ (SSID, WPA şifreleme, AP ve WLC yönetimi).
 - ARP, MAC öğrenme, TTL/Hop simülasyonu.
 - PPP/HDLC WAN enkapsülasyonu, PAP/CHAP kimlik doğrulaması.
-- SSH (v1/v2) ve Telnet oturum yönetimi.
-- `switchport trunk allowed vlan add/remove/except/all` sözdizimi ile VLAN filtreleme.
+  - **SSH (v1/v2) ve Telnet oturum yönetimi (uçtan uca çalışır):** `crypto key generate rsa modulus 2048` → `ip ssh version 2` → `username <kullanıcı> privilege 15 secret <parola>` → `line vty 0 4` → `login local` → `transport input ssh` zinciri ile tam yapılandırma. PC terminalinden `ssh <kullanıcı>@<ip>` komutu başarılı bağlantıyı simüle eder: RSA/anahtar+SSH v2+login local+transport ssh kontrolleri yapılır, parola yerel kullanıcı veritabanına karşı doğrulanır ve oturum `sshSessions` içine `established` olarak yazılır (`show ssh` / `show ip ssh` ile görülebilir).
+  - `switchport trunk allowed vlan add/remove/except/all` sözdizimi ile VLAN filtreleme.
 
 ### 🎓 CCNA 200-301 Müfredat Konuları Envanteri
 - **Ağ Temelleri (Network Fundamentals):** IPv4/IPv6 Adresleme, Subnetting, VLSM, Link-Local IPv6 (`fe80::`), EUI-64 Host Adresi türetme, SLAAC (`no ipv6 nd suppress-ra`), Düz/Çapraz/Fiber/Seri kablolama.
@@ -81,7 +81,8 @@
 - Ping animasyonu ve detaylı PDU inceleme paneli (hop-by-hop kontrol, P/N tuş kontrolü).
 - Zaman Çizelgesi (Timeline) paneli ile geçmiş işlem takibi.
 - `show interfaces` komutunda gerçek zamanlı rx/tx paket ve hata sayıçları.
-- **Topoloji Üretici Sihirbazı** — 40+ hazır senaryo (VLAN, OSPF, EIGRP, NAT, IoT, Sorun Giderme vb.) arama ve üretme.
+  - **Topoloji Üretici Sihirbazı** — 40+ hazır senaryo (VLAN, OSPF, EIGRP, NAT, IoT, Sorun Giderme vb.) arama ve üretme.
+  - **Subnetting Yardımcısı (etkileşimli panel):** IP adresi ve subnet maskesi (hem ondalık `255.255.255.0` hem de CIDR `/24` ön eki) girildiğinde ağ (network), broadcast, ilk/son kullanılabilir host, kullanılabilir host sayısı, toplam adres ve wildcard mask değerlerini anlık olarak hesaplayıp gösteren panel (PC → Ayarlar sekmesi). Ayrıca `show ip interface brief` çıktısı her IP'li interface için `Subnet: <ağ>/<prefix>  Broadcast: <broadcast>  Hosts: <ilk>-<son> (<sayı>)` satırını içerir.
 
 ### 📱 Mobil / Tablet Desteği
 - Sanal klavye açıldığında ekran kaymasını önleyen `visualViewport` düzeltmesi.
@@ -149,8 +150,8 @@
 - Wireless Networking (SSID, WPA encryption, AP and WLC management).
 - ARP, MAC learning, TTL/Hop simulation.
 - PPP/HDLC WAN encapsulation with PAP/CHAP authentication.
-- SSH (v1/v2) and Telnet session management.
-- `switchport trunk allowed vlan add/remove/except/all` syntax for granular VLAN filtering.
+  - **SSH (v1/v2) and Telnet session management (end-to-end):** the full chain `crypto key generate rsa modulus 2048` → `ip ssh version 2` → `username <user> privilege 15 secret <pw>` → `line vty 0 4` → `login local` → `transport input ssh` fully configures SSH. From a PC terminal, `ssh <user>@<ip>` simulates a successful connection: it verifies RSA keys + SSH v2 + login local + transport ssh, authenticates the password against the local user database, and records the session as `established` in `sshSessions` (visible via `show ssh` / `show ip ssh`).
+  - `switchport trunk allowed vlan add/remove/except/all` syntax for granular VLAN filtering.
 
 ### 🎓 CCNA 200-301 Curriculum & Protocol Inventory
 - **Network Fundamentals:** IPv4/IPv6 Addressing, Subnetting, VLSM, Link-Local IPv6 (`fe80::`), EUI-64 Host Address derivation, SLAAC (`no ipv6 nd suppress-ra`), Straight-through/Crossover/Fiber/Serial cabling.
@@ -181,7 +182,8 @@
 - Packet animation and comprehensive PDU inspect panels (hop-by-hop playback, P/N key control).
 - Timeline Panel for past action logs and activity tracking.
 - `show interfaces` displaying real-time rx/tx packet and error counters.
-- **Topology Generator Wizard** — 40+ pre-built scenarios (VLAN, OSPF, EIGRP, NAT, IoT, Troubleshooting, etc.) with search.
+  - **Topology Generator Wizard** — 40+ pre-built scenarios (VLAN, OSPF, EIGRP, NAT, IoT, Troubleshooting, etc.) with search.
+  - **Subnetting Helper (interactive panel):** enter an IP address and subnet mask (decimal `255.255.255.0` or CIDR `/24` prefix) and the panel instantly computes network, broadcast, first/last usable host, usable host count, total addresses and wildcard mask (PC → Settings tab). In addition, `show ip interface brief` prints a `Subnet: <net>/<prefix>  Broadcast: <broadcast>  Hosts: <first>-<last> (<count>)` line for every interface that has an IP.
 
 ### 📱 Mobile & Tablet Optimization
 - `visualViewport` adjustment to prevent layout displacement by virtual keyboards.
@@ -270,3 +272,81 @@ src/
 ├── utils/               # Utilities (achievement records tracking)
 └── tests/               # Unit, integration, accessibility and performance tests (Vitest)
 ```
+
+---
+
+## 🧪 Örnekler (Examples)
+
+### Örnek 1 — SSH Tam Akışı (Başarılı Bağlantı Simülasyonu)
+
+**Hedef:** Router'ı SSH ile güvenli yönetime açmak ve PC'den başarılı bir SSH oturumu başlatmak.
+
+**Topoloji:** 1 Router (R1) + 1 PC (PC-1), `PC-1 Eth0 → R1 Gi0/0` (düz kablo).
+
+**R1 CLI komut zinciri:**
+```
+R1> enable
+R1# configure terminal
+R1(config)# hostname R1
+R1(config)# ip domain-name lab.local
+R1(config)# crypto key generate rsa modulus 2048
+R1(config)# ip ssh version 2
+R1(config)# username admin privilege 15 secret 1234
+R1(config)# enable secret 123
+R1(config)# line vty 0 4
+R1(config-line)# login local
+R1(config-line)# transport input ssh
+R1(config-line)# exit
+R1(config)# interface gi0/0
+R1(config-if)# ip address 192.168.1.150 255.255.255.0
+R1(config-if)# no shutdown
+```
+
+**PC-1 ayarları:** IP `192.168.1.10`, Subnet `255.255.255.0`, Gateway `192.168.1.150`.
+
+**PC-1 CMD — başarılı SSH bağlantısı:**
+```
+C:\> ssh admin@192.168.1.150
+Password: 1234
+R1>
+```
+Bağlantı sonrası R1 üzerinde:
+```
+R1# show ssh
+... Active SSH Sessions: 1
+Session   User       Source
+1         admin      vty0
+
+R1# show ip ssh
+SSH Version: 2
+SSH Status: enabled
+VTY Transport Input: ssh
+```
+
+### Örnek 2 — Subnetting Yardımcısı
+
+**Nerede:** PC → Ayarlar (Settings) sekmesi → "Subnetting Yardımcısı" paneli.
+
+**Girdi:** IP `192.168.1.10`, Subnet Mask `255.255.255.0` (veya `/24`).
+
+**Çıktı:**
+| Alan | Değer |
+|------|-------|
+| Ağ (Network) | `192.168.1.0/24` |
+| Broadcast | `192.168.1.255` |
+| İlk kullanılabilir host | `192.168.1.1` |
+| Son kullanılabilir host | `192.168.1.254` |
+| Kullanılabilir host sayısı | `254` |
+| Toplam adres | `256` |
+| Wildcard mask | `0.0.0.255` |
+| Subnet mask | `255.255.255.0` |
+
+**`show ip interface brief` (CLI) ek bilgisi:**
+```
+Interface              IP-Address      OK? Method Status                Protocol
+Gi0/0                  192.168.1.150   YES manual up                    up
+  Subnet: 192.168.1.0/24  Broadcast: 192.168.1.255  Hosts: 192.168.1.1-192.168.1.254 (254)
+```
+
+> Daha fazla uçtan uca laboratuvar örneği için: `doc/training/ORNEK_LABLAR.md`
+

@@ -1,7 +1,7 @@
 import type { CommandHandler } from './commandTypes';
 import { cmdStormControl, cmdStormControlAction, cmdMlsQosTrust, cmdMlsQosCos, cmdPriorityQueueOut, cmdQueueSet, cmdTxQueue } from './interface/cmd.qos';
 import { cmdCdpEnable, cmdNoCdpEnable, cmdUdldEnable, cmdNoUdld, cmdChannelProtocol } from './interface/cmd.cdp';
-import { cmdEncapsulationDot1q, cmdEncapsulationHdlc, cmdEncapsulationPpp, cmdNoEncapsulation, cmdClockRate, cmdNoClockRate, cmdPppAuthPap, cmdPppAuthChap, cmdNoPppAuth, cmdPppPapSentUsername } from './interface/cmd.ppp';
+import { cmdEncapsulationDot1q, cmdEncapsulationHdlc, cmdEncapsulationPpp, cmdNoEncapsulation, cmdClockRate, cmdNoClockRate, cmdPppAuthPap, cmdPppAuthChap, cmdNoPppAuth, cmdPppPapSentUsername, cmdPppChapCredentials } from './interface/cmd.ppp';
 import { cmdBandwidth, cmdDelay, cmdMtu, cmdKeepalive, cmdNoKeepalive, cmdDirectedBroadcast, cmdCarrierDelay, cmdLoadInterval, cmdPowerInline, cmdPowerInlineConsumption, cmdArpInspectionLimit } from './interface/cmd.physical';
 
 // cmd modülleri
@@ -69,6 +69,8 @@ import {
   cmdNoIpArpInspectionTrust,
   cmdIpv6NdSuppressRa,
   cmdNoIpv6NdSuppressRa,
+  cmdTunnelSource,
+  cmdTunnelDestination,
 } from './interface/cmd.ipAddress';
 
 import {
@@ -105,6 +107,7 @@ import {
   cmdVrrpIp,
   cmdVrrpPriority,
   cmdVrrpPreempt,
+  cmdQosSetDscp,
 } from './interface/cmd.misc';
 
 // Interface-level komutlar (interface, shutdown, speed, duplex, switchport, ip address, vs.)
@@ -214,6 +217,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'no clock rate': cmdNoClockRate,
   'ppp authentication pap': cmdPppAuthPap,
   'ppp authentication chap': cmdPppAuthChap,
+  'ppp chap hostname': cmdPppChapCredentials,
+  'ppp chap password': cmdPppChapCredentials,
   'no ppp authentication': cmdNoPppAuth,
   'ppp pap sent-username': cmdPppPapSentUsername,
   'switchport protected': cmdSwitchportProtected,
@@ -225,7 +230,10 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'storm-control action': cmdStormControlAction,
   'mls qos trust': cmdMlsQosTrust,
   'mls qos cos': cmdMlsQosCos,
+  'set dscp': cmdQosSetDscp,
   'ip dhcp snooping trust': cmdIpDhcpSnoopingTrust,
+  'tunnel source': cmdTunnelSource,
+  'tunnel destination': cmdTunnelDestination,
   'no ip dhcp snooping trust': cmdNoIpDhcpSnoopingTrust,
   'ip arp inspection trust': cmdIpArpInspectionTrust,
   'no ip arp inspection trust': cmdNoIpArpInspectionTrust,

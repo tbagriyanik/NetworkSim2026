@@ -735,7 +735,7 @@ From ${pcIP || '127.0.0.1'} icmp_seq=2 Destination Host Unreachable
   }
 
   if (command === 'nslookup') {
-    const domain = args[0] || 'google.com';
+    const domain = args[0] || 'deneme.site';
     const out =
       `Server:		${pcDNS || '8.8.8.8'}
 Address:	${pcDNS || '8.8.8.8'}#53

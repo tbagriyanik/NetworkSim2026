@@ -7,6 +7,7 @@ import { portsFormTrunk } from '../connectivity';
 import {
   formatPortName, isPhysicalEthernetPort, getAllowedVlansString, getNativeVlanString,
 } from './showHelpers';
+import { calculateSubnet } from '@/lib/network/subnetting';
 
 /**
  * Show Interfaces
@@ -417,6 +418,10 @@ export function cmdShowIpInterfaceBrief(
 
     if (port.ipAddress && port.subnetMask) {
       output += `${displayPortName.padEnd(22)} ${port.ipAddress.padEnd(15)} YES manual ${status.padEnd(23)} ${protocol.padEnd(8)} \n`;
+      const subnet = calculateSubnet(port.ipAddress, port.subnetMask);
+      if (subnet) {
+        output += `  Subnet: ${subnet.network}/${subnet.prefixLength}  Broadcast: ${subnet.broadcast}  Hosts: ${subnet.firstHost}-${subnet.lastHost} (${subnet.usableHosts})\n`;
+      }
     } else {
       output += `${displayPortName.padEnd(22)} unassigned      YES unset  ${status.padEnd(23)} ${protocol.padEnd(8)} \n`;
     }

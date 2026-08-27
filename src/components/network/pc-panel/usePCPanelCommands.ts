@@ -760,12 +760,28 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
               addPcArpEntry?.(targetIp, targetDevice.macAddress, targetDevice.type === 'iot');
             }
 
-            if (targetDevice && ((targetDevice.type === 'switchL2' || targetDevice.type === 'switchL3') || targetDevice.type === 'router')) {
+            if (targetDevice && ((targetDevice.type === 'switchL2' || targetDevice.type === 'switchL3') || targetDevice.type === 'router' || targetDevice.type === 'wlc')) {
               if (deviceStates) {
                 const targetState = deviceStates.get(result.targetId);
+                if (isSsh && (!targetState?.rsaKeys || targetState.sshVersion !== 2 || !targetState.security?.vtyLines?.loginLocal)) {
+                  emit('error', `Connecting to ${targetIp}...SSH server is not fully configured (RSA, version 2, login local required)`);
+                  return;
+                }
                 if (targetState?.security?.vtyLines) {
                   const transportInput = targetState.security.vtyLines.transportInput || [];
                   if (isSsh) {
+                    if (!targetState.rsaKeys) {
+                      emit('error', `Connecting to ${targetIp}...SSH server has no RSA keys configured`);
+                      return;
+                    }
+                    if (targetState.sshVersion !== 2) {
+                      emit('error', `Connecting to ${targetIp}...SSH version 2 is required`);
+                      return;
+                    }
+                    if (!targetState.security.vtyLines.loginLocal) {
+                      emit('error', `Connecting to ${targetIp}...VTY is not configured for local login`);
+                      return;
+                    }
                     const isSshActive = transportInput.includes('all') || transportInput.includes('ssh');
                     if (!isSshActive) {
                       emit('error', `Connecting to ${targetIp}...Could not open connection to the host, on port 22: Connect failed`);
