@@ -413,8 +413,10 @@ export function usePCPanelInput(params: UsePCPanelInputParams) {
     }
 
     if (e.key === 'Escape') {
-      if (showAutocomplete) {
+      const isAutocompleteVisible = showAutocomplete && renderAutocompleteSuggestions.length > 0;
+      if (isAutocompleteVisible) {
         e.preventDefault();
+        e.stopPropagation();
         setShowAutocomplete(false);
         setAutocompleteIndex(-1);
         setAutocompleteNavigated(false);

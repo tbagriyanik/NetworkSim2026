@@ -2199,6 +2199,8 @@ export function PCPanel({
                           setCurrentPath={setCurrentPath}
                           canReachTargetIp={canReachTargetIp}
                           resolveDeviceNameTargetCallback={resolveDeviceNameTargetCallback}
+                          setPcHostname={setPcHostname}
+                          setEditingFile={setEditingFile}
                         />
                       )}
 

@@ -326,9 +326,16 @@ export function getFtpFilesFromUploadDir(deviceId: string): Array<{ name: string
 /** Resolve a possibly relative path against a current working directory. */
 export function resolvePath(cwd: string, input: string): string {
   if (!input) return cwd;
-  const isAbs = /^[a-zA-Z]:[\\/]/.test(input) || input.startsWith('\\');
+
+  // Handle ~ (home directory) in Linux paths
+  let cleanInput = input;
+  if (cleanInput === '~' || cleanInput.startsWith('~/') || cleanInput.startsWith('~\\')) {
+    cleanInput = cleanInput === '~' ? 'C:\\' : 'C:\\' + cleanInput.slice(2);
+  }
+
+  const isAbs = /^[a-zA-Z]:[\\/]/.test(cleanInput) || cleanInput.startsWith('\\') || cleanInput.startsWith('/');
   const base = isAbs ? '' : cwd.endsWith('\\') ? cwd : cwd + '\\';
-  const combined = base + input;
+  const combined = base + cleanInput;
 
   const driveMatch = /^[a-zA-Z]:/.exec(combined);
   const drive = driveMatch ? driveMatch[0] : 'C:';
@@ -355,7 +362,17 @@ export function getNode(fs: FSNode, path: string): FSNode | null {
   let node: FSNode = fs;
   for (const part of parts) {
     if (node.type !== 'dir') return null;
-    const child: FSNode | undefined = node.children[part];
+    let child: FSNode | undefined = node.children[part];
+    if (!child) {
+      // Case-insensitive lookup fallback
+      const partLower = part.toLowerCase();
+      for (const k in node.children) {
+        if (k.toLowerCase() === partLower) {
+          child = node.children[k];
+          break;
+        }
+      }
+    }
     if (!child) return null;
     node = child;
   }

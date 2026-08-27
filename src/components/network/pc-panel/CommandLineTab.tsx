@@ -20,6 +20,8 @@ interface CommandLineTabProps {
   pcOutput: OutputLine[];
   setPcOutput: (output: OutputLine[]) => void;
   internalPcHostname: string;
+  setPcHostname?: (name: string) => void;
+  setEditingFile?: (file: { path: string; content: string } | null) => void;
   currentPath?: string;
   ftpSession: FtpSession | null;
   pythonSession?: PythonSession | null;
@@ -67,6 +69,8 @@ export function CommandLineTab({
   pcOutput,
   setPcOutput,
   internalPcHostname,
+  setPcHostname,
+  setEditingFile,
   currentPath = 'C:\\',
   ftpSession,
   pythonSession,
@@ -94,7 +98,7 @@ export function CommandLineTab({
   pcDNS = '8.8.8.8',
   pcIPv6 = 'fe80::1',
   wifiEnabled = false,
-  setCurrentPath = () => {},
+  setCurrentPath = () => { },
   canReachTargetIp = () => true,
   resolveDeviceNameTargetCallback = () => null,
 }: CommandLineTabProps) {
@@ -122,23 +126,67 @@ export function CommandLineTab({
   });
 
   const [linuxAutocompleteIndex, setLinuxAutocompleteIndex] = useState(-1);
+  const [isLinuxAutocompleteDismissed, setIsLinuxAutocompleteDismissed] = useState(false);
 
-  // Separate Linux output state & history (stores ALL typed commands including invalid ones)
-  const [linuxOutput, setLinuxOutput] = useState<OutputLine[]>(() => [
-    {
-      id: 'linux-welcome',
-      type: 'output',
-      content: `Linux ${internalPcHostname.toLowerCase()}\nType 'help' for available commands.\n`,
-    },
-  ]);
-  const [linuxHistory, setLinuxHistory] = useState<string[]>([]);
+  // Separate Linux output state & history (persisted per device in localStorage)
+  const [linuxOutput, setLinuxOutput] = useState<OutputLine[]>(() => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(`pc_linux_output_${deviceId}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+      } catch { }
+    }
+    return [
+      {
+        id: 'linux-welcome',
+        type: 'output',
+        content: `Linux ${internalPcHostname.toLowerCase()}\nType 'help' for available commands.\n`,
+      },
+    ];
+  });
+
+  const [linuxHistory, setLinuxHistory] = useState<string[]>(() => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        const saved = localStorage.getItem(`pc_linux_history_${deviceId}`);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) return parsed;
+        }
+      } catch { }
+    }
+    return [];
+  });
+
   const [linuxHistoryIndex, setLinuxHistoryIndex] = useState(-1);
+
+  // Persist Linux output history to localStorage when changed
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(`pc_linux_output_${deviceId}`, JSON.stringify(linuxOutput.slice(-200)));
+      } catch { }
+    }
+  }, [linuxOutput, deviceId]);
+
+  // Persist Linux command history to localStorage when changed
+  useEffect(() => {
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(`pc_linux_history_${deviceId}`, JSON.stringify(linuxHistory.slice(0, 50)));
+      } catch { }
+    }
+  }, [linuxHistory, deviceId]);
 
   // Switch tab and persist choice
   const handleTabSwitch = useCallback((tab: 'cmd' | 'linux') => {
     setActiveTerminalTab(tab);
     setInput('');
     setLinuxAutocompleteIndex(-1);
+    setIsLinuxAutocompleteDismissed(false);
     setLinuxHistoryIndex(-1);
     if (typeof localStorage !== 'undefined') {
       try {
@@ -206,7 +254,9 @@ export function CommandLineTab({
   const linuxFilteredSuggestions = getLinuxSuggestions(input, currentPath, deviceId);
 
   const currentSuggestions = activeTerminalTab === 'cmd' ? renderAutocompleteSuggestions : linuxFilteredSuggestions;
-  const isAutocompleteVisible = activeTerminalTab === 'cmd' ? shouldShowAutocomplete : (input.trim().length > 0 && linuxFilteredSuggestions.length > 0);
+  const isAutocompleteVisible = activeTerminalTab === 'cmd'
+    ? shouldShowAutocomplete
+    : (!isLinuxAutocompleteDismissed && input.trim().length > 0 && linuxFilteredSuggestions.length > 0);
   const autocompleteIndex = activeTerminalTab === 'cmd' ? externalAutocompleteIndex : linuxAutocompleteIndex;
 
   // Auto-scroll active suggestion into view when navigating with Arrow keys in Linux mode
@@ -223,11 +273,12 @@ export function CommandLineTab({
   const completeLinuxSelection = useCallback((selected: string) => {
     const trimmed = input.trimStart();
     const parts = trimmed.split(/\s+/);
+    const suffix = selected.endsWith('/') ? '' : ' ';
     if (parts.length <= 1 && !input.endsWith(' ')) {
-      setInput(selected + ' ');
+      setInput(selected + suffix);
     } else {
       parts[parts.length - 1] = selected;
-      setInput(parts.join(' '));
+      setInput(parts.join(' ') + suffix);
     }
     setLinuxAutocompleteIndex(-1);
   }, [input, setInput]);
@@ -243,6 +294,7 @@ export function CommandLineTab({
       const cmdToRun = input.trim();
       setInput('');
       setLinuxAutocompleteIndex(-1);
+      setIsLinuxAutocompleteDismissed(false);
       // Save ALL commands (valid or invalid) to Linux history for recall with Arrow keys
       setLinuxHistory(prev => [cmdToRun, ...prev.filter(c => c !== cmdToRun)].slice(0, 50));
       setLinuxHistoryIndex(-1);
@@ -250,6 +302,8 @@ export function CommandLineTab({
       await executeLinuxCommand(cmdToRun, {
         deviceId,
         internalPcHostname,
+        setPcHostname,
+        setEditingFile,
         pcIP,
         pcSubnet,
         pcMAC,
@@ -287,7 +341,7 @@ export function CommandLineTab({
                   : (isDark ? "text-secondary-400 hover:text-secondary-200 hover:bg-white/5" : "text-secondary-600 hover:text-secondary-900 hover:bg-secondary-200/60")
               )}
             >
-              <Laptop className="w-3.5 h-3.5" />
+              <TerminalIcon className="w-3.5 h-3.5" />
               <span>Command Prompt</span>
               {activeTerminalTab === 'cmd' && (
                 <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse ml-0.5" />
@@ -423,7 +477,7 @@ export function CommandLineTab({
                     </>
                   ) : (
                     <>
-                      <TerminalIcon className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
+                      <Laptop className="w-4 h-4 shrink-0 text-emerald-400 mt-0.5" />
                       <span style={{ fontSize: `${fontSize}px` }} className="shrink-0 font-geist-mono select-none">
                         <span className="text-emerald-400 font-bold">{line.prompt?.split(':')[0] || `user@${internalPcHostname.toLowerCase()}`}</span>
                         <span className="text-secondary-400">:</span>
@@ -461,7 +515,7 @@ export function CommandLineTab({
                 {activeTerminalTab === 'cmd' ? (
                   <Laptop className="w-4 h-4 text-orange-400" />
                 ) : (
-                  <TerminalIcon className="w-4 h-4 text-emerald-400" />
+                  <Laptop className="w-4 h-4 text-emerald-400" />
                 )}
               </span>
               <span className="font-geist-mono font-bold text-[10px] sm:text-xs select-none opacity-60 group-focus-within:opacity-100 transition-opacity shrink-0 truncate max-w-[140px] sm:max-w-none md:max-w-[240px]">
@@ -479,11 +533,37 @@ export function CommandLineTab({
                 onChange={(e) => {
                   handleInputChange(e.target.value);
                   setLinuxAutocompleteIndex(-1);
+                  setIsLinuxAutocompleteDismissed(false);
                 }}
                 onKeyDown={(e) => {
                   if (activeTerminalTab === 'cmd') {
                     handleKeyDown(e);
                   } else {
+                    // ALWAYS prevent default for Tab in Linux mode so browser focus never jumps to next input element
+                    if (e.key === 'Tab') {
+                      e.preventDefault();
+                      if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
+                        const targetIdx = linuxAutocompleteIndex >= 0 ? linuxAutocompleteIndex : 0;
+                        const selected = linuxFilteredSuggestions[targetIdx];
+                        if (selected) {
+                          completeLinuxSelection(selected);
+                        }
+                        setLinuxAutocompleteIndex((targetIdx + 1) % linuxFilteredSuggestions.length);
+                      }
+                      return;
+                    }
+
+                    // ESC key closes the autocomplete suggestions dropdown first (without closing window)
+                    if (e.key === 'Escape') {
+                      if (isAutocompleteVisible) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsLinuxAutocompleteDismissed(true);
+                        setLinuxAutocompleteIndex(-1);
+                        return;
+                      }
+                    }
+
                     if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
                       if (e.key === 'ArrowDown') {
                         e.preventDefault();
@@ -495,26 +575,12 @@ export function CommandLineTab({
                         setLinuxAutocompleteIndex((prev) => (prev - 1 + linuxFilteredSuggestions.length) % linuxFilteredSuggestions.length);
                         return;
                       }
-                      if (e.key === 'Tab') {
-                        e.preventDefault();
-                        const targetIdx = linuxAutocompleteIndex >= 0 ? linuxAutocompleteIndex : 0;
-                        const selected = linuxFilteredSuggestions[targetIdx];
-                        if (selected) {
-                          completeLinuxSelection(selected);
-                        }
-                        setLinuxAutocompleteIndex((targetIdx + 1) % linuxFilteredSuggestions.length);
-                        return;
-                      }
                       if (e.key === 'Enter' && linuxAutocompleteIndex >= 0) {
                         e.preventDefault();
                         const selected = linuxFilteredSuggestions[linuxAutocompleteIndex];
                         if (selected) {
                           completeLinuxSelection(selected);
                         }
-                        return;
-                      }
-                      if (e.key === 'Escape') {
-                        setLinuxAutocompleteIndex(-1);
                         return;
                       }
                     } else {
@@ -556,6 +622,8 @@ export function CommandLineTab({
                           await executeLinuxCommand(line, {
                             deviceId,
                             internalPcHostname,
+                            setPcHostname,
+                            setEditingFile,
                             pcIP,
                             pcSubnet,
                             pcMAC,

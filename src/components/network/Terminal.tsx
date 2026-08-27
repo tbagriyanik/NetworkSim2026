@@ -1080,8 +1080,15 @@ export function Terminal({
       void handleSubmit();
       return;
     }
-    // Escape cancels password/confirm and returns to normal input
+    // Escape closes autocomplete dropdown first, then cancels password/confirm, then closes window
     if (e.key === 'Escape') {
+      if (shouldShowAutocomplete) {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowAutocomplete(false);
+        setAutocompleteIndex(-1);
+        return;
+      }
       if (state.awaitingPassword || state.awaitingConfigSource || confirmDialog?.show || isReloadConfirmationPending) {
         e.preventDefault();
         if (onCommand) {

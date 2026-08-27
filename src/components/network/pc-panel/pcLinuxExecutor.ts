@@ -7,6 +7,8 @@ import { executePythonScript } from './pcPythonRunner';
 export interface LinuxExecutorParams {
   deviceId: string;
   internalPcHostname: string;
+  setPcHostname?: (name: string) => void;
+  setEditingFile?: (file: { path: string; content: string } | null) => void;
   pcIP: string;
   pcSubnet: string;
   pcMAC: string;
@@ -23,14 +25,14 @@ export interface LinuxExecutorParams {
 }
 
 export const LINUX_SUGGESTIONS = [
-  'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv',
+  'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'nano', 'vim', 'vi', 'edit', 'notepad',
   'ifconfig', 'ip addr', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp',
-  'whoami', 'hostname', 'uname -a', 'clear', 'echo', 'sudo', 'help', 'date', 'uptime',
+  'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'echo', 'sudo', 'help', 'date', 'uptime',
   'python3', 'python'
 ];
 
 const FILE_COMMANDS = new Set([
-  'cd', 'ls', 'dir', 'cat', 'type', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'python', 'python3', 'sh'
+  'cd', 'ls', 'dir', 'cat', 'type', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'nano', 'vim', 'vi', 'edit', 'notepad', 'python', 'python3', 'sh'
 ]);
 
 export function getLinuxSuggestions(
@@ -49,33 +51,64 @@ export function getLinuxSuggestions(
   }
 
   const command = parts[0].toLowerCase();
+  let effectiveCmd = command;
 
-  // If command is 'sudo', check the subcommand
+  // Handle sudo subcommands
   if (command === 'sudo') {
     const subCmd = parts[1]?.toLowerCase();
     if (!subCmd || (parts.length === 2 && !inputVal.endsWith(' '))) {
       const typed = subCmd || '';
       return LINUX_SUGGESTIONS.filter(s => s.toLowerCase().startsWith(typed.toLowerCase()) && s !== 'sudo');
     }
+    effectiveCmd = subCmd;
     if (!FILE_COMMANDS.has(subCmd)) {
       return [];
     }
   } else if (!FILE_COMMANDS.has(command)) {
-    // Commands that don't take file arguments (e.g., clear, pwd, whoami, hostname, date, uptime, ifconfig, help, etc.)
+    // Commands that don't take file arguments (clear, pwd, whoami, hostname, date, uptime, ifconfig, help, etc.)
     return [];
   }
 
-  // File/directory completions for file-accepting commands
+  // Determine last argument being typed
   const lastArg = inputVal.endsWith(' ') ? '' : (parts[parts.length - 1] || '');
+
+  // If typing option flags (e.g. -l, -la), offer flag suggestions for ls
+  if (lastArg.startsWith('-')) {
+    if (effectiveCmd === 'ls') {
+      const flags = ['-l', '-la', '-a', '-lh', '-t', '-r', '-S'];
+      return flags.filter(f => f.startsWith(lastArg));
+    }
+    return [];
+  }
+
+  // Separate path directory prefix from current filename search query
+  let dirPrefix = '';
+  let searchPrefix = lastArg;
+  let targetSearchDir = currentPath;
+
+  const lastSlashIdx = Math.max(lastArg.lastIndexOf('/'), lastArg.lastIndexOf('\\'));
+  if (lastSlashIdx !== -1) {
+    dirPrefix = lastArg.substring(0, lastSlashIdx + 1);
+    searchPrefix = lastArg.substring(lastSlashIdx + 1);
+    const relDir = lastArg.substring(0, lastSlashIdx);
+    targetSearchDir = resolvePath(currentPath, relDir);
+  }
+
   const fs = loadFs(deviceId);
-  const dirNode = getNode(fs, currentPath);
+  const dirNode = getNode(fs, targetSearchDir);
   if (!dirNode || dirNode.type !== 'dir') return [];
 
+  const isDirOnlyCmd = ['cd', 'chdir', 'mkdir', 'rmdir'].includes(effectiveCmd);
   const candidates: string[] = [];
+
   Object.entries(dirNode.children).forEach(([name, child]) => {
-    if (name.toLowerCase().startsWith(lastArg.toLowerCase())) {
-      const suffix = child.type === 'dir' ? '/' : '';
-      candidates.push(name + suffix);
+    if (name.toLowerCase().startsWith(searchPrefix.toLowerCase())) {
+      const isDir = child.type === 'dir';
+      if (isDir) {
+        candidates.push(dirPrefix + name + '/');
+      } else if (!isDirOnlyCmd) {
+        candidates.push(dirPrefix + name);
+      }
     }
   });
 
@@ -101,6 +134,8 @@ export async function executeLinuxCommand(
   const {
     deviceId,
     internalPcHostname,
+    setPcHostname,
+    setEditingFile,
     pcIP,
     pcSubnet,
     pcMAC,
@@ -137,11 +172,37 @@ export async function executeLinuxCommand(
 
   if (command === 'help') {
     const helpText =
-      `These shell commands are defined internally. Type 'help' to see this list.
+`GNU Bash Simulator, version 5.2.15 (x86_64-pc-linux-gnu)
+These shell commands are defined internally. Type 'help' to see this list.
 
-  File Commands:       ls, pwd, cd, cat, touch, mkdir, rm, cp, mv
-  Network Commands:    ifconfig, ip, ping, traceroute, nslookup, netstat, arp
-  System Commands:     whoami, hostname, uname, date, uptime, clear, echo, sudo, python3`;
+  File System Commands:
+    ls [-l] [-la]     List directory contents (long format, hidden files)
+    pwd               Print current working directory
+    cd <dir>          Change directory (e.g. cd ~, cd .., cd upload)
+    cat <file>        Display content of a file
+    nano / vim <file> Open file in Notepad text editor
+    touch <file>      Create an empty file
+    mkdir <dir>       Create a new directory
+    rm <file>         Remove file or directory
+    cp <src> <dest>   Copy file
+    mv <src> <dest>   Move or rename file
+    echo "text" > f   Write or append (>>) text to file
+
+  Network Commands:
+    ifconfig / ip a   Display network interfaces & IP configurations
+    ip route          Display IP routing table
+    ping <host>       Send ICMP Echo requests to target IP/hostname
+    traceroute <host> Trace network packet route to destination
+    nslookup <domain> Perform DNS lookup for domain name
+    netstat / arp     Display network statistics & ARP cache
+
+  System & Execution:
+    whoami            Display current user
+    hostname <name>   Display or change system hostname (e.g. hostname aa)
+    uname [-a]        Print system kernel & OS information
+    date / uptime     Print current date & system uptime / load
+    python3 <file.py> Execute Python script on PC file system
+    clear             Clear terminal screen output`;
     addLocalOutput('output', helpText);
     return;
   }
@@ -151,8 +212,40 @@ export async function executeLinuxCommand(
     return;
   }
 
-  if (command === 'hostname') {
-    addLocalOutput('output', internalPcHostname.toLowerCase());
+  // Text editor command (nano, vim, vi, edit, notepad -> opens Notepad editor modal)
+  if (command === 'nano' || command === 'vim' || command === 'vi' || command === 'edit' || command === 'notepad') {
+    const rawFileName = args.join(' ').trim();
+    const fileName = rawFileName || 'new_file.txt';
+    const fs = loadFs(deviceId);
+    const targetPath = resolvePath(currentPath, fileName);
+    const existingContent = rawFileName ? (readFile(fs, targetPath) ?? '') : '';
+    if (setEditingFile) {
+      setEditingFile({ path: targetPath, content: existingContent });
+    }
+    addLocalOutput('output', rawFileName ? `Opening text editor for ${fileName}...` : `Opening empty text editor (${fileName})...`);
+    return;
+  }
+
+  // Fully functional hostname command (hostname or hostname <name> or hostnamectl set-hostname <name>)
+  if (command === 'hostname' || command === 'hostnamectl') {
+    const targetName = command === 'hostnamectl' && args[0] === 'set-hostname' ? args[1] : args[0];
+    if (targetName) {
+      const newHostname = targetName.trim().slice(0, 20);
+      if (setPcHostname) {
+        setPcHostname(newHostname);
+      }
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+          detail: {
+            deviceId,
+            config: { name: newHostname }
+          }
+        }));
+      }
+      addLocalOutput('success', `Hostname set to ${newHostname}`);
+    } else {
+      addLocalOutput('output', internalPcHostname);
+    }
     return;
   }
 
@@ -425,7 +518,7 @@ export async function executeLinuxCommand(
   // Network commands
   if (command === 'ifconfig' || command === 'ipconfig') {
     const ifconfigOut =
-      `eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+`eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet ${pcIP}  netmask ${pcSubnet}  broadcast ${pcGateway || '0.0.0.0'}
         inet6 ${pcIPv6 || 'fe80::1'}  prefixlen 64  scopeid 0x20<link>
         ether ${pcMAC}  txqueuelen 1000  (Ethernet)
@@ -447,7 +540,7 @@ ${wifiEnabled ? `wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
     const sub = args[0]?.toLowerCase();
     if (sub === 'a' || sub === 'addr' || sub === 'address') {
       const ipOut =
-        `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default
+`1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
     inet6 ::1/128 scope host
@@ -483,7 +576,7 @@ ${wifiEnabled ? `wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
     const reachable = canReachTargetIp(targetIp);
     if (reachable) {
       const out =
-        `PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
+`PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
 64 bytes from ${targetIp}: icmp_seq=1 ttl=64 time=0.82 ms
 64 bytes from ${targetIp}: icmp_seq=2 ttl=64 time=0.79 ms
 64 bytes from ${targetIp}: icmp_seq=3 ttl=64 time=0.81 ms
@@ -495,7 +588,7 @@ rtt min/avg/max/mdev = 0.76/0.80/0.84/0.03 ms`;
       addLocalOutput('output', out);
     } else {
       const out =
-        `PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
+`PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
 From ${pcIP} icmp_seq=1 Destination Host Unreachable
 From ${pcIP} icmp_seq=2 Destination Host Unreachable
 
@@ -519,13 +612,13 @@ From ${pcIP} icmp_seq=2 Destination Host Unreachable
     const reachable = canReachTargetIp(targetIp);
     if (reachable) {
       const out =
-        `traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
+`traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
  1  ${pcGateway || '192.168.1.1'} (${pcGateway || '192.168.1.1'})  0.892 ms  0.781 ms  0.745 ms
  2  ${targetIp} (${targetIp})  1.234 ms  1.102 ms  1.089 ms`;
       addLocalOutput('output', out);
     } else {
       const out =
-        `traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
+`traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
  1  ${pcGateway || '192.168.1.1'} (${pcGateway || '192.168.1.1'})  0.892 ms  0.781 ms  0.745 ms
  2  * * *
  3  * * *`;
@@ -537,7 +630,7 @@ From ${pcIP} icmp_seq=2 Destination Host Unreachable
   if (command === 'nslookup') {
     const domain = args[0] || 'google.com';
     const out =
-      `Server:		${pcDNS || '8.8.8.8'}
+`Server:		${pcDNS || '8.8.8.8'}
 Address:	${pcDNS || '8.8.8.8'}#53
 
 Non-authoritative answer:
