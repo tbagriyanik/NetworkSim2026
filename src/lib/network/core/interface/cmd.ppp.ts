@@ -1,0 +1,1 @@
+export { cmdEncapsulationDot1q, cmdEncapsulationHdlc, cmdEncapsulationPpp, cmdNoEncapsulation, cmdClockRate, cmdNoClockRate, cmdPppAuthPap, cmdPppAuthChap, cmdNoPppAuth, cmdPppPapSentUsername } from './cmd.misc';

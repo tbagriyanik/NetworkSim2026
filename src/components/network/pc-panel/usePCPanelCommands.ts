@@ -123,6 +123,11 @@ function applyPcPipeFilter(output: string, pipeExpr: string): string {
   return filtered.join('\n');
 }
 
+const UNSUPPORTED_DOS_COMMANDS = new Set([
+  'cat', 'nano', 'vim', 'vi', 'grep', 'chmod', 'chown', 'pwd', 'touch',
+  'ifconfig', 'traceroute', 'clear', 'history', 'which', 'whereis',
+]);
+
 export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
   const {
     activeTabRef,
@@ -454,7 +459,10 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
         const args = parts.slice(1);
         let cmdSuccess = true;
 
-        if (cmd === 'echo') {
+        if (UNSUPPORTED_DOS_COMMANDS.has(cmd)) {
+          cmdSuccess = false;
+          emit('error', `'${cmd}' is not recognized as an internal or external command.`);
+        } else if (cmd === 'echo') {
           emit('output', args.join(' '));
         } else if (cmd === 'ipconfig') {
           if (args.includes('/release')) {
@@ -802,14 +810,14 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           const flag = args[0]?.toLowerCase();
           if (args.length === 0 || flag === '-a' || flag === '-g' || flag === '-v') {
             emit('output', buildArpTableOutput());
-            } else if (flag === '-d') {
-              const delTarget = args[1];
-              if (!delTarget || delTarget === '*') {
-                clearPcArpTable?.();
-                emit('success', 'The ARP entry was deleted successfully.');
-              } else {
-                removePcArpEntry?.(delTarget);
-                emit('success', `The ARP entry ${delTarget} was deleted successfully.`);
+          } else if (flag === '-d') {
+            const delTarget = args[1];
+            if (!delTarget || delTarget === '*') {
+              clearPcArpTable?.();
+              emit('success', 'The ARP entry was deleted successfully.');
+            } else {
+              removePcArpEntry?.(delTarget);
+              emit('success', `The ARP entry ${delTarget} was deleted successfully.`);
             }
           } else if (flag === '-s') {
             const targetIp = args[1];
@@ -1197,8 +1205,8 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           const targetArg = args.join(' ').trim();
           const targetPath = targetArg ? resolvePath(currentPath, targetArg) : currentPath;
 
-if (!isDir(fs, targetPath)) {
-              emit('error', t.pathNotFound);
+          if (!isDir(fs, targetPath)) {
+            emit('error', t.pathNotFound);
           } else {
             const entries = listDir(fs, targetPath);
             let totalFiles = 0;
@@ -1251,7 +1259,7 @@ if (!isDir(fs, targetPath)) {
             const dirOutput = ` Volume in drive C is OS\n Volume Serial Number is 1234-5678\n\n Directory of ${displayDir}\n\n${dirLines.join('\n')}\n               ${totalFiles} File(s)          ${totalSize.toLocaleString()} bytes\n               ${totalDirs} Dir(s)  100,000,000,000 bytes free`;
             emit('output', dirOutput);
           }
-} else if (cmd === 'type' || cmd === 'cat') {
+        } else if (cmd === 'type' || cmd === 'cat') {
           const fileName = args.join(' ').trim();
           if (!fileName) {
             emit('output', t.commandSyntaxError);
@@ -1271,7 +1279,7 @@ if (!isDir(fs, targetPath)) {
               }
             }
           }
-} else if (cmd === 'del' || cmd === 'delete' || cmd === 'rm') {
+        } else if (cmd === 'del' || cmd === 'delete' || cmd === 'rm') {
           const fileName = args.join(' ').trim();
           if (!fileName) {
             emit('output', t.commandSyntaxError);

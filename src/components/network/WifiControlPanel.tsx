@@ -2,6 +2,7 @@
 
 import { CanvasDevice } from './networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
+import { getRouterWifiConfig } from './wifiAdminConfig';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 import { colors } from '@/lib/design-tokens/colors';
 import {
@@ -1351,7 +1352,8 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 /**
  * Get default WiFi configuration for a router
  */
-function getDefaultWifiConfig(device: CanvasDevice): WifiAdminConfig {
+/* moved to wifiAdminConfig.ts */
+/* function getDefaultWifiConfig(device: CanvasDevice): WifiAdminConfig {
   const defaultSsids: DeviceWifiSsidProfile[] = Array.isArray(device.wifi?.ssids) && device.wifi.ssids.length > 0
     ? device.wifi.ssids
     : [
@@ -1390,9 +1392,9 @@ function getDefaultWifiConfig(device: CanvasDevice): WifiAdminConfig {
     macFilterList: device.wifi?.macFilterList || [],
     ssids: defaultSsids,
   };
-}
+} */
 
-function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdminConfig {
+/* function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdminConfig {
   const wlan = state?.ports?.['wlan0'];
   const wlanWifi = wlan?.wifi;
   const base = getDefaultWifiConfig(device);
@@ -1424,7 +1426,7 @@ function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdm
     macFilterList: wlanWifi.macFilterList || base.macFilterList,
     ssids: Array.isArray(wlanWifi.ssids) && wlanWifi.ssids.length > 0 ? wlanWifi.ssids : base.ssids,
   };
-}
+} */
 
 /**
  * Generate router/switch/WLC admin page content for HTTP access

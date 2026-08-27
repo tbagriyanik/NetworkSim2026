@@ -6,8 +6,6 @@ import {
   PySuper,
   toPyComplex,
   getPythonType,
-  formatPythonValue,
-  isSingleStringLiteral,
   findOperatorIndex,
   isEnclosedInParens,
   splitOutsideQuotesAndParens,
@@ -17,6 +15,10 @@ import {
   formatStringTemplate,
 } from './pcPythonRunnerHelpers';
 import { loadFs, saveFs, readFile, writeFile, resolvePath, listDir, makeDir, deleteFile, isDir, getNode } from './pcFileSystem';
+import { evaluatePythonLiteral } from './pcPythonEvaluatorLiterals';
+import { evaluatePythonFunctionCall } from './pcPythonEvaluatorFunctions';
+import { evaluatePythonLogicalOrComparison } from './pcPythonEvaluatorOperators';
+import { evaluateSafeJavaScriptFallback } from './pcPythonEvaluatorSecurity';
 
 export function createExpressionEvaluator(
   scope: Record<string, unknown>,
@@ -221,11 +223,6 @@ export function createExpressionEvaluator(
       }
       if (current.trim()) parts.push(current.trim());
       return parts.filter(p => p.trim() !== '').map(p => evaluateExpr(p));
-    }
-
-    if (isSingleStringLiteral(trimmed)) {
-      const raw = trimmed.slice(1, -1);
-      return raw.replace(/\\n/g, '\n').replace(/\\t/g, '\t').replace(/\\r/g, '\r').replace(/\\\\/g, '\\');
     }
 
     const isCompleteCall = (name: string): boolean => {
@@ -700,25 +697,8 @@ export function createExpressionEvaluator(
       }
     }
 
-    // String literal
-    if (isSingleStringLiteral(trimmed)) {
-      return trimmed.slice(1, -1);
-    }
-
-    // Number literal
-    if (!isNaN(Number(trimmed))) {
-      return Number(trimmed);
-    }
-
-    // Boolean or None
-    if (trimmed === 'True') return true;
-    if (trimmed === 'False') return false;
-    if (trimmed === 'None') return null;
-
-    // Scope variable lookups
-    if (scope[trimmed] !== undefined) {
-      return scope[trimmed];
-    }
+    const literalResult = evaluatePythonLiteral(trimmed, scope);
+    if (literalResult.handled) return literalResult.value;
 
     // Member call: targetExpr.method(...) (supports string literals, variables, etc.)
     const dotIdx = findOperatorIndex(trimmed, '.');
@@ -924,112 +904,8 @@ export function createExpressionEvaluator(
       return condVal ? evaluateExpr(trueExpr) : evaluateExpr(falseExpr);
     }
 
-    // Handle Logical Operators: or, and, not
-    const orIdx = findOperatorIndex(trimmed, ' or ');
-    if (orIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, orIdx));
-      if (leftVal) return leftVal;
-      return evaluateExpr(trimmed.slice(orIdx + 4));
-    }
-
-    const andIdx = findOperatorIndex(trimmed, ' and ');
-    if (andIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, andIdx));
-      if (!leftVal) return leftVal;
-      return evaluateExpr(trimmed.slice(andIdx + 5));
-    }
-
-    if (trimmed.startsWith('not ') || trimmed.startsWith('not(')) {
-      const targetExpr = trimmed.startsWith('not ') ? trimmed.slice(4) : trimmed.slice(3);
-      return !evaluateExpr(targetExpr);
-    }
-
-    // Handle Comparison Operators: ==, !=, <=, >=, <, >, in, not in, is, is not
-    const isNotIdx = findOperatorIndex(trimmed, ' is not ');
-    if (isNotIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, isNotIdx));
-      const rightVal = evaluateExpr(trimmed.slice(isNotIdx + 8));
-      return leftVal !== rightVal;
-    }
-
-    const isIdx = findOperatorIndex(trimmed, ' is ');
-    if (isIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, isIdx));
-      const rightVal = evaluateExpr(trimmed.slice(isIdx + 4));
-      return leftVal === rightVal;
-    }
-
-    const notInIdx = findOperatorIndex(trimmed, ' not in ');
-    if (notInIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, notInIdx));
-      const rightVal = evaluateExpr(trimmed.slice(notInIdx + 8));
-      if (Array.isArray(rightVal)) return !rightVal.includes(leftVal);
-      if (typeof rightVal === 'string') return !rightVal.includes(String(leftVal));
-      if (rightVal instanceof Set) return !rightVal.has(leftVal);
-      if (rightVal && typeof rightVal === 'object') return !(String(leftVal) in rightVal);
-      return true;
-    }
-
-    const inIdx = findOperatorIndex(trimmed, ' in ');
-    if (inIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, inIdx));
-      const rightVal = evaluateExpr(trimmed.slice(inIdx + 4));
-      if (Array.isArray(rightVal)) return rightVal.includes(leftVal);
-      if (typeof rightVal === 'string') return rightVal.includes(String(leftVal));
-      if (rightVal instanceof Set) return rightVal.has(leftVal);
-      if (rightVal && typeof rightVal === 'object') return String(leftVal) in rightVal;
-      return false;
-    }
-
-    const eqEqIdx = findOperatorIndex(trimmed, '==');
-    if (eqEqIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, eqEqIdx));
-      const rightVal = evaluateExpr(trimmed.slice(eqEqIdx + 2));
-      if (Array.isArray(leftVal) && Array.isArray(rightVal)) {
-        if (leftVal.length !== rightVal.length) return false;
-        return leftVal.every((v, i) => v === rightVal[i] || formatPythonValue(v) === formatPythonValue(rightVal[i]));
-      }
-      return leftVal === rightVal || formatPythonValue(leftVal) === formatPythonValue(rightVal);
-    }
-
-    const notEqIdx = findOperatorIndex(trimmed, '!=');
-    if (notEqIdx !== -1) {
-      const leftVal = evaluateExpr(trimmed.slice(0, notEqIdx));
-      const rightVal = evaluateExpr(trimmed.slice(notEqIdx + 2));
-      if (Array.isArray(leftVal) && Array.isArray(rightVal)) {
-        if (leftVal.length !== rightVal.length) return true;
-        return !leftVal.every((v, i) => v === rightVal[i] || formatPythonValue(v) === formatPythonValue(rightVal[i]));
-      }
-      return leftVal !== rightVal && formatPythonValue(leftVal) !== formatPythonValue(rightVal);
-    }
-
-    const lteIdx = findOperatorIndex(trimmed, '<=');
-    if (lteIdx !== -1) {
-      const leftVal = Number(evaluateExpr(trimmed.slice(0, lteIdx)));
-      const rightVal = Number(evaluateExpr(trimmed.slice(lteIdx + 2)));
-      return leftVal <= rightVal;
-    }
-
-    const gteIdx = findOperatorIndex(trimmed, '>=');
-    if (gteIdx !== -1) {
-      const leftVal = Number(evaluateExpr(trimmed.slice(0, gteIdx)));
-      const rightVal = Number(evaluateExpr(trimmed.slice(gteIdx + 2)));
-      return leftVal >= rightVal;
-    }
-
-    const ltIdx = findOperatorIndex(trimmed, '<');
-    if (ltIdx !== -1 && trimmed[ltIdx + 1] !== '=' && trimmed[ltIdx + 1] !== '<') {
-      const leftVal = Number(evaluateExpr(trimmed.slice(0, ltIdx)));
-      const rightVal = Number(evaluateExpr(trimmed.slice(ltIdx + 1)));
-      return leftVal < rightVal;
-    }
-
-    const gtIdx = findOperatorIndex(trimmed, '>');
-    if (gtIdx !== -1 && trimmed[gtIdx + 1] !== '=' && trimmed[gtIdx + 1] !== '>') {
-      const leftVal = Number(evaluateExpr(trimmed.slice(0, gtIdx)));
-      const rightVal = Number(evaluateExpr(trimmed.slice(gtIdx + 1)));
-      return leftVal > rightVal;
-    }
+    const logicalOrComparison = evaluatePythonLogicalOrComparison(trimmed, evaluateExpr);
+    if (logicalOrComparison.handled) return logicalOrComparison.value;
 
     // Handle Python % string formatting or modulo
     const percentIdx = findOperatorIndex(trimmed, '%');
@@ -1300,28 +1176,8 @@ export function createExpressionEvaluator(
       }
     }
 
-    // User-defined function call or PyClass constructor
-    const functionCallMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\)$/.exec(trimmed);
-    if (functionCallMatch) {
-      const fn = scope[functionCallMatch[1]];
-      if (fn instanceof PyClass) {
-        const args = functionCallMatch[2].trim()
-          ? splitOutsideQuotesAndParens(functionCallMatch[2], ',').map(arg => evaluateExpr(arg))
-          : [];
-        const instance = new PyInstance(fn);
-        const initMethod = fn.findMethod('__init__');
-        if (typeof initMethod === 'function') {
-          initMethod(instance, ...args);
-        }
-        return instance;
-      }
-      if (typeof fn === 'function') {
-        const args = functionCallMatch[2].trim()
-          ? splitOutsideQuotesAndParens(functionCallMatch[2], ',').map(arg => evaluateExpr(arg))
-          : [];
-        return fn(...args);
-      }
-    }
+    const functionCall = evaluatePythonFunctionCall(trimmed, scope, evaluateExpr);
+    if (functionCall.handled) return functionCall.value;
 
     // Single Identifier variable lookup
     if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
@@ -1332,22 +1188,7 @@ export function createExpressionEvaluator(
       throw new Error(`NameError: name '${trimmed}' is not defined`);
     }
 
-    // Fallback: JS Function evaluation in isolated scope
-    try {
-      const keys: string[] = [];
-      const vals: unknown[] = [];
-      for (const [k, v] of Object.entries(scope)) {
-        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k)) {
-          keys.push(k);
-          vals.push(v);
-        }
-      }
-      // eslint-disable-next-line no-new-func
-      const fn = new Function(...keys, `return (${trimmed});`);
-      return fn(...vals);
-    } catch {
-      return trimmed;
-    }
+    return evaluateSafeJavaScriptFallback(trimmed, scope).value;
   };
 
   return evaluateExpr;

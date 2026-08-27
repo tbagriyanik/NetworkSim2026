@@ -28,7 +28,8 @@ import { FileEditorModal } from './pc-panel/FileEditorModal';
 import { loadFs, saveFs, writeFile, readFile, getFtpFilesFromUploadDir, syncMailFilesToFs, syncHttpContentToFs } from './pc-panel/pcFileSystem';
 import { HomeLauncher } from './pc-panel/HomeLauncher';
 import { PowerOffOverlay } from './pc-panel/PowerOffOverlay';
-import { getDefaultPcFiles, getPCConfigDefaults } from './pc-panel/pcPanelFiles';
+import { getPCConfigDefaults } from './pc-panel/pcPanelFiles';
+import { usePCPanelSessionState } from './pc-panel/usePCPanelSessionState';
 import { usePCPanelNtp } from './pc-panel/usePCPanelNtp';
 import { usePCPanelSync } from './pc-panel/usePCPanelSync';
 import { usePCPanelValidation } from './pc-panel/usePCPanelValidation';
@@ -41,7 +42,7 @@ import { usePCPanelBrowser } from './pc-panel/usePCPanelBrowser';
 import { usePCPanelCommands } from './pc-panel/usePCPanelCommands';
 import { usePCPanelInput } from './pc-panel/usePCPanelInput';
 import { validateIP, validateIPv6, isValidIpAddress, formatMacForArp, highlightText as highlightTextHelper, getInitialPcOutput } from './pc-panel/pcPanelHelpers';
-import type { DhcpPoolConfig, FtpSession, PythonSession, OutputLine, PCActiveTab, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
+import type { DhcpPoolConfig, OutputLine, PCActiveTab, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
 import { usePCPanelState } from './pc-panel/usePCPanelState';
 import { PCDesktop } from './pc-panel/PCDesktop';
 import { PCTerminal } from './pc-panel/PCTerminal';
@@ -146,39 +147,10 @@ export function PCPanel({
   const [connectedDeviceId, setConnectedDeviceId] = useState<string | null>(null);
   const [consoleConnectionTime, setConsoleConnectionTime] = useState<number>(0);
 
-  // FTP & Python session state (interactive ftp> / python> mode on PC desktop)
-  const [ftpSession, setFtpSession] = useState<FtpSession | null>(null);
-  const [pythonSession, setPythonSession] = useState<PythonSession | null>(null);
-  const [isFtpFilePickerOpen, setIsFtpFilePickerOpen] = useState(false);
   const [currentPath, setCurrentPath] = useState<string>('C:\\');
   const [editingFile, setEditingFile] = useState<{ path: string; content: string } | null>(null);
-
-  // Local files downloaded via FTP get
-  const [pcLocalFiles, setPcLocalFiles] = useState<PcFile[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(`pc_files_${deviceId}`);
-        if (stored) return JSON.parse(stored);
-      } catch { }
-    }
-    const defaults = getDefaultPcFiles(deviceId);
-    try { localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults)); } catch { }
-    return defaults;
-  });
-
-  // Keep desktop CMD and console histories separate per PC device.
-  const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(`pc_history_${deviceId}`);
-        if (stored) return JSON.parse(stored);
-      } catch { }
-    }
-    return pcHistories?.get(deviceId) || [];
-  });
-  const [desktopHistoryIndex, setDesktopHistoryIndex] = useState(-1);
-  const [consoleHistory, setConsoleHistory] = useState<string[]>([]);
-  const [consoleHistoryIndex, setConsoleHistoryIndex] = useState(-1);
+  const sessionState = usePCPanelSessionState(deviceId, pcHistories, activeTab, setCurrentPath);
+  const { ftpSession, setFtpSession, pythonSession, setPythonSession, isFtpFilePickerOpen, setIsFtpFilePickerOpen, pcLocalFiles, setPcLocalFiles, desktopHistory, setDesktopHistory, desktopHistoryIndex, setDesktopHistoryIndex, consoleHistory, setConsoleHistory, consoleHistoryIndex, setConsoleHistoryIndex } = sessionState;
 
   // Undo/Redo state
   const [undoStack, setUndoStack] = useState<string[]>([]);
@@ -193,57 +165,6 @@ export function PCPanel({
     }
   }, [deviceId, currentPath]);
 
-  // Sync files and cwd when deviceId changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const storedFiles = localStorage.getItem(`pc_files_${deviceId}`);
-        if (storedFiles) {
-          setPcLocalFiles(JSON.parse(storedFiles));
-        } else {
-          const defaults = getDefaultPcFiles(deviceId);
-          localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults));
-          setPcLocalFiles(defaults);
-        }
-
-        setCurrentPath('C:\\');
-        localStorage.setItem(`pc_cwd_${deviceId}`, 'C:\\');
-      } catch { }
-    }
-  }, [deviceId]);
-
-  // Load and save desktop history per deviceId
-  useEffect(() => {
-    let historyToLoad: string[] = [];
-    if (typeof localStorage !== 'undefined') {
-      try {
-        const stored = localStorage.getItem(`pc_history_${deviceId}`);
-        if (stored) historyToLoad = JSON.parse(stored);
-      } catch { }
-    }
-    if (historyToLoad.length === 0) {
-      historyToLoad = pcHistories?.get(deviceId) || [];
-    }
-    setDesktopHistory(historyToLoad);
-    setDesktopHistoryIndex(-1);
-  // Reload only when switching devices. `pcHistories` changes whenever a
-  // command is recorded; listening to it here would immediately overwrite
-  // the newly recorded local history with the previous snapshot.
-  }, [deviceId]);
-
-  useEffect(() => {
-    if (typeof localStorage !== 'undefined' && desktopHistory.length > 0) {
-      try {
-        localStorage.setItem(`pc_history_${deviceId}`, JSON.stringify(desktopHistory));
-      } catch { }
-    }
-  }, [deviceId, desktopHistory]);
-
-  // Reset per-tab command cursor when tab changes.
-  useEffect(() => {
-    if (activeTab === 'desktop') setTimeout(() => setDesktopHistoryIndex(-1), 0);
-    if (activeTab === 'terminal') setTimeout(() => setConsoleHistoryIndex(-1), 0);
-  }, [activeTab]);
 
   const executeCommandRef = useRef<((cmd?: string) => Promise<void>) | null>(null);
 

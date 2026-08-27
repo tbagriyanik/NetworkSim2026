@@ -4,6 +4,8 @@ import {
 } from './pcFileSystem';
 import type { FSNode } from './pcFileSystem';
 import { executePythonScript } from './pcPythonRunner';
+import { formatLinuxPath, formatWinToUnixPath } from './pcLinuxPathUtils';
+export { formatLinuxPath, formatWinToUnixPath } from './pcLinuxPathUtils';
 
 export interface LinuxExecutorParams {
   deviceId: string;
@@ -29,7 +31,7 @@ export interface LinuxExecutorParams {
 }
 
 export const LINUX_SUGGESTIONS = [
-  'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'grep', 'wc', 'nano', 'vim', 'vi', 'edit', 'notepad',
+  'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'grep', 'wc', 'nano', 'vim', 'vi', 'notepad',
   'ifconfig', 'ip addr', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp', 'ftp', 'ssh', 'telnet',
   'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'history', 'echo', 'sudo', 'help', 'date', 'uptime',
   'for', 'while', 'if', 'python3', 'python'
@@ -46,8 +48,10 @@ function expandShellVariables(input: string, deviceId: string, currentPath?: str
 }
 
 const FILE_COMMANDS = new Set([
-  'cd', 'ls', 'dir', 'cat', 'type', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'nano', 'vim', 'vi', 'edit', 'notepad', 'python', 'python3', 'sh', 'bash'
+  'cd', 'ls', 'dir', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'nano', 'vim', 'vi', 'notepad', 'python', 'python3', 'sh', 'bash'
 ]);
+
+const UNSUPPORTED_LINUX_COMMANDS = new Set(['type', 'edit', 'ipconfig']);
 
 export function getLinuxSuggestions(
   inputVal: string,
@@ -129,18 +133,6 @@ export function getLinuxSuggestions(
   return candidates;
 }
 
-export function formatLinuxPath(winPath: string): string {
-  if (!winPath || winPath === 'C:\\') return '~';
-  const clean = winPath.replace(/^C:\\?/i, '').replace(/\\/g, '/');
-  return clean ? `~/${clean}` : '~';
-}
-
-export function formatWinToUnixPath(winPath: string): string {
-  if (!winPath || winPath === 'C:\\') return '/home/user';
-  const clean = winPath.replace(/^C:\\?/i, '').replace(/\\/g, '/');
-  return `/home/user/${clean}`;
-}
-
 function removeTree(fs: FSNode, path: string): boolean {
   const parts = path.replace(/\\/g, '/').split('/').filter(Boolean);
   if (parts.length === 0) return false;
@@ -187,6 +179,11 @@ export async function executeLinuxCommand(
   const parts = cleanCmd.split(/\s+/);
   const command = parts[0].toLowerCase();
   const args = parts.slice(1);
+
+  if (UNSUPPORTED_LINUX_COMMANDS.has(command)) {
+    addLocalOutput('error', `bash: ${command}: command not found`);
+    return;
+  }
 
   const linuxPrompt = `${isSudo ? 'root' : 'user'}@${internalPcHostname.toLowerCase()}:${formatLinuxPath(currentPath)}${isSudo ? '#' : '$'}`;
 
@@ -401,7 +398,7 @@ export async function executeLinuxCommand(
 
   if (command === 'help') {
     const helpText =
-`GNU Bash Simulator, version 5.2.15 (x86_64-pc-linux-gnu)
+      `GNU Bash Simulator, version 5.2.15 (x86_64-pc-linux-gnu)
 These shell commands are defined internally. Type 'help' to see this list.
 
   File System Commands:
@@ -452,7 +449,7 @@ These shell commands are defined internally. Type 'help' to see this list.
   }
 
   // Text editor command (nano, vim, vi, edit, notepad -> opens Notepad editor modal)
-  if (command === 'nano' || command === 'vim' || command === 'vi' || command === 'edit' || command === 'notepad') {
+  if (command === 'nano' || command === 'vim' || command === 'vi' || command === 'notepad') {
     const rawFileName = args.join(' ').trim();
     const fileName = rawFileName || 'new_file.txt';
     const fs = loadFs(deviceId);
@@ -673,7 +670,7 @@ These shell commands are defined internally. Type 'help' to see this list.
   }
 
   // Read file from PC file system
-  if (command === 'cat' || command === 'type') {
+  if (command === 'cat') {
     const fileName = args[0];
     if (!fileName) {
       addLocalOutput('error', 'cat: missing file operand');
@@ -920,9 +917,9 @@ These shell commands are defined internally. Type 'help' to see this list.
   }
 
   // Network commands
-  if (command === 'ifconfig' || command === 'ipconfig') {
+  if (command === 'ifconfig') {
     const ifconfigOut =
-`eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
+      `eth0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet ${pcIP}  netmask ${pcSubnet}  broadcast ${pcGateway || '0.0.0.0'}
         inet6 ${pcIPv6 || 'fe80::1'}  prefixlen 64  scopeid 0x20<link>
         ether ${pcMAC}  txqueuelen 1000  (Ethernet)
@@ -944,7 +941,7 @@ ${wifiEnabled ? `wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
     const sub = args[0]?.toLowerCase();
     if (sub === 'a' || sub === 'addr' || sub === 'address') {
       const ipOut =
-`1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default
+        `1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
     inet6 ::1/128 scope host
@@ -981,7 +978,7 @@ ${wifiEnabled ? `wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
     const reachable = isLoopback || canReachTargetIp(targetIp);
     if (reachable) {
       const out =
-`PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
+        `PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
 64 bytes from ${targetIp}: icmp_seq=1 ttl=64 time=0.82 ms
 64 bytes from ${targetIp}: icmp_seq=2 ttl=64 time=0.79 ms
 64 bytes from ${targetIp}: icmp_seq=3 ttl=64 time=0.81 ms
@@ -993,7 +990,7 @@ rtt min/avg/max/mdev = 0.76/0.80/0.84/0.03 ms`;
       addLocalOutput('output', out);
     } else {
       const out =
-`PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
+        `PING ${rawTarget} (${targetIp}) 56(84) bytes of data.
 From ${pcIP || '127.0.0.1'} icmp_seq=1 Destination Host Unreachable
 From ${pcIP || '127.0.0.1'} icmp_seq=2 Destination Host Unreachable
 
@@ -1017,13 +1014,13 @@ From ${pcIP || '127.0.0.1'} icmp_seq=2 Destination Host Unreachable
     const reachable = canReachTargetIp(targetIp);
     if (reachable) {
       const out =
-`traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
+        `traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
  1  ${pcGateway || '192.168.1.1'} (${pcGateway || '192.168.1.1'})  0.892 ms  0.781 ms  0.745 ms
  2  ${targetIp} (${targetIp})  1.234 ms  1.102 ms  1.089 ms`;
       addLocalOutput('output', out);
     } else {
       const out =
-`traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
+        `traceroute to ${rawTarget} (${targetIp}), 30 hops max, 60 byte packets
  1  ${pcGateway || '192.168.1.1'} (${pcGateway || '192.168.1.1'})  0.892 ms  0.781 ms  0.745 ms
  2  * * *
  3  * * *`;
@@ -1035,7 +1032,7 @@ From ${pcIP || '127.0.0.1'} icmp_seq=2 Destination Host Unreachable
   if (command === 'nslookup') {
     const domain = args[0] || 'google.com';
     const out =
-`Server:		${pcDNS || '8.8.8.8'}
+      `Server:		${pcDNS || '8.8.8.8'}
 Address:	${pcDNS || '8.8.8.8'}#53
 
 Non-authoritative answer:

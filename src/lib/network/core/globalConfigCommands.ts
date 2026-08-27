@@ -11,6 +11,10 @@ import { getDeviceCapabilities } from '../capabilities';
 import { validateIpRoutingSupport } from './L3Validation';
 import { createStubHandler } from './stubCommandHints';
 import { cmdAccessList, cmdNoAccessList } from './interface/cmd.misc';
+import { cmdNoIpDhcpSnooping, cmdIpDhcpSnoopingVlan, cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress } from './globalConfigDhcp';
+import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList } from './globalConfigNat';
+import { cmdAaaNewModel, cmdNoAaaNewModel, cmdAaaAuthentication, cmdRadiusServerHost, cmdTacacsServerHost, cmdRadiusServerKey, cmdTacacsServerKey } from './globalConfigSecurity';
+import { cmdLoggingHost, cmdLoggingTrap } from './globalConfigServices';
 import {
   cmdNoIpHttpServer,
   cmdNoIpDomainLookup,
@@ -19,11 +23,9 @@ import {
   cmdNoIpSshTimeOut,
   cmdNoSpanningTree,
   cmdNoMlsQos,
-  cmdNoIpDhcpSnooping,
   cmdNoUsername,
   cmdNoInterface,
   cmdIpSshVersion,
-  cmdIpDhcpSnoopingVlan,
   cmdIpArpInspection,
   cmdNoIpArpInspection,
   cmdSpanningTreeVlan,
@@ -47,11 +49,6 @@ import {
   cmdIpSshAuthRetries,
   cmdCryptoKeyGenerateRsa,
   cmdCryptoKeyZeroizeRsa,
-  cmdIpDhcpPool,
-  cmdNoIpDhcpPool,
-  cmdIpv6DhcpPool,
-  cmdIpDhcpExcludedAddress,
-  cmdNoIpDhcpExcludedAddress,
   cmdIpAccessList,
   cmdIpv6AccessList,
   cmdIpv6AclPermit,
@@ -68,11 +65,6 @@ import {
   cmdIpHost,
   cmdAliasExec,
   cmdNoAliasExec,
-  cmdIpNatPool,
-  cmdIpNatInsideSourceStatic,
-  cmdIpNatInsideSourceList,
-  cmdLoggingHost,
-  cmdLoggingTrap,
   cmdIpSla,
   cmdSpanningTreeMst,
   cmdMstName,
@@ -81,13 +73,6 @@ import {
   cmdNoMstInstance,
   cmdMstShowPending,
   cmdSpanningTreeMstPriority,
-  cmdAaaNewModel,
-  cmdNoAaaNewModel,
-  cmdAaaAuthentication,
-  cmdRadiusServerHost,
-  cmdTacacsServerHost,
-  cmdRadiusServerKey,
-  cmdTacacsServerKey,
 } from './globalConfigExtraCommands';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)

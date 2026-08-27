@@ -70,7 +70,7 @@ export function getAutocompleteSuggestions({
     const trimmedVal = value.trimStart();
     const parts = trimmedVal.split(/\s+/);
     const firstCmd = parts[0]?.toLowerCase() || '';
-    const fileCmds = ['python', 'py', 'python3', 'edit', 'notepad', 'cat', 'del', 'delete', 'rm', 'type', 'dir', 'ls', 'cd', 'chdir', 'rd', 'rmdir', 'md', 'mkdir', 'copy', 'move', 'ren', 'rename', 'call'];
+    const fileCmds = ['python', 'py', 'python3', 'edit', 'notepad', 'del', 'delete', 'type', 'dir', 'cd', 'chdir', 'rd', 'rmdir', 'md', 'mkdir', 'copy', 'move', 'ren', 'rename', 'call'];
     const isFileCmd = fileCmds.includes(firstCmd);
     const hasSpaceAfterCmd = value.includes(' ');
 

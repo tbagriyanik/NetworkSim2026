@@ -1,9 +1,12 @@
 // Network Command Executor (refactored with handler map)
-import { SwitchState, CommandMode, CommandResult, Port } from './types';
+import { SwitchState, CommandMode, CommandResult } from './types';
 import { useAppStore } from '../store/appStore';
 import { parseCommand, validateCommand, commandPatterns, getLevenshteinDistance, expandKeywordPrefixes, resolveAliases } from './parser';
 import { getDeviceCapabilities } from './capabilities';
-import { isRouterModel } from './switchModels';
+import { findDeviceByHost, formatBytes } from './executorSessionUtils';
+import { applyPipeFilterOutput as applyPipeFilterOutputExternal, processCommandResult as processCommandResultExternal } from './executorResultUtils';
+import { getSmartHint as getSmartHintExternal } from './executorHints';
+import { generateBootMessages } from './executorBootMessages';
 import { getModePrompt } from './initialState';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { encryptMd5Password, encryptType7Password } from './crypto';
@@ -965,7 +968,7 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, 
 /**
  * Akıllı ipucu sistemi - Mevcut duruma göre sonraki adımı önerir
  */
-function getSmartHint(state: SwitchState, lang: 'tr' | 'en'): string {
+/* function getSmartHint(state: SwitchState, lang: 'tr' | 'en'): string {
   const isTr = lang === 'tr';
   const mode = state.currentMode;
 
@@ -1014,7 +1017,7 @@ function getSmartHint(state: SwitchState, lang: 'tr' | 'en'): string {
   }
 
   return '';
-}
+} */
 
 /**
  * Akıllı hata tahmin ve komut öneri sistemi
@@ -1123,7 +1126,7 @@ function getEstimatedSuggestions(
 /**
  * Hata sonuçlarına tahmin önerilerini ekleyen yardımcı fonksiyon
  */
-function processCommandResult(
+/* function processCommandResult(
   result: CommandResult,
   input: string,
   mode: CommandMode,
@@ -1161,9 +1164,9 @@ function processCommandResult(
     }
   }
   return result;
-}
+} */
 
-function applyPipeFilterOutput(
+/* function applyPipeFilterOutput(
   output: string,
   filter: { type: 'include' | 'exclude' | 'begin' | 'section'; query: string }
 ): string {
@@ -1199,7 +1202,7 @@ function applyPipeFilterOutput(
     }
   }
   return out.join('\n');
-}
+} */
 
 // --- Core executor ---
 export function executeCommand(
@@ -1332,7 +1335,7 @@ export function executeCommand(
       // In Exam mode, we don't show any smart hints or educational notes.
       const helpLevel = useAppStore.getState().helpLevel;
       if (helpLevel !== 'exam') {
-        helpOutput += getSmartHint(state, language);
+        helpOutput += getSmartHintExternal(state, language);
       }
     }
 
@@ -1351,18 +1354,18 @@ export function executeCommand(
   const validation = validateCommand(parsed, state.currentMode, state);
 
   if (!validation.valid) {
-    return processCommandResult({
+    return processCommandResultExternal({
       success: false,
       error: validation.error || 'Unknown error'
-    }, cmdToProcess, state.currentMode, state, language);
+    }, cmdToProcess, state.currentMode, state, language, getEstimatedSuggestions);
   }
 
   const commandName = validation.matchedPattern;
   if (!commandName) {
-    return processCommandResult({
+    return processCommandResultExternal({
       success: false,
       error: IOS_ERRORS.unknown
-    }, cmdToProcess, state.currentMode, state, language);
+    }, cmdToProcess, state.currentMode, state, language, getEstimatedSuggestions);
   }
 
   const ctx: CommandContext = {
@@ -1451,10 +1454,10 @@ export function executeCommand(
     (isSwitchOnlyCmd && !(isL2Switch || isL3Switch)) ||
     (isFirewallOnlyCmd && !isFirewall) ||
     (isWlcOnlyCmd && !isWLC)) {
-    return processCommandResult({
+     return processCommandResultExternal({
       success: false,
       error: `% Invalid input detected at '^' marker.\n${commandName} is not supported on this ${deviceLabel}.`
-    }, cmdToProcess, state.currentMode, state, language);
+     }, cmdToProcess, state.currentMode, state, language, getEstimatedSuggestions);
   }
 
   const commandInput = parsed.resolvedInput || parsed.rawInput;
@@ -1472,9 +1475,9 @@ export function executeCommand(
   }
   let result = handler(state, commandInput, ctx);
   if (pipeFilter && result.success && typeof result.output === 'string') {
-    result = { ...result, output: applyPipeFilterOutput(result.output, pipeFilter) };
+    result = { ...result, output: applyPipeFilterOutputExternal(result.output, pipeFilter) };
   }
-  return processCommandResult(result, cmdToProcess, state.currentMode, state, language);
+  return processCommandResultExternal(result, cmdToProcess, state.currentMode, state, language, getEstimatedSuggestions);
 }
 
 // --- Session helpers (kept local) ---
@@ -1482,7 +1485,8 @@ export function executeCommand(
 /**
  * Compute the interface summary line for boot messages.
  */
-function computeInterfaceSummary(state: SwitchState): string {
+/* boot-message helpers moved to executorBootMessages.ts */
+/* function computeInterfaceSummary(state: SwitchState): string {
   const isRouter = isRouterModel(state.version.modelName) || isRouterModel(state.switchModel);
   const isL3Switch = state.version.modelName.includes('3650');
   const isFirewall = state.deviceType === 'firewall' || state.switchLayer === 'FW' || state.version.modelName.includes('ASA') || state.version.modelName.includes('Firepower');
@@ -1496,14 +1500,14 @@ function computeInterfaceSummary(state: SwitchState): string {
   if (reportedGiCount > 0) parts.push(`${reportedGiCount} Gigabit Ethernet/IEEE 802.3 interface(s)`);
   if (wlanCount > 0) parts.push(`${wlanCount} 802.11 Wireless interface(s)`);
   return parts.join('\n');
-}
+} */
 
 /**
  * Generate realistic boot messages for a device.
  * @param full When true, includes POST, memory test, and full initialization (console).
  *            When false, shows a shorter boot sequence (telnet/SSH remote sessions).
  */
-function generateBootMessages(state: SwitchState, language: 'tr' | 'en', full: boolean): string {
+/* function generateBootMessages(state: SwitchState, language: 'tr' | 'en', full: boolean): string {
   const isRouter = isRouterModel(state.version.modelName) || isRouterModel(state.switchModel);
   const isL3Switch = state.version.modelName.includes('3650');
   const ifaceSummary = computeInterfaceSummary(state);
@@ -1579,7 +1583,7 @@ ${ifaceSummary}`;
 Technical Support: http://yunus.sf.net
 Copyright (c) 1996-2026 by Network Systems, Inc.
 ${body}`;
-}
+} */
 
 function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
   const needsLogin = !!(state.security.consoleLine.login && state.security.consoleLine.password);
@@ -1919,28 +1923,6 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
       passwordContext: state.passwordContext
     }
   };
-}
-
-function findDeviceByHost(ctx: { devices?: CanvasDevice[]; deviceStates?: Map<string, SwitchState> }, host: string) {
-  const normalized = host.trim().toLowerCase();
-  const devices = ctx.devices || [];
-  const direct = devices.find(device =>
-    device.ip === host ||
-    device.name.toLowerCase() === normalized ||
-    device.id.toLowerCase() === normalized
-  );
-  if (direct) return direct;
-  return devices.find(device =>
-    (device.ip || '').toLowerCase() === normalized ||
-    device.name.toLowerCase().includes(normalized) ||
-    device.id.toLowerCase().includes(normalized)
-  );
-}
-
-function formatBytes(bytes: number) {
-  if (bytes >= 1024 * 1024) return `${Math.max(1, Math.round(bytes / (1024 * 1024)))} MB`;
-  if (bytes >= 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
-  return `${Math.max(1, bytes)} B`;
 }
 
 function handleFtpSessionCommand(
