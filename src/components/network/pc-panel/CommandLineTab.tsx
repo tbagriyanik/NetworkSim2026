@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Laptop, Terminal as TerminalIcon, CornerDownLeft, Trash2 } from 'lucide-react';
+import { Laptop, Terminal as TerminalIcon, CornerDownLeft, Trash2, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { cn } from '@/lib/utils';
 import type { OutputLine, FtpSession, PythonSession } from './PCPanel.types';
-import { executeLinuxCommand, LINUX_SUGGESTIONS, formatLinuxPath } from './pcLinuxExecutor';
+import { executeLinuxCommand, formatLinuxPath, getLinuxSuggestions } from './pcLinuxExecutor';
 
 interface CommandLineTabProps {
   isDark: boolean;
@@ -74,7 +74,7 @@ export function CommandLineTab({
   setInput,
   shouldShowAutocomplete,
   renderAutocompleteSuggestions,
-  autocompleteIndex,
+  autocompleteIndex: externalAutocompleteIndex,
   completeAutocompleteSelection,
   executeCommand,
   handleInputChange,
@@ -101,10 +101,29 @@ export function CommandLineTab({
   const inputRef = externalInputRef;
   const autocompleteRef = useRef<HTMLDivElement>(null);
 
-  // Terminal active tab state: 'cmd' vs 'linux'
-  const [activeTerminalTab, setActiveTerminalTab] = useState<'cmd' | 'linux'>('cmd');
+  // Pinned terminal tab state (persist in localStorage per device and globally)
+  const [pinnedTerminalTab, setPinnedTerminalTab] = useState<'cmd' | 'linux' | null>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const pinned = localStorage.getItem(`pc_pinned_terminal_tab_${deviceId}`) || localStorage.getItem('pc_pinned_terminal_tab');
+      if (pinned === 'cmd' || pinned === 'linux') return pinned;
+    }
+    return null;
+  });
 
-  // Separate Linux output state
+  // Terminal active tab state: 'cmd' vs 'linux' (loads pinned or last used terminal tab)
+  const [activeTerminalTab, setActiveTerminalTab] = useState<'cmd' | 'linux'>(() => {
+    if (typeof localStorage !== 'undefined') {
+      const pinned = localStorage.getItem(`pc_pinned_terminal_tab_${deviceId}`) || localStorage.getItem('pc_pinned_terminal_tab');
+      if (pinned === 'cmd' || pinned === 'linux') return pinned;
+      const last = localStorage.getItem(`pc_last_terminal_tab_${deviceId}`);
+      if (last === 'cmd' || last === 'linux') return last;
+    }
+    return 'cmd';
+  });
+
+  const [linuxAutocompleteIndex, setLinuxAutocompleteIndex] = useState(-1);
+
+  // Separate Linux output state & history (stores ALL typed commands including invalid ones)
   const [linuxOutput, setLinuxOutput] = useState<OutputLine[]>(() => [
     {
       id: 'linux-welcome',
@@ -112,6 +131,41 @@ export function CommandLineTab({
       content: `Linux ${internalPcHostname.toLowerCase()}\nType 'help' for available commands.\n`,
     },
   ]);
+  const [linuxHistory, setLinuxHistory] = useState<string[]>([]);
+  const [linuxHistoryIndex, setLinuxHistoryIndex] = useState(-1);
+
+  // Switch tab and persist choice
+  const handleTabSwitch = useCallback((tab: 'cmd' | 'linux') => {
+    setActiveTerminalTab(tab);
+    setInput('');
+    setLinuxAutocompleteIndex(-1);
+    setLinuxHistoryIndex(-1);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(`pc_last_terminal_tab_${deviceId}`, tab);
+      } catch { }
+    }
+  }, [deviceId, setInput]);
+
+  // Toggle pin/unpin for a tab
+  const togglePinTab = useCallback((tab: 'cmd' | 'linux', e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPinnedTerminalTab(prev => {
+      const next = prev === tab ? null : tab;
+      if (typeof localStorage !== 'undefined') {
+        try {
+          if (next) {
+            localStorage.setItem(`pc_pinned_terminal_tab_${deviceId}`, next);
+            localStorage.setItem('pc_pinned_terminal_tab', next);
+          } else {
+            localStorage.removeItem(`pc_pinned_terminal_tab_${deviceId}`);
+            localStorage.removeItem('pc_pinned_terminal_tab');
+          }
+        } catch { }
+      }
+      return next;
+    });
+  }, [deviceId]);
 
   // Current displayed output based on active tab
   const activeOutput = activeTerminalTab === 'cmd' ? pcOutput : linuxOutput;
@@ -149,12 +203,34 @@ export function CommandLineTab({
   }, []);
 
   // Filter Linux suggestions
-  const linuxFilteredSuggestions = input.trim()
-    ? LINUX_SUGGESTIONS.filter(s => s.toLowerCase().startsWith(input.trim().toLowerCase()))
-    : LINUX_SUGGESTIONS;
+  const linuxFilteredSuggestions = getLinuxSuggestions(input, currentPath, deviceId);
 
   const currentSuggestions = activeTerminalTab === 'cmd' ? renderAutocompleteSuggestions : linuxFilteredSuggestions;
   const isAutocompleteVisible = activeTerminalTab === 'cmd' ? shouldShowAutocomplete : (input.trim().length > 0 && linuxFilteredSuggestions.length > 0);
+  const autocompleteIndex = activeTerminalTab === 'cmd' ? externalAutocompleteIndex : linuxAutocompleteIndex;
+
+  // Auto-scroll active suggestion into view when navigating with Arrow keys in Linux mode
+  useEffect(() => {
+    if (activeTerminalTab === 'linux' && isAutocompleteVisible && linuxAutocompleteIndex >= 0 && autocompleteRef.current) {
+      const activeEl = autocompleteRef.current.querySelector(`[data-autocomplete-index="${linuxAutocompleteIndex}"]`) as HTMLElement | null;
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      }
+    }
+  }, [activeTerminalTab, isAutocompleteVisible, linuxAutocompleteIndex]);
+
+  // Helper to complete selection in Linux mode
+  const completeLinuxSelection = useCallback((selected: string) => {
+    const trimmed = input.trimStart();
+    const parts = trimmed.split(/\s+/);
+    if (parts.length <= 1 && !input.endsWith(' ')) {
+      setInput(selected + ' ');
+    } else {
+      parts[parts.length - 1] = selected;
+      setInput(parts.join(' '));
+    }
+    setLinuxAutocompleteIndex(-1);
+  }, [input, setInput]);
 
   // Submit command based on active tab
   const handleSubmitForm = async (e: React.FormEvent) => {
@@ -164,8 +240,13 @@ export function CommandLineTab({
     if (activeTerminalTab === 'cmd') {
       await executeCommand();
     } else {
-      const cmdToRun = input;
+      const cmdToRun = input.trim();
       setInput('');
+      setLinuxAutocompleteIndex(-1);
+      // Save ALL commands (valid or invalid) to Linux history for recall with Arrow keys
+      setLinuxHistory(prev => [cmdToRun, ...prev.filter(c => c !== cmdToRun)].slice(0, 50));
+      setLinuxHistoryIndex(-1);
+
       await executeLinuxCommand(cmdToRun, {
         deviceId,
         internalPcHostname,
@@ -188,49 +269,93 @@ export function CommandLineTab({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden relative">
-      {/* 2-Tab Selection Header */}
+      {/* 2-Tab Selection Header with Pin / Default Support */}
       <div className={cn(
         "flex items-center justify-between px-3 py-1.5 border-b shrink-0 z-10",
         isDark ? "bg-secondary-900/90 border-secondary-800" : "bg-secondary-100/90 border-secondary-200"
       )}>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTerminalTab('cmd');
-              setInput('');
-            }}
-            className={cn(
-              "flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm",
-              activeTerminalTab === 'cmd'
-                ? (isDark ? "bg-orange-500/20 text-orange-300 border border-orange-500/40" : "bg-white text-orange-700 border border-orange-200 shadow")
-                : (isDark ? "text-secondary-400 hover:text-secondary-200 hover:bg-white/5" : "text-secondary-600 hover:text-secondary-900 hover:bg-secondary-200/60")
-            )}
-          >
-            <TerminalIcon className="w-3.5 h-3.5" />
-            <span>{language === 'tr' ? 'Command Prompt' : 'Command Prompt'}</span>
-          </button>
+        <div className="flex items-center gap-2">
+          {/* CMD Tab Button with Pin */}
+          <div className="relative flex items-center group">
+            <button
+              type="button"
+              onClick={() => handleTabSwitch('cmd')}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm pr-7 relative",
+                activeTerminalTab === 'cmd'
+                  ? (isDark ? "bg-orange-500/20 text-orange-300 border border-orange-500/40" : "bg-white text-orange-700 border border-orange-200 shadow")
+                  : (isDark ? "text-secondary-400 hover:text-secondary-200 hover:bg-white/5" : "text-secondary-600 hover:text-secondary-900 hover:bg-secondary-200/60")
+              )}
+            >
+              <Laptop className="w-3.5 h-3.5" />
+              <span>Command Prompt</span>
+              {activeTerminalTab === 'cmd' && (
+                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse ml-0.5" />
+              )}
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTerminalTab('linux');
-              setInput('');
-            }}
-            className={cn(
-              "flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm",
-              activeTerminalTab === 'linux'
-                ? (isDark ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-white text-emerald-700 border border-emerald-200 shadow")
-                : (isDark ? "text-secondary-400 hover:text-secondary-200 hover:bg-white/5" : "text-secondary-600 hover:text-secondary-900 hover:bg-secondary-200/60")
-            )}
-          >
-            <TerminalIcon className="w-3.5 h-3.5" />
-            <span>{language === 'tr' ? 'Linux Terminali' : 'Linux Terminal'}</span>
-          </button>
+            {/* Pin Toggle Button */}
+            <button
+              type="button"
+              title={pinnedTerminalTab === 'cmd' ? (language === 'tr' ? 'Varsayılan terminal (Sabitlendi). Kaldırmak için tıklayın.' : 'Default terminal (Pinned). Click to unpin.') : (language === 'tr' ? 'Varsayılan Terminal Olarak Sabitle' : 'Pin as Default Terminal')}
+              onClick={(e) => togglePinTab('cmd', e)}
+              className={cn(
+                "absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10",
+                pinnedTerminalTab === 'cmd'
+                  ? "text-orange-500 opacity-100 scale-110"
+                  : "text-muted-foreground opacity-30 hover:opacity-100 hover:text-orange-400"
+              )}
+            >
+              <Pin className={cn("w-3 h-3 transition-transform", pinnedTerminalTab === 'cmd' && "fill-orange-500/40 rotate-45")} />
+            </button>
+          </div>
+
+          {/* Linux Tab Button with Pin */}
+          <div className="relative flex items-center group">
+            <button
+              type="button"
+              onClick={() => handleTabSwitch('linux')}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold transition-all shadow-sm pr-7 relative",
+                activeTerminalTab === 'linux'
+                  ? (isDark ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-white text-emerald-700 border border-emerald-200 shadow")
+                  : (isDark ? "text-secondary-400 hover:text-secondary-200 hover:bg-white/5" : "text-secondary-600 hover:text-secondary-900 hover:bg-secondary-200/60")
+              )}
+            >
+              <TerminalIcon className="w-3.5 h-3.5" />
+              <span>{language === 'tr' ? 'Linux Terminali' : 'Linux Terminal'}</span>
+              {activeTerminalTab === 'linux' && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
+              )}
+            </button>
+
+            {/* Pin Toggle Button */}
+            <button
+              type="button"
+              title={pinnedTerminalTab === 'linux' ? (language === 'tr' ? 'Varsayılan terminal (Sabitlendi). Kaldırmak için tıklayın.' : 'Default terminal (Pinned). Click to unpin.') : (language === 'tr' ? 'Varsayılan Terminal Olarak Sabitle' : 'Pin as Default Terminal')}
+              onClick={(e) => togglePinTab('linux', e)}
+              className={cn(
+                "absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-black/10 dark:hover:bg-white/10 transition-all z-10",
+                pinnedTerminalTab === 'linux'
+                  ? "text-emerald-500 opacity-100 scale-110"
+                  : "text-muted-foreground opacity-30 hover:opacity-100 hover:text-emerald-400"
+              )}
+            >
+              <Pin className={cn("w-3 h-3 transition-transform", pinnedTerminalTab === 'linux' && "fill-emerald-500/40 rotate-45")} />
+            </button>
+          </div>
         </div>
 
-        <div className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-muted/50 text-muted-foreground hidden sm:block">
-          {activeTerminalTab === 'cmd' ? 'CMD Command Prompt' : 'Linux Bash Terminal'}
+        <div className="flex items-center gap-2">
+          {pinnedTerminalTab && (
+            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1">
+              <Pin className="w-2.5 h-2.5 fill-primary/30 rotate-45" />
+              <span>{pinnedTerminalTab === 'cmd' ? 'CMD Default' : 'Linux Default'}</span>
+            </span>
+          )}
+          <div className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-muted/50 text-muted-foreground hidden sm:block">
+            {activeTerminalTab === 'cmd' ? 'CMD Command Prompt' : 'Linux Bash Terminal'}
+          </div>
         </div>
       </div>
 
@@ -351,10 +476,71 @@ export function CommandLineTab({
                 data-terminal-input
                 type="text"
                 value={input}
-                onChange={(e) => handleInputChange(e.target.value)}
+                onChange={(e) => {
+                  handleInputChange(e.target.value);
+                  setLinuxAutocompleteIndex(-1);
+                }}
                 onKeyDown={(e) => {
                   if (activeTerminalTab === 'cmd') {
                     handleKeyDown(e);
+                  } else {
+                    if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        setLinuxAutocompleteIndex((prev) => (prev + 1) % linuxFilteredSuggestions.length);
+                        return;
+                      }
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        setLinuxAutocompleteIndex((prev) => (prev - 1 + linuxFilteredSuggestions.length) % linuxFilteredSuggestions.length);
+                        return;
+                      }
+                      if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const targetIdx = linuxAutocompleteIndex >= 0 ? linuxAutocompleteIndex : 0;
+                        const selected = linuxFilteredSuggestions[targetIdx];
+                        if (selected) {
+                          completeLinuxSelection(selected);
+                        }
+                        setLinuxAutocompleteIndex((targetIdx + 1) % linuxFilteredSuggestions.length);
+                        return;
+                      }
+                      if (e.key === 'Enter' && linuxAutocompleteIndex >= 0) {
+                        e.preventDefault();
+                        const selected = linuxFilteredSuggestions[linuxAutocompleteIndex];
+                        if (selected) {
+                          completeLinuxSelection(selected);
+                        }
+                        return;
+                      }
+                      if (e.key === 'Escape') {
+                        setLinuxAutocompleteIndex(-1);
+                        return;
+                      }
+                    } else {
+                      // Autocomplete dropdown is not active -> Arrow keys navigate command history
+                      if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (linuxHistory.length > 0) {
+                          const nextIdx = Math.min(linuxHistoryIndex + 1, linuxHistory.length - 1);
+                          setLinuxHistoryIndex(nextIdx);
+                          setInput(linuxHistory[nextIdx] || '');
+                        }
+                        return;
+                      }
+                      if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        if (linuxHistoryIndex > 0) {
+                          const nextIdx = linuxHistoryIndex - 1;
+                          setLinuxHistoryIndex(nextIdx);
+                          setInput(linuxHistory[nextIdx] || '');
+                        } else if (linuxHistoryIndex === 0) {
+                          setLinuxHistoryIndex(-1);
+                          setInput('');
+                        }
+                        return;
+                      }
+                    }
                   }
                 }}
                 onPaste={(e) => {
@@ -411,9 +597,9 @@ export function CommandLineTab({
                     "flex items-center justify-between px-3 py-2 text-[11px] font-geist-mono font-semibold",
                     isDark ? 'text-secondary-200 bg-secondary-900/60' : 'text-secondary-700 bg-secondary-50'
                   )}>
-                    <span>{activeTerminalTab === 'cmd' ? t.cmdSuggestions : (language === 'tr' ? 'Linux Komut Önerileri' : 'Linux Suggestions')}</span>
+                    <span>{activeTerminalTab === 'cmd' ? t.cmdSuggestions : (language === 'tr' ? 'Linux Komut ve Dosya Önerileri' : 'Linux Suggestions')}</span>
                     <span className={cn("text-[10px] font-bold", isDark ? 'text-accent-300' : 'text-accent-700')}>
-                      Tab ↹ {t.completeWithTab}
+                      ↑↓ {language === 'tr' ? 'Seç' : 'Navigate'} | Tab ↹ {t.completeWithTab}
                     </span>
                   </div>
                   <div className="max-h-40 overflow-y-auto overflow-x-hidden mobile-scroll custom-scrollbar font-geist-mono">
@@ -421,11 +607,17 @@ export function CommandLineTab({
                       <button
                         key={`${cmd}-${idx}`}
                         type="button"
+                        data-autocomplete-index={idx}
+                        onMouseEnter={() => {
+                          if (activeTerminalTab === 'linux') {
+                            setLinuxAutocompleteIndex(idx);
+                          }
+                        }}
                         onClick={() => {
                           if (activeTerminalTab === 'cmd') {
                             completeAutocompleteSelection(cmd);
                           } else {
-                            setInput(cmd);
+                            completeLinuxSelection(cmd);
                           }
                           inputRef.current?.focus();
                         }}
