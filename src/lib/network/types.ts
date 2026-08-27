@@ -147,6 +147,7 @@ export interface Port {
   dhcpSnoopingTrust?: boolean;
   dhcpSnoopingLimitRate?: number; // DHCP rate limit (packets per second) on untrusted ports
   arpInspectionTrust?: boolean;
+  arpInspectionLimitRate?: number;
   carrierDelay?: number;
   loadInterval?: number;
   directedBroadcast?: boolean;
@@ -394,6 +395,11 @@ export interface SwitchState {
   cryptoMaps?: Record<string, Record<number, { ipsecIsakmp: boolean; matchAddress?: string; setPeer?: string; setTransformSet?: string; setPfs?: string }>>;
   tunnelGroups?: Record<string, { type?: string; generalAttributes?: { authenticationType?: string; authenticationServerGroup?: string }; ipsecAttributes?: { preSharedKey?: string } }>;
   cdpEnabled?: boolean;
+  cdpTimer?: number;
+  cdpHoldtime?: number;
+  snmpCommunities?: Record<string, 'RO' | 'RW'>;
+  snmpContact?: string;
+  snmpLocation?: string;
   spanningTreeMode?: 'pvst' | 'rapid-pvst' | 'mst';
   vtpMode?: 'server' | 'client' | 'transparent' | 'off';
   vtpDomain?: string;

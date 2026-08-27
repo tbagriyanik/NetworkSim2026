@@ -181,7 +181,6 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `spanning-tree bpduguard enable` | Enable BPDU Guard |
 | `spanning-tree bpduguard disable` | Disable BPDU Guard |
 | `spanning-tree bpduguard` | ⚠️ Stub - Command deprecated |
-| `spanning-tree bpduguard` | ⚠️ Stub - BPDU Guard enable/disable removed |
 | `no spanning-tree` | Disable spanning-tree |
 | `username <name> [privilege <lvl>] [password\|secret] <pass>` | Create user |
 | `no username <name>` | Remove user |
@@ -193,8 +192,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no tacacs-server host <ip>` | Remove TACACS+ server host |
 | `cdp run` | Enable CDP globally |
 | `no cdp run` | Disable CDP |
-| `cdp timer <sec>` | ⚠️ Stub - Set CDP update interval |
-| `cdp holdtime <sec>` | ⚠️ Stub - Set CDP hold time |
+| `cdp timer <sec>` | Set CDP update interval in seconds |
+| `cdp holdtime <sec>` | Set CDP hold time in seconds |
 | `mls qos` | Enable MLS QoS |
 | `no mls qos` | Disable MLS QoS |
 | `router rip` | Enable RIP routing |
@@ -221,9 +220,9 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ipv6 router ospf <id>` | Disable OSPFv3 |
 | `crypto key generate rsa` | Generate RSA keys for SSH |
 | `ip ssh authentication-retries <n>` | Set SSH retry limit |
-| `snmp-server community <str> {RO\|RW}` | ⚠️ Stub - Set SNMP community |
-| `snmp-server contact <text>` | ⚠️ Stub - Set SNMP contact |
-| `snmp-server location <text>` | ⚠️ Stub - Set SNMP location |
+| `snmp-server community <str> {RO\|RW}` | Store an SNMP community and access mode |
+| `snmp-server contact <text>` | Set SNMP contact information |
+| `snmp-server location <text>` | Set SNMP location information |
 | `archive` | ⚠️ Stub - Enter archive config mode |
 | `alias <mode> <name> <cmd>` | Create command alias |
 | `no alias <name>` | Remove command alias |
@@ -236,11 +235,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `spanning-tree mode mst` | Set Spanning Tree mode to Multiple Spanning Tree (MST) |
 | `spanning-tree mst configuration` | Enter MST configuration mode |
 | `spanning-tree mst <instance-id> priority <val>` | Set MST instance bridge priority (in config mode) |
-| `default interface <name>` | ⚠️ Stub - Reset interface to default configuration |
+| `default interface <name>` | Reset interface configuration while preserving identity |
 | `mac access-list extended <name>` | ⚠️ Stub - Create named MAC access list |
-| `class-map [match-all\|match-any] <name>` | ⚠️ Stub - Create QoS class map |
-| `policy-map <name>` | ⚠️ Stub - Create QoS policy map |
-| `template <name>` | ⚠️ Stub - Enter template configuration mode |
 | `access-list <id> <action> <condition>` | Create numbered ACL (1-99 standard, 100-199 extended) |
 | `ip access-list {standard|extended} <name>` | Create named ACL |
 | `no access-list <id>` | Remove numbered ACL |
@@ -399,17 +395,12 @@ The simulator supports **400+ commands** across multiple configuration modes.
 |---------|-------------|
 | `mls qos trust {cos|dscp}` | Set QoS trust state |
 | `mls qos cos <val>` | Set default CoS value |
-| `priority-queue out` | ⚠️ Stub - Enable priority queue |
-| `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
-| `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
 | `storm-control {broadcast|multicast|unicast} level <%>` | Set storm control |
 
 #### Management Commands
 
 | Command | Description |
 |---------|-------------|
-| `cdp timer <sec>` | ⚠️ Stub - Set CDP update interval |
-| `cdp holdtime <sec>` | ⚠️ Stub - Set CDP hold time |
 | `clear arp-cache` | Clear ARP cache |
 | `clear mac address-table` | Clear MAC address table |
 | `clear counters` | Clear interface counters |
@@ -655,9 +646,6 @@ The simulator supports **400+ commands** across multiple configuration modes.
 |---------|-------------|
 | `mls qos trust {cos|dscp}` | Set QoS trust state |
 | `mls qos cos <val>` | Set default CoS value |
-| `priority-queue out` | ⚠️ Stub - Enable priority queue |
-| `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
-| `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
 | `storm-control {broadcast|multicast|unicast} level <%>` | Set storm control |
 
 #### IP Configuration
@@ -716,17 +704,12 @@ The simulator supports **400+ commands** across multiple configuration modes.
 |---------|-------------|
 | `mls qos trust {cos|dscp}` | Set QoS trust state |
 | `mls qos cos <val>` | Set default CoS value |
-| `priority-queue out` | ⚠️ Stub - Enable priority queue |
-| `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
-| `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
 | `storm-control {broadcast|multicast|unicast} level <%>` | Set storm control |
 
 #### Management Commands
 
 | Command | Description |
 |---------|-------------|
-| `cdp timer <sec>` | ⚠️ Stub - Set CDP update interval |
-| `cdp holdtime <sec>` | ⚠️ Stub - Set CDP hold time |
 | `clear arp-cache` | Clear ARP cache |
 | `clear mac address-table` | Clear MAC address table |
 | `clear counters` | Clear interface counters |
@@ -747,16 +730,16 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `ip dhcp snooping trust` | Set interface as trusted for DHCP |
 | `ip arp inspection trust` | Set interface as trusted for DAI |
 | `channel-protocol {lacp|pagp}` | ⚠️ Stub - Set EtherChannel protocol |
-| `priority-queue out` | ⚠️ Stub - Enable priority queue |
-| `queue-set <n>` | ⚠️ Stub - Apply QoS queue set |
-| `tx-queue <n>` | ⚠️ Stub - Configure transmit queue |
+| `priority-queue out` | Enable and store interface priority-queue configuration (traffic scheduling is sim-only) |
+| `queue-set <n>` | Store interface QoS queue-set configuration (traffic scheduling is sim-only) |
+| `tx-queue <n>` | Store interface transmit-queue configuration (traffic scheduling is sim-only) |
 | `power inline {auto|static}` | ⚠️ Stub - Configure PoE |
 | `power inline consumption <watt>` | ⚠️ Stub - Set PoE power limit |
 | `keepalive` | Enable keepalive |
 | `no keepalive` | Disable keepalive |
 | `carrier-delay <ms>` | ⚠️ Stub - Set carrier delay |
 | `load-interval <sec>` | ⚠️ Stub - Set statistics interval |
-| `ip arp inspection limit <pps>` | ⚠️ Stub - Set ARP inspection rate limit |
+| `ip arp inspection limit <pps>` | Store interface ARP inspection rate limit |
 | `ipv6 rip <name> enable` | Enable RIPng on interface |
 | `ipv6 ospf <id> area <area>` | Enable OSPFv3 on interface |
 | `ipv6 dhcp server <pool-name>` | Enable IPv6 DHCP server on interface |

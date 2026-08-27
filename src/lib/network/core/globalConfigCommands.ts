@@ -198,16 +198,16 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'ipv6 dhcp pool': cmdIpv6DhcpPool,
   'ip dhcp excluded-address': cmdIpDhcpExcludedAddress,
   'no ip dhcp excluded-address': cmdNoIpDhcpExcludedAddress,
-  'cdp timer': createStubHandler('cdp timer'),
-  'cdp holdtime': createStubHandler('cdp holdtime'),
-  'snmp-server community': createStubHandler('snmp-server community'),
-  'snmp-server contact': createStubHandler('snmp-server contact'),
-  'snmp-server location': createStubHandler('snmp-server location'),
+  'cdp timer': cmdCdpTimer,
+  'cdp holdtime': cmdCdpHoldtime,
+  'snmp-server community': cmdSnmpCommunity,
+  'snmp-server contact': cmdSnmpContact,
+  'snmp-server location': cmdSnmpLocation,
   'archive': createStubHandler('archive'),
   'alias': cmdAliasExec,
   'no alias': cmdNoAliasExec,
   'macro': createStubHandler('macro'),
-  'default interface': createStubHandler('default interface'),
+  'default interface': cmdDefaultInterface,
   'configure replace': createStubHandler('configure replace'),
   'mac access-list': createStubHandler('mac access-list'),
   'class-map': createStubHandler('class-map'),
@@ -1346,4 +1346,51 @@ function cmdIpHttpServer(state: SwitchState, _input: string, ctx: CommandContext
 
 
 // ── End of Handlers ──────────────────────────────────────────────────────────
+
+function cmdCdpTimer(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^cdp\s+timer\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid CDP timer value' };
+  const value = Number(match[1]);
+  if (value < 5 || value > 65535) return { success: false, error: '% CDP timer must be between 5 and 65535 seconds' };
+  return { success: true, output: `CDP timer set to ${value} seconds`, newState: { cdpTimer: value } };
+}
+
+function cmdCdpHoldtime(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^cdp\s+holdtime\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid CDP holdtime value' };
+  const value = Number(match[1]);
+  if (value < 10 || value > 65535) return { success: false, error: '% CDP holdtime must be between 10 and 65535 seconds' };
+  return { success: true, output: `CDP holdtime set to ${value} seconds`, newState: { cdpHoldtime: value } };
+}
+
+function cmdSnmpCommunity(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^snmp-server\s+community\s+(\S+)(?:\s+(RO|RW))?$/i);
+  if (!match) return { success: false, error: '% Invalid SNMP community command' };
+  return { success: true, output: `SNMP community ${match[1]} configured`, newState: { snmpCommunities: { ...state.snmpCommunities, [match[1]]: (match[2] || 'RO').toUpperCase() as 'RO' | 'RW' } } };
+}
+
+function cmdSnmpContact(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^snmp-server\s+contact\s+(.+)$/i);
+  if (!match) return { success: false, error: '% Invalid SNMP contact command' };
+  return { success: true, output: 'SNMP contact configured', newState: { snmpContact: match[1].trim() } };
+}
+
+function cmdSnmpLocation(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^snmp-server\s+location\s+(.+)$/i);
+  if (!match) return { success: false, error: '% Invalid SNMP location command' };
+  return { success: true, output: 'SNMP location configured', newState: { snmpLocation: match[1].trim() } };
+}
+
+function cmdDefaultInterface(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^default\s+interface\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid interface name' };
+  const interfaceName = match[1];
+  const port = state.ports?.[interfaceName];
+  if (!port) return { success: false, error: `% Interface ${interfaceName} not found` };
+  const defaultPort = { ...port };
+  for (const key of ['description', 'ipAddress', 'ipv6Address', 'nativeVlan', 'allowedVlans', 'qos', 'bandwidth', 'delay', 'stpPriority', 'dhcpSnoopingTrust', 'dhcpSnoopingLimitRate', 'arpInspectionTrust', 'carrierDelay', 'loadInterval', 'directedBroadcast', 'powerInline', 'channelGroup', 'encapsulation', 'clockRate', 'pppAuthentication', 'pppUsername', 'helperAddress', 'proxyArp', 'ipVerifySource']) {
+    delete (defaultPort as Record<string, unknown>)[key];
+  }
+  return { success: true, output: `Interface ${interfaceName} reset to default configuration`, newState: { ports: { ...state.ports, [interfaceName]: defaultPort } } };
+}
 

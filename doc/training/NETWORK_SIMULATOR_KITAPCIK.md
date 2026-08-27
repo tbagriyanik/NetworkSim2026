@@ -6741,8 +6741,10 @@ Router'lar arasında varsayılan ağ geçidi yedekliliği:
 - `vrrp <group-id> priority <value>`: Aktif yönlendirici seçimi için öncelik değerini belirler.
 - `show vrrp`: VRRP gruplarını ve durumlarını listeler.
 
-### 15. QoS (Quality of Service) Stub Komutları
-- CLI uyumluluğu açısından eklenen `mls qos`, `policy-map <name>`, `class-map <name>` komutları CLI parser tarafından tanınmakta ve konfigürasyona eklenebilmektedir (Simülasyon düzeyinde stub olarak çalışırlar).
+### 15. QoS (Quality of Service) Yapılandırma Komutları
+- `priority-queue out`, `queue-set <n>` ve `tx-queue <n>` komutları interface state içine kaydedilir.
+- Bu komutların paket önceliklendirme, kuyruk gecikmesi ve gerçek trafik şekillendirme etkileri henüz simüle edilmez.
+- `class-map` ve `policy-map` komutları hâlâ stub durumundadır.
 
 ### 16. Spatial Partitioning (Uzamsal Bölümleme)
 - Topolojide 100+ cihaz ve kablo olduğunda render performansının düşmesini engellemek için, tuval alanı sanal karelere bölünür (spatial hashing). Sadece ekranda görünür olan (viewport) cihazlar ve kablolar çizilerek yüksek FPS korunur.

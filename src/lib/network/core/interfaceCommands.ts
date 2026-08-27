@@ -1,5 +1,4 @@
 import type { CommandHandler } from './commandTypes';
-import { createStubHandler } from './stubCommandHints';
 
 // cmd modülleri
 import {
@@ -128,6 +127,10 @@ import {
   cmdLoadInterval,
   cmdPowerInline,
   cmdPowerInlineConsumption,
+  cmdArpInspectionLimit,
+  cmdPriorityQueueOut,
+  cmdQueueSet,
+  cmdTxQueue,
   cmdVrrpIp,
   cmdVrrpPriority,
   cmdVrrpPreempt,
@@ -219,14 +222,14 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'no ipv6 ospf area': cmdNoIpv6Ospf,
   'switchport voice': cmdSwitchportVoiceVlan,
   'channel-protocol': cmdChannelProtocol,
-  'priority-queue out': createStubHandler('priority-queue out'),
-  'queue-set': createStubHandler('queue-set'),
-  'tx-queue': createStubHandler('tx-queue'),
+  'priority-queue out': cmdPriorityQueueOut,
+  'queue-set': cmdQueueSet,
+  'tx-queue': cmdTxQueue,
   'power inline': cmdPowerInline,
   'power inline consumption': cmdPowerInlineConsumption,
   'ip directed-broadcast': (state, input, _ctx) => cmdDirectedBroadcast(state, input, true),
   'no ip directed-broadcast': (state, input, _ctx) => cmdDirectedBroadcast(state, input, false),
-  'ip arp inspection limit': createStubHandler('ip arp inspection limit'),
+  'ip arp inspection limit': cmdArpInspectionLimit,
   'carrier-delay': cmdCarrierDelay,
   'delay': cmdDelay,
   'load-interval': cmdLoadInterval,

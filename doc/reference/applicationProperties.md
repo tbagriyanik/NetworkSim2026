@@ -76,7 +76,7 @@
 | **Telnet** | **Yes** | Telnet sessions, password auth, transport input |
 | **SPAN (Port Monitoring)** | **Yes** | `monitor session`, source/destination, rx/tx/both |
 | **QoS** | **Yes** | Policy maps, class maps, priority queue, shaping, policing, queuing, MLS QoS |
-| **SNMP** | **Stub** | `snmp-server community/contact/location`, show commands |
+| **SNMP** | **Configuration supported** | `snmp-server community/contact/location`; values are stored and exposed to show/configuration output |
 | **sFlow/NetFlow** | **No** | Not implemented |
 | **VPN (IPsec)** | Declared | ASA features mention Site-to-Site and Remote Access VPN |
 | **IoT Protocols** | Limited | Environment-based rules engine, no CoAP/MQTT simulation |
@@ -303,14 +303,14 @@ The following are marked as **stubs** (not fully implemented) in the codebase:
 4. **`disconnect` command** - "Disconnect network connection" (stub)
 5. **`resume` command** - "Resume a suspended session" (stub)
 6. **`suspend` command** - "Suspend current session" (stub) - `% Suspend not supported`
-7. **`snmp-server`** - SNMP server settings (stub)
+7. **`snmp-server`** - Community/contact/location configuration is supported; full SNMP packet polling is not simulated
 8. **`archive`** - Archive settings (stub)
 9. **`macro`** - Create macro (stub)
 10. **`class-map`** / **`policy-map`** - QoS (mostly stub though declared)
 11. **`template`** - Template configuration (stub)
-12. **`power inline`** - PoE settings (stub)
+12. **`power inline`** - PoE settings remain configuration-only
 13. **`channel-protocol`** - EtherChannel protocol selection (stub)
-14. **`priority-queue`** - Priority queue settings (stub)
+14. **`priority-queue`** - Priority queue settings are stored; packet scheduling remains sim-only
 15. **`session-limit`** - Max session limit (stub)
 16. **`autocommand`** - Auto-command (stub)
 17. **`lockable`** - Line locking (stub)

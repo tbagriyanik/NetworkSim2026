@@ -1013,6 +1013,44 @@ export function cmdLoadInterval(state: SwitchState, input: string, _ctx: Command
   return { success: true, newState: { ports } };
 }
 
+export function cmdArpInspectionLimit(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^ip\s+arp\s+inspection\s+limit\s+(\d+)$/i);
+  if (!match || Number(match[1]) < 1) return { success: false, error: '% Invalid ARP inspection rate' };
+  const updatePort = (port: Port) => ({ ...port, arpInspectionLimitRate: Number(match[1]) });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, output: `ARP inspection limit set to ${match[1]} pps`, newState: { ports } };
+}
+
+export function cmdPriorityQueueOut(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !/^priority-queue\s+out$/i.test(input)) return { success: false, error: '% Invalid priority-queue command' };
+  const updatePort = (port: Port) => ({ ...port, qos: { ...port.qos, enabled: true, priorityQueue: { ...port.qos?.priorityQueue, enabled: true } } });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, output: 'Priority output queue enabled', newState: { ports } };
+}
+
+export function cmdQueueSet(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^queue-set\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid queue-set command' };
+  const updatePort = (port: Port) => ({ ...port, qos: { ...port.qos, enabled: true, egressQueue: Number(match[1]) } });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, output: `Queue set ${match[1]} configured`, newState: { ports } };
+}
+
+export function cmdTxQueue(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const match = input.match(/^tx-queue\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid tx-queue command' };
+  const updatePort = (port: Port) => ({ ...port, qos: { ...port.qos, enabled: true, ingressQueue: Number(match[1]) } });
+  const ports = state.selectedInterfaces?.length ? applyToSelectedPorts(state, updatePort) : state.currentInterface ? { ...state.ports, [state.currentInterface]: updatePort(state.ports[state.currentInterface] || {} as Port) } : null;
+  if (!ports) return { success: false, error: '% No interface selected' };
+  return { success: true, output: `Transmit queue ${match[1]} configured`, newState: { ports } };
+}
+
 export function cmdPowerInline(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^power\s+inline$/i);

@@ -1062,8 +1062,16 @@ function cmdShowNtp(state: SwitchState, _input: string, ctx: CommandContext): Co
 /**
  * Show SNMP
  */
-function cmdShowSnmp(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return { success: true, output: '\nSNMP agent not enabled.\n' };
+function cmdShowSnmp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const communities = Object.entries(state.snmpCommunities || {});
+  if (communities.length === 0 && !state.snmpContact && !state.snmpLocation) {
+    return { success: true, output: '\nSNMP agent not configured.\n' };
+  }
+  const lines = ['\nSNMP configuration:'];
+  communities.forEach(([name, mode]) => lines.push(`  community ${name} ${mode}`));
+  if (state.snmpContact) lines.push(`  contact ${state.snmpContact}`);
+  if (state.snmpLocation) lines.push(`  location ${state.snmpLocation}`);
+  return { success: true, output: `${lines.join('\n')}\n` };
 }
 
 /**

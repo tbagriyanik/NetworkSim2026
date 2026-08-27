@@ -1,7 +1,8 @@
 import type { OutputLine } from './PCPanel.types';
 import {
-  loadFs, saveFs, readFile, writeFile, deleteFile, makeDir, getNode, resolvePath, copyFile, moveNode
+  loadFs, saveFs, readFile, writeFile, deleteFile, removeDir, makeDir, getNode, resolvePath, copyFile, moveNode
 } from './pcFileSystem';
+import type { FSNode } from './pcFileSystem';
 import { executePythonScript } from './pcPythonRunner';
 
 export interface LinuxExecutorParams {
@@ -33,6 +34,16 @@ export const LINUX_SUGGESTIONS = [
   'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'history', 'echo', 'sudo', 'help', 'date', 'uptime',
   'for', 'while', 'if', 'python3', 'python'
 ];
+
+const shellVariables = new Map<string, Record<string, string>>();
+
+function expandShellVariables(input: string, deviceId: string, currentPath?: string, hostname?: string): string {
+  const vars = shellVariables.get(deviceId) || {};
+  const withSubstitution = input.replace(/\$\((pwd|hostname|whoami)\)/g, (_, command) =>
+    command === 'pwd' ? formatWinToUnixPath(currentPath || 'C:\\') : command === 'hostname' ? (hostname || '') : 'user');
+  return withSubstitution.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}|\$([A-Za-z_][A-Za-z0-9_]*)/g,
+    (_, braced, plain) => vars[braced || plain] ?? '');
+}
 
 const FILE_COMMANDS = new Set([
   'cd', 'ls', 'dir', 'cat', 'type', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'nano', 'vim', 'vi', 'edit', 'notepad', 'python', 'python3', 'sh', 'bash'
@@ -130,6 +141,20 @@ export function formatWinToUnixPath(winPath: string): string {
   return `/home/user/${clean}`;
 }
 
+function removeTree(fs: FSNode, path: string): boolean {
+  const parts = path.replace(/\\/g, '/').split('/').filter(Boolean);
+  if (parts.length === 0) return false;
+  const name = parts.pop() as string;
+  let parent: FSNode = fs;
+  for (const part of parts) {
+    if (parent.type !== 'dir' || !parent.children[part]) return false;
+    parent = parent.children[part];
+  }
+  if (parent.type !== 'dir' || !parent.children[name]) return false;
+  delete parent.children[name];
+  return true;
+}
+
 export async function executeLinuxCommand(
   cmdLine: string,
   params: LinuxExecutorParams
@@ -154,7 +179,7 @@ export async function executeLinuxCommand(
     setLinuxOutput,
   } = params;
 
-  const rawCmd = cmdLine.trim();
+  const rawCmd = expandShellVariables(cmdLine.trim(), deviceId, currentPath, internalPcHostname);
   if (!rawCmd) return;
 
   const isSudo = rawCmd.startsWith('sudo ');
@@ -196,7 +221,9 @@ export async function executeLinuxCommand(
             stageError = 'grep: option requires an argument';
           } else {
             const lines = pipeData.split(/\r?\n/);
-            const regex = new RegExp(cleanPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), isCaseInsensitive ? 'i' : '');
+            let regex: RegExp;
+            try { regex = new RegExp(cleanPattern, isCaseInsensitive ? 'i' : ''); }
+            catch { stageError = `grep: invalid regular expression: ${cleanPattern}`; regex = /$a/; }
             const matched = lines.filter(l => regex.test(l));
 
             if (isCountOnly) {
@@ -287,6 +314,26 @@ export async function executeLinuxCommand(
     return;
   }
 
+  // Shell variable assignment: NAME=value, export NAME=value
+  const assignment = cleanCmd.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+  if (assignment) {
+    const vars = shellVariables.get(deviceId) || {};
+    vars[assignment[1]] = assignment[2].replace(/^['"]|['"]$/g, '');
+    shellVariables.set(deviceId, vars);
+    return;
+  }
+
+  if (command === 'export') {
+    const exportArg = args[0] || '';
+    const exportMatch = exportArg.match(/^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/);
+    if (exportMatch) {
+      const vars = shellVariables.get(deviceId) || {};
+      vars[exportMatch[1]] = exportMatch[2].replace(/^['"]|['"]$/g, '');
+      shellVariables.set(deviceId, vars);
+    }
+    return;
+  }
+
   // Handle Bash For Loops (e.g., for i in 1 2 3; do ping 192.168.1.$i; done OR for i in {1..5}; do echo $i; done)
   if (cleanCmd.startsWith('for ')) {
     const forMatch = cleanCmd.match(/^for\s+([a-zA-Z_][a-zA-Z0-9_]*)\s+in\s+(.+?)\s*;\s*do\s+(.+?)\s*;\s*done$/i)
@@ -318,11 +365,13 @@ export async function executeLinuxCommand(
 
   // Handle Bash If Conditionals (e.g. if [ "$x" = "1" ]; then echo yes; else echo no; fi)
   if (cleanCmd.startsWith('if ')) {
-    const ifMatch = cleanCmd.match(/^if\s+\[\s*(.+?)\s*\]\s*;\s*then\s+(.+?)(?:\s*;\s*else\s+(.+?))?\s*;\s*fi$/i);
+    const ifMatch = cleanCmd.match(/^if\s+\[\s*(.+?)\s*\]\s*;\s*then\s+(.+?)(?:\s*;\s*elif\s+\[\s*(.+?)\s*\]\s*;\s*then\s+(.+?))?(?:\s*;\s*else\s+(.+?))?\s*;\s*fi$/i);
     if (ifMatch) {
       const cond = ifMatch[1].trim();
       const thenBody = ifMatch[2].trim();
-      const elseBody = ifMatch[3]?.trim();
+      const elifCond = ifMatch[3]?.trim();
+      const elifBody = ifMatch[4]?.trim();
+      const elseBody = ifMatch[5]?.trim();
 
       // Simple condition evaluator
       let condResult = false;
@@ -337,7 +386,12 @@ export async function executeLinuxCommand(
         condResult = cond !== '0' && cond !== 'false';
       }
 
-      const targetCmd = condResult ? thenBody : elseBody;
+      let targetCmd = condResult ? thenBody : undefined;
+      if (!targetCmd && elifCond) {
+        const elifEq = elifCond.match(/^"?(.*?)"?\s*(==|=|!=)\s*"?(.*?)"?$/);
+        const elifResult = elifEq ? (elifEq[2] === '!=' ? elifEq[1] !== elifEq[3] : elifEq[1] === elifEq[3]) : elifCond !== '0' && elifCond !== 'false';
+        targetCmd = elifResult ? elifBody : elseBody;
+      } else if (!targetCmd) targetCmd = elseBody;
       if (targetCmd) {
         await executeLinuxCommand(targetCmd, { ...params, silent: false });
       }
@@ -530,10 +584,11 @@ These shell commands are defined internally. Type 'help' to see this list.
   // List directory contents using exact PC file system
   if (command === 'ls' || command === 'dir') {
     const fs = loadFs(deviceId);
-    const flags = args.filter(a => a.startsWith('-')).join('');
+    const flags = args.filter(a => a.startsWith('-')).join('').replace(/^-+/g, '');
     const targetArg = args.find(a => !a.startsWith('-')) || '';
     const isLong = flags.includes('l');
     const showAll = flags.includes('a');
+    const humanSize = flags.includes('h');
 
     const targetWinPath = targetArg ? resolvePath(currentPath, targetArg) : currentPath;
     const targetNode = getNode(fs, targetWinPath);
@@ -569,10 +624,13 @@ These shell commands are defined internally. Type 'help' to see this list.
       items.push({ name, isDir, isExec, size, modifiedAt: dateStr });
     });
 
+    if (flags.includes('t')) items.sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt));
+    if (flags.includes('r')) items.reverse();
     if (isLong) {
       const formatted = items.map(item => {
         const perms = item.isDir ? 'drwxr-xr-x 2 user user' : (item.isExec ? '-rwxr-xr-x 1 user user' : '-rw-r--r-- 1 user user');
-        const sz = item.size.toString().padStart(6);
+        const sizeText = humanSize && item.size >= 1024 ? `${(item.size / 1024).toFixed(1)}K` : item.size.toString();
+        const sz = sizeText.padStart(6);
         return `${perms} ${sz} ${item.modifiedAt} ${item.name}`;
       }).join('\n');
       addLocalOutput('output', `total ${items.length * 4}\n${formatted}`);
@@ -661,7 +719,12 @@ These shell commands are defined internally. Type 'help' to see this list.
     }
 
     const lines = content.split(/\r?\n/);
-    const regex = new RegExp(pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), isCaseInsensitive ? 'i' : '');
+    let regex: RegExp;
+    try { regex = new RegExp(pattern, isCaseInsensitive ? 'i' : ''); }
+    catch {
+      addLocalOutput('error', `grep: invalid regular expression: ${pattern}`);
+      return;
+    }
     const matched = lines.filter(l => regex.test(l));
 
     if (isCountOnly) {
@@ -688,20 +751,25 @@ These shell commands are defined internally. Type 'help' to see this list.
 
   // Create folder in PC file system
   if (command === 'mkdir') {
-    const dirName = args[0];
+    const dirName = args.find(a => !a.startsWith('-'));
     if (!dirName) {
       addLocalOutput('error', 'mkdir: missing operand');
       return;
     }
     const fs = loadFs(deviceId);
     const fullPath = resolvePath(currentPath, dirName);
-    makeDir(fs, fullPath);
+    if (!makeDir(fs, fullPath)) {
+      addLocalOutput('error', `mkdir: cannot create directory '${dirName}'`);
+      return;
+    }
     saveFs(deviceId, fs);
     return;
   }
 
   // Remove file or folder in PC file system
   if (command === 'rm') {
+    const recursive = args.some(a => a === '-r' || a === '-R');
+    const force = args.includes('-f');
     const fileName = args.filter(a => !a.startsWith('-'))[0];
     if (!fileName) {
       addLocalOutput('error', 'rm: missing operand');
@@ -711,10 +779,17 @@ These shell commands are defined internally. Type 'help' to see this list.
     const fullPath = resolvePath(currentPath, fileName);
     const node = getNode(fs, fullPath);
     if (!node) {
+      if (force) return;
       addLocalOutput('error', `rm: cannot remove '${fileName}': No such file or directory`);
       return;
     }
-    deleteFile(fs, fullPath);
+    const removed = node.type === 'dir'
+      ? (recursive ? removeTree(fs, fullPath) : removeDir(fs, fullPath))
+      : deleteFile(fs, fullPath);
+    if (!removed) {
+      addLocalOutput('error', `rm: cannot remove '${fileName}': ${node.type === 'dir' ? 'Is a directory or directory is not empty' : 'Operation not permitted'}`);
+      return;
+    }
     saveFs(deviceId, fs);
     return;
   }
@@ -800,7 +875,14 @@ These shell commands are defined internally. Type 'help' to see this list.
     }
 
     // Process line by line for shell script commands
-    const lines = content.split(/\r?\n/);
+    const lines: string[] = [];
+    let pending = '';
+    for (const sourceLine of content.split(/\r?\n/)) {
+      const line = sourceLine.trim();
+      if (line.endsWith('\\')) pending += line.slice(0, -1) + ' ';
+      else { lines.push(pending + line); pending = ''; }
+    }
+    if (pending) lines.push(pending);
     for (const line of lines) {
       const trimmedLine = line.trim();
       if (!trimmedLine || trimmedLine.startsWith('#')) continue;
