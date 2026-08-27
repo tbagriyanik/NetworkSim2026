@@ -370,8 +370,7 @@ export async function executeLinuxCommand(
 
   if (command === 'help') {
     const helpText =
-      `GNU Bash Simulator, version 5.2.15 (x86_64-pc-linux-gnu)
-These shell commands are defined internally. Type 'help' to see this list.
+      `These shell commands are defined internally. Type 'help' to see this list.
 
   File System Commands:
     ls [-l] [-la]     List directory contents (long format, hidden files)
@@ -536,7 +535,7 @@ These shell commands are defined internally. Type 'help' to see this list.
   if (command === 'bash' || command === 'sh' || command.startsWith('./') || command.startsWith('.\\')) {
     const scriptArg = (command === 'bash' || command === 'sh') ? args[0] : command;
     if (!scriptArg) {
-      addLocalOutput('output', `GNU bash, version 5.2.15(1)-release (x86_64-pc-linux-gnu)`);
+      addLocalOutput('output', `bash`);
       return;
     }
 
