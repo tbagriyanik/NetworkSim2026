@@ -241,9 +241,18 @@ export function CommandLineTab({
 
   // Auto-scroll output area
   useEffect(() => {
-    if (outputRef?.current) {
-      outputRef.current.scrollTop = outputRef.current.scrollHeight;
-    }
+    if (!outputRef?.current) return;
+    requestAnimationFrame(() => {
+      if (outputRef.current) {
+        outputRef.current.scrollTop = outputRef.current.scrollHeight;
+      }
+    });
+    const timer = setTimeout(() => {
+      if (outputRef.current) {
+        outputRef.current.scrollTop = outputRef.current.scrollHeight;
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [activeOutput, outputRef]);
 
   // Focus input when container clicked
@@ -721,7 +730,7 @@ export function CommandLineTab({
                         }}
                         className={cn(
                           "w-full text-left px-2.5 py-1 text-[11px] font-geist-mono transition-colors",
-                          autocompleteIndex >= 0 && idx === autocompleteIndex
+                          (activeTerminalTab === 'cmd' ? (autocompleteIndex >= 0 && idx === autocompleteIndex) : (linuxAutocompleteIndex >= 0 && idx === linuxAutocompleteIndex))
                             ? (isDark ? "bg-accent-500/20 text-accent-200" : "bg-accent-50 text-accent-900")
                             : (isDark ? "text-secondary-300 hover:bg-primary/10" : "text-secondary-700 hover:bg-primary/10")
                         )}

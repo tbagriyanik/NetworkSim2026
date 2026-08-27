@@ -161,8 +161,8 @@ export function BasarilarimPanel({ t, language, isDark, onClose, zIndex }: Basar
             <span className={`font-semibold text-sm pointer-events-none ${isDark ? 'text-secondary-100' : 'text-secondary-800'}`}>{t.basarilarim}</span>
           </div>
           <TooltipWrapper title={t.close}>
-            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="w-5 h-5 rounded-md bg-error-500 hover:bg-error-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0">
-              <X className="w-3 h-3 text-white pointer-events-none" />
+            <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="w-5 h-5 rounded-full bg-error-500 hover:bg-error-600 active:scale-95 cursor-pointer transition-all inline-flex items-center justify-center shrink-0 shadow-sm border border-error-600/30">
+              <X className="w-3 h-3 text-white stroke-[3] pointer-events-none" />
             </button>
           </TooltipWrapper>
         </div>

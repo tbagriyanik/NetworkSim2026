@@ -2,6 +2,12 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v3.3.0 — 2026-08-27
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-27 | **Sürüm 3.3.0 Yayınlandı: Gelişmiş Linux Bash Shell & Standart Modüler Pencere UI/UX** — Linux Terminaline `for` döngüleri, `if/else` koşul blokları, Pipe (`|`) boru hattı, Çıktı yönlendirmeleri (`>` ve `>>`), `grep` ve `wc` filtreleme komutları entegre edildi. `ping 127.0.0.1` döngü adresi denetimi ve `chmod -x` izin kaldırma mantığı giderildi. CMD `Ctrl+L` ekran temizleme düzeltildi. Tüm uygulama pencerelerine (`ModernPanel`, `TeacherRoomPanel`, `RoomJoinDialog`, `BasarilarimPanel`, `DialogContent`) kırmızı daire içinde beyaz `X` simgeli standart modüler kapatma butonları uygulandı. |
+
 ## v3.2.0 — 2026-08-27
 
 | Tarih | Değişiklik |
