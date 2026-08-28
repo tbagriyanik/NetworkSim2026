@@ -448,6 +448,7 @@ export function useCanvasActions({
   }, [isExamActive, saveToHistory, setConnections]);
 
   const addSummaryNote = useCallback(() => {
+    if (isExamActive && !isExamEditorOpen) return;
     saveToHistory();
     const isTr = language === 'tr';
 
@@ -549,7 +550,7 @@ export function useCanvasActions({
     };
     setNotes((prev) => [...prev, newNote]);
     setSelectedNoteIds([newNote.id]);
-  }, [saveToHistory, language, devices, deviceStates, connections, getNextNoteId, setNotes, setSelectedNoteIds]);
+  }, [isExamActive, isExamEditorOpen, saveToHistory, language, devices, deviceStates, connections, getNextNoteId, setNotes, setSelectedNoteIds]);
 
   return {
     addDevice,

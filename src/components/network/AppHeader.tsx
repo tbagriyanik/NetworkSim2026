@@ -64,6 +64,7 @@ interface AppHeaderProps {
   showBasarilarim: boolean;
   setShowBasarilarim: (v: boolean) => void;
   isPingPanelOpen?: boolean;
+  isExamActive?: boolean;
 }
 
 export function AppHeader({
@@ -79,7 +80,8 @@ export function AppHeader({
   isGuidedModeActive, isPanelMinimized, expandPanel, setShowAboutModal,
   showBasarilarim, setShowBasarilarim,
   helpLevel, setHelpLevel,
-  isPingPanelOpen
+  isPingPanelOpen,
+  isExamActive = false
 }: AppHeaderProps) {
   return (
     <header className={cn("fixed top-0 left-0 right-0 z-[50] border-b px-3 sm:px-5 h-14 sm:h-16 flex items-center", isDark ? "liquid-glass border-secondary-800" : "bg-white/90 backdrop-blur-md border-secondary-200")}>
@@ -225,7 +227,8 @@ export function AppHeader({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button aria-label={t.generateSummary}
-                        className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-secondary-200/50", isDark ? 'text-secondary-300 hover:text-primary-400 hover:bg-secondary-700/50' : 'text-secondary-600 hover:text-primary-600')}
+                        className={cn("h-8 w-8 flex items-center justify-center transition-all hover:bg-secondary-200/50", isDark ? 'text-secondary-300 hover:text-primary-400 hover:bg-secondary-700/50' : 'text-secondary-600 hover:text-primary-600', isExamActive && "opacity-40 cursor-not-allowed hover:bg-transparent hover:text-secondary-300")}
+                        disabled={isExamActive}
                         onClick={() => window.dispatchEvent(new CustomEvent('add-summary-note'))}
                       >
                         <FileText className="w-4 h-4" />
@@ -406,13 +409,14 @@ export function AppHeader({
                       >
                         <ImageDown className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.saveAsPNG}</span>
                       </Button>
-                      <Button
-                        variant="outline"
-                        className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-primary-400" : "hover:text-primary-600")}
-                        onClick={() => { window.dispatchEvent(new CustomEvent('add-summary-note')); setShowMobileMenu(false); }}
-                      >
-                        <FileText className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.generateSummary}</span>
-                      </Button>
+                        <Button
+                          variant="outline"
+                          disabled={isExamActive}
+                          className={cn("justify-start gap-2 h-9 text-xs font-bold min-w-0 overflow-hidden text-ellipsis whitespace-nowrap animate-marquee-hover", isDark ? "hover:text-primary-400" : "hover:text-primary-600", isExamActive && "opacity-40 cursor-not-allowed")}
+                          onClick={() => { window.dispatchEvent(new CustomEvent('add-summary-note')); setShowMobileMenu(false); }}
+                        >
+                          <FileText className="w-3.5 h-3.5 flex-shrink-0" /> <span>{t.generateSummary}</span>
+                        </Button>
                     </div>
                   </div>
 

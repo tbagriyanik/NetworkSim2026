@@ -18,6 +18,7 @@ export function useLoadProject({
   setRefreshNetworkReport,
   setIsExamLoadedFromFile,
   startExamProject,
+  resetToEmptyProject,
   hasUnsavedChanges,
   handleSaveProject,
   setSaveDialog,
@@ -35,6 +36,7 @@ export function useLoadProject({
   setRefreshNetworkReport: (v: null) => void;
   setIsExamLoadedFromFile: (v: boolean) => void;
   startExamProject: (project: ExamProject) => void;
+  resetToEmptyProject: () => void;
   hasUnsavedChanges: boolean;
   handleSaveProject: () => void;
   setSaveDialog: (v: { show: boolean; message: string; onConfirm: (save: boolean) => void } | null) => void;
@@ -49,6 +51,9 @@ export function useLoadProject({
     event.target.value = '';
 
     const doLoad = () => {
+      // Fully tear down the previously loaded project (memory + localStorage)
+      // before loading the new one.
+      resetToEmptyProject();
       document.body.style.cursor = 'wait';
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -128,7 +133,7 @@ export function useLoadProject({
       return;
     }
     doLoad();
-  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm, startExamProject, toast, setRefreshNetworkReport, setIsExamLoadedFromFile]);
+  }, [loadProjectData, setHasUnsavedChanges, t.invalidProjectFile, t.failedLoadProject, language, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, hasUnsavedChanges, handleSaveProject, setSaveDialog, t.unsavedChangesConfirm, startExamProject, toast, setRefreshNetworkReport, setIsExamLoadedFromFile, resetToEmptyProject]);
 
   return handleLoadProject;
 }

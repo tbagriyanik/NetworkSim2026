@@ -53,6 +53,7 @@ export function useProjectApplication({
   toast: (params: { title: string; description: string }) => void;
 }) {
   const applyExampleProjectAsTemplate = useCallback((projectData: unknown, exampleId?: string) => {
+    resetToEmptyProject();
     const data = (projectData && typeof projectData === 'object') ? projectData as Record<string, unknown> : {};
     const topology = (data.topology && typeof data.topology === 'object') ? data.topology as Record<string, unknown> : {};
     const safeTopologyDevices = Array.isArray(topology.devices) ? topology.devices as CanvasDevice[] : [];
@@ -160,9 +161,10 @@ export function useProjectApplication({
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }
-  }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder, projectName, addProjectRecord, language]);
+  }, [resetToEmptyProject, loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder, projectName, addProjectRecord, language]);
 
   const applyExampleProject = useCallback((projectData: unknown, exampleId?: string) => {
+    resetToEmptyProject();
     loadProjectData(projectData);
     setRefreshNetworkReport(null);
     let loadedTitle = projectName;
@@ -201,7 +203,7 @@ export function useProjectApplication({
     if (typeof window !== 'undefined') {
       window.scrollTo(0, 0);
     }
-  }, [loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder, projectName, addProjectRecord]);
+  }, [resetToEmptyProject, loadProjectData, setShowProjectPicker, setZoom, setPan, closeGuidedMode, closeExam, setProjectName, setLoadedExampleId, setRefreshNetworkReport, groupedExampleProjects, exampleLevelOrder, projectName, addProjectRecord]);
 
   const startExamFromCatalog = useCallback((project: ExamProject) => {
     setIsExamLoadedFromFile(false);
@@ -216,6 +218,7 @@ export function useProjectApplication({
     closeExam();
     closeGuidedMode();
     resetWorkspaceUiState();
+    resetToEmptyProject();
     startExamProject(generateExamFromProject(projectData as ProjectData, language));
     loadProjectData(projectData);
     toggleEditor(true);
@@ -224,7 +227,7 @@ export function useProjectApplication({
       title: language === 'tr' ? 'Proje D\u00F6n\u00FC\u015Ft\u00FCr\u00FCld\u00FC' : 'Project Converted',
       description: language === 'tr' ? 'G\u00F6revler otomatik olarak \u00E7\u0131kar\u0131ld\u0131 ve S\u0131nav D\u00FCzenleyici a\u00E7\u0131ld\u0131.' : 'Tasks were automatically extracted and the Exam Editor was opened.',
     });
-  }, [closeExam, closeGuidedMode, language, startExamProject, loadProjectData, toggleEditor, toast, resetWorkspaceUiState]);
+  }, [closeExam, closeGuidedMode, language, startExamProject, loadProjectData, toggleEditor, toast, resetWorkspaceUiState, resetToEmptyProject]);
 
   const handleStartGuidedProject = useCallback((project: GuidedProject) => {
     closeExam();

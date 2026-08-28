@@ -458,6 +458,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
   const environment = useEnvironment();
 
   const helpLevel = useAppStore(state => state.helpLevel);
+  const setHelpLevel = useAppStore((state) => state.setHelpLevel);
 
   const setDevices = useAppStore((state) => state.setDevices);
   const setConnections = useAppStore((state) => state.setConnections);
@@ -569,6 +570,24 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
     window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'escape' } }));
   }, [isExamActive, setRefreshNetworkReport, setShowTeacherPanel, setShowRoomJoinDialog]);
+
+  // During exam mode the help level must be at its minimum ('exam').
+  // The previous level is captured once when the exam starts and restored
+  // when it ends (so a freshly opened project returns to its old help level).
+  const prevHelpLevelRef = useRef<'beginner' | 'intermediate' | 'exam' | null>(null);
+  const prevIsExamActiveRef = useRef(false);
+  useEffect(() => {
+    if (isExamActive && !prevIsExamActiveRef.current) {
+      prevHelpLevelRef.current = helpLevel;
+      if (helpLevel !== 'exam') setHelpLevel('exam');
+    } else if (!isExamActive && prevIsExamActiveRef.current) {
+      if (prevHelpLevelRef.current && prevHelpLevelRef.current !== 'exam') {
+        setHelpLevel(prevHelpLevelRef.current);
+      }
+      prevHelpLevelRef.current = null;
+    }
+    prevIsExamActiveRef.current = isExamActive;
+  }, [isExamActive, helpLevel, setHelpLevel]);
 
   useEffect(() => {
     const handleMobileBack = () => {
@@ -1504,6 +1523,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     setRefreshNetworkReport,
     setIsExamLoadedFromFile,
     startExamProject,
+    resetToEmptyProject,
     hasUnsavedChanges,
     handleSaveProject,
     setSaveDialog,
@@ -1682,6 +1702,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
             theme={theme}
             language={language}
             isPingPanelOpen={isPingPanelOpen}
+            isExamActive={isExamActive}
             setLanguage={setLanguage}
             setTheme={setTheme}
             graphicsQuality={graphicsQuality}
@@ -1905,7 +1926,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
                 {/* Topology Toolbar */}
                 {activeTab === 'topology' && (
                   <TopologyToolbar
-                    isPingPanelOpen={isPingPanelOpen}
+            isPingPanelOpen={isPingPanelOpen}
                     t={t}
                     isDark={isDark}
                     language={language}
@@ -2134,6 +2155,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
           {showAboutModal && <LazyAboutModal
             isOpen={showAboutModal}
             onClose={() => setShowAboutModal(false)}
+            isExamActive={isExamActive}
             onStartTour={() => {
               setShowAboutModal(false);
               setShowOnboarding(true);

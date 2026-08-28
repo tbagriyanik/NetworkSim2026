@@ -220,6 +220,7 @@ export function ProjectPickerDialog({
                     const examTemplate = getAvailableExams(language).find((ep: ExamProject) => ep.id === 'exam-template-blank');
                     if (examTemplate) {
                       closeProjectPicker();
+                      resetToEmptyProject();
                       startExamProject(examTemplate);
                       loadProjectData(examTemplate.data);
                     }
@@ -398,6 +399,7 @@ export function ProjectPickerDialog({
                             className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-success-800/40 bg-success-900/10 hover:bg-success-900/30 hover:border-success-500/50' : 'border-success-200/50 bg-success-50/30 hover:bg-success-50 hover:border-success-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative ${selectedProjectId === guidedProject.id ? (isDark ? 'ring-2 ring-success-400 ring-offset-2 ring-offset-secondary-900' : 'ring-2 ring-success-500 ring-offset-2 ring-offset-white') : ''}`}
                             onClick={() => {
                               closeProjectPicker();
+                              resetToEmptyProject();
                               setZoom(1.0);
                               setPan({ x: 0, y: 0 });
                               startGuidedProject(guidedProject);
@@ -506,6 +508,7 @@ export function ProjectPickerDialog({
                             className={`group h-auto min-h-[140px] md:min-h-[180px] flex-col items-start gap-3 md:gap-5 p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 text-left transition-all duration-300 hover:translate-y-[-4px] active:scale-[0.98] ${isDark ? 'border-error-800/40 bg-error-900/10 hover:bg-error-900/30 hover:border-error-500/50' : 'border-error-200/50 bg-error-50/30 hover:bg-error-50 hover:border-error-500/40'} w-full overflow-hidden shadow-sm hover:shadow-2xl relative ${selectedProjectId === examProject.id ? (isDark ? 'ring-2 ring-error-400 ring-offset-2 ring-offset-secondary-900' : 'ring-2 ring-error-500 ring-offset-2 ring-offset-white') : ''}`}
                             onClick={() => {
                               closeProjectPicker();
+                              resetToEmptyProject();
                               setZoom(1.0);
                               setPan({ x: 0, y: 0 });
                               startExamProject(examProject);

@@ -250,7 +250,7 @@ describe('generateExamFromProject', () => {
         notes: [
           {
             id: 'note-1',
-            text: '📝 GENEL TALİMATLAR\n\nBu projede switch yapılandırması yapacaksınız.\nTüm adımları sırayla uygulayın.\n\nBaşarılar!',
+            text: '📝 GENEL TALİMATLAR\n\nBu projede switch yapılandırması yapacaksınız.\nTüm adımları sırayla uygulayın.\n\nBaşarılar!\n\nAd, Soyad ve Numaranızı buraya yazınız:',
             x: 100, y: 100, width: 300, height: 200,
             color: 'var(--color-error-500)', font: 'verdana', fontSize: 12, opacity: 0.75
           }

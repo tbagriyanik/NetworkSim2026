@@ -24,17 +24,20 @@ interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
   onStartTour: () => void;
+  isExamActive?: boolean;
 }
 
 type TabType = 'help' | 'about' | 'contact';
 
-export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
+export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false }: AboutModalProps) {
   const { t } = useLanguage();
   const { theme } = useTheme();
   const CONTACT_NAME_MAX_LENGTH = 64;
   const CONTACT_EMAIL_MAX_LENGTH = 254;
   const CONTACT_MESSAGE_MAX_LENGTH = 1000;
-  const [activeTab, setActiveTab] = useState<TabType>('help');
+  const [activeTab, setActiveTab] = useState<TabType>(
+    isExamActive && process.env.NEXT_PUBLIC_IS_CONTACT_ENABLED == 'true' ? 'contact' : isExamActive ? 'about' : 'help'
+  );
   const isContactEnabled = process.env.NEXT_PUBLIC_IS_CONTACT_ENABLED == 'true';
   const isDark = theme === 'dark';
   const lang = (t as unknown as Record<string, string>).language || 'en';
@@ -152,6 +155,13 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
     }
   }, [searchQuery, filteredHelpCategories]);
 
+  // During exam mode the help (command reference) tab must not be accessible
+  useEffect(() => {
+    if (isExamActive && activeTab === 'help') {
+      setActiveTab(isContactEnabled ? 'contact' : 'about');
+    }
+  }, [isExamActive, activeTab, isContactEnabled]);
+
   return (
     <Dialog open={isOpen}>
       <DialogContent showCloseButton={false} className="sm:max-w-[600px] md:max-w-2xl lg:max-w-3xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden liquid-glass-light">
@@ -167,16 +177,18 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
         </TooltipWrapper>
         <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle className="sr-only">
-            {activeTab === 'about' ? t.aboutTitle : t.commandReference}
+            {activeTab === 'about' ? t.aboutTitle : activeTab === 'contact' ? t.contactTitle : t.commandReference}
           </DialogTitle>
           <div className={cn('flex items-end gap-2 mb-2 border-b', isDark ? 'border-secondary-800' : 'border-secondary-200')}>
-            <button
-              onClick={() => setActiveTab('help')}
-              className={tabButtonClass('help')}
-            >
-              <Terminal className="w-4 h-4" />
-              {t.commandReference}
-            </button>
+            {!isExamActive && (
+              <button
+                onClick={() => setActiveTab('help')}
+                className={tabButtonClass('help')}
+              >
+                <Terminal className="w-4 h-4" />
+                {t.commandReference}
+              </button>
+            )}
 
             {isContactEnabled && (
               <button
@@ -201,7 +213,7 @@ export function AboutModal({ isOpen, onClose, onStartTour }: AboutModalProps) {
         </DialogHeader>
 
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden border rounded-md mx-6 mb-2">
-          {activeTab === 'help' && (
+          {activeTab === 'help' && !isExamActive && (
             <div className={cn('p-4 space-y-3 border-b-2 shrink-0', isDark ? 'bg-secondary-700 border-secondary-500/60' : 'bg-secondary-100 border-secondary-300')}>
               {/* Search */}
               <div className="relative">

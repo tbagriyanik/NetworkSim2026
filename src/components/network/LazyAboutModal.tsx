@@ -12,6 +12,7 @@ interface LazyAboutModalProps {
     isOpen: boolean;
     onClose: () => void;
     onStartTour: () => void;
+    isExamActive?: boolean;
 }
 
 function AboutModalFallback() {
@@ -31,12 +32,12 @@ function AboutModalFallback() {
     );
 }
 
-export function LazyAboutModal({ isOpen, onClose, onStartTour }: LazyAboutModalProps) {
+export function LazyAboutModal({ isOpen, onClose, onStartTour, isExamActive }: LazyAboutModalProps) {
     if (!isOpen) return null;
 
     return (
         <Suspense fallback={<AboutModalFallback />}>
-            <AboutModalComponent isOpen={isOpen} onClose={onClose} onStartTour={onStartTour} />
+            <AboutModalComponent isOpen={isOpen} onClose={onClose} onStartTour={onStartTour} isExamActive={isExamActive} />
         </Suspense>
     );
 }

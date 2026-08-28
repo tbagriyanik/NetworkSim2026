@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { generateRandomLinkLocalIpv4 } from '@/lib/network/linkLocal';
 import { useAppStore } from '@/lib/store/appStore';
 import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
+import { clearProjectLocalStorage } from '@/lib/storage/clearProjectStorage';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
 import { TerminalOutput } from '@/components/network/Terminal';
@@ -61,6 +62,10 @@ export function useProjectReset({
 }: UseProjectResetProps) {
   const resetToEmptyProject = useCallback(() => {
     clearPcLinuxSessions();
+
+    // Wipe every persisted remnant of the project that was loaded before this one
+    // so nothing leaks into the new exam / guided lesson / opened project.
+    clearProjectLocalStorage();
 
     // A new/empty project must not inherit floating windows from the previous project.
     useMultiWindowStore.getState().closeAllDeviceWindows();
