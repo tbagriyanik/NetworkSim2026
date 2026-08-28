@@ -156,35 +156,54 @@ export function checkConnectivity(
   let targetDevice = targetDeviceId ? deviceMap.get(targetDeviceId) : undefined;
 
   // If the resolved target is a NAT global IP, the actual end device is the
-  // mapped local IP. Override targetDevice so that BFS finds the full path
-  // Server → R1 → PC-1, and the NAT outside→inside translation fires at R1.
+  // mapped local IP — BUT only when the source is on the OUTSIDE network.
+  // Inside→inside via a global IP (hairpin NAT) is NOT supported by default,
+  // so we leave resolvedTargetIp unchanged in that case and the packet will
+  // fail to route (no device owns 203.x.x.x on the inside).
   if (targetDeviceId && deviceStates) {
     const routerState = deviceStates.get(targetDeviceId);
     const staticEntry = routerState?.natStaticTranslations?.find(
       t => t.globalIp === resolvedTargetIp
     );
     if (staticEntry) {
-      // Find the actual end device (the one with localIp)
-      const realDevId = (() => {
-        for (const d of devices) {
-          if (d.ip === staticEntry.localIp) return d.id;
-        }
-        if (deviceStates) {
-          for (const [id, s] of deviceStates.entries()) {
-            for (const portId in s.ports) {
-              if (s.ports[portId].ipAddress === staticEntry.localIp) return id;
+      // Determine if the source is on the outside network (not in any inside subnet).
+      const sourceIpForNat = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, false);
+      const sourceIsOutside = (() => {
+        if (!routerState) return false;
+        for (const portId in routerState.ports) {
+          const port = routerState.ports[portId];
+          if (port.natSide === 'inside' && port.ipAddress && port.subnetMask) {
+            if (isIpInSubnet(sourceIpForNat, port.ipAddress, port.subnetMask)) {
+              return false; // Source is inside → hairpin not supported
             }
           }
         }
-        return null;
+        return true; // Source is outside
       })();
-      if (realDevId) {
-        const realDev = deviceMap.get(realDevId);
-        if (realDev) {
-          targetDevice = realDev;
-          // Also update resolvedTargetIp so isDirectSubnet / gateway routing
-          // uses the real inner address, not the NAT global address.
-          resolvedTargetIp = staticEntry.localIp;
+
+      if (sourceIsOutside) {
+        // Find the actual end device (the one with localIp)
+        const realDevId = (() => {
+          for (const d of devices) {
+            if (d.ip === staticEntry.localIp) return d.id;
+          }
+          if (deviceStates) {
+            for (const [id, s] of deviceStates.entries()) {
+              for (const portId in s.ports) {
+                if (s.ports[portId].ipAddress === staticEntry.localIp) return id;
+              }
+            }
+          }
+          return null;
+        })();
+        if (realDevId) {
+          const realDev = deviceMap.get(realDevId);
+          if (realDev) {
+            targetDevice = realDev;
+            // Also update resolvedTargetIp so isDirectSubnet / gateway routing
+            // uses the real inner address, not the NAT global address.
+            resolvedTargetIp = staticEntry.localIp;
+          }
         }
       }
     }
