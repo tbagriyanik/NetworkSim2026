@@ -55,6 +55,7 @@ interface CommandLineTabProps {
   setCurrentPath?: (path: string) => void;
   canReachTargetIp?: (targetIp: string) => boolean;
   resolveDeviceNameTargetCallback?: (raw: string) => { ip: string; label?: string } | null;
+  openWebPage?: (url: string, target?: string) => void;
 }
 
 export function CommandLineTab({
@@ -101,6 +102,7 @@ export function CommandLineTab({
   setCurrentPath = () => { },
   canReachTargetIp = () => true,
   resolveDeviceNameTargetCallback = () => null,
+  openWebPage,
 }: CommandLineTabProps) {
   const inputRef = externalInputRef;
   const autocompleteRef = useRef<HTMLDivElement>(null);
@@ -345,6 +347,7 @@ export function CommandLineTab({
         setCurrentPath,
         canReachTargetIp,
         resolveDeviceNameTargetCallback,
+        openWebPage,
         addLocalOutput: addLinuxOutput,
         setLinuxOutput,
         executeCommand,
@@ -674,6 +677,7 @@ export function CommandLineTab({
                             setCurrentPath,
                             canReachTargetIp,
                             resolveDeviceNameTargetCallback,
+                            openWebPage,
                             addLocalOutput: addLinuxOutput,
                             setLinuxOutput,
                           });

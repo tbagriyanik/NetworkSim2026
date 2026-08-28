@@ -24,6 +24,7 @@ export interface LinuxExecutorParams {
   setCurrentPath: (path: string) => void;
   canReachTargetIp: (targetIp: string) => boolean;
   resolveDeviceNameTargetCallback: (raw: string) => { ip: string; label?: string } | null;
+  openWebPage?: (url: string, target?: string) => void;
   addLocalOutput: (type: OutputLine['type'], content: string, prompt?: string) => void;
   setLinuxOutput: React.Dispatch<React.SetStateAction<OutputLine[]>>;
   executeCommand?: (cmdToExecute?: string) => Promise<void>;
@@ -33,7 +34,7 @@ export interface LinuxExecutorParams {
 
 export const LINUX_SUGGESTIONS = [
   'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'grep', 'wc', 'nano', 'vim', 'vi', 'notepad',
-  'ifconfig', 'ip addr', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp', 'ftp', 'ssh', 'telnet',
+  'ifconfig', 'ip addr', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp', 'ftp', 'ssh', 'telnet', 'curl', 'wget',
   'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'history', 'echo', 'sudo', 'help', 'date', 'uptime',
   'for', 'while', 'if', 'python3', 'python'
 ];
@@ -144,6 +145,7 @@ export async function executeLinuxCommand(
     setCurrentPath,
     canReachTargetIp,
     resolveDeviceNameTargetCallback,
+    openWebPage,
     addLocalOutput,
     setLinuxOutput,
   } = params;
@@ -159,6 +161,17 @@ export async function executeLinuxCommand(
 
   if (UNSUPPORTED_LINUX_COMMANDS.has(command)) {
     addLocalOutput('error', `bash: ${command}: command not found`);
+    return;
+  }
+
+  if (command === 'curl' || command === 'wget') {
+    const url = args.find(arg => !arg.startsWith('-'));
+    if (!url) {
+      addLocalOutput('error', `${command}: missing URL`);
+      return;
+    }
+    openWebPage?.(url);
+    addLocalOutput('output', `${command}: connected to ${url}`);
     return;
   }
 

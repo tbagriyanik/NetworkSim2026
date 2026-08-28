@@ -192,6 +192,23 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       ]
     },
     {
+      id: 'examples-ssh',
+      icon: Server,
+      title: isTR ? 'Örnek: SSH Sunucusu' : 'Example: SSH Server',
+      type: 'examples',
+      cmds: [
+        ['hostname R1', isTR ? '1. Cihaz adını belirle' : '1. Set the device hostname', '(config)#'],
+        ['ip domain-name example.local', isTR ? '2. RSA anahtarı için alan adı belirle' : '2. Set the domain name for RSA key generation', '(config)#'],
+        ['username admin privilege 15 secret cisco', isTR ? '3. Yerel yönetici kullanıcısı oluştur' : '3. Create a local administrator account', '(config)#'],
+        ['crypto key generate rsa', isTR ? '4. RSA anahtarlarını oluştur' : '4. Generate RSA keys', '(config)#'],
+        ['ip ssh version 2', isTR ? '5. SSH sürüm 2’yi etkinleştir' : '5. Enable SSH version 2', '(config)#'],
+        ['line vty 0 4', isTR ? '6. VTY hatlarını yapılandır' : '6. Configure the VTY lines', '(config)#'],
+        ['login local', isTR ? '7. Yerel kullanıcı doğrulamasını etkinleştir' : '7. Enable local user authentication', '(config-line)#'],
+        ['transport input ssh', isTR ? '8. Yalnızca SSH erişimine izin ver' : '8. Allow SSH access only', '(config-line)#'],
+        ['ssh -l admin 192.168.1.150', isTR ? '9. SSH bağlantısını test et' : '9. Test the SSH connection', '>'],
+      ]
+    },
+    {
       id: 'examples-vlan',
       icon: Layers,
       title: isTR ? 'Örnek: VLAN & Trunk' : 'Example: VLAN & Trunk',

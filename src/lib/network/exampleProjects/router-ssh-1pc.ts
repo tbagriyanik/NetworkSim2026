@@ -31,6 +31,9 @@ const example = (isTr: boolean): ExampleProject => {
   const routerSshR1 = createInitialRouterState('00:50:00:00:00:04');
   routerSshR1.hostname = 'R1';
   routerSshR1.domainName = 'lab.local';
+  // Keep the generated RSA key pair in the device state as well as in the
+  // running config; SSH clients validate this runtime capability.
+  routerSshR1.rsaKeys = { modulus: 1024, name: 'R1.lab.local' };
   routerSshR1.sshVersion = 2;
   routerSshR1.ports['gi0/0'] = {
     ...routerSshR1.ports['gi0/0'],

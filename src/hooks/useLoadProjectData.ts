@@ -87,9 +87,13 @@ export function useLoadProjectData({
       const data = (projectData && typeof projectData === 'object') ? projectData as Record<string, unknown> : {};
       const topology = (data.topology && typeof data.topology === 'object') ? data.topology as Record<string, unknown> : {};
       const safeDevices = Array.isArray(data.devices) ? data.devices : [];
-      const safeDeviceOutputs = Array.isArray(data.deviceOutputs) ? data.deviceOutputs : [];
-      const safePcOutputs = Array.isArray(data.pcOutputs) ? data.pcOutputs : [];
-      const safePcHistories = Array.isArray(data.pcHistories) ? data.pcHistories : [];
+      // Terminal output and command history belong to the current session, not
+      // to the project. Never restore them from a previously saved project;
+      // otherwise a newly opened example appears to contain the old project's
+      // CLI activity.
+      const safeDeviceOutputs: { id: string; outputs: TerminalOutput[] }[] = [];
+      const safePcOutputs: { id: string; outputs: PCOutputLine[] }[] = [];
+      const safePcHistories: { id: string; history: string[] }[] = [];
       const safeTopologyDevices = Array.isArray(topology.devices) ? topology.devices : [];
       const safeTopologyConnections = Array.isArray(topology.connections) ? topology.connections : [];
       const safeTopologyNotes = Array.isArray(topology.notes) ? topology.notes : [];

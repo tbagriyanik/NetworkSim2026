@@ -284,7 +284,7 @@ export function DraggableWindowWrapper({
         <>
           {/* Corners */}
           <div className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize z-50 flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity select-none" onPointerDown={(e) => handleResizePointerDown(e, 'se')}>
-            <div className={cn("w-2.5 h-2.5 rounded-br-full border-b-2 border-r-2 bg-transparent", isDark ? "border-secondary-400" : "border-secondary-600", isActive && "border-success-500")} />
+            <div className={cn("w-2.5 h-2.5 rounded-br-lg border-b-2 border-r-2 bg-transparent", isDark ? "border-secondary-400" : "border-secondary-600", isActive && "border-success-500")} />
           </div>
           <div className="absolute left-0 bottom-0 w-3 h-3 cursor-sw-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'sw')} />
           <div className="absolute right-0 top-0 w-3 h-3 cursor-ne-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'ne')} />

@@ -2120,6 +2120,7 @@ export function PCPanel({
                           setCurrentPath={setCurrentPath}
                           canReachTargetIp={canReachTargetIp}
                           resolveDeviceNameTargetCallback={resolveDeviceNameTargetCallback}
+                          openWebPage={openWebPage}
                           setPcHostname={setPcHostname}
                           setEditingFile={setEditingFile}
                         />

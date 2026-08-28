@@ -1089,6 +1089,23 @@ body.graphics-low [role="dialog"] {
   filter: none !important;
 }
 
+/* Keep every glass window solid in low-graphics mode, including windows that
+   use a direct backdrop-blur utility instead of a liquid-glass class. */
+body.graphics-low [class*="backdrop-blur"],
+body.graphics-low .liquid-glass,
+body.graphics-low .liquid-glass-light,
+body.graphics-low .liquid-glass-strong,
+body.graphics-low [data-portal-window="true"],
+body.graphics-low [data-slot="dialog-content"],
+body.graphics-low [role="dialog"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: var(--background) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
 /* Network report and info panel glass effects */
 body.graphics-low .backdrop-blur-md,
 body.graphics-low [class*="backdrop-blur"] {
