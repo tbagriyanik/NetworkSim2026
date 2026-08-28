@@ -20,8 +20,9 @@
   - **Modül Desteği:** `json`, `re` (regex), `os.path`, simüle edilmiş `socket` (ağ programlama betikleri için), `math`, `random`, `datetime`, `sys`.
   - **Güvenlik Katmanı:** Tarayıcı sandbox koruması ve dunder nitelik bloklaması.
 - PC CMD'de kullanıcı tanımlı `.bat` ve `.cmd` yığın dosyaları çalıştırma (`@echo off`, `set`, `%VAR%`, `%1`, `goto`, `call`).
-- Dosya Düzenleyici (File Editor) pencerelerinde `Batch Yığın Dosyası` ve `Python Betiği` rozet etiketleri ile tek tıkla kaydedip CMD'de çalıştırma (Play).
-- Tab tuşu ile otomatik komut ve dosya tamamlama.
+  - Dosya Düzenleyici (File Editor) pencerelerinde `Batch Yığın Dosyası` ve `Python Betiği` rozet etiketleri ile tek tıkla kaydedip CMD'de çalıştırma (Play).
+  - **Linux Terminali (Bash kabuğu):** PC terminalinde tam bir Linux kabuğu; `ls -l`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `nano`/`vim` ile dosya sistemi yönetimi; `ifconfig`, `ip addr`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget` ağ komutları; `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, `sudo` sistem komutları. Komut dizimi: `for`/`while` döngüleri, `if` koşul blokları, shell değişkenleri (`$VAR`), boru hattı (`|`), çıktı yönlendirme (`>` ve `>>`), `grep` ve `wc` filtreleme; ayrıca `python3` ile Python betikleri çalıştırma.
+  - Tab tuşu ile otomatik komut ve dosya tamamlama.
 - Komut geçmişi (Yukarı/Aşağı ok tuşları, kalıcı state).
 - Pipe filtreleme (`show run | include`, `ping | find` vb.).
 - Aktif moda göre değişen, mobil odaklı hızlı komut butonları.
@@ -66,7 +67,11 @@
 - 3 seviyeli akıllı yardım sistemi (Başlangıç, Orta, Sınav).
 - Ses sentezleyici ders anlatımı (Metin okuma - TTS).
 - Fault Injection (Hata enjeksiyonu ve pratik arıza giderme motoru).
-- Otomatik PDF sertifika üretimi (Türkçe karakter korumalı, 1 yıllık geçerlilik süresi ve doğrulama kodlu).
+  - Otomatik PDF sertifika üretimi (Türkçe karakter korumalı, 1 yıllık geçerlilik süresi ve doğrulama kodlu). Sertifikalar `http://network2026.vercel.app/verify` adresinden doğrulama kodu ile sorgulanabilir; PDF üzerinde QR kod ve doğrulama kodu yer alır.
+
+### 📂 Proje Yönetimi
+- **Yeni Başla (Yeni Proje):** Mevcut çalışmayı sıfırlayarak boş bir proje açar (varsayılan PC-1, PC-2, SWITCH-1). Önceki projeye ait tüm veriler — otomatik kayıt (`netsim_autosave`), geçmiş (`netsim_history`), pencere konumları, posta kutuları vb. — hem bellekten hem localStorage'dan tamamen temizlenir; böylece önceki proje hiçbir iz bırakmaz.
+- Otomatik kayıt (autosave) ile açık proje düzenli olarak yerel olarak korunur.
 
 ### 👩‍🏫 Sınıf Yönetimi (Room Sistemi)
 - Öğretmen odaları (Redis tabanlı, katılım kodu ile bağlantı).
@@ -127,7 +132,8 @@
 - Pipe filtering (e.g., `show run | include`).
 - Context-aware, mobile-focused quick command buttons.
 - Color-coded command realism indicators (`real` / `stub` / `sim-only`).
-- Educational error messages with helpful troubleshooting hints.
+  - Educational error messages with helpful troubleshooting hints.
+  - **Linux Terminal (Bash shell):** a full Linux shell inside the PC terminal — file-system management with `ls -l`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `nano`/`vim`; networking with `ifconfig`, `ip addr`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget`; system commands `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, `sudo`. Scripting supports `for`/`while` loops, `if` conditionals, shell variables (`$VAR`), pipes (`|`), output redirection (`>` and `>>`), and `grep`/`wc` filtering; `python3` scripts can also be run.
 
 ### 🌐 Protocols
 - VLAN, Trunking, STP (real BPDU propagation).
@@ -167,7 +173,11 @@
 - 3-tier intelligent help system (Beginner, Intermediate, Exam).
 - Built-in Text-to-Speech (TTS) narration for guided lessons.
 - Fault Injection (fault-injection and troubleshooting engine).
-- Automated PDF Certificate generation (with Turkish character mapping, 1-year validity, and secure verification codes).
+  - Automated PDF Certificate generation (with Turkish character mapping, 1-year validity, and secure verification codes). Certificates can be verified by entering the verification code at `http://network2026.vercel.app/verify`; the PDF includes a QR code and the verification code.
+
+### 📂 Project Management
+- **New Project / Start Fresh ("Yeni Başla"):** resets the current work and opens a blank project (default PC-1, PC-2, SWITCH-1). All data from the previous project — autosave (`netsim_autosave`), history (`netsim_history`), window positions, mailboxes, etc. — is fully cleared from both memory and localStorage, leaving no trace of the prior project.
+- Autosave periodically persists the open project locally.
 
 ### 👩‍🏫 Classroom & Room Management
 - Instructor Rooms (Redis-backed, code-based student join).
