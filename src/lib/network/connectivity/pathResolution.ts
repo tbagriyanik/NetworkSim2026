@@ -140,11 +140,55 @@ export function checkConnectivity(
         if (port.ipAddress) ipMap.set(port.ipAddress, id);
         if (port.ipv6Address) ipMap.set(port.ipv6Address.toLowerCase(), id);
       }
+      // Also map NAT global IPs to this router so that outside→inside traffic
+      // (e.g. ping to a static NAT global address) can be path-resolved correctly.
+      if (state.natStaticTranslations) {
+        for (const entry of state.natStaticTranslations) {
+          if (!ipMap.has(entry.globalIp)) {
+            ipMap.set(entry.globalIp, id);
+          }
+        }
+      }
     }
   }
 
   const targetDeviceId = ipMap.get(resolvedTargetIp.toLowerCase());
-  const targetDevice = targetDeviceId ? deviceMap.get(targetDeviceId) : undefined;
+  let targetDevice = targetDeviceId ? deviceMap.get(targetDeviceId) : undefined;
+
+  // If the resolved target is a NAT global IP, the actual end device is the
+  // mapped local IP. Override targetDevice so that BFS finds the full path
+  // Server → R1 → PC-1, and the NAT outside→inside translation fires at R1.
+  if (targetDeviceId && deviceStates) {
+    const routerState = deviceStates.get(targetDeviceId);
+    const staticEntry = routerState?.natStaticTranslations?.find(
+      t => t.globalIp === resolvedTargetIp
+    );
+    if (staticEntry) {
+      // Find the actual end device (the one with localIp)
+      const realDevId = (() => {
+        for (const d of devices) {
+          if (d.ip === staticEntry.localIp) return d.id;
+        }
+        if (deviceStates) {
+          for (const [id, s] of deviceStates.entries()) {
+            for (const portId in s.ports) {
+              if (s.ports[portId].ipAddress === staticEntry.localIp) return id;
+            }
+          }
+        }
+        return null;
+      })();
+      if (realDevId) {
+        const realDev = deviceMap.get(realDevId);
+        if (realDev) {
+          targetDevice = realDev;
+          // Also update resolvedTargetIp so isDirectSubnet / gateway routing
+          // uses the real inner address, not the NAT global address.
+          resolvedTargetIp = staticEntry.localIp;
+        }
+      }
+    }
+  }
 
   if (!targetDevice) {
     return { success: false, hops: [], hopIds: [], error: 'Request timed out.' };
@@ -1180,6 +1224,21 @@ export function checkConnectivity(
             }
           }
 
+          // 3. Drop if no translation found and only static NAT is configured (no dynamic rules)
+          //    This enforces strict static NAT behaviour: only mapped addresses may exit.
+          const hasOnlyStaticNat = (state.natStaticTranslations?.length ?? 0) > 0 && !state.natDynamicRules?.length;
+          if (!translated && hasOnlyStaticNat) {
+            return {
+              success: false,
+              hops: hopNames.slice(0, i + 1),
+              hopIds: path.slice(0, i + 1),
+              targetId: targetDevice.id,
+              error: language === 'tr'
+                ? `NAT: ${currentSourceIp} için statik çevrim bulunamadı — paket düşürüldü.`
+                : `NAT: no static translation for ${currentSourceIp} — packet dropped.`
+            };
+          }
+
           // Record translation for reverse-path verification
           if (translated && state.natStaticTranslations?.length) {
             natTranslatedAt = stepDeviceId;
@@ -1204,6 +1263,11 @@ export function checkConnectivity(
               currentTargetIp = entry.localIp;
               translated = true;
             }
+          }
+
+          // Record for reverse-path tracking
+          if (translated) {
+            natTranslatedAt = stepDeviceId;
           }
         }
       }

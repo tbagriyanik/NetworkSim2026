@@ -178,6 +178,30 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
                 debugLines.push(`*Mar  1 00:00:00.001: ICMP: echo request sent, src ${sourceIp}, dst ${host}`);
                 debugLines.push(`*Mar  1 00:00:00.004: ICMP: echo reply rcvd, src ${host}, dst ${sourceIp}`);
             }
+            if (state.debugs?.['ip nat'] || state.debugs?.['ip nat detailed']) {
+                // Look for NAT translation entries on devices in the path
+                const pathDeviceIds = connectivity.hopIds || [];
+                for (const devId of pathDeviceIds) {
+                    const devState = ctx.deviceStates?.get(devId);
+                    if (!devState) continue;
+                    const staticEntry = devState.natStaticTranslations?.find(
+                        (t: { localIp: string; globalIp: string }) => t.localIp === sourceIp || t.globalIp === host || t.localIp === host
+                    );
+                    if (staticEntry) {
+                        debugLines.push(`*Mar  1 00:00:00.002: NAT: s=${sourceIp}->${staticEntry.globalIp}, d=${host} [1]`);
+                        debugLines.push(`*Mar  1 00:00:00.005: NAT*: s=${host}, d=${staticEntry.globalIp}->${staticEntry.localIp} [1]`);
+                        break;
+                    }
+                    const dynEntry = devState.natTranslations?.find(
+                        (t: { localIp: string; globalIp: string; remoteIp?: string }) => t.localIp === sourceIp
+                    );
+                    if (dynEntry) {
+                        debugLines.push(`*Mar  1 00:00:00.002: NAT: s=${sourceIp}->${dynEntry.globalIp}, d=${host} [1]`);
+                        debugLines.push(`*Mar  1 00:00:00.005: NAT*: s=${host}, d=${dynEntry.globalIp}->${dynEntry.localIp} [1]`);
+                        break;
+                    }
+                }
+            }
             if ((state.debugs?.['sw-vlan packet'] || state.debugs?.['vlan packet']) && connectivity.hops?.length) {
                 debugLines.push(`*Mar  1 00:00:00.002: SW_VLAN-PACKET: frame forwarded across ${Math.max(0, connectivity.hops.length - 1)} hop(s)`);
             }
@@ -205,10 +229,10 @@ function cmdPing(state: SwitchState, input: string, ctx: CommandContext): Comman
             const n = parseInt(count, 10) || 5;
             let packetLine = '';
             let successes = 0;
-            
+
             // For a successful ping, occasionally simulate ARP delay (first packet drops)
             const dropFirst = Math.random() < 0.3; // 30% chance to simulate ARP timeout
-            
+
             for (let i = 0; i < n; i++) {
                 if (i === 0 && dropFirst) {
                     packetLine += '.';
@@ -297,22 +321,22 @@ function cmdTelnet(state: SwitchState, input: string, ctx: CommandContext): Comm
             };
         }
 
-            // Check target device configuration
-            if (!connectivity.targetId) return { success: false, error: '% Target device not found' };
-            const targetState = ctx.deviceStates?.get(connectivity.targetId);
+        // Check target device configuration
+        if (!connectivity.targetId) return { success: false, error: '% Target device not found' };
+        const targetState = ctx.deviceStates?.get(connectivity.targetId);
 
-            if (targetState) {
-                const transportInput = targetState.security?.vtyLines?.transportInput || [];
-                const isTelnetActive = transportInput.includes('all') || transportInput.includes('telnet');
+        if (targetState) {
+            const transportInput = targetState.security?.vtyLines?.transportInput || [];
+            const isTelnetActive = transportInput.includes('all') || transportInput.includes('telnet');
 
-                if (!isTelnetActive) {
-                    return {
-                        success: false,
-                        output: `Connecting to ${host}...`,
-                        error: `% Connection refused by remote host`
-                    };
-                }
+            if (!isTelnetActive) {
+                return {
+                    success: false,
+                    output: `Connecting to ${host}...`,
+                    error: `% Connection refused by remote host`
+                };
             }
+        }
     }
 
     return {
@@ -952,7 +976,7 @@ function cmdClockSet(state: SwitchState, input: string, _ctx: CommandContext): C
     if (!match) return { success: false, error: '% Invalid input' };
 
     const [, time, day, monthStr, year] = match;
-    
+
     // Parse month string to number (0-11)
     const monthMap: Record<string, number> = {
         january: 0, jan: 0,
@@ -973,7 +997,7 @@ function cmdClockSet(state: SwitchState, input: string, _ctx: CommandContext): C
 
     // Parse time (hh:mm:ss)
     const [hours, minutes, seconds] = time.split(':').map(Number);
-    
+
     // Create configured date object
     const configuredDate = new Date(Number(year), month, Number(day), hours, minutes, seconds);
     // Get real current time

@@ -130,7 +130,10 @@ export function CommandLineTab({
   });
 
   const [linuxAutocompleteIndex, setLinuxAutocompleteIndex] = useState(-1);
+  const [linuxAutocompleteNavigated, setLinuxAutocompleteNavigated] = useState(false);
   const [isLinuxAutocompleteDismissed, setIsLinuxAutocompleteDismissed] = useState(false);
+  const [linuxTabCycleIndex, setLinuxTabCycleIndex] = useState(-1);
+  const [lastLinuxTabInput, setLastLinuxTabInput] = useState('');
 
   // Separate Linux output state & history (persisted per device in localStorage)
   const [linuxOutput, setLinuxOutput] = useState<OutputLine[]>(() => {
@@ -327,18 +330,24 @@ export function CommandLineTab({
     }
   }, [activeTerminalTab, isAutocompleteVisible, linuxAutocompleteIndex]);
 
-  // Helper to complete selection in Linux mode
+  // Helper to complete selection in Linux mode (matching CMD mode buildCompletedInput)
   const completeLinuxSelection = useCallback((selected: string) => {
     const trimmed = input.trimStart();
     const parts = trimmed.split(/\s+/);
     const suffix = selected.endsWith('/') ? '' : ' ';
+    let completed = '';
     if (parts.length <= 1 && !input.endsWith(' ')) {
-      setInput(selected + suffix);
+      completed = selected + suffix;
     } else {
-      parts[parts.length - 1] = selected;
-      setInput(parts.join(' ') + suffix);
+      const tokens = input.endsWith(' ') ? parts.filter(Boolean) : parts.slice(0, -1).filter(Boolean);
+      const commandPrefix = tokens.join(' ');
+      completed = commandPrefix ? `${commandPrefix} ${selected}${suffix}` : `${parts[0]} ${selected}${suffix}`;
     }
+    setInput(completed);
+    setIsLinuxAutocompleteDismissed(true);
     setLinuxAutocompleteIndex(-1);
+    setLinuxAutocompleteNavigated(false);
+    return completed;
   }, [input, setInput]);
 
   // Submit command based on active tab
@@ -595,6 +604,8 @@ export function CommandLineTab({
                 onChange={(e) => {
                   handleInputChange(e.target.value);
                   setLinuxAutocompleteIndex(-1);
+                  setLinuxAutocompleteNavigated(false);
+                  setLinuxTabCycleIndex(-1);
                   setIsLinuxAutocompleteDismissed(false);
                 }}
                 onKeyDown={(e) => {
@@ -614,8 +625,83 @@ export function CommandLineTab({
                   if (activeTerminalTab === 'cmd') {
                     handleKeyDown(e);
                   } else {
-                    // ALWAYS prevent default for Tab in Linux mode so browser focus never jumps to next input element
-                    if (e.key === 'Tab') {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      if (isAutocompleteVisible && linuxAutocompleteNavigated && linuxFilteredSuggestions.length > 0) {
+                        const targetIdx = linuxAutocompleteIndex >= 0 ? linuxAutocompleteIndex : 0;
+                        const selected = linuxFilteredSuggestions[targetIdx];
+                        if (selected) {
+                          const completed = completeLinuxSelection(selected);
+                          void (async () => {
+                            const cmdToRun = completed.trim();
+                            if (!cmdToRun) return;
+                            setInput('');
+                            setLinuxAutocompleteIndex(-1);
+                            setLinuxAutocompleteNavigated(false);
+                            setIsLinuxAutocompleteDismissed(false);
+                            setLinuxHistory(prev => [cmdToRun, ...prev.filter(c => c !== cmdToRun)].slice(0, 50));
+                            setLinuxHistoryIndex(-1);
+
+                            await executeLinuxCommand(cmdToRun, {
+                              deviceId,
+                              internalPcHostname,
+                              setPcHostname,
+                              setEditingFile,
+                              pcIP,
+                              pcSubnet,
+                              pcMAC,
+                              pcGateway,
+                              pcDNS,
+                              pcIPv6,
+                              wifiEnabled,
+                              currentPath,
+                              setCurrentPath,
+                              canReachTargetIp,
+                              resolveDeviceNameTargetCallback,
+                              openWebPage,
+                              addLocalOutput: addLinuxOutput,
+                              setLinuxOutput,
+                              buildArpTableOutput,
+                            });
+                          })();
+                          return;
+                        }
+                      }
+                      void (async () => {
+                        const cmdToRun = input.trim();
+                        if (!cmdToRun || isCmdInputDisabled) return;
+                        setInput('');
+                        setLinuxAutocompleteIndex(-1);
+                        setLinuxAutocompleteNavigated(false);
+                        setIsLinuxAutocompleteDismissed(false);
+                        setLinuxHistory(prev => [cmdToRun, ...prev.filter(c => c !== cmdToRun)].slice(0, 50));
+                        setLinuxHistoryIndex(-1);
+
+                        await executeLinuxCommand(cmdToRun, {
+                          deviceId,
+                          internalPcHostname,
+                          setPcHostname,
+                          setEditingFile,
+                          pcIP,
+                          pcSubnet,
+                          pcMAC,
+                          pcGateway,
+                          pcDNS,
+                          pcIPv6,
+                          wifiEnabled,
+                          currentPath,
+                          setCurrentPath,
+                          canReachTargetIp,
+                          resolveDeviceNameTargetCallback,
+                          openWebPage,
+                          addLocalOutput: addLinuxOutput,
+                          setLinuxOutput,
+                          buildArpTableOutput,
+                        });
+                      })();
+                      return;
+                    } else if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
+                      // ALWAYS prevent default for Tab in Linux mode so browser focus never jumps to next input element
                       e.preventDefault();
                       if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
                         const targetIdx = linuxAutocompleteIndex >= 0 ? linuxAutocompleteIndex : 0;
@@ -623,38 +709,83 @@ export function CommandLineTab({
                         if (selected) {
                           completeLinuxSelection(selected);
                         }
-                        setLinuxAutocompleteIndex((targetIdx + 1) % linuxFilteredSuggestions.length);
+                        return;
+                      }
+
+                      // Linux tab complete fallback (when autocomplete dropdown is dismissed or cycling)
+                      const suggestions = getLinuxSuggestions(input, currentPath, deviceId);
+                      if (suggestions.length > 0) {
+                        if (linuxTabCycleIndex === -1) {
+                          setLastLinuxTabInput(input);
+                          setLinuxTabCycleIndex(0);
+                          completeLinuxSelection(suggestions[0]);
+                        } else {
+                          const nextIndex = (linuxTabCycleIndex + 1) % suggestions.length;
+                          setLinuxTabCycleIndex(nextIndex);
+                          // Recompute suggestions from original base input
+                          const origSuggestions = getLinuxSuggestions(lastLinuxTabInput, currentPath, deviceId);
+                          const chosen = origSuggestions[nextIndex] || suggestions[nextIndex] || suggestions[0];
+                          if (chosen) {
+                            const trimmed = lastLinuxTabInput.trimStart();
+                            const parts = trimmed.split(/\s+/);
+                            const suffix = chosen.endsWith('/') ? '' : ' ';
+                            let completed = '';
+                            if (parts.length <= 1 && !lastLinuxTabInput.endsWith(' ')) {
+                              completed = chosen + suffix;
+                            } else {
+                              const tokens = lastLinuxTabInput.endsWith(' ') ? parts.filter(Boolean) : parts.slice(0, -1).filter(Boolean);
+                              const commandPrefix = tokens.join(' ');
+                              completed = commandPrefix ? `${commandPrefix} ${chosen}${suffix}` : `${parts[0]} ${chosen}${suffix}`;
+                            }
+                            setInput(completed);
+                          }
+                        }
                       }
                       return;
-                    }
-
-                    // ESC key closes the autocomplete suggestions dropdown first (without closing window)
-                    if (e.key === 'Escape') {
+                    } else if (e.key === 'Escape') {
+                      // ESC key closes the autocomplete suggestions dropdown first (without closing window)
                       if (isAutocompleteVisible) {
                         e.preventDefault();
                         e.stopPropagation();
                         setIsLinuxAutocompleteDismissed(true);
                         setLinuxAutocompleteIndex(-1);
+                        setLinuxAutocompleteNavigated(false);
                         return;
                       }
-                    }
-
-                    // Arrow keys navigate command history (dismissing autocomplete dropdown)
-                    if (e.key === 'ArrowUp') {
+                    } else if (e.key === 'ArrowUp') {
+                      if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
+                        e.preventDefault();
+                        setLinuxAutocompleteIndex(prev => {
+                          if (prev === -1) return linuxFilteredSuggestions.length - 1;
+                          return prev <= 0 ? linuxFilteredSuggestions.length - 1 : prev - 1;
+                        });
+                        setLinuxAutocompleteNavigated(true);
+                        return;
+                      }
                       e.preventDefault();
                       setIsLinuxAutocompleteDismissed(true);
                       setLinuxAutocompleteIndex(-1);
-                      if (linuxHistory.length > 0) {
-                        const nextIdx = Math.min(linuxHistoryIndex + 1, linuxHistory.length - 1);
+                      setLinuxAutocompleteNavigated(false);
+                      if (linuxHistory.length > 0 && linuxHistoryIndex < linuxHistory.length - 1) {
+                        const nextIdx = linuxHistoryIndex + 1;
                         setLinuxHistoryIndex(nextIdx);
                         setInput(linuxHistory[nextIdx] || '');
                       }
                       return;
-                    }
-                    if (e.key === 'ArrowDown') {
+                    } else if (e.key === 'ArrowDown') {
+                      if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
+                        e.preventDefault();
+                        setLinuxAutocompleteIndex(prev => {
+                          if (prev === -1) return 0;
+                          return (prev + 1) % linuxFilteredSuggestions.length;
+                        });
+                        setLinuxAutocompleteNavigated(true);
+                        return;
+                      }
                       e.preventDefault();
                       setIsLinuxAutocompleteDismissed(true);
                       setLinuxAutocompleteIndex(-1);
+                      setLinuxAutocompleteNavigated(false);
                       if (linuxHistoryIndex > 0) {
                         const nextIdx = linuxHistoryIndex - 1;
                         setLinuxHistoryIndex(nextIdx);
@@ -664,17 +795,6 @@ export function CommandLineTab({
                         setInput('');
                       }
                       return;
-                    }
-
-                    if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
-                      if (e.key === 'Enter' && linuxAutocompleteIndex >= 0) {
-                        e.preventDefault();
-                        const selected = linuxFilteredSuggestions[linuxAutocompleteIndex];
-                        if (selected) {
-                          completeLinuxSelection(selected);
-                        }
-                        return;
-                      }
                     }
                   }
                 }}

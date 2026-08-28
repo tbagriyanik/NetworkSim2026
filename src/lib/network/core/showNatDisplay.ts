@@ -37,7 +37,10 @@ export function cmdShowIpNatTranslations(state: SwitchState, _input: string, _ct
  * Show IP NAT Statistics
  */
 export function cmdShowIpNatStatistics(state: SwitchState, _input: string, _ctx?: CommandContext): CommandResult {
-  let output = '\nTotal active translations: ' + (state.natTranslations?.length || 0) + ' (0 static, 0 dynamic; 0 extended)\n';
+  const staticCount = state.natStaticTranslations?.length || 0;
+  const dynamicCount = state.natTranslations?.length || 0;
+  const total = staticCount + dynamicCount;
+  let output = `\nTotal active translations: ${total} (${staticCount} static, ${dynamicCount} dynamic; 0 extended)\n`;
   output += 'Peak translations: 0, occurred 00:00:00 ago\n';
   output += 'Outside interfaces:\n';
   Object.keys(state.ports || {}).forEach(pId => {

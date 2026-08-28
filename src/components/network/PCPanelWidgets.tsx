@@ -81,9 +81,9 @@ export const IoTSensorDisplay = ({
 
     // Check if device is an actuator (output) or sensor (input)
     const isActuator = device.iot?.dataFlowDirection === 'output' ||
-                       device.iot?.kind === 'lamp' ||
-                       device.iot?.kind === 'heater' ||
-                       device.iot?.kind === 'cooler';
+        device.iot?.kind === 'lamp' ||
+        device.iot?.kind === 'heater' ||
+        device.iot?.kind === 'cooler';
     const isActive = device.iot?.collaborationEnabled ?? true;
     const deviceIcon = getDeviceIcon(device);
 
@@ -167,9 +167,9 @@ export const IoTSensorDisplay = ({
             ? (language === 'tr' ? 'AÇIK' : 'ON')
             : (language === 'tr' ? 'KAPALI' : 'OFF');
         const statusColor = isActive ? 'text-success-500' : 'text-secondary-400';
-        
+
         // Special handling for lamp devices: use distinct on/off visuals
-        const displayIcon = device.iot?.kind === 'lamp' 
+        const displayIcon = device.iot?.kind === 'lamp'
             ? (isActive ? '💡' : '💡')
             : deviceIcon;
 
@@ -252,7 +252,7 @@ export const IoTSensorDisplay = ({
                         <div className="text-xs text-secondary-500 mb-1">
                             {language === 'tr' ? 'Anlık Sensör Değeri' : 'Live Sensor Value'}
                         </div>
-                        <div className="text-2xl font-bold text-accent-500">{displayStr}</div>
+                        <div className="text-2xl font-bold text-accent-500" title={displayStr}>{displayStr}</div>
                     </div>
                     <div className={`p-3 rounded-full ${isDark ? 'bg-secondary-700' : 'bg-white'}`}>
                         <span className="text-2xl">{deviceIcon}</span>

@@ -123,7 +123,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
   const { passwordField, hiddenCheckbox, maxClientsField } = renderWifiConfigFieldTemplates(wifi, isTurkish, safeWifiPassword);
 
-  const loginFormHTML = renderWifiAdminLoginTemplate({ deviceName: safeDeviceName, isTurkish, username: jsUsername });
+  const loginFormHTML = renderWifiAdminLoginTemplate({ deviceName: safeDeviceName, isTurkish, username: adminUsername });
 
   const mainContent = `
     <div id="main-content" style="display:none;">
@@ -430,11 +430,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     </div>
       
     ${renderWifiAdminIotTemplate({
-      activeTab,
-      isTurkish,
-      connectedDevices: onlyIotConnectedDevices,
-      availableDevices: availableIotDevices,
-    })}
+    activeTab,
+    isTurkish,
+    connectedDevices: onlyIotConnectedDevices,
+    availableDevices: availableIotDevices,
+  })}
 
     ${renderWifiAdminAccountTemplate(activeTab, isTurkish, jsUsername)}
     <!-- Status Tab -->

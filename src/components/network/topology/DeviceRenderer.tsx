@@ -334,10 +334,10 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
       {(() => {
         const isWirelessHost = device.type === 'router' || device.type === 'wlc';
         if (!isWirelessHost) return null;
-        
+
         const wlanPort = device.ports.find(p => p.id === 'wlan0');
         const activeWifiConfig = deviceStates?.get(device.id)?.ports['wlan0']?.wifi || device.wifi;
-        
+
         let isEnabled = false;
         if (device.type === 'wlc') isEnabled = true;
         else if (wlanPort) isEnabled = !wlanPort.shutdown;
@@ -347,7 +347,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
         const is5Ghz = getChannelBand(activeWifiConfig?.channel) === '5GHz';
         const coverageRadius = is5Ghz ? 250 : 150;
-        
+
         return (
           <circle
             cx={deviceWidth / 2}
@@ -419,9 +419,11 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           height={deviceHeight}
           rx={8}
           fill={deviceFill}
-          style={{ stroke: isDark
-            ? ((device.type as string) === 'pc' ? 'var(--color-primary-500)' : (device.type as string) === 'iot' ? 'var(--color-secondary-500)' : (device.type as string) === 'firewall' ? 'var(--color-error-500)' : isSwitchDeviceType(device.type) ? 'var(--color-accent-500)' : (device.type as string) === 'wlc' ? 'var(--color-warning-400)' : 'var(--color-warning-500)')
-            : 'var(--color-secondary-300)' }}
+          style={{
+            stroke: isDark
+              ? ((device.type as string) === 'pc' ? 'var(--color-primary-500)' : (device.type as string) === 'iot' ? 'var(--color-secondary-500)' : (device.type as string) === 'firewall' ? 'var(--color-error-500)' : isSwitchDeviceType(device.type) ? 'var(--color-accent-500)' : (device.type as string) === 'wlc' ? 'var(--color-warning-400)' : 'var(--color-warning-500)')
+              : 'var(--color-secondary-300)'
+          }}
           strokeWidth={1.5}
           className={isDragging ? '' : 'transition-all duration-150'}
           filter="url(#deviceShadow)"
@@ -534,7 +536,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
           return (
             <g transform={`translate(${deviceWidth - 23}, 7)`}>
-              <title>{[pcWifi?.ssid ? `SSID: ${pcWifi.ssid}` : 'Wi-Fi', isConnected ? 'Bağlı' : 'Bağlı değil', strength > 0 ? `Sinyal: ${strength}/5` : 'Sinyal yok'].join(' • ')}</title>
+              <title>{[`SSID: ${pcWifi?.ssid ?? 'N/A'}`, isConnected ? 'Bağlı' : 'Bağlı değil', `Sinyal: ${strength}/5`, `Güvenlik: ${pcWifi?.security ?? 'open'}`, `Kanal: ${pcWifi?.channel ?? 'N/A'}`, `Parola: ${pcWifi?.password ? 'Evet' : 'Hayır'}`].join(' • ')}</title>
               <svg x="-2" y="1" width="22" height="14" viewBox="0 0 22 14" className="pointer-events-none">
                 {wifiBarRects.map((bar, index) => (
                   <rect
@@ -864,12 +866,12 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
           const portColor = isStartPort ? 'var(--color-success-500)' :
             isTargetPort ? 'var(--color-warning-500)' :
-            (isShutdown || isDeviceOffline) ? STATUS_COLORS.offline :
-            isConsolePort
-              ? (isConnected ? PORT_COLORS.console.connected : PORT_COLORS.console.disconnected)
-              : device.type === 'iot'
-                ? PORT_COLORS.ethernet.connected
-                : (isConnected ? PORT_COLORS.ethernet.connected : PORT_COLORS.ethernet.disconnected);
+              (isShutdown || isDeviceOffline) ? STATUS_COLORS.offline :
+                isConsolePort
+                  ? (isConnected ? PORT_COLORS.console.connected : PORT_COLORS.console.disconnected)
+                  : device.type === 'iot'
+                    ? PORT_COLORS.ethernet.connected
+                    : (isConnected ? PORT_COLORS.ethernet.connected : PORT_COLORS.ethernet.disconnected);
 
           return (
             <g
@@ -1036,8 +1038,8 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
                           stpRole === 'root'
                             ? 'var(--color-primary-500)'
                             : stpRole === 'designated'
-                            ? 'var(--color-success-500)'
-                            : 'var(--color-warning-500)'
+                              ? 'var(--color-success-500)'
+                              : 'var(--color-warning-500)'
                         }
                         stroke={isDark ? 'var(--color-secondary-950)' : 'var(--color-secondary-50)'}
                         strokeWidth="0.5"
@@ -1199,8 +1201,8 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
                         stpRole === 'root'
                           ? 'var(--color-primary-500)'
                           : stpRole === 'designated'
-                          ? 'var(--color-success-500)'
-                          : 'var(--color-warning-500)'
+                            ? 'var(--color-success-500)'
+                            : 'var(--color-warning-500)'
                       }
                       stroke={isDark ? 'var(--color-secondary-950)' : 'var(--color-secondary-50)'}
                       strokeWidth="0.5"

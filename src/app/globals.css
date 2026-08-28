@@ -19,6 +19,7 @@
     transform: scale(0.5);
     opacity: 0.6;
   }
+
   100% {
     transform: scale(1.8);
     opacity: 0;
@@ -26,10 +27,13 @@
 }
 
 @keyframes sound-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(1.05);
@@ -59,28 +63,63 @@
 }
 
 @keyframes cable-source-scale {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.333); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.333);
+  }
 }
 
 @keyframes cable-end-scale {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.25); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.25);
+  }
 }
 
 @keyframes ping-trail-opacity {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.45; }
+
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
 }
 
 @keyframes ping-glow-opacity {
-  0%, 100% { opacity: 0.15; }
-  50% { opacity: 0.35; }
+
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
 }
 
 @keyframes ping-glow-opacity-low {
-  0%, 100% { opacity: 0.08; }
-  50% { opacity: 0.2; }
+
+  0%,
+  100% {
+    opacity: 0.08;
+  }
+
+  50% {
+    opacity: 0.2;
+  }
 }
 
 .animate-cable-source {
@@ -352,18 +391,36 @@
   }
 
   input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"])::placeholder,
-textarea::placeholder {
+  textarea::placeholder {
     color: hsl(var(--muted-foreground));
     opacity: 1;
   }
 
   /* Python editor token colors (the textarea keeps the caret and selection). */
-  .py-highlight .py-keyword { color: #c084fc; }
-  .py-highlight .py-builtin { color: #67e8f9; }
-  .py-highlight .py-string { color: #86efac; }
-  .py-highlight .py-number { color: #fbbf24; }
-  .py-highlight .py-constant { color: #fb7185; }
-  .py-highlight .py-comment { color: #94a3b8; font-style: italic; }
+  .py-highlight .py-keyword {
+    color: #c084fc;
+  }
+
+  .py-highlight .py-builtin {
+    color: #67e8f9;
+  }
+
+  .py-highlight .py-string {
+    color: #86efac;
+  }
+
+  .py-highlight .py-number {
+    color: #fbbf24;
+  }
+
+  .py-highlight .py-constant {
+    color: #fb7185;
+  }
+
+  .py-highlight .py-comment {
+    color: #94a3b8;
+    font-style: italic;
+  }
 
   /* Minimum font size for accessibility - 12px */
   html {
@@ -411,6 +468,7 @@ textarea::placeholder {
   background-color: hsl(142, 76%, 36%);
   color: hsl(0, 0%, 100%);
 }
+
 ::-moz-selection {
   background-color: hsl(142, 76%, 36%);
   color: hsl(0, 0%, 100%);
@@ -450,28 +508,33 @@ textarea::placeholder {
 .guided-steps-scrollbar [data-slot="scroll-area-scrollbar"] {
   width: 5px;
 }
+
 .guided-steps-scrollbar [data-slot="scroll-area-scrollbar"]:hover {
   background: transparent;
 }
+
 .guided-steps-scrollbar [data-slot="scroll-area-thumb"] {
   background: rgb(148 163 184 / 0.5);
   border-radius: 999px;
   transition: background 0.2s;
 }
+
 .guided-steps-scrollbar [data-slot="scroll-area-thumb"]:hover {
   background: rgb(99 102 241 / 0.6);
 }
+
 .dark .guided-steps-scrollbar [data-slot="scroll-area-thumb"] {
   background: rgb(100 116 139 / 0.4);
 }
+
 .dark .guided-steps-scrollbar [data-slot="scroll-area-thumb"]:hover {
   background: rgb(99 102 241 / 0.5);
 }
 
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 10px;
+  height: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -481,7 +544,7 @@ textarea::placeholder {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(71 85 105 / 0.65);
   border-radius: 999px;
-  border: 1.5px solid transparent;
+  border: 2px solid transparent;
   background-clip: content-box;
   transition: all 0.2s;
 }
@@ -536,6 +599,7 @@ mark.search-active {
   width: 5px;
   height: 5px;
 }
+
 .help-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(71 85 105 / 0.65);
   border-radius: 999px;
@@ -543,15 +607,19 @@ mark.search-active {
   background-clip: content-box;
   transition: background 0.2s;
 }
+
 .help-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgb(71 85 105 / 0.85);
 }
+
 .dark .help-scrollbar::-webkit-scrollbar-thumb {
   background: rgb(100 116 139 / 0.7);
 }
+
 .dark .help-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgb(100 116 139 / 0.9);
 }
+
 .help-scrollbar {
   scrollbar-width: thin;
   -ms-overflow-style: auto;
@@ -999,10 +1067,21 @@ button,
 
 /* Marquee animation for long text in buttons */
 @keyframes marquee {
-  0% { transform: translateX(0); }
-  33% { transform: translateX(0); }
-  66% { transform: translateX(calc(-100% + 140px)); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+
+  33% {
+    transform: translateX(0);
+  }
+
+  66% {
+    transform: translateX(calc(-100% + 140px));
+  }
+
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .animate-marquee-hover:hover span {
@@ -1031,10 +1110,21 @@ button,
 
 /* Ambient border glow for panels in high graphics mode */
 @keyframes border-glow-rotate {
-  0% { box-shadow: 0 0 8px rgba(6, 182, 212, 0.08), 0 0 20px rgba(6, 182, 212, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
-  25% { box-shadow: 0 0 8px rgba(168, 85, 247, 0.08), 0 0 20px rgba(168, 85, 247, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
-  50% { box-shadow: 0 0 8px rgba(34, 211, 238, 0.08), 0 0 20px rgba(34, 211, 238, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
-  75% { box-shadow: 0 0 8px rgba(251, 191, 36, 0.08), 0 0 20px rgba(251, 191, 36, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+  0% {
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.08), 0 0 20px rgba(6, 182, 212, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  25% {
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.08), 0 0 20px rgba(168, 85, 247, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  50% {
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.08), 0 0 20px rgba(34, 211, 238, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
+
+  75% {
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.08), 0 0 20px rgba(251, 191, 36, 0.03), 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  }
 }
 
 .panel-ambient-glow {
@@ -1163,19 +1253,53 @@ body.graphics-low [class*="shadow-"] {
 }
 
 /* Subtle shadows across the app - reduce glow intensity on hover/active states */
-.shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03); }
-.shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04); }
-.shadow-md { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.04); }
-.shadow-lg { box-shadow: 0 6px 12px -3px rgb(0 0 0 / 0.06), 0 3px 5px -4px rgb(0 0 0 / 0.04); }
-.shadow-xl { box-shadow: 0 12px 20px -5px rgb(0 0 0 / 0.06), 0 5px 8px -6px rgb(0 0 0 / 0.04); }
-.shadow-2xl { box-shadow: 0 15px 35px -12px rgb(0 0 0 / 0.08); }
+.shadow-sm {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+}
 
-.dark .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.15); }
-.dark .shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.15); }
-.dark .shadow-md { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15); }
-.dark .shadow-lg { box-shadow: 0 6px 12px -3px rgb(0 0 0 / 0.2), 0 3px 5px -4px rgb(0 0 0 / 0.15); }
-.dark .shadow-xl { box-shadow: 0 12px 20px -5px rgb(0 0 0 / 0.2), 0 5px 8px -6px rgb(0 0 0 / 0.15); }
-.dark .shadow-2xl { box-shadow: 0 15px 35px -12px rgb(0 0 0 / 0.25); }
+.shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+}
+
+.shadow-md {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+}
+
+.shadow-lg {
+  box-shadow: 0 6px 12px -3px rgb(0 0 0 / 0.06), 0 3px 5px -4px rgb(0 0 0 / 0.04);
+}
+
+.shadow-xl {
+  box-shadow: 0 12px 20px -5px rgb(0 0 0 / 0.06), 0 5px 8px -6px rgb(0 0 0 / 0.04);
+}
+
+.shadow-2xl {
+  box-shadow: 0 15px 35px -12px rgb(0 0 0 / 0.08);
+}
+
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.15);
+}
+
+.dark .shadow {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px rgb(0 0 0 / 0.15);
+}
+
+.dark .shadow-md {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.2), 0 2px 4px -2px rgb(0 0 0 / 0.15);
+}
+
+.dark .shadow-lg {
+  box-shadow: 0 6px 12px -3px rgb(0 0 0 / 0.2), 0 3px 5px -4px rgb(0 0 0 / 0.15);
+}
+
+.dark .shadow-xl {
+  box-shadow: 0 12px 20px -5px rgb(0 0 0 / 0.2), 0 5px 8px -6px rgb(0 0 0 / 0.15);
+}
+
+.dark .shadow-2xl {
+  box-shadow: 0 15px 35px -12px rgb(0 0 0 / 0.25);
+}
 
 @media print {
   @page {
@@ -1243,4 +1367,3 @@ body.graphics-low [class*="shadow-"] {
 .dark * {
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
-
