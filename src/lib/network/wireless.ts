@@ -562,26 +562,36 @@ export function buildImplicitWirelessConnections(
 
   const wirelessConnections: CanvasConnection[] = [];
 
-  for (const ap of apDevices) {
-    const apWifi = getDeviceWifiConfig(ap, safeDeviceStates);
-    const candidates = candidatesByAp.get(ap.id) || [];
-    const limit = getApMaxClients(apWifi);
-    candidates
-      .sort((a, b) => a.dist - b.dist || a.client.id.localeCompare(b.client.id))
-      .slice(0, limit)
-      .forEach(({ client, ssidIndex, ssid }) => {
-        wirelessConnections.push({
-          id: `${idPrefix}-${client.id}-${ap.id}`,
-          sourceDeviceId: client.id,
-          sourcePort: 'wlan0',
-          targetDeviceId: ap.id,
-          targetPort: 'wlan0',
-          cableType: 'wireless',
-          active: true,
-          ssidIndex: ssidIndex,
-          ssid: ssid,
-        } as CanvasConnection);
-      });
+  // A client associates with one AP only. When multiple APs advertise the
+  // same SSID, prefer the closest eligible AP (unless BSSID is pinned above).
+  const allCandidates = Array.from(candidatesByAp.entries()).flatMap(([apId, candidates]) =>
+    candidates.map(candidate => ({ apId, ...candidate }))
+  );
+  allCandidates.sort((a, b) => a.dist - b.dist || a.client.id.localeCompare(b.client.id) || a.apId.localeCompare(b.apId));
+
+  const connectedClients = new Set<string>();
+  const apClientCounts = new Map<string, number>();
+  for (const { apId, client, ssidIndex, ssid } of allCandidates) {
+    if (connectedClients.has(client.id)) continue;
+    const ap = apDevices.find(device => device.id === apId);
+    if (!ap) continue;
+    const limit = getApMaxClients(getDeviceWifiConfig(ap, safeDeviceStates));
+    const currentCount = apClientCounts.get(apId) || 0;
+    if (currentCount >= limit) continue;
+
+    wirelessConnections.push({
+      id: `${idPrefix}-${client.id}-${apId}`,
+      sourceDeviceId: client.id,
+      sourcePort: 'wlan0',
+      targetDeviceId: apId,
+      targetPort: 'wlan0',
+      cableType: 'wireless',
+      active: true,
+      ssidIndex,
+      ssid,
+    } as CanvasConnection);
+    connectedClients.add(client.id);
+    apClientCounts.set(apId, currentCount + 1);
   }
 
   return wirelessConnections;

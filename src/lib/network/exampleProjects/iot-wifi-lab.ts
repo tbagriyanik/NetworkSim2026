@@ -47,8 +47,11 @@ const example = (isTr: boolean): ExampleProject => {
     channel: '2.4GHz',
     mode: 'client'
   };
-  iotWifiDevices[0].ipConfigMode = 'dhcp';
-  iotWifiDevices[0].ip = '0.0.0.0';
+  // PC-1 is the management client for the router web panel. Keep its
+  // documented address static so DHCP renewals cannot temporarily replace it
+  // with 0.0.0.0 and make access to 192.168.1.1 intermittent.
+  iotWifiDevices[0].ipConfigMode = 'static';
+  iotWifiDevices[0].ip = '192.168.1.10';
   iotWifiDevices[0].subnet = '255.255.255.0';
   iotWifiDevices[0].gateway = '192.168.1.1';
 

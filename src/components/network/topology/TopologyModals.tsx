@@ -406,6 +406,7 @@ export function TopologyModals({
           capturedPacketsMap={capturedPacketsMap}
           t={t}
           isDark={isDark}
+          connections={connections}
         />
       )}
 

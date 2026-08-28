@@ -2,7 +2,7 @@
 
 import { useCallback, Dispatch, SetStateAction } from 'react';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
-import type { SwitchState, Port } from '@/lib/network/types';
+import type { SwitchState } from '@/lib/network/types';
 import type { PCOutputLine } from '@/app/page.types';
 
 import type { RefreshNetworkReport } from '@/hooks/useRefreshReport';
@@ -404,12 +404,13 @@ export function useRefreshNetwork({
       };
 
       iotProcessedDevices.forEach((device) => {
-        const state = portSecurityUpdatedStates.get(device.id);
         const deviceName = device.name || device.id;
         rememberIdentity(deviceName, device.ip, device.macAddress, device.ipv6);
-        Object.values(state?.ports || {}).forEach((port: Port) => {
-          rememberIdentity(`${deviceName}:${String(port?.id || '')}`, port?.ipAddress, port?.macAddress, port?.ipv6Address);
-        });
+        // Port MAC addresses in the generated device templates are interface
+        // defaults shared by multiple models. Treating them as device
+        // identities creates false collision reports (especially in WLC/AP
+        // examples). Device-level MAC addresses are the authoritative values
+        // for this topology-wide diagnostic.
       });
       // A device-level address and that same device's interface address are
       // one identity, not a conflict. Only report duplicates across devices.

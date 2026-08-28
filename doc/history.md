@@ -2,6 +2,12 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v3.4.0 — 2026-08-28
+
+| Tarih | Değişiklik |
+|---|---|
+| 2026-08-28 | **Sürüm 3.4.0 Yayınlandı: SSH Tam Akışı, Subnetting Yardımcısı & Cihaz Penceresi UI Düzeltmeleri** — SSH uçtan uca yapılandırma zinciri (`crypto key generate rsa modulus 2048` → `ip ssh version 2` → `username ... privilege 15 secret ...` → `line vty 0 4` → `login local` → `transport input ssh`) doğrulandı ve `username` komutundaki parola ayrıştırma hatası giderildi; PC terminalinden `ssh <kullanıcı>@<ip>` ile başarılı oturum simülasyonu sağlandı. IP adresi girişinde network/broadcast/kullanılabilir host aralığını gösteren etkileşimli **Subnetting Yardımcısı** paneli eklendi ve `show ip interface brief` çıktısı subnet bilgisiyle zenginleştirildi. Switch/Router/WLC cihaz pencerelerinde CLI geçmiş kaydırma çubuğunun yeniden boyutlandırma tutamaçlarının altında kalması sorunu giderildi (içerik alanına alt/sağ iç boşluk eklendi). |
+
 ## v3.3.0 — 2026-08-27
 
 | Tarih | Değişiklik |

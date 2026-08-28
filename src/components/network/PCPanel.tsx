@@ -1151,7 +1151,10 @@ export function PCPanel({
 
         let isWifiConnected = false;
         const clientWifi = getDeviceWifiConfig(d, deviceStates);
-        if (clientWifi && clientWifi.enabled && clientWifi.ssid) {
+        // Only client/STA radios are wireless clients. APs and WLCs can
+        // advertise the same SSID but must never appear in this list.
+        const isWirelessClient = clientWifi?.mode === 'client' || clientWifi?.mode === 'sta';
+        if (isWirelessClient && clientWifi.enabled && clientWifi.ssid) {
           const clientSsidLower = clientWifi.ssid.toLowerCase();
           const matchedSsid = routerSsids.get(clientSsidLower);
           if (matchedSsid) {
@@ -1162,7 +1165,7 @@ export function PCPanel({
             }
           }
         }
-        if (clientWifi?.bssid === routerId || d.wifi?.bssid === routerId) {
+        if (isWirelessClient && (clientWifi?.bssid === routerId || d.wifi?.bssid === routerId)) {
           isWifiConnected = true;
         }
 

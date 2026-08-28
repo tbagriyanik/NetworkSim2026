@@ -7,6 +7,7 @@ import { getConnectionStatusMessage } from './networkTopology.helpers';
 import { DraggableWindowWrapper } from './DraggableWindowWrapper';
 import { useDrag } from '@/hooks/useDrag';
 import { PacketLayerDetails } from './PacketLayerDetails';
+import type { CanvasConnection } from './networkTopology.types';
 
 interface PacketCapturePanelProps {
   activeCaptureConnectionId: string;
@@ -16,6 +17,7 @@ interface PacketCapturePanelProps {
   capturedPacketsMap: Record<string, { id: string; timestamp: number; sourceIp: string; targetIp: string; protocol: string; info: string; }[]>;
   t: Record<string, string>;
   isDark: boolean;
+  connections?: CanvasConnection[];
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -27,10 +29,12 @@ export const PacketCapturePanel = ({
   setActiveCaptureConnection,
   capturedPacketsMap,
   t,
-  isDark
+  isDark,
+  connections: connectionList
 }: PacketCapturePanelProps) => {
   const devices = useAppStore(state => state.topology.devices);
-  const connections = useAppStore(state => state.topology.connections);
+  const storedConnections = useAppStore(state => state.topology.connections);
+  const connections = connectionList || storedConnections;
   const { language } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState('');

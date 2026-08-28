@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import { SwitchState, Port } from '@/lib/network/types';
 import { getWirelessSignalStrength } from '@/lib/network/connectivity';
-import { getChannelBand } from '@/lib/network/wireless';
+import { getChannelBand, getDeviceWifiConfig, getApActiveSsids, wifiChannelMatches, wifiMacFilterMatches } from '@/lib/network/wireless';
 import { getDeviceWidth } from '../networkTopology.helpers';
 import {
   STATUS_COLORS,
@@ -492,6 +492,20 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           (isEnabled && deviceConnections.some(c => c.cableType === 'wireless' && c.active !== false));
 
         const activeWifiConfig = wlanState?.wifi || pcWifi;
+        const isMacBlocked = usesWifiBars && !isConnected && !!pcWifi?.ssid && topologyDevices.some(ap => {
+          if (ap.id === device.id || ap.status === 'offline') return false;
+          const apState = deviceStates?.get(ap.id);
+          const apWifi = getDeviceWifiConfig(ap, deviceStates);
+          if (!apWifi) return false;
+          const matchingSsid = getApActiveSsids(apWifi, apState, deviceStates)
+            .find(item => item.ssid.toLowerCase() === pcWifi.ssid.toLowerCase());
+          if (!matchingSsid || !wifiChannelMatches(apWifi, pcWifi)) return false;
+          const clientSecurity = (pcWifi.security || 'open').toLowerCase();
+          const apSecurity = (matchingSsid.security || 'open').toLowerCase();
+          if (clientSecurity !== apSecurity) return false;
+          if (apSecurity !== 'open' && matchingSsid.password !== pcWifi.password) return false;
+          return !wifiMacFilterMatches(apWifi, device, deviceStates);
+        });
 
         if (showWifi && isEnabled && !isPoweredOff) {
           const isNetworkHost = isRouter || isWlc || isSwitchL3;
@@ -520,6 +534,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
           return (
             <g transform={`translate(${deviceWidth - 23}, 7)`}>
+              <title>{[pcWifi?.ssid ? `SSID: ${pcWifi.ssid}` : 'Wi-Fi', isConnected ? 'Bağlı' : 'Bağlı değil', strength > 0 ? `Sinyal: ${strength}/5` : 'Sinyal yok'].join(' • ')}</title>
               <svg x="-2" y="1" width="22" height="14" viewBox="0 0 22 14" className="pointer-events-none">
                 {wifiBarRects.map((bar, index) => (
                   <rect
@@ -542,6 +557,12 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
                 <g transform="translate(14, 10)">
                   <rect x="0" y="2" width="3.5" height="2.5" rx="0.5" fill={isDark ? 'var(--color-warning-400)' : 'var(--color-warning-500)'} />
                   <path d="M0.5 2V1.2C0.5 0.5 1 0 1.75 0C2.5 0 3 0.5 3 1.2V2" fill="none" stroke={isDark ? 'var(--color-warning-400)' : 'var(--color-warning-500)'} strokeWidth="0.8" />
+                </g>
+              )}
+              {isMacBlocked && (
+                <g transform="translate(13, 0)" aria-label="MAC blocked">
+                  <circle cx="2.5" cy="2.5" r="2.5" fill="var(--color-error-500)" />
+                  <path d="M1.2 1.2l2.6 2.6M3.8 1.2L1.2 3.8" stroke="white" strokeWidth="0.8" strokeLinecap="round" />
                 </g>
               )}
             </g>
@@ -581,6 +602,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           </svg>
         ) : device.type === 'iot' ? (
           <svg width="32" height="32" viewBox="0 -2 27 27" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-warning-100)' : 'var(--color-warning-800)' }} strokeWidth="1.5">
+            <title>{`${device.name || 'IoT'} • ${device.iot?.sensorType || 'sensor'} • ${getIotMeasuredValue(device)}`}</title>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.247 7.761a6 6 0 0 1 0 8.478" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M19.075 4.933a10 10 0 0 1 0 14.134" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.925 19.067a10 10 0 0 1 0-14.134" />

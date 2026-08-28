@@ -113,7 +113,9 @@ export function NetworkTopology({
     const existing = new Set(topologyConnections.map((connection) =>
       `${connection.sourceDeviceId}:${connection.sourcePort}-${connection.targetDeviceId}:${connection.targetPort}`
     ));
-    const implicitWireless = buildImplicitWirelessConnections(topologyDevices, deviceStates, 'visual-wireless')
+    // Keep the derived link ids aligned with connectivity packet captures so
+    // clicking a wireless link opens the same per-link packet list as wired links.
+    const implicitWireless = buildImplicitWirelessConnections(topologyDevices, deviceStates, 'wireless')
       .filter((connection) => !existing.has(`${connection.sourceDeviceId}:${connection.sourcePort}-${connection.targetDeviceId}:${connection.targetPort}`));
     return [...topologyConnections, ...implicitWireless];
   }, [topologyConnections, topologyDevices, deviceStates]);

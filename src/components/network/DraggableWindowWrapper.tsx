@@ -29,6 +29,7 @@ interface DraggableWindowWrapperProps {
   disableResize?: boolean;
   onHeaderDoubleClick?: () => void;
   restoreRequest?: number;
+  contentInset?: boolean;
 }
 
 export function DraggableWindowWrapper({
@@ -53,6 +54,7 @@ export function DraggableWindowWrapper({
   disableResize = false,
   onHeaderDoubleClick,
   restoreRequest,
+  contentInset = false,
 }: DraggableWindowWrapperProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -274,7 +276,7 @@ export function DraggableWindowWrapper({
 
       {/* Content */}
       {!isCollapsed && (
-        <div className={cn("flex-1 min-h-0 flex flex-col relative", contentClassName)}>
+        <div className={cn("flex-1 min-h-0 flex flex-col relative", contentInset && "pb-3 pr-3", contentClassName)}>
           {children}
         </div>
       )}
@@ -283,8 +285,8 @@ export function DraggableWindowWrapper({
       {(!isMobile || !isMobileFullScreen) && !isCollapsed && !disableResize && (
         <>
           {/* Corners */}
-          <div className="absolute right-1 bottom-1 w-4 h-4 cursor-se-resize z-50 flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity select-none" onPointerDown={(e) => handleResizePointerDown(e, 'se')}>
-            <div className={cn("w-2.5 h-2.5 rounded-br-lg border-b-2 border-r-2 bg-transparent", isDark ? "border-secondary-400" : "border-secondary-600", isActive && "border-success-500")} />
+          <div className={cn("absolute bottom-1 right-1 w-4 h-4 cursor-se-resize z-50 flex items-end justify-end opacity-60 hover:opacity-100 transition-opacity select-none", contentInset && "bottom-0 right-0 w-3 h-3")} onPointerDown={(e) => handleResizePointerDown(e, 'se')}>
+            <div className={cn("w-2.5 h-2.5 rounded-br-lg border-b-2 border-r-2 bg-transparent", isDark ? "border-secondary-400" : "border-secondary-600", isActive && "border-success-500", contentInset && "w-2 h-2")} />
           </div>
           <div className="absolute left-0 bottom-0 w-3 h-3 cursor-sw-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'sw')} />
           <div className="absolute right-0 top-0 w-3 h-3 cursor-ne-resize z-50 hover:bg-success-500/20" onPointerDown={(e) => handleResizePointerDown(e, 'ne')} />

@@ -88,7 +88,12 @@ export const ConnectionLine = memo(function ConnectionLine({
   // Check if either port is shutdown
   const sourcePort = sourceDevice.ports.find(p => p.id === connection.sourcePort);
   const targetPort = targetDevice.ports.find(p => p.id === connection.targetPort);
-  const isShutdown = sourcePort?.shutdown || targetPort?.shutdown;
+  // Wireless links represent an association, not a physical cable port.
+  // The wlan0 placeholder may remain shutdown on clients, and WLCs may not
+  // expose a wlan0 port at all; neither should make an active link gray.
+  const isShutdown = connection.cableType === 'wireless'
+    ? false
+    : sourcePort?.shutdown || targetPort?.shutdown;
 
   // BOLT: Use helper function to resolve actual STP blocking state
   const sourceSTPBlocking = getPortSTPBlocking(deviceStates, sourceDevice, connection.sourcePort);
@@ -174,15 +179,26 @@ export const ConnectionLine = memo(function ConnectionLine({
     ? buildWavePath(source.x, source.y, target.x, target.y)
     : `M ${source.x} ${source.y} C ${controlPoint1.x} ${controlPoint1.y}, ${controlPoint2.x} ${controlPoint2.y}, ${target.x} ${target.y}`;
 
+  // Use the actual rendered SVG paths as the motion path. This keeps the
+  // animated dots on every crest and trough of the wireless wave instead of
+  // letting the browser approximate a separate straight route.
+  const motionPathId = `connection-motion-${connection.id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+  const reverseMotionPathId = `${motionPathId}-reverse`;
+
   const reversePathD = isWireless
     ? buildWavePath(target.x, target.y, source.x, source.y)
     : `M ${target.x} ${target.y} C ${controlPoint2.x} ${controlPoint2.y}, ${controlPoint1.x} ${controlPoint1.y}, ${source.x} ${source.y}`;
+
+  // Keep the apparent travel speed consistent with the physical distance:
+  // nearby devices animate quickly, while distant devices animate slowly.
+  const animationDuration = `${Math.min(5, Math.max(0.7, len / 160))}s`;
 
   return (
     <g data-connection-id={connection.id}>
       {/* Invisible wider path for hover detection */}
       <path
         d={pathD}
+        id={motionPathId}
         stroke="transparent"
         strokeWidth={12}
         fill="none"
@@ -210,6 +226,9 @@ export const ConnectionLine = memo(function ConnectionLine({
           transition: isDragging ? 'none' : 'stroke 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease, filter 0.2s ease'
         }}
       />
+      {isWireless && (
+        <path id={reverseMotionPathId} d={reversePathD} fill="none" stroke="none" pointerEvents="none" />
+      )}
 
       {/* Ambient glow for active connections in high graphics mode */}
       {graphicsQuality === 'high' && isEffectivelyActive && !isHovered && !isWireless && (
@@ -232,18 +251,20 @@ export const ConnectionLine = memo(function ConnectionLine({
         <>
           <circle r={Math.max(2, 4 / zoom)} fill={color} opacity={0.25}>
             <animateMotion
-              dur="2s"
+              dur={animationDuration}
               repeatCount="indefinite"
-              path={pathD}
-            />
+            >
+              <mpath href={`#${motionPathId}`} />
+            </animateMotion>
           </circle>
           <circle r={Math.max(2, 4 / zoom)} fill={color} opacity={0.25}>
             <animateMotion
-              dur="2s"
+              dur={animationDuration}
               repeatCount="indefinite"
               begin="1s"
-              path={reversePathD}
-            />
+            >
+              <mpath href={`#${reverseMotionPathId}`} />
+            </animateMotion>
           </circle>
         </>
       )}

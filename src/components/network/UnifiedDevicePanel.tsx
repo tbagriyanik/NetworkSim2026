@@ -181,6 +181,7 @@ export function UnifiedDevicePanel({
             isDark={isDark}
             modalPosition={modalPosition}
             modalSize={modalSize}
+            contentInset
             handlePointerDown={handlePointerDown}
             handleResizeStart={handleResizeStart}
             collapsible
@@ -277,6 +278,17 @@ export function UnifiedDevicePanel({
                                         />
                                     </div>
 
+                                    {hasTaskSystem && deviceType !== 'router' && (
+                                        <div className="space-y-4 pt-2">
+                                            <MacTablePanel
+                                                macTable={state?.macAddressTable || []}
+                                                isDark={isDark}
+                                                language={language}
+                                                deviceName={deviceName}
+                                            />
+                                        </div>
+                                    )}
+
                                     <div className="space-y-4 pt-2">
                                         <div className="flex items-center gap-2 text-sm font-semibold text-primary">
                                             <ShieldCheck className="w-4 h-4" />
@@ -290,16 +302,6 @@ export function UnifiedDevicePanel({
                                         />
                                     </div>
 
-                                    {hasTaskSystem && (
-                                        <div className="space-y-4 pt-2">
-                                            <MacTablePanel
-                                                macTable={state?.macAddressTable || []}
-                                                isDark={isDark}
-                                                language={language}
-                                                deviceName={deviceName}
-                                            />
-                                        </div>
-                                    )}
                                 </div>
 
                                 {hasTaskSystem && (

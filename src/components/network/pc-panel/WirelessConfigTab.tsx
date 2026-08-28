@@ -516,6 +516,12 @@ export function WirelessConfigTab({
                         const apSecurity = wlan.security || 'open';
                         if (apSecurity !== wifiSecurity) return false;
                         if (apSecurity !== 'open' && wlan.password !== wifiPassword) return false;
+                        const apDevice = topologyDevices.find(d => d.id === id);
+                        const apWifi = getDeviceWifiConfig(apDevice, safeStates);
+                        if (apWifi && !wifiMacFilterMatches(apWifi, currentDevice, safeStates)) {
+                          isBlockedByMac = true;
+                          return false;
+                        }
                         return true;
                       }
                     }

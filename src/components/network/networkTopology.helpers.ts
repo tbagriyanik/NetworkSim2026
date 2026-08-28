@@ -52,6 +52,11 @@ export function getConnectionStatusMessage(conn: CanvasConnection, devices: Canv
   }
 
   if (sourceDevice.status === 'offline' || targetDevice.status === 'offline') return language === 'tr' ? 'Cihaz kapalı' : 'Device is offline';
+  // Wireless links use the Wi-Fi association state, not the physical
+  // wlan0 placeholder port. PCs/IoT devices keep that placeholder shutdown
+  // until an association is established, and WLCs do not expose a physical
+  // wlan0 port at all.
+  if (conn.cableType === 'wireless') return language === 'tr' ? 'Bağlantı sorunsuz' : 'Connection OK';
   if (sourcePort?.shutdown || targetPort?.shutdown) return language === 'tr' ? 'Port kapalı (shutdown)' : 'Port is shutdown';
   if (sourcePort?.spanningTree?.state === 'blocking' || targetPort?.spanningTree?.state === 'blocking') return language === 'tr' ? 'STP engelliyor (blocking)' : 'STP blocking';
 
@@ -141,4 +146,3 @@ export const getPortPosition = (device: CanvasDevice, portId: string) => {
 export const getDevicePairKey = (id1: string, id2: string, separator: string = ':'): string => {
   return id1 < id2 ? `${id1}${separator}${id2}` : `${id2}${separator}${id1}`;
 };
-
