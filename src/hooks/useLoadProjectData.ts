@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { logger } from '@/lib/logger';
 import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
+import { clearPcLinuxSessions } from '@/components/network/pc-panel/pcLinuxSessionStorage';
 
 export interface UseLoadProjectDataProps {
   setDeviceStates: (states: Map<string, SwitchState>) => void;
@@ -65,6 +66,7 @@ export function useLoadProjectData({
       // Project windows belong to the previous workspace and must never leak
       // into a newly loaded project.
       useMultiWindowStore.getState().closeAllDeviceWindows();
+      clearPcLinuxSessions();
 
       // Clear packet capture, simulation states, and device state caches
       // Preserve isSimulationMode if it's defined in the loaded data; otherwise default to true for new projects.

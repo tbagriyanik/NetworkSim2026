@@ -2123,6 +2123,7 @@ export function PCPanel({
                           openWebPage={openWebPage}
                           setPcHostname={setPcHostname}
                           setEditingFile={setEditingFile}
+                          buildArpTableOutput={buildArpTableOutput}
                         />
                       )}
 

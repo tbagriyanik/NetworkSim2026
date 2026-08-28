@@ -56,6 +56,7 @@ interface CommandLineTabProps {
   canReachTargetIp?: (targetIp: string) => boolean;
   resolveDeviceNameTargetCallback?: (raw: string) => { ip: string; label?: string } | null;
   openWebPage?: (url: string, target?: string) => void;
+  buildArpTableOutput?: () => string;
 }
 
 export function CommandLineTab({
@@ -103,6 +104,7 @@ export function CommandLineTab({
   canReachTargetIp = () => true,
   resolveDeviceNameTargetCallback = () => null,
   openWebPage,
+  buildArpTableOutput,
 }: CommandLineTabProps) {
   const inputRef = externalInputRef;
   const autocompleteRef = useRef<HTMLDivElement>(null);
@@ -203,6 +205,30 @@ export function CommandLineTab({
       } catch { }
     }
   }, [linuxHistory, deviceId]);
+
+  // A project reset can happen while the PC panel is still mounted. Reset
+  // the in-memory Linux session too, otherwise its persistence effects can
+  // immediately write the old output/history back to localStorage.
+  useEffect(() => {
+    const handleNewProjectReset = () => {
+      const defaultOutput: OutputLine[] = [{
+        id: 'linux-welcome',
+        type: 'output',
+        content: `Linux ${internalPcHostname.toLowerCase()}\nType 'help' for available commands.\n`,
+      }];
+      setLinuxOutput(defaultOutput);
+      setLinuxHistory([]);
+      setLinuxHistoryIndex(-1);
+      setInput('');
+      try {
+        localStorage.removeItem(`pc_linux_output_${deviceId}`);
+        localStorage.removeItem(`pc_linux_history_${deviceId}`);
+      } catch { }
+    };
+
+    window.addEventListener('new-project-reset', handleNewProjectReset);
+    return () => window.removeEventListener('new-project-reset', handleNewProjectReset);
+  }, [deviceId, internalPcHostname, setInput]);
 
   // Switch tab and persist choice
   const handleTabSwitch = useCallback((tab: 'cmd' | 'linux') => {
@@ -352,6 +378,7 @@ export function CommandLineTab({
         setLinuxOutput,
         executeCommand,
         linuxHistory: [cmdToRun, ...linuxHistory.filter(c => c !== cmdToRun)].slice(0, 50),
+        buildArpTableOutput,
       });
     }
   };
@@ -680,6 +707,7 @@ export function CommandLineTab({
                             openWebPage,
                             addLocalOutput: addLinuxOutput,
                             setLinuxOutput,
+                            buildArpTableOutput,
                           });
                         }
                       }

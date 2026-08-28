@@ -6,8 +6,8 @@ import { createInitialState, createInitialRouterState } from '../initialState';
 
 const example = (isTr: boolean): ExampleProject => {
   const roasDevices = [
-    createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 10),
-    createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 20),
+    createPcDevice('pc-1', 'PC-1', 40, 120, '192.168.10.10', 10, '192.168.10.1'),
+    createPcDevice('pc-2', 'PC-2', 40, 260, '192.168.20.10', 20, '192.168.20.1'),
     createSwitchDevice('switch-1', 'SW1', 260, 190),
     createRouterDevice('router-1', 'R1', 520, 190)
   ];

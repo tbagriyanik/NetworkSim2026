@@ -5,6 +5,7 @@ import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
 import { TerminalOutput } from '@/components/network/Terminal';
+import { clearPcLinuxSessions } from '@/components/network/pc-panel/pcLinuxSessionStorage';
 import { PCOutputLine, TabType } from '@/types/pageTypes';
 import type { ProjectState } from '@/hooks/useHistory';
 import type { RefreshNetworkReport } from '@/hooks/useRefreshReport';
@@ -59,6 +60,8 @@ export function useProjectReset({
   resetHistory
 }: UseProjectResetProps) {
   const resetToEmptyProject = useCallback(() => {
+    clearPcLinuxSessions();
+
     // A new/empty project must not inherit floating windows from the previous project.
     useMultiWindowStore.getState().closeAllDeviceWindows();
     // Clear packet capture and simulation states (trigger recompile)

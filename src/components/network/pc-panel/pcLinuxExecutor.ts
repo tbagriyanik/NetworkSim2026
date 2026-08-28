@@ -28,6 +28,7 @@ export interface LinuxExecutorParams {
   addLocalOutput: (type: OutputLine['type'], content: string, prompt?: string) => void;
   setLinuxOutput: React.Dispatch<React.SetStateAction<OutputLine[]>>;
   executeCommand?: (cmdToExecute?: string) => Promise<void>;
+  buildArpTableOutput?: () => string;
   linuxHistory?: string[];
   silent?: boolean;
 }
@@ -760,7 +761,11 @@ Address: 142.250.180.206`;
   }
 
   if (command === 'netstat' || command === 'arp') {
-    addLocalOutput('output', `Address                  HWtype  HWaddress           Flags Mask            Iface\n${pcGateway || '192.168.1.1'}          ether   00:11:22:33:44:55   C                     eth0`);
+    if (command === 'arp' && params.buildArpTableOutput) {
+      addLocalOutput('output', params.buildArpTableOutput());
+    } else {
+      addLocalOutput('output', `Address                  HWtype  HWaddress           Flags Mask            Iface\n${pcGateway || '192.168.1.1'}          ether   00:11:22:33:44:55   C                     eth0`);
+    }
     return;
   }
 
