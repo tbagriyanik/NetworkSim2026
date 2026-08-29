@@ -2,13 +2,13 @@ import { useEffect, useCallback } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import type { CanvasDevice, CanvasConnection, ContextMenuState, ContextMenuMode, DeviceType } from '../networkTopology.types';
 import { areArraysEqual } from '@/lib/network/equality';
-import { 
-  VIRTUAL_CANVAS_WIDTH_DESKTOP, 
-  VIRTUAL_CANVAS_HEIGHT_DESKTOP, 
-  DRAG_THRESHOLD, 
-  MOMENTUM_THRESHOLD, 
-  MOMENTUM_DECAY, 
-  MOMENTUM_MIN_SPEED 
+import {
+  VIRTUAL_CANVAS_WIDTH_DESKTOP,
+  VIRTUAL_CANVAS_HEIGHT_DESKTOP,
+  DRAG_THRESHOLD,
+  MOMENTUM_THRESHOLD,
+  MOMENTUM_DECAY,
+  MOMENTUM_MIN_SPEED
 } from '../networkTopology.constants';
 import { isSwitchDeviceType } from '../networkTopology.helpers';
 
@@ -48,11 +48,11 @@ export interface UseTopologyMouseProps {
   getPortPositionRef: React.MutableRefObject<(device: CanvasDevice, portId: string) => { x: number; y: number }>;
   connectionMetaRef: React.MutableRefObject<Map<string, { index: number; total: number }>>;
   lastDragPositionRef: React.MutableRefObject<{ x: number, y: number } | null>;
-  
+
   dragAnimationFrameRef: React.MutableRefObject<number | null>;
   mousePosAnimationFrameRef: React.MutableRefObject<number | null>;
   momentumAnimationFrameRef: React.MutableRefObject<number | null>;
-  
+
   setMousePos: (pos: { x: number; y: number }) => void;
   setDevices: React.Dispatch<React.SetStateAction<CanvasDevice[]>>;
   setIsPanning: (panning: boolean) => void;
@@ -79,7 +79,7 @@ export interface UseTopologyMouseProps {
   openContextMenu: (x: number, y: number, id: string | null, mode?: ContextMenuMode) => void;
   cancelConnectionDrawing: () => void;
   onDeviceSelect: (type: DeviceType, id: string, model?: string, name?: string) => void;
-  
+
   pingMode: boolean;
   pingSource: CanvasDevice | null;
   language?: string;
@@ -165,9 +165,9 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
     const isOnNoteHeader = !!targetEl.closest('[data-note-header]');
     const isOnEditable = targetEl.tagName === 'TEXTAREA' || targetEl.tagName === 'INPUT' || targetEl.isContentEditable;
 
-    if (isOnNoteHeader) return;
+    if (isOnNoteHeader || isOnNote) return;
 
-    if (e.button === 0 && !isOnDevice && !isOnNote && !isOnEditable) {
+    if (e.button === 0 && !isOnDevice && !isOnEditable) {
       e.preventDefault();
 
       setSelectedDeviceIds([]);
@@ -214,7 +214,7 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
         selectionBoxRef.current = box;
         setIsSelecting(true);
         isSelectingRef.current = true;
-        
+
         document.body.style.cursor = 'crosshair';
         canvasRef.current?.focus();
       }
@@ -223,11 +223,11 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
       setSelectAllMode(false);
     }
   }, [
-    openContextMenu, pingMode, cancelConnectionDrawing, pingSource, 
-    panRef, zoomRef, setPanStart, panStartRef, setIsPanning, isPanningRef, 
-    svgContentGroupRef, setContextMenu, setSelectedDeviceIds, setSelectedNoteIds, 
-    setSelectAllMode, setPingMode, setPingSource, setPingResult, selectionAdditiveRef, 
-    selectionBaseIdsRef, selectedDeviceIdsRef, setSelectionBox, selectionBoxRef, 
+    openContextMenu, pingMode, cancelConnectionDrawing, pingSource,
+    panRef, zoomRef, setPanStart, panStartRef, setIsPanning, isPanningRef,
+    svgContentGroupRef, setContextMenu, setSelectedDeviceIds, setSelectedNoteIds,
+    setSelectAllMode, setPingMode, setPingSource, setPingResult, selectionAdditiveRef,
+    selectionBaseIdsRef, selectedDeviceIdsRef, setSelectionBox, selectionBoxRef,
     setIsSelecting, isSelectingRef, canvasRef
   ]);
 
@@ -303,7 +303,7 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
             rectEl.setAttribute('width', rw.toString());
             rectEl.setAttribute('height', rh.toString());
           }
-          
+
           const counterEl = document.getElementById('selection-counter');
           if (counterEl) {
             if (selectedIds.length > 0) {
@@ -685,14 +685,14 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
         selectionBoxRef.current = null;
         selectionAdditiveRef.current = false;
         selectionBaseIdsRef.current = [];
-        
+
         document.body.style.cursor = '';
       }
-      
+
       if (document.body.style.cursor === 'copy') {
         document.body.style.cursor = '';
       }
-      
+
       if (!isPanningRef.current && !isActuallyDraggingRef.current && !wasDraggingRef.current) {
         const targetEl = e.target as HTMLElement;
         const isOnDevice = !!targetEl.closest?.('[data-device-id]');

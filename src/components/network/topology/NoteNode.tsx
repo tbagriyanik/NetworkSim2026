@@ -85,7 +85,7 @@ export const NoteNode = memo(function NoteNode({
 
     const textNormalized = turkishLowerCase(textarea.value);
     const queryNormalized = turkishLowerCase(searchQuery);
-    
+
     // Find all start indices of matches
     const indices: number[] = [];
     let pos = textNormalized.indexOf(queryNormalized);
@@ -104,7 +104,7 @@ export const NoteNode = memo(function NoteNode({
     if (searchQuery === lastQuery) {
       nextIdx = (matchIndex + 1) % indices.length;
     }
-    
+
     setMatchIndex(nextIdx);
     setLastQuery(searchQuery);
 
@@ -139,16 +139,43 @@ export const NoteNode = memo(function NoteNode({
           } ${selectedNoteIds.includes(note.id) ? 'ring-2 ring-pink-400/70' : ''}`}
         data-note-id={note.id}
         style={{ backgroundColor: note.color, fontFamily: note.font, opacity: note.opacity }}
-        onPointerDown={() => bringNoteToFront(note.id)}
-        onClick={(e) => {
+        onPointerDown={(e) => {
+          const target = e.target as HTMLElement;
+          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-export-hide]');
+          if (interactiveTarget) return;
+
+          e.preventDefault();
           e.stopPropagation();
           setContextMenu(null);
+          bringNoteToFront(note.id);
           if (e.shiftKey) {
             setSelectedNoteIds((prev) => prev.includes(note.id) ? prev.filter(id => id !== note.id) : [...prev, note.id]);
           } else {
             setSelectedNoteIds([note.id]);
             setSelectedDeviceIds([]);
           }
+          handleNoteHeaderMouseDown(e as unknown as React.MouseEvent, note.id);
+        }}
+        onMouseDown={(e) => {
+          const target = e.target as HTMLElement;
+          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-export-hide]');
+          if (interactiveTarget) return;
+
+          e.preventDefault();
+          e.stopPropagation();
+          handleNoteHeaderMouseDown(e, note.id);
+        }}
+        onTouchStart={(e) => {
+          const target = e.target as HTMLElement;
+          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-export-hide]');
+          if (interactiveTarget) return;
+
+          e.preventDefault();
+          e.stopPropagation();
+          handleNoteHeaderTouchStart(e, note.id);
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
         }}
       >
         {/* Note Header - Draggable */}
@@ -157,10 +184,12 @@ export const NoteNode = memo(function NoteNode({
           data-note-header="true"
           onMouseDown={(e) => {
             // A note drag must not also start panning the topology canvas.
+            e.preventDefault();
             e.stopPropagation();
             handleNoteHeaderMouseDown(e, note.id);
           }}
           onTouchStart={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             handleNoteHeaderTouchStart(e, note.id);
           }}
@@ -294,8 +323,8 @@ export const NoteNode = memo(function NoteNode({
 
         {/* Search Bar */}
         {showSearch && (
-          <div 
-            className="flex items-center gap-1.5 px-2 py-1 bg-black/10 border-b border-black/10" 
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 bg-black/10 border-b border-black/10"
             onMouseDown={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -315,8 +344,8 @@ export const NoteNode = memo(function NoteNode({
               className="flex-1 text-[10px] px-1.5 py-0.5 rounded border border-black/20 bg-white/90 dark:bg-secondary-800/90 text-black dark:text-white focus:outline-none"
               autoFocus
             />
-            <button 
-              onClick={(e) => { e.stopPropagation(); handleSearchNext(); }} 
+            <button
+              onClick={(e) => { e.stopPropagation(); handleSearchNext(); }}
               className="px-1.5 py-0.5 text-[9px] bg-black/15 hover:bg-black/25 text-black dark:text-white rounded"
             >
               {language === 'tr' ? 'Sonraki' : 'Next'}

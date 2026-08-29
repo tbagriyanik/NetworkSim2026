@@ -94,13 +94,13 @@ export function useTopologyNoteActions({
     const note = notes.find((n) => n.id === noteId);
     if (!note) return;
 
+    setSelectedNoteIds([noteId]);
     saveToHistory();
     bringNoteToFront(noteId);
     draggedNoteIdRef.current = noteId;
     noteDragStartRef.current = { x: e.clientX, y: e.clientY };
     setDraggedNoteId(noteId);
     setNoteDragStart({ x: e.clientX, y: e.clientY });
-    setSelectedNoteIds([noteId]);
   }, [notes, saveToHistory, bringNoteToFront, setSelectedNoteIds, canvasRef, draggedNoteIdRef, noteDragStartRef]);
 
   const handleNoteHeaderTouchStart = useCallback((e: ReactTouchEvent, noteId: string) => {
@@ -111,13 +111,13 @@ export function useTopologyNoteActions({
     const note = notes.find((n) => n.id === noteId);
     if (!note) return;
 
+    setSelectedNoteIds([noteId]);
     saveToHistory();
     bringNoteToFront(noteId);
     draggedNoteIdRef.current = noteId;
     noteDragStartRef.current = { x: touch.clientX, y: touch.clientY };
     setDraggedNoteId(noteId);
     setNoteDragStart({ x: touch.clientX, y: touch.clientY });
-    setSelectedNoteIds([noteId]);
   }, [notes, saveToHistory, bringNoteToFront, setSelectedNoteIds, canvasRef, draggedNoteIdRef, noteDragStartRef]);
 
   const handleNoteResizeStart = useCallback((e: ReactMouseEvent, noteId: string, direction: string = 'se') => {

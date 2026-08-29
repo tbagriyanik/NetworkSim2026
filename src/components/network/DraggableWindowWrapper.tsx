@@ -197,7 +197,9 @@ export function DraggableWindowWrapper({
         }}
         className={cn(
           'flex items-center justify-between px-3 py-2 select-none shrink-0 group',
-          (!isMobile || !isMobileFullScreen) && 'cursor-grab active:cursor-grabbing',
+          // Every window title is a drag handle, including title text and
+          // mobile layouts; action controls stop propagation below.
+          'cursor-grab active:cursor-grabbing',
           isDark
             ? 'bg-secondary-700 border-b-2 border-secondary-500/60'
             : 'bg-secondary-100 border-b-2 border-secondary-300',
@@ -212,13 +214,13 @@ export function DraggableWindowWrapper({
           )}
           {typeof title === 'string' ? (
             <h2 className={cn(
-              "text-sm font-semibold truncate pointer-events-none",
+              "text-sm font-semibold truncate pointer-events-none cursor-grab active:cursor-grabbing",
               isDark ? "text-secondary-100" : "text-secondary-900"
             )}>
               {title}
             </h2>
           ) : (
-            <div className={cn("text-sm font-semibold flex-1 min-w-0 flex items-center", isDark ? "text-secondary-100" : "text-secondary-900")}>
+            <div className={cn("text-sm font-semibold flex-1 min-w-0 flex items-center cursor-grab active:cursor-grabbing", isDark ? "text-secondary-100" : "text-secondary-900")}>
               {title}
             </div>
           )}
