@@ -63,7 +63,35 @@ const builders = [
 
 export const exampleProjects = (language: 'tr' | 'en'): ExampleProject[] => {
   const isTr = language === 'tr';
-  return builders.map(build => build(isTr));
+  return builders.map(build => {
+    const project = build(isTr);
+    const overviewNote = {
+      id: `${project.id}-overview`,
+      text: `${project.title}\n\n${project.description}`,
+      x: 40,
+      y: 40,
+      width: 420,
+      height: 180,
+      color: 'var(--color-warning-500)',
+      font: 'verdana',
+      fontSize: 12 as const,
+      opacity: 0.75 as const,
+    };
+
+    return {
+      ...project,
+      detail: project.detail || project.description,
+      data: {
+        ...project.data,
+        topology: {
+          ...project.data.topology,
+          notes: project.data.topology.notes.length > 0
+            ? project.data.topology.notes
+            : [overviewNote],
+        },
+      },
+    };
+  });
 };
 
 /** Structural and semantic checks shared by the catalog and import flows. */

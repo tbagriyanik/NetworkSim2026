@@ -2,6 +2,10 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v3.5.0 — 2026-08-29
+
+Görev yöneticisi pencere listesi modernleştirildi; eksik örnek açıklamalarına not ve detaylar eklendi. OSPF, RIP ve ACL arıza örneklerine komut ipuçları eklendi. ROAS alt arayüzleri ve örnek topoloji kablo durumları düzeltildi. NTP istemci zamanı ile Linux terminal `date` komutu ve canvas not sürükleme davranışı iyileştirildi.
+
 ## v3.4.0 — 2026-08-28
 
 | Tarih | Değişiklik |

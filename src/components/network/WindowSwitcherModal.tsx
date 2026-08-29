@@ -167,26 +167,32 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
   return (
     <div
       data-task-switcher="true"
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-transparent transition-opacity duration-150 animate-in fade-in"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-slate-950/20 p-4 transition-opacity duration-150 animate-in fade-in"
       onClick={() => closeSwitcher()}
     >
       <div
         className={cn(
-          'w-full max-w-2xl mx-4 p-5 rounded-2xl border transition-all select-none',
+          'w-full max-w-3xl p-6 rounded-[1.75rem] border transition-all select-none',
           isLowGraphics
             ? (isDark ? 'bg-secondary-950 border-secondary-800 text-secondary-100 shadow-none' : 'bg-white border-secondary-300 text-secondary-900 shadow-none')
-            : (isDark ? 'bg-secondary-950/90 border-secondary-700/80 text-secondary-100 shadow-2xl backdrop-blur-md' : 'bg-white/90 border-secondary-200 text-secondary-900 shadow-2xl backdrop-blur-md')
+            : (isDark ? 'bg-secondary-950/95 border-white/10 text-secondary-100 shadow-2xl shadow-black/40 backdrop-blur-xl' : 'bg-white/95 border-secondary-200 text-secondary-900 shadow-2xl backdrop-blur-xl')
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3 mb-4 border-b border-secondary-700/40">
+        <div className="flex items-center gap-3 pb-4 mb-5 border-b border-secondary-700/40">
           <div className="flex items-center gap-2">
-            <AppWindow className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-sm font-semibold tracking-wide">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/15 border border-emerald-400/20">
+              <AppWindow className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+            <h3 className="text-base font-bold tracking-tight">
               {language === 'tr' ? 'Görev Yöneticisi Pencere Listesi' : 'Task Switcher Windows'}
             </h3>
+            <p className="text-[11px] text-secondary-400 mt-0.5">{language === 'tr' ? 'Açık cihaz pencereleri' : 'Open device windows'}</p>
+            </div>
           </div>
+          <div className="ml-auto flex items-center gap-2">
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
             {displayList.length} {language === 'tr' ? 'Öğe' : 'Items'}
           </span>
@@ -203,6 +209,7 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
               {language === 'tr' ? 'Tümünü kapat' : 'Close all'}
             </button>
           )}
+          </div>
         </div>
 
         {/* Windows List / Cards Grid */}
@@ -227,7 +234,7 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
                   }
                 }}
                 className={cn(
-                  'flex items-center gap-3.5 p-3.5 rounded-xl border transition-all cursor-pointer outline-none',
+                  'flex items-center gap-3.5 p-3.5 rounded-2xl border transition-all cursor-pointer outline-none hover:-translate-y-0.5',
                   isSelected
                     ? isDark
                       ? 'bg-emerald-500/20 border-emerald-500 shadow-md ring-1 ring-emerald-500'

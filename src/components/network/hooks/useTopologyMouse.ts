@@ -160,7 +160,12 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
     const targetEl = e.target as HTMLElement;
     const isOnDevice = !!targetEl.closest('[data-device-id]');
     const isOnNote = !!targetEl.closest('[data-note-id]');
+    // Note headers own the drag gesture. Never start canvas panning for the
+    // same pointer-down, even if the event reaches the canvas layer.
+    const isOnNoteHeader = !!targetEl.closest('[data-note-header]');
     const isOnEditable = targetEl.tagName === 'TEXTAREA' || targetEl.tagName === 'INPUT' || targetEl.isContentEditable;
+
+    if (isOnNoteHeader) return;
 
     if (e.button === 0 && !isOnDevice && !isOnNote && !isOnEditable) {
       e.preventDefault();

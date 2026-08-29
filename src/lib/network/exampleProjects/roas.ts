@@ -32,7 +32,9 @@ const example = (isTr: boolean): ExampleProject => {
     ipAddress: '192.168.10.1',
     subnetMask: '255.255.255.0',
     isSubinterface: true,
-    parentInterface: 'gi0/0'
+    parentInterface: 'gi0/0',
+    shutdown: false,
+    status: 'connected'
   };
   roasRouter.ports['gi0/0.20'] = {
     ...roasRouter.ports['gi0/0'],
@@ -41,7 +43,9 @@ const example = (isTr: boolean): ExampleProject => {
     ipAddress: '192.168.20.1',
     subnetMask: '255.255.255.0',
     isSubinterface: true,
-    parentInterface: 'gi0/0'
+    parentInterface: 'gi0/0',
+    shutdown: false,
+    status: 'connected'
   };
   const roasNotes: CanvasNote[] = [
     {

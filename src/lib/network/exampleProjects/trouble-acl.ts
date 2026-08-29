@@ -38,7 +38,11 @@ const example = (isTr: boolean): ExampleProject => {
         description: { tr: 'R1 Gi0/0 arayüzünde tüm trafiği engelleyen ACL 101 uygulanmış.', en: 'ACL 101 blocking all traffic is applied on R1 Gi0/0.' },
         configKey: 'ports.gi0/0.accessGroupIn',
         faultValue: '101',
-        correctValue: undefined
+        correctValue: undefined,
+        hint: {
+          tr: 'Komut ipucu: R1# show access-lists → R1# configure terminal → interface gi0/0 → no ip access-group 101 in. Kontrol: show running-config ve PC1’den PC2’ye ping atın.',
+          en: 'Command hint: R1# show access-lists → R1# configure terminal → interface gi0/0 → no ip access-group 101 in. Verify with show running-config and ping PC2 from PC1.'
+        }
       }
     ],
     data: baseProjectData(troubleAclDevices, troubleAclConnections, [], [{ id: 'router-1', state: troubleAclR1State }])

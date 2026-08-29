@@ -154,10 +154,14 @@ export const NoteNode = memo(function NoteNode({
         {/* Note Header - Draggable */}
         <div
           data-export-hide="true"
+          data-note-header="true"
           onMouseDown={(e) => {
+            // A note drag must not also start panning the topology canvas.
+            e.stopPropagation();
             handleNoteHeaderMouseDown(e, note.id);
           }}
           onTouchStart={(e) => {
+            e.stopPropagation();
             handleNoteHeaderTouchStart(e, note.id);
           }}
           className={`relative flex items-center justify-center px-2 text-[10px] font-semibold tracking-widest select-none ${isDark ? 'bg-black/10' : 'bg-black/5'

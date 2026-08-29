@@ -47,7 +47,7 @@ Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik 
 
 ---
 
-## Latest Updates (v3.4.0)
+## Latest Updates (v3.5.0)
 
 | English | Türkçe |
 | --- | --- |
@@ -176,7 +176,7 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.4.0 |
+| Version / Sürüm | 3.5.0 |
 | Total Lines / Toplam Satır (src/) | 115,876 |
 | Source Files / Kaynak Dosya | 500 |
 | Documentation Files / Dokümantasyon Dosya | 22 |

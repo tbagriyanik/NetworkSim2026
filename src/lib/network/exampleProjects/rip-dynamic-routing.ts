@@ -131,8 +131,8 @@ const example = (isTr: boolean): ExampleProject => {
       ? 'RIP dinamik yönlendirme protokolü otomatik route öğrenimi sağlar.'
       : 'RIP dynamic routing protocol provides automatic route learning.',
     detail: isTr
-      ? 'ML0: router rip, network 192.168.1.0, network 192.168.2.0 | ML1: router rip, network 192.168.2.0, network 192.168.3.0'
-      : 'ML0: router rip, network 192.168.1.0, network 192.168.2.0 | ML1: router rip, network 192.168.2.0, network 192.168.3.0',
+      ? 'Komut ipucu — ML0: configure terminal → router rip → network 192.168.1.0 → network 192.168.2.0. ML1: router rip → network 192.168.2.0 → network 192.168.3.0. Her iki cihazda ip routing açık olmalı. Kontrol: show ip route ve PC0’dan ping 192.168.3.10.'
+      : 'Command hint — ML0: configure terminal → router rip → network 192.168.1.0 → network 192.168.2.0. ML1: router rip → network 192.168.2.0 → network 192.168.3.0. Ensure ip routing is enabled on both devices. Verify with show ip route and ping 192.168.3.10 from PC0.',
     level: 'advanced',
     data: baseProjectData(ripRoutingDevices, ripRoutingConnections, ripRoutingNotes, [
       { id: 'switch0-l2', state: switch0L2State },

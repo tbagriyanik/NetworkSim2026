@@ -29,6 +29,7 @@ export const TaskCard = React.memo(({ tasks, state, context, isDark }: TaskCardP
 
   // Calculate max score
   const maxScore = tasks.reduce((acc, task) => acc + task.weight, 0);
+  const completedTaskCount = tasks.filter(task => getTaskStatus(task, state, context)).length;
   const isCategoryComplete = score === maxScore && maxScore > 0;
 
   // Track task completion changes for animation
@@ -66,8 +67,8 @@ export const TaskCard = React.memo(({ tasks, state, context, isDark }: TaskCardP
 
   return (
     <div className={cn(
-      "relative rounded-3xl p-5 transition-all duration-500 overflow-hidden hardware-accelerated",
-      isDark ? "bg-secondary-950/40 border-white/10 shadow-black/40" : "bg-white/40 border-black/5 shadow-secondary-200/50",
+      "relative rounded-[1.75rem] p-5 transition-all duration-500 overflow-hidden hardware-accelerated",
+      isDark ? "bg-secondary-950/65 border-white/10 shadow-black/50" : "bg-white/75 border-black/5 shadow-secondary-300/40",
       "border backdrop-blur-2xl shadow-2xl",
       isCategoryComplete && "ring-2 ring-success-500/30"
     )}>
@@ -101,19 +102,25 @@ export const TaskCard = React.memo(({ tasks, state, context, isDark }: TaskCardP
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-start justify-between gap-4 mb-4">
         <div className="flex flex-col gap-0.5">
-          <span className="text-[10px] font-black tracking-[0.2em] opacity-40 uppercase">System Checks</span>
-          <h3 className={cn("text-lg font-black tracking-tight flex items-center gap-2", isDark ? "text-white" : "text-secondary-950")}>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex h-2 w-2 rounded-full bg-accent-400 shadow-[0_0_10px_rgba(34,211,238,0.8)]" />
+            <span className="text-[10px] font-black tracking-[0.2em] opacity-50 uppercase">System Checks</span>
+          </div>
+          <h3 className={cn("text-xl font-black tracking-tight flex items-center gap-2", isDark ? "text-white" : "text-secondary-950")}>
             {t.tasks}
             {isCategoryComplete && <span className="text-success-500 animate-pulse">✓</span>}
           </h3>
+          <span className={cn("text-[11px] font-medium", isDark ? "text-secondary-400" : "text-secondary-500")}>
+            {completedTaskCount}/{tasks.length} {context.language === 'tr' ? 'görev tamamlandı' : 'tasks completed'}
+          </span>
         </div>
         <div className={cn(
-          "px-3 py-1.5 rounded-2xl font-black text-xs tabular-nums shadow-lg transition-all duration-500",
+          "px-3 py-2 rounded-2xl font-black text-xs tabular-nums shadow-lg transition-all duration-500 border",
           isCategoryComplete
-            ? "bg-success-500 text-secondary-950 shadow-success-500/15 scale-110"
-            : "bg-secondary-800 text-white dark:bg-white dark:text-secondary-900 shadow-black/10"
+            ? "bg-success-500 text-secondary-950 border-success-300 shadow-success-500/15 scale-105"
+            : isDark ? "bg-white/10 text-white border-white/10 shadow-black/10" : "bg-secondary-950 text-white border-secondary-800 shadow-black/10"
         )}>
           {score} / {maxScore}
         </div>
