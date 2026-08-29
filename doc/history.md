@@ -12,6 +12,8 @@ Görev yöneticisi pencere listesi modernleştirildi; eksik örnek açıklamalar
 
 **802.1X, IPsec ve SDN/YANG altyapısı** — `dot1x system-auth-control`, interface port-control, EAPOL state machine ve RADIUS sonucu simülasyonu; IKE Phase 1/2 SA ile ESP protocol 50 kapsülleme; YANG parser ve NETCONF/RESTCONF tarzı SDN controller datastore eklendi. MQC `class-map`, `policy-map` ve `service-policy` komutları stub durumundan çıkarıldı.
 
+**Ağ Entegrasyon Düzeltmeleri** — LLDP neighbor detail çıktısı artık bağlı cihazın gerçek chassis ID ve management IP değerlerini kullanıyor. HSRP/VRRP sanal IP’leri aktif/master cihaza çözümleniyor. DHCP broadcast’leri helper adresine yönlendiriliyor ve DHCP snooping yalnızca UDP 67/68 veya açık DHCP mesajlarında untrusted portları engelliyor.
+
 ## v3.4.0 — 2026-08-28
 
 | Tarih | Değişiklik |

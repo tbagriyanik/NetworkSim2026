@@ -86,6 +86,7 @@ export interface Port {
   ospfProcessId?: string;
   ospfArea?: string;
   ipv6DhcpServer?: string;
+  helperAddresses?: string[];
   lldpTransmit?: boolean;       // default: true when LLDP enabled
   lldpReceive?: boolean;        // default: true when LLDP enabled
   isRoutedPort?: boolean;       // For L3 switch routed ports

@@ -724,7 +724,10 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
 
           output += `------------------------------------------------\n`;
           output += `Local Intf: ${localPort}\n`;
-          output += `Chassis id: 0050.56a1.b2c3\n`;
+          const neighborState = ctx.deviceStates?.get(connectedDeviceId);
+          const chassisId = connectedDevice.macAddress || neighborState?.macAddress || connectedDeviceId;
+          const managementIp = connectedDevice.ip || Object.values(neighborState?.ports || {}).find(port => port.ipAddress)?.ipAddress || ' not configured';
+          output += `Chassis id: ${chassisId}\n`;
           output += `Port id: ${remotePort}\n`;
           output += `Port Description: ${remotePort}\n`;
           output += `System Name: ${connectedDevice.name}\n`;
@@ -732,7 +735,7 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
           output += `Time remaining: ${holdtime} seconds\n`;
           output += `System Capabilities: ${capability}\n`;
           output += `Enabled Capabilities: ${capability}\n`;
-          output += `Management Addresses:\n    IP: 192.168.1.2\n`;
+          output += `Management Addresses:\n    IP: ${managementIp}\n`;
         }
       });
       output += `------------------------------------------------\n`;

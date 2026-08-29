@@ -36,6 +36,7 @@ Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve iç
 - SLAAC IPv6 otomatik adresleme (`no ipv6 nd suppress-ra` & EUI-64)
 - AAA (`aaa new-model`, RADIUS & TACACS+ sunucu yapılandırması)
 - Seri/WAN, IoT, Güvenlik Duvarı, Port Security, DHCP Snooping, DAI, IP Source Guard komutları
+- Ağ terimleri sözlüğü: VLAN/trunk, yönlendirme, FHRP, DHCP relay/snooping, QoS, LLDP-MED, 802.1X, IPsec ve SDN otomasyonu
 - Klavye kısayolları ve komut sözdizimi
 
 **Ne Zaman Okuyacağım?**

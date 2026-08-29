@@ -879,6 +879,46 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no deny <condition>` | Remove a deny rule |
 | `exit` | Return to global configuration mode |
 
+## Network Terminology / Ağ Terimleri
+
+| Term | Türkçe açıklama | Simulator example |
+|------|------------------|-------------------|
+| **Default gateway** | Yerel ağ dışındaki hedeflere giden ilk yönlendirici | `ip default-gateway 192.168.1.1` |
+| **Broadcast domain** | Broadcast paketlerinin ulaştığı mantıksal alan; VLAN ile ayrılır | `vlan 10` |
+| **Access port** | Tek bir access VLAN taşıyan uç cihaz portu | `switchport mode access` |
+| **Trunk port** | Birden fazla VLAN’ı 802.1Q etiketiyle taşıyan port | `switchport mode trunk` |
+| **Native VLAN** | Trunk üzerinde etiketsiz taşınan VLAN | `switchport trunk native vlan 99` |
+| **Next hop** | Paketi hedef ağa yaklaştıran sonraki router adresi | `ip route 10.10.0.0 255.255.0.0 192.168.1.2` |
+| **Metric** | Yönlendirme yollarını karşılaştıran protokol maliyeti | OSPF/EIGRP route output |
+| **Convergence** | Ağ değişikliğinden sonra router’ların ortak topoloji bilgisine ulaşması | `show ip ospf neighbor` |
+| **FHRP** | HSRP/VRRP gibi yedekli ilk atlama/ağ geçidi protokolleri | `standby 1 ip 192.168.1.1` |
+| **DHCP relay** | DHCP broadcast paketini başka IP ağındaki sunucuya iletme | `ip helper-address 192.168.10.10` |
+| **DHCP snooping** | Güvenilmeyen portlardan gelen sahte DHCP Offer/ACK mesajlarını engelleme | `ip dhcp snooping` |
+| **ARP inspection / DAI** | ARP mesajlarını güvenilir IP–MAC bağlamalarına göre doğrulama | `ip arp inspection vlan 10` |
+| **NAT / PAT** | IP adresi ve port çevirisi; birçok hostu tek genel IP üzerinden taşıyabilir | `show ip nat translations` |
+| **Latency** | Paketin kaynak ile hedef arasındaki gecikme süresi | `show ip sla statistics` |
+| **Jitter** | Ardışık paket gecikmelerindeki değişim; ses/video için önemlidir | `ip sla 1 jitter 192.0.2.1` |
+| **Packet loss** | Gönderilip hedefe ulaşmayan paket oranı | IP SLA statistics output |
+| **QoS queue** | Çıkış kapasitesi yetmediğinde paketlerin beklediği kuyruk | `service-policy output QOS` |
+| **LLQ / CBWFQ / WFQ** | Sırasıyla düşük gecikmeli öncelik, sınıf tabanlı ağırlıklı ve ağırlıklı adil kuyruklama | QoS scheduler simulation |
+| **LLDP / LLDP-MED** | Komşu cihaz/port ve medya uç noktası bilgisi keşfi | `show lldp neighbors detail` |
+| **802.1X / EAPOL** | Port tabanlı erişim kontrolü ve Ethernet üzerindeki kimlik doğrulama çerçeveleri | `dot1x system-auth-control` |
+| **RADIUS / AAA** | Merkezi kimlik doğrulama, yetkilendirme ve hesaplama altyapısı | `radius-server host <ip> key <key>` |
+| **IPsec / ESP / IKE** | IP katmanında güvenlik; ESP veri korur, IKE anahtar ve SA görüşür | IPsec module concepts |
+| **Overlay / underlay** | Overlay mantıksal sanal ağ, underlay onu taşıyan fiziksel/IP altyapıdır | SDN/DNA Center concepts |
+| **SDN** | Kontrol düzlemini yazılımla merkezileştiren ağ yaklaşımı | Controller concepts |
+| **YANG / NETCONF / RESTCONF** | Ağ verisini modelleme ve API üzerinden yapılandırma araçları | Automation concepts |
+
+### IP SLA quick example
+
+```text
+Switch(config)# ip sla 1 icmp-echo 192.0.2.1 frequency 10
+Switch(config)# ip sla schedule 1 life forever start now
+Switch# show ip sla statistics
+```
+
+The simulator reports sent, received, lost, minimum/average/maximum RTT, and jitter values for synthetic probes.
+
 ## Features
 - **Tab Completion**: Auto-complete commands with TAB
 - **Command History**: Up/Arrow keys for previous commands

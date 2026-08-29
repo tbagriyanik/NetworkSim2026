@@ -1,14 +1,24 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
+**Sürüm / Version:** 3.5.0 · **Son doğrulama / Last verified:** 2026-08-29
+
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-08-29)
 
-- **IP SLA Active Probes:** Sentetik `icmp-echo` ve `jitter` prob gönderimi, RTT/jitter ölçümleri, timeout sayaçları ve `show ip sla statistics` çıktısı.
-- **QoS Queue Scheduling:** WFQ, LLQ ve CBWFQ kuyruk algoritmaları; bant genişliği doygunluğunda paket düşürme ve sınıf bazlı istatistikler.
-- Her iki özellik için otomatik birim testleri eklendi.
-- **MSTP BPDU Engine (simülasyon yardımcıları):** CIST root election, MSTI M-record ve region boundary/digest kontrolü; henüz `stp.ts` topoloji akışına tam bağlı değildir.
-- **802.1X EAP (simülasyon yardımcıları):** EAPOL state machine ve RADIUS erişilebilirliğine göre sonuç üretimi; gerçek EAPOL/RADIUS ağı yoktur.
-- **IPsec (simülasyon yardımcıları):** IKE Phase 1/2 SA ve ESP protocol 50 veri modeli; gerçek şifreli taşıma veya path-resolution entegrasyonu yoktur.
-- **SDN/YANG (çekirdek API):** YANG module/leaf parser’ı ve typed datastore; HTTP daemon/route sunucusu içermez.
+Bu bölüm, özelliklerin gerçekten hangi katmanda çalıştığını ayırır: **entegre** özellikler kullanıcı akışına bağlıdır; **simülasyon motoru** özellikleri deterministik çekirdek fonksiyonları sağlar; **kavramsal/helper** özellikler henüz gerçek paket/daemon akışına bağlı değildir.
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **IP SLA Active Probes** | `icmp-echo`/`jitter` operasyonu, RTT min/avg/max, jitter, başarı/timeout sayaçları, `ip sla schedule`, arka plan periyodik tetikleme ve `show ip sla statistics` entegredir. Prob hedef erişilebilirliği simüle edilir; gerçek ağ soketi kullanılmaz. |
+| **QoS Queue Scheduling** | Deterministik WFQ, LLQ ve CBWFQ motoru; kapasite doygunluğunda düşürme ve sınıf sayaçları vardır. `class-map`/`policy-map` temel tanım durumunu, interface `service-policy` bağlantısını ve `pathResolution` trafik kancasını destekler; gelişmiş MQC `match/set/police/shape` alt eylemleri henüz yoktur. |
+| **LLDP / LLDP-MED** | LLDP global/interface ayarları, `lldp tlv-select`, periyodik LLDP paketleri ve gerçek bağlı cihazdan dinamik chassis ID/management IP ile `show lldp neighbors detail` çıktısı vardır. |
+| **FHRP ve DHCP entegrasyonları** | HSRP/VRRP seçimi sanal gateway çözümlemesine bağlıdır; `ip helper-address` DHCP broadcast relay yapar; DHCP snooping untrusted portlardan gelen DHCP Offer/ACK trafiğini filtreler. |
+| **MSTP BPDU Engine** | CIST root election, MSTI M-record, region digest ve boundary kontrolü `mstp.ts` helper motorunda vardır; henüz ana `stp.ts` topoloji BPDU akışına tam bağlanmamıştır. |
+| **802.1X EAP** | `dot1x system-auth-control`, interface port-control, EAPOL state machine ve RADIUS erişilebilirliği simüle edilir; gerçek EAPOL/RADIUS taşıması ve tam authenticator daemon’ı yoktur. |
+| **IPsec** | IKE Phase 1/2 SA ve ESP protocol 50 veri modeli ile `resolvePathTraffic` içindeki simülasyon kancası vardır; gerçek şifreleme, anahtar görüşmesi ve `cryptoCommands.ts` CLI kayıt akışı henüz yoktur. |
+| **SDN / YANG / DNA Center** | Minimal YANG module/leaf parser, typed datastore, NETCONF/RESTCONF tarzı in-memory API ve kavramsal SDN/DNA Center quiz’i vardır; HTTP controller daemon’ı yoktur. |
+| **Yardım ve terim sözlüğü** | CLI context help; IP SLA, QoS, LLDP, 802.1X komutları; Türkçe/İngilizce ağ terimleri ve kısaltmaları yardım penceresinde günceldir. |
+
+IP SLA, QoS, parser/CLI, LLDP, MSTP, 802.1X, SDN ve ağ entegrasyonları için otomatik testler bulunmaktadır.
 
 ## Türkçe (Turkish)
 
@@ -23,7 +33,7 @@
 
 ### ⌨️ CLI / Terminal
 - Gerçekçi CLI komut satırı (user, privileged, global-config, interface, line, vlan, router-config ve adlandırılmış-ACL modları).
-- PC CMD ve Dosya Düzenleyici ortamında tam kapsamlı **Python 3 yorumlayıcısı**:
+- PC CMD ve Dosya Düzenleyici ortamında simüle edilmiş **Python 3 yorumlayıcısı** (öğretim amaçlı kapsam):
   - **OOP:** Sınıflar (`class`), kurucu metot (`__init__`), nitelik bağlama (`self`), kalıtım (inheritance), `super()`, `isinstance()`.
   - **Decorator'lar:** `@property`, `@<name>.setter`, `@staticmethod`, `@classmethod` ve kullanıcı tanımlı decorator fonksiyonları.
   - **Generator'lar:** `yield` ve `yield from` ile tembel iterasyon (lazy evaluation).
@@ -31,7 +41,7 @@
   - **Güvenlik Katmanı:** Tarayıcı sandbox koruması ve dunder nitelik bloklaması.
 - PC CMD'de kullanıcı tanımlı `.bat` ve `.cmd` yığın dosyaları çalıştırma (`@echo off`, `set`, `%VAR%`, `%1`, `goto`, `call`).
   - Dosya Düzenleyici (File Editor) pencerelerinde `Batch Yığın Dosyası` ve `Python Betiği` rozet etiketleri ile tek tıkla kaydedip CMD'de çalıştırma (Play).
-  - **Linux Terminali (Bash kabuğu):** PC terminalinde tam bir Linux kabuğu; `ls -l`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `nano`/`vim` ile dosya sistemi yönetimi; `ifconfig`, `ip addr`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget` ağ komutları; `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, `sudo` sistem komutları. Komut dizimi: `for`/`while` döngüleri, `if` koşul blokları, shell değişkenleri (`$VAR`), boru hattı (`|`), çıktı yönlendirme (`>` ve `>>`), `grep` ve `wc` filtreleme; ayrıca `python3` ile Python betikleri çalıştırma.
+  - **Linux Terminali (simüle Bash kabuğu):** PC terminalinde dosya, ağ ve temel sistem komutları (`ls`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `ifconfig`, `ip addr`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget`, `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, `sudo`). `for`/`while`, `if`, `$VAR`, `|`, `>`/`>>`, `grep`, `wc` ve `python3` desteklenir; bu gerçek işletim sistemi shell’i değil, sanal dosya sistemi üzerinde çalışan bir simülasyondur.
   - Tab tuşu ile otomatik komut ve dosya tamamlama.
 - Komut geçmişi (Yukarı/Aşağı ok tuşları, kalıcı state).
 - Pipe filtreleme (`show run | include`, `ping | find` vb.).
@@ -51,7 +61,7 @@
 - SLAAC (no ipv6 nd suppress-ra ile bağlı PC'lerde EUI-64 otomatik IPv6 adres üretimi).
 - DHCP sunucu ve istemci simülasyonu.
 - Port Security (MAC kısıtlama, sticky MAC, ihlal eylemleri).
-- DHCP Snooping (trusted/untrusted port, rate-limit, Option 82, VLAN kapsamlı).
+- DHCP Snooping (trusted/untrusted port, VLAN kapsamı ve DHCP Offer/ACK filtreleme; rate-limit/Option 82 yalnızca durum modelinde görüntülenir, ayrı CLI yapılandırması yoktur).
 - Dynamic ARP Inspection (ip arp inspection).
 - IP Source Guard (ip verify source, ip source binding).
 - AAA (aaa new-model, RADIUS ve TACACS+ sunucu konfigürasyonu).
@@ -60,6 +70,10 @@
 - Kablosuz Ağ (SSID, WPA şifreleme, AP ve WLC yönetimi).
 - ARP, MAC öğrenme, TTL/Hop simülasyonu.
 - PPP/HDLC WAN enkapsülasyonu, PAP/CHAP kimlik doğrulaması.
+  - **IP SLA:** Sentetik aktif prob, schedule ve `show ip sla statistics` ile ölçüm.
+  - **QoS:** WFQ/LLQ/CBWFQ kuyruk simülasyonu, doygunlukta drop ve MQC service-policy kancası.
+  - **LLDP-MED / 802.1X:** TLV seçimi, komşu ayrıntıları, EAPOL/RADIUS state simülasyonu.
+  - **MSTP / IPsec / SDN:** Ayrı helper/API katmanlarında CIST-MSTI, ESP/SA, YANG ve controller datastore simülasyonları.
   - **SSH (v1/v2) ve Telnet oturum yönetimi (uçtan uca çalışır):** `crypto key generate rsa modulus 2048` → `ip ssh version 2` → `username <kullanıcı> privilege 15 secret <parola>` → `line vty 0 4` → `login local` → `transport input ssh` zinciri ile tam yapılandırma. PC terminalinden `ssh <kullanıcı>@<ip>` komutu başarılı bağlantıyı simüle eder: RSA/anahtar+SSH v2+login local+transport ssh kontrolleri yapılır, parola yerel kullanıcı veritabanına karşı doğrulanır ve oturum `sshSessions` içine `established` olarak yazılır (`show ssh` / `show ip ssh` ile görülebilir).
   - `switchport trunk allowed vlan add/remove/except/all` sözdizimi ile VLAN filtreleme.
 
@@ -67,14 +81,14 @@
 - **Ağ Temelleri (Network Fundamentals):** IPv4/IPv6 Adresleme, Subnetting, VLSM, Link-Local IPv6 (`fe80::`), EUI-64 Host Adresi türetme, SLAAC (`no ipv6 nd suppress-ra`), Düz/Çapraz/Fiber/Seri kablolama.
 - **Ağ Erişimi (Network Access / Switching):** VLANs (1-4094, 802.1Q, Native VLAN, Voice VLAN, Allowed VLAN listeleri), VTP v1/v2 (Server/Client/Transparent), STP / PVST+ / MSTP (802.1s — `spanning-tree mode mst`, `spanning-tree mst configuration`, instance-VLAN eşleme), EtherChannel (LACP/PAgP/Static), Port Security (Sticky MAC, Violation protect/restrict/shutdown), Kablosuz (WLC AIR-CT2504-K9, Lightweight AP, CAPWAP, WPA2/WPA3 PSK/Enterprise).
 - **IP Bağlantısı (IP Connectivity / Routing):** Statik IPv4/IPv6 Yönlendirme (Default & Floating static routes), RIPv2 & RIPng (Split horizon, Passive interface, Auto-summary), OSPFv2 & OSPFv3 (Multi-area Area 0/10/20, Router-ID, ABR, NSSA/Stub, Passive-interface, Default-information originate, SPF Dijkstra), EIGRP (DUAL motoru, Feasibility Condition, AS, Router-ID, Auto-summary, Metrik hesabı), BGP (eBGP/iBGP, `router bgp <as>`, `neighbor <ip> remote-as <asn>`, dinamik `Established` / `Idle` komşuluk durumu, `show ip bgp summary`, `show ip bgp`), Rota Yeniden Dağıtımı (`redistribute ospf/rip/eigrp/bgp/static/connected`).
-- **IP Servisleri (IP Services):** NAT / PAT (Statik NAT, Dinamik NAT, Overload / PAT, `show ip nat translations` port kolonları `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port`, `show ip nat statistics`), SLAAC IPv6 (Router Advertisements `no ipv6 nd suppress-ra` ile otomatik adresleme), DHCP Sunucu & Relay (`ip dhcp pool`, `default-router`, `dns-server`, `excluded-address`, `ip helper-address`, IPv6 DHCP pool), FHRP (HSRPv1/v2 Active/Standby/Preempt, VRRP Master/Backup), QoS (MLS QoS, class-map, policy-map), Yönetim (Syslog level `logging trap`, SNMP, NTP, SSH v1/v2, Telnet, CDP/LLDP, SPAN, IP SLA).
-- **Güvenlik Temelleri (Security Fundamentals):** ACLs (Standart 1-99, Genişletilmiş 100-199 IPv4 ACL'ler, IPv6 `ipv6 traffic-filter`), Katman 2 Güvenlik (DHCP Snooping, Dynamic ARP Inspection DAI, IP Source Guard), AAA & Kimlik Doğrulama (`aaa new-model`, RADIUS `radius-server host`, TACACS+ `tacacs-server host`), Kriptografi (`crypto key generate rsa`, `enable secret`, `service password-encryption`).
+- **IP Servisleri (IP Services):** NAT / PAT (Statik NAT, Dinamik NAT, Overload / PAT, `show ip nat translations` port kolonları `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port`, `show ip nat statistics`), SLAAC IPv6 (Router Advertisements `no ipv6 nd suppress-ra` ile otomatik adresleme), DHCP Sunucu & Relay (`ip dhcp pool`, `default-router`, `dns-server`, `excluded-address`, `ip helper-address`, IPv6 DHCP pool), FHRP (HSRP Active/Standby, VRRP Master/Backup ve sanal gateway çözümleme), QoS (MLS QoS, temel class-map/policy-map, interface service-policy ve WFQ/LLQ/CBWFQ simülasyonu), IP SLA (`icmp-echo`, `jitter`, schedule, RTT/jitter statistics), Yönetim (Syslog level `logging trap`, SNMP, NTP, SSH v1/v2, Telnet, CDP/LLDP, SPAN).
+- **Güvenlik Temelleri (Security Fundamentals):** ACLs (Standart 1-99, Genişletilmiş 100-199 IPv4 ACL'ler, IPv6 `ipv6 traffic-filter`), Katman 2 Güvenlik (DHCP Snooping, Dynamic ARP Inspection DAI, IP Source Guard), AAA & Kimlik Doğrulama (`aaa new-model`, RADIUS `radius-server host`, TACACS+ `tacacs-server host`), 802.1X/EAPOL durum simülasyonu ve Kriptografi (`crypto key generate rsa`, `enable secret`, `service password-encryption`).
 
 ### 📚 Eğitim Modülleri
 - 19 Rehberli ders (Guided Mode) — adım adım yönergeler ve otomatik doğrulama; "Bana Öğret" modülü dahil.
 - 46 Hazır örnek uygulama projesi ve sektörel senaryolar (SOHO, Kampüs, Hastane, E-Ticaret).
 - 6 Sınav Modülü ve Öğretmenler için sınav editörü + otomatik puanlama.
-- 3 seviyeli akıllı yardım sistemi (Başlangıç, Orta, Sınav).
+- 3 seviyeli akıllı yardım sistemi (Başlangıç, Orta, Sınav); context-aware CLI komut yardım ağacı ve ağ terimleri sözlüğü.
 - Ses sentezleyici ders anlatımı (Metin okuma - TTS).
 - Fault Injection (Hata enjeksiyonu ve pratik arıza giderme motoru).
   - Otomatik PDF sertifika üretimi (Türkçe karakter korumalı, 1 yıllık geçerlilik süresi ve doğrulama kodlu). Sertifikalar `http://network2026.vercel.app/verify` adresinden doğrulama kodu ile sorgulanabilir; PDF üzerinde QR kod ve doğrulama kodu yer alır.
@@ -111,20 +125,34 @@
 - Güvenli girdi sanitizasyonu ve XSS koruması.
 - Şifreli LocalStorage (XOR + Base64) veri koruması.
 - Sıkılaştırılmış Content Security Policy (CSP) başlıkları.
-- CI sürecinde zorunlu `npm audit` güvenlik taraması.
+- CI sürecinde yüksek/kritik seviyede başarısız olan `pnpm audit` güvenlik taraması.
 - Sınav bütünlük kontrolü (XOR tabanlı veri bütünlük hash'i).
 
 ### 🧪 Test ve CI
 - Vitest ile kapsamlı otomatik test senaryoları.
-- Kapsamlı CI iş akışı: TypeScript tip doğrulaması, ESLint, npm audit, vitest testleri ve Next.js build kontrolü.
+- CI iş akışı: TypeScript tip doğrulaması, yüksek/kritik audit kontrolü, Vitest testleri ve Next.js production build; yerel `npm run check` komutu bunlara ek olarak Oxlint çalıştırır.
 - Otomatik README istatistik güncelleyici.
 
-### 📄 Dokümantasyon (23 dosya)
+### 📄 Dokümantasyon (24 Markdown dosyası)
 - CLI komut referansı, rehberli ders kılavuzları, hata yönetimi, entegrasyon kılavuzu, L3 switch konfigürasyonu, kablosuz ağlar, oda takip sistemi, kullanım kılavuzları ve örnek projelerin çözüm adımlarını barındıran Türkçe Eğitim Kitapçığı.
 
 ---
 
 ## English (English)
+
+### Current implementation status
+
+| Feature | Current scope and boundary |
+|---|---|
+| **IP SLA active probes** | `icmp-echo`/`jitter`, RTT min/avg/max, jitter, timeout counters, `ip sla schedule`, periodic background trigger, and `show ip sla statistics`; reachability is simulated rather than socket-based. |
+| **QoS queue scheduling** | Deterministic WFQ, LLQ, and CBWFQ with saturation drops and per-class counters. Basic `class-map`, `policy-map`, interface `service-policy`, and the path traffic hook are available; advanced MQC actions are not. |
+| **LLDP / LLDP-MED** | Global/interface settings, `lldp tlv-select`, periodic LLDP packets, and dynamic chassis ID/management IP in `show lldp neighbors detail`. |
+| **FHRP and DHCP integration** | HSRP/VRRP virtual gateway resolution, DHCP relay through `ip helper-address`, and untrusted-port DHCP Offer/ACK filtering through DHCP snooping. |
+| **MSTP** | CIST root election, MSTI M-records, region digest, and boundary helpers exist; the helper engine is not fully connected to the main `stp.ts` topology BPDU flow. |
+| **802.1X EAP** | System/port-control CLI, EAPOL state machine, and RADIUS availability simulation; no real EAPOL/RADIUS transport or authenticator daemon. |
+| **IPsec** | IKE Phase 1/2 SA and ESP protocol 50 data model plus a `resolvePathTraffic` simulation hook; no real cryptography, key exchange, or registered `cryptoCommands.ts` CLI flow. |
+| **SDN / YANG / DNA Center** | Minimal YANG parser, typed in-memory datastore, NETCONF/RESTCONF-style API, and conceptual SDN/DNA Center quiz; no HTTP controller daemon. |
+| **Help and terminology** | Context-aware CLI help, current IP SLA/QoS/LLDP/802.1X command trees, and bilingual network terminology/abbreviation lists. |
 
 ### 🖥️ Devices & Topology
 - Router, L2/L3 Switch, PC, Firewall, Access Point, IoT device, Wireless LAN Controller (WLC).
@@ -143,7 +171,7 @@
 - Context-aware, mobile-focused quick command buttons.
 - Color-coded command realism indicators (`real` / `stub` / `sim-only`).
   - Educational error messages with helpful troubleshooting hints.
-  - **Linux Terminal (Bash shell):** a full Linux shell inside the PC terminal — file-system management with `ls -l`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `nano`/`vim`; networking with `ifconfig`, `ip addr`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget`; system commands `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, `sudo`. Scripting supports `for`/`while` loops, `if` conditionals, shell variables (`$VAR`), pipes (`|`), output redirection (`>` and `>>`), and `grep`/`wc` filtering; `python3` scripts can also be run.
+- **Linux Terminal (simulated Bash shell):** a teaching-focused shell on a virtual file system with file, network, and basic system commands such as `ls -l`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `ifconfig`, `ip addr`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget`, `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, and `sudo`. It supports `for`/`while`, `if`, `$VAR`, pipes, redirection, `grep`, `wc`, and `python3`; it is not a host operating-system shell.
 
 ### 🌐 Protocols
 - VLAN, Trunking, STP (real BPDU propagation).
@@ -157,7 +185,7 @@
 - SLAAC (IPv6 Router Advertisements `no ipv6 nd suppress-ra` for automatic host EUI-64 address generation).
 - DHCP server and client simulation.
 - Port Security (MAC limits, sticky MAC, violation actions).
-- DHCP Snooping (trusted/untrusted ports, rate-limit, Option 82, VLAN-scoped).
+- DHCP Snooping (trusted/untrusted ports, VLAN-scoped filtering; rate-limit/Option 82 are represented in status data but have no standalone configuration command).
 - Dynamic ARP Inspection (ip arp inspection).
 - IP Source Guard (ip verify source, ip source binding).
 - AAA (aaa new-model, RADIUS & TACACS+ server configuration).
@@ -166,6 +194,10 @@
 - Wireless Networking (SSID, WPA encryption, AP and WLC management).
 - ARP, MAC learning, TTL/Hop simulation.
 - PPP/HDLC WAN encapsulation with PAP/CHAP authentication.
+  - **IP SLA:** synthetic active probes, scheduling, and `show ip sla statistics`.
+  - **QoS:** WFQ/LLQ/CBWFQ queue simulation, saturation drops, and the MQC service-policy hook.
+  - **LLDP-MED / 802.1X:** TLV selection, dynamic neighbor detail, and EAPOL/RADIUS state simulation.
+  - **MSTP / IPsec / SDN:** CIST/MSTI, ESP/SA, YANG, and controller datastore simulation helpers.
   - **SSH (v1/v2) and Telnet session management (end-to-end):** the full chain `crypto key generate rsa modulus 2048` → `ip ssh version 2` → `username <user> privilege 15 secret <pw>` → `line vty 0 4` → `login local` → `transport input ssh` fully configures SSH. From a PC terminal, `ssh <user>@<ip>` simulates a successful connection: it verifies RSA keys + SSH v2 + login local + transport ssh, authenticates the password against the local user database, and records the session as `established` in `sshSessions` (visible via `show ssh` / `show ip ssh`).
   - `switchport trunk allowed vlan add/remove/except/all` syntax for granular VLAN filtering.
 
@@ -173,14 +205,14 @@
 - **Network Fundamentals:** IPv4/IPv6 Addressing, Subnetting, VLSM, Link-Local IPv6 (`fe80::`), EUI-64 Host Address derivation, SLAAC (`no ipv6 nd suppress-ra`), Straight-through/Crossover/Fiber/Serial cabling.
 - **Network Access / Switching:** VLANs (1-4094, 802.1Q, Native VLAN, Voice VLAN, Trunk allowed VLAN lists), VTP v1/v2 (Server/Client/Transparent), STP / PVST+ / MSTP (802.1s — `spanning-tree mode mst`, `spanning-tree mst configuration`, instance-VLAN mapping), EtherChannel (LACP/PAgP/Static), Port Security (Sticky MAC, Violation protect/restrict/shutdown), Wireless (WLC AIR-CT2504-K9, Lightweight AP, CAPWAP, WPA2/WPA3 PSK/Enterprise).
 - **IP Connectivity / Routing:** Static IPv4/IPv6 Routing (Default & Floating static routes), RIPv2 & RIPng (Split horizon, Passive interface, Auto-summary), OSPFv2 & OSPFv3 (Multi-area Area 0/10/20, Router-ID, ABR, NSSA/Stub, Passive-interface, Default-information originate, SPF Dijkstra), EIGRP (DUAL engine, Feasibility Condition, AS, Router-ID, Auto-summary, Metric calculation), BGP (eBGP/iBGP, `router bgp <as>`, `neighbor <ip> remote-as <asn>`, dynamic `Established` / `Idle` neighbor state, `show ip bgp summary`, `show ip bgp`), Route Redistribution (`redistribute ospf/rip/eigrp/bgp/static/connected`).
-- **IP Services:** NAT / PAT (Static NAT, Dynamic NAT, Overload / PAT, `show ip nat translations` port columns `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port`, `show ip nat statistics`), SLAAC IPv6 (Router Advertisements `no ipv6 nd suppress-ra` for automatic host EUI-64 address generation), DHCP Server & Relay (`ip dhcp pool`, `default-router`, `dns-server`, `excluded-address`, `ip helper-address`, IPv6 DHCP pool), FHRP (HSRPv1/v2 Active/Standby/Preempt, VRRP Master/Backup), QoS (MLS QoS, class-map, policy-map), Management (Syslog level `logging trap`, SNMP, NTP, SSH v1/v2, Telnet, CDP/LLDP, SPAN, IP SLA).
-- **Security Fundamentals:** ACLs (Standard 1-99, Extended 100-199 IPv4 ACLs, IPv6 `ipv6 traffic-filter`), Layer 2 Security (DHCP Snooping, Dynamic ARP Inspection DAI, IP Source Guard), AAA & Authentication (`aaa new-model`, RADIUS `radius-server host`, TACACS+ `tacacs-server host`), Cryptography (`crypto key generate rsa`, `enable secret`, `service password-encryption`).
+- **IP Services:** NAT / PAT (static, dynamic, overload/PAT, port-column `show ip nat translations`, and `show ip nat statistics`), SLAAC IPv6 (`no ipv6 nd suppress-ra` and EUI-64), DHCP server & relay (`ip dhcp pool`, `default-router`, `dns-server`, `excluded-address`, `ip helper-address`, IPv6 DHCP pool), FHRP virtual gateway resolution (HSRP Active/Standby and VRRP Master/Backup), QoS (MLS QoS, basic class-map/policy-map, interface service-policy, WFQ/LLQ/CBWFQ), and IP SLA (`icmp-echo`, `jitter`, schedule, RTT/jitter statistics); management includes Syslog, SNMP, NTP, SSH, Telnet, CDP/LLDP, and SPAN.
+- **Security Fundamentals:** ACLs (Standard 1-99, Extended 100-199 IPv4 ACLs, IPv6 `ipv6 traffic-filter`), Layer 2 Security (DHCP Snooping, Dynamic ARP Inspection DAI, IP Source Guard), AAA & Authentication (`aaa new-model`, RADIUS `radius-server host`, TACACS+ `tacacs-server host`), 802.1X/EAPOL state simulation, and Cryptography (`crypto key generate rsa`, `enable secret`, `service password-encryption`).
 
 ### 📚 Education & Training
 - 19 Guided Lessons — step-by-step instructions and automated verification, including "Teach Me" tracks.
 - 46 pre-built example training labs and industry scenarios (SOHO, Campus, Hospital, E-Commerce).
 - 6 Exam Modules and custom exam builder for instructors + automated grading.
-- 3-tier intelligent help system (Beginner, Intermediate, Exam).
+- 3-tier intelligent help system (Beginner, Intermediate, Exam), with context-aware CLI command trees and bilingual network terminology.
 - Built-in Text-to-Speech (TTS) narration for guided lessons.
 - Fault Injection (fault-injection and troubleshooting engine).
   - Automated PDF Certificate generation (with Turkish character mapping, 1-year validity, and secure verification codes). Certificates can be verified by entering the verification code at `http://network2026.vercel.app/verify`; the PDF includes a QR code and the verification code.
@@ -217,15 +249,15 @@
 - Secure input sanitization and XSS protection.
 - Encrypted LocalStorage (XOR + Base64) storage protection.
 - Hardened Content Security Policy (CSP) headers.
-- Mandatory `npm audit` security scans in the CI pipeline.
+- CI runs `pnpm audit` and fails on high/critical vulnerabilities.
 - Exam integrity validation (XOR-based state signature hashing).
 
 ### 🧪 Testing & CI/CD
 - Comprehensive automated test suite using Vitest.
-- Complete CI/CD workflow: TypeScript validation, ESLint checks, npm audit, vitest, and Next.js production builds.
+- CI workflow runs TypeScript validation, high/critical audit checks, Vitest, and the Next.js production build; local `npm run check` additionally runs Oxlint.
 - Automated README statistics updater.
 
-### 📄 Documentation (23 files)
+### 📄 Documentation (24 Markdown files)
 - Comprehensive resources including CLI reference guides, guided lesson manuals, error handling logs, integration guides, L3 switch configurations, wireless guides, room tracking setups, user guides, and the Turkish Training Booklet containing walkthroughs for 46 labs.
 
 ## Architecture / Mimari

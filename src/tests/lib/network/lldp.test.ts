@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { executeCommand } from '@/lib/network/executor';
 import { createInitialState } from '@/lib/network/initialState';
 import type { SwitchState } from '@/lib/network/types';
+import { cmdShowLldp } from '@/lib/network/core/showSwitchingDisplay';
 
 describe('LLDP Protocol Implementation', () => {
   let state: SwitchState;
@@ -91,5 +92,18 @@ describe('LLDP Protocol Implementation', () => {
       state = { ...state, ...result.newState };
     }
     expect(state.ports['fa0/1'].lldpReceive).toBe(false);
+  });
+
+  it('should render neighbor chassis ID and management IP from topology data', () => {
+    const result = cmdShowLldp({ ...state, lldpEnabled: true }, 'show lldp neighbors detail', {
+      language: 'en', sourceDeviceId: 'sw1', deviceStates: new Map(),
+      devices: [
+        { id: 'sw1', type: 'switchL2', name: 'SW1', ports: [], macAddress: '0000.0000.0001' },
+        { id: 'r1', type: 'router', name: 'R1', ip: '10.0.0.2', macAddress: '00AA.BBCC.DDEE', ports: [] },
+      ] as never,
+      connections: [{ id: 'c1', sourceDeviceId: 'sw1', sourcePort: 'fa0/1', targetDeviceId: 'r1', targetPort: 'gi0/0' }] as never,
+    });
+    expect(result.output).toContain('Chassis id: 00AA.BBCC.DDEE');
+    expect(result.output).toContain('IP: 10.0.0.2');
   });
 });

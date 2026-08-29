@@ -343,6 +343,12 @@ export const showPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 2
   },
+  'show policy-map interface': {
+    pattern: /^show\s+policy-map\s+interface(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'show policy-map': {
     pattern: /^show\s+policy-map(\s+(.+))?$/i,
     modes: ['privileged'],

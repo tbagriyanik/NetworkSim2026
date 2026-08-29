@@ -40,7 +40,7 @@ export function checkConnectivity(
   _connections: CanvasConnection[],
   deviceStates?: Map<string, SwitchState>,
   language: 'tr' | 'en' = 'tr',
-  options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string }
+  options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string; dhcpMessage?: 'discover' | 'offer' | 'request' | 'ack' }
 ): {
   success: boolean;
   hops: string[];
@@ -85,7 +85,8 @@ export function checkConnectivity(
 
   // Check if targetIp is a hostname (not an IP address)
   const isIp = (val: string) => /^(\d{1,3}\.){3}\d{1,3}$/.test(val) || val.includes(':');
-  if (!isIp(targetIp)) {
+  const isDhcpBroadcast = targetIp === '255.255.255.255' && options?.protocol === 'udp' && (options.port === '67' || options.port === '68');
+  if (!isIp(targetIp) && !isDhcpBroadcast) {
     // Check if source device has domain lookup disabled
     const sourceState = deviceStates?.get(sourceId);
     if (sourceState?.domainLookup === false) {
@@ -155,7 +156,24 @@ export function checkConnectivity(
     }
   }
 
-  const targetDeviceId = ipMap.get(resolvedTargetIp.toLowerCase());
+  // DHCP Discover/Request is broadcast; relay it to the first configured helper.
+  if (isDhcpBroadcast && deviceStates) {
+    const helperIp = [...safeDeviceStates.values()]
+      .flatMap(state => Object.values(state.ports || {}).flatMap(port => port.helperAddresses || []))[0];
+    if (helperIp) resolvedTargetIp = helperIp;
+  }
+  let targetDeviceId = ipMap.get(resolvedTargetIp.toLowerCase());
+  // HSRP/VRRP virtual IPs resolve to the elected active/master device.
+  if (!targetDeviceId && deviceStates) {
+    const virtualCandidates: Array<{ deviceId: string; priority: number; active: boolean }> = [];
+    for (const [deviceId, state] of safeDeviceStates) {
+      Object.values(state.ports || {}).forEach(port => {
+        Object.values(port.hsrp?.groups || {}).forEach(group => { if (group.virtualIp === resolvedTargetIp) virtualCandidates.push({ deviceId, priority: group.priority ?? 100, active: group.state === 'Active' }); });
+        Object.values(port.vrrp?.groups || {}).forEach(group => { if (group.virtualIp === resolvedTargetIp) virtualCandidates.push({ deviceId, priority: group.priority ?? 100, active: group.state === 'Master' }); });
+      });
+    }
+    targetDeviceId = virtualCandidates.sort((a, b) => Number(b.active) - Number(a.active) || b.priority - a.priority)[0]?.deviceId;
+  }
   let targetDevice = targetDeviceId ? deviceMap.get(targetDeviceId) : undefined;
 
   // If the resolved target is a NAT global IP, the actual end device is the
@@ -1166,7 +1184,8 @@ export function checkConnectivity(
           ) : false;
 
           // Only block if this could be a DHCP packet (exempt ICMP and TCP)
-          const isDhcpTraffic = options?.protocol !== 'icmp' && options?.protocol !== 'tcp';
+          const isDhcpTraffic = options?.dhcpMessage !== undefined ||
+            (options?.protocol === 'udp' && (options.port === '67' || options.port === '68'));
 
           if (isDhcpServer && isDhcpTraffic) {
             return {

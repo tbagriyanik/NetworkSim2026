@@ -70,8 +70,18 @@ function getInlineHelp(mode: CommandMode, partialInput: string, prompt: string, 
       // Top-level commands for current mode
       suggestions = [...(modeCommands[''] || [])];
     } else if (hasSpace) {
+      // Parameterized command families need a small dynamic branch because
+      // the command tree cannot use a literal numeric operation id.
+      if (/^ip\s+sla\s+\d+$/i.test(lower)) {
+        suggestions = ['icmp-echo', 'jitter'];
+      } else if (/^ip\s+sla\s+schedule\s+\d+$/i.test(lower)) {
+        suggestions = ['life'];
+      }
+
       // 1. Exact match in commandHelp tree when trailing space is present (e.g. "debug ?", "debug ip ?")
-      if (modeCommands[lower]) {
+      if (suggestions.length > 0) {
+        // Dynamic suggestions already resolved above.
+      } else if (modeCommands[lower]) {
         suggestions = [...modeCommands[lower]];
       } else {
         // Try expanding the last token if it's an abbreviated sub-keyword (e.g. "interface f" -> "interface FastEthernet")

@@ -33,12 +33,12 @@ const STUB_COMMAND_HINTS: Record<string, { tr: string; en: string }> = {
   'configure replace': { tr: 'Yapılandırma değiştirme (replace) henüz simüle edilmiyor.', en: 'Configuration replace not yet simulated.' },
   'mac access-list': { tr: 'MAC erişim listesi yapılandırması henüz simüle edilmiyor.', en: 'MAC access-list configuration not yet simulated.' },
   'class-map': {
-    tr: 'Sınıf haritası (class-map) ile trafik sınıflandırması yapılır. match-all (tüm koşullar) veya match-any (herhangi bir koşul) kullanılır. Alt komutlar: match access-group, match ip, match protocol, match any. class-map içinde tanımlanan trafik, policy-map ile işlenir. Örn: class-map match-any VOICE → match ip dscp ef',
-    en: 'Class-map is used for traffic classification. Use match-all (all conditions) or match-any (any condition). Sub-commands: match access-group, match ip, match protocol, match any. Traffic matched in class-map is processed by policy-map. E.g.: class-map match-any VOICE → match ip dscp ef'
+    tr: 'Temel class-map tanımı kaydedilir. Örn: class-map match-any VOICE. Ayrıntılı match alt komutları henüz simüle edilmiyor.',
+    en: 'Basic class-map definitions are stored. E.g.: class-map match-any VOICE. Detailed match subcommands are not yet simulated.'
   },
   'policy-map': {
-    tr: 'Politika haritası (policy-map) ile sınıflandırılmış trafiğe QoS eylemleri atanır. class (class-map adı) ile sınıf belirtilir. Alt komutlar: set (dscp/cos), police (hız sınırlama), bandwidth (bant genişliği), priority (öncelik), shape (şekillendirme). interface\'e service-policy ile uygulanır. Örn: policy-map QOS → class VOICE → priority 1000',
-    en: 'Policy-map assigns QoS actions to classified traffic. Use class (class-map name) to specify the class. Sub-commands: set (dscp/cos), police (rate limiting), bandwidth (bandwidth allocation), priority (priority queuing), shape (traffic shaping). Applied to interface with service-policy. E.g.: policy-map QOS → class VOICE → priority 1000'
+    tr: 'Temel policy-map tanımı kaydedilir. Örn: policy-map QOS. class/set/police gibi ayrıntılı eylem alt komutları henüz simüle edilmiyor.',
+    en: 'Basic policy-map definitions are stored. E.g.: policy-map QOS. Detailed class/set/police actions are not yet simulated.'
   },
   'template': { tr: 'Şablon (template) yapılandırması henüz simüle edilmiyor.', en: 'Template configuration not yet simulated.' },
   'transport output': { tr: 'Çıkış protokolü yapılandırması henüz simüle edilmiyor.', en: 'Output transport configuration not yet simulated.' },

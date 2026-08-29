@@ -238,12 +238,12 @@ export function cmdLoggingTrap(state: SwitchState, input: string, _ctx: CommandC
  */
 export function cmdIpSla(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const schedule = input.match(/^ip\s+sla\s+schedule\s+(\d+)\s+life\s+forever\s+start\s+now/i);
+  if (schedule) return { success: true, output: `IP SLA operation ${schedule[1]} scheduled`, newState: { ipSlaOperations: { ...state.ipSlaOperations, [schedule[1]]: { ...(state.ipSlaOperations?.[schedule[1]] || createIpSlaOperation(schedule[1], 'unknown')), running: true } } } };
   const match = input.match(/^ip\s+sla\s+(\d+)/i);
   if (!match) return { success: false, error: '% Invalid IP SLA command syntax' };
 
   const slaId = match[1];
-  const schedule = input.match(/^ip\s+sla\s+schedule\s+(\d+)\s+life\s+forever\s+start\s+now/i);
-  if (schedule) return { success: true, output: `IP SLA operation ${schedule[1]} scheduled`, newState: { ipSlaOperations: { ...state.ipSlaOperations, [schedule[1]]: { ...(state.ipSlaOperations?.[schedule[1]] || createIpSlaOperation(schedule[1], 'unknown')), running: true } } } };
   const detail = input.match(/^ip\s+sla\s+(\d+)\s+(?:icmp-echo|jitter)\s+(\S+)(?:\s+frequency\s+(\d+))?/i);
   const operations = { ...state.ipSlaOperations };
   if (detail) operations[slaId] = createIpSlaOperation(slaId, detail[2], /jitter/i.test(input) ? 'jitter' : 'icmp-echo', detail[3] ? Number(detail[3]) : 60);

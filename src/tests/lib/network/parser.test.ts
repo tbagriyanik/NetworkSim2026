@@ -160,6 +160,13 @@ describe('Command Parser Functions', () => {
       expect(result.matchedPattern).toBe('version');
     });
 
+    it('should validate IP SLA operation and schedule commands', () => {
+      const operation = parseCommand('ip sla 1 icmp-echo 192.0.2.1 frequency 10', 'config', { ...mockState, currentMode: 'config' });
+      const schedule = parseCommand('ip sla schedule 1 life forever start now', 'config', { ...mockState, currentMode: 'config' });
+      expect(validateCommand(operation!, 'config', { ...mockState, currentMode: 'config' }).matchedPattern).toBe('ip sla');
+      expect(validateCommand(schedule!, 'config', { ...mockState, currentMode: 'config' }).matchedPattern).toBe('ip sla');
+    });
+
     it('should reject commands for wrong mode', () => {
       const parsed: ParsedCommand = { command: 'enable', args: [], rawInput: 'enable', resolvedInput: 'enable' };
       const result = validateCommand(parsed, 'config', mockState);

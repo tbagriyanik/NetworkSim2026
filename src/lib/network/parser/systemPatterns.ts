@@ -442,6 +442,14 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
+  // IP SLA operation and schedule definitions
+  'ip sla': {
+    pattern: /^ip\s+sla\s+(?:(?:\d+\s+(?:icmp-echo|jitter)\s+\S+(?:\s+frequency\s+\d+)?)|(?:schedule\s+\d+\s+life\s+forever\s+start\s+now))$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 7
+  },
+
   // Template
   'template': {
     pattern: /^template\s+(\S+)$/i,

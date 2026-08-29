@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createIpSlaOperation, formatIpSlaStatistics, isIpSlaDue, runSyntheticIpSlaProbe } from '@/lib/network/ipSla';
+import { executeCommand } from '@/lib/network/executor';
+import { createInitialState } from '@/lib/network/initialState';
 
 describe('IP SLA active probes', () => {
   it('records synthetic RTT samples and calculates jitter', () => {
@@ -20,5 +22,16 @@ describe('IP SLA active probes', () => {
     op = { ...op, running: true, lastRunAt: 1000 };
     expect(isIpSlaDue(op, 60000)).toBe(false);
     expect(isIpSlaDue(op, 61000)).toBe(true);
+  });
+
+  it('accepts the CLI operation and schedule forms', () => {
+    let state = createInitialState('TestRouter', 'WS-C3650-24PS');
+    state = { ...state, currentMode: 'config' };
+    let result = executeCommand(state, 'ip sla 10 icmp-echo 192.0.2.1 frequency 10', 'en');
+    expect(result.success).toBe(true);
+    state = { ...state, ...result.newState };
+    result = executeCommand(state, 'ip sla schedule 10 life forever start now', 'en');
+    expect(result.success).toBe(true);
+    expect(result.newState?.ipSlaOperations?.['10']?.running).toBe(true);
   });
 });
