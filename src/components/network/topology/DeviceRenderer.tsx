@@ -172,7 +172,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
     <g
       key={device.id}
       transform={`translate(${device.x}, ${device.y})`}
-      className={`${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isDragging ? 'opacity-40' : ''}`}
+      className={`topology-device-draggable ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} ${isDragging ? 'opacity-40' : ''}`}
       data-device-id={device.id}
       role="button"
       tabIndex={0}

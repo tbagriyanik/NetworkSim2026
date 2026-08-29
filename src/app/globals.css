@@ -353,6 +353,13 @@
   --canvas-bg-4: #080c1a;
 }
 
+/* Keep the grab cursor on a draggable topology object, including its SVG
+   child shapes which may define their own pointer cursor. */
+.topology-device-draggable,
+.topology-device-draggable * {
+  cursor: inherit !important;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
