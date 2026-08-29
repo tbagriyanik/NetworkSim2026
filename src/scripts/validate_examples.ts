@@ -10,9 +10,6 @@ function assert(condition: boolean, message: string) {
 
 function validateProjects(lang: 'en' | 'tr') {
   const projects = exampleProjects(lang);
-  console.log(`\nValidating ${projects.length} projects for language: ${lang}`);
-
-  // Ensure unique IDs
   const ids = projects.map(p => p.id);
   const uniqueIds = new Set(ids);
   assert(uniqueIds.size === ids.length, `Duplicate project IDs found for ${lang}`);
@@ -28,8 +25,6 @@ function validateProjects(lang: 'en' | 'tr') {
     const errors = validateExampleProject(p);
     assert(errors.length === 0, `Validation errors in project ${p.id}: ${errors.join(', ')}`);
   }
-
-  console.log(`All ${projects.length} projects for ${lang} passed basic validation.`);
 }
 
 function runConnectivityChecks() {
@@ -47,7 +42,6 @@ function runConnectivityChecks() {
     const deviceStates = new Map<string, SwitchState>(proj.data.devices.map((d: any) => [d.id, d.state]));
     for (const { src, dst, desc } of checks) {
       const result = checkConnectivity(src, dst, devices, connections, deviceStates, 'en');
-      console.log(`${desc}: ${result.success ? 'PASS' : 'FAIL'}`);
       assert(result.success, `${desc} failed`);
     }
   };
@@ -65,8 +59,6 @@ function runConnectivityChecks() {
     { src: 'laptop-staff', dst: '192.168.10.1', desc: 'Laptop-Staff to Gateway ping' },
     { src: 'laptop-staff', dst: '192.168.10.2', desc: 'Laptop-Staff to WAP-Staff L3 Switch IP ping' }
   ]);
-
-  console.log('All connectivity checks passed.');
 }
 
 function main() {
@@ -74,7 +66,6 @@ function main() {
     validateProjects('en');
     validateProjects('tr');
     runConnectivityChecks();
-    console.log('\nAll example projects validation completed successfully.');
   } catch (e) {
     console.error('Validation failed:', e);
     process.exit(1);
