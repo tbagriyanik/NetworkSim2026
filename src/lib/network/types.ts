@@ -410,6 +410,8 @@ export interface SwitchState {
   lldpTimer?: number;
   lldpHoldtime?: number;
   lldpReinit?: number;
+  lldpTlvSelect?: string[];
+  lldpMed?: { capabilities?: boolean; networkPolicy?: boolean; location?: boolean; power?: boolean };
   snmpCommunities?: Record<string, 'RO' | 'RW'>;
   snmpContact?: string;
   snmpLocation?: string;
@@ -674,6 +676,12 @@ export interface SwitchState {
   syslogTrapLevel?: string;
   currentSlaId?: string;
   ipSlaOperations?: Record<string, IpSlaOperation>;
+  ipSlaTracks?: Record<string, { operationId: string; state: 'up' | 'down'; lastChange: number }>;
+  qosClassMaps?: Record<string, { match: 'all' | 'any'; criteria: string[] }>;
+  qosPolicyMaps?: Record<string, { classes: Record<string, { priority?: boolean; bandwidthPercent?: number }> }>;
+  qosServicePolicies?: Record<string, { direction: 'input' | 'output'; policy: string }>;
+  dot1xSystemAuthControl?: boolean;
+  dot1xSessions?: Record<string, import('./dot1x').Dot1xSession>;
 
   // Route redistribution rules
   redistributeRules?: RedistributeRule[];

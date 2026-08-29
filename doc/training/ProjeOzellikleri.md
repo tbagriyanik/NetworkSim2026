@@ -1,5 +1,11 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
+## Son Ağ Simülasyonu Geliştirmeleri (2026-08-29)
+
+- **IP SLA Active Probes:** Sentetik `icmp-echo` ve `jitter` prob gönderimi, RTT/jitter ölçümleri, timeout sayaçları ve `show ip sla statistics` çıktısı.
+- **QoS Queue Scheduling:** WFQ, LLQ ve CBWFQ kuyruk algoritmaları; bant genişliği doygunluğunda paket düşürme ve sınıf bazlı istatistikler.
+- Her iki özellik için otomatik birim testleri eklendi.
+
 ## Türkçe (Turkish)
 
 ### 🖥️ Cihazlar ve Topoloji

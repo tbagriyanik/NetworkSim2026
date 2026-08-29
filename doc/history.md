@@ -6,6 +6,10 @@ Yeniden eskiye, tarih ve özellik listesi.
 
 Görev yöneticisi pencere listesi modernleştirildi; eksik örnek açıklamalarına not ve detaylar eklendi. OSPF, RIP ve ACL arıza örneklerine komut ipuçları eklendi. ROAS alt arayüzleri ve örnek topoloji kablo durumları düzeltildi. NTP istemci zamanı ile Linux terminal `date` komutu ve canvas not sürükleme davranışı iyileştirildi.
 
+**IP SLA Active Probes & QoS Queue Scheduling** — Sentetik IP SLA `icmp-echo`/`jitter` prob motoru, RTT min/avg/max, jitter ve timeout istatistikleri ile `show ip sla statistics` desteği eklendi. QoS için deterministik WFQ, LLQ ve CBWFQ kuyruk simülasyonu, doygunlukta paket düşürme ve sınıf bazlı sayaçlar uygulandı. IP SLA ve QoS davranışları için otomatik testler eklendi.
+
+**MSTP BPDU Engine başlangıcı** — CIST root seçimi, MSTI M-record üretimi, bölge adı/revizyon/digest karşılaştırması ve bölge sınırı algılama eklendi; testleri oluşturuldu.
+
 ## v3.4.0 — 2026-08-28
 
 | Tarih | Değişiklik |

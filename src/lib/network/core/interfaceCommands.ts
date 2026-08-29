@@ -1,5 +1,11 @@
 import type { CommandHandler } from './commandTypes';
+const cmdServicePolicy: CommandHandler = (state, input) => {
+  const m = input.match(/^service-policy\s+(input|output)\s+(\S+)$/i);
+  if (!m || !state.currentInterface) return { success: false, error: '% Invalid service-policy syntax' };
+  return { success: true, output: `Service-policy ${m[2]} applied ${m[1]} on ${state.currentInterface}`, newState: { qosServicePolicies: { ...state.qosServicePolicies, [state.currentInterface]: { direction: m[1].toLowerCase() as 'input'|'output', policy: m[2] } } } };
+};
 import { cmdStormControl, cmdStormControlAction, cmdMlsQosTrust, cmdMlsQosCos, cmdPriorityQueueOut, cmdQueueSet, cmdTxQueue } from './interface/cmd.qos';
+import { cmdDot1xPort } from './dot1xCommands';
 import { cmdCdpEnable, cmdNoCdpEnable, cmdUdldEnable, cmdNoUdld, cmdChannelProtocol } from './interface/cmd.cdp';
 import { cmdEncapsulationDot1q, cmdEncapsulationHdlc, cmdEncapsulationPpp, cmdNoEncapsulation, cmdClockRate, cmdNoClockRate, cmdPppAuthPap, cmdPppAuthChap, cmdNoPppAuth, cmdPppPapSentUsername, cmdPppChapCredentials } from './interface/cmd.ppp';
 import { cmdBandwidth, cmdDelay, cmdMtu, cmdKeepalive, cmdNoKeepalive, cmdDirectedBroadcast, cmdCarrierDelay, cmdLoadInterval, cmdPowerInline, cmdPowerInlineConsumption, cmdArpInspectionLimit } from './interface/cmd.physical';
@@ -235,6 +241,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'storm-control action': cmdStormControlAction,
   'mls qos trust': cmdMlsQosTrust,
   'mls qos cos': cmdMlsQosCos,
+  'service-policy': cmdServicePolicy,
+  'dot1x port-control': cmdDot1xPort,
   'set dscp': cmdQosSetDscp,
   'ip dhcp snooping trust': cmdIpDhcpSnoopingTrust,
   'tunnel source': cmdTunnelSource,

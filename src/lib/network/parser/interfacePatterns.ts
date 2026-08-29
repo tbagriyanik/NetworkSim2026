@@ -496,6 +496,8 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'service-policy': { pattern: /^service-policy\s+(input|output)\s+(\S+)$/i, modes: ['interface'], minArgs: 2, maxArgs: 2 },
+  'dot1x port-control': { pattern: /^dot1x\s+port-control\s+(auto|force-authorized|force-unauthorized)$/i, modes: ['interface'], minArgs: 1, maxArgs: 1 },
   'no lldp receive': {
     pattern: /^no\s+lldp\s+receive$/i,
     modes: ['interface', 'config-if-range'],

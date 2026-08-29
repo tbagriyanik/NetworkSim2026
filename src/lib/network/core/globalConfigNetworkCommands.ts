@@ -242,6 +242,8 @@ export function cmdIpSla(state: SwitchState, input: string, _ctx: CommandContext
   if (!match) return { success: false, error: '% Invalid IP SLA command syntax' };
 
   const slaId = match[1];
+  const schedule = input.match(/^ip\s+sla\s+schedule\s+(\d+)\s+life\s+forever\s+start\s+now/i);
+  if (schedule) return { success: true, output: `IP SLA operation ${schedule[1]} scheduled`, newState: { ipSlaOperations: { ...state.ipSlaOperations, [schedule[1]]: { ...(state.ipSlaOperations?.[schedule[1]] || createIpSlaOperation(schedule[1], 'unknown')), running: true } } } };
   const detail = input.match(/^ip\s+sla\s+(\d+)\s+(?:icmp-echo|jitter)\s+(\S+)(?:\s+frequency\s+(\d+))?/i);
   const operations = { ...state.ipSlaOperations };
   if (detail) operations[slaId] = createIpSlaOperation(slaId, detail[2], /jitter/i.test(input) ? 'jitter' : 'icmp-echo', detail[3] ? Number(detail[3]) : 60);
@@ -250,6 +252,14 @@ export function cmdIpSla(state: SwitchState, input: string, _ctx: CommandContext
     output: `IP SLA responder/operation ${slaId} configured`,
     newState: { currentSlaId: slaId, ipSlaOperations: operations }
   };
+}
+
+export function cmdLldpTlvSelect(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^lldp\s+tlv-select\s+(.+)$/i);
+  if (!match) return { success: false, error: '% Invalid LLDP TLV selection' };
+  const selected = match[1].trim().split(/\s+/).map(v => v.toLowerCase());
+  return { success: true, output: `LLDP TLV-MED selection configured: ${selected.join(', ')}`, newState: { lldpTlvSelect: selected, lldpMed: { capabilities: true, networkPolicy: selected.includes('network-policy') || selected.includes('all'), power: selected.includes('power') || selected.includes('all'), location: selected.includes('location') || selected.includes('all') } } };
 }
 
 export function cmdSpanningTreeMst(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {

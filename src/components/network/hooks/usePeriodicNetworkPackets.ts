@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
+import { runSyntheticIpSlaProbe } from '@/lib/network/ipSla';
 
 interface UsePeriodicNetworkPacketsOptions {
   devices: CanvasDevice[];
@@ -35,7 +36,7 @@ export function usePeriodicNetworkPackets({
       const currentConnections = connectionsRef.current;
       const currentStates = deviceStatesRef.current;
 
-      if (!currentDevices.length || !currentConnections.length) return;
+      if (!currentDevices.length) return;
 
       const packetsToDispatch: Array<{
         connectionId: string;
@@ -45,6 +46,21 @@ export function usePeriodicNetworkPackets({
         length: number;
         info: string;
       }> = [];
+
+      // IP SLA scheduled operations: emit a synthetic probe and persist its result.
+      currentDevices.forEach(device => {
+        const state = currentStates?.get(device.id);
+        if (!state?.ipSlaOperations) return;
+        Object.values(state.ipSlaOperations).forEach(operation => {
+          if (!operation.running) return;
+          const target = currentDevices.find(d => d.ip === operation.target);
+          const reachable = Boolean(target && target.status !== 'offline');
+          const updated = runSyntheticIpSlaProbe(operation, { reachable, latency: reachable ? 2 : undefined });
+          state.ipSlaOperations![operation.id] = updated;
+          const connection = currentConnections.find(c => c.sourceDeviceId === device.id && (c.targetDeviceId === target?.id || c.targetDeviceId === device.id));
+          if (connection) packetsToDispatch.push({ connectionId: connection.id || `${connection.sourceDeviceId}-${connection.targetDeviceId}`, sourceIp: device.ip || device.name, targetIp: operation.target, protocol: 'IP SLA', length: operation.type === 'jitter' ? 128 : 64, info: `IP SLA ${operation.id} ${operation.type} probe` });
+        });
+      });
 
       currentConnections.forEach(conn => {
         if (conn.active === false) return;
@@ -97,7 +113,7 @@ export function usePeriodicNetworkPackets({
             targetIp: '01:80:C2:00:00:0E',
             protocol: 'LLDP',
             length: 150,
-            info: `LLDP Announcement: Device ${devA.name} Port ${conn.sourcePort}`,
+            info: `LLDP Announcement: Device ${devA.name} Port ${conn.sourcePort}${stateA?.lldpMed ? ` MED TLVs: ${Object.keys(stateA.lldpMed).filter(k => stateA.lldpMed?.[k as keyof NonNullable<typeof stateA.lldpMed>]).join(', ')}` : ''}`,
           });
         }
 
@@ -111,7 +127,7 @@ export function usePeriodicNetworkPackets({
             targetIp: '01:80:C2:00:00:0E',
             protocol: 'LLDP',
             length: 150,
-            info: `LLDP Announcement: Device ${devB.name} Port ${conn.targetPort}`,
+            info: `LLDP Announcement: Device ${devB.name} Port ${conn.targetPort}${stateB?.lldpMed ? ` MED TLVs: ${Object.keys(stateB.lldpMed).filter(k => stateB.lldpMed?.[k as keyof NonNullable<typeof stateB.lldpMed>]).join(', ')}` : ''}`,
           });
         }
 

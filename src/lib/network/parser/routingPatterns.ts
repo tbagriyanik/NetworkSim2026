@@ -193,6 +193,9 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'lldp tlv-select': {
+    pattern: /^lldp\s+tlv-select\s+(.+)$/i, modes: ['config'], minArgs: 1, maxArgs: 4
+  },
   'vtp mode': {
     pattern: /^vtp\s+mode\s+(server|client|transparent|off)$/i,
     modes: ['config'],

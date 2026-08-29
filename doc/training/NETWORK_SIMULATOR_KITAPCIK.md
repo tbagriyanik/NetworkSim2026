@@ -549,6 +549,9 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `cdp holdtime <sec>` | Set CDP hold time |
 | `mls qos` | Enable MLS QoS |
 | `no mls qos` | Disable MLS QoS |
+| `ip sla <id>` | Create IP SLA operation |
+| `ip sla <id> icmp-echo <target> [frequency <seconds>]` | Configure synthetic ICMP probe |
+| `ip sla <id> jitter <target> [frequency <seconds>]` | Configure synthetic jitter probe |
 | `router rip` | Enable RIP routing |
 | `router ospf [<id>]` | Enable OSPF routing |
 | `no router rip` | Disable RIP |
@@ -919,6 +922,7 @@ The simulator supports **280+ commands** across multiple configuration modes.
 | `show etherchannel` | Display EtherChannel |
 | `show arp` / `show ip arp` | Display ARP table |
 | `show mls qos` | Display QoS status |
+| `show ip sla statistics` | Display IP SLA RTT, jitter, sent/received and timeout statistics |
 | `show ip arp inspection` | Display ARP inspection |
 | `show access-lists` | Display access lists |
 | `show mac access-lists` | Display MAC access lists |
@@ -6770,10 +6774,28 @@ Router'lar arasında varsayılan ağ geçidi yedekliliği:
 
 ### 15. QoS (Quality of Service) Yapılandırma Komutları
 - `priority-queue out`, `queue-set <n>` ve `tx-queue <n>` komutları interface state içine kaydedilir.
-- Bu komutların paket önceliklendirme, kuyruk gecikmesi ve gerçek trafik şekillendirme etkileri henüz simüle edilmez.
-- `class-map` ve `policy-map` komutları hâlâ stub durumundadır.
+- **WFQ:** Akış ağırlığına göre adil servis sağlar.
+- **LLQ:** `priority` sınıfına kesin öncelik verir; gecikmeye duyarlı paketleri korur.
+- **CBWFQ:** Sınıflara ayrılan `bandwidth percent` kotasını uygular; doygunlukta kota aşan paketleri düşürür.
 
-### 16. Spatial Partitioning (Uzamsal Bölümleme)
+Örnek CLI:
+```text
+(config)# mls qos
+(config)# class-map match-any VOICE
+(config)# policy-map WAN-POLICY
+(config-pmap)# class VOICE
+(config-pmap-c)# priority
+(config-pmap-c)# class DATA
+(config-pmap-c)# bandwidth percent 25
+```
+
+### 16. IP SLA Active Probes
+- `(config)# ip sla 10 icmp-echo 192.168.1.1 frequency 10`: Sentetik ICMP probu tanımlar.
+- `(config)# ip sla 20 jitter 192.168.1.1 frequency 10`: Jitter ölçümlü prob tanımlar.
+- `# show ip sla statistics`: RTT min/avg/max, jitter, gönderilen/alınan/kaybedilen paket ve timeout sonuçlarını gösterir.
+- Prob motoru topoloji erişilebilirliğini kullanır; gerçek ağ paketleri yerine deterministik sentetik örnekler üretir.
+
+### 17. Spatial Partitioning (Uzamsal Bölümleme)
 - Topolojide 100+ cihaz ve kablo olduğunda render performansının düşmesini engellemek için, tuval alanı sanal karelere bölünür (spatial hashing). Sadece ekranda görünür olan (viewport) cihazlar ve kablolar çizilerek yüksek FPS korunur.
 
 ### 17. Gelişmiş EtherChannel

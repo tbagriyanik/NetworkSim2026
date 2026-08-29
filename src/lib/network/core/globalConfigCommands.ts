@@ -12,7 +12,9 @@ import { validateIpRoutingSupport } from './L3Validation';
 import { createStubHandler } from './stubCommandHints';
 import { cmdAccessList, cmdNoAccessList } from './interface/cmd.misc';
 import { cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress, cmdIpDhcpSnoopingVlan, cmdNoIpDhcpSnooping } from './globalConfigDhcpCommands';
-import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdSpanningTreeMst } from './globalConfigNetworkCommands';
+import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdLldpTlvSelect, cmdSpanningTreeMst } from './globalConfigNetworkCommands';
+import { cmdClassMap, cmdPolicyMap } from './qosMqcCommands';
+import { cmdDot1xSystem } from './dot1xCommands';
 import { cmdAaaNewModel, cmdNoAaaNewModel, cmdAaaAuthentication, cmdRadiusServerHost, cmdTacacsServerHost, cmdRadiusServerKey, cmdTacacsServerKey } from './globalConfigAaaCommands';
 import {
   cmdNoIpHttpServer,
@@ -134,10 +136,12 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'ip dhcp snooping': cmdIpDhcpSnooping,
   'no ip dhcp snooping': cmdNoIpDhcpSnooping,
   'mls qos': cmdMlsQos,
+  'dot1x system-auth-control': cmdDot1xSystem,
   'no mls qos': cmdNoMlsQos,
   'cdp run': cmdCdpRun,
   'no cdp run': cmdNoCdpRun,
   'lldp run': cmdLldpRun,
+  'lldp tlv-select': cmdLldpTlvSelect,
   'no lldp run': cmdNoLldpRun,
   'username': cmdUsername,
   'no username': cmdNoUsername,
@@ -200,8 +204,8 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'default interface': cmdDefaultInterface,
   'configure replace': createStubHandler('configure replace'),
   'mac access-list': createStubHandler('mac access-list'),
-  'class-map': createStubHandler('class-map'),
-  'policy-map': createStubHandler('policy-map'),
+  'class-map': cmdClassMap,
+  'policy-map': cmdPolicyMap,
   'template': createStubHandler('template'),
   'access-list': cmdAccessList,
   'no access-list': cmdNoAccessList,

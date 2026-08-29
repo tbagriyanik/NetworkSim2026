@@ -232,6 +232,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `logging host <ip>` | Configure Syslog server host IP address |
 | `logging trap <level>` | Set Syslog logging severity level |
 | `ip sla <id>` | Create IP SLA monitoring operation |
+| `ip sla <id> icmp-echo <target> [frequency <seconds>]` | Configure synthetic ICMP echo probe |
+| `ip sla <id> jitter <target> [frequency <seconds>]` | Configure synthetic jitter probe |
 | `spanning-tree mode mst` | Set Spanning Tree mode to Multiple Spanning Tree (MST) |
 | `spanning-tree mst configuration` | Enter MST configuration mode |
 | `spanning-tree mst <instance-id> priority <val>` | Set MST instance bridge priority (in config mode) |
@@ -247,8 +249,9 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ip route <network> <mask> [next-hop]` | Remove static IPv4 route (next-hop optional if single route) |
 | `ipv6 route <prefix>/<len> <next-hop>` | Add static IPv6 route |
 | `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
-| `class-map [match-all\|match-any] <name>` | ⚠️ Stub - Create QoS class map |
-| `policy-map <name>` | ⚠️ Stub - Create QoS policy map |
+| `class-map [match-all\|match-any] <name>` | Create QoS class map |
+| `policy-map <name>` | Create QoS policy map |
+| WFQ / LLQ / CBWFQ | Simulate queue scheduling and packet drops under bandwidth saturation |
 | `template <name>` | ⚠️ Stub - Enter template configuration mode |
 | `access-list <id> <action> <condition>` | Create numbered ACL (1-99 standard, 100-199 extended) |
 | `ip access-list {standard|extended} <name>` | Create named ACL |

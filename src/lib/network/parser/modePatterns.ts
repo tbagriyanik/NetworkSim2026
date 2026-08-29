@@ -407,6 +407,7 @@ export const modePatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'dot1x system-auth-control': { pattern: /^dot1x\s+system-auth-control$/i, modes: ['config'], minArgs: 0, maxArgs: 0 },
   'no lldp run': {
     pattern: /^no\s+lldp\s+run$/i,
     modes: ['config'],
