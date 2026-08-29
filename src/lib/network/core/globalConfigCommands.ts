@@ -11,44 +11,36 @@ import { getDeviceCapabilities } from '../capabilities';
 import { validateIpRoutingSupport } from './L3Validation';
 import { createStubHandler } from './stubCommandHints';
 import { cmdAccessList, cmdNoAccessList } from './interface/cmd.misc';
-import { cmdNoIpDhcpSnooping, cmdIpDhcpSnoopingVlan, cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress } from './globalConfigDhcp';
-import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList } from './globalConfigNat';
-import { cmdAaaNewModel, cmdNoAaaNewModel, cmdAaaAuthentication, cmdRadiusServerHost, cmdTacacsServerHost, cmdRadiusServerKey, cmdTacacsServerKey } from './globalConfigSecurity';
-import { cmdLoggingHost, cmdLoggingTrap } from './globalConfigServices';
+import { cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress, cmdIpDhcpSnoopingVlan, cmdNoIpDhcpSnooping } from './globalConfigDhcpCommands';
+import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdSpanningTreeMst } from './globalConfigNetworkCommands';
+import { cmdAaaNewModel, cmdNoAaaNewModel, cmdAaaAuthentication, cmdRadiusServerHost, cmdTacacsServerHost, cmdRadiusServerKey, cmdTacacsServerKey } from './globalConfigAaaCommands';
 import {
   cmdNoIpHttpServer,
   cmdNoIpDomainLookup,
   cmdNoIpDomainName,
   cmdNoIpRouting,
   cmdNoIpSshTimeOut,
-  cmdNoSpanningTree,
   cmdNoMlsQos,
+  cmdIpSshVersion,
+  cmdIpDomainLookup,
+  cmdSystemMtu,
+  cmdSdmPrefer,
+  cmdIpSshAuthRetries
+} from './globalConfigServiceCommands';
+import {
+  cmdNoSpanningTree,
   cmdNoUsername,
   cmdNoInterface,
-  cmdIpSshVersion,
-  cmdIpArpInspection,
-  cmdNoIpArpInspection,
   cmdSpanningTreeVlan,
   cmdSpanningTreePortfastDefault,
   cmdErrdisableRecovery,
   cmdVtpPassword,
-  cmdNtpServer,
-  cmdClockTimezone,
-  cmdIpNameServer,
-  cmdIpDomainLookup,
-  cmdSystemMtu,
-  cmdSdmPrefer,
-  cmdIpv6UnicastRouting,
-  cmdNoIpv6UnicastRouting,
-  cmdIpv6Route,
-  cmdNoIpv6Route,
-  cmdIpv6RouterRip,
-  cmdIpv6RouterOspf,
-  cmdNoIpv6RouterRip,
-  cmdNoIpv6RouterOspf,
-  cmdIpSshAuthRetries,
+  cmdIpArpInspection,
+  cmdNoIpArpInspection,
   cmdCryptoKeyGenerateRsa,
-  cmdCryptoKeyZeroizeRsa,
+  cmdCryptoKeyZeroizeRsa
+} from './globalConfigSecurityCommands';
+import {
   cmdIpAccessList,
   cmdIpv6AccessList,
   cmdIpv6AclPermit,
@@ -61,19 +53,27 @@ import {
   cmdExtAclDeny,
   cmdExtAclNoPermit,
   cmdExtAclNoDeny,
-  cmdNoIpAccessList,
-  cmdIpHost,
-  cmdAliasExec,
-  cmdNoAliasExec,
-  cmdIpSla,
-  cmdSpanningTreeMst,
+  cmdNoIpAccessList
+} from './globalConfigAclCommands';
+
+import {
   cmdMstName,
   cmdMstRevision,
   cmdMstInstance,
   cmdNoMstInstance,
   cmdMstShowPending,
-  cmdSpanningTreeMstPriority,
-} from './globalConfigExtraCommands';
+  cmdSpanningTreeMstPriority
+} from './globalConfigMstpCommands';
+import {
+  cmdIpv6UnicastRouting,
+  cmdNoIpv6UnicastRouting,
+  cmdIpv6Route,
+  cmdNoIpv6Route,
+  cmdIpv6RouterRip,
+  cmdIpv6RouterOspf,
+  cmdNoIpv6RouterRip,
+  cmdNoIpv6RouterOspf
+} from './globalConfigIpv6Commands';
 
 // Global config (hostname, vlan, vtp, spanning-tree, security, ip domain-name, etc.)
 
