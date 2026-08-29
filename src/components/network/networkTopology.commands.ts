@@ -199,7 +199,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
       cmds: [
         ['hostname R1', isTR ? '1. Cihaz adını belirle' : '1. Set the device hostname', '(config)#'],
         ['ip domain-name example.local', isTR ? '2. RSA anahtarı için alan adı belirle' : '2. Set the domain name for RSA key generation', '(config)#'],
-        ['username admin privilege 15 secret cisco', isTR ? '3. Yerel yönetici kullanıcısı oluştur' : '3. Create a local administrator account', '(config)#'],
+        ['username admin privilege 15 secret netsim', isTR ? '3. Yerel yönetici kullanıcısı oluştur' : '3. Create a local administrator account', '(config)#'],
         ['crypto key generate rsa', isTR ? '4. RSA anahtarlarını oluştur' : '4. Generate RSA keys', '(config)#'],
         ['ip ssh version 2', isTR ? '5. SSH sürüm 2’yi etkinleştir' : '5. Enable SSH version 2', '(config)#'],
         ['line vty 0 4', isTR ? '6. VTY hatlarını yapılandır' : '6. Configure the VTY lines', '(config)#'],

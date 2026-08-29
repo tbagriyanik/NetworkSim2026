@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { shouldOpenPingPacketPanel } from '@/components/network/hooks/usePingSequence';
 
 describe('NetworkTopology Component', () => {
   it('should render SVG canvas element', () => {
@@ -54,5 +55,11 @@ describe('NetworkTopology Component', () => {
   it('should produce ping animation on successful ping', () => {
     const pingAnimation = { active: true, sourceId: 'PC1', targetId: 'PC2' };
     expect(pingAnimation.active).toBe(true);
+  });
+
+  it('should keep packet analysis closed for CLI-triggered ping and traceroute', () => {
+    expect(shouldOpenPingPacketPanel()).toBe(true);
+    expect(shouldOpenPingPacketPanel(false)).toBe(false);
+    expect(shouldOpenPingPacketPanel(undefined)).toBe(true);
   });
 });

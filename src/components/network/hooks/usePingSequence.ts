@@ -1,6 +1,6 @@
 'use client';
 
- 
+
 
 import { useCallback } from 'react';
 import type { CanvasConnection, CanvasDevice } from '../networkTopology.types';
@@ -14,6 +14,10 @@ export interface BroadcastAnimTarget {
   fromY: number;
   toX: number;
   toY: number;
+}
+
+export function shouldOpenPingPacketPanel(openPacketPanel: boolean = true): boolean {
+  return openPacketPanel;
 }
 
 const getPortVlan = (port: { accessVlan?: number | string; vlan?: number | string } | undefined): number => {
@@ -72,7 +76,7 @@ export const buildBroadcastAnimTargets = ({
   const ingressConn = connections.find(conn =>
     conn.active !== false &&
     ((conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
-     (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId))
+      (conn.targetDeviceId === switchId && conn.sourceDeviceId === exceptId))
   );
   const ingressPortId = ingressConn
     ? (ingressConn.sourceDeviceId === switchId ? ingressConn.sourcePort : ingressConn.targetPort)
@@ -108,12 +112,12 @@ export const buildBroadcastAnimTargets = ({
       toY: neighbor.y,
     });
   }
-  
+
   // If there is only 1 target device for the broadcast, skip the animation
   if (result.length === 1) {
     return [];
   }
-  
+
   return result;
 };
 
@@ -195,7 +199,9 @@ export function usePingSequence(deps: PingSequenceDeps) {
     requestAnimationFrame,
   } = deps;
 
-  const startPingAnimation = useCallback((sourceId: string, targetId: string) => {
+  const startPingAnimation = useCallback((sourceId: string, targetId: string, options?: { openPacketPanel?: boolean }) => {
+    const shouldOpenPanel = shouldOpenPingPacketPanel(options?.openPacketPanel ?? true);
+
     if (pingAnimationRef.current) cancelAnimationFrame(pingAnimationRef.current);
     if (pingCleanupTimeoutRef.current) {
       clearTimeout(pingCleanupTimeoutRef.current);
@@ -240,6 +246,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
         frame: 0,
         error: errorMessage,
         hopCount: 0,
+        showPacketPanel: shouldOpenPanel,
         broadcastTargets: [],
         broadcastAnim: [],
         broadcastProgress: 0
@@ -289,7 +296,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
         error: errorMessage,
         hopCount: 0,
         isPaused: isSimulationMode,
-        showPacketPanel: true,
+        showPacketPanel: shouldOpenPanel,
         failedAtHop: Math.max(0, partialPath.length - 2),
         broadcastTargets: [],
         broadcastAnim: [],
@@ -416,7 +423,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
     if (!path || path.length < 2) {
       const errorMessage = isTR ? 'Fiziksel bağlantı yok' : 'No physical connection';
       setHopPacketInfos([]);
-      setPingAnimation({ sourceId, targetId, path: [sourceId], currentHopIndex: 0, progress: 0, success: false, frame: 0, error: errorMessage, hopCount: 0, isPaused: false, showPacketPanel: true, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 });
+      setPingAnimation({ sourceId, targetId, path: [sourceId], currentHopIndex: 0, progress: 0, success: false, frame: 0, error: errorMessage, hopCount: 0, isPaused: false, showPacketPanel: shouldOpenPanel, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 });
       setErrorToast({ message: isTR ? 'Ping başarısız!' : 'Ping failed!', details: errorMessage });
       pingCleanupTimeoutRef.current = setTimeout(() => { setPingAnimation(null); setPingMode(false); setErrorToast(null); }, 3000);
       return;
@@ -425,7 +432,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
     setHopPacketInfos(buildHopPacketInfosFn(path, devices, connections, 64, targetIp));
     pingIsPausedRef.current = isSimulationMode;
     pingStepModeRef.current = isSimulationMode;
-    setPingAnimation({ sourceId, targetId, path, currentHopIndex: 0, progress: 0, success: null, frame: 0, hopCount: 0, isPaused: isSimulationMode, showPacketPanel: true, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 });
+    setPingAnimation({ sourceId, targetId, path, currentHopIndex: 0, progress: 0, success: null, frame: 0, hopCount: 0, isPaused: isSimulationMode, showPacketPanel: shouldOpenPanel, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 });
     setErrorToast(null);
 
     const hopDuration = 1500;

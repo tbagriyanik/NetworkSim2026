@@ -13,7 +13,7 @@ interface UseTopologyPingUIProps {
   setPacketPopupHop: React.Dispatch<React.SetStateAction<number | null>>;
   onPacketPanelFocus?: () => void;
   pingAnimation: PingAnimationState | null;
-  startPingAnimation: (sourceId: string, targetId: string) => void;
+  startPingAnimation: (sourceId: string, targetId: string, options?: { openPacketPanel?: boolean }) => void;
   isTR: boolean;
 }
 
@@ -98,9 +98,9 @@ export function useTopologyPingUI({
   // Listen for global ping animation trigger
   useEffect(() => {
     const handlePingTrigger = (event: Event) => {
-      const { sourceId, targetId } = (event as CustomEvent).detail as { sourceId: string; targetId: string };
+      const { sourceId, targetId, openPacketPanel } = (event as CustomEvent).detail as { sourceId: string; targetId: string; openPacketPanel?: boolean };
       if (sourceId && targetId) {
-        startPingAnimation(sourceId, targetId);
+        startPingAnimation(sourceId, targetId, { openPacketPanel: openPacketPanel ?? true });
       }
     };
     window.addEventListener('trigger-ping-animation', handlePingTrigger as EventListener);

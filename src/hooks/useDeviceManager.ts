@@ -601,7 +601,7 @@ export function useDeviceManager() {
 
         if (triggerPingAnimation) {
           window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-            detail: { sourceId: deviceId, targetId: triggerPingAnimation }
+            detail: { sourceId: deviceId, targetId: triggerPingAnimation, openPacketPanel: false }
           }));
         }
 
@@ -984,7 +984,7 @@ export function useDeviceManager() {
 
       if (triggerPingAnimation) {
         window.dispatchEvent(new CustomEvent('trigger-ping-animation', {
-          detail: { sourceId: deviceId, targetId: triggerPingAnimation }
+          detail: { sourceId: deviceId, targetId: triggerPingAnimation, openPacketPanel: false }
         }));
       }
 

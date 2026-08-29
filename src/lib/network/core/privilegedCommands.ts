@@ -656,6 +656,35 @@ function cmdDebug(state: SwitchState, input: string, _ctx: CommandContext): Comm
             output += `IP: s=192.168.1.100 (gi0/0) d=8.8.8.8 (gi0/1) len 40, forward\n`;
         }
         output += `ip packet debugging is on\n`;
+    } else if (lower === 'ip nat' || lower === 'ip nat detailed') {
+        const insideIf = Object.keys(state.ports || {}).find(p => state.ports?.[p]?.natSide === 'inside') || 'gi0/0';
+        const outsideIf = Object.keys(state.ports || {}).find(p => state.ports?.[p]?.natSide === 'outside') || 'gi0/1';
+        const staticEntries = state.natStaticTranslations || [];
+        const dynamicEntries = state.natTranslations || [];
+
+        output += `\n`;
+        if (staticEntries.length === 0 && dynamicEntries.length === 0) {
+            output += `NAT: No translations configured — configure NAT and run ping to see events\n`;
+        } else {
+            staticEntries.slice(0, 2).forEach((t, i) => {
+                const seq = i + 1;
+                output += `*Mar  1 00:00:0${seq}.00${seq}: NAT: s=${t.localIp}->${t.globalIp}, d=203.0.113.100 [${seq * 10}]\n`;
+                if (lower === 'ip nat detailed') {
+                    output += `*Mar  1 00:00:0${seq}.00${seq + 1}: NAT: i=${insideIf} [${seq * 10}], o=${outsideIf}, protocol=icmp\n`;
+                }
+                output += `*Mar  1 00:00:0${seq}.00${seq + 2}: NAT*: s=203.0.113.100, d=${t.globalIp}->${t.localIp} [${seq * 10}]\n`;
+            });
+            dynamicEntries.slice(0, 2).forEach((t, i) => {
+                const seq = staticEntries.length + i + 1;
+                const dstIp = '203.0.113.100';
+                output += `*Mar  1 00:00:0${seq}.001: NAT: s=${t.localIp}:${t.localPort || 1024}->${t.globalIp}:${t.globalPort || 1024}, d=${dstIp} [${seq * 10}]\n`;
+                if (lower === 'ip nat detailed') {
+                    output += `*Mar  1 00:00:0${seq}.002: NAT: i=${insideIf} [${seq * 10}], o=${outsideIf}, protocol=${t.protocol || 'icmp'}\n`;
+                }
+                output += `*Mar  1 00:00:0${seq}.003: NAT*: s=${dstIp}, d=${t.globalIp}:${t.globalPort || 1024}->${t.localIp}:${t.localPort || 1024} [${seq * 10}]\n`;
+            });
+            output += `\n(Subsequent translations will appear automatically when ping is executed)\n`;
+        }
     }
 
     return {
