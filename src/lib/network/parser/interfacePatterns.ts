@@ -478,6 +478,30 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'lldp transmit': {
+    pattern: /^lldp\s+transmit$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no lldp transmit': {
+    pattern: /^no\s+lldp\s+transmit$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'lldp receive': {
+    pattern: /^lldp\s+receive$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no lldp receive': {
+    pattern: /^no\s+lldp\s+receive$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'channel-group': {
     pattern: /^channel-group\s+(\d+)(\s+mode\s+(on|active|passive|desirable|auto))?$/i,
     modes: ['interface', 'config-if-range'],

@@ -86,6 +86,35 @@ export function usePeriodicNetworkPackets({
           });
         }
 
+        // LLDP
+        if (
+          (devA.type === 'switchL2' || devA.type === 'switchL3' || devA.type === 'router') &&
+          stateA?.lldpEnabled === true
+        ) {
+          packetsToDispatch.push({
+            connectionId: connId,
+            sourceIp: devA.ip || stateA?.hostname || devA.name,
+            targetIp: '01:80:C2:00:00:0E',
+            protocol: 'LLDP',
+            length: 150,
+            info: `LLDP Announcement: Device ${devA.name} Port ${conn.sourcePort}`,
+          });
+        }
+
+        if (
+          (devB.type === 'switchL2' || devB.type === 'switchL3' || devB.type === 'router') &&
+          stateB?.lldpEnabled === true
+        ) {
+          packetsToDispatch.push({
+            connectionId: connId,
+            sourceIp: devB.ip || stateB?.hostname || devB.name,
+            targetIp: '01:80:C2:00:00:0E',
+            protocol: 'LLDP',
+            length: 150,
+            info: `LLDP Announcement: Device ${devB.name} Port ${conn.targetPort}`,
+          });
+        }
+
         // 2. OSPF Hello Periodic Packets (Router/SwitchL3 with OSPF enabled)
         const stA = stateA as unknown as { ospfEnabled?: boolean; routingProtocol?: string; ospfProcessId?: string; ospfArea?: string };
         const stB = stateB as unknown as { ospfEnabled?: boolean; routingProtocol?: string; ospfProcessId?: string; ospfArea?: string };

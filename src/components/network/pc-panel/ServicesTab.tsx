@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Globe, Network, Download, History, Mail } from 'lucide-react';
+import { Globe, Network, Download, History, Mail, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { DnsServiceConfig } from './DnsServiceConfig';
@@ -9,8 +9,10 @@ import { HttpServiceConfig } from './HttpServiceConfig';
 import { DhcpServiceConfig } from './DhcpServiceConfig';
 import { NtpServiceConfig } from './NtpServiceConfig';
 import { MailServiceConfig } from './MailServiceConfig';
+import { SyslogServiceConfig } from './SyslogServiceConfig';
 import { getFtpFilesFromUploadDir, deleteFile, loadFs, saveFs } from './pcFileSystem';
 import type { DhcpPoolConfig, PcFile } from './PCPanel.types';
+import { SyslogMessage } from '@/lib/network/syslog';
 
 interface ServicesTabProps {
   deviceId?: string;
@@ -18,8 +20,8 @@ interface ServicesTabProps {
   isDark: boolean;
   language: string;
   t: Record<string, string>;
-  activeServiceTab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp';
-  setActiveServiceTab: (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp') => void;
+  activeServiceTab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp' | 'syslog';
+  setActiveServiceTab: (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp' | 'syslog') => void;
   mobileVerticalScrollStyle?: React.CSSProperties;
   dispatchDeviceConfig: (config: Record<string, unknown>) => void;
 
@@ -86,6 +88,12 @@ interface ServicesTabProps {
   handleViewReplySend: (replyBody: string, msg: { from?: string; to?: string; subject: string; body: string; timestamp?: string }, onError: (err: string) => void, onSuccess: () => void) => void;
   handleDeleteInbox: (index: number) => void;
   handleDeleteSent: (index: number) => void;
+
+  // SYSLOG
+  serviceSyslogEnabled: boolean;
+  setServiceSyslogEnabled: (val: boolean) => void;
+  serviceSyslogMessages: SyslogMessage[];
+  setServiceSyslogMessages: (val: SyslogMessage[]) => void;
 }
 
 export function ServicesTab({
@@ -162,9 +170,15 @@ export function ServicesTab({
   handleViewReplySend,
   handleDeleteInbox,
   handleDeleteSent,
+
+  // SYSLOG
+  serviceSyslogEnabled,
+  setServiceSyslogEnabled,
+  serviceSyslogMessages,
+  setServiceSyslogMessages,
 }: ServicesTabProps) {
 
-  const serviceTabClass = (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp') => cn(
+  const serviceTabClass = (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp' | 'syslog') => cn(
     'relative inline-flex items-center gap-2 rounded-t-lg border border-b-0 px-4 py-2.5 text-xs font-semibold transition-all duration-200 ease-out focus-ring-animate shrink-0 whitespace-nowrap',
     activeServiceTab === tab
       ? isDark
@@ -175,7 +189,7 @@ export function ServicesTab({
         : 'bg-secondary-100/80 text-secondary-500 border-transparent hover:text-secondary-700 hover:bg-secondary-50'
   );
 
-  const getServiceTabIcon = (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp') => {
+  const getServiceTabIcon = (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp' | 'syslog') => {
     switch (tab) {
       case 'dns':
         return <Globe className="w-3.5 h-3.5" />;
@@ -189,6 +203,8 @@ export function ServicesTab({
         return <Mail className="w-3.5 h-3.5" />;
       case 'ntp':
         return <History className="w-3.5 h-3.5" />;
+      case 'syslog':
+        return <FileText className="w-3.5 h-3.5" />;
     }
   };
 
@@ -199,7 +215,7 @@ export function ServicesTab({
     >
       {/* Inner Tabs for Services - Modern Style */}
       <div className={`flex items-end gap-1 px-4 pt-3 border-b overflow-x-auto custom-scrollbar flex-nowrap ${isDark ? 'border-secondary-700/50 bg-gradient-to-b from-secondary-900/20 to-transparent' : 'border-secondary-200 bg-gradient-to-b from-secondary-50/50 to-transparent'}`}>
-        {(['dns', 'http', 'dhcp', 'ftp', 'mail', 'ntp'] as const).map((tab) => (
+        {(['dns', 'http', 'dhcp', 'ftp', 'mail', 'ntp', 'syslog'] as const).map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveServiceTab(tab)}
@@ -215,7 +231,8 @@ export function ServicesTab({
               (tab === 'dhcp' && serviceDhcpEnabled) ||
               (tab === 'ftp' && serviceFtpEnabled) ||
               (tab === 'mail' && serviceMailEnabled) ||
-              (tab === 'ntp' && serviceNtpEnabled)) && (
+              (tab === 'ntp' && serviceNtpEnabled) ||
+              (tab === 'syslog' && serviceSyslogEnabled)) && (
                 <span className={cn(
                   'w-2 h-2 rounded-full animate-pulse',
                   isDark ? 'bg-success-400' : 'bg-success-500'
@@ -466,6 +483,35 @@ export function ServicesTab({
             serviceMailPassword={serviceMailPassword}
             serviceMailInbox={serviceMailInbox}
             serviceMailSent={serviceMailSent}
+            serviceDhcpEnabled={serviceDhcpEnabled}
+            serviceDhcpPools={serviceDhcpPools}
+          />
+        )}
+
+        {activeServiceTab === 'syslog' && (
+          <SyslogServiceConfig
+            isDark={isDark}
+            language={language}
+            serviceSyslogEnabled={serviceSyslogEnabled}
+            setServiceSyslogEnabled={setServiceSyslogEnabled}
+            serviceSyslogMessages={serviceSyslogMessages}
+            setServiceSyslogMessages={setServiceSyslogMessages}
+            dispatchDeviceConfig={dispatchDeviceConfig}
+            serviceDnsEnabled={serviceDnsEnabled}
+            serviceDnsRecords={serviceDnsRecords}
+            serviceHttpEnabled={serviceHttpEnabled}
+            serviceHttpContent={serviceHttpContent}
+            serviceFtpEnabled={serviceFtpEnabled}
+            serviceMailEnabled={serviceMailEnabled}
+            serviceMailDomain={serviceMailDomain}
+            serviceMailUsername={serviceMailUsername}
+            serviceMailPassword={serviceMailPassword}
+            serviceMailInbox={serviceMailInbox}
+            serviceMailSent={serviceMailSent}
+            serviceNtpEnabled={serviceNtpEnabled}
+            serviceNtpServer={serviceNtpServer}
+            serviceNtpDate={serviceNtpDate}
+            serviceNtpTime={serviceNtpTime}
             serviceDhcpEnabled={serviceDhcpEnabled}
             serviceDhcpPools={serviceDhcpPools}
           />

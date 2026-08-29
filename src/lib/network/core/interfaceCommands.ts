@@ -3,6 +3,7 @@ import { cmdStormControl, cmdStormControlAction, cmdMlsQosTrust, cmdMlsQosCos, c
 import { cmdCdpEnable, cmdNoCdpEnable, cmdUdldEnable, cmdNoUdld, cmdChannelProtocol } from './interface/cmd.cdp';
 import { cmdEncapsulationDot1q, cmdEncapsulationHdlc, cmdEncapsulationPpp, cmdNoEncapsulation, cmdClockRate, cmdNoClockRate, cmdPppAuthPap, cmdPppAuthChap, cmdNoPppAuth, cmdPppPapSentUsername, cmdPppChapCredentials } from './interface/cmd.ppp';
 import { cmdBandwidth, cmdDelay, cmdMtu, cmdKeepalive, cmdNoKeepalive, cmdDirectedBroadcast, cmdCarrierDelay, cmdLoadInterval, cmdPowerInline, cmdPowerInlineConsumption, cmdArpInspectionLimit } from './interface/cmd.physical';
+import { cmdLldpTransmit, cmdLldpReceive, cmdNoLldpTransmit, cmdNoLldpReceive } from './interface/cmd.misc';
 
 // cmd modülleri
 import {
@@ -149,6 +150,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'no switchport access vlan': cmdNoSwitchportAccessVlan,
   'no switchport port-security': cmdNoSwitchportPortSecurity,
   'no cdp enable': cmdNoCdpEnable,
+  'no lldp transmit': cmdNoLldpTransmit,
+  'no lldp receive': cmdNoLldpReceive,
   'no udld': cmdNoUdld,
   'no ip proxy-arp': cmdNoIpProxyArp,
   'no keepalive': cmdNoKeepalive,
@@ -176,6 +179,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'switchport voice vlan': cmdSwitchportVoiceVlan,
   // CDP
   'cdp enable': cmdCdpEnable,
+  'lldp transmit': cmdLldpTransmit,
+  'lldp receive': cmdLldpReceive,
   // Spanning-tree extras
   'spanning-tree bpduguard enable': cmdSpanningTreeBpduguard,
   'spanning-tree bpduguard disable': cmdSpanningTreeBpduguardDisable,

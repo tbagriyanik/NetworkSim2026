@@ -401,4 +401,16 @@ export const modePatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'lldp run': {
+    pattern: /^lldp\s+run$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no lldp run': {
+    pattern: /^no\s+lldp\s+run$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
 };

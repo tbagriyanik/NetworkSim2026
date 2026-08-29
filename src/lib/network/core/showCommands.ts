@@ -36,6 +36,7 @@ import {
   cmdShowIpEigrpNeighbors, cmdShowIpBgpSummary,
   cmdShowIpBgp, cmdShowIpv6Rip, cmdShowIpv6Ospf,
   cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
+  cmdShowIpv6Neighbors,
 } from './showRoutingDisplay';
 
 // Show komutları (show running-config, show vlan, show ip route, vs.)
@@ -74,6 +75,8 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip dhcp snooping': cmdShowIpDhcpSnooping,
   'show interfaces status': cmdShowInterfacesStatus,
   'show cdp': cmdShowCdp,
+  'show lldp': cmdShowLldp,
+  'show lldp neighbors': cmdShowLldp,
   'show vtp status': cmdShowVtpStatus,
   'show etherchannel': cmdShowEtherchannel,
   'show arp': cmdShowArp,
@@ -106,6 +109,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show': cmdShowParent,
   'show ip interface': cmdShowIpInterface,
   'show ipv6 route': cmdShowIpv6Route,
+  'show ipv6 neighbors': cmdShowIpv6Neighbors,
   'show ipv6 interface brief': cmdShowIpv6InterfaceBrief,
   'show ipv6 dhcp pool': cmdShowIpv6DhcpPool,
   'show mac address-table static': cmdShowMacStatic,
@@ -120,7 +124,6 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show controllers': cmdShowControllers,
   'show diagnostic': cmdShowDiag,
   'show privilege': cmdShowPrivilege,
-  'show lldp': cmdShowLldp,
   'show banner motd': cmdShowBannerMotd,
   'show alias': cmdShowAlias,
   'show redundancy': cmdShowRedundancy,
@@ -672,6 +675,8 @@ function cmdDoShow(
       return cmdShowMacAddressTable(state, showCommand, ctx);
     } else if (subCmd.startsWith('cdp neighbors') || subCmd.startsWith('cdp')) {
       return cmdShowCdpNeighbors(state, showCommand, ctx);
+    } else if (subCmd.startsWith('lldp neighbors') || subCmd.startsWith('lldp')) {
+      return cmdShowLldp(state, showCommand, ctx);
     } else if (subCmd.startsWith('ip route') || subCmd.startsWith('ip ro')) {
       return cmdShowIpRoute(state, showCommand, ctx);
     } else if (subCmd.startsWith('clock')) {
@@ -1063,15 +1068,43 @@ function cmdShowNtp(state: SwitchState, _input: string, ctx: CommandContext): Co
  * Show SNMP
  */
 function cmdShowSnmp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const chassis = state.version?.serialNumber || 'XXXXXXXXXXXX';
+  const contact = state.snmpContact || 'unconfigured';
+  const location = state.snmpLocation || 'unconfigured';
   const communities = Object.entries(state.snmpCommunities || {});
-  if (communities.length === 0 && !state.snmpContact && !state.snmpLocation) {
-    return { success: true, output: '\nSNMP agent not configured.\n' };
+
+  let output = `Chassis: ${chassis}\n`;
+  output += `Contact: ${contact}\n`;
+  output += `Location: ${location}\n`;
+  output += `0 SNMP packets input\n`;
+  output += `    0 Bad SNMP version errors\n`;
+  output += `    0 Unknown community name\n`;
+  output += `    0 Illegal operation for community name supplied\n`;
+  output += `    0 Encoding errors\n`;
+  output += `    0 Number of requested variables\n`;
+  output += `    0 Number of altered variables\n`;
+  output += `    0 Get-request PDUs\n`;
+  output += `    0 Get-next PDUs\n`;
+  output += `    0 Set-request PDUs\n`;
+  output += `0 SNMP packets output\n`;
+  output += `    0 Too big errors (Maximum packet size 1500)\n`;
+  output += `    0 No such name errors\n`;
+  output += `    0 Bad values errors\n`;
+  output += `    0 General errors\n`;
+  output += `    0 Response PDUs\n`;
+  output += `    0 Trap PDUs\n`;
+  output += `SNMP logging: ${state.loggingEnabled ? 'enabled' : 'disabled'}\n`;
+
+  if (communities.length > 0) {
+    output += `SNMP communities:\n`;
+    communities.forEach(([name, mode]) => {
+      output += `    ${name} ${mode}\n`;
+    });
+  } else {
+    output += `SNMP communities:\n    <none configured>\n`;
   }
-  const lines = ['\nSNMP configuration:'];
-  communities.forEach(([name, mode]) => lines.push(`  community ${name} ${mode}`));
-  if (state.snmpContact) lines.push(`  contact ${state.snmpContact}`);
-  if (state.snmpLocation) lines.push(`  location ${state.snmpLocation}`);
-  return { success: true, output: `${lines.join('\n')}\n` };
+
+  return { success: true, output };
 }
 
 /**

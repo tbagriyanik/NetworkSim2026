@@ -137,6 +137,8 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no mls qos': cmdNoMlsQos,
   'cdp run': cmdCdpRun,
   'no cdp run': cmdNoCdpRun,
+  'lldp run': cmdLldpRun,
+  'no lldp run': cmdNoLldpRun,
   'username': cmdUsername,
   'no username': cmdNoUsername,
   // 'interface' command handler is in interfaceCommands.ts for proper port validation
@@ -185,6 +187,9 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no ip dhcp excluded-address': cmdNoIpDhcpExcludedAddress,
   'cdp timer': cmdCdpTimer,
   'cdp holdtime': cmdCdpHoldtime,
+  'lldp timer': cmdLldpTimer,
+  'lldp holdtime': cmdLldpHoldtime,
+  'lldp reinit': cmdLldpReinit,
   'snmp-server community': cmdSnmpCommunity,
   'snmp-server contact': cmdSnmpContact,
   'snmp-server location': cmdSnmpLocation,
@@ -1190,6 +1195,34 @@ function cmdNoCdpRun(state: SwitchState, _input: string, _ctx: CommandContext): 
 }
 
 /**
+ * LLDP Run
+ */
+function cmdLldpRun(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: iosModeError() };
+  }
+
+  return {
+    success: true,
+    newState: { lldpEnabled: true }
+  };
+}
+
+/**
+ * No LLDP Run
+ */
+function cmdNoLldpRun(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: iosModeError() };
+  }
+
+  return {
+    success: true,
+    newState: { lldpEnabled: false }
+  };
+}
+
+/**
  * Router RIP - Enable RIP routing
  */
 function cmdRouterRip(state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
@@ -1346,6 +1379,30 @@ function cmdCdpHoldtime(_state: SwitchState, input: string, _ctx: CommandContext
   const value = Number(match[1]);
   if (value < 10 || value > 65535) return { success: false, error: '% CDP holdtime must be between 10 and 65535 seconds' };
   return { success: true, output: `CDP holdtime set to ${value} seconds`, newState: { cdpHoldtime: value } };
+}
+
+function cmdLldpTimer(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^lldp\s+timer\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid LLDP timer value' };
+  const value = Number(match[1]);
+  if (value < 5 || value > 65535) return { success: false, error: '% LLDP timer must be between 5 and 65535 seconds' };
+  return { success: true, output: `LLDP timer set to ${value} seconds`, newState: { lldpTimer: value } };
+}
+
+function cmdLldpHoldtime(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^lldp\s+holdtime\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid LLDP holdtime value' };
+  const value = Number(match[1]);
+  if (value < 10 || value > 65535) return { success: false, error: '% LLDP holdtime must be between 10 and 65535 seconds' };
+  return { success: true, output: `LLDP holdtime set to ${value} seconds`, newState: { lldpHoldtime: value } };
+}
+
+function cmdLldpReinit(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^lldp\s+reinit\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid LLDP reinit value' };
+  const value = Number(match[1]);
+  if (value < 2 || value > 5) return { success: false, error: '% LLDP reinit must be between 2 and 5 seconds' };
+  return { success: true, output: `LLDP reinit set to ${value} seconds`, newState: { lldpReinit: value } };
 }
 
 function cmdSnmpCommunity(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {

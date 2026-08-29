@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
 
 export function usePCPanelState() {
-  const [activeServiceTab, setActiveServiceTab] = useState<'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp'>('dns');
+  const [activeServiceTab, setActiveServiceTab] = useState<'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp' | 'syslog'>('dns');
   const [showCmdSettings, setShowCmdSettings] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');

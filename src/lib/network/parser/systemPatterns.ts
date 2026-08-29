@@ -174,6 +174,12 @@ export const systemPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'clear ipv6 neighbors': {
+    pattern: /^clear\s+ipv6\s+neighbor(s)?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'clear mac address-table': {
     pattern: /^clear\s+mac\s+address-table(\s+(dynamic|static)(\s+vlan\s+\d+)?)?$/i,
     modes: ['privileged'],

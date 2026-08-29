@@ -686,8 +686,105 @@ export function cmdShowMacStatic(_state: SwitchState, _input: string, _ctx: Comm
 /**
  * Show LLDP
  */
-export function cmdShowLldp(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return { success: true, output: '\n% LLDP is not enabled\n' };
+export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
+  const enabled = state.lldpEnabled === true;
+  if (!enabled) {
+    return { success: true, output: '\n% LLDP is not enabled\n' };
+  }
+
+  const timer = state.lldpTimer || 30;
+  const holdtime = state.lldpHoldtime || 120;
+  const reinit = state.lldpReinit || 2;
+
+  if (input.includes('neighbors detail')) {
+    let output = '\n';
+    const connections = ctx.connections || [];
+    const sourceDeviceId = ctx.sourceDeviceId as string;
+    const devices = ctx.devices || [];
+    
+    const deviceConnections = connections.filter(
+      (conn: CanvasConnection) => conn.sourceDeviceId === sourceDeviceId || conn.targetDeviceId === sourceDeviceId
+    );
+
+    if (deviceConnections.length === 0) {
+      output += 'No LLDP neighbors found\n';
+    } else {
+      deviceConnections.forEach((conn: CanvasConnection) => {
+        const isSource = conn.sourceDeviceId === sourceDeviceId;
+        const localPort = isSource ? conn.sourcePort : conn.targetPort;
+        const connectedDeviceId = isSource ? conn.targetDeviceId : conn.sourceDeviceId;
+        const remotePort = isSource ? conn.targetPort : conn.sourcePort;
+
+        const connectedDevice = devices.find((d: CanvasDevice) => d.id === connectedDeviceId);
+        if (connectedDevice) {
+          const deviceType = connectedDevice.type;
+          let capability = 'B';
+          if (deviceType === 'router') capability = 'B,R';
+          else if (deviceType === 'pc' || deviceType === 'iot') capability = 'S';
+
+          output += `------------------------------------------------\n`;
+          output += `Local Intf: ${localPort}\n`;
+          output += `Chassis id: 0050.56a1.b2c3\n`;
+          output += `Port id: ${remotePort}\n`;
+          output += `Port Description: ${remotePort}\n`;
+          output += `System Name: ${connectedDevice.name}\n`;
+          output += `System Description:\n NOS Software, C2960 Software\n`;
+          output += `Time remaining: ${holdtime} seconds\n`;
+          output += `System Capabilities: ${capability}\n`;
+          output += `Enabled Capabilities: ${capability}\n`;
+          output += `Management Addresses:\n    IP: 192.168.1.2\n`;
+        }
+      });
+      output += `------------------------------------------------\n`;
+    }
+    output += '\nTotal entries displayed: ' + deviceConnections.length + '\n';
+    return { success: true, output };
+  } else if (input.includes('neighbors')) {
+    let output = '\nCapability codes:\n';
+    output += '    (R) Router, (B) Bridge, (T) Telephone, (C) DOCSIS Cable Device\n';
+    output += '    (W) WLAN Access Point, (P) Repeater, (S) Station, (O) Other\n\n';
+    output += 'Device ID           Local Intf     Hold-time  Capability      Port ID\n';
+    
+    const connections = ctx.connections || [];
+    const sourceDeviceId = ctx.sourceDeviceId as string;
+    const devices = ctx.devices || [];
+
+    const deviceConnections = connections.filter(
+      (conn: CanvasConnection) => conn.sourceDeviceId === sourceDeviceId || conn.targetDeviceId === sourceDeviceId
+    );
+
+    if (deviceConnections.length === 0) {
+      output += 'No LLDP neighbors found\n';
+    } else {
+      deviceConnections.forEach((conn: CanvasConnection) => {
+        const isSource = conn.sourceDeviceId === sourceDeviceId;
+        const localPort = isSource ? conn.sourcePort : conn.targetPort;
+        const connectedDeviceId = isSource ? conn.targetDeviceId : conn.sourceDeviceId;
+        const remotePort = isSource ? conn.targetPort : conn.sourcePort;
+
+        const connectedDevice = devices.find((d: CanvasDevice) => d.id === connectedDeviceId);
+        if (connectedDevice) {
+          const deviceType = connectedDevice.type;
+          let capability = 'B';
+          if (deviceType === 'router') capability = 'B,R';
+          else if (deviceType === 'pc' || deviceType === 'iot') capability = 'S';
+
+          output += `${connectedDevice.name.padEnd(20)}${localPort.padEnd(15)}${holdtime.toString().padEnd(11)}${capability.padEnd(16)}${remotePort}\n`;
+        }
+      });
+    }
+    
+    output += '\nTotal entries displayed: ' + deviceConnections.length + '\n';
+    return { success: true, output };
+  }
+
+  let output = '\nGlobal LLDP Information:\n';
+  output += `    Status: ACTIVE\n`;
+  output += `    LLDP advertisements are sent every ${timer} seconds\n`;
+  output += `    LLDP hold time advertised is ${holdtime} seconds\n`;
+  output += `    LLDP interface reinitialisation delay is ${reinit} seconds\n`;
+
+  return { success: true, output };
 }
 
 /**

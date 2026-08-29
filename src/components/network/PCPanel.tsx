@@ -338,6 +338,8 @@ export function PCPanel({
   const [serviceNtpTime, setServiceNtpTime] = useState(deviceFromTopology?.services?.ntp?.time || new Date().toTimeString().slice(0, 8));
   const [serviceDhcpEnabled, setServiceDhcpEnabled] = useState(deviceFromTopology?.services?.dhcp?.enabled ?? false);
   const [serviceDhcpPools, setServiceDhcpPools] = useState<DhcpPoolConfig[]>(deviceFromTopology?.services?.dhcp?.pools || []);
+  const [serviceSyslogEnabled, setServiceSyslogEnabled] = useState(deviceFromTopology?.services?.syslog?.enabled ?? false);
+  const [serviceSyslogMessages, setServiceSyslogMessages] = useState<import('@/lib/network/syslog').SyslogMessage[]>(deviceFromTopology?.services?.syslog?.messages || []);
   const isDhcpEditingRef = useRef(false); // Track if user is actively editing DHCP pools
   const isDnsEditingRef = useRef(false); // Track if user is actively editing DNS records
   const checkDhcpAvailabilityRef = useRef<() => { available: boolean; reason: string }>(() => ({ available: true, reason: '' }));
@@ -2284,6 +2286,10 @@ export function PCPanel({
                           handleViewReplySend={handleViewReplySend}
                           handleDeleteInbox={handleDeleteInbox}
                           handleDeleteSent={handleDeleteSent}
+                          serviceSyslogEnabled={serviceSyslogEnabled}
+                          setServiceSyslogEnabled={setServiceSyslogEnabled}
+                          serviceSyslogMessages={serviceSyslogMessages}
+                          setServiceSyslogMessages={setServiceSyslogMessages}
                         />
                       )}
 

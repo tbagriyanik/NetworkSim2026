@@ -86,6 +86,8 @@ export interface Port {
   ospfProcessId?: string;
   ospfArea?: string;
   ipv6DhcpServer?: string;
+  lldpTransmit?: boolean;       // default: true when LLDP enabled
+  lldpReceive?: boolean;        // default: true when LLDP enabled
   isRoutedPort?: boolean;       // For L3 switch routed ports
   isSubinterface?: boolean;     // For subinterfaces (e.g., gi0/0.10)
   tunnel?: {
@@ -362,6 +364,7 @@ export interface SwitchState {
   };
   macAddressTable: { mac: string; vlan: number; port: string; type: string; timestamp?: number }[];
   arpCache: { ip: string; mac: string; interface: string; timestamp: number }[];
+  ndpCache?: { ipv6: string; mac: string; interface: string; state: string; timestamp: number; isRouter?: boolean }[];
   // Password prompt state
   awaitingPassword?: boolean;
   passwordContext?: 'enable' | 'console' | 'vty';
@@ -403,6 +406,10 @@ export interface SwitchState {
   cdpEnabled?: boolean;
   cdpTimer?: number;
   cdpHoldtime?: number;
+  lldpEnabled?: boolean;
+  lldpTimer?: number;
+  lldpHoldtime?: number;
+  lldpReinit?: number;
   snmpCommunities?: Record<string, 'RO' | 'RW'>;
   snmpContact?: string;
   snmpLocation?: string;
@@ -505,6 +512,11 @@ export interface SwitchState {
       date?: string;
       time?: string;
       timeOffset?: number; // Time offset in milliseconds from real system time
+    };
+    syslog?: {
+      enabled: boolean;
+      messages: import('./syslog').SyslogMessage[];
+      maxMessages?: number;
     };
   };
   spanningTreePriority?: number;
@@ -716,6 +728,7 @@ export interface StartupConfig {
   dnsServer?: string;
   sshVersion?: 1 | 2;
   cdpEnabled?: boolean;
+  lldpEnabled?: boolean;
   spanningTreeMode?: 'pvst' | 'rapid-pvst' | 'mst';
   vtpMode?: 'server' | 'client' | 'transparent' | 'off';
   vtpDomain?: string;

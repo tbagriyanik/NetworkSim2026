@@ -5,6 +5,7 @@ import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult, Port } from '../types';
 import { clearArpCache } from '../arp';
+import { clearNdpCache } from '../ndp';
 import { clearMacTable, clearDynamicMacEntries, clearStaticMacEntries } from '../macLearning';
 import { getL3Hops } from '../routing';
 
@@ -43,6 +44,7 @@ export const privilegedHandlers: Record<string, CommandHandler> = {
     'terminal monitor': cmdTerminal,
     'terminal no monitor': cmdTerminal,
     'clear arp-cache': cmdClearArpCache,
+    'clear ipv6 neighbors': cmdClearIpv6Neighbors,
     'clear mac address-table': cmdClearMacAddressTable,
     'clear counters': cmdClearCounters,
     'undebug': cmdUndebug,
@@ -884,6 +886,20 @@ function cmdClearArpCache(_state: SwitchState, _input: string, ctx: CommandConte
 
     if (deviceId && deviceStates) {
         clearArpCache(deviceId, deviceStates);
+    }
+
+    return { success: true, output: '' };
+}
+
+/**
+ * Clear IPv6 Neighbors Cache
+ */
+function cmdClearIpv6Neighbors(_state: SwitchState, _input: string, ctx: CommandContext): CommandResult {
+    const deviceId = ctx.sourceDeviceId;
+    const deviceStates = ctx.deviceStates;
+
+    if (deviceId && deviceStates) {
+        clearNdpCache(deviceId, deviceStates);
     }
 
     return { success: true, output: '' };

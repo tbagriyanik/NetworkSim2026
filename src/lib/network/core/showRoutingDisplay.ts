@@ -1020,3 +1020,33 @@ export function cmdShowIpv6Ospf(state: SwitchState, _input: string, _ctx: Comman
   output += '!\n';
   return { success: true, output };
 }
+
+export function cmdShowIpv6Neighbors(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  let output = '\nIPv6 Address                              Age Link-layer Addr State Interface\n';
+
+  const ndpCache = state.ndpCache || [];
+  const now = Date.now();
+
+  ndpCache.forEach(entry => {
+    const ageMs = now - entry.timestamp;
+    const ageMin = Math.floor(ageMs / 60000);
+    const ageStr = entry.state === 'STATIC' ? '-' : ageMin.toString();
+    const mac = entry.mac || '-';
+    
+    // Format the line, padding logic:
+    // Address: 42 chars
+    // Age: 3 chars right aligned
+    // Space: 1 char
+    // MAC: 15 chars
+    // State: 5 chars
+    // Interface: rest
+    const paddedAddress = entry.ipv6.toUpperCase().padEnd(41, ' ');
+    const paddedAge = ageStr.padStart(3, ' ');
+    const paddedMac = mac.padEnd(15, ' ');
+    const paddedState = entry.state.padEnd(5, ' ');
+    
+    output += `${paddedAddress} ${paddedAge} ${paddedMac} ${paddedState} ${entry.interface}\n`;
+  });
+
+  return { success: true, output };
+}

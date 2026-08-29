@@ -175,6 +175,24 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'lldp timer': {
+    pattern: /^lldp\s+timer\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'lldp holdtime': {
+    pattern: /^lldp\s+holdtime\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'lldp reinit': {
+    pattern: /^lldp\s+reinit\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'vtp mode': {
     pattern: /^vtp\s+mode\s+(server|client|transparent|off)$/i,
     modes: ['config'],

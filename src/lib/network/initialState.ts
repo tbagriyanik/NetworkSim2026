@@ -690,6 +690,7 @@ export function buildStartupConfig(state: SwitchState): StartupConfig {
     dnsServer: state.dnsServer,
     sshVersion: state.sshVersion,
     cdpEnabled: state.cdpEnabled,
+    lldpEnabled: state.lldpEnabled,
     spanningTreeMode: state.spanningTreeMode,
     vtpMode: state.vtpMode,
     vtpDomain: state.vtpDomain,

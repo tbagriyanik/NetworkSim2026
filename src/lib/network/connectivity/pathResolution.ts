@@ -2,6 +2,7 @@ import { CanvasDevice, CanvasConnection, CanvasPort } from '@/components/network
 import { SwitchState, Port } from '@/lib/network/types';
 import { findRoute, getRoutingTable, isIpv6InNetwork } from '@/lib/network/routing';
 import { performArpResolution, getMacFromArpCache } from '@/lib/network/arp';
+import { performNdpResolution, getMacFromNdpCache } from '@/lib/network/ndp';
 import { learnMacAddress, findMacPort } from '@/lib/network/macLearning';
 import { ensureDeviceStatesMap } from '@/lib/network/networkUtils';
 import { recalculateStp } from '@/lib/network/stp';
@@ -55,8 +56,8 @@ export function checkConnectivity(
   const portSecurityViolations: Array<{ deviceId: string; portId: string; action: string; mac: string }> = [];
   const traversedPorts: Array<{ deviceId: string; portId: string; type: 'ingress' | 'egress' }> = [];
   const capturedPackets: Array<{ connectionId: string; sourceIp: string; targetIp: string; protocol: string; length: number; info: string }> = [];
-  // Track the ARP broadcast request so it can be recorded on every switch flood port
-  let arpBroadcast: { sourceIp: string; targetIp: string } | null = null;
+  // Track the ARP/NDP broadcast request so it can be recorded on every switch flood port
+  let arpBroadcast: { sourceIp: string; targetIp: string; isIpv6?: boolean } | null = null;
 
   // BOLT: Use a device map for O(1) lookups
   const deviceMap = new Map<string, CanvasDevice>();
@@ -194,49 +195,71 @@ export function checkConnectivity(
     return { success: false, hops: [], hopIds: [], error: 'Request timed out.' };
   }
 
-  // 1.5. Perform ARP resolution if target is in same subnet
-  // ARP is needed for L2 communication to resolve IP to MAC
+  // 1.5. Perform ARP/NDP resolution if target is in same subnet
   const sourceDeviceForArp = deviceMap.get(sourceId);
   if (sourceDeviceForArp && targetDevice?.macAddress) {
     const sourceState = safeDeviceStates.get(sourceId);
     if (sourceState || safeDeviceStates.size === 0) {
-      // Check if source and target are in same subnet
-      // BOLT: Use pre-resolved safeDeviceStates
-      const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, false, sourceDeviceForArp);
-      const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates, sourceDeviceForArp) || '255.255.255.0';
+      const isIpv6 = resolvedTargetIp.includes(':');
+      const sourceIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isIpv6, sourceDeviceForArp);
 
-      if (isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet)) {
-        // Same subnet - perform ARP resolution
-        // Find the interface through which we'll send the ARP
-        // BOLT: Use pre-calculated adjList for O(1) connection lookup
+      let isInSameSubnet = false;
+
+      if (isIpv6) {
+        let prefix = 64;
+        if (sourceState) {
+          for (const p of Object.values(sourceState.ports)) {
+            if (p.ipv6Address?.toLowerCase() === sourceIp.toLowerCase() && p.ipv6Prefix) {
+              prefix = p.ipv6Prefix;
+              break;
+            }
+          }
+        }
+        // Need to import isIpv6InNetwork from routing, but we already have it at the top
+        isInSameSubnet = isIpv6InNetwork(sourceIp, resolvedTargetIp, prefix);
+      } else {
+        const sourceSubnet = getSubnetForDeviceIp(sourceId, sourceIp, devices, safeDeviceStates, sourceDeviceForArp) || '255.255.255.0';
+        isInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);
+      }
+
+      if (isInSameSubnet) {
         const sourceConn = adjList.get(sourceId)?.[0]?.connection;
         const interfaceName = sourceConn ? (sourceConn.sourceDeviceId === sourceId ? sourceConn.sourcePort : sourceConn.targetPort) : 'unknown';
 
-        // ARP broadcast only happens when the target MAC is unknown or the cache
-        // entry has aged out (getMacFromArpCache cleans expired 2-minute entries).
-        const cachedMac = getMacFromArpCache(sourceId, resolvedTargetIp, safeDeviceStates);
+        if (isIpv6) {
+          const cachedMac = getMacFromNdpCache(sourceId, resolvedTargetIp, safeDeviceStates);
+          performNdpResolution(sourceId, resolvedTargetIp, targetDevice.macAddress, interfaceName, safeDeviceStates, targetDevice.type === 'router');
 
-        // Perform ARP resolution (simulated)
-        performArpResolution(
-          sourceId,
-          resolvedTargetIp,
-          targetDevice.macAddress,
-          interfaceName,
-          safeDeviceStates
-        );
+          if (!cachedMac && sourceConn) {
+            arpBroadcast = { sourceIp, targetIp: resolvedTargetIp, isIpv6: true }; // piggyback on arpBroadcast flag for packet flooding
+            // NS: Solicited-node multicast
+            const parts = resolvedTargetIp.split(':');
+            const lastPart = parts[parts.length - 1];
+            // Format ff02::1:ff...
+            capturedPackets.push({
+              connectionId: sourceConn.id,
+              sourceIp: sourceIp,
+              targetIp: `ff02::1:ff00:${lastPart}`, // simplified multicast IP format
+              protocol: 'ICMPv6',
+              length: 72,
+              info: `ICMPv6 NS: Who has ${resolvedTargetIp}?`
+            });
+          }
+        } else {
+          const cachedMac = getMacFromArpCache(sourceId, resolvedTargetIp, safeDeviceStates);
+          performArpResolution(sourceId, resolvedTargetIp, targetDevice.macAddress, interfaceName, safeDeviceStates);
 
-        if (!cachedMac && sourceConn) {
-          // Remember the ARP request so it can be recorded on every switch flood port
-          arpBroadcast = { sourceIp, targetIp: resolvedTargetIp };
-          // Record ARP Broadcast Request
-          capturedPackets.push({
-            connectionId: sourceConn.id,
-            sourceIp: sourceIp,
-            targetIp: '255.255.255.255',
-            protocol: 'ARP',
-            length: 42,
-            info: `ARP Request: Who has ${resolvedTargetIp}? Tell ${sourceIp}`
-          });
+          if (!cachedMac && sourceConn) {
+            arpBroadcast = { sourceIp, targetIp: resolvedTargetIp, isIpv6: false };
+            capturedPackets.push({
+              connectionId: sourceConn.id,
+              sourceIp: sourceIp,
+              targetIp: '255.255.255.255',
+              protocol: 'ARP',
+              length: 42,
+              info: `ARP Request: Who has ${resolvedTargetIp}? Tell ${sourceIp}`
+            });
+          }
         }
       }
     }
@@ -438,17 +461,29 @@ export function checkConnectivity(
         learnMacAddress(bId, sourceMac, dstPortId, sourceVlan, safeDeviceStates);
       }
 
-      // ARP learning on L3 devices (routers, L3 switches) when packet traverses
+      // ARP/NDP learning on L3 devices (routers, L3 switches) when packet traverses
       if (aDevice && (aDevice.type === 'router' || aDevice.type === 'switchL3') && sourceMac && sourceIp) {
-        performArpResolution(aId, sourceIp, sourceMac, srcPortId || 'Vlan1', safeDeviceStates);
+        if (sourceIp.includes(':')) {
+          performNdpResolution(aId, sourceIp, sourceMac, srcPortId || 'Vlan1', safeDeviceStates, aDevice.type === 'router');
+        } else {
+          performArpResolution(aId, sourceIp, sourceMac, srcPortId || 'Vlan1', safeDeviceStates);
+        }
       }
       if (bDevice && (bDevice.type === 'router' || bDevice.type === 'switchL3') && sourceMac && sourceIp) {
-        performArpResolution(bId, sourceIp, sourceMac, dstPortId || 'Vlan1', safeDeviceStates);
+        if (sourceIp.includes(':')) {
+          performNdpResolution(bId, sourceIp, sourceMac, dstPortId || 'Vlan1', safeDeviceStates, bDevice.type === 'router');
+        } else {
+          performArpResolution(bId, sourceIp, sourceMac, dstPortId || 'Vlan1', safeDeviceStates);
+        }
       }
 
-      // Learn target ARP on router / L3 switch next to destination
+      // Learn target ARP/NDP on router / L3 switch next to destination
       if (i === path.length - 2 && (aDevice?.type === 'router' || aDevice?.type === 'switchL3') && targetMac && resolvedTargetIp) {
-        performArpResolution(aId, resolvedTargetIp, targetMac, srcPortId || 'Vlan1', safeDeviceStates);
+        if (resolvedTargetIp.includes(':')) {
+          performNdpResolution(aId, resolvedTargetIp, targetMac, srcPortId || 'Vlan1', safeDeviceStates, targetDevice.type === 'router');
+        } else {
+          performArpResolution(aId, resolvedTargetIp, targetMac, srcPortId || 'Vlan1', safeDeviceStates);
+        }
       }
 
       let packetInfo = options?.protocol === 'icmp' ? 'Echo Request' : 'Data Packet';
@@ -483,14 +518,25 @@ export function checkConnectivity(
       const bId = path[i + 1];
       const conn = pathConnections.get(`${aId}-${bId}`);
       if (conn) {
-        capturedPackets.push({
-          connectionId: conn.id,
-          sourceIp: arpBroadcast.targetIp,
-          targetIp: arpBroadcast.sourceIp,
-          protocol: 'ARP',
-          length: 42,
-          info: `ARP Reply: ${arpBroadcast.targetIp} is at ${targetDevice.macAddress}`
-        });
+        if (arpBroadcast.isIpv6) {
+          capturedPackets.push({
+            connectionId: conn.id,
+            sourceIp: arpBroadcast.targetIp,
+            targetIp: arpBroadcast.sourceIp,
+            protocol: 'ICMPv6',
+            length: 72,
+            info: `ICMPv6 NA: ${arpBroadcast.targetIp} is at ${targetDevice.macAddress}`
+          });
+        } else {
+          capturedPackets.push({
+            connectionId: conn.id,
+            sourceIp: arpBroadcast.targetIp,
+            targetIp: arpBroadcast.sourceIp,
+            protocol: 'ARP',
+            length: 42,
+            info: `ARP Reply: ${arpBroadcast.targetIp} is at ${targetDevice.macAddress}`
+          });
+        }
       }
     }
     // ARP Request (broadcast) floods on every switch port except the incoming one
@@ -510,14 +556,29 @@ export function checkConnectivity(
         const switchPortId = conn.sourceDeviceId === bId ? conn.sourcePort : conn.targetPort;
         const switchPort = safeDeviceStates.get(bId)?.ports?.[switchPortId];
         if (!isPortMemberOfVlan(switchPort, sourceVlan)) continue;
-        capturedPackets.push({
-          connectionId: conn.id,
-          sourceIp: arpBroadcast.sourceIp,
-          targetIp: '255.255.255.255',
-          protocol: 'ARP',
-          length: 42,
-          info: `ARP Request: Who has ${arpBroadcast.targetIp}? Tell ${arpBroadcast.sourceIp}`
-        });
+
+        if (arpBroadcast.isIpv6) {
+          const parts = arpBroadcast.targetIp.split(':');
+          const lastPart = parts[parts.length - 1];
+          capturedPackets.push({
+            connectionId: conn.id,
+            sourceIp: arpBroadcast.sourceIp,
+            targetIp: `ff02::1:ff00:${lastPart}`,
+            protocol: 'ICMPv6',
+            length: 72,
+            info: `ICMPv6 NS: Who has ${arpBroadcast.targetIp}?`
+          });
+        } else {
+          capturedPackets.push({
+            connectionId: conn.id,
+            sourceIp: arpBroadcast.sourceIp,
+            targetIp: '255.255.255.255',
+            protocol: 'ARP',
+            length: 42,
+            info: `ARP Request: Who has ${arpBroadcast.targetIp}? Tell ${arpBroadcast.sourceIp}`
+          });
+        }
+
         // The neighbor switch learns the broadcast source MAC on its ingress port
         const floodNeighborId = conn.sourceDeviceId === bId ? conn.targetDeviceId : conn.sourceDeviceId;
         const floodNeighbor = deviceMap.get(floodNeighborId);

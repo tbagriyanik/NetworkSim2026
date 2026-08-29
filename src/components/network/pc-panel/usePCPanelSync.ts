@@ -192,6 +192,10 @@ export function usePCPanelSync({
               dhcp: {
                 enabled: serviceDhcpEnabled,
                 pools: serviceDhcpPools
+              },
+              syslog: {
+                enabled: deviceFromTopology?.services?.syslog?.enabled ?? false,
+                messages: deviceFromTopology?.services?.syslog?.messages ?? []
               }
             },
             wifi: {
@@ -237,6 +241,10 @@ export function usePCPanelSync({
             time: serviceNtpTime,
           },
           dhcp: { enabled: serviceDhcpEnabled, pools: serviceDhcpPools },
+          syslog: {
+            enabled: deviceFromTopology?.services?.syslog?.enabled ?? false,
+            messages: deviceFromTopology?.services?.syslog?.messages ?? []
+          }
         },
       });
     }, 250);
@@ -261,6 +269,8 @@ export function usePCPanelSync({
     serviceNtpTime,
     serviceDhcpEnabled,
     serviceDhcpPools,
+    deviceFromTopology?.services?.syslog?.enabled,
+    deviceFromTopology?.services?.syslog?.messages,
   ]);
 
   return { dispatchDeviceConfig, syncToGlobal };

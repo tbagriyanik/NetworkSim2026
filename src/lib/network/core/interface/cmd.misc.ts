@@ -635,6 +635,46 @@ export function cmdCdpEnable(state: SwitchState, _input: string, _ctx: CommandCo
   return { success: true, output: 'CDP enabled on interface', newState: { ports: newPorts } };
 }
 
+export function cmdLldpTransmit(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, lldpTransmit: true });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, newState: { ports: newPorts } };
+}
+
+export function cmdNoLldpTransmit(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, lldpTransmit: false });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, newState: { ports: newPorts } };
+}
+
+export function cmdLldpReceive(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, lldpReceive: true });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, newState: { ports: newPorts } };
+}
+
+export function cmdNoLldpReceive(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const updatePort = (port: Port) => ({ ...port, lldpReceive: false });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, newState: { ports: newPorts } };
+}
+
 /**
  * Spanning-Tree BPDUGuard Disable
  */

@@ -165,6 +165,11 @@ export interface CanvasDevice {
         maxUsers: number;
       }>;
     };
+    syslog?: {
+      enabled: boolean;
+      messages: import('../../lib/network/syslog').SyslogMessage[];
+      maxMessages?: number;
+    };
   };
   vlan?: number;
   x: number;

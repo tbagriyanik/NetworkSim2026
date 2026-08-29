@@ -318,6 +318,8 @@ export const PacketCapturePanel = ({
                           const getProtocolColor = (proto: string) => {
                             switch (proto.toUpperCase()) {
                               case 'ICMP': return 'text-primary-500';
+                              case 'ICMPV6':
+                              case 'NDP': return 'text-cyan-500 dark:text-cyan-400';
                               case 'ARP': return 'text-amber-500';
                               case 'STP': return 'text-emerald-500';
                               case 'HTTP': return 'text-sky-500 dark:text-sky-400';

@@ -117,6 +117,12 @@ export const showPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'show ipv6 neighbors': {
+    pattern: /^show\s+ipv6\s+neighbor(s)?$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'show spanning-tree': {
     pattern: /^show\s+spanning-tree(\s+(vlan|interface|detail|summary)\s*(.+)?)?$/i,
     modes: ['user', 'privileged'],

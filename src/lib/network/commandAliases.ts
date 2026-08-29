@@ -117,6 +117,21 @@ export const commandAliases: Record<string, string> = {
   'sh cdp det': 'show cdp neighbors detail',
   'sh cdp deta': 'show cdp neighbors detail',
 
+  'sh lldp': 'show lldp neighbors',
+  'sh lldp n': 'show lldp neighbors',
+  'sh lldp ne': 'show lldp neighbors',
+  'sh lldp nei': 'show lldp neighbors',
+  'sh lldp neig': 'show lldp neighbors',
+  'sh lldp neigh': 'show lldp neighbors',
+  'sh lldp neighb': 'show lldp neighbors',
+  'sh lldp neighbo': 'show lldp neighbors',
+  'sh lldp neighbor': 'show lldp neighbors',
+
+  'sh lldp ne de': 'show lldp neighbors detail',
+  'sh lldp nei d': 'show lldp neighbors detail',
+  'sh lldp det': 'show lldp neighbors detail',
+  'sh lldp deta': 'show lldp neighbors detail',
+
   'sh ip int br': 'show ip interface brief',
   'sh ip int brie': 'show ip interface brief',
   'sh ip int brief': 'show ip interface brief',
@@ -131,6 +146,7 @@ export const commandAliases: Record<string, string> = {
   'sh ip int': 'show ip interface brief',
   'show interface trunk': 'show interfaces trunk',
   'show cdp neighbor': 'show cdp neighbors',
+  'show lldp neighbor': 'show lldp neighbors',
   'show mac address': 'show mac address-table',
 
   'sh int sta': 'show interfaces status',
@@ -973,5 +989,22 @@ export const commandAliases: Record<string, string> = {
   // Setup
   'set': 'setup',
   'setu': 'setup',
-  'setup': 'setup'
+  'setup': 'setup',
+
+  'sh ipv6 nei': 'show ipv6 neighbors',
+  'sh ipv6 neig': 'show ipv6 neighbors',
+  'sh ipv6 neigh': 'show ipv6 neighbors',
+  'show ipv6 ne': 'show ipv6 neighbors',
+  'show ipv6 nei': 'show ipv6 neighbors',
+  'show ipv6 neig': 'show ipv6 neighbors',
+  'show ipv6 neigh': 'show ipv6 neighbors',
+  'show ipv6 neighbor': 'show ipv6 neighbors',
+  'show ipv6 neighbors': 'show ipv6 neighbors',
+
+  'clear ipv6 ne': 'clear ipv6 neighbors',
+  'clear ipv6 nei': 'clear ipv6 neighbors',
+  'clear ipv6 neig': 'clear ipv6 neighbors',
+  'clear ipv6 neigh': 'clear ipv6 neighbors',
+  'clear ipv6 neighbor': 'clear ipv6 neighbors',
+  'clear ipv6 neighbors': 'clear ipv6 neighbors'
 };
