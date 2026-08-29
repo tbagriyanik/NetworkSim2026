@@ -673,6 +673,7 @@ export interface SwitchState {
   syslogHost?: string;
   syslogTrapLevel?: string;
   currentSlaId?: string;
+  ipSlaOperations?: Record<string, IpSlaOperation>;
 
   // Route redistribution rules
   redistributeRules?: RedistributeRule[];
@@ -691,6 +692,13 @@ export interface SwitchState {
   tacacsServers?: Array<{ host: string; key?: string }>;
   radiusKey?: string;
   tacacsKey?: string;
+}
+
+export interface IpSlaSample { success: boolean; rtt?: number; timestamp: number; }
+export interface IpSlaOperation {
+  id: string; target: string; type: 'icmp-echo' | 'jitter'; frequency: number;
+  timeout: number; sourceInterface?: string; running: boolean;
+  statistics: { attempts: number; successes: number; failures: number; min?: number; avg?: number; max?: number; jitter?: number; last?: number; samples: IpSlaSample[] };
 }
 
 export interface RedistributeRule {

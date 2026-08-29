@@ -111,6 +111,10 @@ export const showPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 1
   },
+  'show ip sla statistics': {
+    pattern: /^show\s+ip\s+sla\s+statistics$/i,
+    modes: ['user', 'privileged'], minArgs: 0, maxArgs: 0
+  },
   'show ipv6 interface brief': {
     pattern: /^show\s+ipv6\s+interface\s+brief$/i,
     modes: ['user', 'privileged'],

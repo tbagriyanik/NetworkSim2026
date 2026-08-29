@@ -5,6 +5,7 @@ import { SwitchState, CommandResult } from '../types';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import { getSwitchDisplayProfile } from './showHelpers';
 import { checkConnectivity } from '../connectivity';
+import { formatIpSlaStatistics } from '../ipSla';
 import {
   cmdShowWireless, cmdShowWlanSummary,
   cmdShowApSummary, cmdShowApConfig, cmdShowApJoinStats,
@@ -137,6 +138,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show hosts': cmdShowHosts,
   'show ip nat translations': cmdShowIpNatTranslations,
   'show ip nat statistics': cmdShowIpNatStatistics,
+  'show ip sla statistics': cmdShowIpSlaStatistics,
 
   // New: missing show commands
   'show nameif': cmdShowNameif,
@@ -155,6 +157,10 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ipv6 access-list': cmdShowIpv6AccessList,
   'show ipv6 access-lists': cmdShowIpv6AccessList,
 };
+
+function cmdShowIpSlaStatistics(state: SwitchState): CommandResult {
+  return { success: true, output: formatIpSlaStatistics(state.ipSlaOperations) };
+}
 
 /**
  * Show Running Configuration

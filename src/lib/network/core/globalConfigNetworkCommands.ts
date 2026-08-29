@@ -2,6 +2,7 @@ import { iosModeError } from './iosErrors';
 import type { CommandContext } from './commandTypes';
 import type { SwitchState, CommandResult } from '../types';
 import { buildRunningConfig } from './configBuilder';
+import { createIpSlaOperation } from '../ipSla';
 
 export function cmdNtpServer(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
@@ -241,10 +242,13 @@ export function cmdIpSla(state: SwitchState, input: string, _ctx: CommandContext
   if (!match) return { success: false, error: '% Invalid IP SLA command syntax' };
 
   const slaId = match[1];
+  const detail = input.match(/^ip\s+sla\s+(\d+)\s+(?:icmp-echo|jitter)\s+(\S+)(?:\s+frequency\s+(\d+))?/i);
+  const operations = { ...state.ipSlaOperations };
+  if (detail) operations[slaId] = createIpSlaOperation(slaId, detail[2], /jitter/i.test(input) ? 'jitter' : 'icmp-echo', detail[3] ? Number(detail[3]) : 60);
   return {
     success: true,
     output: `IP SLA responder/operation ${slaId} configured`,
-    newState: { currentSlaId: slaId }
+    newState: { currentSlaId: slaId, ipSlaOperations: operations }
   };
 }
 
