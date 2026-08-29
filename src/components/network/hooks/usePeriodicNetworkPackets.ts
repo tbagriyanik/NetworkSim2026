@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
-import { runSyntheticIpSlaProbe } from '@/lib/network/ipSla';
+import { isIpSlaDue, runSyntheticIpSlaProbe } from '@/lib/network/ipSla';
 
 interface UsePeriodicNetworkPacketsOptions {
   devices: CanvasDevice[];
@@ -52,7 +52,7 @@ export function usePeriodicNetworkPackets({
         const state = currentStates?.get(device.id);
         if (!state?.ipSlaOperations) return;
         Object.values(state.ipSlaOperations).forEach(operation => {
-          if (!operation.running) return;
+          if (!isIpSlaDue(operation)) return;
           const target = currentDevices.find(d => d.ip === operation.target);
           const reachable = Boolean(target && target.status !== 'offline');
           const updated = runSyntheticIpSlaProbe(operation, { reachable, latency: reachable ? 2 : undefined });

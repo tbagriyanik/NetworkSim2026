@@ -10,6 +10,8 @@ Görev yöneticisi pencere listesi modernleştirildi; eksik örnek açıklamalar
 
 **MSTP BPDU Engine başlangıcı** — CIST root seçimi, MSTI M-record üretimi, bölge adı/revizyon/digest karşılaştırması ve bölge sınırı algılama eklendi; testleri oluşturuldu.
 
+**802.1X, IPsec ve SDN/YANG altyapısı** — `dot1x system-auth-control`, interface port-control, EAPOL state machine ve RADIUS sonucu simülasyonu; IKE Phase 1/2 SA ile ESP protocol 50 kapsülleme; YANG parser ve NETCONF/RESTCONF tarzı SDN controller datastore eklendi. MQC `class-map`, `policy-map` ve `service-policy` komutları stub durumundan çıkarıldı.
+
 ## v3.4.0 — 2026-08-28
 
 | Tarih | Değişiklik |

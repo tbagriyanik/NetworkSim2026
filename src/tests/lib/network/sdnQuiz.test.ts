@@ -1,0 +1,2 @@
+import { describe, expect, it } from 'vitest'; import { answerSdnQuiz, sdnQuizQuestions } from '@/lib/network/sdnQuiz';
+describe('SDN/DNA Center quiz',()=>{it('covers architecture, overlay and automation topics',()=>{expect(sdnQuizQuestions).toHaveLength(4);expect(sdnQuizQuestions.map(q=>q.id)).toEqual(['architecture','overlay','dna','automation']);});it('evaluates answers with an explanation',()=>{expect(answerSdnQuiz('dna',0).correct).toBe(true);expect(answerSdnQuiz('dna',1).correct).toBe(false);expect(answerSdnQuiz('dna',1).explanation).toContain('DNA');});});

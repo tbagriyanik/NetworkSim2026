@@ -1,0 +1,8 @@
+export interface SdnQuizQuestion { id: string; question: string; choices: string[]; answer: number; explanation: string; }
+export const sdnQuizQuestions: SdnQuizQuestion[] = [
+  { id: 'architecture', question: 'SDN’de control plane ile data plane arasındaki temel fark nedir?', choices: ['Control plane karar verir, data plane paket iletir', 'İkisi de yalnızca fiziksel kablodur', 'Data plane politika üretir, control plane kablo döşer'], answer: 0, explanation: 'Controller merkezi kararları üretir; cihazlar forwarding işini yapar.' },
+  { id: 'overlay', question: 'Overlay ağ neyin üzerinde sanal bağlantı kurar?', choices: ['Underlay IP ağının üzerinde', 'Yalnızca konsol kablosunda', 'Sadece DNS kayıtlarının üzerinde'], answer: 0, explanation: 'Overlay, fiziksel underlay üzerinde tünel/sanal ağ oluşturur.' },
+  { id: 'dna', question: 'DNA Center’ın geleneksel cihaz yönetiminden farkı nedir?', choices: ['Policy tabanlı merkezi otomasyon ve görünürlük sağlar', 'Yalnızca seri port hızını değiştirir', 'Sadece paket yakalama yapar'], answer: 0, explanation: 'DNA Center intent/policy, inventory, assurance ve otomasyonu merkezileştirir.' },
+  { id: 'automation', question: 'Ansible, Puppet ve Chef ortak olarak ne sağlar?', choices: ['Tekrarlanabilir otomasyon ve yapılandırma yönetimi', 'Yalnızca fiziksel switch üretimi', 'Sadece kablosuz kanal ölçümü'], answer: 0, explanation: 'Bu araçlar farklı modellerle deklaratif/otomatik yönetim sağlar.' }
+];
+export function answerSdnQuiz(questionId: string, choice: number): { correct: boolean; explanation: string } { const q = sdnQuizQuestions.find(x => x.id === questionId); if (!q) throw new Error('Unknown quiz question'); return { correct: choice === q.answer, explanation: q.explanation }; }

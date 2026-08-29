@@ -707,6 +707,7 @@ export interface IpSlaOperation {
   id: string; target: string; type: 'icmp-echo' | 'jitter'; frequency: number;
   timeout: number; sourceInterface?: string; running: boolean;
   statistics: { attempts: number; successes: number; failures: number; min?: number; avg?: number; max?: number; jitter?: number; last?: number; samples: IpSlaSample[] };
+  lastRunAt?: number;
 }
 
 export interface RedistributeRule {

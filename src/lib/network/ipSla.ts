@@ -15,7 +15,11 @@ export function recordIpSlaProbe(operation: IpSlaOperation, rtt?: number, timest
 }
 
 export function runSyntheticIpSlaProbe(operation: IpSlaOperation, result: { reachable: boolean; latency?: number }, timestamp = Date.now()): IpSlaOperation {
-  return recordIpSlaProbe(operation, result.reachable ? result.latency : undefined, timestamp);
+  return { ...recordIpSlaProbe(operation, result.reachable ? result.latency : undefined, timestamp), lastRunAt: timestamp };
+}
+
+export function isIpSlaDue(operation: IpSlaOperation, now = Date.now()): boolean {
+  return operation.running && (operation.lastRunAt === undefined || now - operation.lastRunAt >= operation.frequency * 1000);
 }
 
 export function formatIpSlaStatistics(operations: Record<string, IpSlaOperation> = {}): string {

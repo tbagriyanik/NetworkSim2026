@@ -237,6 +237,10 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `spanning-tree mode mst` | Set Spanning Tree mode to Multiple Spanning Tree (MST) |
 | `spanning-tree mst configuration` | Enter MST configuration mode |
 | `spanning-tree mst <instance-id> priority <val>` | Set MST instance bridge priority (in config mode) |
+| `lldp tlv-select {all|network-policy|location|power}` | Select LLDP-MED TLVs |
+| `dot1x system-auth-control` | Enable 802.1X system authentication |
+| `crypto isakmp policy <priority>` | Configure IKE Phase 1 policy |
+| `crypto ipsec transform-set <name> <encryption> <auth>` | Configure IPsec Phase 2 transform set |
 | `default interface <name>` | Reset interface configuration while preserving identity |
 | `mac access-list extended <name>` | ⚠️ Stub - Create named MAC access list |
 | `access-list <id> <action> <condition>` | Create numbered ACL (1-99 standard, 100-199 extended) |
@@ -251,6 +255,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
 | `class-map [match-all\|match-any] <name>` | Create QoS class map |
 | `policy-map <name>` | Create QoS policy map |
+| `service-policy {input|output} <name>` | Apply an MQC policy to an interface |
 | WFQ / LLQ / CBWFQ | Simulate queue scheduling and packet drops under bandwidth saturation |
 | `template <name>` | ⚠️ Stub - Enter template configuration mode |
 | `access-list <id> <action> <condition>` | Create numbered ACL (1-99 standard, 100-199 extended) |

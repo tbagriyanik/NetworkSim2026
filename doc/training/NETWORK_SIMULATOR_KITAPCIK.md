@@ -6795,6 +6795,22 @@ Router'lar arasında varsayılan ağ geçidi yedekliliği:
 - `# show ip sla statistics`: RTT min/avg/max, jitter, gönderilen/alınan/kaybedilen paket ve timeout sonuçlarını gösterir.
 - Prob motoru topoloji erişilebilirliğini kullanır; gerçek ağ paketleri yerine deterministik sentetik örnekler üretir.
 
+### 16a. MSTP BPDU Engine
+- CIST root, bridge priority ve MAC adresine göre seçilir.
+- MSTI M-record kayıtları instance/VLAN eşlemesini taşır.
+- Region name, revision ve digest uyuşmazlığı bölge sınırı olarak raporlanır.
+
+### 16b. 802.1X EAP Authentication
+- `dot1x system-auth-control` global 802.1X state’ini açar.
+- Interface’te `dot1x port-control auto` port state’ini yapılandırır; arka planda gerçek EAPOL paketi başlatmaz.
+- EAPOL Start → Identity → Challenge → Success/Failure akışı simüle edilir.
+- Simülasyon API’sinde RADIUS erişilebilirliği sonucu `failed` veya `authorized` state’i üretir; gerçek RADIUS sunucusuna bağlantı yapılmaz.
+
+### 16c. IPsec ve SDN/YANG
+- IKE Phase 1/2 SA modeli ve ESP protocol 50 kapsülleme yardımcıları vardır; gerçek kriptografik tünel kurulmaz.
+- YANG module/leaf parser’ı ile typed controller datastore oluşturulur.
+- Controller sınıfı içinde NETCONF-benzeri XML GET ve RESTCONF-benzeri GET/PATCH işlemleri vardır; harici HTTP endpoint’i yoktur.
+
 ### 17. Spatial Partitioning (Uzamsal Bölümleme)
 - Topolojide 100+ cihaz ve kablo olduğunda render performansının düşmesini engellemek için, tuval alanı sanal karelere bölünür (spatial hashing). Sadece ekranda görünür olan (viewport) cihazlar ve kablolar çizilerek yüksek FPS korunur.
 

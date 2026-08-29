@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createIpSlaOperation, formatIpSlaStatistics, runSyntheticIpSlaProbe } from '@/lib/network/ipSla';
+import { createIpSlaOperation, formatIpSlaStatistics, isIpSlaDue, runSyntheticIpSlaProbe } from '@/lib/network/ipSla';
 
 describe('IP SLA active probes', () => {
   it('records synthetic RTT samples and calculates jitter', () => {
@@ -13,5 +13,12 @@ describe('IP SLA active probes', () => {
     const op = runSyntheticIpSlaProbe(createIpSlaOperation('2', '192.0.2.1'), { reachable: false }, 1);
     expect(op.statistics).toMatchObject({ attempts: 1, successes: 0, failures: 1 });
     expect(formatIpSlaStatistics({ '2': op })).toContain('Packets: Sent = 1, Received = 0, Lost = 1');
+  });
+
+  it('honors the configured frequency for scheduled probes', () => {
+    let op = createIpSlaOperation('3', '10.0.0.3');
+    op = { ...op, running: true, lastRunAt: 1000 };
+    expect(isIpSlaDue(op, 60000)).toBe(false);
+    expect(isIpSlaDue(op, 61000)).toBe(true);
   });
 });

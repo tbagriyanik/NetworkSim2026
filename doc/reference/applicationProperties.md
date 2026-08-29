@@ -67,7 +67,7 @@
 | **ACL (Extended)** | **Yes** | Numbered (100-199, 2000-2699) and named, protocol match (tcp/udp/icmp/ip), source/destination, port (eq), implicit deny |
 | **MAC ACL** | **Yes** | `mac access-list extended` |
 | **Storm Control** | **Yes** | Broadcast/multicast/unicast threshold, action shutdown/trap |
-| **802.1X** | Declared | WLC feature declaration, not deeply simulated |
+| **802.1X** | **Partial** | EAPOL state machine, system-auth-control, port-control and RADIUS simulation |
 | **STP BPDU Guard/Filter** | **Yes** | Global and per-port |
 | **STP Root Guard** | **Yes** | Port-level |
 | **PPP** | **Yes** | WAN serial encapsulation, PAP/CHAP authentication, sent-username |
@@ -75,10 +75,10 @@
 | **SSH** | **Yes** | SSHv1/v2, version config, time-out, authentication-retries, sessions |
 | **Telnet** | **Yes** | Telnet sessions, password auth, transport input |
 | **SPAN (Port Monitoring)** | **Yes** | `monitor session`, source/destination, rx/tx/both |
-| **QoS** | **Yes** | Policy maps, class maps, priority queue, shaping, policing, queuing, MLS QoS |
+| **QoS** | **Partial** | MQC object/service-policy state plus standalone WFQ/LLQ/CBWFQ scheduler; full path traffic hook is not implemented |
 | **SNMP** | **Configuration supported** | `snmp-server community/contact/location`; values are stored and exposed to show/configuration output |
 | **sFlow/NetFlow** | **No** | Not implemented |
-| **VPN (IPsec)** | Declared | ASA features mention Site-to-Site and Remote Access VPN |
+| **VPN (IPsec)** | **Partial** | IKE Phase 1/2 SA and ESP protocol 50 simulation primitives |
 | **IoT Protocols** | Limited | Environment-based rules engine, no CoAP/MQTT simulation |
 | **CAPWAP** | Declared | WLC feature declaration |
 
@@ -320,11 +320,11 @@ The following are marked as **stubs** (not fully implemented) in the codebase:
 21. **Smartphone/Tablet** - Not implemented
 22. **Printer devices** - Not implemented
 23. **Cloud devices** - Not implemented
-24. **VPN (IPsec) implementation** - Declared in ASA features but not functional
-25. **802.1X** - Declared in WLC features but not implemented
+24. **VPN (IPsec) implementation** - CLI and SA/ESP simulation primitives are available
+25. **802.1X** - EAPOL and authenticator state machine are available
 26. **Real-time step-by-step PDU animation** (like Tracer's Simulation Mode) - The simulator has packet capture but not the visual step-by-step PDU walking mode
 
-**⚠️ Stub markers** found in `executor.ts` lines 499-586: setup, test, more, disconnect, resume, suspend, snmp-server, archive, macro, class-map, policy-map, template, power, channel-protocol, priority-queue, session-limit, autocommand, lockable
+**⚠️ Stub markers** found in `executor.ts` lines 499-586: setup, test, more, disconnect, resume, suspend, archive, macro, template, power, priority-queue, session-limit, autocommand, lockable. `class-map` and `policy-map` now have basic state creation; advanced MQC submode actions remain unimplemented.
 
 ---
 
@@ -371,8 +371,8 @@ The following are marked as **stubs** (not fully implemented) in the codebase:
 - No physical mode (rack, physical cabling)
 - No hub, smartphone, tablet, printer, server (dedicated), cloud devices
 - No multi-user real-time topology collaboration
-- VPN/IPsec not implemented
-- 802.1X not implemented
+- VPN/IPsec is currently simulation-level, without full cryptographic transport
+- 802.1X is currently simulation-level, without live RADIUS network I/O
 - Some advanced show commands are stubs
 - No SNMP/NetFlow/sFlow support
 - No IPv6 routing protocol full implementation (RIPng/OSPFv3 present but basic)

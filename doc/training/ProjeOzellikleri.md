@@ -5,6 +5,10 @@
 - **IP SLA Active Probes:** Sentetik `icmp-echo` ve `jitter` prob gönderimi, RTT/jitter ölçümleri, timeout sayaçları ve `show ip sla statistics` çıktısı.
 - **QoS Queue Scheduling:** WFQ, LLQ ve CBWFQ kuyruk algoritmaları; bant genişliği doygunluğunda paket düşürme ve sınıf bazlı istatistikler.
 - Her iki özellik için otomatik birim testleri eklendi.
+- **MSTP BPDU Engine (simülasyon yardımcıları):** CIST root election, MSTI M-record ve region boundary/digest kontrolü; henüz `stp.ts` topoloji akışına tam bağlı değildir.
+- **802.1X EAP (simülasyon yardımcıları):** EAPOL state machine ve RADIUS erişilebilirliğine göre sonuç üretimi; gerçek EAPOL/RADIUS ağı yoktur.
+- **IPsec (simülasyon yardımcıları):** IKE Phase 1/2 SA ve ESP protocol 50 veri modeli; gerçek şifreli taşıma veya path-resolution entegrasyonu yoktur.
+- **SDN/YANG (çekirdek API):** YANG module/leaf parser’ı ve typed datastore; HTTP daemon/route sunucusu içermez.
 
 ## Türkçe (Turkish)
 
