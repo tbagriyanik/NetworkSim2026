@@ -285,7 +285,9 @@ export function IpSettingsTab({
               dispatchDeviceConfig({
                 services: {
                   ntp: {
-                    enabled: serviceNtpEnabled || (trimmedValue !== '' && isValidIpAddress(trimmedValue)),
+                    // An NTP server IP configures this client as an NTP client;
+                    // it must not enable the local NTP server service.
+                    enabled: serviceNtpEnabled,
                     server: value,
                     date: syncedTime?.date || serviceNtpDate,
                     time: syncedTime?.time || serviceNtpTime

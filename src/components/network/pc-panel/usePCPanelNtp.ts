@@ -105,7 +105,6 @@ export function usePCPanelNtp({
       language as 'tr' | 'en',
       { protocol: 'any' }
     );
-    dispatchCapturedPackets(canReach.capturedPackets);
     if (!canReach.success) return null;
 
     let serverDate = '';
@@ -144,6 +143,7 @@ export function usePCPanelNtp({
           time: serverTime,
           realtime: false,
           offset,
+          capturedPackets: canReach.capturedPackets,
         };
       }
     }
@@ -154,6 +154,7 @@ export function usePCPanelNtp({
       time: now.toTimeString().slice(0, 8),
       realtime: true,
       offset: 0,
+      capturedPackets: canReach.capturedPackets,
     };
   }, [
     deviceId,
@@ -165,6 +166,12 @@ export function usePCPanelNtp({
     deviceStates,
     language,
   ]);
+
+  useEffect(() => {
+    if (ntpSyncState && 'capturedPackets' in ntpSyncState) {
+      dispatchCapturedPackets(ntpSyncState.capturedPackets);
+    }
+  }, [ntpSyncState]);
 
   useEffect(() => {
     if (!ntpSyncState) {

@@ -95,6 +95,7 @@ export interface UsePCPanelCommandsParams {
   currentPath: string;
   setCurrentPath: React.Dispatch<React.SetStateAction<string>>;
   setEditingFile: React.Dispatch<React.SetStateAction<{ path: string; content: string } | null>>;
+  getNtpNow?: () => Date | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -206,6 +207,7 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
     currentPath,
     setCurrentPath,
     setEditingFile,
+    getNtpNow,
   } = params;
 
   const executeFtpPut = useCallback((fileName: string) => {
@@ -1173,6 +1175,34 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           }
         } else if (cmd === 'ver') {
           emit('output', `OS [Version 10.0.26200.8037]`);
+        } else if (cmd === 'date') {
+          const now = getNtpNow ? getNtpNow() : null;
+          const effectiveNow = now && !Number.isNaN(now.getTime()) ? now : new Date();
+          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          const dayName = days[effectiveNow.getDay()];
+          const monthStr = String(effectiveNow.getMonth() + 1).padStart(2, '0');
+          const dateStr = String(effectiveNow.getDate()).padStart(2, '0');
+          const yearStr = effectiveNow.getFullYear();
+          if (args.includes('-u') || args.includes('--utc')) {
+            emit('output', effectiveNow.toUTCString());
+          } else {
+            emit('output', `The current date is: ${dayName} ${monthStr}/${dateStr}/${yearStr}`);
+          }
+        } else if (cmd === 'time') {
+          const now = getNtpNow ? getNtpNow() : null;
+          const effectiveNow = now && !Number.isNaN(now.getTime()) ? now : new Date();
+          const hours = String(effectiveNow.getHours()).padStart(2, '0');
+          const mins = String(effectiveNow.getMinutes()).padStart(2, '0');
+          const secs = String(effectiveNow.getSeconds()).padStart(2, '0');
+          const ms = String(effectiveNow.getMilliseconds()).slice(0, 2).padStart(2, '0');
+          emit('output', `The current time is: ${hours}:${mins}:${secs}.${ms}`);
+        } else if (cmd === 'uptime') {
+          const now = getNtpNow ? getNtpNow() : null;
+          const effectiveNow = now && !Number.isNaN(now.getTime()) ? now : new Date();
+          const hours = String(effectiveNow.getHours()).padStart(2, '0');
+          const mins = String(effectiveNow.getMinutes()).padStart(2, '0');
+          const secs = String(effectiveNow.getSeconds()).padStart(2, '0');
+          emit('output', ` ${hours}:${mins}:${secs} up 1 day, 4:20, 1 user, load average: 0.08, 0.03, 0.01`);
         } else if (cmd === 'cd' || cmd === 'chdir') {
           const targetArg = args.join(' ').trim();
           if (!targetArg || targetArg === '.') {

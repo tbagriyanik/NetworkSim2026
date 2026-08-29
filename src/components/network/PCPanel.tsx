@@ -464,6 +464,7 @@ export function PCPanel({
 
   const {
     ntpPanelTime,
+    ntpSyncState,
     applyNtpServerTime,
     formatFullDateTime,
   } = usePCPanelNtp({
@@ -1788,6 +1789,7 @@ export function PCPanel({
     currentPath,
     setCurrentPath,
     setEditingFile,
+    getNtpNow: () => (ntpSyncState ? ntpPanelTime : null),
   });
 
   const {
@@ -2127,6 +2129,7 @@ export function PCPanel({
                           setPcHostname={setPcHostname}
                           setEditingFile={setEditingFile}
                           buildArpTableOutput={buildArpTableOutput}
+                          getNtpNow={() => (ntpSyncState ? ntpPanelTime : null)}
                         />
                       )}
 

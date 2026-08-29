@@ -31,6 +31,7 @@ export interface LinuxExecutorParams {
   buildArpTableOutput?: () => string;
   linuxHistory?: string[];
   silent?: boolean;
+  getNtpNow?: () => Date | null;
 }
 
 export const LINUX_SUGGESTIONS = [
@@ -527,12 +528,21 @@ export async function executeLinuxCommand(
   }
 
   if (command === 'date') {
-    addLocalOutput('output', new Date().toUTCString());
+    const ntpNow = params.getNtpNow ? params.getNtpNow() : null;
+    const now = ntpNow && !Number.isNaN(ntpNow.getTime()) ? ntpNow : new Date();
+
+    if (args.includes('-u') || args.includes('--utc')) {
+      addLocalOutput('output', now.toUTCString());
+    } else {
+      addLocalOutput('output', now.toString());
+    }
     return;
   }
 
   if (command === 'uptime') {
-    const timeStr = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const ntpNow = params.getNtpNow ? params.getNtpNow() : null;
+    const now = ntpNow && !Number.isNaN(ntpNow.getTime()) ? ntpNow : new Date();
+    const timeStr = now.toLocaleTimeString('en-US', { hour12: false });
     addLocalOutput('output', ` ${timeStr} up 2:15,  1 user,  load average: 0.04, 0.03, 0.00`);
     return;
   }

@@ -57,6 +57,7 @@ interface CommandLineTabProps {
   resolveDeviceNameTargetCallback?: (raw: string) => { ip: string; label?: string } | null;
   openWebPage?: (url: string, target?: string) => void;
   buildArpTableOutput?: () => string;
+  getNtpNow?: () => Date | null;
 }
 
 export function CommandLineTab({
@@ -105,6 +106,7 @@ export function CommandLineTab({
   resolveDeviceNameTargetCallback = () => null,
   openWebPage,
   buildArpTableOutput,
+  getNtpNow,
 }: CommandLineTabProps) {
   const inputRef = externalInputRef;
   const autocompleteRef = useRef<HTMLDivElement>(null);
@@ -388,6 +390,7 @@ export function CommandLineTab({
         executeCommand,
         linuxHistory: [cmdToRun, ...linuxHistory.filter(c => c !== cmdToRun)].slice(0, 50),
         buildArpTableOutput,
+        getNtpNow,
       });
     }
   };
@@ -662,6 +665,7 @@ export function CommandLineTab({
                               addLocalOutput: addLinuxOutput,
                               setLinuxOutput,
                               buildArpTableOutput,
+                              getNtpNow,
                             });
                           })();
                           return;
@@ -697,6 +701,7 @@ export function CommandLineTab({
                           addLocalOutput: addLinuxOutput,
                           setLinuxOutput,
                           buildArpTableOutput,
+                          getNtpNow,
                         });
                       })();
                       return;
