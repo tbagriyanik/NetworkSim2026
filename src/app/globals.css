@@ -1259,6 +1259,21 @@ body.graphics-low [class*="shadow-"] {
   box-shadow: none !important;
 }
 
+/* Low graphics must make every glass-style surface opaque. Some windows use
+   translucent Tailwind backgrounds alongside the blur utility, so disabling
+   backdrop-filter alone still leaves the glass appearance behind. */
+body.graphics-low .liquid-glass,
+body.graphics-low .liquid-glass-light,
+body.graphics-low .liquid-glass-strong,
+body.graphics-low [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--background) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
 /* Subtle shadows across the app - reduce glow intensity on hover/active states */
 .shadow-sm {
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.03);
@@ -1266,6 +1281,69 @@ body.graphics-low [class*="shadow-"] {
 
 .shadow {
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+}
+
+/* Final low-graphics override. Keep this at the end so it wins over
+   component-level important translucent background utilities (for example
+   packet-analysis and device windows). */
+html body.graphics-low .liquid-glass,
+html body.graphics-low .liquid-glass-light,
+html body.graphics-low .liquid-glass-strong,
+html body.graphics-low [class*="backdrop-blur"] {
+  background: var(--background) !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* The portal backdrop is only a click-capture layer; it must stay transparent
+   so the area outside browser/device windows matches high-quality mode. */
+html body.graphics-low [data-portal-overlay="true"] {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Explicit fallback for windows whose component-level important background
+   utilities are rendered outside the body quality-class cascade. */
+.graphics-low-solid,
+.graphics-low-solid * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.graphics-low-solid {
+  background-color: var(--background) !important;
+}
+
+.graphics-low-solid [class*="backdrop-blur"],
+.graphics-low-solid [class*="bg-white/"],
+.graphics-low-solid [class*="bg-black/"],
+.graphics-low-solid [class*="bg-muted/"],
+.graphics-low-solid [class*="bg-secondary-"][class*="/"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background-color: var(--background) !important;
+  background-image: none !important;
+}
+
+.graphics-low-solid [class*="bg-"][class*="/"] {
+  background-color: var(--background) !important;
+  background-image: none !important;
+}
+
+.graphics-low-solid [data-modal-header],
+.graphics-low-solid [data-modal-content] {
+  background-color: var(--background) !important;
+  background-image: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .shadow-md {

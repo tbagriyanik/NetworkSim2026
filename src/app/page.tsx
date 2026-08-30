@@ -661,17 +661,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
 
 
-  useEffect(() => {
-    try {
-      const appStoreData = localStorage.getItem('network-simulator-storage');
-      if (!appStoreData) {
-        setGraphicsQuality('high');
-      }
-    } catch {
-      setGraphicsQuality('high');
-    }
-  }, [setGraphicsQuality]);
-
   // Reset scroll when topology is reset or project loaded
   useEffect(() => {
     if (topologyContainerRef.current) {

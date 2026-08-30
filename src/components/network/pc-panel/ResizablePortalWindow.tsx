@@ -291,7 +291,8 @@ export function ResizablePortalWindow({
   return createPortal(
     <div
       data-portal-window="true"
-      className={`fixed inset-0 z-[9999] pointer-events-auto ${isLowGraphics ? 'bg-black/40' : 'bg-black/20'}`}
+      data-portal-overlay="true"
+      className="fixed inset-0 z-[9999] pointer-events-auto bg-transparent"
       onClick={(e) => {
         e.stopPropagation();
         onClose();
@@ -352,12 +353,12 @@ export function ResizablePortalWindow({
               {headerActions}
               <Button
                 size="icon"
-                variant="outline"
+                variant="ghost"
                 onClick={onClose}
-                className="h-8 w-8 shrink-0"
+                className="h-6 w-6 shrink-0 rounded-md bg-error-500 text-white hover:bg-error-600 hover:text-white active:scale-95 transition-all shadow-sm border border-error-600/30"
                 aria-label="Kapat"
               >
-                <X className="w-4 h-4" />
+                <X className="w-3.5 h-3.5 stroke-[3]" />
               </Button>
             </div>
           </div>

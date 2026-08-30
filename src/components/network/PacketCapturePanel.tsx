@@ -33,6 +33,7 @@ export const PacketCapturePanel = ({
   connections: connectionList
 }: PacketCapturePanelProps) => {
   const devices = useAppStore(state => state.topology.devices);
+  const graphicsQuality = useAppStore(state => state.graphicsQuality);
   const storedConnections = useAppStore(state => state.topology.connections);
   const connections = connectionList || storedConnections;
   const { language } = useLanguage();
@@ -185,7 +186,9 @@ export const PacketCapturePanel = ({
   return (
     <DraggableWindowWrapper
       id="packetCapture"
-      className={`liquid-glass-light ${isDark ? '!bg-secondary-950/40 border-emerald-950/80 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]' : '!bg-white/60 border-emerald-950/80 shadow-[0_8px_28px_rgba(15,23,42,0.12)]'}`}
+      className={graphicsQuality === 'low'
+        ? `graphics-low-solid ${isDark ? '!bg-secondary-950 !border-secondary-800' : '!bg-white !border-secondary-200'}`
+        : `liquid-glass-light ${isDark ? '!bg-secondary-950/40 border-emerald-950/80 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]' : '!bg-white/60 border-emerald-950/80 shadow-[0_8px_28px_rgba(15,23,42,0.12)]'}`}
       title={
         <div className="flex flex-col gap-0.5 pointer-events-none">
           <div className="flex items-center gap-2">
@@ -236,7 +239,7 @@ export const PacketCapturePanel = ({
     >
       <div className="flex-1 flex flex-col min-h-0 relative">
         {/* Search & Filter Bar */}
-        <div className={`p-1.5 border-b flex flex-col gap-1.5 text-[11px] ${isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50/60'}`}>
+        <div className={`p-1.5 border-b flex flex-col gap-1.5 text-[11px] ${graphicsQuality === 'low' ? (isDark ? 'border-secondary-800 bg-secondary-950' : 'border-secondary-200 bg-white') : (isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50/60')}`}>
           <div className="flex items-center gap-1.5 w-full">
             <Search className="w-3.5 h-3.5 opacity-50 shrink-0" />
             <input
@@ -268,7 +271,7 @@ export const PacketCapturePanel = ({
           </div>
 
           {(showExclude || excludeQuery) && (
-            <div className={`flex items-center gap-1.5 px-2 py-1 rounded border shadow-sm ${isDark ? 'border-secondary-700 bg-secondary-800/80' : 'border-secondary-300 bg-white'}`}>
+            <div className={`flex items-center gap-1.5 px-2 py-1 rounded border shadow-sm ${isDark ? (graphicsQuality === 'low' ? 'border-secondary-700 bg-secondary-800' : 'border-secondary-700 bg-secondary-800/80') : 'border-secondary-300 bg-white'}`}>
               <span className={`text-[10px] font-bold shrink-0 ${isDark ? 'text-amber-400' : 'text-amber-700'}`}>
                 {language === 'tr' ? 'Dışlanacak:' : 'Exclude:'}
               </span>
@@ -294,7 +297,7 @@ export const PacketCapturePanel = ({
         {/* Table View */}
         <div className="custom-scrollbar p-0 bg-transparent flex-1 overflow-auto w-full">
           <table className="w-full text-[10px] text-left border-collapse">
-            <thead className={`sticky top-0 z-10 ${isDark ? 'bg-secondary-950/80' : 'bg-secondary-100/80'} backdrop-blur-sm`}>
+            <thead className={`sticky top-0 z-10 ${graphicsQuality === 'low' ? (isDark ? 'bg-secondary-950' : 'bg-secondary-100') : (isDark ? 'bg-secondary-950/80' : 'bg-secondary-100/80')} ${graphicsQuality === 'high' ? 'backdrop-blur-sm' : ''}`}>
               <tr>
                 {columnOrder.map((col, idx) => renderHeader(col, idx))}
               </tr>
@@ -359,7 +362,7 @@ export const PacketCapturePanel = ({
 
         {/* Pagination Bar */}
         {filteredPackets.length > 0 && (
-          <div className={`px-2 py-1.5 border-t flex items-center justify-between text-[10px] select-none ${isDark ? 'border-secondary-800 bg-secondary-950/60' : 'border-secondary-200 bg-secondary-100/60'}`}>
+          <div className={`px-2 py-1.5 border-t flex items-center justify-between text-[10px] select-none ${graphicsQuality === 'low' ? (isDark ? 'border-secondary-800 bg-secondary-950' : 'border-secondary-200 bg-secondary-100') : (isDark ? 'border-secondary-800 bg-secondary-950/60' : 'border-secondary-200 bg-secondary-100/60')}`}>
             <span className="opacity-60">
               {language === 'tr'
                 ? `Toplam ${filteredPackets.length} paket (Sayfa ${currentPage} / ${totalPages})`

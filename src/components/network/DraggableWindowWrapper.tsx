@@ -261,10 +261,7 @@ export function DraggableWindowWrapper({
               onClose();
             }}
             className={cn(
-              "flex items-center justify-center p-1.5 ml-2 rounded transition-colors shrink-0",
-              isDark
-                ? "text-secondary-400 hover:text-white hover:bg-error-500/80"
-                : "text-secondary-500 hover:text-white hover:bg-error-500"
+              "flex items-center justify-center w-6 h-6 ml-2 rounded-md bg-error-500 text-white hover:bg-error-600 active:scale-95 transition-all shrink-0 shadow-sm border border-error-600/30",
             )}
             aria-label={t.close}
             title={t.close}

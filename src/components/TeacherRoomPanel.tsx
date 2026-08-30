@@ -329,7 +329,8 @@ export function TeacherRoomPanel() {
           </div>
           <button
             type="button"
-            className="w-5 h-5 rounded-full bg-error-500 hover:bg-error-600 active:scale-95 transition-all inline-flex items-center justify-center text-white shrink-0 shadow-sm border border-error-600/30"
+            className="w-6 h-6 rounded-md bg-error-500 hover:bg-error-600 active:scale-95 transition-all inline-flex items-center justify-center text-white shrink-0 shadow-sm border border-error-600/30"
+            aria-label={t.roomClose}
             title={t.roomClose}
             onClick={() => setShowTeacherPanel(false)}
           >

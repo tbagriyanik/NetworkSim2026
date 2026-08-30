@@ -15,6 +15,7 @@ import {
     Search,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useGraphicsQuality } from '@/lib/store/appStore';
 import dynamic from 'next/dynamic';
 import type { DeviceType, CanvasDevice, CanvasConnection } from './networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
@@ -100,6 +101,8 @@ export function UnifiedDevicePanel({
     restoreRequest
 }: UnifiedDevicePanelProps) {
 
+    const graphicsQuality = useGraphicsQuality();
+
     const [selectedVlan, setSelectedVlan] = React.useState(1);
     const [routeSearch, setRouteSearch] = React.useState('');
     const isNarrow = modalSize.width < 1100;
@@ -145,7 +148,7 @@ export function UnifiedDevicePanel({
     return (
         <DraggableWindowWrapper
             id={deviceId || "deviceUnified"}
-            className={`liquid-glass-light ${isDark ? '!bg-secondary-950/40 border-emerald-950/80 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]' : '!bg-white/60 border-emerald-950/80 shadow-[0_8px_28px_rgba(15,23,42,0.12)]'} ${className || ''}`}
+            className={`${graphicsQuality === 'high' ? `liquid-glass-light ${isDark ? '!bg-secondary-950/40 border-emerald-950/80 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]' : '!bg-white/60 border-emerald-950/80 shadow-[0_8px_28px_rgba(15,23,42,0.12)]'}` : (isDark ? '!bg-secondary-950 !border-secondary-800' : '!bg-white !border-secondary-200')} ${className || ''}`}
             title={
                 <div className="flex items-center gap-2 px-2">
                     <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as 'console' | 'settings' | 'stp')} className="min-w-0">
