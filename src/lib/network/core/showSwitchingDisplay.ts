@@ -721,20 +721,20 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
           let capability = 'B';
           let enabledCapability = 'B';
           let systemDescription = '';
-          
+
           // Set capabilities based on device type
           if (deviceType === 'router') {
             capability = 'B,R';
             enabledCapability = 'B,R';
-            systemDescription = 'Cisco IOS Software, 7200 Series Software';
+            systemDescription = 'NOS Software, 7200 Series Software';
           } else if (deviceType === 'switchL2' || deviceType === 'switchL3') {
             capability = 'B';
             enabledCapability = 'B';
-            systemDescription = 'Cisco IOS Software, C2960 Software';
+            systemDescription = 'NOS Software, C2960 Software';
           } else if (deviceType === 'pc') {
             capability = 'S';
             enabledCapability = 'S';
-            systemDescription = 'Windows PC, Generic Workstation';
+            systemDescription = 'PC, Generic Workstation';
           } else if (deviceType === 'iot') {
             capability = 'S';
             enabledCapability = 'S';
@@ -742,11 +742,11 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
           } else if (deviceType === 'wlc') {
             capability = 'B,W';
             enabledCapability = 'B,W';
-            systemDescription = 'Cisco IOS-XE Software, Wireless LAN Controller';
+            systemDescription = 'IOS-XE Software, Wireless LAN Controller';
           } else if (deviceType === 'firewall') {
             capability = 'B,R';
             enabledCapability = 'B,R';
-            systemDescription = 'Cisco ASA Software, Adaptive Security Appliance';
+            systemDescription = 'ASA Software, Adaptive Security Appliance';
           }
 
           output += `------------------------------------------------\n`;
@@ -787,7 +787,7 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
           output += `System Capabilities: ${capability}\n`;
           output += `Enabled Capabilities: ${enabledCapability}\n`;
           output += `Management Addresses:\n    IP: ${managementIp}\n`;
-          
+
           // Add VLAN information if available
           if (neighborState && deviceType !== 'pc' && deviceType !== 'iot') {
             const vlanInfo = Object.entries(neighborState.ports || {})

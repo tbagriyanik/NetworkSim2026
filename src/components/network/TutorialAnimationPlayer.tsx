@@ -790,6 +790,28 @@ export function TutorialAnimationPlayer({ animationId }: TutorialAnimationPlayer
         );
       }
 
+      case 'subnetting':
+        return (
+          <div className="relative w-full h-56 bg-secondary-900 border border-secondary-800 rounded-lg overflow-hidden flex flex-col justify-between p-4 select-none">
+            <div className="text-center text-sm font-bold text-white">{activeLang === 'tr' ? 'Subnetting Yardımcısı' : 'Subnetting Helper'}</div>
+            <div className="grid grid-cols-4 gap-1 items-center text-center font-mono text-[9px]">
+              <div className="p-2 rounded bg-primary-600 text-white">192.168.1.0/24</div>
+              <div className="text-secondary-400">→</div>
+              <div className="p-2 rounded bg-accent-600 text-white">/26</div>
+              <div className="text-success-400">4 subnet</div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-secondary-200 font-mono">
+              <div className="rounded border border-secondary-700 p-2">Network: 192.168.1.0</div>
+              <div className="rounded border border-secondary-700 p-2">Broadcast: 192.168.1.63</div>
+              <div className="rounded border border-secondary-700 p-2">Hosts: .1 – .62</div>
+              <div className="rounded border border-secondary-700 p-2">62 usable hosts</div>
+            </div>
+            <div className="bg-secondary-950/80 border border-secondary-800 px-2 py-1.5 rounded text-[10px] text-secondary-200 text-center">
+              {activeLang === 'tr' ? 'Subnet maskesi ağ ve host bitlerini ayırır; CIDR öneki küçüldükçe host kapasitesi artar.' : 'The subnet mask separates network and host bits; a smaller CIDR prefix provides more host capacity.'}
+            </div>
+          </div>
+        );
+
       default:
         return (
           <div className="w-full h-40 bg-secondary-100 dark:bg-secondary-900 rounded-lg flex items-center justify-center text-secondary-400 italic text-xs">

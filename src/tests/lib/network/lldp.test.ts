@@ -106,7 +106,7 @@ describe('LLDP Protocol Implementation', () => {
     expect(result.output).toContain('Chassis id: 00AA.BBCC.DDEE');
     expect(result.output).toContain('IP: 10.0.0.2');
     expect(result.output).toContain('System Capabilities: B,R');
-    expect(result.output).toContain('Cisco IOS Software, 7200 Series Software');
+    expect(result.output).toContain('NOS Software, 7200 Series Software');
   });
 
   it('should show device-specific system descriptions', () => {
@@ -119,7 +119,7 @@ describe('LLDP Protocol Implementation', () => {
       connections: [{ id: 'c1', sourceDeviceId: 'r1', sourcePort: 'gi0/0', targetDeviceId: 'sw1', targetPort: 'fa0/1' }] as never,
     });
     expect(switchResult.output).toContain('System Capabilities: B');
-    expect(switchResult.output).toContain('Cisco IOS Software, C2960 Software');
+    expect(switchResult.output).toContain('NOS Software, C2960 Software');
 
     const pcResult = cmdShowLldp({ ...state, lldpEnabled: true }, 'show lldp neighbors detail', {
       language: 'en', sourceDeviceId: 'sw1', deviceStates: new Map(),
@@ -130,6 +130,6 @@ describe('LLDP Protocol Implementation', () => {
       connections: [{ id: 'c1', sourceDeviceId: 'sw1', sourcePort: 'fa0/1', targetDeviceId: 'pc1', targetPort: 'eth0' }] as never,
     });
     expect(pcResult.output).toContain('System Capabilities: S');
-    expect(pcResult.output).toContain('Windows PC, Generic Workstation');
+    expect(pcResult.output).toContain('PC, Generic Workstation');
   });
 });

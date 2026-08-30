@@ -279,6 +279,8 @@ PC panelindeki **Linux Terminal** sekmesinde kullanılabilen komutlar, dosya izi
 | `cmd1 | cmd2` | Pipe: İlk komutun çıktısını ikinciye aktarır | `history | grep ping` |
 | `history` | Daha önce çalıştırılan komut geçmişini listeler | `history` |
 | `ifconfig` / `ip a` | Ağ arayüzleri ve IP yapılandırmalarını gösterir | `ifconfig` |
+| `dhclient eth0` | Linux DHCP lease yeniler | `dhclient eth0` |
+| `dhclient -r eth0` | Linux DHCP lease bırakır | `dhclient -r eth0` |
 | `ip route` | Yönlendirme tablosunu gösterir | `ip route` |
 | `ping <host>` | ICMP Echo isteği gönderir | `ping 192.168.1.1` |
 | `traceroute <host>` | Paket geçiş yolunu izler | `traceroute 8.8.8.8` |

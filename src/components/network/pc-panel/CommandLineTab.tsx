@@ -46,6 +46,8 @@ interface CommandLineTabProps {
   // Optional Linux network props
   deviceId?: string;
   pcIP?: string;
+  setPcIP?: (ip: string) => void;
+  applyDhcpLease?: (force?: boolean) => { ip: string; subnetMask: string; gateway: string; dns: string; serverName: string; poolName: string } | null;
   pcSubnet?: string;
   pcMAC?: string;
   pcGateway?: string;
@@ -95,6 +97,8 @@ export function CommandLineTab({
   outputRef,
   deviceId = 'pc-1',
   pcIP = '192.168.1.10',
+  setPcIP,
+  applyDhcpLease,
   pcSubnet = '255.255.255.0',
   pcMAC = '00:50:79:66:68:00',
   pcGateway = '192.168.1.1',
@@ -374,6 +378,8 @@ export function CommandLineTab({
         setPcHostname,
         setEditingFile,
         pcIP,
+        setPcIP,
+        applyDhcpLease,
         pcSubnet,
         pcMAC,
         pcGateway,
@@ -651,6 +657,8 @@ export function CommandLineTab({
                               setPcHostname,
                               setEditingFile,
                               pcIP,
+                              setPcIP,
+                              applyDhcpLease,
                               pcSubnet,
                               pcMAC,
                               pcGateway,
@@ -687,6 +695,8 @@ export function CommandLineTab({
                           setPcHostname,
                           setEditingFile,
                           pcIP,
+                          setPcIP,
+                          applyDhcpLease,
                           pcSubnet,
                           pcMAC,
                           pcGateway,
@@ -819,6 +829,8 @@ export function CommandLineTab({
                             setPcHostname,
                             setEditingFile,
                             pcIP,
+                            setPcIP,
+                            applyDhcpLease,
                             pcSubnet,
                             pcMAC,
                             pcGateway,

@@ -14,6 +14,8 @@ export interface LinuxExecutorParams {
   setPcHostname?: (name: string) => void;
   setEditingFile?: (file: { path: string; content: string } | null) => void;
   pcIP: string;
+  setPcIP?: (ip: string) => void;
+  applyDhcpLease?: (force?: boolean) => { ip: string; subnetMask: string; gateway: string; dns: string; serverName: string; poolName: string } | null;
   pcSubnet: string;
   pcMAC: string;
   pcGateway: string;
@@ -36,7 +38,7 @@ export interface LinuxExecutorParams {
 
 export const LINUX_SUGGESTIONS = [
   'ls', 'ls -l', 'ls -la', 'pwd', 'cd', 'cat', 'touch', 'mkdir', 'rm', 'cp', 'mv', 'chmod', 'chown', 'grep', 'wc', 'nano', 'vim', 'vi', 'notepad',
-  'ifconfig', 'ip addr', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp', 'ftp', 'ssh', 'telnet', 'curl', 'wget',
+  'ifconfig', 'ip addr', 'dhclient', 'dhclient -r eth0', 'ping', 'traceroute', 'nslookup', 'netstat', 'arp', 'ftp', 'ssh', 'telnet', 'curl', 'wget',
   'whoami', 'hostname', 'hostnamectl', 'uname -a', 'clear', 'history', 'echo', 'sudo', 'help', 'date', 'uptime',
   'for', 'while', 'if', 'python3', 'python'
 ];
@@ -137,6 +139,8 @@ export async function executeLinuxCommand(
     setPcHostname,
     setEditingFile,
     pcIP,
+    setPcIP,
+    applyDhcpLease,
     pcSubnet,
     pcMAC,
     pcGateway,
@@ -406,6 +410,8 @@ export async function executeLinuxCommand(
 
   Network Commands:
     ifconfig / ip a   Display network interfaces & IP configurations
+    dhclient eth0     Renew DHCP lease
+    dhclient -r eth0  Release DHCP lease
     ip route          Display IP routing table
     ping <host>       Send ICMP Echo requests to target IP/hostname
     traceroute <host> Trace network packet route to destination
@@ -662,6 +668,20 @@ ${wifiEnabled ? `wlan0: flags=4163<UP,BROADCAST,RUNNING,MULTICAST>  mtu 1500
         inet6 ::1  prefixlen 128  scopeid 0x10<host>
         loop  txqueuelen 1000  (Local Loopback)`;
     addLocalOutput('output', ifconfigOut);
+    return;
+  }
+
+  if (command === 'dhclient') {
+    if (args.includes('-r')) {
+      setPcIP?.('0.0.0.0');
+      addLocalOutput('success', `DHCP lease released for ${args.find(a => !a.startsWith('-')) || 'eth0'}.`);
+    } else {
+      const lease = applyDhcpLease?.(true);
+      if (lease) {
+        setPcIP?.(lease.ip);
+        addLocalOutput('success', `DHCP lease renewed for ${args.find(a => !a.startsWith('-')) || 'eth0'}. Current IP: ${lease.ip}`);
+      } else addLocalOutput('error', 'dhclient: DHCP server not available');
+    }
     return;
   }
 

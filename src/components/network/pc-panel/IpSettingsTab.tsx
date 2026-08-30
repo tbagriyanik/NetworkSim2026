@@ -7,7 +7,6 @@ import { isValidMAC, normalizeMAC } from "@/lib/utils";
 import { errorHandler } from '@/lib/errors/errorHandler';
 import { DHCP_ERRORS } from '@/lib/errors/errorHandler';
 import { toast } from "@/hooks/use-toast";
-import { SubnettingPanel } from './SubnettingPanel';
 
 interface IpSettingsTabProps {
   isDark: boolean;
@@ -249,8 +248,6 @@ export function IpSettingsTab({
             disabled={ipConfigMode === 'dhcp'}
           />
         </div>
-
-        <SubnettingPanel ip={pcIP} mask={pcSubnet} isDark={isDark} language={language} />
 
         <div className={`mt-4 rounded-xl border p-4 space-y-3 ${isDark ? 'border-secondary-800 bg-secondary-950/40' : 'border-secondary-200 bg-white'}`}>
           <div>

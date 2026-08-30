@@ -2118,6 +2118,8 @@ export function PCPanel({
                           mobileVerticalScrollStyle={mobileVerticalScrollStyle}
                           deviceId={deviceId}
                           pcIP={pcIP}
+                          setPcIP={setPcIP}
+                          applyDhcpLease={(force) => applyDhcpLeaseRef.current?.(force) ?? null}
                           pcSubnet={pcSubnet}
                           pcMAC={pcMAC}
                           pcGateway={pcGateway}

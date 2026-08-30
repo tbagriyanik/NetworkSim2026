@@ -11,6 +11,30 @@ export interface CommandDefinition {
 export function getCommandCategories(isTR: boolean): CommandDefinition[] {
   return [
     {
+      id: 'command_modes',
+      icon: Layers,
+      title: isTR ? 'Komut Modları' : 'Command Modes',
+      type: 'commands',
+      cmds: [
+        ['Router>', isTR ? 'Kullanıcı Modu' : 'User Mode'],
+        ['Router#', isTR ? 'Ayrıcalıklı Mod' : 'Privileged Mode'],
+        ['(config)#', isTR ? 'Global Yapılandırma' : 'Global Config'],
+        ['(config-if)#', isTR ? 'Arayüz Yapılandırma' : 'Interface Config'],
+      ]
+    },
+    {
+      id: 'subnetting_info',
+      icon: Network,
+      title: isTR ? 'Subnetting & Alt Ağlar' : 'Subnetting & Subnets',
+      type: 'info',
+      cmds: [
+        [isTR ? 'Subnet Mask (Alt Ağ Maskesi)' : 'Subnet Mask', isTR ? 'IP adresinin ağ ve host bölümlerini ayırmak için kullanılır (ör: /24 = 255.255.255.0 = 256 adres).' : 'Used to separate network and host portions of IP address (e.g. /24 = 255.255.255.0 = 256 addresses).'],
+        [isTR ? 'Ağ Adresi (Network Address)' : 'Network Address', isTR ? 'Alt ağın ilk adresidir, cihazlara atanamaz (ör: 192.168.1.0).' : 'First address of the subnet, cannot be assigned to devices (e.g. 192.168.1.0).'],
+        [isTR ? 'Yayın Adresi (Broadcast Address)' : 'Broadcast Address', isTR ? 'Alt ağın son adresidir, tüm cihazlara yayın için kullanılır (ör: 192.168.1.255).' : 'Last address of the subnet, used to broadcast to all devices (e.g. 192.168.1.255).'],
+        [isTR ? 'Kullanılabilir Host Sayısı' : 'Usable Host Count', isTR ? '2^(32 - Prefix) - 2 formülü ile hesaplanır.' : 'Calculated using 2^(32 - Prefix) - 2 formula.'],
+      ]
+    },
+    {
       id: 'system',
       icon: Terminal,
       title: isTR ? 'Oturum' : 'Session',
@@ -41,6 +65,8 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['mv <kaynak> <hedef>', isTR ? 'Dosyayı taşı veya yeniden adlandır' : 'Move or rename file'],
         ['echo "metin" > <dosya>', isTR ? 'Ekrana yazdır veya dosyaya yaz/ekle (>>)' : 'Print text or write/append (>>) to file'],
         ['ifconfig / ip addr', isTR ? 'Ağ arayüzlerini ve IP adreslerini listele' : 'Display network interfaces & IP addresses'],
+        ['dhclient eth0', isTR ? 'Linux DHCP adres kiralamasını yenile' : 'Renew the Linux DHCP lease'],
+        ['dhclient -r eth0', isTR ? 'Linux DHCP adres kiralamasını bırak' : 'Release the Linux DHCP lease'],
         ['ip route', isTR ? 'Yönlendirme tablosunu görüntüle' : 'Show IP routing table'],
         ['ping <ip/host>', isTR ? 'ICMP ağ bağlantısı testi' : 'Test network connectivity (ICMP)'],
         ['traceroute <ip/host>', isTR ? 'Hedefe giden paket rotasını izle' : 'Trace route to target'],
@@ -396,7 +422,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['NetworkSimulator Kullanım İpuçları', isTR ? 'NetworkSimulator tuvalinde cihazları sürükleyip bırakabilir, portlar arası kablo türünü seçerek (Bakır Düz/Çapraz, Fiber, Seri) bağlayabilirsiniz. Alt paneldeki Paket Yakalama (Packet Capture) sekmesi ile paketlerin OSI katman detaylarını inceleyebilir, Güdümlü Mod (Guided Mode) ile adım adım pratik senaryoları çözebilirsiniz.' : 'In NetworkSimulator, drag-and-drop devices onto the canvas and connect them using appropriate cabling (Copper Straight/Cross, Fiber, Serial). Use the Packet Capture tab to inspect OSI layer encapsulation details, or complete interactive exercises via Guided Mode.'],
       ]
     },
-{
+    {
       id: 'firewall',
       icon: Shield,
       title: isTR ? 'Güvenlik Duvarı (ASA/Firewall)' : 'Firewall (ASA)',
@@ -938,7 +964,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['TCP/IP', isTR ? 'Transmission Control Protocol / Internet Protocol - İnternet protokol ailesi' : 'Transmission Control Protocol / Internet Protocol - Internet protocol suite'],
         ['VLSM', isTR ? 'Variable Length Subnet Mask - Değişken uzunluklu alt ağ maskesi' : 'Variable Length Subnet Mask - variable-size subnetting'],
         ['FHRP', isTR ? 'First Hop Redundancy Protocol - Yedekli ilk atlama/ağ geçidi protokolü' : 'First Hop Redundancy Protocol - redundant first-hop gateway protocol'],
-        ['HSRP', isTR ? 'Hot Standby Router Protocol - Cisco varsayılan ağ geçidi yedekliliği' : 'Hot Standby Router Protocol - Cisco first-hop gateway redundancy'],
+        ['HSRP', isTR ? 'Hot Standby Router Protocol - varsayılan ağ geçidi yedekliliği' : 'Hot Standby Router Protocol - first-hop gateway redundancy'],
         ['VRRP', isTR ? 'Virtual Router Redundancy Protocol - Standart sanal router yedekliliği' : 'Virtual Router Redundancy Protocol - standards-based virtual router redundancy'],
         ['PAT', isTR ? 'Port Address Translation - Çoklu hostu portlarla tek genel IP üzerinden taşır' : 'Port Address Translation - multiplexes hosts through one public IP using ports'],
         ['RSTP', isTR ? 'Rapid Spanning Tree Protocol - Daha hızlı STP yakınsaması' : 'Rapid Spanning Tree Protocol - faster STP convergence'],

@@ -19,6 +19,7 @@ import { Info, Terminal, Search, X, ChevronDown, Compass, Mail, Loader2, Message
 import Image from 'next/image';
 import { getCommandCategories } from './networkTopology.commands';
 import { TutorialAnimationPlayer } from './TutorialAnimationPlayer';
+import { SubnettingPanel } from './pc-panel/SubnettingPanel';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -50,6 +51,7 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
   const helpCategories = useMemo(() => getCommandCategories(isTR), [isTR]);
 
   const [expandedHelp, setExpandedHelp] = useState<Record<string, boolean>>({
+    command_modes: true,
     system: true,
   });
   const [searchQuery, setSearchQuery] = useState('');
@@ -251,34 +253,6 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
                 </div>
               )}
 
-              {/* Command Modes Legend */}
-              {!searchQuery.trim() && (
-                <div className={cn('p-3 rounded-lg text-xs space-y-1', isDark ? 'bg-secondary-950/50 border border-secondary-800' : 'bg-white border border-secondary-200')}>
-                  <div className="flex items-center justify-between border-b pb-1.5 mb-1.5 border-secondary-200 dark:border-secondary-800">
-                    <p className={cn('font-semibold', isDark ? 'text-secondary-200' : 'text-secondary-700')}>
-                      {t.commandModes}
-                    </p>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("font-mono px-1 rounded", isDark ? 'bg-success-500/10 text-success-400' : 'bg-success-50 text-success-600')}>Router&gt;</span>
-                      <span className={isDark ? 'text-secondary-400' : 'text-secondary-600'}>{isTR ? 'Kullanıcı Modu' : 'User Mode'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn("font-mono px-1 rounded", isDark ? 'bg-success-500/10 text-success-400' : 'bg-success-50 text-success-600')}>Router#</span>
-                      <span className={isDark ? 'text-secondary-400' : 'text-secondary-600'}>{isTR ? 'Ayrıcalıklı Mod' : 'Privileged Mode'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn("font-mono px-1 rounded", isDark ? 'bg-success-500/10 text-success-400' : 'bg-success-50 text-success-600')}>(config)#</span>
-                      <span className={isDark ? 'text-secondary-400' : 'text-secondary-600'}>{isTR ? 'Global Yapılandırma' : 'Global Config'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={cn("font-mono px-1 rounded", isDark ? 'bg-success-500/10 text-success-400' : 'bg-success-50 text-success-600')}>(config-if)#</span>
-                      <span className={isDark ? 'text-secondary-400' : 'text-secondary-600'}>{isTR ? 'Arayüz Yapılandırma' : 'Interface Config'}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -566,7 +540,8 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
                         { id: 'broadcast-vis', title: isTR ? 'Broadcast Görselleştirme' : 'Broadcast Visualization' },
                         { id: 'arp-anim', title: isTR ? 'ARP Adres Çözümleme' : 'ARP Address Resolution' },
                         { id: 'ping-anim', title: isTR ? 'ICMP Ping Süreci' : 'ICMP Ping Process' },
-                        { id: 'dhcp-flow', title: isTR ? 'DHCP (DORA) Akışı' : 'DHCP (DORA) Flow' }
+                        { id: 'dhcp-flow', title: isTR ? 'DHCP (DORA) Akışı' : 'DHCP (DORA) Flow' },
+                        { id: 'subnetting', title: isTR ? 'Subnetting Paneli' : 'Subnetting Panel' }
                       ].map((anim) => (
                         <button
                           key={`help-tab-${anim.id}`}
@@ -594,7 +569,11 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
                     {/* Player on the right/bottom */}
                     <div className="md:col-span-2 flex flex-col gap-2">
                       <div className="rounded-xl border border-secondary-200 dark:border-secondary-800 bg-secondary-950/20 p-1">
-                        <TutorialAnimationPlayer key={`help-tab-player-${animationKey}`} animationId={selectedAnimId} />
+                        {selectedAnimId === 'subnetting' ? (
+                          <SubnettingPanel key="help-subnetting-panel" isDark={isDark} language={isTR ? 'tr' : 'en'} />
+                        ) : (
+                          <TutorialAnimationPlayer key={`help-tab-player-${animationKey}`} animationId={selectedAnimId} />
+                        )}
                       </div>
                     </div>
                   </div>

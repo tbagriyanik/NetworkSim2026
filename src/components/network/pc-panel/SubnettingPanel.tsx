@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { calculateSubnet, type SubnetInfo } from '@/lib/network/subnetting';
 
 interface SubnettingPanelProps {
@@ -112,17 +111,6 @@ export function SubnettingPanel({ ip = '', mask = '255.255.255.0', isDark = fals
         )
       )}
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-3 text-xs"
-        onClick={() => {
-          setIpValue(ip);
-          setMaskValue(mask);
-        }}
-      >
-        {isTurkish ? 'PC adresine sıfırla' : 'Reset to PC address'}
-      </Button>
     </div>
   );
 }

@@ -51,7 +51,7 @@ IP SLA, QoS, parser/CLI, LLDP, MSTP, 802.1X, SDN ve ağ entegrasyonları için o
   - **Güvenlik Katmanı:** Tarayıcı sandbox koruması ve dunder nitelik bloklaması.
 - PC CMD'de kullanıcı tanımlı `.bat` ve `.cmd` yığın dosyaları çalıştırma (`@echo off`, `set`, `%VAR%`, `%1`, `goto`, `call`).
   - Dosya Düzenleyici (File Editor) pencerelerinde `Batch Yığın Dosyası` ve `Python Betiği` rozet etiketleri ile tek tıkla kaydedip CMD'de çalıştırma (Play).
-  - **Linux Terminali (simüle Bash kabuğu):** PC terminalinde dosya, ağ ve temel sistem komutları (`ls`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `ifconfig`, `ip addr`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget`, `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, `sudo`). `for`/`while`, `if`, `$VAR`, `|`, `>`/`>>`, `grep`, `wc` ve `python3` desteklenir; bu gerçek işletim sistemi shell’i değil, sanal dosya sistemi üzerinde çalışan bir simülasyondur.
+  - **Linux Terminali (simüle Bash kabuğu):** PC terminalinde dosya, ağ ve temel sistem komutları (`ls`, `pwd`, `cd`, `cat`, `touch`, `mkdir`, `rm`, `cp`, `mv`, `chmod`, `chown`, `ifconfig`, `ip addr`, `dhclient eth0`, `dhclient -r eth0`, `ping`, `traceroute`, `nslookup`, `netstat`, `arp`, `ftp`, `ssh`, `telnet`, `curl`, `wget`, `whoami`, `hostname`, `uname -a`, `date`, `uptime`, `history`, `echo`, `sudo`). `for`/`while`, `if`, `$VAR`, `|`, `>`/`>>`, `grep`, `wc` ve `python3` desteklenir; bu gerçek işletim sistemi shell’i değil, sanal dosya sistemi üzerinde çalışan bir simülasyondur.
   - Tab tuşu ile otomatik komut ve dosya tamamlama.
 - Komut geçmişi (Yukarı/Aşağı ok tuşları, kalıcı state).
 - Pipe filtreleme (`show run | include`, `ping | find` vb.).
