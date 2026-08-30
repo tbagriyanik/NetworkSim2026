@@ -49,10 +49,13 @@ const example = (isTr: boolean): ExampleProject => {
   mlSwitch1State.switchModel = 'WS-C3650-24PS';
   mlSwitch1State.switchLayer = 'L3';
   mlSwitch1State.ipRouting = true;
+  mlSwitch1State.routingProtocol = 'ospf';
+  mlSwitch1State.ospfProcessId = '1';
   mlSwitch1State.ports['gi1/0/1'] = { ...mlSwitch1State.ports['gi1/0/1'], mode: 'routed', isRoutedPort: true, ipAddress: '10.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
   mlSwitch1State.ports['gi1/0/2'] = { ...mlSwitch1State.ports['gi1/0/2'], mode: 'routed', isRoutedPort: true, ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  mlSwitch1State.staticRoutes = [
-    { destination: '192.168.2.0', subnetMask: '255.255.255.0', nextHop: '10.0.0.2', metric: 1, type: 'static' }
+  mlSwitch1State.dynamicRoutes = [
+    { destination: '10.0.0.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic', area: 0 },
+    { destination: '192.168.1.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic', area: 0 }
   ];
   mlSwitch1State.runningConfig = [
     '!',
@@ -70,7 +73,9 @@ const example = (isTr: boolean): ExampleProject => {
     ' ip address 192.168.1.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'ip route 192.168.2.0 255.255.255.0 10.0.0.2',
+    'router ospf 1',
+    ' network 10.0.0.0 0.0.0.255 area 0',
+    ' network 192.168.1.0 0.0.0.255 area 0',
     '!',
     'end'
   ];
@@ -78,11 +83,13 @@ const example = (isTr: boolean): ExampleProject => {
   const router3State = createInitialRouterState('00:50:00:00:A3:10');
   router3State.hostname = 'Router3';
   router3State.ipRouting = true;
+  router3State.routingProtocol = 'ospf';
+  router3State.ospfProcessId = '1';
   router3State.ports['gi0/0'] = { ...router3State.ports['gi0/0'], ipAddress: '10.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
   router3State.ports['gi0/1'] = { ...router3State.ports['gi0/1'], ipAddress: '20.0.0.1', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
-  router3State.staticRoutes = [
-    { destination: '192.168.1.0', subnetMask: '255.255.255.0', nextHop: '10.0.0.1', metric: 1, type: 'static' },
-    { destination: '192.168.2.0', subnetMask: '255.255.255.0', nextHop: '20.0.0.2', metric: 1, type: 'static' }
+  router3State.dynamicRoutes = [
+    { destination: '10.0.0.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic', area: 0 },
+    { destination: '20.0.0.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic', area: 10 }
   ];
   router3State.runningConfig = [
     '!',
@@ -96,8 +103,9 @@ const example = (isTr: boolean): ExampleProject => {
     ' ip address 20.0.0.1 255.0.0.0',
     ' no shutdown',
     '!',
-    'ip route 192.168.1.0 255.255.255.0 10.0.0.1',
-    'ip route 192.168.2.0 255.255.255.0 20.0.0.2',
+    'router ospf 1',
+    ' network 10.0.0.0 0.0.0.255 area 0',
+    ' network 20.0.0.0 0.0.0.255 area 10',
     '!',
     'end'
   ];
@@ -107,10 +115,13 @@ const example = (isTr: boolean): ExampleProject => {
   mlSwitch2State.switchModel = 'WS-C3650-24PS';
   mlSwitch2State.switchLayer = 'L3';
   mlSwitch2State.ipRouting = true;
+  mlSwitch2State.routingProtocol = 'ospf';
+  mlSwitch2State.ospfProcessId = '1';
   mlSwitch2State.ports['gi1/0/1'] = { ...mlSwitch2State.ports['gi1/0/1'], mode: 'routed', isRoutedPort: true, ipAddress: '20.0.0.2', subnetMask: '255.0.0.0', status: 'connected', shutdown: false };
   mlSwitch2State.ports['gi1/0/2'] = { ...mlSwitch2State.ports['gi1/0/2'], mode: 'routed', isRoutedPort: true, ipAddress: '192.168.2.1', subnetMask: '255.255.255.0', status: 'connected', shutdown: false };
-  mlSwitch2State.staticRoutes = [
-    { destination: '192.168.1.0', subnetMask: '255.255.255.0', nextHop: '20.0.0.1', metric: 1, type: 'static' }
+  mlSwitch2State.dynamicRoutes = [
+    { destination: '20.0.0.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic', area: 10 },
+    { destination: '192.168.2.0', subnetMask: '0.0.0.255', nextHop: 'directly connected', metric: 1, type: 'dynamic', area: 10 }
   ];
   mlSwitch2State.runningConfig = [
     '!',
@@ -128,7 +139,9 @@ const example = (isTr: boolean): ExampleProject => {
     ' ip address 192.168.2.1 255.255.255.0',
     ' no shutdown',
     '!',
-    'ip route 192.168.1.0 255.255.255.0 20.0.0.1',
+    'router ospf 1',
+    ' network 20.0.0.0 0.0.0.255 area 10',
+    ' network 192.168.2.0 0.0.0.255 area 10',
     '!',
     'end'
   ];

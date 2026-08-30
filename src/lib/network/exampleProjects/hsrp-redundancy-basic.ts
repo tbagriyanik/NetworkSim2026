@@ -1,212 +1,158 @@
-import { createL3SwitchDevice, createPcDevice, connectPorts, baseProjectData } from './helpers';
-;
+import { createSwitchDevice, createPcDevice, createRouterDevice, connectPorts, baseProjectData } from './helpers';
 import type { ExampleProject } from './types';
-import { createInitialState } from '../initialState';
+import { createInitialState, createInitialRouterState } from '../initialState';
 import type { CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
 
+/**
+ * HSRP Redundancy Basic
+ * Senaryo:
+ *   İki yönlendirici (R1 ve R2) HSRP Grubu 1 oluşturarak sanal varsayılan ağ geçidi (192.168.10.254) olarak hizmet verir.
+ *   - R1 (Active Gateway):  IP 192.168.10.2/24, Standby Group 1 (Virtual IP: 192.168.10.254, Priority: 110, Preempt: True)
+ *   - R2 (Standby Gateway): IP 192.168.10.3/24, Standby Group 1 (Virtual IP: 192.168.10.254, Priority: 90)
+ *   - PC-1 & PC-2: Gateway = 192.168.10.254 (Sanal IP)
+ *
+ * Test:
+ *   1) R1# show standby brief  → R1 'Active' görünür.
+ *   2) R2# show standby brief  → R2 'Standby' görünür.
+ *   3) PC-1: ping 192.168.10.254 → Başarılı.
+ *   4) Failover: R1 gi0/0 shutdown edildiğinde R2 otomatik 'Active' moda geçer ve ping kesintisiz sürer.
+ */
 const example = (isTr: boolean): ExampleProject => {
-  const l3Switch2VlanDevices = [
-    createL3SwitchDevice('switch2', 'Switch2', 300, 200),
-    createPcDevice('pc4', 'PC4', 50, 100, '192.168.10.10', 10, '192.168.10.1'),
-    createPcDevice('pc5', 'PC5', 50, 180, '192.168.10.15', 10, '192.168.10.1'),
-    createPcDevice('pc6', 'PC6', 50, 260, '192.168.20.10', 20, '192.168.20.1'),
-    createPcDevice('pc7', 'PC7', 50, 340, '192.168.20.15', 20, '192.168.20.1'),
-    createL3SwitchDevice('switch4', 'Switch4', 700, 200),
-    createPcDevice('pc8', 'PC8', 950, 100, '192.168.10.20', 10, '192.168.10.1'),
-    createPcDevice('pc9', 'PC9', 950, 180, '192.168.10.30', 10, '192.168.10.1'),
-    createPcDevice('pc10', 'PC10', 950, 260, '192.168.20.20', 20, '192.168.20.1'),
-    createPcDevice('pc11', 'PC11', 950, 340, '192.168.20.30', 20, '192.168.20.1')
+  // ── Cihazlar ──────────────────────────────────────────────────────────────
+  const devices = [
+    createPcDevice('pc-1', 'PC-1', 120, 150, '192.168.10.10', 1, '192.168.10.254'),
+    createPcDevice('pc-2', 'PC-2', 120, 300, '192.168.10.11', 1, '192.168.10.254'),
+    createSwitchDevice('sw1', 'SW1', 320, 225, '192.168.10.250'),
+    createRouterDevice('r1', 'R1', 540, 130, '192.168.10.2'),
+    createRouterDevice('r2', 'R2', 540, 320, '192.168.10.3')
   ];
+  devices[0].ipConfigMode = 'static';
+  devices[1].ipConfigMode = 'static';
+  devices[2].ipConfigMode = 'static';
+  devices[3].ipConfigMode = 'static';
+  devices[4].ipConfigMode = 'static';
 
-  const l3Switch2VlanConnections: CanvasConnection[] = [];
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'switch2', 'gi1/0/5', 'switch4', 'gi1/0/5', 'crossover');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc4', 'eth0', 'switch2', 'gi1/0/1');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc5', 'eth0', 'switch2', 'gi1/0/2');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc6', 'eth0', 'switch2', 'gi1/0/3');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc7', 'eth0', 'switch2', 'gi1/0/4');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc8', 'eth0', 'switch4', 'gi1/0/1');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc9', 'eth0', 'switch4', 'gi1/0/2');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc10', 'eth0', 'switch4', 'gi1/0/3');
-  connectPorts(l3Switch2VlanDevices, l3Switch2VlanConnections, 'pc11', 'eth0', 'switch4', 'gi1/0/4');
+  // ── Bağlantılar ───────────────────────────────────────────────────────────
+  const connections: CanvasConnection[] = [];
+  connectPorts(devices, connections, 'pc-1', 'eth0', 'sw1', 'fa0/1');
+  connectPorts(devices, connections, 'pc-2', 'eth0', 'sw1', 'fa0/2');
+  connectPorts(devices, connections, 'sw1', 'gi0/1', 'r1', 'gi0/0', 'crossover');
+  connectPorts(devices, connections, 'sw1', 'gi0/2', 'r2', 'gi0/0', 'crossover');
 
-  const l3Switch2VlanNotes: CanvasNote[] = [
+  // ── Not / Canvas açıklaması ───────────────────────────────────────────────
+  const notes: CanvasNote[] = [
     {
-      id: 'l3-switch2-vlan-note',
+      id: 'hsrp-note',
       text: isTr
-        ? 'Amaç: İki L3 switch arasında trunk bağlantısı ile VLAN\'lar arası routing sağlamak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 2 adet L3 Switch (Switch2, Switch4) ekle\n   - 8 adet PC ekle (PC4-PC11)\n   - Switch2 Gi1/0/5 -> Switch4 Gi1/0/5 (Crossover kablo)\n   - PC4-PC5 -> Switch2 Gi1/0/1-2 (VLAN 10)\n   - PC6-PC7 -> Switch2 Gi1/0/3-4 (VLAN 20)\n   - PC8-PC9 -> Switch4 Gi1/0/1-2 (VLAN 10)\n   - PC10-PC11 -> Switch4 Gi1/0/3-4 (VLAN 20)\n\n2) SWITCH2 KONFİGÜRASYONU:\n   - Switch2 terminaline gir: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/5\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n   - exit\n   - interface range gi1/0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi1/0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 KONFİGÜRASYONU:\n   - Switch4 terminaline gir: enable, conf t\n   - Aynı yapılandırma Switch2 ile aynı\n\n4) PC KONFİGÜRASYONU:\n   - VLAN 10 PC\'ler: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PC\'ler: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - Tüm PC\'ler birbirine ping atabilir'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 2 L3 Switches (Switch2, Switch4)\n   - Add 8 PCs (PC4-PC11)\n   - Connect Switch2 Gi1/0/5 -> Switch4 Gi1/0/5 (Crossover cable)\n   - Connect PC4-PC5 -> Switch2 Gi1/0/1-2 (VLAN 10)\n   - Connect PC6-PC7 -> Switch2 Gi1/0/3-4 (VLAN 20)\n   - Connect PC8-PC9 -> Switch4 Gi1/0/1-2 (VLAN 10)\n   - Connect PC10-PC11 -> Switch4 Gi1/0/3-4 (VLAN 20)\n\n2) SWITCH2 CONFIGURATION:\n   - Enter Switch2 terminal: enable, conf t\n   - vlan 10\n     name AG1\n   - exit\n   - vlan 20\n     name AG2\n   - exit\n   - ip routing\n   - interface vlan 10\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface vlan 20\n     ip address 192.168.20.1 255.255.255.0\n     no shutdown\n   - exit\n   - interface gi1/0/5\n     switchport trunk encapsulation dot1q\n     switchport mode trunk\n   - exit\n   - interface range gi1/0/1-2\n     switchport mode access\n     switchport access vlan 10\n   - exit\n   - interface range gi1/0/3-4\n     switchport mode access\n     switchport access vlan 20\n   - exit\n\n3) SWITCH4 CONFIGURATION:\n   - Enter Switch4 terminal: enable, conf t\n   - Same configuration as Switch2\n\n4) PC CONFIGURATION:\n   - VLAN 10 PCs: IP 192.168.10.x, GW 192.168.10.1\n   - VLAN 20 PCs: IP 192.168.20.x, GW 192.168.20.1\n\n5) TEST:\n   - All PCs can ping each other',
-      x: 400,
-      y: 400,
+        ? 'Amaç: HSRP (Hot Standby Router Protocol) ile iki yönlendirici (R1 ve R2) arasında varsayılan ağ geçidi (192.168.10.254) yedekliliği sağlamak.\n\nHSRP Yapılandırması:\n  - Sanal Gateway IP (VIP): 192.168.10.254 (Standby Group 1)\n  - R1 (Birincil / Active): IP 192.168.10.2, Öncelik (Priority) 110, Preempt: Açık\n  - R2 (Yedek / Standby): IP 192.168.10.3, Öncelik (Priority) 90\n\n✅ TEST ADIMLARI:\n\n1) R1 terminalinde HSRP durumunu kontrol et:\n   R1# show standby brief\n   → R1\'in Active durumda olduğunu doğrula (State: Active)\n\n2) R2 terminalinde HSRP durumunu kontrol et:\n   R2# show standby brief\n   → R2\'nin Standby durumda olduğunu doğrula (State: Standby)\n\n3) PC-1\'den sanal ağ geçidine ping at:\n   ping 192.168.10.254\n   → Başarılı olmalı\n\n4) Kesinti Testi (Failover):\n   - R1 terminalinde gi0/0 arayüzünü kapat: interface gi0/0 -> shutdown\n   - R2 terminalinde show standby brief çalıştır (R2 Active duruma geçer)\n   - PC-1\'den tekrar ping 192.168.10.254 at -> Trafik kesintisiz devam eder!\n   - R1 arayüzünü tekrar aç: interface gi0/0 -> no shutdown (Preempt ile R1 tekrar Active olur).'
+        : 'Goal: Configure HSRP (Hot Standby Router Protocol) for default gateway (192.168.10.254) redundancy between R1 and R2.\n\nHSRP Configuration:\n  - Virtual Gateway IP (VIP): 192.168.10.254 (Standby Group 1)\n  - R1 (Primary / Active): IP 192.168.10.2, Priority 110, Preempt: Enabled\n  - R2 (Secondary / Standby): IP 192.168.10.3, Priority 90\n\n✅ TEST STEPS:\n\n1) Inspect HSRP status on R1:\n   R1# show standby brief\n   → Verify R1 is in Active state\n\n2) Inspect HSRP status on R2:\n   R2# show standby brief\n   → Verify R2 is in Standby state\n\n3) From PC-1, ping virtual gateway:\n   ping 192.168.10.254\n   → Should succeed\n\n4) Failover Test:\n   - Shutdown R1 interface gi0/0: interface gi0/0 -> shutdown\n   - Check R2 status: R2# show standby brief (R2 transitions to Active)\n   - Ping 192.168.10.254 from PC-1 -> Traffic continues seamlessly!\n   - Re-enable R1 interface: interface gi0/0 -> no shutdown (R1 reclaims Active state).',
+      x: 730,
+      y: 50,
       width: 520,
-      height: 380,
-      color: 'var(--color-warning-600)',
+      height: 480,
+      color: 'var(--color-primary-500)',
       font: 'verdana',
       fontSize: 12,
       opacity: 0.75
     }
   ];
 
-  const l3Switch2State = createInitialState('00:1A:2B:3C:4D:70', 'WS-C3650-24PS');
-  l3Switch2State.hostname = 'Switch2';
-  l3Switch2State.switchModel = 'WS-C3650-24PS';
-  l3Switch2State.switchLayer = 'L3';
-  l3Switch2State.ipRouting = true;
-  l3Switch2State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['GI1/0/1', 'GI1/0/2', 'GI1/0/5'] };
-  l3Switch2State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['GI1/0/3', 'GI1/0/4', 'GI1/0/5'] };
-  l3Switch2State.ports['vlan10'] = {
-    id: 'vlan10',
-    name: 'VLAN10',
+  // ── Router R1 durumu (Active Gateway) ────────────────────────────────────
+  const r1State = createInitialRouterState(devices[3].macAddress);
+  r1State.hostname = 'R1';
+  r1State.ipRouting = true;
+  r1State.ports['gi0/0'] = {
+    ...r1State.ports['gi0/0'],
+    ipAddress: '192.168.10.2',
+    subnetMask: '255.255.255.0',
     status: 'connected',
-    vlan: 10,
-    mode: 'access',
-    duplex: 'auto',
-    speed: 'auto',
     shutdown: false,
-    type: 'gigabitethernet',
-    ipAddress: '192.168.10.1',
-    subnetMask: '255.255.255.0'
+    hsrp: {
+      groups: {
+        '1': {
+          virtualIp: '192.168.10.254',
+          priority: 110,
+          preempt: true,
+          state: 'Active'
+        }
+      }
+    }
   };
-  l3Switch2State.ports['vlan20'] = {
-    id: 'vlan20',
-    name: 'VLAN20',
-    status: 'connected',
-    vlan: 20,
-    mode: 'access',
-    duplex: 'auto',
-    speed: 'auto',
-    shutdown: false,
-    type: 'gigabitethernet',
-    ipAddress: '192.168.20.1',
-    subnetMask: '255.255.255.0'
-  };
-  l3Switch2State.ports['gi1/0/1'] = { id: 'gi1/0/1', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch2State.ports['gi1/0/2'] = { id: 'gi1/0/2', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch2State.ports['gi1/0/3'] = { id: 'gi1/0/3', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch2State.ports['gi1/0/4'] = { id: 'gi1/0/4', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch2State.ports['gi1/0/5'] = { id: 'gi1/0/5', name: '', status: 'connected', vlan: 1, mode: 'trunk', allowedVlans: 'all', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch2State.runningConfig = [
+  r1State.runningConfig = [
     '!',
-    'hostname Switch2',
+    'hostname R1',
     '!',
-    'vlan 10',
-    ' name AG1',
-    '!',
-    'vlan 20',
-    ' name AG2',
-    '!',
-    'ip routing',
-    '!',
-    'interface vlan 10',
-    ' ip address 192.168.10.1 255.255.255.0',
+    'interface GigabitEthernet0/0',
+    ' ip address 192.168.10.2 255.255.255.0',
+    ' standby 1 ip 192.168.10.254',
+    ' standby 1 priority 110',
+    ' standby 1 preempt',
     ' no shutdown',
-    '!',
-    'interface vlan 20',
-    ' ip address 192.168.20.1 255.255.255.0',
-    ' no shutdown',
-    '!',
-    'interface range gi1/0/1-2',
-    ' switchport access vlan 10',
-    ' switchport mode access',
-    '!',
-    'interface range gi1/0/3 - 4',
-    ' switchport access vlan 20',
-    ' switchport mode access',
-    '!',
-    'interface gi1/0/5',
-    ' switchport trunk encapsulation dot1q',
-    ' switchport mode trunk',
-    ' switchport trunk allowed vlan all',
     '!',
     'end'
   ];
 
-  const l3Switch4State = createInitialState('00:1A:2B:3C:4D:71', 'WS-C3650-24PS');
-  l3Switch4State.hostname = 'Switch4';
-  l3Switch4State.switchModel = 'WS-C3650-24PS';
-  l3Switch4State.switchLayer = 'L3';
-  l3Switch4State.ipRouting = true;
-  l3Switch4State.vlans[10] = { id: 10, name: 'AG1', status: 'active', ports: ['GI1/0/1', 'GI1/0/2', 'GI1/0/5'] };
-  l3Switch4State.vlans[20] = { id: 20, name: 'AG2', status: 'active', ports: ['GI1/0/3', 'GI1/0/4', 'GI1/0/5'] };
-  l3Switch4State.ports['vlan10'] = {
-    id: 'vlan10',
-    name: 'VLAN10',
+  // ── Router R2 durumu (Standby Gateway) ───────────────────────────────────
+  const r2State = createInitialRouterState(devices[4].macAddress);
+  r2State.hostname = 'R2';
+  r2State.ipRouting = true;
+  r2State.ports['gi0/0'] = {
+    ...r2State.ports['gi0/0'],
+    ipAddress: '192.168.10.3',
+    subnetMask: '255.255.255.0',
     status: 'connected',
-    vlan: 10,
-    mode: 'access',
-    duplex: 'auto',
-    speed: 'auto',
     shutdown: false,
-    type: 'gigabitethernet',
-    ipAddress: '192.168.10.1',
-    subnetMask: '255.255.255.0'
+    hsrp: {
+      groups: {
+        '1': {
+          virtualIp: '192.168.10.254',
+          priority: 90,
+          preempt: false,
+          state: 'Standby'
+        }
+      }
+    }
   };
-  l3Switch4State.ports['vlan20'] = {
-    id: 'vlan20',
-    name: 'VLAN20',
-    status: 'connected',
-    vlan: 20,
-    mode: 'access',
-    duplex: 'auto',
-    speed: 'auto',
-    shutdown: false,
-    type: 'gigabitethernet',
-    ipAddress: '192.168.20.1',
-    subnetMask: '255.255.255.0'
-  };
-  l3Switch4State.ports['gi1/0/1'] = { id: 'gi1/0/1', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch4State.ports['gi1/0/2'] = { id: 'gi1/0/2', name: '', status: 'connected', vlan: 10, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch4State.ports['gi1/0/3'] = { id: 'gi1/0/3', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch4State.ports['gi1/0/4'] = { id: 'gi1/0/4', name: '', status: 'connected', vlan: 20, mode: 'access', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch4State.ports['gi1/0/5'] = { id: 'gi1/0/5', name: '', status: 'connected', vlan: 1, mode: 'trunk', allowedVlans: 'all', duplex: 'auto', speed: 'auto', shutdown: false, type: 'gigabitethernet' };
-  l3Switch4State.runningConfig = [
+  r2State.runningConfig = [
     '!',
-    'hostname Switch4',
+    'hostname R2',
     '!',
-    'vlan 10',
-    ' name AG1',
-    '!',
-    'vlan 20',
-    ' name AG2',
-    '!',
-    'ip routing',
-    '!',
-    'interface vlan 10',
-    ' ip address 192.168.10.1 255.255.255.0',
+    'interface GigabitEthernet0/0',
+    ' ip address 192.168.10.3 255.255.255.0',
+    ' standby 1 ip 192.168.10.254',
+    ' standby 1 priority 90',
     ' no shutdown',
-    '!',
-    'interface vlan 20',
-    ' ip address 192.168.20.1 255.255.255.0',
-    ' no shutdown',
-    '!',
-    'interface range gi1/0/1-2',
-    ' switchport access vlan 10',
-    ' switchport mode access',
-    '!',
-    'interface range gi1/0/3 - 4',
-    ' switchport access vlan 20',
-    ' switchport mode access',
-    '!',
-    'interface gi1/0/5',
-    ' switchport trunk encapsulation dot1q',
-    ' switchport mode trunk',
-    ' switchport trunk allowed vlan all',
     '!',
     'end'
   ];
 
+  // ── Switch SW1 durumu ─────────────────────────────────────────────────────
+  const sw1State = createInitialState(devices[2].macAddress);
+  sw1State.hostname = 'SW1';
+  sw1State.ports['fa0/1'] = { ...sw1State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  sw1State.ports['fa0/2'] = { ...sw1State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  sw1State.ports['gi0/1'] = { ...sw1State.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  sw1State.ports['gi0/2'] = { ...sw1State.ports['gi0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  sw1State.runningConfig = [
+    '!', 'hostname SW1', '!', 'end'
+  ];
+
+  // ── Proje tanımı ──────────────────────────────────────────────────────────
   return {
     id: 'hsrp-redundancy-basic',
     tag: 'HSRP',
     title: isTr ? 'HSRP Redundancy' : 'HSRP Redundancy',
-    description: isTr ? 'Varsayılan ağ geçidi yedekliliği için HSRP.' : 'HSRP for default gateway redundancy.',
-    detail: isTr ? 'standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt' : 'standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt',
+    description: isTr
+      ? 'Varsayılan ağ geçidi yedekliliği için HSRP.'
+      : 'HSRP for default gateway redundancy.',
+    detail: 'standby 1 ip 192.168.10.254, standby 1 priority 110, standby 1 preempt',
     level: 'advanced',
-    data: baseProjectData(l3Switch2VlanDevices, l3Switch2VlanConnections, l3Switch2VlanNotes, [
-      { id: 'switch2', state: l3Switch2State },
-      { id: 'switch4', state: l3Switch4State }
+    data: baseProjectData(devices, connections, notes, [
+      { id: 'r1', state: r1State },
+      { id: 'r2', state: r2State },
+      { id: 'sw1', state: sw1State }
     ])
   };
 };
 
 export default example;
-

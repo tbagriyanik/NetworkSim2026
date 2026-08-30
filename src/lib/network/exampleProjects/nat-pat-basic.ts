@@ -5,32 +5,38 @@ import { createInitialState, createInitialRouterState } from '../initialState';
 import type { CanvasConnection, CanvasNote } from '@/components/network/networkTopology.types';
 
 const example = (isTr: boolean): ExampleProject => {
-  const routerDhcpDevices = [
-    createPcDevice('pc-1', 'PC-1', 110, 140, '0.0.0.0', 1),
-    createPcDevice('pc-2', 'PC-2', 110, 290, '0.0.0.0', 1),
-    createSwitchDevice('switch-1', 'SW1', 280, 215, '192.168.10.2'),
-    createRouterDevice('router-1', 'R1', 450, 215, '192.168.10.1')
+  // ── Cihazlar ──────────────────────────────────────────────────────────────
+  const devices = [
+    createPcDevice('pc-1', 'PC-1', 100, 130, '192.168.10.10', 1, '192.168.10.1'),
+    createPcDevice('pc-2', 'PC-2', 100, 300, '192.168.10.11', 1, '192.168.10.1'),
+    createSwitchDevice('sw1', 'SW1', 270, 215, '192.168.10.2'),
+    createRouterDevice('r1', 'R1', 450, 215, '192.168.10.1'),
+    createPcDevice('server', 'Server', 650, 215, '203.0.113.100', 1, '203.0.113.1')
   ];
-  routerDhcpDevices[0].ipConfigMode = 'dhcp';
-  routerDhcpDevices[1].ipConfigMode = 'dhcp';
-  routerDhcpDevices[2].ipConfigMode = 'static';
-  routerDhcpDevices[3].ipConfigMode = 'static';
+  devices[0].ipConfigMode = 'static';
+  devices[1].ipConfigMode = 'static';
+  devices[2].ipConfigMode = 'static';
+  devices[3].ipConfigMode = 'static';
+  devices[4].ipConfigMode = 'static';
 
-  const routerDhcpConnections: CanvasConnection[] = [];
-  connectPorts(routerDhcpDevices, routerDhcpConnections, 'pc-1', 'eth0', 'switch-1', 'fa0/1');
-  connectPorts(routerDhcpDevices, routerDhcpConnections, 'pc-2', 'eth0', 'switch-1', 'fa0/2');
-  connectPorts(routerDhcpDevices, routerDhcpConnections, 'switch-1', 'gi0/1', 'router-1', 'gi0/0', 'crossover');
+  // ── Bağlantılar ───────────────────────────────────────────────────────────
+  const connections: CanvasConnection[] = [];
+  connectPorts(devices, connections, 'pc-1', 'eth0', 'sw1', 'fa0/1');
+  connectPorts(devices, connections, 'pc-2', 'eth0', 'sw1', 'fa0/2');
+  connectPorts(devices, connections, 'sw1', 'gi0/1', 'r1', 'gi0/0', 'crossover');
+  connectPorts(devices, connections, 'r1', 'gi0/1', 'server', 'eth0', 'crossover');
 
-  const routerDhcpNotes: CanvasNote[] = [
+  // ── Not / Canvas açıklaması ───────────────────────────────────────────────
+  const notes: CanvasNote[] = [
     {
-      id: 'router-dhcp-note',
+      id: 'nat-pat-note',
       text: isTr
-        ? 'Amaç: Router üzerinde DHCP sunucusu yapılandırarak PC\'lere otomatik IP ataması yapmak.\n\n🔧 YAPILANDIRMA ADIMLARI:\n\n1) TOPOLOJİ OLUŞTURMA:\n   - 1 adet Router (R1) ekle\n   - 1 adet Switch (SW1) ekle\n   - 2 adet PC ekle (PC-1, PC-2)\n   - PC-1 Eth0 -> SW1 Fa0/1 (Straight kablo)\n   - PC-2 Eth0 -> SW1 Fa0/2 (Straight kablo)\n   - SW1 Gi0/1 -> R1 Gi0/0 (Crossover kablo)\n\n2) ROUTER KONFİGÜRASYONU:\n   - R1 terminaline gir: enable, conf t\n   - interface gi0/0\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip dhcp pool LAN\n     network 192.168.10.0 255.255.255.0\n     default-router 192.168.10.1\n     dns-server 8.8.8.8\n   - exit\n\n3) SWITCH KONFİGÜRASYONU:\n   - SW1 terminaline gir: enable, conf t\n   - interface vlan 1\n     ip address 192.168.10.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n   - exit\n   - interface fa0/2\n     switchport mode access\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n4) PC KONFİGÜRASYONU:\n   - PC-1: IP mode DHCP\n   - PC-2: IP mode DHCP\n\n5) TEST:\n   - PC-1 CMD: ipconfig /renew\n   - PC-2 CMD: ipconfig /renew\n   - R1> show ip dhcp binding (DHCP atamalarını gör)\n   - PC-1 ve PC-2 IP almalı (192.168.10.100+ aralığı)'
-        : '🔧 BUILD STEPS:\n\n1) CREATE TOPOLOGY:\n   - Add 1 Router (R1)\n   - Add 1 Switch (SW1)\n   - Add 2 PCs (PC-1, PC-2)\n   - Connect PC-1 Eth0 -> SW1 Fa0/1 (Straight cable)\n   - Connect PC-2 Eth0 -> SW1 Fa0/2 (Straight cable)\n   - Connect SW1 Gi0/1 -> R1 Gi0/0 (Crossover cable)\n\n2) ROUTER CONFIGURATION:\n   - Enter R1 terminal: enable, conf t\n   - interface gi0/0\n     ip address 192.168.10.1 255.255.255.0\n     no shutdown\n   - exit\n   - ip dhcp pool LAN\n     network 192.168.10.0 255.255.255.0\n     default-router 192.168.10.1\n     dns-server 8.8.8.8\n   - exit\n\n3) SWITCH CONFIGURATION:\n   - Enter SW1 terminal: enable, conf t\n   - interface vlan 1\n     ip address 192.168.10.2 255.255.255.0\n     no shutdown\n   - exit\n   - interface fa0/1\n     switchport mode access\n   - exit\n   - interface fa0/2\n     switchport mode access\n   - exit\n   - interface gi0/1\n     switchport mode access\n   - exit\n\n4) PC CONFIGURATION:\n   - PC-1: IP mode DHCP\n   - PC-2: IP mode DHCP\n\n5) TEST:\n   - PC-1 CMD: ipconfig /renew\n   - PC-2 CMD: ipconfig /renew\n   - R1> show ip dhcp binding (view DHCP assignments)\n   - PC-1 and PC-2 should receive IPs (192.168.10.100+ range)',
-      x: 610,
-      y: 40,
-      width: 500,
-      height: 340,
+        ? 'Amaç: PAT (Port Address Translation / NAT Overload) ile iç ağdaki tüm cihazları tek bir dış IP adresi (203.0.113.1) ve farklı port numaraları üzerinden internete çıkarmak.\n\nPAT Yapılandırması:\n  - İç Ağ: 192.168.10.0/24 (gi0/0 - ip nat inside)\n  - Dış Ağ: 203.0.113.0/24 (gi0/1 - ip nat outside)\n  - ACL 1: access-list 1 permit 192.168.10.0 0.0.0.255\n  - PAT Kuralı: ip nat inside source list 1 interface gi0/1 overload\n\n✅ TEST ADIMLARI:\n\n1) R1 terminalinde NAT durumunu gör:\n   R1# show ip nat translations\n\n2) PC-1 ve PC-2 terminalinden dış sunucuya ping at:\n   ping 203.0.113.100\n   → İki cihazdan da başarıyla ulaşmalı\n\n3) R1 terminalinde çevirileri kontrol et:\n   R1# show ip nat translations\n   → 192.168.10.10:port ve 192.168.10.11:port adreslerinin tek dış IP (203.0.113.1) üzerinde portlar ile eşleştiğini gör!\n\n4) NAT istatistikleri:\n   R1# show ip nat statistics'
+        : 'Goal: Route all internal devices through a single external IP (203.0.113.1) using PAT (Port Address Translation / NAT Overload).\n\nPAT Configuration:\n  - Inside Network: 192.168.10.0/24 (gi0/0 - ip nat inside)\n  - Outside Network: 203.0.113.0/24 (gi0/1 - ip nat outside)\n  - ACL 1: access-list 1 permit 192.168.10.0 0.0.0.255\n  - PAT Rule: ip nat inside source list 1 interface gi0/1 overload\n\n✅ TEST STEPS:\n\n1) View NAT table on R1:\n   R1# show ip nat translations\n\n2) From PC-1 and PC-2, ping Server:\n   ping 203.0.113.100\n   → Should succeed from both devices\n\n3) Inspect translations on R1:\n   R1# show ip nat translations\n   → Observe 192.168.10.10:port and 192.168.10.11:port translated to external IP 203.0.113.1!\n\n4) Check stats:\n   R1# show ip nat statistics',
+      x: 770,
+      y: 50,
+      width: 520,
+      height: 480,
       color: 'var(--color-primary-500)',
       font: 'verdana',
       fontSize: 12,
@@ -38,90 +44,77 @@ const example = (isTr: boolean): ExampleProject => {
     }
   ];
 
-  const routerDhcpR1 = createInitialRouterState('00:50:00:00:00:07');
-  routerDhcpR1.hostname = 'R1';
-  routerDhcpR1.ports['gi0/0'] = {
-    ...routerDhcpR1.ports['gi0/0'],
+  // ── Router R1 durumu ──────────────────────────────────────────────────────
+  const r1State = createInitialRouterState(devices[3].macAddress);
+  r1State.hostname = 'R1';
+  r1State.ipRouting = true;
+  r1State.ports['gi0/0'] = {
+    ...r1State.ports['gi0/0'],
     ipAddress: '192.168.10.1',
     subnetMask: '255.255.255.0',
     status: 'connected',
-    shutdown: false
+    shutdown: false,
+    natSide: 'inside'
   };
-  routerDhcpR1.dhcpPools = {
-    LAN: {
-      network: '192.168.10.0',
-      subnetMask: '255.255.255.0',
-      defaultRouter: '192.168.10.1',
-      dnsServer: '8.8.8.8',
-      leaseTime: '1'
-    }
+  r1State.ports['gi0/1'] = {
+    ...r1State.ports['gi0/1'],
+    ipAddress: '203.0.113.1',
+    subnetMask: '255.255.255.0',
+    status: 'connected',
+    shutdown: false,
+    natSide: 'outside'
   };
-  routerDhcpR1.services = {
-    ...routerDhcpR1.services,
-    dhcp: {
-      enabled: true,
-      pools: [
-        {
-          poolName: 'LAN',
-          defaultGateway: '192.168.10.1',
-          dnsServer: '8.8.8.8',
-          startIp: '192.168.10.100',
-          subnetMask: '255.255.255.0',
-          maxUsers: 50
-        }
-      ]
-    }
-  } as import('../types').SwitchState['services'];
-  routerDhcpR1.runningConfig = [
+  r1State.accessLists = {
+    '1': ['permit 192.168.10.0 0.0.0.255']
+  };
+  r1State.natDynamicRules = [
+    { aclId: '1', interface: 'gi0/1', overload: true }
+  ];
+  r1State.runningConfig = [
     '!',
     'hostname R1',
     '!',
-    'interface gi0/0',
+    'interface GigabitEthernet0/0',
     ' ip address 192.168.10.1 255.255.255.0',
+    ' ip nat inside',
     ' no shutdown',
     '!',
-    'ip dhcp pool LAN',
-    ' network 192.168.10.0 255.255.255.0',
-    ' default-router 192.168.10.1',
-    ' dns-server 8.8.8.8',
+    'interface GigabitEthernet0/1',
+    ' ip address 203.0.113.1 255.255.255.0',
+    ' ip nat outside',
+    ' no shutdown',
     '!',
-    'line con 0',
-    'line aux 0',
-    'line vty 0 4',
-    ' login',
+    'access-list 1 permit 192.168.10.0 0.0.0.255',
+    'ip nat inside source list 1 interface gi0/1 overload',
     '!',
     'end'
   ];
 
-  const routerDhcpSw1 = createInitialState('00:1A:2B:3C:4D:70');
-  routerDhcpSw1.hostname = 'SW1';
-  routerDhcpSw1.ports['fa0/1'] = { ...routerDhcpSw1.ports['fa0/1'], status: 'connected' };
-  routerDhcpSw1.ports['fa0/2'] = { ...routerDhcpSw1.ports['fa0/2'], status: 'connected' };
-  routerDhcpSw1.ports['gi0/1'] = { ...routerDhcpSw1.ports['gi0/1'], mode: 'access', status: 'connected' };
-  routerDhcpSw1.runningConfig = [
-    '!',
-    'hostname SW1',
-    '!',
-    'line con 0',
-    'line vty 0 4',
-    ' login',
-    '!',
-    'end'
+  // ── Switch SW1 durumu ─────────────────────────────────────────────────────
+  const sw1State = createInitialState(devices[2].macAddress);
+  sw1State.hostname = 'SW1';
+  sw1State.ports['fa0/1'] = { ...sw1State.ports['fa0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  sw1State.ports['fa0/2'] = { ...sw1State.ports['fa0/2'], vlan: 1, mode: 'access', status: 'connected' };
+  sw1State.ports['gi0/1'] = { ...sw1State.ports['gi0/1'], vlan: 1, mode: 'access', status: 'connected' };
+  sw1State.runningConfig = [
+    '!', 'hostname SW1', '!', 'end'
   ];
 
+  // ── Proje tanımı ──────────────────────────────────────────────────────────
   return {
     id: 'nat-pat-basic',
     tag: 'NAT',
     title: isTr ? 'NAT PAT' : 'NAT PAT',
-    description: isTr ? 'PAT (NAT overload) ile çoktan-bire çeviri.' : 'Many-to-one translation with PAT (NAT overload).',
-    detail: 'ip nat inside source list 1 interface gi0/0 overload',
+    description: isTr
+      ? 'PAT (NAT overload) ile çoktan-bire çeviri.'
+      : 'Many-to-one translation with PAT (NAT overload).',
+    detail: 'ip nat inside source list 1 interface gi0/1 overload',
     level: 'advanced',
-    data: baseProjectData(routerDhcpDevices, routerDhcpConnections, routerDhcpNotes, [
-      { id: 'router-1', state: routerDhcpR1 },
-      { id: 'switch-1', state: routerDhcpSw1 }
+    data: baseProjectData(devices, connections, notes, [
+      { id: 'r1', state: r1State },
+      { id: 'sw1', state: sw1State }
     ])
   };
 };
 
 export default example;
-
