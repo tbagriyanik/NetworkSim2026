@@ -128,6 +128,9 @@ export function useTopologyNoteActions({
     if (!note) return;
 
     saveToHistory();
+    resizingNoteIdRef.current = noteId;
+    noteResizeDirectionRef.current = direction;
+    noteResizeStartRef.current = { x: e.clientX, y: e.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y };
     setResizingNoteId(noteId);
     setNoteResizeDirection(direction);
     setNoteResizeStart({ x: e.clientX, y: e.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y });
@@ -143,6 +146,9 @@ export function useTopologyNoteActions({
     if (!note) return;
 
     saveToHistory();
+    resizingNoteIdRef.current = noteId;
+    noteResizeDirectionRef.current = direction;
+    noteResizeStartRef.current = { x: touch.clientX, y: touch.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y };
     setResizingNoteId(noteId);
     setNoteResizeDirection(direction);
     setNoteResizeStart({ x: touch.clientX, y: touch.clientY, width: note.width, height: note.height, noteX: note.x, noteY: note.y });

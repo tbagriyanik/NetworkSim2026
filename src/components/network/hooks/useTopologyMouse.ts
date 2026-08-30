@@ -387,6 +387,9 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
 
             const canvasW = CANVAS_W_D;
             const canvasH = CANVAS_H_D;
+            // Connection updates can touch many links. Avoid scanning the full
+            // device array once per endpoint and frame while dragging.
+            const devicesById = new Map(latestDevicesRef.current.map(device => [device.id, device]));
 
             const devicesToMove = currentSelectedIds.includes(currentDraggedDevice)
               ? currentSelectedIds
@@ -421,8 +424,8 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
                 const conn = liveConns[ci];
                 if (!movedSet.has(conn.sourceDeviceId) && !movedSet.has(conn.targetDeviceId)) continue;
 
-                const srcDev = latestDevicesRef.current.find(function (d) { return d.id === conn.sourceDeviceId; });
-                const tgtDev = latestDevicesRef.current.find(function (d) { return d.id === conn.targetDeviceId; });
+                const srcDev = devicesById.get(conn.sourceDeviceId);
+                const tgtDev = devicesById.get(conn.targetDeviceId);
                 if (!srcDev || !tgtDev) continue;
 
                 const sp = newPositions.get(conn.sourceDeviceId) || { x: srcDev.x, y: srcDev.y };
@@ -549,19 +552,12 @@ export function useTopologyMouse(props: UseTopologyMouseProps) {
               }
             }
 
+            // The SVG nodes and connection paths are updated directly above for
+            // every frame. Committing the whole device array here would make
+            // React reconcile the entire topology at 60fps and can overwrite
+            // those DOM writes. Keep the live positions in the ref and commit
+            // them once in handleMouseUp instead.
             liveDeviceDragPositionsRef.current = newPositions;
-            setDevices(prev => {
-              let changed = false;
-              const nextDevices = prev.map(d => {
-                const livePos = newPositions.get(d.id);
-                if (livePos && (Math.abs(d.x - livePos.x) > 0.1 || Math.abs(d.y - livePos.y) > 0.1)) {
-                  changed = true;
-                  return { ...d, x: livePos.x, y: livePos.y };
-                }
-                return d;
-              });
-              return changed ? nextDevices : prev;
-            });
             dragAnimationFrameRef.current = null;
           });
         }

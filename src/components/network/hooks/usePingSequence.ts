@@ -154,6 +154,7 @@ type PingSequenceDeps = {
   pingIsPausedRef: React.MutableRefObject<boolean>;
   pingStepModeRef: React.MutableRefObject<boolean>;
   pingResumeCallbackRef: React.MutableRefObject<(() => void) | null>;
+  pingSkipCallbackRef: React.MutableRefObject<(() => void) | null>;
   pingPathRef: React.MutableRefObject<string[]>;
   cancelPingDueToInterruptionRef: React.MutableRefObject<((reasonMessage: string) => void) | null>;
   setPingAnimation: React.Dispatch<React.SetStateAction<PingAnimationState | null>>;
@@ -184,6 +185,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
     pingIsPausedRef,
     pingStepModeRef,
     pingResumeCallbackRef,
+    pingSkipCallbackRef,
     pingPathRef,
     cancelPingDueToInterruptionRef,
     setPingAnimation,
@@ -503,6 +505,13 @@ export function usePingSequence(deps: PingSequenceDeps) {
           setHopPacketInfos(returnPacketInfos);
           const finishSuccess = () => { setPingAnimation((prev) => prev ? { ...prev, success: true, isPaused: false, broadcastTargets: [], broadcastAnim: [], broadcastProgress: 0 } : null); setPingMode(false); };
           const animateReturn = () => {
+            pingSkipCallbackRef.current = () => {
+              returnStartTime = 0;
+              if (pingAnimationRef.current !== null) {
+                cancelAnimationFrame(pingAnimationRef.current);
+              }
+              pingAnimationRef.current = requestAnimationFrame(animateReturn);
+            };
             pingResumeCallbackRef.current = () => { returnStartTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animateReturn); };
             if (pingIsPausedRef.current) return;
             const fromId = returnPath[returnHop];
@@ -542,6 +551,13 @@ export function usePingSequence(deps: PingSequenceDeps) {
     };
 
     const animate = () => {
+      pingSkipCallbackRef.current = () => {
+        startTime = 0;
+        if (pingAnimationRef.current !== null) {
+          cancelAnimationFrame(pingAnimationRef.current);
+        }
+        pingAnimationRef.current = requestAnimationFrame(animate);
+      };
       pingResumeCallbackRef.current = () => { startTime = Date.now(); pingAnimationRef.current = requestAnimationFrame(animate); };
       if (pingIsPausedRef.current) return;
       if (path.some((id: string) => !latestDevicesRef.current.find(dd => dd.id === id) || latestDevicesRef.current.find(dd => dd.id === id)?.status === 'offline')) {

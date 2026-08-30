@@ -175,16 +175,26 @@ export function useNoteDragging({
       setNoteResizeDirection('se');
     };
 
+    // Releasing the mouse outside the browser window may not dispatch a
+    // regular mouseup to the original SVG/foreignObject target. Always reset
+    // the resize state when the window loses focus or a pointer is released.
+    const handlePointerUp = () => handleMouseUp();
+    const handleWindowBlur = () => handleMouseUp();
+
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseup', handleMouseUp);
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('blur', handleWindowBlur);
     return () => {
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('blur', handleWindowBlur);
     };
   }, [canvasRef, zoomRef, draggedNoteIdRef, resizingNoteIdRef, noteDragStartRef, noteResizeStartRef, noteResizeDirectionRef, setNotes, setDraggedNoteId, setNoteDragStart, setResizingNoteId, setNoteResizeStart, setNoteResizeDirection]);
 }

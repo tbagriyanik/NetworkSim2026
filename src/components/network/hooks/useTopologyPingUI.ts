@@ -5,6 +5,7 @@ interface UseTopologyPingUIProps {
   pingIsPausedRef: React.MutableRefObject<boolean>;
   pingStepModeRef: React.MutableRefObject<boolean>;
   pingResumeCallbackRef: React.MutableRefObject<(() => void) | null>;
+  pingSkipCallbackRef: React.MutableRefObject<(() => void) | null>;
   pingAnimationRef: React.MutableRefObject<number | null>;
   pingCleanupTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
   pingPathRef: React.MutableRefObject<string[]>;
@@ -21,6 +22,7 @@ export function useTopologyPingUI({
   pingIsPausedRef,
   pingStepModeRef,
   pingResumeCallbackRef,
+  pingSkipCallbackRef,
   pingAnimationRef,
   pingCleanupTimeoutRef,
   pingPathRef,
@@ -43,7 +45,10 @@ export function useTopologyPingUI({
   }, [setPingAnimation, pingAnimationRef, pingIsPausedRef]);
 
   const handlePingPlay = useCallback(() => {
-    if (!pingIsPausedRef.current) return;
+    if (!pingIsPausedRef.current) {
+      pingSkipCallbackRef.current?.();
+      return;
+    }
 
     pingIsPausedRef.current = false;
     pingStepModeRef.current = false;
@@ -55,7 +60,7 @@ export function useTopologyPingUI({
       pingResumeCallbackRef.current = null;
       resume();
     }
-  }, [setPingAnimation, setPacketPopupHop, pingIsPausedRef, pingStepModeRef, pingResumeCallbackRef]);
+  }, [setPingAnimation, setPacketPopupHop, pingIsPausedRef, pingStepModeRef, pingResumeCallbackRef, pingSkipCallbackRef]);
 
   const handlePingNext = useCallback(() => {
     if (!pingIsPausedRef.current) return;

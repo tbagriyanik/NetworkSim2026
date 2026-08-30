@@ -630,6 +630,7 @@ export function NetworkTopology({
   const pingCleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pingIsPausedRef = useRef<boolean>(false);
   const pingResumeCallbackRef = useRef<(() => void) | null>(null);
+  const pingSkipCallbackRef = useRef<(() => void) | null>(null);
   const pingStepModeRef = useRef<boolean>(false); // When true, pause at each hop boundary
   // Track the current ping path for external interruption checks (power off, cable change)
   const pingPathRef = useRef<string[]>([]);
@@ -828,6 +829,7 @@ export function NetworkTopology({
     pingIsPausedRef,
     pingStepModeRef,
     pingResumeCallbackRef,
+    pingSkipCallbackRef,
     pingPathRef,
     cancelPingDueToInterruptionRef,
     setPingAnimation: setPingAnimation as React.Dispatch<React.SetStateAction<PingAnimationState | null>>,
@@ -852,6 +854,7 @@ export function NetworkTopology({
     pingIsPausedRef,
     pingStepModeRef,
     pingResumeCallbackRef,
+    pingSkipCallbackRef,
     pingAnimationRef,
     pingCleanupTimeoutRef,
     pingPathRef,

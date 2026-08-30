@@ -147,7 +147,9 @@ export function useCanvasZoomPan({
   const resetView = useCallback(() => {
     setZoom(DEFAULT_ZOOM);
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-    const topMargin = isMobile ? 110 : 55;
+    // Keep the reset viewport clear of the fixed topology toolbar. The
+    // toolbar is taller on desktop than the old 55px margin assumed.
+    const topMargin = 110;
     const sideMargin = isMobile ? 16 : 24;
 
     if (devices.length === 0 && notes.length === 0) {
@@ -231,4 +233,3 @@ export function useCanvasZoomPan({
     resetView
   };
 }
-

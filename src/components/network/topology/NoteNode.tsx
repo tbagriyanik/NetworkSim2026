@@ -141,13 +141,15 @@ export const NoteNode = memo(function NoteNode({
         style={{ backgroundColor: note.color, fontFamily: note.font, opacity: note.opacity }}
         onPointerDown={(e) => {
           const target = e.target as HTMLElement;
-          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-export-hide]');
+          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-note-resize], [data-export-hide]') || target.closest('[class*="resize"]');
+          // A note body (including its textarea/buttons) should rise above
+          // other notes, but never above devices or cables.
+          if (!target.closest('[data-export-hide]') && !target.closest('textarea')) bringNoteToFront(note.id);
           if (interactiveTarget) return;
 
           e.preventDefault();
           e.stopPropagation();
           setContextMenu(null);
-          bringNoteToFront(note.id);
           if (e.shiftKey) {
             setSelectedNoteIds((prev) => prev.includes(note.id) ? prev.filter(id => id !== note.id) : [...prev, note.id]);
           } else {
@@ -158,7 +160,8 @@ export const NoteNode = memo(function NoteNode({
         }}
         onMouseDown={(e) => {
           const target = e.target as HTMLElement;
-          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-export-hide]');
+          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-note-resize], [data-export-hide]') || target.closest('[class*="resize"]');
+          if (!target.closest('[data-export-hide]') && !target.closest('textarea')) bringNoteToFront(note.id);
           if (interactiveTarget) return;
 
           e.preventDefault();
@@ -167,7 +170,8 @@ export const NoteNode = memo(function NoteNode({
         }}
         onTouchStart={(e) => {
           const target = e.target as HTMLElement;
-          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-export-hide]');
+          const interactiveTarget = target.closest('button, textarea, input, select, [data-note-header], [data-note-resize], [data-export-hide]') || target.closest('[class*="resize"]');
+          if (!target.closest('[data-export-hide]') && !target.closest('textarea')) bringNoteToFront(note.id);
           if (interactiveTarget) return;
 
           e.preventDefault();
@@ -201,6 +205,10 @@ export const NoteNode = memo(function NoteNode({
             className="flex items-center justify-center gap-1"
             style={{ display: note.width < 190 ? 'none' : 'flex' }}
             onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            onPointerDown={(e) => {
+              // Preserve native text selection and scrollbar dragging.
               e.stopPropagation();
             }}
             onTouchStart={(e) => {
@@ -359,6 +367,9 @@ export const NoteNode = memo(function NoteNode({
           className="flex-1 min-h-0"
           style={{
             height: showSearch ? `calc(100% - 48px)` : `calc(100% - 24px)`,
+            // Keep the native textarea scrollbar clear of the right resize
+            // handle so it remains clickable.
+            width: 'calc(100% - 10px)',
             scrollBehavior: 'smooth',
           }}
           onWheel={(e) => {
@@ -374,6 +385,12 @@ export const NoteNode = memo(function NoteNode({
             aria-label={language === 'tr' ? 'Not içeriği' : 'Note content'}
             ref={(el) => { noteTextareaRefs.current[note.id] = el; }}
             value={note.text}
+            onFocus={() => {
+              // Editing a note must not leave a device selected; otherwise
+              // Enter/arrow keys can accidentally activate device navigation.
+              setSelectedDeviceIds([]);
+              bringNoteToFront(note.id);
+            }}
             onChange={(e) => updateNoteText(note.id, e.target.value)}
             onMouseDown={(e) => {
               // Sadece textarea içine tıklandığında olay durdurulsun, 
@@ -404,6 +421,38 @@ export const NoteNode = memo(function NoteNode({
             }}
             onKeyDown={(e) => {
               e.stopPropagation();
+              if (e.key === 'Tab') {
+                e.preventDefault();
+                e.stopPropagation();
+                const textarea = e.currentTarget;
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const indentation = '    ';
+                const before = textarea.value.slice(0, start);
+                const removeCount = e.shiftKey && before.endsWith(indentation) ? indentation.length : 0;
+                const insertedText = e.shiftKey ? '' : indentation;
+                const nextText = textarea.value.slice(0, start - removeCount) + insertedText + textarea.value.slice(end);
+                updateNoteText(note.id, nextText);
+                requestAnimationFrame(() => {
+                  textarea.focus();
+                  const nextCursor = start - removeCount + insertedText.length;
+                  textarea.setSelectionRange(nextCursor, nextCursor);
+                });
+                return;
+              }
+              if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                const textarea = e.currentTarget;
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const nextText = textarea.value.slice(0, start) + '\n' + textarea.value.slice(end);
+                updateNoteText(note.id, nextText);
+                requestAnimationFrame(() => {
+                  textarea.focus();
+                  textarea.setSelectionRange(start + 1, start + 1);
+                });
+                return;
+              }
               if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.currentTarget.blur();
                 return;

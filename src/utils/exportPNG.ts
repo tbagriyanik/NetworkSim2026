@@ -258,7 +258,8 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
       addLabel(tgtLabelPos, conn.targetPort);
     });
 
-    // Re-create notes as export-friendly SVG elements (rounded rect + text, auto-sized)
+    // Re-create notes as export-friendly SVG elements. Keep the persisted
+    // dimensions: export must not grow empty or short notes automatically.
     const noteHeights = new Map<string, number>();
     notes.forEach(note => {
       const pad = 12;
@@ -289,8 +290,12 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
         }
       }
 
-      const lineCount = wrappedLines.length;
-      const nh = Math.max(60, lineCount * lineHeight + pad * 2 + 10);
+      // Preserve the user's size for empty/short notes, but expand only when
+      // a non-empty long text would otherwise be clipped in the PNG.
+      const requiredHeight = wrappedLines.length * lineHeight + pad * 2 + 10;
+      const nh = note.text.trim() && requiredHeight > note.height
+        ? requiredHeight
+        : note.height;
       noteHeights.set(note.id, nh);
 
       const g = document.createElementNS(ns, 'g');
@@ -324,7 +329,15 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
       });
 
       g.appendChild(textEl);
-      clone.appendChild(g);
+
+      // Keep notes in the topology layer, before device groups. SVG paint
+      // order makes them stay below devices/cables while their insertion order
+      // preserves the note-to-note stacking order.
+      const topologyGroup = clone.querySelector('[data-content-group="true"]') as SVGGElement | null;
+      const noteLayer = topologyGroup?.querySelector('g[clip-path]') as SVGGElement | null;
+      const firstObject = noteLayer?.querySelector('[data-device-id], [data-connection-id]');
+      if (noteLayer) noteLayer.insertBefore(g, firstObject ?? null);
+      else clone.appendChild(g);
     });
 
     // Set background
@@ -381,7 +394,7 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
       }
     }
 
-    // Bounds (use auto-sized note heights where computed)
+    // Bounds use the notes' persisted dimensions.
     const padding = 50;
     const getNoteMaxY = (n: typeof notes[0]) => n.y + (noteHeights.get(n.id) ?? n.height);
     const minX = Math.min(...devices.map(d => d.x), ...notes.map(n => n.x), 0);

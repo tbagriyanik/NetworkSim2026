@@ -269,6 +269,41 @@ export function TopologyCanvasLayer({
 
                         <EnvironmentBackgrounds environment={environment} isDark={isDark} t={t} />
 
+                        {/* Notes are intentionally below cables and devices in SVG paint order. */}
+                        {visibleNotes.map((note) => (
+                            <NoteNode
+                                key={note.id}
+                                note={note}
+                                isDark={isDark}
+                                selectedNoteIds={selectedNoteIds}
+                                draggedNoteId={null}
+                                contextMenu={contextMenu}
+                                language={language}
+                                t={t}
+                                noteTextareaRefs={noteTextareaRefs}
+                                devices={devices}
+                                connections={connections}
+                                notes={notes}
+                                setSelectedNoteIds={setSelectedNoteIds}
+                                setSelectedDeviceIds={setSelectedDeviceIds}
+                                setContextMenu={setContextMenu}
+                                handleNoteHeaderMouseDown={handleNoteHeaderMouseDown}
+                                handleNoteHeaderTouchStart={handleNoteHeaderTouchStart}
+                                cycleNoteColor={cycleNoteColor}
+                                cycleNoteFont={cycleNoteFont}
+                                cycleNoteFontSize={cycleNoteFontSize}
+                                cycleNoteOpacity={cycleNoteOpacity}
+                                duplicateNote={duplicateNote}
+                                deleteNote={deleteNote}
+                                updateNoteText={updateNoteText}
+                                setNoteTextSelection={setNoteTextSelection}
+                                onTopologyChange={undefined}
+                                handleNoteResizeStart={handleNoteResizeStart}
+                                handleNoteResizeTouchStart={handleNoteResizeTouchStart}
+                                bringNoteToFront={bringNoteToFront}
+                            />
+                        ))}
+
                         {visibleConnections.map((conn) => {
                             const sourceDevice = deviceMap.get(conn.sourceDeviceId);
                             const targetDevice = deviceMap.get(conn.targetDeviceId);
@@ -337,40 +372,6 @@ export function TopologyCanvasLayer({
                             t={tForPing}
                             handleEnvelopeClick={handleEnvelopeClick}
                         />
-
-                        {visibleNotes.map((note) => (
-                            <NoteNode
-                                key={note.id}
-                                note={note}
-                                isDark={isDark}
-                                selectedNoteIds={selectedNoteIds}
-                                draggedNoteId={null}
-                                contextMenu={contextMenu}
-                                language={language}
-                                t={t}
-                                noteTextareaRefs={noteTextareaRefs}
-                                devices={devices}
-                                connections={connections}
-                                notes={notes}
-                                setSelectedNoteIds={setSelectedNoteIds}
-                                setSelectedDeviceIds={setSelectedDeviceIds}
-                                setContextMenu={setContextMenu}
-                                handleNoteHeaderMouseDown={handleNoteHeaderMouseDown}
-                                handleNoteHeaderTouchStart={handleNoteHeaderTouchStart}
-                                cycleNoteColor={cycleNoteColor}
-                                cycleNoteFont={cycleNoteFont}
-                                cycleNoteFontSize={cycleNoteFontSize}
-                                cycleNoteOpacity={cycleNoteOpacity}
-                                duplicateNote={duplicateNote}
-                                deleteNote={deleteNote}
-                                updateNoteText={updateNoteText}
-                                setNoteTextSelection={setNoteTextSelection}
-                                onTopologyChange={undefined}
-                                handleNoteResizeStart={handleNoteResizeStart}
-                                handleNoteResizeTouchStart={handleNoteResizeTouchStart}
-                                bringNoteToFront={bringNoteToFront}
-                            />
-                        ))}
 
                         {selectionBox && (
                             <SelectionBoxOverlay selectionBox={selectionBox} isDark={isDark} zoom={zoom} selectedDeviceCount={selectedDeviceIds.length} />
