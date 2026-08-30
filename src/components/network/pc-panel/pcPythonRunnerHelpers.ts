@@ -1,9 +1,9 @@
 export class PythonInputRequiredException {
-  constructor(public prompt: string) {}
+  constructor(public prompt: string) { }
 }
 
 export class PyComplex {
-  constructor(public real: number, public imag: number) {}
+  constructor(public real: number, public imag: number) { }
 
   add(other: unknown): PyComplex {
     const o = toPyComplex(other);
@@ -169,8 +169,13 @@ export function getPythonType(val: unknown): string {
     return Number.isInteger(val) ? "<class 'int'>" : "<class 'float'>";
   }
   if (typeof val === 'string') return "<class 'str'>";
-  if (Array.isArray(val)) return "<class 'list'>";
-  if (typeof val === 'object') return "<class 'dict'>";
+  if (Array.isArray(val)) return (val as unknown as { __isTuple__?: boolean }).__isTuple__ ? "<class 'tuple'>" : "<class 'list'>";
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>;
+    if (obj.__name__ && typeof obj.__name__ === 'string') return `<class '${obj.__name__}'>`;
+    if (obj.constructor && obj.constructor.name && obj.constructor.name !== 'Object') return `<class '${obj.constructor.name}'>`;
+    return "<class 'dict'>";
+  }
   return `<class '${typeof val}'>`;
 }
 
@@ -192,7 +197,12 @@ export function formatPythonValue(val: unknown, inCollection: boolean = false): 
     return `{${items.map(item => formatPythonValue(item, true)).join(', ')}}`;
   }
   if (Array.isArray(val)) {
-    return `[${val.map(item => formatPythonValue(item, true)).join(', ')}]`;
+    const isTuple = Boolean((val as unknown as { __isTuple__?: boolean }).__isTuple__);
+    const formattedItems = val.map(item => formatPythonValue(item, true)).join(', ');
+    if (isTuple) {
+      return val.length === 1 ? `(${formattedItems},)` : `(${formattedItems})`;
+    }
+    return `[${formattedItems}]`;
   }
   if (typeof val === 'object') {
     const entries = Object.entries(val as Record<string, unknown>).map(
@@ -551,10 +561,13 @@ export class PyInstance {
     }
     const method = this.pyClass.findMethod(attrName);
     if (method !== undefined) {
-      if (this.pyClass.staticMethods.has(attrName)) {
+      if ((method as Record<string, unknown>).__isPropertyGetter) {
+        return (method as Function)(this);
+      }
+      if (this.pyClass.staticMethods.has(attrName) || (method as Record<string, unknown>).__isStaticMethod) {
         return method;
       }
-      if (this.pyClass.classMethods.has(attrName)) {
+      if (this.pyClass.classMethods.has(attrName) || (method as Record<string, unknown>).__isClassMethod) {
         return (method as Function).bind(null, this.pyClass);
       }
       if (typeof method === 'function') {
@@ -582,7 +595,7 @@ export class PyInstance {
 }
 
 export class PySuper {
-  constructor(public instance: PyInstance, public targetClass?: PyClass) {}
+  constructor(public instance: PyInstance, public targetClass?: PyClass) { }
 
   getAttribute(methodName: string): unknown {
     const startBases = this.targetClass ? this.targetClass.baseClasses : this.instance.pyClass.baseClasses;
@@ -602,20 +615,28 @@ export class PySuper {
 export class PyGenerator {
   private iterator: Iterator<unknown> | null = null;
 
-  constructor(private generatorFn: () => Iterator<unknown>) {}
+  constructor(private generatorFnOrArray: (() => Iterator<unknown>) | unknown[]) { }
 
   [Symbol.iterator]() {
     if (!this.iterator) {
-      this.iterator = this.generatorFn();
+      if (typeof this.generatorFnOrArray === 'function') {
+        this.iterator = this.generatorFnOrArray();
+      } else if (Array.isArray(this.generatorFnOrArray)) {
+        this.iterator = (this.generatorFnOrArray as unknown[])[Symbol.iterator]();
+      }
     }
-    return this.iterator;
+    return this.iterator!;
   }
 
   next(val?: unknown) {
     if (!this.iterator) {
-      this.iterator = this.generatorFn();
+      if (typeof this.generatorFnOrArray === 'function') {
+        this.iterator = this.generatorFnOrArray();
+      } else if (Array.isArray(this.generatorFnOrArray)) {
+        this.iterator = (this.generatorFnOrArray as unknown[])[Symbol.iterator]();
+      }
     }
-    return this.iterator.next(val);
+    return this.iterator!.next(val);
   }
 }
 

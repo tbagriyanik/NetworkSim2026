@@ -1,5 +1,4 @@
-import { PyClass, PyInstance } from './pcPythonRunnerHelpers';
-import { splitOutsideQuotesAndParens } from './pcPythonRunnerHelpers';
+import { PyClass, PyInstance, parseFormatArgs } from './pcPythonRunnerHelpers';
 import type { PythonEvaluationResult } from './pcPythonEvaluatorLiterals';
 
 /** Evaluates user-defined Python functions and class constructors. */
@@ -14,16 +13,47 @@ export function evaluatePythonFunctionCall(
   const fn = scope[match[1]];
   if (!(fn instanceof PyClass) && typeof fn !== 'function') return { handled: false };
 
-  const args = match[2].trim()
-    ? splitOutsideQuotesAndParens(match[2], ',').map(arg => evaluateExpr(arg))
-    : [];
+  const { positional, kwargs } = match[2].trim() ? parseFormatArgs(match[2], evaluateExpr) : { positional: [], kwargs: {} as Record<string, unknown> };
 
   if (fn instanceof PyClass) {
     const instance = new PyInstance(fn);
     const initMethod = fn.findMethod('__init__');
-    if (typeof initMethod === 'function') initMethod(instance, ...args);
+    if (typeof initMethod === 'function') {
+      const paramNames = (initMethod as unknown as Record<string, unknown>).__pythonParamNames as string[] | undefined;
+      const orderedArgs = paramNames ? (() => {
+        const bound: unknown[] = [];
+        const remaining = [...positional];
+        for (const name of paramNames) {
+          if (Object.prototype.hasOwnProperty.call(kwargs, name)) {
+            bound.push(kwargs[name]);
+            delete kwargs[name];
+          } else if (remaining.length > 0) {
+            bound.push(remaining.shift()!);
+          }
+        }
+        if (remaining.length > 0) bound.push(...remaining);
+        return bound;
+      })() : positional;
+      initMethod(instance, ...orderedArgs);
+    }
     return { handled: true, value: instance };
   }
 
-  return { handled: true, value: fn(...args) };
+  const paramNames = (fn as unknown as Record<string, unknown>).__pythonParamNames as string[] | undefined;
+  const orderedArgs = paramNames ? (() => {
+    const bound: unknown[] = [];
+    const remaining = [...positional];
+    for (const name of paramNames) {
+      if (Object.prototype.hasOwnProperty.call(kwargs, name)) {
+        bound.push(kwargs[name]);
+        delete kwargs[name];
+      } else if (remaining.length > 0) {
+        bound.push(remaining.shift()!);
+      }
+    }
+    if (remaining.length > 0) bound.push(...remaining);
+    return bound;
+  })() : positional;
+
+  return { handled: true, value: fn(...orderedArgs) };
 }

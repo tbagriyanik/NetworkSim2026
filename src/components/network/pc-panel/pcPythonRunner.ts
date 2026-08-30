@@ -27,6 +27,7 @@ export function executePythonScript(
   deviceId?: string
 ): PythonExecutionResult {
   const scope: Record<string, unknown> = {
+    PyGenerator,
     print: (...args: unknown[]) => {
       outputs.push(args.map(a => formatPythonValue(a)).join(' '));
     },
@@ -184,7 +185,10 @@ export function executePythonScript(
           rawFunc = (...fnArgs: unknown[]) => {
             const savedScope = { ...scope };
             paramNames.forEach((p, idx) => {
-              if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
+              if (p.startsWith('*')) {
+                const varArgName = p.slice(1).trim();
+                scope[varArgName] = fnArgs.slice(idx);
+              } else if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
                 scope[p] = fnArgs[idx];
               } else if (p in paramDefaults) {
                 scope[p] = evaluateExpr(paramDefaults[p]);
@@ -202,8 +206,11 @@ export function executePythonScript(
           };
         }
 
+        (rawFunc as Record<string, unknown>).__pythonParamNames = paramNames;
+        (rawFunc as Record<string, unknown>).__pythonParamDefaults = paramDefaults;
+
         if (decorators) {
-          for (const dec of decorators) {
+          for (const dec of decorators.slice().reverse()) {
             if (dec === 'property') {
               (rawFunc as Record<string, unknown>).__isPropertyGetter = true;
             } else if (dec === 'staticmethod') {
@@ -302,13 +309,28 @@ export function executePythonScript(
         } catch (err) {
           if (err instanceof PythonInputRequiredException) throw err;
           if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
+            const errName = err instanceof Error ? err.message : String(err);
             for (const ex of stmt.exceptBranches) {
-              if (ex.varName && err instanceof Error) {
-                scope[ex.varName] = err.message;
+              let matchesType = true;
+              if (ex.varName) {
+                const exTypeMatch = /^([a-zA-Z0-9_]+)(?:\s+as\s+([a-zA-Z0-9_]+))?$/.exec(ex.varName.trim());
+                if (exTypeMatch) {
+                  const typeName = exTypeMatch[1];
+                  const alias = exTypeMatch[2] || typeName;
+                  if (typeName !== 'Exception' && typeName !== 'BaseException' && !errName.startsWith(typeName)) {
+                    matchesType = false;
+                  } else {
+                    scope[alias] = errName;
+                  }
+                } else if (!errName.startsWith(ex.varName)) {
+                  matchesType = false;
+                }
               }
-              const exSig = execStatementsSync(ex.body);
-              if (exSig !== 'normal') brokeOrReturn = exSig;
-              break;
+              if (matchesType) {
+                const exSig = execStatementsSync(ex.body);
+                if (exSig !== 'normal') brokeOrReturn = exSig;
+                break;
+              }
             }
           }
         } finally {

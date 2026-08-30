@@ -1,4 +1,4 @@
-import { isSingleStringLiteral } from './pcPythonRunnerHelpers';
+import { isSingleStringLiteral, PyComplex } from './pcPythonRunnerHelpers';
 
 export interface PythonEvaluationResult {
   handled: boolean;
@@ -21,6 +21,20 @@ export function evaluatePythonLiteral(
       .replace(/\\t/g, '\t')
       .replace(/\\r/g, '\r')
       .replace(/\\\\/g, '\\'));
+  }
+
+  // Complex literal: 3+4j, 4j, (3+4j), -2.5-1.2j
+  const unparenthesized = (trimmed.startsWith('(') && trimmed.endsWith(')')) ? trimmed.slice(1, -1).trim() : trimmed;
+  const complexMatch = /^([+-]?\d+(?:\.\d+)?)\s*([+-])\s*(\d+(?:\.\d+)?)j$/i.exec(unparenthesized);
+  if (complexMatch) {
+    const real = parseFloat(complexMatch[1]);
+    const sign = complexMatch[2] === '-' ? -1 : 1;
+    const imag = parseFloat(complexMatch[3]) * sign;
+    return handled(new PyComplex(real, imag));
+  }
+  const pureImagMatch = /^([+-]?\d+(?:\.\d+)?)j$/i.exec(unparenthesized);
+  if (pureImagMatch) {
+    return handled(new PyComplex(0, parseFloat(pureImagMatch[1])));
   }
 
   if (!isNaN(Number(trimmed))) return handled(Number(trimmed));

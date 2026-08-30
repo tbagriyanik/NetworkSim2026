@@ -701,7 +701,7 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
     const connections = ctx.connections || [];
     const sourceDeviceId = ctx.sourceDeviceId as string;
     const devices = ctx.devices || [];
-    
+
     const deviceConnections = connections.filter(
       (conn: CanvasConnection) => conn.sourceDeviceId === sourceDeviceId || conn.targetDeviceId === sourceDeviceId
     );
@@ -725,8 +725,28 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
           output += `------------------------------------------------\n`;
           output += `Local Intf: ${localPort}\n`;
           const neighborState = ctx.deviceStates?.get(connectedDeviceId);
-          const chassisId = connectedDevice.macAddress || neighborState?.macAddress || connectedDeviceId;
-          const managementIp = connectedDevice.ip || Object.values(neighborState?.ports || {}).find(port => port.ipAddress)?.ipAddress || ' not configured';
+          const rawChassisId =
+            connectedDevice.macAddress ||
+            neighborState?.macAddress ||
+            Object.values(neighborState?.ports || {}).find(p => p.macAddress)?.macAddress ||
+            '0050.56a1.b2c3';
+          const chassisId = formatMacAddressSimple(rawChassisId);
+
+          let managementIp: string = connectedDevice.ip || '';
+          if (!managementIp && neighborState) {
+            const neighborVlanState = (neighborState as unknown as { vlanState?: { vlanInterfaces?: Array<{ ipAddress?: string }> } }).vlanState;
+            const vlanIps = neighborVlanState?.vlanInterfaces?.map((v: { ipAddress?: string }) => v.ipAddress).filter(Boolean);
+            if (vlanIps && vlanIps.length > 0) {
+              managementIp = vlanIps[0] || '';
+            } else {
+              const portIp = Object.values(neighborState.ports || {}).find(p => p.ipAddress)?.ipAddress;
+              if (portIp) managementIp = portIp;
+            }
+          }
+          if (!managementIp) {
+            managementIp = 'not configured';
+          }
+
           output += `Chassis id: ${chassisId}\n`;
           output += `Port id: ${remotePort}\n`;
           output += `Port Description: ${remotePort}\n`;
@@ -747,7 +767,7 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
     output += '    (R) Router, (B) Bridge, (T) Telephone, (C) DOCSIS Cable Device\n';
     output += '    (W) WLAN Access Point, (P) Repeater, (S) Station, (O) Other\n\n';
     output += 'Device ID           Local Intf     Hold-time  Capability      Port ID\n';
-    
+
     const connections = ctx.connections || [];
     const sourceDeviceId = ctx.sourceDeviceId as string;
     const devices = ctx.devices || [];
@@ -776,7 +796,7 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
         }
       });
     }
-    
+
     output += '\nTotal entries displayed: ' + deviceConnections.length + '\n';
     return { success: true, output };
   }

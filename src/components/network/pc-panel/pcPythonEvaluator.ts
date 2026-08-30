@@ -4,6 +4,7 @@ import {
   PyClass,
   PyInstance,
   PySuper,
+  PyGenerator,
   toPyComplex,
   getPythonType,
   findOperatorIndex,
@@ -140,64 +141,123 @@ export function createExpressionEvaluator(
         itemExprPart = inner.slice(0, ifIdx).trim();
       }
 
-      const compMatch = /^(.+?)\s+for\s+(.+?)\s+in\s+(.+)$/.exec(itemExprPart);
-      if (compMatch) {
-        const itemExpr = compMatch[1].trim();
-        const targetVarStr = compMatch[2].trim();
-        const iterExpr = compMatch[3].trim();
-
-        const rawIterable = evaluateExpr(iterExpr);
-        let items: unknown[] = [];
-        if (Array.isArray(rawIterable)) {
-          items = rawIterable;
-        } else if (typeof rawIterable === 'string') {
-          items = rawIterable.split('');
-        } else if (rawIterable instanceof Set) {
-          items = Array.from(rawIterable);
-        } else if (typeof rawIterable === 'object' && rawIterable !== null) {
-          if (typeof (rawIterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
-            items = Array.from(rawIterable as Iterable<unknown>);
-          } else {
-            items = Object.keys(rawIterable);
-          }
+      const firstForIdx = findOperatorIndex(itemExprPart, ' for ');
+      if (firstForIdx !== -1) {
+        const itemExpr = itemExprPart.slice(0, firstForIdx).trim();
+        const forPartsStr = itemExprPart.slice(firstForIdx).trim();
+        const forMatches: Array<{ varStr: string; iterExpr: string }> = [];
+        const forRegex = /\bfor\s+(.+?)\s+in\s+((?:(?!\bfor\b).)+)/gi;
+        let fm: RegExpExecArray | null;
+        while ((fm = forRegex.exec(forPartsStr)) !== null) {
+          forMatches.push({ varStr: fm[1].trim(), iterExpr: fm[2].trim() });
         }
 
-        const targets = targetVarStr.split(',').map(t => t.trim());
-        const resultList: unknown[] = [];
+        if (forMatches.length > 0) {
+          const resultList: unknown[] = [];
+          const evaluateNestedFor = (depth: number) => {
+            if (depth === forMatches.length) {
+              let shouldInclude = true;
+              if (ifCondExpr) {
+                shouldInclude = Boolean(evaluateExpr(ifCondExpr));
+              }
+              if (shouldInclude) {
+                resultList.push(evaluateExpr(itemExpr));
+              }
+              return;
+            }
 
-        for (const item of items) {
-          const savedValues: Record<string, unknown> = {};
-          if (targets.length > 1 && Array.isArray(item)) {
-            targets.forEach((t, idx) => {
-              savedValues[t] = scope[t];
-              scope[t] = item[idx];
-            });
-          } else {
-            savedValues[targetVarStr] = scope[targetVarStr];
-            scope[targetVarStr] = item;
+            const { varStr, iterExpr } = forMatches[depth];
+            const rawIterable = evaluateExpr(iterExpr);
+            let items: unknown[] = [];
+            if (Array.isArray(rawIterable)) items = rawIterable;
+            else if (typeof rawIterable === 'string') items = rawIterable.split('');
+            else if (rawIterable instanceof Set) items = Array.from(rawIterable);
+            else if (typeof rawIterable === 'object' && rawIterable !== null) {
+              if (typeof (rawIterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+                items = Array.from(rawIterable as Iterable<unknown>);
+              } else {
+                items = Object.keys(rawIterable);
+              }
+            }
+
+            const targets = varStr.split(',').map(t => t.trim());
+            for (const item of items) {
+              const savedValues: Record<string, unknown> = {};
+              if (targets.length > 1 && Array.isArray(item)) {
+                targets.forEach((t, idx) => {
+                  savedValues[t] = scope[t];
+                  scope[t] = item[idx];
+                });
+              } else {
+                savedValues[varStr] = scope[varStr];
+                scope[varStr] = item;
+              }
+
+              evaluateNestedFor(depth + 1);
+
+              if (targets.length > 1 && Array.isArray(item)) {
+                targets.forEach(t => {
+                  if (savedValues[t] !== undefined) scope[t] = savedValues[t];
+                  else delete scope[t];
+                });
+              } else {
+                if (savedValues[varStr] !== undefined) scope[varStr] = savedValues[varStr];
+                else delete scope[varStr];
+              }
+            }
+          };
+
+          evaluateNestedFor(0);
+          return resultList;
+        }
+      }
+
+      const genExprIdx = findOperatorIndex(trimmed, ' for ');
+      if (genExprIdx !== -1 && !trimmed.startsWith('[') && !trimmed.startsWith('{')) {
+        const itemExprPart = trimmed;
+        const firstForIdx = findOperatorIndex(itemExprPart, ' for ');
+        if (firstForIdx !== -1) {
+          const itemExpr = itemExprPart.slice(0, firstForIdx).trim();
+          const forPartsStr = itemExprPart.slice(firstForIdx).trim();
+          const forMatches: Array<{ varStr: string; iterExpr: string }> = [];
+          const forRegex = /\bfor\s+(.+?)\s+in\s+((?:(?!\bfor\b).)+)/gi;
+          let fm: RegExpExecArray | null;
+          while ((fm = forRegex.exec(forPartsStr)) !== null) {
+            forMatches.push({ varStr: fm[1].trim(), iterExpr: fm[2].trim() });
           }
-
-          let shouldInclude = true;
-          if (ifCondExpr) {
-            shouldInclude = Boolean(evaluateExpr(ifCondExpr));
-          }
-
-          if (shouldInclude) {
-            resultList.push(evaluateExpr(itemExpr));
-          }
-
-          if (targets.length > 1 && Array.isArray(item)) {
-            targets.forEach(t => {
-              if (savedValues[t] !== undefined) scope[t] = savedValues[t];
-              else delete scope[t];
-            });
-          } else {
-            if (savedValues[targetVarStr] !== undefined) scope[targetVarStr] = savedValues[targetVarStr];
-            else delete scope[targetVarStr];
+          if (forMatches.length > 0) {
+            const itemsList: unknown[] = [];
+            const evaluateNestedFor = (depth: number) => {
+              if (depth === forMatches.length) {
+                itemsList.push(evaluateExpr(itemExpr));
+                return;
+              }
+              const { varStr, iterExpr } = forMatches[depth];
+              const rawIterable = evaluateExpr(iterExpr);
+              let items: unknown[] = [];
+              if (Array.isArray(rawIterable)) items = rawIterable;
+              else if (typeof rawIterable === 'string') items = rawIterable.split('');
+              else if (rawIterable instanceof Set) items = Array.from(rawIterable);
+              const targets = varStr.split(',').map(t => t.trim());
+              for (const item of items) {
+                const savedValues: Record<string, unknown> = {};
+                if (targets.length > 1 && Array.isArray(item)) {
+                  targets.forEach((t, idx) => { savedValues[t] = scope[t]; scope[t] = item[idx]; });
+                } else {
+                  savedValues[varStr] = scope[varStr]; scope[varStr] = item;
+                }
+                evaluateNestedFor(depth + 1);
+                if (targets.length > 1 && Array.isArray(item)) {
+                  targets.forEach(t => { if (savedValues[t] !== undefined) scope[t] = savedValues[t]; else delete scope[t]; });
+                } else {
+                  if (savedValues[varStr] !== undefined) scope[varStr] = savedValues[varStr]; else delete scope[varStr];
+                }
+              }
+            };
+            evaluateNestedFor(0);
+            return new PyGenerator(itemsList);
           }
         }
-
-        return resultList;
       }
 
       const parts: string[] = [];
@@ -318,6 +378,21 @@ export function createExpressionEvaluator(
       return null;
     }
 
+    // Handle complex(...)
+    const complexBuiltinMatch = /^complex\s*\((.*)\)$/.exec(trimmed);
+    if (complexBuiltinMatch) {
+      const rawArg = complexBuiltinMatch[1].trim();
+      if (!rawArg) return new PyComplex(0, 0);
+      const parts = splitOutsideQuotesAndParens(rawArg, ',');
+      if (parts.length === 1) {
+        const val = evaluateExpr(parts[0]);
+        return toPyComplex(val);
+      }
+      const real = Number(evaluateExpr(parts[0]) || 0);
+      const imag = Number(evaluateExpr(parts[1]) || 0);
+      return new PyComplex(real, imag);
+    }
+
     // Handle set(...)
     const setMatch = /^set\s*\((.*)\)$/.exec(trimmed);
     if (setMatch) {
@@ -334,6 +409,7 @@ export function createExpressionEvaluator(
       const parts = splitOutsideQuotesAndParens(divmodMatch[1], ',').map(p => Number(evaluateExpr(p)));
       const a = parts[0] || 0;
       const b = parts[1] || 1;
+      if (b === 0) throw new Error('ZeroDivisionError: integer division or modulo by zero');
       return [Math.floor(a / b), a % b];
     }
 
@@ -439,15 +515,46 @@ export function createExpressionEvaluator(
     }
 
     // Handle sum(...)
-    const sumMatch = /^sum\s*\((.*)\)$/.exec(trimmed);
+    const sumMatch = isCompleteCall('sum') ? /^sum\s*\((.*)\)$/.exec(trimmed) : null;
     if (sumMatch) {
       const parts = splitOutsideQuotesAndParens(sumMatch[1], ',');
       const val = evaluateExpr(parts[0]);
       const startVal = parts.length > 1 ? Number(evaluateExpr(parts[1])) : 0;
+      let items: unknown[] = [];
       if (Array.isArray(val)) {
-        return val.reduce((acc: number, item: unknown) => acc + Number(item || 0), startVal);
+        items = val;
+      } else if (val instanceof PyGenerator) {
+        let res = val.next();
+        while (!res.done) {
+          items.push(res.value);
+          res = val.next();
+        }
+      } else if (val && typeof val === 'object' && typeof (val as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+        items = Array.from(val as Iterable<unknown>);
       }
-      return startVal;
+      return items.reduce((acc: number, item: unknown) => acc + Number(item || 0), startVal);
+    }
+
+    // Handle list(...)
+    const listMatch = isCompleteCall('list') ? /^list\s*\((.*)\)$/.exec(trimmed) : null;
+    if (listMatch) {
+      const val = evaluateExpr(listMatch[1]);
+      if (Array.isArray(val)) return [...val];
+      if (typeof val === 'string') return val.split('');
+      if (val instanceof Set) return Array.from(val);
+      if (val instanceof PyGenerator) {
+        const items: unknown[] = [];
+        let res = val.next();
+        while (!res.done) {
+          items.push(res.value);
+          res = val.next();
+        }
+        return items;
+      }
+      if (val && typeof val === 'object' && typeof (val as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+        return Array.from(val as Iterable<unknown>);
+      }
+      return [];
     }
 
     // Handle min(...)
@@ -468,10 +575,28 @@ export function createExpressionEvaluator(
       return Math.max(...nums);
     }
 
+    // Handle next(...)
+    const nextMatch = /^next\s*\((.*)\)$/.exec(trimmed);
+    if (nextMatch) {
+      const parts = splitOutsideQuotesAndParens(nextMatch[1], ',');
+      const iterObj = evaluateExpr(parts[0]);
+      if (iterObj instanceof PyGenerator) {
+        const res = iterObj.next();
+        if (!res.done) return res.value;
+      } else if (iterObj && typeof iterObj === 'object' && typeof (iterObj as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+        const it = (iterObj as Iterable<unknown>)[Symbol.iterator]();
+        const res = it.next();
+        if (!res.done) return res.value;
+      }
+      if (parts.length > 1) return evaluateExpr(parts[1]);
+      throw new Error('StopIteration');
+    }
+
     // Handle sorted(...)
     const sortedMatch = isCompleteCall('sorted') ? /^sorted\s*\((.*)\)$/.exec(trimmed) : null;
     if (sortedMatch) {
-      const val = evaluateExpr(sortedMatch[1]);
+      const { positional, kwargs } = parseFormatArgs(sortedMatch[1], evaluateExpr);
+      const val = positional[0];
       let arr: unknown[];
       if (Array.isArray(val)) {
         arr = [...val];
@@ -482,9 +607,15 @@ export function createExpressionEvaluator(
       } else {
         return val;
       }
+      const keyFn = typeof kwargs['key'] === 'function' ? (kwargs['key'] as (x: unknown) => unknown) : null;
+      const reverse = Boolean(kwargs['reverse']);
       arr.sort((a, b) => {
-        if (typeof a === 'number' && typeof b === 'number') return a - b;
-        return String(a) < String(b) ? -1 : String(a) > String(b) ? 1 : 0;
+        const ka = keyFn ? keyFn(a) : a;
+        const kb = keyFn ? keyFn(b) : b;
+        let comp = 0;
+        if (typeof ka === 'number' && typeof kb === 'number') comp = ka - kb;
+        else comp = String(ka) < String(kb) ? -1 : String(ka) > String(kb) ? 1 : 0;
+        return reverse ? -comp : comp;
       });
       return arr;
     }
@@ -503,21 +634,10 @@ export function createExpressionEvaluator(
       } else {
         return val;
       }
-      return arr.reverse();
+      return [...arr].reverse();
     }
 
-    // Handle list(...)
-    const listMatch = isCompleteCall('list') ? /^list\s*\((.*)\)$/.exec(trimmed) : null;
-    if (listMatch) {
-      const innerArg = listMatch[1].trim();
-      if (!innerArg) return [];
-      const val = evaluateExpr(innerArg);
-      if (Array.isArray(val)) return [...val];
-      if (val instanceof Set) return Array.from(val);
-      if (typeof val === 'string') return val.split('');
-      if (typeof val === 'object' && val !== null) return Object.values(val);
-      return [val];
-    }
+
 
     // Handle dict(...)
     const dictMatch = isCompleteCall('dict') ? /^dict\s*\((.*)\)$/.exec(trimmed) : null;
@@ -836,6 +956,28 @@ export function createExpressionEvaluator(
           }
         }
 
+        if (obj instanceof PyInstance || obj instanceof PySuper) {
+          const fn = obj.getAttribute(methodName);
+          if (typeof fn === 'function') {
+            const argList = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
+            return fn(...argList);
+          }
+        }
+
+        if (obj instanceof PyClass) {
+          const method = obj.findMethod(methodName);
+          if (typeof method === 'function') {
+            const argList = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
+            if (obj.staticMethods.has(methodName)) {
+              return method(...argList);
+            }
+            if (obj.classMethods.has(methodName)) {
+              return method(obj, ...argList);
+            }
+            return method(...argList);
+          }
+        }
+
         if (objectValue && typeof objectValue[methodName] === 'function') {
           const argList = rawArgs ? splitOutsideQuotesAndParens(rawArgs, ',').map(a => evaluateExpr(a)) : [];
           return (objectValue[methodName] as (...args: unknown[]) => unknown)(...argList);
@@ -843,20 +985,28 @@ export function createExpressionEvaluator(
       }
     }
 
-    // Member property access: obj.prop or obj.sub.prop
-    if (trimmed.includes('.') && !trimmed.includes('(')) {
-      const parts = trimmed.split('.').map(p => p.trim());
-      if (parts.every(p => /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(p))) {
-        let curr: unknown = scope[parts[0]];
-        for (let i = 1; i < parts.length; i++) {
-          if (curr && typeof curr === 'object' && parts[i] in (curr as Record<string, unknown>)) {
-            curr = (curr as Record<string, unknown>)[parts[i]];
-          } else {
-            curr = undefined;
-            break;
+    // Member property access: obj.prop or obj.sub.prop or (3+4j).real
+    const dotPropIdx = findOperatorIndex(trimmed, '.');
+    if (dotPropIdx !== -1 && !trimmed.endsWith(')')) {
+      const leftExpr = trimmed.slice(0, dotPropIdx).trim();
+      const attrName = trimmed.slice(dotPropIdx + 1).trim();
+      if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(attrName)) {
+        let curr: unknown = evaluateExpr(leftExpr);
+        if (curr instanceof PyInstance) {
+          return curr.getAttribute(attrName);
+        }
+        if (curr instanceof PySuper) {
+          return curr.getAttribute(attrName);
+        }
+        if (curr instanceof PyComplex) {
+          if (attrName === 'real') return Number.isInteger(curr.real) ? `${curr.real}.0` : curr.real;
+          if (attrName === 'imag') return Number.isInteger(curr.imag) ? `${curr.imag}.0` : curr.imag;
+        }
+        if (curr && typeof curr === 'object') {
+          if (attrName in (curr as Record<string, unknown>)) {
+            return (curr as Record<string, unknown>)[attrName];
           }
         }
-        if (curr !== undefined) return curr;
       }
     }
 
@@ -887,8 +1037,15 @@ export function createExpressionEvaluator(
       }
       if (current.trim()) parts.push(current.trim());
       if (parts.length > 1) {
-        return parts.map(p => evaluateExpr(p));
+        const tupleArr = parts.map(p => evaluateExpr(p));
+        (tupleArr as unknown as { __isTuple__: boolean }).__isTuple__ = true;
+        return tupleArr;
       } else if (parts.length === 1) {
+        if (inner.endsWith(',')) {
+          const tupleArr = [evaluateExpr(parts[0])];
+          (tupleArr as unknown as { __isTuple__: boolean }).__isTuple__ = true;
+          return tupleArr;
+        }
         return evaluateExpr(parts[0]);
       }
     }
@@ -907,96 +1064,11 @@ export function createExpressionEvaluator(
     const logicalOrComparison = evaluatePythonLogicalOrComparison(trimmed, evaluateExpr);
     if (logicalOrComparison.handled) return logicalOrComparison.value;
 
-    // Handle Python % string formatting or modulo
-    const percentIdx = findOperatorIndex(trimmed, '%');
-    if (percentIdx !== -1) {
-      const leftExpr = trimmed.slice(0, percentIdx).trim();
-      const rightExpr = trimmed.slice(percentIdx + 1).trim();
-      const leftVal = evaluateExpr(leftExpr);
-      const rightVal = evaluateExpr(rightExpr);
-      if (typeof leftVal === 'string') {
-        const argsArray = Array.isArray(rightVal) ? rightVal : [rightVal];
-        return formatPrintfString(leftVal, argsArray);
-      } else {
-        return Number(leftVal) % Number(rightVal);
-      }
-    }
-
-    // Exponentiation **
-    const powIdx = findOperatorIndex(trimmed, '**');
-    if (powIdx !== -1) {
-      const leftExpr = trimmed.slice(0, powIdx).trim();
-      const rightExpr = trimmed.slice(powIdx + 2).trim();
-      const leftVal = Number(evaluateExpr(leftExpr));
-      const rightVal = Number(evaluateExpr(rightExpr));
-      return Math.pow(leftVal, rightVal);
-    }
-
-    // Floor division //
-    const floorDivIdx = findOperatorIndex(trimmed, '//');
-    if (floorDivIdx !== -1) {
-      const leftExpr = trimmed.slice(0, floorDivIdx).trim();
-      const rightExpr = trimmed.slice(floorDivIdx + 2).trim();
-      const leftVal = Number(evaluateExpr(leftExpr));
-      const rightVal = Number(evaluateExpr(rightExpr));
-      return Math.floor(leftVal / rightVal);
-    }
-
     // Handle range(n) or range(start, stop) or range(start, stop, step)
     const rangeMatch = /^range\((.+)\)$/.exec(trimmed);
     if (rangeMatch) {
       const args = rangeMatch[1].split(',').map(a => Number(evaluateExpr(a)));
       return pythonRange(...args);
-    }
-
-    // Handle math & concatenation outside parens/quotes
-    const addParts = splitOutsideQuotesAndParens(trimmed, '+');
-    if (addParts.length > 1) {
-      const parts = addParts.map(p => evaluateExpr(p));
-      if (parts.some(p => typeof p === 'string')) {
-        return parts.map(p => String(p ?? '')).join('');
-      }
-      if (parts.some(p => p instanceof PyComplex)) {
-        return parts.reduce((acc: unknown, val: unknown) => toPyComplex(acc).add(val), new PyComplex(0, 0));
-      }
-      return parts.reduce((acc: number, val: unknown) => acc + Number(val || 0), 0);
-    }
-
-    const subParts = splitOutsideQuotesAndParens(trimmed, '-');
-    if (subParts.length > 1) {
-      if (subParts[0] === '') {
-        const realParts = subParts.slice(1).map(p => evaluateExpr(p));
-        if (realParts.length > 0) {
-          const first = realParts[0];
-          const negatedFirst = first instanceof PyComplex
-            ? new PyComplex(-first.real, -first.imag)
-            : typeof first === 'number'
-              ? -first
-              : toPyComplex(first).mul(-1);
-
-          if (realParts.length === 1) {
-            return negatedFirst;
-          }
-          if (realParts.some(p => p instanceof PyComplex) || negatedFirst instanceof PyComplex) {
-            return realParts.slice(1).reduce((acc: unknown, val: unknown) => toPyComplex(acc).sub(val), negatedFirst);
-          }
-          return realParts.slice(1).reduce((acc: number, val: unknown) => acc - Number(val || 0), Number(negatedFirst));
-        }
-      } else {
-        const parts = subParts.map(p => evaluateExpr(p));
-        if (parts.some(p => p instanceof Set)) {
-          let res = parts[0] instanceof Set ? new Set(parts[0] as Set<unknown>) : new Set(Array.isArray(parts[0]) ? (parts[0] as unknown[]) : [parts[0]]);
-          for (let i = 1; i < parts.length; i++) {
-            const nextSet = parts[i] instanceof Set ? (parts[i] as Set<unknown>) : new Set(Array.isArray(parts[i]) ? (parts[i] as unknown[]) : [parts[i]]);
-            res = new Set(Array.from(res).filter(x => !nextSet.has(x)));
-          }
-          return res;
-        }
-        if (parts.some(p => p instanceof PyComplex)) {
-          return parts.reduce((acc: unknown, val: unknown, idx: number) => (idx === 0 ? toPyComplex(val) : toPyComplex(acc).sub(val)), new PyComplex(0, 0));
-        }
-        return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc - Number(val)), 0);
-      }
     }
 
     // Handle Set and Dict Operators: |, &, ^
@@ -1059,14 +1131,113 @@ export function createExpressionEvaluator(
       return parts.slice(1).reduce((acc: number, val: unknown) => acc ^ Number(val || 0), Number(parts[0] || 0));
     }
 
+    const floorDivIdx = findOperatorIndex(trimmed, '//');
+    if (floorDivIdx !== -1) {
+      const leftExpr = trimmed.slice(0, floorDivIdx).trim();
+      const rightExpr = trimmed.slice(floorDivIdx + 2).trim();
+      const leftVal = Number(evaluateExpr(leftExpr));
+      const rightVal = Number(evaluateExpr(rightExpr));
+      if (rightVal === 0) throw new Error('ZeroDivisionError: integer division by zero');
+      return Math.floor(leftVal / rightVal);
+    }
+
+    const percentIdx = findOperatorIndex(trimmed, '%');
+    if (percentIdx !== -1) {
+      const leftExpr = trimmed.slice(0, percentIdx).trim();
+      const rightExpr = trimmed.slice(percentIdx + 1).trim();
+      const leftVal = evaluateExpr(leftExpr);
+      const rightVal = evaluateExpr(rightExpr);
+      if (typeof leftVal === 'string') {
+        const argsArray = Array.isArray(rightVal) ? rightVal : [rightVal];
+        return formatPrintfString(leftVal, argsArray);
+      } else {
+        const rightNum = Number(rightVal);
+        if (rightNum === 0) throw new Error('ZeroDivisionError: integer modulo by zero');
+        return Number(leftVal) % rightNum;
+      }
+    }
+
+    // 1. Addition and Subtraction (+, -)
+    const addParts = splitOutsideQuotesAndParens(trimmed, '+');
+    if (addParts.length > 1) {
+      const parts = addParts.map(p => evaluateExpr(p));
+      if (parts.some(p => typeof p === 'string')) {
+        return parts.map(p => String(p ?? '')).join('');
+      }
+      if (parts.some(p => p instanceof PyComplex)) {
+        return parts.reduce((acc: unknown, val: unknown) => toPyComplex(acc).add(val), new PyComplex(0, 0));
+      }
+      return parts.reduce((acc: number, val: unknown) => acc + Number(val || 0), 0);
+    }
+
+    const subParts = splitOutsideQuotesAndParens(trimmed, '-');
+    if (subParts.length > 1) {
+      if (subParts[0] === '') {
+        const realParts = subParts.slice(1).map(p => evaluateExpr(p));
+        if (realParts.length > 0) {
+          const first = realParts[0];
+          const negatedFirst = first instanceof PyComplex
+            ? new PyComplex(-first.real, -first.imag)
+            : typeof first === 'number'
+              ? -first
+              : toPyComplex(first).mul(-1);
+
+          if (realParts.length === 1) {
+            return negatedFirst;
+          }
+          if (realParts.some(p => p instanceof PyComplex) || negatedFirst instanceof PyComplex) {
+            return realParts.slice(1).reduce((acc: unknown, val: unknown) => toPyComplex(acc).sub(val), negatedFirst);
+          }
+          return realParts.slice(1).reduce((acc: number, val: unknown) => acc - Number(val || 0), Number(negatedFirst));
+        }
+      } else {
+        const parts = subParts.map(p => evaluateExpr(p));
+        if (parts.some(p => p instanceof Set)) {
+          let res = parts[0] instanceof Set ? new Set(parts[0] as Set<unknown>) : new Set(Array.isArray(parts[0]) ? (parts[0] as unknown[]) : [parts[0]]);
+          for (let i = 1; i < parts.length; i++) {
+            const nextSet = parts[i] instanceof Set ? (parts[i] as Set<unknown>) : new Set(Array.isArray(parts[i]) ? (parts[i] as unknown[]) : [parts[i]]);
+            res = new Set(Array.from(res).filter(x => !nextSet.has(x)));
+          }
+          return res;
+        }
+        if (parts.some(p => p instanceof PyComplex)) {
+          return parts.reduce((acc: unknown, val: unknown, idx: number) => (idx === 0 ? toPyComplex(val) : toPyComplex(acc).sub(val)), new PyComplex(0, 0));
+        }
+        return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc - Number(val)), 0);
+      }
+    }
+
+    // 2. Multiplication, Division, Modulo (*, /, //, %)
     const mulParts = splitOutsideQuotesAndParens(trimmed, '*');
     if (mulParts.length > 1 && !trimmed.includes('**')) {
       const parts = mulParts.map(p => evaluateExpr(p));
       if (parts.some(p => p instanceof PyComplex)) {
         return parts.reduce((acc: unknown, val: unknown) => toPyComplex(acc).mul(val), new PyComplex(1, 0));
       }
-      // Preserve numeric zero: `0` is a valid multiplicand and must not be
-      // replaced by the fallback value 1.
+      // String repetition ("abc" * 3 or 3 * "abc") or List repetition ([0] * 5 or 5 * [0])
+      if (parts.length === 2) {
+        const [a, b] = parts;
+        if (typeof a === 'string' && typeof b === 'number') {
+          return a.repeat(Math.max(0, Math.floor(b)));
+        }
+        if (typeof b === 'string' && typeof a === 'number') {
+          return b.repeat(Math.max(0, Math.floor(a)));
+        }
+        if (Array.isArray(a) && typeof b === 'number') {
+          const count = Math.max(0, Math.floor(b));
+          const res: unknown[] = [];
+          for (let i = 0; i < count; i++) res.push(...a);
+          if ((a as unknown as { __isTuple__?: boolean }).__isTuple__) (res as unknown as { __isTuple__: boolean }).__isTuple__ = true;
+          return res;
+        }
+        if (Array.isArray(b) && typeof a === 'number') {
+          const count = Math.max(0, Math.floor(a));
+          const res: unknown[] = [];
+          for (let i = 0; i < count; i++) res.push(...b);
+          if ((b as unknown as { __isTuple__?: boolean }).__isTuple__) (res as unknown as { __isTuple__: boolean }).__isTuple__ = true;
+          return res;
+        }
+      }
       return parts.reduce((acc: number, val: unknown) => acc * Number(val ?? 0), 1);
     }
 
@@ -1076,7 +1247,26 @@ export function createExpressionEvaluator(
       if (parts.some(p => p instanceof PyComplex)) {
         return parts.reduce((acc: unknown, val: unknown, idx: number) => (idx === 0 ? toPyComplex(val) : toPyComplex(acc).div(val)), new PyComplex(1, 0));
       }
-      return parts.reduce((acc: number, val: unknown, idx: number) => (idx === 0 ? Number(val) : acc / Number(val)), 0);
+      return parts.reduce((acc: number, val: unknown, idx: number) => {
+        if (idx === 0) return Number(val);
+        const divisor = Number(val);
+        if (divisor === 0) throw new Error('ZeroDivisionError: division by zero');
+        return acc / divisor;
+      }, 0);
+    }
+
+    // 3. Exponentiation (**)
+    const powIdx = findOperatorIndex(trimmed, '**');
+    if (powIdx !== -1) {
+      const leftExpr = trimmed.slice(0, powIdx).trim();
+      const rightExpr = trimmed.slice(powIdx + 2).trim();
+      const leftVal = Number(evaluateExpr(leftExpr));
+      const rightVal = Number(evaluateExpr(rightExpr));
+      const res = Math.pow(leftVal, rightVal);
+      if (!Number.isInteger(rightVal) && Number.isInteger(res)) {
+        return `${res}.0`;
+      }
+      return res;
     }
 
     // Element indexing / Chained indexing: targetExpr[idxExpr] (e.g. deck[i][0], matrix[r][c], arr[0], str[1:])

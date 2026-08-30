@@ -126,7 +126,7 @@ export function formatPortName(portName: string): string {
 
 export function formatMacAddressSimple(mac: string): string {
   if (!mac) return '0000.0000.0000';
-  const cleanMac = mac.replace(/[-:.]/g, '').toLowerCase();
+  const cleanMac = mac.replace(/[-:.]/g, '').toUpperCase();
   const padded = cleanMac.padStart(12, '0').slice(0, 12);
   return padded.match(/.{1,4}/g)?.join('.') || padded;
 }

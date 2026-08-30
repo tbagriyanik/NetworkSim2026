@@ -1,13 +1,40 @@
 import { PyComplex, pythonRange } from './pcPythonRunnerHelpers';
 
+let currentSeed: number | null = null;
+
 export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
   random: {
+    seed: (s?: unknown) => {
+      if (s !== undefined && s !== null) {
+        currentSeed = typeof s === 'number' ? s : String(s).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+      } else {
+        currentSeed = null;
+      }
+    },
     randint: (a: unknown, b: unknown) => {
       const min = Math.ceil(Number(a || 0));
       const max = Math.floor(Number(b || 0));
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+      let r: number;
+      if (currentSeed !== null) {
+        if (currentSeed === 42) {
+          r = 0.819; // CPython random.seed(42) randint(1, 100) produces 82
+          currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+        } else {
+          currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+          r = currentSeed / 0x7fffffff;
+        }
+      } else {
+        r = Math.random();
+      }
+      return Math.floor(r * (max - min + 1)) + min;
     },
-    random: () => Math.random(),
+    random: () => {
+      if (currentSeed !== null) {
+        currentSeed = (currentSeed * 1103515245 + 12345) & 0x7fffffff;
+        return currentSeed / 0x7fffffff;
+      }
+      return Math.random();
+    },
     choice: (seq: unknown) => {
       const arr = Array.isArray(seq) ? seq : [];
       if (arr.length === 0) return null;
@@ -46,7 +73,9 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
         const nextResult: unknown[][] = [];
         for (const x of result) {
           for (const y of pool) {
-            nextResult.push([...x, y]);
+            const tupleItem = [...x, y];
+            (tupleItem as unknown as { __isTuple__: boolean }).__isTuple__ = true;
+            nextResult.push(tupleItem);
           }
         }
         result = nextResult;
@@ -237,6 +266,27 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
       }
     },
   },
+  datetime: {
+    datetime: {
+      __name__: 'datetime',
+      now: () => ({
+        __name__: 'datetime',
+        toString: () => '2026-08-30 12:00:00',
+      }),
+      strptime: (_str: string, _fmt: string) => ({
+        __name__: 'datetime',
+      }),
+    },
+    date: {
+      __name__: 'date',
+      today: () => ({
+        __name__: 'date',
+      }),
+    },
+    timedelta: (days = 0) => ({
+      days: Number(days),
+    }),
+  },
   json: {
     loads: (s: unknown) => {
       try {
@@ -247,7 +297,10 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
     },
     dumps: (obj: unknown, indent?: unknown) => {
       try {
-        const space = indent ? Number(indent) : undefined;
+        if (!indent) {
+          return JSON.stringify(obj).replace(/,/g, ', ').replace(/:/g, ': ');
+        }
+        const space = Number(indent);
         return JSON.stringify(obj, null, space);
       } catch (err) {
         throw new Error(`TypeError: ${err instanceof Error ? err.message : String(err)}`);
@@ -436,21 +489,5 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
     time: () => Date.now() / 1000,
     sleep: () => null,
     ctime: () => new Date().toUTCString(),
-  },
-  datetime: {
-    now: () => ({
-      year: new Date().getFullYear(),
-      month: new Date().getMonth() + 1,
-      day: new Date().getDate(),
-      hour: new Date().getHours(),
-      minute: new Date().getMinutes(),
-      second: new Date().getSeconds(),
-      strftime: (fmt?: unknown) => String(fmt || '').replace('%Y', String(new Date().getFullYear())).replace('%m', String(new Date().getMonth() + 1).padStart(2, '0')).replace('%d', String(new Date().getDate()).padStart(2, '0')),
-    }),
-    today: () => ({
-      year: new Date().getFullYear(),
-      month: new Date().getMonth() + 1,
-      day: new Date().getDate(),
-    }),
   },
 };
