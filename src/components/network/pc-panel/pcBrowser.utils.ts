@@ -438,5 +438,29 @@ export function isDhcpPoolCompatibleForClient({
     topologyConnections,
     deviceStates,
   });
-  return serverVlan !== null && clientVlan === serverVlan;
+
+  if (serverVlan !== null && clientVlan === serverVlan) {
+    return true;
+  }
+
+  // Cross-subnet DHCP Relay Check via ip helper-address
+  if (deviceStates) {
+    const safeStates = deviceStates instanceof Map ? deviceStates : new Map(Object.entries(deviceStates as unknown as Record<string, SwitchState>));
+    for (const [, state] of safeStates.entries()) {
+      for (const portName in state.ports || {}) {
+        const port = state.ports[portName];
+        if (port.helperAddresses && port.helperAddresses.length > 0 && !port.shutdown) {
+          if (port.ipAddress && poolGateway) {
+            const portNet = port.ipAddress.split('.').slice(0, 3).join('.');
+            const poolNet = poolGateway.split('.').slice(0, 3).join('.');
+            if (portNet === poolNet || port.ipAddress === poolGateway) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return false;
 }

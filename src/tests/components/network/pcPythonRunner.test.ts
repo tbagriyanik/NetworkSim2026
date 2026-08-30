@@ -234,7 +234,7 @@ describe('executePythonScript', () => {
     });
 
     it('handles while loop', () => {
-      expect(run(`s = 0\ni = 0\nwhile i < 5:\n  s += i\ni += 1\nprint(s)`)).toBe('10');
+      expect(run(`s = 0\ni = 0\nwhile i < 5:\n  s += i\n  i += 1\nprint(s)`)).toBe('10');
     });
 
     it('handles keyword arguments', () => {
@@ -242,7 +242,7 @@ describe('executePythonScript', () => {
     });
 
     it('handles mutable default args isolation across calls', () => {
-      expect(run(`def append(val, lst=[]):\n  lst.append(val)\n  return lst\nprint(append(1))\nprint(append(2))\nprint(append(3, []))`)).toBe('[1] [1, 2] [3]');
+      expect(run(`def append(val, lst=[]):\n  lst.append(val)\n  return lst\nprint(append(1))\nprint(append(2))\nprint(append(3, []))`)).toBe('[1]\n[1, 2]\n[3]');
     });
 
     it('handles yield in a generator function', () => {

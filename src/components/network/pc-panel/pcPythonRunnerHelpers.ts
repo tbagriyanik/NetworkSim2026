@@ -5,6 +5,10 @@ export class PythonInputRequiredException {
 export class PyType {
   constructor(public name: string) { }
 
+  get __name__(): string {
+    return this.name;
+  }
+
   toString(): string {
     return `<class '${this.name}'>`;
   }
@@ -343,6 +347,33 @@ export function splitOutsideQuotesAndParens(str: string, op: string): string[] {
         parts.push(current);
         current = '';
         i += op.length - 1;
+        continue;
+      }
+    }
+    current += char;
+  }
+  if (current || parts.length > 0) parts.push(current);
+  return parts.map(p => p.trim());
+}
+
+export function splitOnMultiplyOperator(str: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let inQ = false;
+  let qChar = '';
+  let pDepth = 0;
+
+  for (let i = 0; i < str.length; i++) {
+    const char = str[i];
+    if ((char === '"' || char === "'") && (i === 0 || str[i - 1] !== '\\')) {
+      if (!inQ) { inQ = true; qChar = char; }
+      else if (qChar === char) { inQ = false; }
+    } else if (!inQ) {
+      if (char === '(' || char === '[' || char === '{') pDepth++;
+      else if (char === ')' || char === ']' || char === '}') pDepth--;
+      else if (pDepth === 0 && char === '*' && str[i + 1] !== '*' && str[i - 1] !== '*') {
+        parts.push(current);
+        current = '';
         continue;
       }
     }

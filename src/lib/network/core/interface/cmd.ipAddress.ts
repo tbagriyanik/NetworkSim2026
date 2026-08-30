@@ -338,18 +338,27 @@ export function cmdNoIpHelperAddress(state: SwitchState, input: string, _ctx: Co
     return { success: false, error: iosModeError() };
   }
 
-  const match = input.match(/^no\s+ip\s+helper-address(?:\s+(\d+\.\d+\.\d+\.\d+))?$/i);
+  const match = input.match(/^no\s+ip\s+helper-address(?:\s+(\d+\.\d+\.\d+\.\d+|[\w.-]+))?$/i);
   if (!match) {
     return { success: false, error: '% Invalid command' };
   }
 
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
 
+  const targetIp = match[1];
   const newPorts = { ...state.ports };
   const port = newPorts[state.currentInterface] || {} as Port;
-  newPorts[state.currentInterface] = { ...port, helperAddresses: [] } as Port;
+  let helpers: string[] = port.helperAddresses ? [...port.helperAddresses] : [];
 
-  return { success: true, output: 'Helper address(es) removed', newState: { ports: newPorts } };
+  if (targetIp) {
+    helpers = helpers.filter(h => h !== targetIp);
+  } else {
+    helpers = [];
+  }
+
+  newPorts[state.currentInterface] = { ...port, helperAddresses: helpers } as Port;
+
+  return { success: true, output: targetIp ? `Helper address ${targetIp} removed` : 'Helper address(es) removed', newState: { ports: newPorts } };
 }
 
 /**

@@ -191,18 +191,29 @@ export function checkConnectivity(
     let helperIp: string | undefined;
 
     if (sourceDevice && (sourceDevice.type === 'pc' || sourceDevice.type === 'iot')) {
-      // Find the gateway device (router/switch) that has helper addresses configured
       const sourceGatewayIp = sourceDevice.gateway;
       if (sourceGatewayIp) {
-        // Find the device that has the gateway IP
         for (const [deviceId, state] of safeDeviceStates) {
           const device = deviceMap.get(deviceId);
           if (device?.type === 'router' || device?.type === 'switchL3') {
-            // Check if this device has the gateway IP on any interface
             for (const portId in state.ports) {
               const port = state.ports[portId];
-              if (port.ipAddress === sourceGatewayIp && port.helperAddresses && port.helperAddresses.length > 0) {
-                // Use the first helper address on this interface
+              if (port.ipAddress === sourceGatewayIp && port.helperAddresses && port.helperAddresses.length > 0 && !port.shutdown) {
+                helperIp = port.helperAddresses[0];
+                break;
+              }
+            }
+            if (helperIp) break;
+          }
+        }
+      }
+      if (!helperIp) {
+        for (const [deviceId, state] of safeDeviceStates) {
+          const device = deviceMap.get(deviceId);
+          if (device?.type === 'router' || device?.type === 'switchL3') {
+            for (const portId in state.ports) {
+              const port = state.ports[portId];
+              if (port.helperAddresses && port.helperAddresses.length > 0 && !port.shutdown) {
                 helperIp = port.helperAddresses[0];
                 break;
               }
@@ -217,7 +228,7 @@ export function checkConnectivity(
     if (!helperIp) {
       for (const state of safeDeviceStates.values()) {
         for (const port of Object.values(state.ports || {})) {
-          if (port.helperAddresses && port.helperAddresses.length > 0) {
+          if (port.helperAddresses && port.helperAddresses.length > 0 && !port.shutdown) {
             helperIp = port.helperAddresses[0];
             break;
           }

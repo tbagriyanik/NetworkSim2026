@@ -21,6 +21,40 @@ import { executeSinglePythonLine } from './pcPythonStatementParser';
 
 export { PyComplex, pythonRange, formatPythonValue, PyClass, PyInstance, PySuper, PyGenerator } from './pcPythonRunnerHelpers';
 
+export interface ExceptBranchMeta {
+  errorType: string | null;
+  varName: string | null;
+}
+
+export function exceptionMatches(
+  ex: ExceptBranchMeta,
+  errName: string
+): { matches: boolean; alias: string | null } {
+  if (ex.errorType) {
+    const typeName = ex.errorType;
+    if (typeName !== 'Exception' && typeName !== 'BaseException' && !errName.startsWith(typeName)) {
+      return { matches: false, alias: null };
+    }
+    return { matches: true, alias: ex.varName };
+  }
+  if (ex.varName) {
+    const exTypeMatch = /^([a-zA-Z0-9_]+)(?:\s+as\s+([a-zA-Z0-9_]+))?$/.exec(ex.varName.trim());
+    if (exTypeMatch) {
+      const typeName = exTypeMatch[1];
+      const alias = exTypeMatch[2] || typeName;
+      if (typeName !== 'Exception' && typeName !== 'BaseException' && !errName.startsWith(typeName)) {
+        return { matches: false, alias: null };
+      }
+      return { matches: true, alias };
+    }
+    if (!errName.startsWith(ex.varName)) {
+      return { matches: false, alias: null };
+    }
+    return { matches: true, alias: ex.varName };
+  }
+  return { matches: true, alias: null };
+}
+
 export function executePythonScript(
   script: string,
   userInputs: string[] = [],
@@ -130,10 +164,6 @@ export function executePythonScript(
         Object.keys(scope).forEach(k => delete scope[k]);
         Object.assign(scope, savedScope);
 
-        if (process.env.DEBUG_PY) {
-          console.log('[class]', className, 'methods', Object.keys(createdMethods), 'propGetters', Object.keys(propertyGetters), 'staticProps', Object.keys(staticProps), 'classMethods', [...classMethods]);
-        }
-
         const pyClass = new PyClass(className, baseClasses, createdMethods);
         pyClass.staticProps = staticProps;
         pyClass.propertyGetters = propertyGetters;
@@ -156,6 +186,12 @@ export function executePythonScript(
         return { type: 'return', value: retVal };
       } else if (stmt.type === 'def') {
         const { funcName, paramNames, paramDefaults, body, decorators } = stmt;
+        // Python evaluates default arguments once, when the function is defined.
+        // Keeping these values here also preserves mutations between calls.
+        const evaluatedDefaults: Record<string, unknown> = {};
+        for (const [param, expression] of Object.entries(paramDefaults)) {
+          evaluatedDefaults[param] = evaluateExpr(expression);
+        }
 
         const isGen = (sList: Statement[]): boolean => {
           for (const s of sList) {
@@ -179,8 +215,8 @@ export function executePythonScript(
               paramNames.forEach((p, idx) => {
                 if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
                   scope[p] = fnArgs[idx];
-                } else if (p in paramDefaults) {
-                  scope[p] = evaluateExpr(paramDefaults[p]);
+                } else if (p in evaluatedDefaults) {
+                  scope[p] = evaluatedDefaults[p];
                 } else {
                   scope[p] = undefined;
                 }
@@ -256,14 +292,20 @@ export function executePythonScript(
         } else {
           rawFunc = (...fnArgs: unknown[]) => {
             const savedScope = { ...scope };
+            const captured = (rawFunc as Record<string, unknown>).__capturedScope as Record<string, unknown> | undefined;
+            if (captured) {
+              for (const k of Object.keys(captured)) {
+                scope[k] = captured[k];
+              }
+            }
             paramNames.forEach((p, idx) => {
               if (p.startsWith('*')) {
                 const varArgName = p.slice(1).trim();
                 scope[varArgName] = fnArgs.slice(idx);
               } else if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
                 scope[p] = fnArgs[idx];
-              } else if (p in paramDefaults) {
-                scope[p] = evaluateExpr(paramDefaults[p]);
+              } else if (p in evaluatedDefaults) {
+                scope[p] = evaluatedDefaults[p];
               } else {
                 scope[p] = undefined;
               }
@@ -282,7 +324,6 @@ export function executePythonScript(
         (rawFunc as Record<string, unknown>).__pythonParamDefaults = paramDefaults;
 
         if (decorators) {
-          if (process.env.DEBUG_PY) console.log('[def]', funcName, 'decorators', decorators);
           for (const dec of decorators.slice().reverse()) {
             if (dec === 'property') {
               (rawFunc as Record<string, unknown>).__isPropertyGetter = true;
@@ -299,6 +340,9 @@ export function executePythonScript(
               }
             }
           }
+        }
+        if (!(rawFunc as Record<string, unknown>).__capturedScope) {
+          (rawFunc as Record<string, unknown>).__capturedScope = { ...scope };
         }
         scope[funcName] = rawFunc;
       } else if (stmt.type === 'if') {
@@ -384,22 +428,9 @@ export function executePythonScript(
           if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
             const errName = err instanceof Error ? err.message : String(err);
             for (const ex of stmt.exceptBranches) {
-              let matchesType = true;
-              if (ex.varName) {
-                const exTypeMatch = /^([a-zA-Z0-9_]+)(?:\s+as\s+([a-zA-Z0-9_]+))?$/.exec(ex.varName.trim());
-                if (exTypeMatch) {
-                  const typeName = exTypeMatch[1];
-                  const alias = exTypeMatch[2] || typeName;
-                  if (typeName !== 'Exception' && typeName !== 'BaseException' && !errName.startsWith(typeName)) {
-                    matchesType = false;
-                  } else {
-                    scope[alias] = errName;
-                  }
-                } else if (!errName.startsWith(ex.varName)) {
-                  matchesType = false;
-                }
-              }
+              const { matches: matchesType, alias } = exceptionMatches(ex, errName);
               if (matchesType) {
+                if (alias) scope[alias] = errName;
                 const exSig = execStatementsSync(ex.body);
                 if (exSig !== 'normal') brokeOrReturn = exSig;
                 break;
@@ -560,10 +591,6 @@ export async function executePythonScriptAsync(
         Object.keys(scope).forEach(k => delete scope[k]);
         Object.assign(scope, savedScope);
 
-        if (process.env.DEBUG_PY) {
-          console.log('[class]', className, 'methods', Object.keys(createdMethods), 'propGetters', Object.keys(propertyGetters), 'staticProps', Object.keys(staticProps), 'classMethods', [...classMethods]);
-        }
-
         const pyClass = new PyClass(className, baseClasses, createdMethods);
         pyClass.staticProps = staticProps;
         pyClass.propertyGetters = propertyGetters;
@@ -686,6 +713,12 @@ export async function executePythonScriptAsync(
         } else {
           rawFunc = (...fnArgs: unknown[]) => {
             const savedScope = { ...scope };
+            const captured = (rawFunc as Record<string, unknown>).__capturedScope as Record<string, unknown> | undefined;
+            if (captured) {
+              for (const k of Object.keys(captured)) {
+                scope[k] = captured[k];
+              }
+            }
             paramNames.forEach((p, idx) => {
               if (idx < fnArgs.length && fnArgs[idx] !== undefined) {
                 scope[p] = fnArgs[idx];
@@ -722,6 +755,9 @@ export async function executePythonScriptAsync(
               }
             }
           }
+        }
+        if (!(rawFunc as Record<string, unknown>).__capturedScope) {
+          (rawFunc as Record<string, unknown>).__capturedScope = { ...scope };
         }
         scope[funcName] = rawFunc;
       } else if (stmt.type === 'if') {
@@ -805,13 +841,15 @@ export async function executePythonScriptAsync(
         } catch (err) {
           if (err instanceof PythonInputRequiredException) throw err;
           if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
+            const errName = err instanceof Error ? err.message : String(err);
             for (const ex of stmt.exceptBranches) {
-              if (ex.varName && err instanceof Error) {
-                scope[ex.varName] = err.message;
+              const { matches: matchesType, alias } = exceptionMatches(ex, errName);
+              if (matchesType) {
+                if (alias) scope[alias] = errName;
+                const exSig = execStatementsSync(ex.body);
+                if (exSig !== 'normal') brokeOrReturn = exSig;
+                break;
               }
-              const exSig = execStatementsSync(ex.body);
-              if (exSig !== 'normal') brokeOrReturn = exSig;
-              break;
             }
           }
         } finally {
@@ -976,13 +1014,15 @@ export async function executePythonScriptAsync(
         } catch (err) {
           if (err instanceof PythonInputRequiredException) throw err;
           if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
+            const errName = err instanceof Error ? err.message : String(err);
             for (const ex of stmt.exceptBranches) {
-              if (ex.varName && err instanceof Error) {
-                scope[ex.varName] = err.message;
+              const { matches: matchesType, alias } = exceptionMatches(ex, errName);
+              if (matchesType) {
+                if (alias) scope[alias] = errName;
+                const exSig = await execStatements(ex.body);
+                if (exSig !== 'normal') brokeOrReturn = exSig;
+                break;
               }
-              const exSig = await execStatements(ex.body);
-              if (exSig !== 'normal') brokeOrReturn = exSig;
-              break;
             }
           }
         } finally {

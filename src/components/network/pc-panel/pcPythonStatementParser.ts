@@ -56,7 +56,7 @@ export function executeSinglePythonLine(
   if (trimmed.endsWith(';')) {
     trimmed = trimmed.replace(/;+$/, '').trim();
   }
-  if (!trimmed || trimmed.startsWith('#')) return;
+  if (!trimmed || trimmed.startsWith('#') || trimmed === 'pass') return;
 
   if (/^time\.sleep\s*\((.*)\)$/.test(trimmed)) return;
 
@@ -278,9 +278,5 @@ export function executeSinglePythonLine(
     }
   }
 
-  try {
-    evaluateExpr(trimmed);
-  } catch {
-    // ignore
-  }
+  evaluateExpr(trimmed);
 }

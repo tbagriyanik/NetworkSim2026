@@ -512,6 +512,32 @@ export function usePCPanelDhcp({
           info: `DHCP ACK: Server ${lease.serverName} acknowledging IP ${lease.ip} lease`
         }
       ]);
+
+      // Record binding entry in Switch DHCP Snooping Database if Snooping is enabled on connecting switch
+      const switchId = activeConn.sourceDeviceId === deviceId ? activeConn.targetDeviceId : activeConn.sourceDeviceId;
+      const switchPort = activeConn.sourceDeviceId === deviceId ? activeConn.targetPort : activeConn.sourcePort;
+      const safeStates = deviceStates instanceof Map ? deviceStates : new Map(Object.entries(deviceStates || {}));
+      const switchState = safeStates.get(switchId) as SwitchState | undefined;
+
+      if (switchState && switchState.dhcpSnoopingEnabled) {
+        const clientMac = pcDevice?.macAddress || '0050.56a1.b2c3';
+        const bindings = [...(switchState.dhcpSnoopingBindings || [])];
+        const existingIdx = bindings.findIndex(b => b.macAddress?.toLowerCase() === clientMac.toLowerCase() || b.ipAddress === lease.ip);
+        const newBinding = {
+          macAddress: clientMac,
+          ipAddress: lease.ip,
+          leaseTime: 86400,
+          type: 'dynamic' as const,
+          vlan: 1,
+          portId: switchPort
+        };
+        if (existingIdx >= 0) {
+          bindings[existingIdx] = newBinding;
+        } else {
+          bindings.push(newBinding);
+        }
+        switchState.dhcpSnoopingBindings = bindings;
+      }
     }
 
     if (!force &&

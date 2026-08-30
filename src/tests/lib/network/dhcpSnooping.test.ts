@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { cmdIpDhcpSnoopingTrust, cmdNoIpDhcpSnoopingTrust } from '@/lib/network/core/interface/cmd.ipAddress';
 import { cmdIpDhcpSnoopingVlan } from '@/lib/network/core/globalConfigExtraCommands';
+import { cmdShowIpDhcpSnooping } from '@/lib/network/core/showRoutingDisplay';
 import { SwitchState, Port, SwitchModel, SwitchLayer, Vlan, SecurityConfig } from '@/lib/network/types';
 import type { CommandContext } from '@/lib/network/core/commandTypes';
 
@@ -54,5 +55,24 @@ describe('DHCP Snooping Trust Command Support', () => {
     expect(res.success).toBe(true);
     expect(res.newState?.dhcpSnoopingEnabled).toBe(true);
     expect(res.newState?.dhcpSnoopingVlans).toEqual(['10']);
+  });
+
+  it('displays dhcp snooping status and binding table via show ip dhcp snooping', () => {
+    const state = createMockState();
+    state.dhcpSnoopingEnabled = true;
+    state.dhcpSnoopingVlans = ['10'];
+    state.dhcpSnoopingBindings = [
+      { macAddress: '0050.56a1.b2c3', ipAddress: '192.168.1.50', leaseTime: 86400, type: 'dynamic', vlan: 10, portId: 'Gi0/1' }
+    ];
+
+    const showRes = cmdShowIpDhcpSnooping(state, 'show ip dhcp snooping', commandContext);
+    expect(showRes.success).toBe(true);
+    expect(showRes.output).toContain('DHCP snooping is enabled');
+    expect(showRes.output).toContain('10');
+
+    const bindingRes = cmdShowIpDhcpSnooping(state, 'show ip dhcp snooping binding', commandContext);
+    expect(bindingRes.success).toBe(true);
+    expect(bindingRes.output).toContain('0050.56a1.b2c3');
+    expect(bindingRes.output).toContain('192.168.1.50');
   });
 });

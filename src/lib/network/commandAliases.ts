@@ -779,7 +779,13 @@ export const commandAliases: Record<string, string> = {
   'ip dhcp snoo': 'ip dhcp snooping',
   'ip dhcp snoop': 'ip dhcp snooping',
   'ip dhcp snoopi': 'ip dhcp snooping',
-  'ip dhcp snoopin': 'ip dhcp snooping',
+  // DHCP helper-address
+  'ip helper': 'ip helper-address',
+  'ip helper-add': 'ip helper-address',
+  'ip helper-addr': 'ip helper-address',
+  'no ip helper': 'no ip helper-address',
+  'no ip helper-add': 'no ip helper-address',
+  'no ip helper-addr': 'no ip helper-address',
 
   // Storm control
   'sto': 'storm-control',

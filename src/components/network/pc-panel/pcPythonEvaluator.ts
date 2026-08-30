@@ -11,6 +11,7 @@ import {
   findOperatorIndex,
   isEnclosedInParens,
   splitOutsideQuotesAndParens,
+  splitOnMultiplyOperator,
   formatPrintfString,
   pythonRange,
   parseFormatArgs,
@@ -1292,8 +1293,8 @@ export function createExpressionEvaluator(
     }
 
     // 2. Multiplication, Division, Modulo (*, /, //, %)
-    const mulParts = splitOutsideQuotesAndParens(trimmed, '*');
-    if (mulParts.length > 1 && !trimmed.includes('**')) {
+    const mulParts = splitOnMultiplyOperator(trimmed);
+    if (mulParts.length > 1) {
       const parts = mulParts.map(p => evaluateExpr(p));
       if (parts.some(p => p instanceof PyComplex)) {
         return parts.reduce((acc: unknown, val: unknown) => toPyComplex(acc).mul(val), new PyComplex(1, 0));

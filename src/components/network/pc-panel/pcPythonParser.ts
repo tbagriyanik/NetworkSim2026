@@ -65,7 +65,7 @@ export function parseBlockAt(
     if (parsedLines[i].indent < minIndent) break;
 
     const decorators: string[] = [];
-    while (i < parsedLines.length && parsedLines[i].indent === minIndent && parsedLines[i].text.startsWith('@')) {
+    while (i < parsedLines.length && parsedLines[i].indent >= minIndent && parsedLines[i].text.startsWith('@')) {
       decorators.push(parsedLines[i].text.slice(1).trim());
       i++;
     }

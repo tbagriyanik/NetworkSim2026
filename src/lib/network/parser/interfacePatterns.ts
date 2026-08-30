@@ -731,6 +731,12 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'no ip helper-address': {
+    pattern: /^no\s+ip\s+helper-address(?:\s+([0-9.]+|[\w.-]+))?$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'ip directed-broadcast': {
     pattern: /^ip\s+directed-broadcast$/i,
     modes: ['interface', 'config-if-range'],
