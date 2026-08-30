@@ -154,22 +154,96 @@ export function checkConnectivity(
         }
       }
     }
+
+    // Inject FHRP virtual IPs: map virtual IP to the Active/Master device
+    for (const [deviceId, state] of safeDeviceStates) {
+      for (const portId in state.ports) {
+        const port = state.ports[portId];
+
+        // HSRP: Map virtual IP to Active device
+        if (port.hsrp?.groups) {
+          for (const [_groupId, group] of Object.entries(port.hsrp.groups)) {
+            if (group.virtualIp && group.state === 'Active') {
+              ipMap.set(group.virtualIp, deviceId);
+            }
+            if (group.ipv6VirtualIp && group.state === 'Active') {
+              ipMap.set(group.ipv6VirtualIp.toLowerCase(), deviceId);
+            }
+          }
+        }
+
+        // VRRP: Map virtual IP to Master device
+        if (port.vrrp?.groups) {
+          for (const [_groupId, group] of Object.entries(port.vrrp.groups)) {
+            if (group.virtualIp && group.state === 'Master') {
+              ipMap.set(group.virtualIp, deviceId);
+            }
+          }
+        }
+      }
+    }
   }
 
   // DHCP Discover/Request is broadcast; relay it to the first configured helper.
   if (isDhcpBroadcast && deviceStates) {
-    const helperIp = [...safeDeviceStates.values()]
-      .flatMap(state => Object.values(state.ports || {}).flatMap(port => port.helperAddresses || []))[0];
+    // Find helper addresses on the source device's directly connected router
+    const sourceDevice = deviceMap.get(sourceId);
+    let helperIp: string | undefined;
+
+    if (sourceDevice && (sourceDevice.type === 'pc' || sourceDevice.type === 'iot')) {
+      // Find the gateway device (router/switch) that has helper addresses configured
+      const sourceGatewayIp = sourceDevice.gateway;
+      if (sourceGatewayIp) {
+        // Find the device that has the gateway IP
+        for (const [deviceId, state] of safeDeviceStates) {
+          const device = deviceMap.get(deviceId);
+          if (device?.type === 'router' || device?.type === 'switchL3') {
+            // Check if this device has the gateway IP on any interface
+            for (const portId in state.ports) {
+              const port = state.ports[portId];
+              if (port.ipAddress === sourceGatewayIp && port.helperAddresses && port.helperAddresses.length > 0) {
+                // Use the first helper address on this interface
+                helperIp = port.helperAddresses[0];
+                break;
+              }
+            }
+            if (helperIp) break;
+          }
+        }
+      }
+    }
+
+    // Fallback: search all devices for helper addresses if not found on gateway
+    if (!helperIp) {
+      for (const state of safeDeviceStates.values()) {
+        for (const port of Object.values(state.ports || {})) {
+          if (port.helperAddresses && port.helperAddresses.length > 0) {
+            helperIp = port.helperAddresses[0];
+            break;
+          }
+        }
+        if (helperIp) break;
+      }
+    }
+
     if (helperIp) resolvedTargetIp = helperIp;
   }
   let targetDeviceId = ipMap.get(resolvedTargetIp.toLowerCase());
   // HSRP/VRRP virtual IPs resolve to the elected active/master device.
   if (!targetDeviceId && deviceStates) {
-    const virtualCandidates: Array<{ deviceId: string; priority: number; active: boolean }> = [];
+    const virtualCandidates: Array<{ deviceId: string; priority: number; active: boolean; virtualMac?: string }> = [];
     for (const [deviceId, state] of safeDeviceStates) {
       Object.values(state.ports || {}).forEach(port => {
-        Object.values(port.hsrp?.groups || {}).forEach(group => { if (group.virtualIp === resolvedTargetIp) virtualCandidates.push({ deviceId, priority: group.priority ?? 100, active: group.state === 'Active' }); });
-        Object.values(port.vrrp?.groups || {}).forEach(group => { if (group.virtualIp === resolvedTargetIp) virtualCandidates.push({ deviceId, priority: group.priority ?? 100, active: group.state === 'Master' }); });
+        Object.values(port.hsrp?.groups || {}).forEach(group => {
+          if (group.virtualIp === resolvedTargetIp || group.ipv6VirtualIp?.toLowerCase() === resolvedTargetIp.toLowerCase()) {
+            virtualCandidates.push({ deviceId, priority: group.priority ?? 100, active: group.state === 'Active', virtualMac: group.virtualMac });
+          }
+        });
+        Object.values(port.vrrp?.groups || {}).forEach(group => {
+          if (group.virtualIp === resolvedTargetIp) {
+            virtualCandidates.push({ deviceId, priority: group.priority ?? 100, active: group.state === 'Master', virtualMac: group.virtualMac });
+          }
+        });
       });
     }
     targetDeviceId = virtualCandidates.sort((a, b) => Number(b.active) - Number(a.active) || b.priority - a.priority)[0]?.deviceId;
@@ -1176,27 +1250,39 @@ export function checkConnectivity(
         if (snoopingVlans.length > 0 && !snoopingVlans.includes(String(portVlan))) continue;
 
         if (!ingressPort.dhcpSnoopingTrust) {
-          // Untrusted port — check if the previous-hop device is a DHCP server
-          const hopSourceState = safeDeviceStates.get(prevDeviceId);
-          const isDhcpServer = hopSourceState ? (
-            (hopSourceState.dhcpPools && Object.keys(hopSourceState.dhcpPools).length > 0) ||
-            (hopSourceState.services?.dhcp?.pools && hopSourceState.services.dhcp.pools.length > 0)
-          ) : false;
+          // Untrusted port — block DHCP OFFER/ACK from any source
+          // Allow DHCP DISCOVER/REQUEST from clients to pass through to trusted servers
+          const isDhcpServerResponse = options?.dhcpMessage === 'offer' || options?.dhcpMessage === 'ack';
 
-          // Only block if this could be a DHCP packet (exempt ICMP and TCP)
-          const isDhcpTraffic = options?.dhcpMessage !== undefined ||
-            (options?.protocol === 'udp' && (options.port === '67' || options.port === '68'));
+          if (isDhcpServerResponse) {
+            // Check if the previous-hop device is a DHCP server for more specific error message
+            const hopSourceState = safeDeviceStates.get(prevDeviceId);
+            const isDhcpServer = hopSourceState ? (
+              (hopSourceState.dhcpPools && Object.keys(hopSourceState.dhcpPools).length > 0) ||
+              (hopSourceState.services?.dhcp?.pools && hopSourceState.services.dhcp.pools.length > 0)
+            ) : false;
 
-          if (isDhcpServer && isDhcpTraffic) {
-            return {
-              success: false,
-              hops: hopNames.slice(0, i + 1),
-              hopIds: path.slice(0, i + 1),
-              targetId: targetDevice.id,
-              error: language === 'tr'
-                ? `DHCP snooping: Yetkisiz DHCP sunucusu ${device.name} port ${normalizedId} üzerinden engellendi.`
-                : `DHCP snooping: Rogue DHCP server blocked on ${device.name} port ${normalizedId}.`
-            };
+            if (isDhcpServer) {
+              return {
+                success: false,
+                hops: hopNames.slice(0, i + 1),
+                hopIds: path.slice(0, i + 1),
+                targetId: targetDevice.id,
+                error: language === 'tr'
+                  ? `DHCP snooping: Yetkisiz DHCP sunucusu ${device.name} port ${normalizedId} üzerinden engellendi.`
+                  : `DHCP snooping: Rogue DHCP server blocked on ${device.name} port ${normalizedId}.`
+              };
+            } else {
+              return {
+                success: false,
+                hops: hopNames.slice(0, i + 1),
+                hopIds: path.slice(0, i + 1),
+                targetId: targetDevice.id,
+                error: language === 'tr'
+                  ? `DHCP snooping: DHCP OFFER/ACK paketi yetkisiz port ${normalizedId} üzerinden engellendi.`
+                  : `DHCP snooping: DHCP OFFER/ACK packet blocked on untrusted port ${normalizedId}.`
+              };
+            }
           }
         }
       }
@@ -1488,7 +1574,7 @@ export function checkConnectivity(
 
 /** Resolves a path and applies configured QoS/IPsec simulation to its packet batch. */
 export function resolvePathTraffic(
-  sourceId: string, targetIp: string, packets: QosPacket[], devices: CanvasDevice[], connections: CanvasConnection[], deviceStates: Map<string, SwitchState>, language: 'tr'|'en' = 'tr'
+  sourceId: string, targetIp: string, packets: QosPacket[], devices: CanvasDevice[], connections: CanvasConnection[], deviceStates: Map<string, SwitchState>, language: 'tr' | 'en' = 'tr'
 ): { connectivity: ReturnType<typeof checkConnectivity>; qos?: QosScheduleResult; esp?: EspPacket } {
   const connectivity = checkConnectivity(sourceId, targetIp, devices, connections, deviceStates, language);
   if (!connectivity.success) return { connectivity };

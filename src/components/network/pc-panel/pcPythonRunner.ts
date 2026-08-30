@@ -13,6 +13,7 @@ import {
   PyClass,
   PyGenerator,
   formatPythonValue,
+  splitOutsideQuotesAndParens,
 } from './pcPythonRunnerHelpers';
 import { Statement, parseProgramLines, parseBlockAt } from './pcPythonParser';
 import { createExpressionEvaluator } from './pcPythonEvaluator';
@@ -79,7 +80,16 @@ export function executePythonScript(
         if (stmt.text === 'continue') return 'continue';
         if (stmt.text === 'return' || stmt.text.startsWith('return ') || stmt.text.startsWith('return(')) {
           const retExpr = stmt.text.length > 6 ? stmt.text.slice(6).trim() : '';
-          const retVal = retExpr ? evaluateExpr(retExpr) : undefined;
+          let retVal: unknown;
+          if (retExpr) {
+            const retParts = splitOutsideQuotesAndParens(retExpr, ',');
+            if (retParts.length > 1) {
+              retVal = retParts.map(p => evaluateExpr(p));
+              (retVal as unknown as { __isTuple__?: boolean }).__isTuple__ = true;
+            } else {
+              retVal = evaluateExpr(retExpr);
+            }
+          }
           return { type: 'return', value: retVal };
         }
         processLineSync(stmt.text);
@@ -120,6 +130,10 @@ export function executePythonScript(
         Object.keys(scope).forEach(k => delete scope[k]);
         Object.assign(scope, savedScope);
 
+        if (process.env.DEBUG_PY) {
+          console.log('[class]', className, 'methods', Object.keys(createdMethods), 'propGetters', Object.keys(propertyGetters), 'staticProps', Object.keys(staticProps), 'classMethods', [...classMethods]);
+        }
+
         const pyClass = new PyClass(className, baseClasses, createdMethods);
         pyClass.staticProps = staticProps;
         pyClass.propertyGetters = propertyGetters;
@@ -149,6 +163,9 @@ export function executePythonScript(
             if (s.type === 'if' && s.branches.some(b => isGen(b.body))) return true;
             if (s.type === 'while' && isGen(s.body)) return true;
             if (s.type === 'for' && isGen(s.body)) return true;
+            if (s.type === 'for' && s.body.some(b => b.type === 'if' && b.branches.some(bb => isGen(bb.body)))) return true;
+            if (s.type === 'for' && s.body.some(b => b.type === 'while' && isGen(b.body))) return true;
+            if (s.type === 'for' && s.body.some(b => b.type === 'for' && isGen(b.body))) return true;
           }
           return false;
         };
@@ -169,13 +186,68 @@ export function executePythonScript(
                 }
               });
 
-              for (const subStmt of body) {
-                if (subStmt.type === 'yield') {
-                  yield evaluateExpr(subStmt.expr);
-                } else if (subStmt.type === 'line') {
-                  processLineSync(subStmt.text);
+              function* processGenStatements(stmts: Statement[]): Generator<unknown, string | void, unknown> {
+                for (const s of stmts) {
+                  if (s.type === 'yield') {
+                    yield evaluateExpr(s.expr);
+                  } else if (s.type === 'line') {
+                    if (s.text === 'break' || s.text === 'continue') continue;
+                    processLineSync(s.text);
+                  } else if (s.type === 'if') {
+                    for (const branch of s.branches) {
+                      if (branch.condition === null || evalCondition(branch.condition)) {
+                        yield* processGenStatements(branch.body);
+                        break;
+                      }
+                    }
+                  } else if (s.type === 'while') {
+                    let iterLimit = 10000;
+                    let brokeOut = false;
+                    while (evalCondition(s.condition) && iterLimit-- > 0) {
+                      const sig = yield* processGenStatements(s.body);
+                      if (sig === 'break') {
+                        brokeOut = true;
+                        break;
+                      }
+                    }
+                    if (!brokeOut && s.elseBody) {
+                      yield* processGenStatements(s.elseBody);
+                    }
+                  } else if (s.type === 'for') {
+                    const iterable = evaluateExpr(s.iterableExpr);
+                    let items: unknown[] = [];
+                    if (Array.isArray(iterable)) items = iterable;
+                    else if (typeof iterable === 'string') items = iterable.split('');
+                    else if (iterable instanceof Set) items = Array.from(iterable);
+                    else if (typeof iterable === 'object' && iterable !== null) {
+                      if (typeof (iterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+                        items = Array.from(iterable as Iterable<unknown>);
+                      } else {
+                        items = Object.keys(iterable);
+                      }
+                    }
+                    let brokeOut = false;
+                    for (const item of items) {
+                      const targets = s.varName.split(',').map(t => t.trim());
+                      if (targets.length > 1 && Array.isArray(item)) {
+                        targets.forEach((t, idx) => { scope[t] = item[idx]; });
+                      } else {
+                        scope[s.varName] = item;
+                      }
+                      const sig = yield* processGenStatements(s.body);
+                      if (sig === 'break') {
+                        brokeOut = true;
+                        break;
+                      }
+                    }
+                    if (!brokeOut && s.elseBody) {
+                      yield* processGenStatements(s.elseBody);
+                    }
+                  }
                 }
               }
+
+              yield* processGenStatements(body);
 
               Object.keys(scope).forEach(key => delete scope[key]);
               Object.assign(scope, savedScope);
@@ -210,6 +282,7 @@ export function executePythonScript(
         (rawFunc as Record<string, unknown>).__pythonParamDefaults = paramDefaults;
 
         if (decorators) {
+          if (process.env.DEBUG_PY) console.log('[def]', funcName, 'decorators', decorators);
           for (const dec of decorators.slice().reverse()) {
             if (dec === 'property') {
               (rawFunc as Record<string, unknown>).__isPropertyGetter = true;
@@ -437,7 +510,16 @@ export async function executePythonScriptAsync(
         if (stmt.text === 'continue') return 'continue';
         if (stmt.text === 'return' || stmt.text.startsWith('return ') || stmt.text.startsWith('return(')) {
           const retExpr = stmt.text.length > 6 ? stmt.text.slice(6).trim() : '';
-          const retVal = retExpr ? evaluateExpr(retExpr) : undefined;
+          let retVal: unknown;
+          if (retExpr) {
+            const retParts = splitOutsideQuotesAndParens(retExpr, ',');
+            if (retParts.length > 1) {
+              retVal = retParts.map(p => evaluateExpr(p));
+              (retVal as unknown as { __isTuple__?: boolean }).__isTuple__ = true;
+            } else {
+              retVal = evaluateExpr(retExpr);
+            }
+          }
           return { type: 'return', value: retVal };
         }
         processLineSync(stmt.text);
@@ -478,6 +560,10 @@ export async function executePythonScriptAsync(
         Object.keys(scope).forEach(k => delete scope[k]);
         Object.assign(scope, savedScope);
 
+        if (process.env.DEBUG_PY) {
+          console.log('[class]', className, 'methods', Object.keys(createdMethods), 'propGetters', Object.keys(propertyGetters), 'staticProps', Object.keys(staticProps), 'classMethods', [...classMethods]);
+        }
+
         const pyClass = new PyClass(className, baseClasses, createdMethods);
         pyClass.staticProps = staticProps;
         pyClass.propertyGetters = propertyGetters;
@@ -507,6 +593,9 @@ export async function executePythonScriptAsync(
             if (s.type === 'if' && s.branches.some(b => isGen(b.body))) return true;
             if (s.type === 'while' && isGen(s.body)) return true;
             if (s.type === 'for' && isGen(s.body)) return true;
+            if (s.type === 'for' && s.body.some(b => b.type === 'if' && b.branches.some(bb => isGen(bb.body)))) return true;
+            if (s.type === 'for' && s.body.some(b => b.type === 'while' && isGen(b.body))) return true;
+            if (s.type === 'for' && s.body.some(b => b.type === 'for' && isGen(b.body))) return true;
           }
           return false;
         };
@@ -527,13 +616,68 @@ export async function executePythonScriptAsync(
                 }
               });
 
-              for (const subStmt of body) {
-                if (subStmt.type === 'yield') {
-                  yield evaluateExpr(subStmt.expr);
-                } else if (subStmt.type === 'line') {
-                  processLineSync(subStmt.text);
+              function* processGenStatements(stmts: Statement[]): Generator<unknown, string | void, unknown> {
+                for (const s of stmts) {
+                  if (s.type === 'yield') {
+                    yield evaluateExpr(s.expr);
+                  } else if (s.type === 'line') {
+                    if (s.text === 'break' || s.text === 'continue') continue;
+                    processLineSync(s.text);
+                  } else if (s.type === 'if') {
+                    for (const branch of s.branches) {
+                      if (branch.condition === null || evalCondition(branch.condition)) {
+                        yield* processGenStatements(branch.body);
+                        break;
+                      }
+                    }
+                  } else if (s.type === 'while') {
+                    let iterLimit = 10000;
+                    let brokeOut = false;
+                    while (evalCondition(s.condition) && iterLimit-- > 0) {
+                      const sig = yield* processGenStatements(s.body);
+                      if (sig === 'break') {
+                        brokeOut = true;
+                        break;
+                      }
+                    }
+                    if (!brokeOut && s.elseBody) {
+                      yield* processGenStatements(s.elseBody);
+                    }
+                  } else if (s.type === 'for') {
+                    const iterable = evaluateExpr(s.iterableExpr);
+                    let items: unknown[] = [];
+                    if (Array.isArray(iterable)) items = iterable;
+                    else if (typeof iterable === 'string') items = iterable.split('');
+                    else if (iterable instanceof Set) items = Array.from(iterable);
+                    else if (typeof iterable === 'object' && iterable !== null) {
+                      if (typeof (iterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+                        items = Array.from(iterable as Iterable<unknown>);
+                      } else {
+                        items = Object.keys(iterable);
+                      }
+                    }
+                    let brokeOut = false;
+                    for (const item of items) {
+                      const targets = s.varName.split(',').map(t => t.trim());
+                      if (targets.length > 1 && Array.isArray(item)) {
+                        targets.forEach((t, idx) => { scope[t] = item[idx]; });
+                      } else {
+                        scope[s.varName] = item;
+                      }
+                      const sig = yield* processGenStatements(s.body);
+                      if (sig === 'break') {
+                        brokeOut = true;
+                        break;
+                      }
+                    }
+                    if (!brokeOut && s.elseBody) {
+                      yield* processGenStatements(s.elseBody);
+                    }
+                  }
                 }
               }
+
+              yield* processGenStatements(body);
 
               Object.keys(scope).forEach(key => delete scope[key]);
               Object.assign(scope, savedScope);
@@ -718,7 +862,16 @@ export async function executePythonScriptAsync(
         if (stmt.text === 'continue') return 'continue';
         if (stmt.text === 'return' || stmt.text.startsWith('return ') || stmt.text.startsWith('return(')) {
           const retExpr = stmt.text.length > 6 ? stmt.text.slice(6).trim() : '';
-          const retVal = retExpr ? evaluateExpr(retExpr) : undefined;
+          let retVal: unknown;
+          if (retExpr) {
+            const retParts = splitOutsideQuotesAndParens(retExpr, ',');
+            if (retParts.length > 1) {
+              retVal = retParts.map(p => evaluateExpr(p));
+              (retVal as unknown as { __isTuple__?: boolean }).__isTuple__ = true;
+            } else {
+              retVal = evaluateExpr(retExpr);
+            }
+          }
           return { type: 'return', value: retVal };
         }
         await processLine(stmt.text);

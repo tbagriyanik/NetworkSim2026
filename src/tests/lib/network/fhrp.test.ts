@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { SwitchState } from '@/lib/network/types';
+import { runFhrpElection, getHsrpVirtualMac, getVrrpVirtualMac } from '@/lib/network/fhrp';
 
 describe('FHRP (First Hop Redundancy Protocols)', () => {
   interface HSRPGroup {
@@ -95,5 +97,160 @@ describe('FHRP (First Hop Redundancy Protocols)', () => {
     const decrement = 20;
     const trackedPriority = initialPriority - decrement;
     expect(trackedPriority).toBe(130);
+  });
+
+  it('should inject HSRP virtual IP into ipMap for Active router', () => {
+    // Create device states with HSRP configuration
+    const deviceStates = new Map<string, SwitchState>();
+
+    // Router 1 - Higher priority, should be Active
+    deviceStates.set('R1', {
+      ports: {
+        'GigabitEthernet0/0': {
+          id: 'GigabitEthernet0/0',
+          name: 'GigabitEthernet0/0',
+          status: 'connected',
+          vlan: 1,
+          mode: 'routed',
+          duplex: 'full',
+          speed: '1000',
+          shutdown: false,
+          type: 'gigabitethernet',
+          ipAddress: '192.168.1.1',
+          subnetMask: '255.255.255.0',
+          hsrp: {
+            groups: {
+              '1': {
+                virtualIp: '192.168.1.254',
+                priority: 150,
+                preempt: true,
+                state: 'Active'
+              }
+            }
+          }
+        }
+      }
+    } as unknown as SwitchState);
+
+    // Router 2 - Lower priority, should be Standby
+    deviceStates.set('R2', {
+      ports: {
+        'GigabitEthernet0/0': {
+          id: 'GigabitEthernet0/0',
+          name: 'GigabitEthernet0/0',
+          status: 'connected',
+          vlan: 1,
+          mode: 'routed',
+          duplex: 'full',
+          speed: '1000',
+          shutdown: false,
+          type: 'gigabitethernet',
+          ipAddress: '192.168.1.2',
+          subnetMask: '255.255.255.0',
+          hsrp: {
+            groups: {
+              '1': {
+                virtualIp: '192.168.1.254',
+                priority: 100,
+                preempt: false,
+                state: 'Standby'
+              }
+            }
+          }
+        }
+      }
+    } as unknown as SwitchState);
+
+    // Run FHRP election
+    const electionResult = runFhrpElection(deviceStates);
+
+    // Verify election result
+    const r1State = electionResult.get('R1');
+    const r2State = electionResult.get('R2');
+
+    expect(r1State?.ports['GigabitEthernet0/0']?.hsrp?.groups?.['1']?.state).toBe('Active');
+    expect(r2State?.ports['GigabitEthernet0/0']?.hsrp?.groups?.['1']?.state).toBe('Standby');
+  });
+
+  it('should inject VRRP virtual IP into ipMap for Master router', () => {
+    // Create device states with VRRP configuration
+    const deviceStates = new Map<string, SwitchState>();
+
+    // Router 1 - Higher priority, should be Master
+    deviceStates.set('R1', {
+      ports: {
+        'GigabitEthernet0/0': {
+          id: 'GigabitEthernet0/0',
+          name: 'GigabitEthernet0/0',
+          status: 'connected',
+          vlan: 1,
+          mode: 'routed',
+          duplex: 'full',
+          speed: '1000',
+          shutdown: false,
+          type: 'gigabitethernet',
+          ipAddress: '192.168.1.1',
+          subnetMask: '255.255.255.0',
+          vrrp: {
+            groups: {
+              '1': {
+                virtualIp: '192.168.1.254',
+                priority: 150,
+                preempt: true,
+                state: 'Master'
+              }
+            }
+          }
+        }
+      }
+    } as unknown as SwitchState);
+
+    // Router 2 - Lower priority, should be Backup
+    deviceStates.set('R2', {
+      ports: {
+        'GigabitEthernet0/0': {
+          id: 'GigabitEthernet0/0',
+          name: 'GigabitEthernet0/0',
+          status: 'connected',
+          vlan: 1,
+          mode: 'routed',
+          duplex: 'full',
+          speed: '1000',
+          shutdown: false,
+          type: 'gigabitethernet',
+          ipAddress: '192.168.1.2',
+          subnetMask: '255.255.255.0',
+          vrrp: {
+            groups: {
+              '1': {
+                virtualIp: '192.168.1.254',
+                priority: 100,
+                preempt: false,
+                state: 'Backup'
+              }
+            }
+          }
+        }
+      }
+    } as unknown as SwitchState);
+
+    // Run FHRP election
+    const electionResult = runFhrpElection(deviceStates);
+
+    // Verify election result
+    const r1State = electionResult.get('R1');
+    const r2State = electionResult.get('R2');
+
+    expect(r1State?.ports['GigabitEthernet0/0']?.vrrp?.groups?.['1']?.state).toBe('Master');
+    expect(r2State?.ports['GigabitEthernet0/0']?.vrrp?.groups?.['1']?.state).toBe('Backup');
+    expect(r1State?.ports['GigabitEthernet0/0']?.vrrp?.groups?.['1']?.virtualMac).toBe('0000.5e00.0101');
+  });
+
+  it('should compute Virtual MAC addresses for HSRP v1, HSRP v2, and VRRP', () => {
+    expect(getHsrpVirtualMac(1, 1)).toBe('0000.0c07.ac01');
+    expect(getHsrpVirtualMac(10, 1)).toBe('0000.0c07.ac0a');
+    expect(getHsrpVirtualMac(1, 2)).toBe('0000.0c9f.f001');
+    expect(getVrrpVirtualMac(1)).toBe('0000.5e00.0101');
+    expect(getVrrpVirtualMac(10)).toBe('0000.5e00.010a');
   });
 });

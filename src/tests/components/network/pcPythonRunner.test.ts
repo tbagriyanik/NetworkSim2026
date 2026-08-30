@@ -225,15 +225,15 @@ describe('executePythonScript', () => {
       expect(run(`print("ab" * 3)`)).toBe('ababab');
     });
 
-    it.fails('handles isinstance() and type()', () => {
+    it('handles isinstance() and type()', () => {
       expect(run(`print(isinstance(42, int), type(42), type("x") == str)`)).toBe("True <class 'int'> True");
     });
 
-    it.fails('handles enumerate() and zip()', () => {
+    it('handles enumerate() and zip()', () => {
       expect(run(`print(list(enumerate(["a","b","c"])))`)).toBe("[(0, 'a'), (1, 'b'), (2, 'c')]");
     });
 
-    it.fails('handles while loop', () => {
+    it('handles while loop', () => {
       expect(run(`s = 0\ni = 0\nwhile i < 5:\n  s += i\ni += 1\nprint(s)`)).toBe('10');
     });
 
@@ -241,23 +241,23 @@ describe('executePythonScript', () => {
       expect(run(`def foo(a, b):\n  print(a, b)\nfoo(b=2, a=1)`)).toBe('1 2');
     });
 
-    it.fails('handles mutable default args isolation across calls', () => {
+    it('handles mutable default args isolation across calls', () => {
       expect(run(`def append(val, lst=[]):\n  lst.append(val)\n  return lst\nprint(append(1))\nprint(append(2))\nprint(append(3, []))`)).toBe('[1] [1, 2] [3]');
     });
 
-    it.fails('handles yield in a generator function', () => {
+    it('handles yield in a generator function', () => {
       expect(run(`def countdown(n):\n  while n > 0:\n    yield n\n    n -= 1\nfor x in countdown(3):\n  print(x)`)).toBe('3\n2\n1');
     });
 
-    it.fails('handles a generator expression', () => {
+    it('handles a generator expression', () => {
       expect(run(`print(sum(x for x in range(5)))`)).toBe('10');
     });
 
-    it.fails('handles multiple return values via tuple', () => {
+    it('handles multiple return values via tuple', () => {
       expect(run(`def swap(a, b):\n  return b, a\nx, y = swap(1, 2)\nprint(x, y)`)).toBe('2 1');
     });
 
-    it.fails('handles yield inside a conditional', () => {
+    it('handles yield inside a conditional', () => {
       expect(run(`def conditional_gen(limit):\n  for i in range(limit):\n    if i % 2 == 0:\n      yield i\nprint(list(conditional_gen(6)))`)).toBe('[0, 2, 4]');
     });
 
@@ -269,19 +269,19 @@ describe('executePythonScript', () => {
       expect(run(`class Point:\n  def __init__(self, x, y):\n    self.x = x\n    self.y = y\n  def dist(self):\n    return (self.x ** 2 + self.y ** 2) ** 0.5\np = Point(3, 4)\nprint(p.dist())`)).toBe('5.0');
     });
 
-    it.fails('handles property decorator', () => {
+    it('handles property decorator', () => {
       expect(run(`class Circle:\n  def __init__(self, r):\n    self.r = r\n  @property\n  def area(self):\n    return 3.14 * self.r ** 2\nc = Circle(3)\nprint(c.area)`)).toBe('28.26');
     });
 
-    it.fails('handles classmethod', () => {
+    it('handles classmethod', () => {
       expect(run(`class Counter:\n  count = 0\n  @classmethod\n  def increment(cls):\n    cls.count += 1\nCounter.increment()\nCounter.increment()\nprint(Counter.count)`)).toBe('2');
     });
 
-    it.fails('applies a custom decorator', () => {
+    it('applies a custom decorator', () => {
       expect(run(`def logger(fn):\n  def wrapper(*args):\n    return fn(*args)\n  return wrapper\n@logger\ndef add(a, b):\n  return a + b\nprint(add(3, 4))`)).toBe('7');
     });
 
-    it.fails('chains multiple decorators', () => {
+    it('chains multiple decorators', () => {
       expect(run(`def double(fn):\n  def wrapper(*args):\n    return fn(*args) * 2\n  return wrapper\ndef inc(fn):\n  def wrapper(*args):\n    return fn(*args) + 1\n  return wrapper\n@double\n@inc\ndef val(x):\n  return x\nprint(val(3))`)).toBe('8');
     });
 
@@ -289,11 +289,11 @@ describe('executePythonScript', () => {
       expect(run(`print([(r, c) for r in range(2) for c in range(2)])`)).toBe('[(0, 0), (0, 1), (1, 0), (1, 1)]');
     });
 
-    it.fails('imports datetime', () => {
+    it('imports datetime', () => {
       expect(run(`from datetime import datetime\nprint(type(datetime.now()).__name__)`)).toBe('datetime');
     });
 
-    it.fails('handles try/except with specific error', () => {
+    it('handles try/except with specific error', () => {
       expect(run(`try:\n  int("abc")\nexcept ValueError:\n  print("bad value")\nprint("ok")`)).toBe('bad value\nok');
     });
 

@@ -2,6 +2,20 @@ import { SwitchState } from './types';
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { useAppStore } from '@/lib/store/appStore';
 
+export function getHsrpVirtualMac(groupId: number, version: number = 1): string {
+  const hexGroup = groupId.toString(16).padStart(2, '0');
+  if (version === 2) {
+    const hexGroup3 = groupId.toString(16).padStart(3, '0');
+    return `0000.0c9f.f${hexGroup3}`;
+  }
+  return `0000.0c07.ac${hexGroup}`;
+}
+
+export function getVrrpVirtualMac(groupId: number): string {
+  const hexGroup = groupId.toString(16).padStart(2, '0');
+  return `0000.5e00.01${hexGroup}`;
+}
+
 // Helper to compare IP addresses numerically
 function compareIps(ip1?: string, ip2?: string): number {
   if (!ip1 && !ip2) return 0;
@@ -139,9 +153,12 @@ export function runFhrpElection(deviceStates: Map<string, SwitchState>): Map<str
             roleState = 'Standby';
           }
 
+          const groupConf = port.hsrp.groups[inter.groupId];
+          const virtualMac = getHsrpVirtualMac(inter.groupId, groupConf.version || 1);
           port.hsrp.groups[inter.groupId] = {
-            ...port.hsrp.groups[inter.groupId],
-            state: roleState
+            ...groupConf,
+            state: roleState,
+            virtualMac
           };
         }
       }
@@ -189,9 +206,12 @@ export function runFhrpElection(deviceStates: Map<string, SwitchState>): Map<str
         const port = state.ports[inter.portId];
         if (port?.vrrp?.groups?.[inter.groupId]) {
           const roleState = index === 0 ? 'Master' : 'Backup';
+          const groupConf = port.vrrp.groups[inter.groupId];
+          const virtualMac = getVrrpVirtualMac(inter.groupId);
           port.vrrp.groups[inter.groupId] = {
-            ...port.vrrp.groups[inter.groupId],
-            state: roleState
+            ...groupConf,
+            state: roleState,
+            virtualMac
           };
         }
       }

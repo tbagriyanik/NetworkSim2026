@@ -5,8 +5,9 @@ import {
   PyInstance,
   PySuper,
   PyGenerator,
+  PyType,
   toPyComplex,
-  getPythonType,
+  getPyTypeValue,
   findOperatorIndex,
   isEnclosedInParens,
   splitOutsideQuotesAndParens,
@@ -124,6 +125,20 @@ export function createExpressionEvaluator(
 
     return new PyFile(filePath, mode, initialContent, onSave);
   };
+
+  // Built-in Python type objects used by type()/isinstance()/subclass checks.
+  scope['int'] = new PyType('int');
+  scope['float'] = new PyType('float');
+  scope['str'] = new PyType('str');
+  scope['bool'] = new PyType('bool');
+  scope['list'] = new PyType('list');
+  scope['dict'] = new PyType('dict');
+  scope['tuple'] = new PyType('tuple');
+  scope['set'] = new PyType('set');
+  scope['object'] = new PyType('object');
+  scope['Exception'] = new PyType('Exception');
+  scope['ValueError'] = new PyType('ValueError');
+  scope['BaseException'] = new PyType('BaseException');
   const evaluateExpr = (expr: string): unknown => {
     const trimmed = expr.trim();
     if (!trimmed) return undefined;
@@ -285,6 +300,70 @@ export function createExpressionEvaluator(
       return parts.filter(p => p.trim() !== '').map(p => evaluateExpr(p));
     }
 
+    // Top-level generator expression: expr for var in iterable [if cond]
+    // (outside brackets; list/set comprehensions are handled above)
+    {
+      const genExprIdx = findOperatorIndex(trimmed, ' for ');
+      if (genExprIdx !== -1 && !trimmed.startsWith('[') && !trimmed.startsWith('{') && !trimmed.startsWith('(')) {
+        const itemExpr = trimmed.slice(0, genExprIdx).trim();
+        const forPartsStr = trimmed.slice(genExprIdx).trim();
+        const forRegex = /\bfor\s+(.+?)\s+in\s+((?:(?!\bfor\b).)+)/gi;
+        const forMatches: Array<{ varStr: string; iterExpr: string }> = [];
+        let fm: RegExpExecArray | null;
+        while ((fm = forRegex.exec(forPartsStr)) !== null) {
+          forMatches.push({ varStr: fm[1].trim(), iterExpr: fm[2].trim() });
+        }
+        if (forMatches.length > 0) {
+          let ifCondExpr: string | null = null;
+          const lastIter = forMatches[forMatches.length - 1].iterExpr;
+          const ifAt = findOperatorIndex(lastIter, ' if ');
+          if (ifAt !== -1) {
+            ifCondExpr = lastIter.slice(ifAt + 4).trim();
+            forMatches[forMatches.length - 1].iterExpr = lastIter.slice(0, ifAt).trim();
+          }
+          const itemsList: unknown[] = [];
+          const evaluateNestedFor = (depth: number): void => {
+            if (depth === forMatches.length) {
+              let shouldInclude = true;
+              if (ifCondExpr) shouldInclude = Boolean(evaluateExpr(ifCondExpr));
+              if (shouldInclude) itemsList.push(evaluateExpr(itemExpr));
+              return;
+            }
+            const { varStr, iterExpr } = forMatches[depth];
+            const rawIterable = evaluateExpr(iterExpr);
+            let items: unknown[] = [];
+            if (Array.isArray(rawIterable)) items = rawIterable;
+            else if (typeof rawIterable === 'string') items = rawIterable.split('');
+            else if (rawIterable instanceof Set) items = Array.from(rawIterable);
+            else if (typeof rawIterable === 'object' && rawIterable !== null) {
+              if (typeof (rawIterable as Record<string | symbol, unknown>)[Symbol.iterator] === 'function') {
+                items = Array.from(rawIterable as Iterable<unknown>);
+              } else {
+                items = Object.keys(rawIterable);
+              }
+            }
+            const targets = varStr.split(',').map(t => t.trim());
+            for (const item of items) {
+              const savedValues: Record<string, unknown> = {};
+              if (targets.length > 1 && Array.isArray(item)) {
+                targets.forEach((t, idx) => { savedValues[t] = scope[t]; scope[t] = item[idx]; });
+              } else {
+                savedValues[varStr] = scope[varStr]; scope[varStr] = item;
+              }
+              evaluateNestedFor(depth + 1);
+              if (targets.length > 1 && Array.isArray(item)) {
+                targets.forEach(t => { if (savedValues[t] !== undefined) scope[t] = savedValues[t]; else delete scope[t]; });
+              } else {
+                if (savedValues[varStr] !== undefined) scope[varStr] = savedValues[varStr]; else delete scope[varStr];
+              }
+            }
+          };
+          evaluateNestedFor(0);
+          return new PyGenerator(itemsList);
+        }
+      }
+    }
+
     const isCompleteCall = (name: string): boolean => {
       const prefix = new RegExp(`^${name}\\s*\\(`).exec(trimmed);
       if (!prefix) return false;
@@ -342,7 +421,7 @@ export function createExpressionEvaluator(
     const typeMatch = /^type\s*\((.*)\)$/.exec(trimmed);
     if (typeMatch) {
       const val = evaluateExpr(typeMatch[1]);
-      return getPythonType(val);
+      return getPyTypeValue(val);
     }
 
     // Handle isinstance(...)
@@ -351,21 +430,17 @@ export function createExpressionEvaluator(
       const parts = splitOutsideQuotesAndParens(isinstanceMatch[1], ',');
       const obj = evaluateExpr(parts[0]);
       const cls = evaluateExpr(parts[1]);
-      if (obj instanceof PyInstance && cls instanceof PyClass) {
-        let current: PyClass | undefined = obj.pyClass;
-        while (current) {
-          if (current === cls || current.name === cls.name) return true;
-          current = current.baseClasses.length > 0 ? current.baseClasses[0] : undefined;
+      if (cls instanceof PyType) {
+        if (obj instanceof PyInstance) {
+          let current: PyClass | undefined = obj.pyClass;
+          while (current) {
+            if (current.name === cls.name) return true;
+            current = current.baseClasses.length > 0 ? current.baseClasses[0] : undefined;
+          }
+          return false;
         }
-        return false;
+        return getPyTypeValue(obj).name === cls.name;
       }
-      const typeStr = getPythonType(obj);
-      if (cls === 'str' || cls === scope['str']) return typeStr === "<class 'str'>";
-      if (cls === 'int' || cls === scope['int']) return typeStr === "<class 'int'>";
-      if (cls === 'float' || cls === scope['float']) return typeStr === "<class 'float'>";
-      if (cls === 'list' || cls === scope['list']) return typeStr === "<class 'list'>";
-      if (cls === 'dict' || cls === scope['dict']) return typeStr === "<class 'dict'>";
-      if (cls === 'bool' || cls === scope['bool']) return typeStr === "<class 'bool'>";
       return false;
     }
 
@@ -751,7 +826,11 @@ export function createExpressionEvaluator(
               : typeof iterVal === 'object' && iterVal !== null && typeof (iterVal as Record<string | symbol, unknown>)[Symbol.iterator] === 'function'
                 ? Array.from(iterVal as Iterable<unknown>)
                 : [];
-        return items.map((item, idx) => [startVal + idx, item]);
+        return items.map((item, idx) => {
+          const pair: unknown[] = [startVal + idx, item];
+          (pair as unknown as { __isTuple__: boolean }).__isTuple__ = true;
+          return pair;
+        });
       }
       return [];
     }
@@ -775,7 +854,9 @@ export function createExpressionEvaluator(
         const minLen = Math.min(...iterables.map(it => it.length));
         const zipped: unknown[][] = [];
         for (let i = 0; i < minLen; i++) {
-          zipped.push(iterables.map(it => it[i]));
+          const tup: unknown[] = iterables.map(it => it[i]);
+          (tup as unknown as { __isTuple__: boolean }).__isTuple__ = true;
+          zipped.push(tup);
         }
         return zipped;
       }
@@ -996,6 +1077,9 @@ export function createExpressionEvaluator(
           return curr.getAttribute(attrName);
         }
         if (curr instanceof PySuper) {
+          return curr.getAttribute(attrName);
+        }
+        if (curr instanceof PyClass) {
           return curr.getAttribute(attrName);
         }
         if (curr instanceof PyComplex) {

@@ -2,6 +2,39 @@ export class PythonInputRequiredException {
   constructor(public prompt: string) { }
 }
 
+export class PyType {
+  constructor(public name: string) { }
+
+  toString(): string {
+    return `<class '${this.name}'>`;
+  }
+}
+
+/** Returns the Python type object for a runtime value (mirrors type()/isinstance). */
+export function getPyTypeValue(val: unknown): PyType {
+  if (val === null || val === undefined) return new PyType('NoneType');
+  if (val instanceof PyType) return val;
+  if (val instanceof PyInstance) return new PyType(val.pyClass.name);
+  if (val instanceof PyClass) return new PyType('type');
+  if (val instanceof PyGenerator) return new PyType('generator');
+  if (val instanceof PyComplex) return new PyType('complex');
+  if (val instanceof PyFile) return new PyType('_io.TextIOWrapper');
+  if (typeof val === 'boolean') return new PyType('bool');
+  if (typeof val === 'number') return Number.isInteger(val) ? new PyType('int') : new PyType('float');
+  if (typeof val === 'string') return new PyType('str');
+  if (Array.isArray(val)) {
+    return (val as unknown as { __isTuple__?: boolean }).__isTuple__ ? new PyType('tuple') : new PyType('list');
+  }
+  if (val instanceof Set) return new PyType('set');
+  if (typeof val === 'object') {
+    const obj = val as Record<string, unknown>;
+    if (obj.__name__ && typeof obj.__name__ === 'string') return new PyType(obj.__name__);
+    if (obj.constructor && obj.constructor.name && obj.constructor.name !== 'Object') return new PyType(obj.constructor.name);
+    return new PyType('dict');
+  }
+  return new PyType(typeof val);
+}
+
 export class PyComplex {
   constructor(public real: number, public imag: number) { }
 
@@ -183,6 +216,7 @@ export function formatPythonValue(val: unknown, inCollection: boolean = false): 
   if (val === null || val === undefined) return 'None';
   if (val === true) return 'True';
   if (val === false) return 'False';
+  if (val instanceof PyType) return `<class '${val.name}'>`;
   if (typeof val === 'string') return inCollection ? `'${val}'` : val;
   if (val instanceof PyInstance) return `<${val.pyClass.name} object>`;
   if (val instanceof PyClass) return `<class '${val.name}'>`;
@@ -421,6 +455,15 @@ export function parseFormatArgs(
   }
 
   for (const token of tokens) {
+    if (token.startsWith('*')) {
+      const spreadVal = evalFn(token.slice(1).trim());
+      if (Array.isArray(spreadVal)) {
+        positional.push(...spreadVal);
+      } else {
+        positional.push(spreadVal);
+      }
+      continue;
+    }
     const kwMatch = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(.+)$/.exec(token);
     if (kwMatch && !token.startsWith('"') && !token.startsWith("'")) {
       kwargs[kwMatch[1]] = evalFn(kwMatch[2]);
@@ -536,6 +579,32 @@ export class PyClass {
       if (found !== undefined) return found;
     }
     return undefined;
+  }
+
+  getAttribute(attrName: string): unknown {
+    if (isForbiddenDunderProperty(attrName)) {
+      throw new Error(`AttributeError: Security restriction: access to '${attrName}' is blocked.`);
+    }
+    if (this.staticProps[attrName] !== undefined) return this.staticProps[attrName];
+    const getter = this.findPropertyGetter(attrName);
+    if (getter && typeof getter === 'function') {
+      return (getter as Function)(this);
+    }
+    const method = this.findMethod(attrName);
+    if (method !== undefined) {
+      if (this.classMethods.has(attrName) || (method as Record<string, unknown>).__isClassMethod) {
+        return (method as Function).bind(null, this);
+      }
+      return method;
+    }
+    throw new Error(`AttributeError: type object '${this.name}' has no attribute '${attrName}'`);
+  }
+
+  setAttribute(attrName: string, value: unknown): void {
+    if (isForbiddenDunderProperty(attrName)) {
+      throw new Error(`AttributeError: Security restriction: access to '${attrName}' is blocked.`);
+    }
+    this.staticProps[attrName] = value;
   }
 }
 
@@ -664,6 +733,9 @@ export function assignValueToLhs(
     if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(attrName)) {
       const targetObj = evaluateExpr(objExpr);
       if (targetObj instanceof PyInstance) {
+        targetObj.setAttribute(attrName, rhsVal);
+        return true;
+      } else if (targetObj instanceof PyClass) {
         targetObj.setAttribute(attrName, rhsVal);
         return true;
       } else if (targetObj && typeof targetObj === 'object') {

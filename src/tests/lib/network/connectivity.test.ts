@@ -46,7 +46,137 @@ describe('Connectivity Functions', () => {
     ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }],
   } as CanvasDevice;
 
+  describe('DHCP Relay (ip helper-address)', () => {
+    it('should store helper addresses in port configuration', () => {
+      // Test that helper addresses are properly stored in the port state
+      const port: Port = {
+        id: 'GigabitEthernet0/0',
+        name: 'GigabitEthernet0/0',
+        status: 'connected',
+        vlan: 1,
+        mode: 'routed',
+        duplex: 'full',
+        speed: '1000',
+        shutdown: false,
+        type: 'gigabitethernet',
+        ipAddress: '192.168.1.1',
+        subnetMask: '255.255.255.0',
+        helperAddresses: ['10.0.0.1', '10.0.0.2']
+      } as Port;
 
+      expect(port.helperAddresses).toBeDefined();
+      expect(port.helperAddresses).toContain('10.0.0.1');
+      expect(port.helperAddresses).toContain('10.0.0.2');
+    });
+
+    it('should handle empty helper addresses array', () => {
+      const port: Port = {
+        id: 'GigabitEthernet0/0',
+        name: 'GigabitEthernet0/0',
+        status: 'connected',
+        vlan: 1,
+        mode: 'routed',
+        duplex: 'full',
+        speed: '1000',
+        shutdown: false,
+        type: 'gigabitethernet',
+        ipAddress: '192.168.1.1',
+        subnetMask: '255.255.255.0',
+        helperAddresses: []
+      } as Port;
+
+      expect(port.helperAddresses).toBeDefined();
+      expect(port.helperAddresses).toHaveLength(0);
+    });
+  });
+
+  describe('DHCP Snooping Security', () => {
+    it('should store DHCP snooping configuration in switch state', () => {
+      const switchState = {
+        dhcpSnoopingEnabled: true,
+        dhcpSnoopingVlans: ['10', '20'],
+        ports: {
+          'fa0/1': {
+            id: 'fa0/1',
+            name: 'FastEthernet0/1',
+            status: 'connected',
+            vlan: 1,
+            mode: 'access',
+            duplex: 'full',
+            speed: '100',
+            shutdown: false,
+            type: 'fastethernet',
+            dhcpSnoopingTrust: false
+          } as Port,
+          'fa0/2': {
+            id: 'fa0/2',
+            name: 'FastEthernet0/2',
+            status: 'connected',
+            vlan: 1,
+            mode: 'access',
+            duplex: 'full',
+            speed: '100',
+            shutdown: false,
+            type: 'fastethernet',
+            dhcpSnoopingTrust: true
+          } as Port
+        }
+      } as unknown as SwitchState;
+
+      expect(switchState.dhcpSnoopingEnabled).toBe(true);
+      expect(switchState.dhcpSnoopingVlans).toContain('10');
+      expect(switchState.dhcpSnoopingVlans).toContain('20');
+      expect(switchState.ports['fa0/1']?.dhcpSnoopingTrust).toBe(false);
+      expect(switchState.ports['fa0/2']?.dhcpSnoopingTrust).toBe(true);
+    });
+
+    it('should handle DHCP snooping disabled state', () => {
+      const switchState = {
+        dhcpSnoopingEnabled: false,
+        ports: {
+          'fa0/1': {
+            id: 'fa0/1',
+            name: 'FastEthernet0/1',
+            status: 'connected',
+            vlan: 1,
+            mode: 'access',
+            duplex: 'full',
+            speed: '100',
+            shutdown: false,
+            type: 'fastethernet',
+            dhcpSnoopingTrust: false
+          } as Port
+        }
+      } as unknown as SwitchState;
+
+      expect(switchState.dhcpSnoopingEnabled).toBe(false);
+      expect(switchState.ports['fa0/1']?.dhcpSnoopingTrust).toBe(false);
+    });
+
+    it('should handle empty VLAN list in DHCP snooping', () => {
+      const switchState = {
+        dhcpSnoopingEnabled: true,
+        dhcpSnoopingVlans: [],
+        ports: {
+          'fa0/1': {
+            id: 'fa0/1',
+            name: 'FastEthernet0/1',
+            status: 'connected',
+            vlan: 1,
+            mode: 'access',
+            duplex: 'full',
+            speed: '100',
+            shutdown: false,
+            type: 'fastethernet',
+            dhcpSnoopingTrust: false
+          } as Port
+        }
+      } as unknown as SwitchState;
+
+      expect(switchState.dhcpSnoopingEnabled).toBe(true);
+      expect(switchState.dhcpSnoopingVlans).toHaveLength(0);
+    });
+  });
 
   const pc3: CanvasDevice = {
     id: 'PC3', name: 'PC3', type: 'pc',

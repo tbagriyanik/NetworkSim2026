@@ -719,8 +719,35 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
         if (connectedDevice) {
           const deviceType = connectedDevice.type;
           let capability = 'B';
-          if (deviceType === 'router') capability = 'B,R';
-          else if (deviceType === 'pc' || deviceType === 'iot') capability = 'S';
+          let enabledCapability = 'B';
+          let systemDescription = '';
+          
+          // Set capabilities based on device type
+          if (deviceType === 'router') {
+            capability = 'B,R';
+            enabledCapability = 'B,R';
+            systemDescription = 'Cisco IOS Software, 7200 Series Software';
+          } else if (deviceType === 'switchL2' || deviceType === 'switchL3') {
+            capability = 'B';
+            enabledCapability = 'B';
+            systemDescription = 'Cisco IOS Software, C2960 Software';
+          } else if (deviceType === 'pc') {
+            capability = 'S';
+            enabledCapability = 'S';
+            systemDescription = 'Windows PC, Generic Workstation';
+          } else if (deviceType === 'iot') {
+            capability = 'S';
+            enabledCapability = 'S';
+            systemDescription = 'IoT Device, Generic Sensor/Actuator';
+          } else if (deviceType === 'wlc') {
+            capability = 'B,W';
+            enabledCapability = 'B,W';
+            systemDescription = 'Cisco IOS-XE Software, Wireless LAN Controller';
+          } else if (deviceType === 'firewall') {
+            capability = 'B,R';
+            enabledCapability = 'B,R';
+            systemDescription = 'Cisco ASA Software, Adaptive Security Appliance';
+          }
 
           output += `------------------------------------------------\n`;
           output += `Local Intf: ${localPort}\n`;
@@ -747,15 +774,30 @@ export function cmdShowLldp(state: SwitchState, input: string, ctx: CommandConte
             managementIp = 'not configured';
           }
 
+          // Get real port description if available
+          const localPortObj = connectedDevice.ports?.find(p => p.id === localPort);
+          const portDescription = localPortObj?.description || localPortObj?.name || remotePort;
+
           output += `Chassis id: ${chassisId}\n`;
           output += `Port id: ${remotePort}\n`;
-          output += `Port Description: ${remotePort}\n`;
+          output += `Port Description: ${portDescription}\n`;
           output += `System Name: ${connectedDevice.name}\n`;
-          output += `System Description:\n NOS Software, C2960 Software\n`;
+          output += `System Description:\n ${systemDescription}\n`;
           output += `Time remaining: ${holdtime} seconds\n`;
           output += `System Capabilities: ${capability}\n`;
-          output += `Enabled Capabilities: ${capability}\n`;
+          output += `Enabled Capabilities: ${enabledCapability}\n`;
           output += `Management Addresses:\n    IP: ${managementIp}\n`;
+          
+          // Add VLAN information if available
+          if (neighborState && deviceType !== 'pc' && deviceType !== 'iot') {
+            const vlanInfo = Object.entries(neighborState.ports || {})
+              .filter(([, port]) => port.vlan && port.vlan > 1)
+              .map(([portId, port]) => `    ${portId}: VLAN ${port.vlan}`)
+              .join('\n');
+            if (vlanInfo) {
+              output += `VLAN Information:\n${vlanInfo}\n`;
+            }
+          }
         }
       });
       output += `------------------------------------------------\n`;

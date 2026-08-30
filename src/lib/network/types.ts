@@ -253,6 +253,8 @@ export interface Port {
     groups?: Record<number, {
       virtualIp?: string;
       ipv6VirtualIp?: string;
+      virtualMac?: string;
+      version?: number;
       priority?: number;
       preempt?: boolean;
       state?: 'Initial' | 'Listen' | 'Speak' | 'Standby' | 'Active';
@@ -261,6 +263,7 @@ export interface Port {
   vrrp?: {
     groups?: Record<number, {
       virtualIp?: string;
+      virtualMac?: string;
       priority?: number;
       preempt?: boolean;
       state?: 'Init' | 'Backup' | 'Master';
