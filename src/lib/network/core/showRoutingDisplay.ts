@@ -1123,7 +1123,7 @@ export function cmdShowIpv6Neighbors(state: SwitchState, _input: string, _ctx: C
     const ageMin = Math.floor(ageMs / 60000);
     const ageStr = entry.state === 'STATIC' ? '-' : ageMin.toString();
     const mac = entry.mac || '-';
-    
+
     // Format the line, padding logic:
     // Address: 42 chars
     // Age: 3 chars right aligned
@@ -1135,7 +1135,7 @@ export function cmdShowIpv6Neighbors(state: SwitchState, _input: string, _ctx: C
     const paddedAge = ageStr.padStart(3, ' ');
     const paddedMac = mac.padEnd(15, ' ');
     const paddedState = entry.state.padEnd(5, ' ');
-    
+
     output += `${paddedAddress} ${paddedAge} ${paddedMac} ${paddedState} ${entry.interface}\n`;
   });
 
