@@ -217,9 +217,11 @@ function getRecommendedCliCommands(
 function RefreshDeviceListToast({
   devices,
   language,
+  showCommandSummary = true,
 }: {
   devices: RefreshDeviceSummary[];
   language: string;
+  showCommandSummary?: boolean;
 }) {
   const { t } = useLanguage();
   const [selectedId, setSelectedId] = useState<string | null>(devices[0]?.id ?? null);
@@ -466,7 +468,7 @@ function RefreshDeviceListToast({
           )}
 
           {/* Switch / Router Durum & CLI Komut Özeti */}
-          {!isPcOrIot && (
+          {showCommandSummary && !isPcOrIot && (
             <div className="rounded-lg border border-secondary-200 dark:border-secondary-700 overflow-hidden text-xs">
               <button
                 type="button"
@@ -590,7 +592,7 @@ function RefreshDeviceListToast({
           )}
 
           {/* PC CMD Commands Summary for PCs */}
-          {isPcOrIot && (
+          {showCommandSummary && isPcOrIot && (
             <div className="rounded-lg border border-secondary-200 dark:border-secondary-700 overflow-hidden text-xs">
               <button
                 type="button"
@@ -680,10 +682,12 @@ export function LiveDeviceList({
   devices,
   deviceStates,
   language,
+  showCommandSummary = true,
 }: {
   devices: CanvasDevice[];
   deviceStates: Map<string, SwitchState>;
   language: string;
+  showCommandSummary?: boolean;
 }) {
   const { t } = useLanguage();
 
@@ -760,6 +764,5 @@ export function LiveDeviceList({
     });
   }, [devices, deviceStates, language]);
 
-  return <RefreshDeviceListToast devices={liveDevices} language={language} />;
+  return <RefreshDeviceListToast devices={liveDevices} language={language} showCommandSummary={showCommandSummary} />;
 }
-

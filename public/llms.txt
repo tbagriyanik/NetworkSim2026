@@ -1,0 +1,8 @@
+# Network Simulator
+
+Interactive web-based network simulator for learning network configuration.
+
+## Links
+
+- [Home](https://network2026.vercel.app/)
+- [Documentation](https://github.com/tbagriyanik/networksimulator/tree/main/doc)

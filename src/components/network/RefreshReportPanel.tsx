@@ -25,6 +25,7 @@ export function RefreshReportPanel({
   topologyDevices,
   deviceStates,
   bringElementToFront,
+  isExamActive = false,
 }: RefreshReportPanelProps) {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
@@ -181,7 +182,12 @@ export function RefreshReportPanel({
                 </TabsContent>
 
                 <TabsContent value="devices" className="mt-2">
-                  <LiveDeviceList devices={topologyDevices} deviceStates={deviceStates} language={language} />
+                  <LiveDeviceList
+                    devices={topologyDevices}
+                    deviceStates={deviceStates}
+                    language={language}
+                    showCommandSummary={!isExamActive}
+                  />
                 </TabsContent>
               </Tabs>
             </div>

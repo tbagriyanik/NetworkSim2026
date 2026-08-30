@@ -63,7 +63,12 @@ export function middleware(request: NextRequest) {
     return preflight;
   }
 
-  const response = NextResponse.next();
+  // Forward the nonce on the request as well as the response. Next.js reads
+  // this request header when it renders its own inline scripts; setting only
+  // the response header leaves those scripts without a matching nonce.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-nonce', nonce);
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
   if (isApiRequest) {
     const origin = request.headers.get('origin');
     if (origin === request.nextUrl.origin) response.headers.set('Access-Control-Allow-Origin', origin);

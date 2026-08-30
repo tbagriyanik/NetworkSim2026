@@ -44,4 +44,5 @@ export interface RefreshReportPanelProps {
   topologyDevices: CanvasDevice[];
   deviceStates: Map<string, SwitchState>;
   bringElementToFront: (el: HTMLElement) => void;
+  isExamActive?: boolean;
 }

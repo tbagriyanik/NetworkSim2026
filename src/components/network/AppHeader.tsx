@@ -269,7 +269,7 @@ export function AppHeader({
               <div className={`w-px h-4 mx-1 ${isDark ? 'bg-secondary-700' : 'bg-secondary-300'} hidden md:block`} />
               <TooltipWrapper title={language === 'tr' ? 'Switch to English' : "Türkçe'ye Geç"}>
                 <button
-                  aria-label={language === 'tr' ? 'Switch to English' : "Türkçe'ye Geç"}
+                  aria-label={`${language.toUpperCase()}: ${language === 'tr' ? 'Switch to English' : "Türkçe'ye Geç"}`}
                   onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
                   className={cn("text-[10px] font-bold h-7 px-1.5 flex items-center gap-1 rounded transition-all ui-hover-surface", isDark ? 'text-secondary-300 hover:text-purple-300' : 'text-secondary-700 hover:text-purple-700')}
                 >

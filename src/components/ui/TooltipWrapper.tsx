@@ -28,7 +28,10 @@ export function TooltipWrapper({
         return <>{children}</>;
     }
 
-    const effectiveAriaLabel = ariaLabel || (typeof title === 'string' ? title : undefined);
+    const existingAriaLabel = React.isValidElement(children)
+        ? (children.props as { 'aria-label'?: string })['aria-label']
+        : undefined;
+    const effectiveAriaLabel = ariaLabel || existingAriaLabel || (typeof title === 'string' ? title : undefined);
 
     const child = React.isValidElement(children)
         ? React.cloneElement(children as React.ReactElement<{ 'aria-label'?: string }>, { 'aria-label': effectiveAriaLabel })

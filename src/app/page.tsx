@@ -2132,6 +2132,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
               topologyDevices={topologyDevices}
               deviceStates={deviceStates}
               bringElementToFront={bringElementToFront}
+              isExamActive={isExamActive}
             />
           </main>
 
