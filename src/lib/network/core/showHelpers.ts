@@ -107,6 +107,9 @@ export function getPrefixLength(subnetMask: string | undefined): number {
 }
 
 export function getNetworkAddress(ipAddress: string, subnetMask: string): string {
+  if (!ipAddress || !subnetMask) {
+    return '0.0.0.0';
+  }
   const ipParts = ipAddress.split('.').map(Number);
   const maskParts = subnetMask.split('.').map(Number);
   return ipParts.map((part, index) => part & maskParts[index]).join('.');

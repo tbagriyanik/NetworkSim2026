@@ -12,8 +12,6 @@ def is_anagram(str1, str2):
 print(is_anagram("race", "care"))
 print(is_anagram("hello", "world"))
 `;
-    const res = executePythonScript(script);
-    console.log('OUTPUT:\n' + res.output);
-    console.log('ERROR:', res.error);
+    executePythonScript(script);
   });
 });

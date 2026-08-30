@@ -3,6 +3,8 @@ import { SwitchState, Port } from './types';
 import { calculateOSPFRoutes } from './ospf';
 import { calculateEigrpRoutes } from './eigrp-dual';
 import { validateSviStatus } from './core/L3Validation';
+import { getNetworkAddress } from './core/showHelpers';
+import { isIpInSubnet } from './connectivity.utils';
 
 
 export interface Route {
@@ -24,8 +26,6 @@ export interface Route {
  */
 function buildRoutingTable(
   deviceId: string,
-  _devices: CanvasDevice[],
-  _connections: CanvasConnection[],
   deviceStates: Map<string, SwitchState>
 ): Route[] {
   const routes: Route[] = [];
@@ -349,32 +349,6 @@ export function ipToNumber(ip: string): number {
 }
 
 /**
- * Get network address from IP and subnet mask
- */
-function getNetworkAddress(ip: string, subnetMask: string): string {
-  if (!ip || !subnetMask) {
-    return '0.0.0.0';
-  }
-  const ipNum = ipToNumber(ip);
-  const maskNum = ipToNumber(subnetMask);
-  const networkNum = ipNum & maskNum;
-
-  return numberToIp(networkNum);
-}
-
-/**
- * Convert number to IP string
- */
-function numberToIp(num: number): string {
-  return [
-    (num >>> 24) & 255,
-    (num >>> 16) & 255,
-    (num >>> 8) & 255,
-    num & 255
-  ].join('.');
-}
-
-/**
  * Get prefix length from subnet mask
  */
 function getPrefixLength(subnetMask: string): number {
@@ -406,7 +380,7 @@ export function getRoutingTable(
   if (!state) return [];
 
   const routes = (devices && connections)
-    ? buildRoutingTable(deviceId, devices, connections, deviceStates)
+    ? buildRoutingTable(deviceId, deviceStates)
     : buildBasicRoutingTable(state);
 
   return routes.sort((a, b) => {
@@ -689,14 +663,6 @@ export function getL3Hops(
     return undefined;
   };
 
-  const isIpInSubnetLocal = (ip1: string, ip2: string, mask: string): boolean => {
-    try {
-      return getNetworkAddress(ip1, mask) === getNetworkAddress(ip2, mask);
-    } catch {
-      return false;
-    }
-  };
-
   for (let step = 0; step < 30; step++) {
     if (visited.has(currentId)) {
       break;
@@ -717,7 +683,7 @@ export function getL3Hops(
     if (currentState) {
       for (const port of Object.values(currentState.ports || {})) {
         if (port.ipAddress && port.subnetMask) {
-          if (isIpInSubnetLocal(port.ipAddress, targetIp, port.subnetMask)) {
+          if (isIpInSubnet(port.ipAddress, targetIp, port.subnetMask)) {
             targetIsDirectlyConnected = true;
             break;
           }
@@ -731,7 +697,7 @@ export function getL3Hops(
       }
     }
     if (!targetIsDirectlyConnected && currentDevice.ip && currentDevice.subnet) {
-      if (isIpInSubnetLocal(currentDevice.ip, targetIp, currentDevice.subnet)) {
+      if (isIpInSubnet(currentDevice.ip, targetIp, currentDevice.subnet)) {
         targetIsDirectlyConnected = true;
       }
     }

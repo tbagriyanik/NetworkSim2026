@@ -1,6 +1,16 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 3.5.0 · **Son doğrulama / Last verified:** 2026-08-29
+**Sürüm / Version:** 3.6.0 · **Son doğrulama / Last verified:** 2026-08-30
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-08-30)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **LLDP Neighbors Detail** | `show lldp neighbors detail` çıktısında sabit (hardcoded) Chassis ID ve Management IP yerine bağlı olan komşu cihazın dinamik MAC adresi ve IP bilgileri çekilir. |
+| **FHRP Virtual MAC & IP** | HSRP v1 (`0000.0c07.acXX`), HSRP v2 (`0000.0c9f.fXXX`) ve VRRP (`0000.5e00.01XX`) standart sanal MAC adresi hesaplama motoru eklendi; sanal IP adresleri `pathResolution.ts` üzerinde dinamik olarak aktif gateway cihazına çözümlenmektedir. |
+| **DHCP Relay (`ip helper-address`)** | Arayüz bazlı `ip helper-address` komutları ile cross-subnet DHCP broadcast paketleri unicast helper adresine yönlendirilir. Parametreli `no ip helper-address <ip>` silme komutları desteklenmektedir. |
+| **DHCP Snooping & Rogue Protection** | Untrusted portlardan gelen sahte DHCP OFFER/ACK paketleri engellenir. İstemci IP kiraladıkça switch üzerinde canlı `DHCP Snooping Binding Table` oluşturulur ve `show ip dhcp snooping binding` ile raporlanır. |
+| **CCNA Konu Denetimi & Raporlama** | 63 CCNA konusu taranıp tam (%60), kısmi (%30) ve eksik (%10) olarak sınıflandırılmış ve eksiklerin giderilme yol haritası oluşturulmuştur. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-08-29)
 

@@ -1,5 +1,6 @@
-import { Route, ipToNumber } from './routing';
+import { Route } from './routing';
 import { Port, SwitchState } from './types';
+import { getNetworkAddress } from './core/showHelpers';
 
 /**
  * OSPF LSA Types
@@ -838,20 +839,4 @@ export function calculateOSPFRoutes(
   });
 
   return routes;
-}
-
-function getNetworkAddress(ip: string, subnetMask: string): string {
-  const ipNum = ipToNumber(ip);
-  const maskNum = ipToNumber(subnetMask);
-  const networkNum = ipNum & maskNum;
-  return numberToIp(networkNum);
-}
-
-function numberToIp(num: number): string {
-  return [
-    (num >>> 24) & 255,
-    (num >>> 16) & 255,
-    (num >>> 8) & 255,
-    num & 255
-  ].join('.');
 }

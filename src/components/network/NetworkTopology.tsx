@@ -811,8 +811,7 @@ export function NetworkTopology({
     setPingMode,
     pingAnimationRef,
     pingCleanupTimeoutRef,
-    pingIsPausedRef,
-    _pingStepModeRef: pingStepModeRef
+    pingIsPausedRef
   });
 
   const { startPingAnimation } = usePingSequence({

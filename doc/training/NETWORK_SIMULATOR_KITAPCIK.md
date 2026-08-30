@@ -22,9 +22,12 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu
+### Güncel özellik durumu (v3.6.0)
 
-- **Güvenlik:** DHCP Snooping VLAN etkinleştirme, trusted interface ve rogue DHCP paketlerinin engellenmesi; DAI VLAN yapılandırması.
+- **Güvenlik & DHCP Snooping:** `ip dhcp snooping`, VLAN etkinleştirme (`ip dhcp snooping vlan`), `ip dhcp snooping trust` ve untrusted portlardan gelen sahte (rogue) DHCP OFFER/ACK paketlerinin engellenmesi. İstemci IP aldıkça canlı **DHCP Snooping Binding Table** kaydı tutulur (`show ip dhcp snooping binding`). DAI VLAN yapılandırması.
+- **FHRP (HSRP & VRRP):** HSRP v1 (`0000.0c07.acXX`), HSRP v2 (`0000.0c9f.fXXX`) ve VRRP (`0000.5e00.01XX`) için otomatik sanal MAC hesaplama motoru. Virtual IP adreslerinin yol çözümlemesinde aktif/master cihaza yönlendirilmesi.
+- **DHCP Relay (`ip helper-address`):** Cross-subnet DHCP broadcast paketlerinin unicast helper adresine yönlendirilmesi ve parametreli kaldırma (`no ip helper-address <ip>`).
+- **LLDP Komşu Detayları:** `show lldp neighbors detail` çıktısında bağlı komşu cihazın dinamik Chassis ID (MAC) ve Management IP bilgilerinin canlı gösterimi.
 - **SSH:** RSA anahtarı, SSH v2, local login ve VTY transport zinciriyle simüle edilmiş SSH oturumu.
 - **Subnetting:** PC IP ayarları panelinde network, broadcast ve kullanılabilir host aralığı hesaplama.
 - **Paket analizi:** Paket yakalama satırına tıklayarak L2 Ethernet → L3 IP → L4 TCP/UDP/ICMP ayrıştırması.
@@ -176,14 +179,14 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.5.0 |
-| Total Lines / Toplam Satır (src/) | 115,876 |
-| Source Files / Kaynak Dosya | 500 |
-| Documentation Files / Dokümantasyon Dosya | 22 |
-| Example Projects / Örnek Proje | 49 |
+| Version / Sürüm | 3.6.0 |
+| Total Lines / Toplam Satır (src/) | 145,145 |
+| Source Files / Kaynak Dosya | 644 |
+| Documentation Files / Dokümantasyon Dosya | 24 |
+| Example Projects / Örnek Proje | 46 |
 | Guided Lessons / Rehberli Ders | 19 |
 | Exams / Sınav | 6 |
-| Tests / Test | 940 (92 dosya) |
+| Tests / Test | 1169 (119 dosya) |
 | CLI Commands / CLI Komutları | 400+ |
 
 ## Documentation / Dokümantasyon

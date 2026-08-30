@@ -107,7 +107,7 @@ export function createExpressionEvaluator(
     const resolvedPath = resolvePath(cwdRef.value, filePath);
 
     let initialContent = '';
-    if (mode.includes('r') || mode.includes('+')) {
+    if (mode.includes('r') || mode.includes('+') || mode.includes('a')) {
       const content = readFile(fs, resolvedPath) ?? readFile(fs, `C:\\${filePath}`) ?? readFile(fs, `C:\\code\\${filePath}`);
       if (content === null || content === undefined) {
         if (!mode.includes('w') && !mode.includes('a') && !mode.includes('+')) {

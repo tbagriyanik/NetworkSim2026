@@ -6,28 +6,25 @@ import { SwitchState } from '@/lib/network/types';
 import { isCableCompatible } from '@/lib/network/types';
 
 interface PingAnimationProps {
-  _devices?: Map<string, CanvasDevice>;
   connections: CanvasConnection[];
   deviceStates?: Map<string, SwitchState>;
   deviceMap: Map<string, CanvasDevice>;
   isTR: boolean;
   // State setters
-   
+
   setPingAnimation: React.Dispatch<React.SetStateAction<any>>;
-   
+
   setHopPacketInfos: (infos: any[]) => void;
-   
+
   setErrorToast: (toast: any) => void;
   setPingMode: (val: boolean) => void;
   // Refs from parent
   pingAnimationRef: React.MutableRefObject<number | null>;
   pingCleanupTimeoutRef: React.MutableRefObject<ReturnType<typeof setTimeout> | null>;
   pingIsPausedRef: React.MutableRefObject<boolean>;
-  _pingStepModeRef: React.MutableRefObject<boolean>;
 }
 
 export function usePingAnimation({
-  _devices: _unused,
   connections,
   deviceStates,
   deviceMap,
@@ -38,8 +35,7 @@ export function usePingAnimation({
   setPingMode,
   pingAnimationRef,
   pingCleanupTimeoutRef,
-  pingIsPausedRef,
-  _pingStepModeRef: _unused2
+  pingIsPausedRef
 }: PingAnimationProps) {
 
   // BFS Path finder

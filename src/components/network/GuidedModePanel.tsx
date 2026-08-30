@@ -16,7 +16,8 @@ import {
   Volume2,
   VolumeX,
   Award,
-  Play
+  Play,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -29,6 +30,7 @@ import { GuidedProject, getProgressPercentage } from '@/lib/network/guidedMode';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TutorialAnimationPlayer } from './TutorialAnimationPlayer';
 import { generateCertificate } from '@/lib/utils/certificateGenerator';
+import { answerSdnQuiz, sdnQuizQuestions } from '@/lib/network/sdnQuiz';
 
 interface GuidedModePanelProps {
   project: GuidedProject | null;
@@ -109,6 +111,30 @@ export function GuidedModePanel({
   });
 
   const [usedShowMeStepIds, setUsedShowMeStepIds] = React.useState<Set<string>>(new Set());
+  const [showSdnQuiz, setShowSdnQuiz] = useState(false);
+  const [sdnQuizIndex, setSdnQuizIndex] = useState(0);
+  const [sdnQuizScore, setSdnQuizScore] = useState(0);
+  const [sdnQuizAnswered, setSdnQuizAnswered] = useState<string[]>([]);
+  const [sdnQuizFeedback, setSdnQuizFeedback] = useState<{ correct: boolean; explanation: string } | null>(null);
+  const [sdnShuffledChoices, setSdnShuffledChoices] = useState<Array<{ text: string; originalIndex: number }>>([]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const saved = localStorage.getItem('sdn_quiz_progress');
+    if (saved) {
+      try {
+        const progress = JSON.parse(saved) as { score?: number; answered?: string[] };
+        setSdnQuizScore(progress.score || 0);
+        setSdnQuizAnswered(progress.answered || []);
+      } catch { /* Ignore invalid previous progress. */ }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sdn_quiz_progress', JSON.stringify({ score: sdnQuizScore, answered: sdnQuizAnswered }));
+    }
+  }, [sdnQuizScore, sdnQuizAnswered]);
 
   // Save hint state to localStorage when it changes
   useEffect(() => {
@@ -457,6 +483,16 @@ export function GuidedModePanel({
 
   const progress = project ? getProgressPercentage(project.steps) : 0;
   const currentStep = project ? project.steps[currentStepIndex] : null;
+  const sdnQuestion = sdnQuizQuestions[sdnQuizIndex];
+
+  useEffect(() => {
+    const choices = sdnQuestion.choices.map((text, originalIndex) => ({ text, originalIndex }));
+    for (let index = choices.length - 1; index > 0; index--) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
+    }
+    setSdnShuffledChoices(choices);
+  }, [sdnQuestion]);
 
   const toggleStepExpand = (stepId: string) => {
     setExpandedSteps(prev =>
@@ -810,6 +846,62 @@ export function GuidedModePanel({
         )}
 
         {/* Steps List */}
+        <div className="px-3 pb-2">
+          <button
+            onClick={() => setShowSdnQuiz(true)}
+            className="w-full rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-3 py-2 text-left text-xs font-bold text-primary-700 dark:text-primary-300"
+          >
+            🎓 {language === 'tr' ? 'Bilgi Quiz’i' : 'Knowledge Quiz'}
+            <span className="float-right">{sdnQuizScore}/{sdnQuizQuestions.length}</span>
+          </button>
+          {showSdnQuiz && sdnQuestion && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="sdn-quiz-title">
+              <div className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-primary-300 bg-white shadow-2xl dark:border-primary-700 dark:bg-secondary-900">
+                <div className="flex items-center justify-between border-b border-secondary-200 p-4 dark:border-secondary-700">
+                  <div>
+                    <h2 id="sdn-quiz-title" className="font-bold text-secondary-900 dark:text-secondary-100">🎓 {language === 'tr' ? 'Bilgi Quiz’i' : 'Knowledge Quiz'}</h2>
+                    <p className="text-xs text-secondary-500">{language === 'tr' ? 'Destek konusu' : 'Support topic'}</p>
+                  </div>
+                  <button onClick={() => setShowSdnQuiz(false)} className="rounded p-1 hover:bg-secondary-100 dark:hover:bg-secondary-800" aria-label={language === 'tr' ? 'Quiz’i kapat' : 'Close quiz'}><X className="h-5 w-5" /></button>
+                </div>
+                <div className="overflow-y-auto overscroll-contain p-5 scrollbar-thin scrollbar-thumb-secondary-400 dark:scrollbar-thumb-secondary-600">
+                  <div className="flex justify-between text-[10px] text-secondary-500">
+                    <span>{sdnQuizIndex + 1}/{sdnQuizQuestions.length}</span>
+                    <span>{language === 'tr' ? 'Skor' : 'Score'}: {sdnQuizScore}/{sdnQuizQuestions.length}</span>
+                  </div>
+                  <p className="mt-3 text-sm font-medium text-secondary-800 dark:text-secondary-200">{sdnQuestion.question}</p>
+              {sdnShuffledChoices.map(({ text: choice, originalIndex }) => (
+                <button
+                  key={choice}
+                  disabled={sdnQuizFeedback !== null}
+                  onClick={() => {
+                    const result = answerSdnQuiz(sdnQuestion.id, originalIndex);
+                        if (!sdnQuizAnswered.includes(sdnQuestion.id)) {
+                          setSdnQuizAnswered(answered => [...answered, sdnQuestion.id]);
+                          if (result.correct) setSdnQuizScore(score => score + 1);
+                        }
+                        setSdnQuizFeedback(result);
+                      }}
+                      className="w-full whitespace-normal break-words rounded border border-secondary-200 dark:border-secondary-700 px-3 py-2 text-left text-sm hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-70"
+                    >{choice}</button>
+                  ))}
+                  {sdnQuizFeedback && (
+                    <div className={cn('rounded p-2 text-[11px]', sdnQuizFeedback.correct ? 'bg-success-50 text-success-700' : 'bg-error-50 text-error-700')}>
+                      <p className="font-bold">{sdnQuizFeedback.correct ? (language === 'tr' ? 'Doğru!' : 'Correct!') : (language === 'tr' ? 'Yanlış' : 'Incorrect')}</p>
+                      <p>{sdnQuizFeedback.explanation}</p>
+                      <button onClick={() => {
+                        setSdnQuizFeedback(null);
+                        setSdnQuizIndex(index => (index + 1) % sdnQuizQuestions.length);
+                      }} className="mt-1 font-bold underline">
+                        {language === 'tr' ? 'Sonraki soru' : 'Next question'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
         <ScrollArea className="flex-1 overflow-y-auto guided-steps-scrollbar">
           <div className="p-2 space-y-1 pr-3">
             {(() => {
