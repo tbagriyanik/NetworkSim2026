@@ -9,7 +9,8 @@ export function usePCPanelState() {
 
   const [fontSize, setFontSize] = useState<number>(() => {
     try {
-      return parseInt(localStorage.getItem('terminal-font-size') || '13', 10);
+      const parsed = parseInt(localStorage.getItem('terminal-font-size') || '13', 10);
+      return Math.max(12, Math.min(20, isNaN(parsed) ? 13 : parsed));
     } catch {
       errorHandler.logError(STORAGE_ERRORS.LOCAL_STORAGE_UNAVAILABLE({ key: 'terminal-font-size', operation: 'read' }));
       return 13;

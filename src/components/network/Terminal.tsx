@@ -1527,7 +1527,7 @@ export function Terminal({
                       {line.type === 'error' && <span className="text-error-500 font-bold italic">{highlightText(line.content)}</span>}
                       {line.type === 'success' && (
                         <span className={cn(
-                          "font-bold text-xs tracking-widest opacity-80",
+                          "font-bold tracking-widest opacity-80",
                           line.realismLevel === 'stub' ? "text-warning-500" :
                             line.realismLevel === 'sim-only' ? "text-primary-500" : "text-accent-500"
                         )}>{highlightText(line.content)}</span>

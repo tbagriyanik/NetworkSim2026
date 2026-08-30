@@ -389,6 +389,36 @@ export const modePatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 1
   },
+  'show ip ospf database': {
+    pattern: /^show\s+ip\s+ospf\s+database(?:\s+(\S+))?$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ip eigrp': {
+    pattern: /^show\s+ip\s+eigrp(?:\s+(\d+))?$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ip eigrp neighbors': {
+    pattern: /^show\s+ip\s+eigrp\s+neighbors(?:\s+(\d+))?$/i,
+    modes: ['user', 'privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'router eigrp': {
+    pattern: /^router\s+eigrp\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no router eigrp': {
+    pattern: /^no\s+router\s+eigrp(?:\s+(\d+))?$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'cdp run': {
     pattern: /^cdp\s+run$/i,
     modes: ['config'],

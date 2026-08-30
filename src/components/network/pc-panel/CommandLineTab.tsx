@@ -139,7 +139,6 @@ export function CommandLineTab({
   const [linuxAutocompleteNavigated, setLinuxAutocompleteNavigated] = useState(false);
   const [isLinuxAutocompleteDismissed, setIsLinuxAutocompleteDismissed] = useState(false);
   const [linuxTabCycleIndex, setLinuxTabCycleIndex] = useState(-1);
-  const [lastLinuxTabInput, setLastLinuxTabInput] = useState('');
 
   // Separate Linux output state & history (persisted per device in localStorage)
   const [linuxOutput, setLinuxOutput] = useState<OutputLine[]>(() => {
@@ -643,7 +642,7 @@ export function CommandLineTab({
                           const completed = completeLinuxSelection(selected);
                           void (async () => {
                             const cmdToRun = completed.trim();
-                            if (!cmdToRun) return;
+                            if (!cmdToRun || isCmdInputDisabled) return;
                             setInput('');
                             setLinuxAutocompleteIndex(-1);
                             setLinuxAutocompleteNavigated(false);
@@ -716,49 +715,17 @@ export function CommandLineTab({
                       })();
                       return;
                     } else if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
-                      // ALWAYS prevent default for Tab in Linux mode so browser focus never jumps to next input element
                       e.preventDefault();
-                      if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
-                        const targetIdx = linuxAutocompleteIndex >= 0 ? linuxAutocompleteIndex : 0;
-                        const selected = linuxFilteredSuggestions[targetIdx];
-                        if (selected) {
-                          completeLinuxSelection(selected);
-                        }
-                        return;
-                      }
-
-                      // Linux tab complete fallback (when autocomplete dropdown is dismissed or cycling)
-                      const suggestions = getLinuxSuggestions(input, currentPath, deviceId);
+                      const currentInput = input;
+                      const suggestions = getLinuxSuggestions(currentInput, currentPath, deviceId);
                       if (suggestions.length > 0) {
-                        if (linuxTabCycleIndex === -1) {
-                          setLastLinuxTabInput(input);
-                          setLinuxTabCycleIndex(0);
-                          completeLinuxSelection(suggestions[0]);
-                        } else {
-                          const nextIndex = (linuxTabCycleIndex + 1) % suggestions.length;
-                          setLinuxTabCycleIndex(nextIndex);
-                          // Recompute suggestions from original base input
-                          const origSuggestions = getLinuxSuggestions(lastLinuxTabInput, currentPath, deviceId);
-                          const chosen = origSuggestions[nextIndex] || suggestions[nextIndex] || suggestions[0];
-                          if (chosen) {
-                            const trimmed = lastLinuxTabInput.trimStart();
-                            const parts = trimmed.split(/\s+/);
-                            const suffix = chosen.endsWith('/') ? '' : ' ';
-                            let completed = '';
-                            if (parts.length <= 1 && !lastLinuxTabInput.endsWith(' ')) {
-                              completed = chosen + suffix;
-                            } else {
-                              const tokens = lastLinuxTabInput.endsWith(' ') ? parts.filter(Boolean) : parts.slice(0, -1).filter(Boolean);
-                              const commandPrefix = tokens.join(' ');
-                              completed = commandPrefix ? `${commandPrefix} ${chosen}${suffix}` : `${parts[0]} ${chosen}${suffix}`;
-                            }
-                            setInput(completed);
-                          }
-                        }
+                        const nextIndex = (linuxTabCycleIndex + 1) % suggestions.length;
+                        setLinuxTabCycleIndex(nextIndex);
+                        const selected = suggestions[nextIndex];
+                        completeLinuxSelection(selected);
                       }
                       return;
                     } else if (e.key === 'Escape') {
-                      // ESC key closes the autocomplete suggestions dropdown first (without closing window)
                       if (isAutocompleteVisible) {
                         e.preventDefault();
                         e.stopPropagation();
@@ -771,8 +738,8 @@ export function CommandLineTab({
                       if (isAutocompleteVisible && linuxFilteredSuggestions.length > 0) {
                         e.preventDefault();
                         setLinuxAutocompleteIndex(prev => {
-                          if (prev === -1) return linuxFilteredSuggestions.length - 1;
-                          return prev <= 0 ? linuxFilteredSuggestions.length - 1 : prev - 1;
+                          if (prev <= 0) return linuxFilteredSuggestions.length - 1;
+                          return prev - 1;
                         });
                         setLinuxAutocompleteNavigated(true);
                         return;

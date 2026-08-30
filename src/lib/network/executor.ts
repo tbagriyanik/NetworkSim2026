@@ -224,7 +224,8 @@ export function executeCommand(
   const requiresRouting = [
     'ip route', 'no ip route', 'router rip', 'router ospf', 'router eigrp',
     'ipv6 route', 'no ipv6 route', 'ipv6 router', 'show ip route', 'show ipv6 route',
-    'show ip protocols', 'show ip ospf', 'show ip ospf neighbor'
+    'show ip protocols', 'show ip ospf', 'show ip ospf neighbor', 'show ip ospf database', 'show ip ospf interface',
+    'show ip eigrp', 'show ip eigrp neighbors'
   ];
   const requiresFirewall = [
     'access-group', 'object network', 'object-group', 'nat', 'same-security-traffic'
@@ -251,7 +252,8 @@ export function executeCommand(
   const isWLC = state.deviceType === 'wlc' || state.switchModel === 'AIR-CT2504-K9';
 
   const l3OnlyCommands = [
-    'show ip route', 'show ipv6 route', 'show ip protocols', 'show ip ospf', 'show ip ospf neighbor',
+    'show ip route', 'show ipv6 route', 'show ip protocols', 'show ip ospf', 'show ip ospf neighbor', 'show ip ospf database', 'show ip ospf interface',
+    'show ip eigrp', 'show ip eigrp neighbors',
     'show mls qos', 'show sdm prefer'
   ];
   const switchOnlyCommands = [
@@ -287,10 +289,10 @@ export function executeCommand(
     (isSwitchOnlyCmd && !(isL2Switch || isL3Switch)) ||
     (isFirewallOnlyCmd && !isFirewall) ||
     (isWlcOnlyCmd && !isWLC)) {
-     return processCommandResultExternal({
+    return processCommandResultExternal({
       success: false,
       error: `% Invalid input detected at '^' marker.\n${commandName} is not supported on this ${deviceLabel}.`
-     }, cmdToProcess, state.currentMode, state, language, getEstimatedSuggestions);
+    }, cmdToProcess, state.currentMode, state, language, getEstimatedSuggestions);
   }
 
   const commandInput = parsed.resolvedInput || parsed.rawInput;
