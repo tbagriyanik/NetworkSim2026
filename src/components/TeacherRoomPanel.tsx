@@ -209,14 +209,16 @@ function RoomMonitor({ roomCode, onClose }: { roomCode: string; onClose: () => v
 export function TeacherRoomPanel() {
   const { showTeacherPanel, setShowTeacherPanel, studentRoomCode } = useRoom();
   const { t } = useLanguage();
-  const [roomCodeInput, setRoomCodeInput] = useState(() => localStorage.getItem('teacher-room-code') || '');
+  const [roomCodeInput, setRoomCodeInput] = useState(() => typeof sessionStorage !== 'undefined' ? (sessionStorage.getItem('teacher-room-code') || '') : '');
   const [activeCode, setActiveCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeRoomCount, setActiveRoomCount] = useState<number | null>(null);
 
+  // Room code is stored in sessionStorage (not localStorage) so it does not persist on disk across
+  // browser sessions, reducing exposure of the classroom join code. (CodeQL: js/clear-text-storage-of-sensitive-information)
   useEffect(() => {
-    if (activeCode) localStorage.setItem('teacher-room-code', activeCode);
+    if (activeCode && typeof sessionStorage !== 'undefined') sessionStorage.setItem('teacher-room-code', activeCode);
   }, [activeCode]);
 
   useEffect(() => {

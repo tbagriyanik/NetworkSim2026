@@ -200,6 +200,7 @@ export function CommandLineTab({
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
       try {
+        // Simulated terminal output (no real data).
         localStorage.setItem(`pc_linux_output_${deviceId}`, JSON.stringify(linuxOutput.slice(-200)));
       } catch { }
     }
@@ -209,6 +210,7 @@ export function CommandLineTab({
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
       try {
+        // Simulated terminal command history (no real data).
         localStorage.setItem(`pc_linux_history_${deviceId}`, JSON.stringify(linuxHistory.slice(0, 50)));
       } catch { }
     }

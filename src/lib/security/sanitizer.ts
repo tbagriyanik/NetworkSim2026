@@ -43,16 +43,27 @@ export function sanitizeHTTPContent(input: string): string {
 
 export function sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
-    // Strip HTML tags, keeping their inner text
-    let sanitized = input.replace(/<[^>]*>/g, '');
-    // Remove dangerous URI schemes recursively to prevent bypasses like "javas<javascript:>cript:"
+    let sanitized = input.trim();
+
+    // Iterate tag stripping and scheme removal to a fixpoint. Repeating until no further changes
+    // (rather than a single greedy pass) prevents bypasses where overlapping, nested, or malformed
+    // tags (e.g. "<<script>script>", "java<javascript:>script:") leave dangerous syntax behind.
     let prev: string;
     do {
         prev = sanitized;
-        sanitized = sanitized.replace(/(javascript|data|vbscript|file):/gi, '');
+        sanitized = sanitized
+            .replace(/<[^<>]*>/g, '')
+            .replace(/\s*j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
+            .replace(/\s*v\s*b\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
+            .replace(/\s*d\s*a\s*t\s*a\s*:/gi, '')
+            .replace(/\s*f\s*i\s*l\s*e\s*:/gi, '');
     } while (sanitized !== prev);
 
-    return sanitized.trim();
+    // Remove any residual unbalanced angle brackets that are not part of a complete tag, preventing
+    // them from being reassembled into script/img/onerror markup later.
+    sanitized = sanitized.replace(/[<>]/g, '').trim();
+
+    return sanitized;
 }
 
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);

@@ -1,7 +1,44 @@
 import { describe, it, expect } from 'vitest';
-import { encryptMd5Password, encryptType7Password, decryptType7Password, verifyType7Password, verifyMd5Password } from '@/lib/network/crypto';
+import { encryptMd5Password, encryptType7Password, decryptType7Password, verifyType7Password, verifyMd5Password, hashPassword, verifyPassword } from '@/lib/network/crypto';
 
 describe('Crypto Module', () => {
+  describe('hashPassword / verifyPassword (PBKDF2-SHA256)', () => {
+    it('should produce a strong hash with the expected format', () => {
+      const result = hashPassword('secret123');
+      expect(result.startsWith('pbkdf2$')).toBe(true);
+      const parts = result.split('$');
+      expect(parts.length).toBe(4);
+      expect(parseInt(parts[1], 10)).toBeGreaterThanOrEqual(100000);
+      expect(parts[2].length).toBeGreaterThan(0);
+      expect(parts[3].length).toBeGreaterThan(0);
+    });
+
+    it('should be salted (different hash each time)', () => {
+      const h1 = hashPassword('samepassword');
+      const h2 = hashPassword('samepassword');
+      expect(h1).not.toBe(h2);
+    });
+
+    it('should verify a valid password', () => {
+      const hash = hashPassword('S3cret!pass');
+      expect(verifyPassword('S3cret!pass', hash)).toBe(true);
+      expect(verifyPassword('wrong', hash)).toBe(false);
+    });
+
+    it('should verify a legacy MD5 Type 5 hash for compatibility', () => {
+      const legacy = encryptMd5Password('legacypass', 'saltsalt');
+      expect(verifyPassword('legacypass', legacy)).toBe(true);
+      expect(verifyPassword('nope', legacy)).toBe(false);
+    });
+
+    it('should return false for malformed/empty stored hashes', () => {
+      expect(verifyPassword('x', '')).toBe(false);
+      expect(verifyPassword('x', 'pbkdf2$abc')).toBe(false);
+      expect(verifyPassword('x', 'pbkdf2$100000$!!$!!')).toBe(false);
+    });
+  });
+
+
   describe('encryptMd5Password', () => {
     it('should produce consistent hash with given salt', () => {
       const result = encryptMd5Password('password', 'abcdefgh');

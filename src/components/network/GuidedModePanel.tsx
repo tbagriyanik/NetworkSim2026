@@ -147,6 +147,7 @@ export function GuidedModePanel({
 
   useEffect(() => {
     if (typeof window !== 'undefined' && project) {
+      // Simulated quiz progress (local lesson state).
       localStorage.setItem(`sdn_quiz_progress_${project.id}`, JSON.stringify({ score: sdnQuizScore, answered: sdnQuizAnswered }));
       localStorage.setItem(`quiz_earned_points_${project.id}`, String(quizEarnedPoints));
     }
@@ -162,6 +163,7 @@ export function GuidedModePanel({
   // Save expanded steps to localStorage when they change
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // UI preference (expanded step IDs); no sensitive data.
       localStorage.setItem('guided_expanded_steps', JSON.stringify(expandedSteps));
     }
   }, [expandedSteps]);

@@ -404,6 +404,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
           } else {
             next = [...list, { ip, mac, type: isIot ? 'dynamic (IoT)' : 'dynamic' }];
           }
+          // Simulated network ARP table state (no real data).
           localStorage.setItem(`pc_arp_${devId}`, JSON.stringify(next));
         } catch { /* ignore */ }
       };

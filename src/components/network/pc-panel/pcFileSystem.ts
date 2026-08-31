@@ -321,6 +321,7 @@ export function saveFs(deviceId: string, fs: FSNode): void {
   fsStore[deviceId] = fs;
   if (typeof localStorage !== 'undefined') {
     try {
+      // Simulated virtual filesystem state (no real credentials/PII).
       localStorage.setItem(`pc_fs_${deviceId}`, JSON.stringify(fs));
     } catch {
       // ignore storage errors

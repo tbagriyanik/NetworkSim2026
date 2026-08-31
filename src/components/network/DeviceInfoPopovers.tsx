@@ -65,6 +65,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // UI preference (collapsed sections); no sensitive data.
       localStorage.setItem(`pc-info-collapsed-${pc.id}`, JSON.stringify(collapsedSections));
     }
   }, [collapsedSections, pc.id]);
@@ -124,115 +125,115 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
           </div>
         </div>
         {!windowCollapsed && (
-        <div className="overflow-hidden cursor-default">
-          <div className="p-2 space-y-1 text-xs">
-            <TooltipWrapper title={t.copy}>
-              <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ip || '0.0.0.0')}>
-                <span className="opacity-50">{language === 'tr' ? 'IP Adresi' : 'IP'}</span>
-                <span className="font-mono text-primary-500">{pc?.ip || '0.0.0.0'}</span>
-              </div>
-            </TooltipWrapper>
-            <TooltipWrapper title={t.copy}>
-              <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.subnet || '255.255.255.0')}>
-                <span className="opacity-50">{language === 'tr' ? 'Alt Ağ' : 'Subnet'}</span>
-                <span className="font-mono opacity-80">{pc?.subnet || '255.255.255.0'}</span>
-              </div>
-            </TooltipWrapper>
-            <TooltipWrapper title={t.copy}>
-              <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.gateway || '0.0.0.0')}>
-                <span className="opacity-50">{language === 'tr' ? 'Ağ Geçidi' : 'GW'}</span>
-                <span className="font-mono opacity-80">{pc?.gateway || '0.0.0.0'}</span>
-              </div>
-            </TooltipWrapper>
-            <TooltipWrapper title={t.copy}>
-              <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(`${pc?.ipv6 || '2001:db8:acad:1::10'}/${pc?.ipv6Prefix || '64'}`)}>
-                <span className="opacity-50">{language === 'tr' ? 'IPv6 Adresi' : 'IPv6'}</span>
-                <span className="font-mono opacity-80">{pc?.ipv6 || '2001:db8:acad:1::10'}<span className="opacity-50">/{pc?.ipv6Prefix || '64'}</span></span>
-              </div>
-            </TooltipWrapper>
-            <TooltipWrapper title={t.copy}>
-              <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')}>
-                <span className="opacity-50">{language === 'tr' ? 'MAC Adresi' : 'MAC'}</span>
-                <span className="font-mono opacity-30 text-xs">{pc?.macAddress ? normalizeMAC(pc.macAddress) : (language === 'tr' ? 'Yok' : 'N/A')}</span>
-              </div>
-            </TooltipWrapper>
-            {pc?.wifi && pc.wifi.enabled && (
-              <Collapsible open={!collapsedSections.wifi} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, wifi: !open }))}>
-                <CollapsibleTrigger asChild>
-                  <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
-                    <div className="flex justify-between items-center w-full">
-                      <span className="opacity-50">{language === 'tr' ? 'Kablosuz' : 'WiFi'}</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-bold text-purple-500">{t.active}</span>
-                        {collapsedSections.wifi ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
+          <div className="overflow-hidden cursor-default">
+            <div className="p-2 space-y-1 text-xs">
+              <TooltipWrapper title={t.copy}>
+                <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.ip || '0.0.0.0')}>
+                  <span className="opacity-50">{language === 'tr' ? 'IP Adresi' : 'IP'}</span>
+                  <span className="font-mono text-primary-500">{pc?.ip || '0.0.0.0'}</span>
+                </div>
+              </TooltipWrapper>
+              <TooltipWrapper title={t.copy}>
+                <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.subnet || '255.255.255.0')}>
+                  <span className="opacity-50">{language === 'tr' ? 'Alt Ağ' : 'Subnet'}</span>
+                  <span className="font-mono opacity-80">{pc?.subnet || '255.255.255.0'}</span>
+                </div>
+              </TooltipWrapper>
+              <TooltipWrapper title={t.copy}>
+                <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.gateway || '0.0.0.0')}>
+                  <span className="opacity-50">{language === 'tr' ? 'Ağ Geçidi' : 'GW'}</span>
+                  <span className="font-mono opacity-80">{pc?.gateway || '0.0.0.0'}</span>
+                </div>
+              </TooltipWrapper>
+              <TooltipWrapper title={t.copy}>
+                <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(`${pc?.ipv6 || '2001:db8:acad:1::10'}/${pc?.ipv6Prefix || '64'}`)}>
+                  <span className="opacity-50">{language === 'tr' ? 'IPv6 Adresi' : 'IPv6'}</span>
+                  <span className="font-mono opacity-80">{pc?.ipv6 || '2001:db8:acad:1::10'}<span className="opacity-50">/{pc?.ipv6Prefix || '64'}</span></span>
+                </div>
+              </TooltipWrapper>
+              <TooltipWrapper title={t.copy}>
+                <div className="flex justify-between items-center cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors" onClick={() => navigator.clipboard.writeText(pc?.macAddress ? normalizeMAC(pc.macAddress) : 'N/A')}>
+                  <span className="opacity-50">{language === 'tr' ? 'MAC Adresi' : 'MAC'}</span>
+                  <span className="font-mono opacity-30 text-xs">{pc?.macAddress ? normalizeMAC(pc.macAddress) : (language === 'tr' ? 'Yok' : 'N/A')}</span>
+                </div>
+              </TooltipWrapper>
+              {pc?.wifi && pc.wifi.enabled && (
+                <Collapsible open={!collapsedSections.wifi} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, wifi: !open }))}>
+                  <CollapsibleTrigger asChild>
+                    <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
+                      <div className="flex justify-between items-center w-full">
+                        <span className="opacity-50">{language === 'tr' ? 'Kablosuz' : 'WiFi'}</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-xs font-bold text-purple-500">{t.active}</span>
+                          {collapsedSections.wifi ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="space-y-1">
-                    <div className="flex gap-2 text-xs">
-                      <span className="opacity-50">SSID:</span>
-                      <span className="font-mono">{pc?.wifi?.ssid || '-'}</span>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="space-y-1">
+                      <div className="flex gap-2 text-xs">
+                        <span className="opacity-50">SSID:</span>
+                        <span className="font-mono">{pc?.wifi?.ssid || '-'}</span>
+                      </div>
+                      <div className="flex gap-2 text-xs">
+                        <span className="opacity-50">{t.channelShort}</span>
+                        <span className="font-mono">{pc?.wifi?.channel || '-'}</span>
+                        <span className="opacity-50">|</span>
+                        <span className="font-mono uppercase">{pc?.wifi?.security || '-'}</span>
+                      </div>
+                      {(() => {
+                        const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
+                        const pctMap: Record<number, string> = { 0: '0%', 1: '1%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
+                        const colorMap: Record<number, string> = { 0: 'text-secondary-400', 1: 'text-error-500', 2: 'text-warning-500', 3: 'text-yellow-500', 4: 'text-success-500', 5: 'text-success-500' };
+                        if (strength === 0) return null;
+                        return (
+                          <div className="flex justify-between items-center text-xs mt-0.5">
+                            <span className="opacity-50">{t.signal}</span>
+                            <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
+                          </div>
+                        );
+                      })()}
                     </div>
-                    <div className="flex gap-2 text-xs">
-                      <span className="opacity-50">{t.channelShort}</span>
-                      <span className="font-mono">{pc?.wifi?.channel || '-'}</span>
-                      <span className="opacity-50">|</span>
-                      <span className="font-mono uppercase">{pc?.wifi?.security || '-'}</span>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+              {pc?.services && (
+                <Collapsible open={!collapsedSections.services} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, services: !open }))}>
+                  <CollapsibleTrigger asChild>
+                    <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
+                      <span className="opacity-50">{t.services}</span>
+                      {collapsedSections.services ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
                     </div>
-                    {(() => {
-                      const strength = getWirelessSignalStrength(pc, topologyDevices, deviceStates);
-                      const pctMap: Record<number, string> = { 0: '0%', 1: '1%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
-                      const colorMap: Record<number, string> = { 0: 'text-secondary-400', 1: 'text-error-500', 2: 'text-warning-500', 3: 'text-yellow-500', 4: 'text-success-500', 5: 'text-success-500' };
-                      if (strength === 0) return null;
-                      return (
-                        <div className="flex justify-between items-center text-xs mt-0.5">
-                          <span className="opacity-50">{t.signal}</span>
-                          <span className={`font-bold ${colorMap[strength]}`}>{pctMap[strength]}</span>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-            {pc?.services && (
-              <Collapsible open={!collapsedSections.services} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, services: !open }))}>
-                <CollapsibleTrigger asChild>
-                  <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
-                    <span className="opacity-50">{t.services}</span>
-                    {collapsedSections.services ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="flex flex-wrap gap-0.5">
-                    {pc?.services?.http?.enabled && (
-                      <span className="px-1 py-0.5 rounded bg-warning-500/20 text-warning-500 text-xs font-bold border border-warning-500/20">HTTP</span>
-                    )}
-                    {pc?.services?.dns?.enabled && (
-                      <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">DNS</span>
-                    )}
-                    {pc?.services?.dhcp?.enabled && (
-                      <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-xs font-bold border border-purple-500/20">DHCP</span>
-                    )}
-                    {pc?.services?.ftp?.enabled && (
-                      <span className="px-1 py-0.5 rounded bg-accent-500/20 text-accent-500 text-xs font-bold border border-accent-500/20">FTP</span>
-                    )}
-                    {pc?.services?.mail?.enabled && (
-                      <span className="px-1 py-0.5 rounded bg-error-500/20 text-error-500 text-xs font-bold border border-error-500/20">MAIL</span>
-                    )}
-                    {pc?.services?.ntp?.enabled && (
-                      <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">NTP</span>
-                    )}
-                    {!pc?.services?.http?.enabled && !pc?.services?.dns?.enabled && !pc?.services?.dhcp?.enabled && !pc?.services?.ftp?.enabled && !pc?.services?.mail?.enabled && !pc?.services?.ntp?.enabled && (
-                      <span className="text-xs opacity-40 italic">{t.none}</span>
-                    )}
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-<Collapsible open={!collapsedSections.ipMode} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, ipMode: !open }))}>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="flex flex-wrap gap-0.5">
+                      {pc?.services?.http?.enabled && (
+                        <span className="px-1 py-0.5 rounded bg-warning-500/20 text-warning-500 text-xs font-bold border border-warning-500/20">HTTP</span>
+                      )}
+                      {pc?.services?.dns?.enabled && (
+                        <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">DNS</span>
+                      )}
+                      {pc?.services?.dhcp?.enabled && (
+                        <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-xs font-bold border border-purple-500/20">DHCP</span>
+                      )}
+                      {pc?.services?.ftp?.enabled && (
+                        <span className="px-1 py-0.5 rounded bg-accent-500/20 text-accent-500 text-xs font-bold border border-accent-500/20">FTP</span>
+                      )}
+                      {pc?.services?.mail?.enabled && (
+                        <span className="px-1 py-0.5 rounded bg-error-500/20 text-error-500 text-xs font-bold border border-error-500/20">MAIL</span>
+                      )}
+                      {pc?.services?.ntp?.enabled && (
+                        <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">NTP</span>
+                      )}
+                      {!pc?.services?.http?.enabled && !pc?.services?.dns?.enabled && !pc?.services?.dhcp?.enabled && !pc?.services?.ftp?.enabled && !pc?.services?.mail?.enabled && !pc?.services?.ntp?.enabled && (
+                        <span className="text-xs opacity-40 italic">{t.none}</span>
+                      )}
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+              <Collapsible open={!collapsedSections.ipMode} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, ipMode: !open }))}>
                 <CollapsibleTrigger asChild>
                   <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
                     <span className="opacity-50">{t.ipMode}</span>
@@ -248,38 +249,38 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
                   </div>
                 </CollapsibleContent>
               </Collapsible>
-          </div>
-          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-secondary-700/50' : 'border-secondary-200/50'} flex gap-1.5`}>
-            <button
-              onClick={() => {
-                if (pc?.type && pc?.id) {
-                  handleDeviceDoubleClick(pc.type, pc.id);
-                }
-              }}
-              disabled={!pc?.type || !pc?.id}
-              className={`flex-1 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-accent-700 hover:bg-accent-600 text-white disabled:bg-secondary-700 disabled:text-secondary-500' : 'bg-primary-600 hover:bg-primary-700 text-white disabled:bg-secondary-300 disabled:text-secondary-500'}`}
-            >
-              {t.open}
-            </button>
-            <button
-              onClick={() => {
-                if (pc?.id) {
-                  if (onOpenSettings) {
-                    onOpenSettings(pc.id);
-                  } else {
-                    onOpenPanel(pc.id);
+            </div>
+            <div className={`px-2 py-1.5 border-t ${isDark ? 'border-secondary-700/50' : 'border-secondary-200/50'} flex gap-1.5`}>
+              <button
+                onClick={() => {
+                  if (pc?.type && pc?.id) {
+                    handleDeviceDoubleClick(pc.type, pc.id);
                   }
-                }
-              }}
-              disabled={!pc?.id}
-              className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-secondary-700 hover:bg-secondary-600 text-secondary-200 disabled:bg-secondary-800 disabled:text-secondary-500' : 'bg-secondary-100 hover:bg-secondary-200 text-secondary-700 disabled:bg-secondary-200 disabled:text-secondary-400'}`}
-            >
-              <TooltipWrapper title={t.details}>
-                <SettingsIcon className="w-3 h-3" />
-              </TooltipWrapper>
-            </button>
+                }}
+                disabled={!pc?.type || !pc?.id}
+                className={`flex-1 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-accent-700 hover:bg-accent-600 text-white disabled:bg-secondary-700 disabled:text-secondary-500' : 'bg-primary-600 hover:bg-primary-700 text-white disabled:bg-secondary-300 disabled:text-secondary-500'}`}
+              >
+                {t.open}
+              </button>
+              <button
+                onClick={() => {
+                  if (pc?.id) {
+                    if (onOpenSettings) {
+                      onOpenSettings(pc.id);
+                    } else {
+                      onOpenPanel(pc.id);
+                    }
+                  }
+                }}
+                disabled={!pc?.id}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-secondary-700 hover:bg-secondary-600 text-secondary-200 disabled:bg-secondary-800 disabled:text-secondary-500' : 'bg-secondary-100 hover:bg-secondary-200 text-secondary-700 disabled:bg-secondary-200 disabled:text-secondary-400'}`}
+              >
+                <TooltipWrapper title={t.details}>
+                  <SettingsIcon className="w-3 h-3" />
+                </TooltipWrapper>
+              </button>
+            </div>
           </div>
-        </div>
         )}
       </div>
     </div>
@@ -306,6 +307,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // UI preference (collapsed sections); no sensitive data.
       localStorage.setItem(`router-info-collapsed-${router.id}`, JSON.stringify(collapsedSections));
     }
   }, [collapsedSections, router.id]);
@@ -381,113 +383,113 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
           </div>
         </div>
         {!windowCollapsed && (
-        <div className="overflow-hidden cursor-default">
-          <div className="p-2 space-y-1 text-xs">
-            <div className="flex justify-between items-center">
-              <span className="opacity-50">{t.portsShort}</span>
-              <span className="font-mono">
-                <span className="text-success-500">{connectedPorts}</span>
-                <span className="opacity-50">/{totalPorts}</span>
-                <span className="ml-1 opacity-50">{t.connectedShort}</span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="opacity-50">{t.routing}</span>
-              <span className={`text-xs font-bold tracking-wider ${routerState?.ipRouting ? 'text-success-500' : 'text-secondary-500'}`}>
-                {routerState?.ipRouting ? t.enabled : t.disabled}
-              </span>
-            </div>
-{wifiEnabled && (
-              <Collapsible open={!collapsedSections.wifi} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, wifi: !open }))}>
-                <CollapsibleTrigger asChild>
-                  <div className="flex justify-between items-center cursor-pointer select-none">
-                    <span className="opacity-50 flex items-center gap-1">
-                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                        <path d="M5 12.55a11 11 0 0 1 14.08 0" />
-                        <path d="M1.42 9a16 16 0 0 1 21.16 0" />
-                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
-                        <line x1="12" y1="20" x2="12.01" y2="20" />
-                      </svg>
-                      {language === 'tr' ? 'Kablosuz' : 'WiFi'}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <span className="text-accent-500">{t.active}</span>
-                      {collapsedSections.wifi ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
-                    </div>
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {wifiConfig?.ssid && (
-                    <div className="pt-1 border-t border-secondary-500/20 space-y-1">
-                      <div className="flex gap-2 text-xs">
-                        <span className="opacity-50">SSID:</span>
-                        <span className="font-mono font-bold text-accent-500">{wifiConfig.ssid}</span>
-                      </div>
-                      <div className="flex gap-2 text-xs">
-                        <span className="opacity-50">{t.channelShort}:</span>
-                        <span className="font-mono">{wifiConfig.channel || '2.4GHz'}</span>
-                        <span className="opacity-50">|</span>
-                        <span className="font-mono uppercase">{wifiConfig.security || 'open'}</span>
-                      </div>
-                    </div>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-            {dhcpPools > 0 && (
+          <div className="overflow-hidden cursor-default">
+            <div className="p-2 space-y-1 text-xs">
               <div className="flex justify-between items-center">
-                <span className="opacity-50">DHCP</span>
-                <span className="font-bold text-purple-500">{dhcpPools} {t.pools}</span>
+                <span className="opacity-50">{t.portsShort}</span>
+                <span className="font-mono">
+                  <span className="text-success-500">{connectedPorts}</span>
+                  <span className="opacity-50">/{totalPorts}</span>
+                  <span className="ml-1 opacity-50">{t.connectedShort}</span>
+                </span>
               </div>
-            )}
-            {ipAddresses.length > 0 && (
-              <Collapsible open={!collapsedSections.ipAddresses} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, ipAddresses: !open }))}>
-                <CollapsibleTrigger asChild>
-                  <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
-                    <span className="opacity-30 text-xs mb-0.5 uppercase font-bold tracking-tighter">{language === 'tr' ? 'IP Adresleri' : 'IP Addresses'}</span>
-                    {collapsedSections.ipAddresses ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {ipAddresses.map((addr: string, i: number) => (
-                    <TooltipWrapper key={i} title={t.copy}>
-                      <div
-                        className="font-mono text-xs opacity-70 truncate cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors"
-                        onClick={() => navigator.clipboard.writeText(addr)}
-                      >
-                        {addr}
+              <div className="flex justify-between items-center">
+                <span className="opacity-50">{t.routing}</span>
+                <span className={`text-xs font-bold tracking-wider ${routerState?.ipRouting ? 'text-success-500' : 'text-secondary-500'}`}>
+                  {routerState?.ipRouting ? t.enabled : t.disabled}
+                </span>
+              </div>
+              {wifiEnabled && (
+                <Collapsible open={!collapsedSections.wifi} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, wifi: !open }))}>
+                  <CollapsibleTrigger asChild>
+                    <div className="flex justify-between items-center cursor-pointer select-none">
+                      <span className="opacity-50 flex items-center gap-1">
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+                          <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+                          <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+                          <line x1="12" y1="20" x2="12.01" y2="20" />
+                        </svg>
+                        {language === 'tr' ? 'Kablosuz' : 'WiFi'}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-accent-500">{t.active}</span>
+                        {collapsedSections.wifi ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
                       </div>
-                    </TooltipWrapper>
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
-            )}
-          </div>
-          <div className={`px-2 py-1.5 border-t ${isDark ? 'border-secondary-700/50' : 'border-secondary-200/50'} flex gap-1.5`}>
-            <button
-              onClick={() => {
-                handleDeviceDoubleClick(router.type, router.id);
-              }}
-              className={`flex-1 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-success-600 hover:bg-success-700 text-white' : 'bg-success-600 hover:bg-success-700 text-white'}`}
-            >
-              {t.openCLI}
-            </button>
-            <TooltipWrapper title={t.details}>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {wifiConfig?.ssid && (
+                      <div className="pt-1 border-t border-secondary-500/20 space-y-1">
+                        <div className="flex gap-2 text-xs">
+                          <span className="opacity-50">SSID:</span>
+                          <span className="font-mono font-bold text-accent-500">{wifiConfig.ssid}</span>
+                        </div>
+                        <div className="flex gap-2 text-xs">
+                          <span className="opacity-50">{t.channelShort}:</span>
+                          <span className="font-mono">{wifiConfig.channel || '2.4GHz'}</span>
+                          <span className="opacity-50">|</span>
+                          <span className="font-mono uppercase">{wifiConfig.security || 'open'}</span>
+                        </div>
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+              {dhcpPools > 0 && (
+                <div className="flex justify-between items-center">
+                  <span className="opacity-50">DHCP</span>
+                  <span className="font-bold text-purple-500">{dhcpPools} {t.pools}</span>
+                </div>
+              )}
+              {ipAddresses.length > 0 && (
+                <Collapsible open={!collapsedSections.ipAddresses} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, ipAddresses: !open }))}>
+                  <CollapsibleTrigger asChild>
+                    <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
+                      <span className="opacity-30 text-xs mb-0.5 uppercase font-bold tracking-tighter">{language === 'tr' ? 'IP Adresleri' : 'IP Addresses'}</span>
+                      {collapsedSections.ipAddresses ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {ipAddresses.map((addr: string, i: number) => (
+                      <TooltipWrapper key={i} title={t.copy}>
+                        <div
+                          className="font-mono text-xs opacity-70 truncate cursor-pointer hover:bg-secondary-500/10 rounded px-1 transition-colors"
+                          onClick={() => navigator.clipboard.writeText(addr)}
+                        >
+                          {addr}
+                        </div>
+                      </TooltipWrapper>
+                    ))}
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
+            </div>
+            <div className={`px-2 py-1.5 border-t ${isDark ? 'border-secondary-700/50' : 'border-secondary-200/50'} flex gap-1.5`}>
               <button
                 onClick={() => {
-                  if (onOpenSettings) {
-                    onOpenSettings(router.id);
-                  } else {
-                    onOpenPanel(router.id);
-                  }
+                  handleDeviceDoubleClick(router.type, router.id);
                 }}
-                className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-secondary-700 hover:bg-secondary-600 text-secondary-200' : 'bg-secondary-100 hover:bg-secondary-200 text-secondary-700'}`}
+                className={`flex-1 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-success-600 hover:bg-success-700 text-white' : 'bg-success-600 hover:bg-success-700 text-white'}`}
               >
-                <SettingsIcon className="w-3 h-3" />
+                {t.openCLI}
               </button>
-            </TooltipWrapper>
+              <TooltipWrapper title={t.details}>
+                <button
+                  onClick={() => {
+                    if (onOpenSettings) {
+                      onOpenSettings(router.id);
+                    } else {
+                      onOpenPanel(router.id);
+                    }
+                  }}
+                  className={`px-2 py-1 rounded-lg text-xs font-bold transition-colors ${isDark ? 'bg-secondary-700 hover:bg-secondary-600 text-secondary-200' : 'bg-secondary-100 hover:bg-secondary-200 text-secondary-700'}`}
+                >
+                  <SettingsIcon className="w-3 h-3" />
+                </button>
+              </TooltipWrapper>
+            </div>
           </div>
-        </div>
         )}
       </div>
     </div>

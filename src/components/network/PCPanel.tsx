@@ -297,6 +297,7 @@ export function PCPanel({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // Simulated mail client inbox/sent (fake data, no real credentials).
       localStorage.setItem(`mail_inbox_${deviceId}`, JSON.stringify(serviceMailInbox));
       localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
     }
