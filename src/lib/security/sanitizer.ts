@@ -45,14 +45,13 @@ export function sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
     let sanitized = input.trim();
 
-    // Iterate tag stripping and scheme removal to a fixpoint. Repeating until no further changes
-    // (rather than a single greedy pass) prevents bypasses where overlapping, nested, or malformed
-    // tags (e.g. "<<script>script>", "java<javascript:>script:") leave dangerous syntax behind.
+    // Iterate scheme removal to a fixpoint. Repeating until no further changes
+    // (rather than a single pass) prevents bypasses where obfuscated tokens can
+    // collapse into dangerous schemes after intermediate replacements.
     let prev: string;
     do {
         prev = sanitized;
         sanitized = sanitized
-            .replace(/<[^<>]*>/g, '')
             .replace(/\s*j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
             .replace(/\s*v\s*b\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
             .replace(/\s*d\s*a\s*t\s*a\s*:/gi, '')
