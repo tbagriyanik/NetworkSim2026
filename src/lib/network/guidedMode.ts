@@ -356,7 +356,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'router-1', type: 'router', name: 'Router-1', x: 400, y: 100, ip: '', status: 'online', wifi: { enabled: true, mode: 'ap', ssid: 'Office-Wifi', security: 'open' }, ports: generateRouterPorts() },
+            { id: 'router-1', type: 'router', name: 'Router-1', x: 400, y: 100, ip: '', status: 'online', wifi: { enabled: true, mode: 'ap', ssid: 'Office-Wifi', security: 'open', channel: '6' }, ports: generateRouterPorts() },
             { id: 'switch-1', type: 'switchL2', name: 'Switch-1', x: 400, y: 250, ip: '', status: 'online', ports: generateSwitchPorts() },
             { id: 'pc-1', type: 'pc', name: 'Ofis-PC', x: 200, y: 350, ip: '192.168.1.10', subnet: '255.255.255.0', gateway: '192.168.1.1', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] },
             { id: 'pc-2', type: 'pc', name: 'Laptop', x: 600, y: 350, ip: '', ipConfigMode: 'dhcp', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const }] }
