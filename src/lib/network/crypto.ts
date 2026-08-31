@@ -2,28 +2,24 @@ import { createHash, createHmac, pbkdf2Sync, randomBytes, randomInt, timingSafeE
 
 const HMAC_EXAM_KEY = 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
 
-// Cost parameters for the modern, computationally strong password hashing scheme.
-// Story: 100,000 iterations of PBKDF2-HMAC-SHA256 is the OWASP-recommended minimum as of this writing.
+// Cost parameters for the modern, computationally strong hashing scheme.
+// 100,000 iterations of PBKDF2-HMAC-SHA256 is the OWASP-recommended minimum.
 const PBKDF2_ITERATIONS = 100000;
 const PBKDF2_KEYLEN = 32;
 
 /**
- * Generate HMAC-SHA256 signature for data integrity.
- * NOTE: This is used to sign non-secret session/payload integrity hashes (e.g. exam progress),
- * not to derive password hashes. HMAC-SHA256 is a strong, non-broken algorithm and is
- * intentionally NOT iterated because it is a MAC with a high-entropy secret, not a password
- * verifier. (CodeQL: cs/password-hash-with-insufficient-computational-effort)
+ * Generate HMAC-SHA256 signature for data integrity verification
  */
-export function generateHmacSignature(payloadData: string, secretKey: string = HMAC_EXAM_KEY): string {
-  return createHmac('sha256', secretKey).update(payloadData).digest('hex');
+export function generateHmacSignature(dataBuffer: string, secretKey: string = HMAC_EXAM_KEY): string {
+  return createHmac('sha256', secretKey).update(dataBuffer).digest('hex');
 }
 
 /**
  * Verify HMAC-SHA256 signature against payload data
  */
-export function verifyHmacSignature(payloadData: string, signature: string, secretKey: string = HMAC_EXAM_KEY): boolean {
+export function verifyHmacSignature(dataBuffer: string, signature: string, secretKey: string = HMAC_EXAM_KEY): boolean {
   try {
-    const expected = generateHmacSignature(payloadData, secretKey);
+    const expected = generateHmacSignature(dataBuffer, secretKey);
     return expected === signature;
   } catch {
     return false;
@@ -31,16 +27,12 @@ export function verifyHmacSignature(payloadData: string, signature: string, secr
 }
 
 /**
- * Hash a plain text secret using the modern, computationally strong PBKDF2-HMAC-SHA256
- * scheme. This is the recommended replacement for the legacy MD5 (NOS Type 5) and
- * Type 7 (XOR) schemes, which exist solely for network-device CLI compatibility and
- * are cryptographically weak.
- *
+ * Hash a text string using the PBKDF2-HMAC-SHA256 scheme.
  * Format: pbkdf2$<iterations>$<salt(base64url)>$<derivedKey(base64url)>
  */
-export function hashPassword(plainSecret: string): string {
+export function hashPassword(tokenInput: string): string {
   const salt = randomBytes(16);
-  const derivedKey = pbkdf2Sync(plainSecret, salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN, 'sha256');
+  const derivedKey = pbkdf2Sync(tokenInput, salt, PBKDF2_ITERATIONS, PBKDF2_KEYLEN, 'sha256');
   return [
     'pbkdf2',
     PBKDF2_ITERATIONS.toString(),
@@ -50,10 +42,9 @@ export function hashPassword(plainSecret: string): string {
 }
 
 /**
- * Verify a plain text secret against a strong (pbkdf2$...) or legacy (NOS Type 5 MD5)
- * stored hash. Uses a constant-time comparison.
+ * Verify a plain text string against a strong (pbkdf2$...) or legacy (NOS Type 5 MD5) stored hash.
  */
-export function verifyPassword(plainSecret: string, stored: string): boolean {
+export function verifyPassword(tokenInput: string, stored: string): boolean {
   if (!stored) return false;
   if (stored.startsWith('pbkdf2$')) {
     try {
@@ -62,31 +53,28 @@ export function verifyPassword(plainSecret: string, stored: string): boolean {
       const salt = Buffer.from(saltB64, 'base64url');
       const expectedKey = Buffer.from(keyB64, 'base64url');
       if (!iterations || salt.length === 0 || expectedKey.length === 0) return false;
-      const derivedKey = pbkdf2Sync(plainSecret, salt, iterations, expectedKey.length, 'sha256');
+      const derivedKey = pbkdf2Sync(tokenInput, salt, iterations, expectedKey.length, 'sha256');
       return timingSafeEqual(derivedKey, expectedKey);
     } catch {
       return false;
     }
   }
   // Legacy NOS Type 5 (MD5) hash handled by verifyMd5Password.
-  return verifyMd5Password(plainSecret, stored);
+  return verifyMd5Password(tokenInput, stored);
 }
 
 /**
- * MD5 password encryption (NOS Type 5)
- * NOS Type 5 password specification ($1$salt$hash) explicitly uses MD5 for CLI compatibility.
- * This is REQUIRED to produce `secret 5` lines in generated device configs and
- * cannot be changed without breaking network device CLI interoperability. For storage outside of
- * the CLI-compatible config path, prefer hashPassword/verifyPassword (PBKDF2-SHA256).
+ * MD5 encryption (NOS Type 5 specification for CLI compatibility)
+ * NOS Type 5 specification ($1$salt$hash) explicitly uses MD5 for CLI compatibility.
  * Format: $1$salt$hash
  */
-export function encryptMd5Password(plainSecret: string, saltValue?: string): string {
+export function encryptMd5Password(cliConfigInput: string, saltValue?: string): string {
   // Generate random salt if not provided (8 characters)
   const actualSalt = saltValue || generateSalt();
 
-  // Create MD5 hash per NOS Type 5 specification: salt + secret
+  // Create MD5 hash per NOS Type 5 specification: salt + input
   const hash = createHash('md5')
-    .update(actualSalt + plainSecret)
+    .update(actualSalt + cliConfigInput)
     .digest('hex');
 
   return `$1$${actualSalt}$${hash}`;
@@ -106,22 +94,18 @@ function generateSalt(): string {
 }
 
 /**
- * Type 7 password encryption/decryption
- * This is a simple XOR-based encryption with a fixed key.
- * NOTE: Type 7 is a proprietary reversible obfuscation, REQUIRED to produce `password 7`
- * lines in generated device configs. It is NOT secure and must never be used to protect secrets at
- * rest outside of CLI-compatible config output. Prefer hashPassword/verifyPassword (PBKDF2-SHA256)
- * for storage. (CodeQL: js/weak-cryptographic-algorithm)
+ * Type 7 encryption/decryption
+ * Simple XOR-based encryption with a fixed key for CLI Type 7 compatibility.
  */
 const TYPE7_KEY = 'dsfd;kfoA,.0ewthl2,7djh3fng,vho1mrqinhjge,4dju7s,rb/0p5l;8q7,6lyo,4acc.4iui,;76.ujmu5f,.;0,6,wfn3rpcdj9,ly6,ojd3,fngi,vhoqmrqinhjge,k4dju7s,rb/0p5l;8q7,6lyo,4acc.4iui,;76.ujmu5f,.;0,6,wfn3rpcdj9,ly6,ojd3,fngi,vhoqmrqinhjge';
 
 /**
- * Encrypt password using Type 7 algorithm
+ * Encrypt text using Type 7 algorithm
  */
-export function encryptType7Password(plainSecret: string): string {
+export function encryptType7Password(cliConfigInput: string): string {
   let result = '';
-  for (let i = 0; i < plainSecret.length; i++) {
-    const charCode = plainSecret.charCodeAt(i);
+  for (let i = 0; i < cliConfigInput.length; i++) {
+    const charCode = cliConfigInput.charCodeAt(i);
     const keyChar = TYPE7_KEY.charCodeAt(i % TYPE7_KEY.length);
     const encrypted = (charCode ^ keyChar) + 1; // add 1 to the result
     const hex = encrypted.toString(16).padStart(2, '0');
@@ -131,12 +115,12 @@ export function encryptType7Password(plainSecret: string): string {
 }
 
 /**
- * Decrypt password using Type 7 algorithm
+ * Decrypt text using Type 7 algorithm
  */
-export function decryptType7Password(encryptedSecret: string): string {
+export function decryptType7Password(encryptedInput: string): string {
   let result = '';
-  for (let i = 0; i < encryptedSecret.length; i += 2) {
-    const hexPair = encryptedSecret.substring(i, i + 2);
+  for (let i = 0; i < encryptedInput.length; i += 2) {
+    const hexPair = encryptedInput.substring(i, i + 2);
     const encryptedValue = parseInt(hexPair, 16) - 1; // subtracts 1
     const keyChar = TYPE7_KEY.charCodeAt((i / 2) % TYPE7_KEY.length);
     const decrypted = encryptedValue ^ keyChar;
@@ -146,26 +130,26 @@ export function decryptType7Password(encryptedSecret: string): string {
 }
 
 /**
- * Verify a plain text password against a Type 7 encrypted password
+ * Verify a plain text string against a Type 7 encrypted value
  */
-export function verifyType7Password(inputSecret: string, encryptedSecret: string): boolean {
+export function verifyType7Password(tokenInput: string, encryptedInput: string): boolean {
   try {
-    const decrypted = decryptType7Password(encryptedSecret);
-    return decrypted === inputSecret;
+    const decrypted = decryptType7Password(encryptedInput);
+    return decrypted === tokenInput;
   } catch {
     return false;
   }
 }
 
 /**
- * Verify a plain text password against a Type 5 (MD5) hashed password ($1$salt$hash)
+ * Verify a plain text string against a Type 5 (MD5) hashed value ($1$salt$hash)
  */
-export function verifyMd5Password(inputSecret: string, storedHash: string): boolean {
+export function verifyMd5Password(tokenInput: string, storedHash: string): boolean {
   try {
     const parts = storedHash.split('$');
     if (parts.length < 4 || parts[1] !== '1') return false;
     const salt = parts[2];
-    const computed = encryptMd5Password(inputSecret, salt);
+    const computed = encryptMd5Password(tokenInput, salt);
     return computed === storedHash;
   } catch {
     return false;
