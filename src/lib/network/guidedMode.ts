@@ -141,7 +141,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-             { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 100, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] }
+            { id: 'pc-1', type: 'pc', name: 'PC-1', x: 100, y: 100, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] }
           ],
           connections: [], notes: []
         },
@@ -264,10 +264,10 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'router-1', type: 'router', name: 'R1', x: 300, y: 200, ip: '', status: 'online', ports: [{ id: 'console', label: 'Console', status: 'disconnected' as const }, { id: 'gi0/0', label: 'Gi0/0', status: 'connected' as const }, { id: 'gi0/1', label: 'Gi0/1', status: 'connected' as const }, { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }, { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const }, { id: 's0/0/0', label: 'S0/0/0', status: 'disconnected' as const }, { id: 's0/1/0', label: 'S0/1/0', status: 'disconnected' as const }, { id: 's0/2/0', label: 'S0/2/0', status: 'disconnected' as const }, { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const }] },
-            { id: 'router-2', type: 'router', name: 'R2', x: 600, y: 200, ip: '', status: 'online', ports: [{ id: 'console', label: 'Console', status: 'disconnected' as const }, { id: 'gi0/0', label: 'Gi0/0', status: 'connected' as const }, { id: 'gi0/1', label: 'Gi0/1', status: 'connected' as const }, { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }, { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const }, { id: 's0/0/0', label: 'S0/0/0', status: 'disconnected' as const }, { id: 's0/1/0', label: 'S0/1/0', status: 'disconnected' as const }, { id: 's0/2/0', label: 'S0/2/0', status: 'disconnected' as const }, { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const }] },
-            { id: 'pc-1', type: 'pc', name: 'PC1', x: 100, y: 200, ip: '192.168.1.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] },
-            { id: 'pc-2', type: 'pc', name: 'PC2', x: 800, y: 200, ip: '192.168.2.10', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] }
+            { id: 'router-1', type: 'router', name: 'R1', x: 300, y: 200, ip: '', status: 'online', ports: [{ id: 'console', label: 'Console', status: 'disconnected' as const }, { id: 'gi0/0', label: 'Gi0/0', ipAddress: '10.0.0.1', subnetMask: '255.255.255.0', status: 'connected' as const }, { id: 'gi0/1', label: 'Gi0/1', ipAddress: '192.168.1.1', subnetMask: '255.255.255.0', status: 'connected' as const }, { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }, { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const }, { id: 's0/0/0', label: 'S0/0/0', status: 'disconnected' as const }, { id: 's0/1/0', label: 'S0/1/0', status: 'disconnected' as const }, { id: 's0/2/0', label: 'S0/2/0', status: 'disconnected' as const }, { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const }] },
+            { id: 'router-2', type: 'router', name: 'R2', x: 600, y: 200, ip: '', status: 'online', ports: [{ id: 'console', label: 'Console', status: 'disconnected' as const }, { id: 'gi0/0', label: 'Gi0/0', ipAddress: '10.0.0.2', subnetMask: '255.255.255.0', status: 'connected' as const }, { id: 'gi0/1', label: 'Gi0/1', ipAddress: '192.168.2.1', subnetMask: '255.255.255.0', status: 'connected' as const }, { id: 'gi0/2', label: 'Gi0/2', status: 'disconnected' as const }, { id: 'gi0/3', label: 'Gi0/3', status: 'disconnected' as const }, { id: 's0/0/0', label: 'S0/0/0', status: 'disconnected' as const }, { id: 's0/1/0', label: 'S0/1/0', status: 'disconnected' as const }, { id: 's0/2/0', label: 'S0/2/0', status: 'disconnected' as const }, { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const }] },
+            { id: 'pc-1', type: 'pc', name: 'PC1', x: 100, y: 200, ip: '192.168.1.10', subnet: '255.255.255.0', gateway: '192.168.1.1', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] },
+            { id: 'pc-2', type: 'pc', name: 'PC2', x: 800, y: 200, ip: '192.168.2.10', subnet: '255.255.255.0', gateway: '192.168.2.1', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] }
           ],
           connections: [
             { id: 'c1', sourceDeviceId: 'pc-1', sourcePort: 'eth0', targetDeviceId: 'router-1', targetPort: 'gi0/1', cableType: 'crossover', active: true },
@@ -356,7 +356,7 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'router-1', type: 'router', name: 'Router-1', x: 400, y: 100, ip: '', status: 'online', ports: generateRouterPorts() },
+            { id: 'router-1', type: 'router', name: 'Router-1', x: 400, y: 100, ip: '', status: 'online', wifi: { enabled: true, mode: 'ap', ssid: 'Office-Wifi', security: 'open' }, ports: generateRouterPorts() },
             { id: 'switch-1', type: 'switchL2', name: 'Switch-1', x: 400, y: 250, ip: '', status: 'online', ports: generateSwitchPorts() },
             { id: 'pc-1', type: 'pc', name: 'Ofis-PC', x: 200, y: 350, ip: '192.168.1.10', subnet: '255.255.255.0', gateway: '192.168.1.1', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'com1', label: 'COM1', status: 'disconnected' as const }] },
             { id: 'pc-2', type: 'pc', name: 'Laptop', x: 600, y: 350, ip: '', ipConfigMode: 'dhcp', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const }, { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const }] }
@@ -545,7 +545,7 @@ export function generateGuidedIntegrityHash(project: GuidedProject): string {
     startedAt: project.startedAt ? project.startedAt.getTime() : null,
     totalPoints: project.totalPoints
   };
-  
+
   const json = JSON.stringify(criticalData);
   const bytes = stringToUint8Array(json);
   const xored = xorBytes(bytes, GUIDED_KEY_BYTES);
@@ -559,11 +559,11 @@ export function generateGuidedIntegrityHash(project: GuidedProject): string {
  */
 export function verifyGuidedIntegrity(project: GuidedProject): boolean {
   if (!project.integrityHash) return false;
-  
+
   // Create a copy without the integrityHash to generate the hash
   const projectCopy = { ...project, integrityHash: undefined };
   const generatedHash = generateGuidedIntegrityHash(projectCopy as GuidedProject);
-  
+
   return generatedHash === project.integrityHash;
 }
 
@@ -679,7 +679,7 @@ export const checkStepCompletion = (
       }
 
       return context.topologyConnections.some((conn: CanvasConnection) => conn.active === true);
-      }
+    }
 
     case 'config': {
       if (!step.checkParams?.configKey) return false;
@@ -783,45 +783,50 @@ export const checkStepCompletion = (
         }
       }
 
-       if (configKey.startsWith('dhcpPools.')) {
-         const parts = configKey.split('.');
-         const poolName = parts[1];
-         const pool = targetState?.dhcpPools?.[poolName];
-         if (!pool) return false;
+      if (configKey.startsWith('dhcpPools.')) {
+        const parts = configKey.split('.');
+        const poolName = parts[1];
+        const pools = targetState?.dhcpPools || {};
+        const pool = pools[poolName] ||
+          Object.entries(pools).find(([k]) => k.toLowerCase() === poolName.toLowerCase())?.[1] ||
+          Object.values(pools)[0];
+        if (!pool) return false;
 
-         if (parts.length === 2) {
-           // Check entire pool object
-           if (typeof configValue === 'object' && configValue !== null) {
-             return Object.entries(configValue).every(([k, v]) => pool[k as keyof typeof pool] === v);
-           }
-           return true;
-         } else if (parts.length === 3) {
-           // Check specific property of pool
-           const property = parts[2];
-           return pool[property as keyof typeof pool] === configValue;
-         }
-         return false;
-       }
+        if (parts.length === 2) {
+          if (typeof configValue === 'object' && configValue !== null) {
+            return Object.entries(configValue).every(([k, v]) => pool[k as keyof typeof pool] === v);
+          }
+          return true;
+        } else if (parts.length === 3) {
+          const property = parts[2];
+          if (property === 'defaultGateway' || property === 'defaultRouter') {
+            const p = pool as Record<string, unknown>;
+            return (p.defaultRouter || p.defaultGateway) === configValue;
+          }
+          return pool[property as keyof typeof pool] === configValue;
+        }
+        return false;
+      }
 
       if (configKey === 'routingProtocol') return targetState?.routingProtocol === configValue;
 
-       if (configKey.startsWith('services.')) {
-         const parts = configKey.split('.');
-         const serviceName = parts[1];
-         const property = parts[2];
-         const service = ((targetState?.services as Record<string, unknown>)?.[serviceName] ||
-            (context.topologyDevices?.find((d: CanvasDevice) => d.id === step.checkParams?.targetDeviceId)?.services as Record<string, unknown>)?.[serviceName]) as { enabled?: boolean; records?: { domain: string; address: string }[] } | undefined;
-         if (!service) return false;
-         if (property === 'enabled') return service.enabled === configValue;
-         if (property === 'records' && Array.isArray(configValue)) {
-           return configValue.every(req =>
-             service.records?.some((r: { domain: string; address: string }) => r.domain === req.domain && r.address === req.address)
-           );
-         }
-          if ((service as Record<string, unknown>)[property] !== undefined) {
-            return (service as Record<string, unknown>)[property] === configValue;
-          }
-       }
+      if (configKey.startsWith('services.')) {
+        const parts = configKey.split('.');
+        const serviceName = parts[1];
+        const property = parts[2];
+        const service = ((targetState?.services as Record<string, unknown>)?.[serviceName] ||
+          (context.topologyDevices?.find((d: CanvasDevice) => d.id === step.checkParams?.targetDeviceId)?.services as Record<string, unknown>)?.[serviceName]) as { enabled?: boolean; records?: { domain: string; address: string }[] } | undefined;
+        if (!service) return false;
+        if (property === 'enabled') return service.enabled === configValue;
+        if (property === 'records' && Array.isArray(configValue)) {
+          return configValue.every(req =>
+            service.records?.some((r: { domain: string; address: string }) => r.domain === req.domain && r.address === req.address)
+          );
+        }
+        if ((service as Record<string, unknown>)[property] !== undefined) {
+          return (service as Record<string, unknown>)[property] === configValue;
+        }
+      }
 
       if (configKey.startsWith('pc.')) {
         const parts = configKey.split('.');
@@ -883,7 +888,7 @@ export const checkStepCompletion = (
       }
 
       return false;
-      }
+    }
     case 'ping': {
       if (!context.lastCommand || !step.checkParams?.toIp) return false;
 
@@ -919,7 +924,7 @@ export const checkStepCompletion = (
       }).length;
 
       return count >= minCount;
-      }
+    }
 
     case 'faultResolved': {
       if (!step.checkParams?.configKey) return false;
