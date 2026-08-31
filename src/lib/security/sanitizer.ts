@@ -23,7 +23,7 @@ export function sanitizeHTTPContent(input: string): string {
 
     let safe = input.replace(/&/g, '&amp;');
     safe = safe.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    
+
     // Whitelist formatting and layout tags safely
     safe = safe
         .replace(/&lt;b&gt;/gi, '<b>').replace(/&lt;\/b&gt;/gi, '</b>')
@@ -36,23 +36,29 @@ export function sanitizeHTTPContent(input: string): string {
 
     // Safe link transformation (disallow javascript: URIs)
     safe = safe.replace(/&lt;a\s+href=&quot;(https?:\/\/[^&"]+)&quot;&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">')
-               .replace(/&lt;\/a&gt;/gi, '</a>');
-        
+        .replace(/&lt;\/a&gt;/gi, '</a>');
+
     return safe;
 }
 
 export function sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
-    // Strip HTML tags and dangerous characters first
-    let sanitized = input.replace(/<[^>]*>?/gm, '').replace(/[<>`]/g, '').trim();
+    let sanitized = input.trim();
+    let prev: string;
+
+    // Strip HTML tags and dangerous characters recursively to prevent nested injection like "<<script>script>"
+    do {
+        prev = sanitized;
+        sanitized = sanitized.replace(/<[^>]*>?/gm, '').replace(/[<>`]/g, '');
+    } while (sanitized !== prev);
+
     // Remove dangerous URI schemes recursively to prevent bypasses like "javas<javascript:>cript:"
-    // where inner tags or schemes are removed first, leaving behind a malicious payload.
-    let prev;
     do {
         prev = sanitized;
         sanitized = sanitized.replace(/(javascript|data|vbscript|file):/gi, '');
     } while (sanitized !== prev);
-    return sanitized;
+
+    return sanitized.trim();
 }
 
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);

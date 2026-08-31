@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { CanvasDevice, CanvasNote, CanvasConnection, DeviceType } from '../components/network/networkTopology.types';
 import { generateRandomLinkLocalIpv4, generateRandomLinkLocalIpv6 } from '@/lib/network/linkLocal';
 import { getDeviceWidth, getDeviceHeight } from '../components/network/networkTopology.helpers';
-import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts } from '../components/network/networkTopology.portGenerators';
+import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts, generateFirewallPorts } from '../components/network/networkTopology.portGenerators';
 import { generateUniqueMacAddress } from '@/lib/utils';
 import type { SwitchState } from '@/lib/network/types';
 
@@ -153,7 +153,7 @@ export interface UseCanvasActionsProps {
   setConnections: React.Dispatch<React.SetStateAction<CanvasConnection[]>>;
   notes: CanvasNote[];
   setNotes: React.Dispatch<React.SetStateAction<CanvasNote[]>>;
-   
+
   deviceStates: Map<string, any> | undefined | null;
   saveToHistory: () => void;
   isExamActive: boolean;
@@ -168,11 +168,11 @@ export interface UseCanvasActionsProps {
   setSelectedNoteIds: React.Dispatch<React.SetStateAction<string[]>>;
   onDeviceSelect: (type: DeviceType, id: string, switchModel?: string, name?: string, isNew?: boolean, device?: CanvasDevice) => void;
   onDeviceDelete?: (deviceId: string) => void;
-   
+
   setConnectionStart: React.Dispatch<React.SetStateAction<any>>;
   setIsDrawingConnection: React.Dispatch<React.SetStateAction<boolean>>;
   language: string;
-   
+
   t: any;
 }
 
@@ -318,10 +318,7 @@ export function useCanvasActions({
           : type === 'switch'
             ? switchLayer === 'L3' ? generateL3SwitchPorts() : generateSwitchPorts()
             : type === 'firewall'
-              ? [
-                { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) },
-                { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) },
-              ]
+              ? generateFirewallPorts()
               : type === 'wlc'
                 ? generateWLCPorts()
                 : generateRouterPorts(),

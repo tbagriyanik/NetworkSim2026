@@ -73,7 +73,7 @@ export function RoomJoinDialog() {
 
   return (
     <Dialog open={showRoomJoinDialog} onOpenChange={setShowRoomJoinDialog}>
-      <DialogContent className="sm:max-w-sm" onEscapeKeyDown={() => {}} onPointerDownOutside={() => {}}>
+      <DialogContent className="sm:max-w-sm" onEscapeKeyDown={() => { }} onPointerDownOutside={() => { }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Users className="w-4 h-4 text-primary-500" />{studentRoomCode ? `${t.roomJoinTitle} — ${studentRoomCode}` : t.roomJoinTitle}</DialogTitle>
           <DialogDescription>

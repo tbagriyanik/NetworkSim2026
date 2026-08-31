@@ -1539,11 +1539,22 @@
             'Isıtıcı': 'Aktuatör (Output)\nSoğuk havalarda sera sıcaklığını korur'
         };
 
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
         document.querySelectorAll('.device').forEach(device => {
             device.addEventListener('mouseenter', (e) => {
                 const label = device.querySelector('.device-label')?.textContent;
                 if (label && deviceInfo[label]) {
-                    tooltip.innerHTML = `<h4>${label}</h4><p>${deviceInfo[label].replace(/\n/g, '<br>')}</p>`;
+                    const safeLabel = escapeHtml(label);
+                    const safeInfo = escapeHtml(deviceInfo[label]).replace(/\n/g, '<br>');
+                    tooltip.innerHTML = `<h4>${safeLabel}</h4><p>${safeInfo}</p>`;
                     tooltip.style.display = 'block';
                 }
             });

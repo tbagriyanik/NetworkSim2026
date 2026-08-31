@@ -23,11 +23,22 @@ export function normalizeMAC(mac: string): string {
 export const generateMacAddress = (seed?: number): string => {
   const chars = '0123456789ABCDEF';
   let hex = '';
-  for (let i = 0; i < 12; i++) {
-    const idx = seed !== undefined
-      ? (seed + i) % 16
-      : Math.floor(Math.random() * 16);
-    hex += chars[idx];
+  if (seed !== undefined) {
+    for (let i = 0; i < 12; i++) {
+      hex += chars[(seed + i) % 16];
+    }
+  } else {
+    const bytes = new Uint8Array(12);
+    if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+      globalThis.crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < 12; i++) {
+        bytes[i] = Math.floor(Math.random() * 256);
+      }
+    }
+    for (let i = 0; i < 12; i++) {
+      hex += chars[bytes[i] % 16];
+    }
   }
   return `${hex.slice(0, 4)}.${hex.slice(4, 8)}.${hex.slice(8, 12)}`;
 };

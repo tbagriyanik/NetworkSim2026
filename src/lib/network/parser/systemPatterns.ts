@@ -578,13 +578,13 @@ export const systemPatterns: Record<string, CommandPattern> = {
 
   //  DHCP Pool sub-commands (dhcp-config mode) 
   'default-router': {
-    pattern: /^default-router\s+\d+\.\d+\.\d+\.\d+(?:\s+\d+\.\d+\.\d+\.\d+)*$/i,
+    pattern: /^default-router(?:\s+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})+$/i,
     modes: ['dhcp-config'],
     minArgs: 1,
     maxArgs: 8
   },
   'dns-server': {
-    pattern: /^dns-server\s+(?:[0-9.]+|[0-9a-fA-F:]+)(?:\s+(?:[0-9.]+|[0-9a-fA-F:]+))*$/i,
+    pattern: /^dns-server(?:\s+[0-9a-fA-F.:]+)+$/i,
     modes: ['dhcp-config'],
     minArgs: 1,
     maxArgs: 8
@@ -765,122 +765,122 @@ export const systemPatterns: Record<string, CommandPattern> = {
   },
 
 
-// ── Firewall commands ────────────────────────────────────────────────────────────
-'no nameif': {
-  pattern: /^no\s+nameif$/i,
+  // ── Firewall commands ────────────────────────────────────────────────────────────
+  'no nameif': {
+    pattern: /^no\s+nameif$/i,
     modes: ['interface'],
-      minArgs: 0,
-        maxArgs: 0,
-          capability: 'firewall'
-},
-'show nameif': {
-  pattern: /^show\s+nameif$/i,
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'show nameif': {
+    pattern: /^show\s+nameif$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 0,
-          capability: 'firewall'
-},
-'show ip access-group': {
-  pattern: /^show\s+ip\s+access-group(?:\s+(\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 0,
+    capability: 'firewall'
+  },
+  'show ip access-group': {
+    pattern: /^show\s+ip\s+access-group(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1,
-          capability: 'firewall'
-},
-'show dot11 associations': {
-  pattern: /^show\s+dot11\s+associations(?:\s+(\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 1,
+    capability: 'firewall'
+  },
+  'show dot11 associations': {
+    pattern: /^show\s+dot11\s+associations(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1,
-          capability: 'routing'
-},
-'show dot11 statistics': {
-  pattern: /^show\s+dot11\s+statistics(?:\s+(\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'show dot11 statistics': {
+    pattern: /^show\s+dot11\s+statistics(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1,
-          capability: 'routing'
-},
-'show wlan': {
-  pattern: /^show\s+wlan\s+(\d+)$/i,
+    minArgs: 0,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'show wlan': {
+    pattern: /^show\s+wlan\s+(\d+)$/i,
     modes: ['privileged'],
-      minArgs: 1,
-        maxArgs: 1,
-          capability: 'routing'
-},
-'no wlan': {
-  pattern: /^no\s+wlan\s+(\d+)$/i,
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'no wlan': {
+    pattern: /^no\s+wlan\s+(\d+)$/i,
     modes: ['config'],
-      minArgs: 1,
-        maxArgs: 1,
-          capability: 'routing'
-},
-'show vtp password': {
-  pattern: /^show\s+vtp\s+password$/i,
+    minArgs: 1,
+    maxArgs: 1,
+    capability: 'routing'
+  },
+  'show vtp password': {
+    pattern: /^show\s+vtp\s+password$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 0
-},
-'show ip eigrp neighbors': {
-  pattern: /^show\s+ip\s+eigrp\s+neighbors(?:\s+(\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ip eigrp neighbors': {
+    pattern: /^show\s+ip\s+eigrp\s+neighbors(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1
-},
-'show ip bgp summary': {
-  pattern: /^show\s+ip\s+bgp\s+summary$/i,
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ip bgp summary': {
+    pattern: /^show\s+ip\s+bgp\s+summary$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 0
-},
-'show ip bgp': {
-  pattern: /^show\s+ip\s+bgp(?:\s+(\S+))?$/i,
-  modes: ['privileged'],
-  minArgs: 0,
-  maxArgs: 1
-},
-'show ip nat translations': {
-  pattern: /^show\s+ip\s+nat\s+translations$/i,
-  modes: ['privileged'],
-  minArgs: 0,
-  maxArgs: 0
-},
-'show ip nat statistics': {
-  pattern: /^show\s+ip\s+nat\s+statistics$/i,
-  modes: ['privileged'],
-  minArgs: 0,
-  maxArgs: 0
-},
-'show ipv6 rip': {
-  pattern: /^show\s+ipv6\s+rip(?:\s+(\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ip bgp': {
+    pattern: /^show\s+ip\s+bgp(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1
-},
-'show ipv6 ospf': {
-  pattern: /^show\s+ipv6\s+ospf(?:\s+(\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ip nat translations': {
+    pattern: /^show\s+ip\s+nat\s+translations$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1
-},
-'show vrrp brief': {
-  pattern: /^show\s+vrrp\s+brief$/i,
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ip nat statistics': {
+    pattern: /^show\s+ip\s+nat\s+statistics$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 0
-},
-'show vrrp': {
-  pattern: /^show\s+vrrp(?:\s+(\d+|\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show ipv6 rip': {
+    pattern: /^show\s+ipv6\s+rip(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1
-},
-'show ipv6 access-list': {
-  pattern: /^show\s+ipv6\s+access-list(?:\s+(\S+))?$/i,
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ipv6 ospf': {
+    pattern: /^show\s+ipv6\s+ospf(?:\s+(\S+))?$/i,
     modes: ['privileged'],
-      minArgs: 0,
-        maxArgs: 1
-},
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show vrrp brief': {
+    pattern: /^show\s+vrrp\s+brief$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'show vrrp': {
+    pattern: /^show\s+vrrp(?:\s+(\d+|\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'show ipv6 access-list': {
+    pattern: /^show\s+ipv6\s+access-list(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
 
   // ── End of Configuration ─────────────────────────────────────────────────────────
 };

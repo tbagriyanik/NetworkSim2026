@@ -1,4 +1,4 @@
-import { createHash, createHmac } from 'crypto';
+import { createHash, createHmac, randomInt } from 'crypto';
 
 const HMAC_EXAM_KEY = 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
 
@@ -22,14 +22,15 @@ export function verifyHmacSignature(data: string, signature: string, key: string
 }
 
 /**
- * MD5 password encryption (Type 5)
+ * MD5 password encryption (NOS Type 5)
+ * NOS Type 5 password specification ($1$salt$hash) explicitly uses MD5 for CLI compatibility.
  * Format: $1$salt$hash
  */
 export function encryptMd5Password(password: string, salt?: string): string {
   // Generate random salt if not provided (8 characters)
   const actualSalt = salt || generateSalt();
 
-  // Create MD5 hash: salt + password
+  // Create MD5 hash per NOS Type 5 specification: salt + password
   const hash = createHash('md5')
     .update(actualSalt + password)
     .digest('hex');
@@ -39,22 +40,13 @@ export function encryptMd5Password(password: string, salt?: string): string {
 
 /**
  * Generate random salt for MD5 encryption (8 characters)
- * Uses cryptographically secure random values (CSPRNG) if available.
+ * Uses cryptographically secure random integers.
  */
 function generateSalt(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./';
   let salt = '';
-  const bytes = new Uint8Array(8);
-  if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
-    globalThis.crypto.getRandomValues(bytes);
-    for (let i = 0; i < 8; i++) {
-      salt += chars.charAt(bytes[i] % chars.length);
-    }
-  } else {
-    // Fallback if CSPRNG is not supported in the environment
-    for (let i = 0; i < 8; i++) {
-      salt += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+  for (let i = 0; i < 8; i++) {
+    salt += chars.charAt(randomInt(0, chars.length));
   }
   return salt;
 }

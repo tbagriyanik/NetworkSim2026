@@ -88,7 +88,11 @@ export function createExpressionEvaluator(
       }
 
       const files = listDir(fs, searchDir);
-      const regexStr = '^' + filePattern.replace(/\./g, '\\.').replace(/\*/g, '.*').replace(/\?/g, '.') + '$';
+      const regexStr = '^' + filePattern
+        .replace(/\\/g, '\\\\')
+        .replace(/[.+^${}()|[\]]/g, '\\$&')
+        .replace(/\*/g, '.*')
+        .replace(/\?/g, '.') + '$';
       const regex = new RegExp(regexStr);
 
       const matched = files.filter(f => regex.test(f));

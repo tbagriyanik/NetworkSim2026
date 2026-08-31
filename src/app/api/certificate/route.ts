@@ -13,9 +13,8 @@ export const dynamic = 'force-dynamic';
 function generateVerifyCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
-  const bytes = crypto.randomBytes(10);
   for (let i = 0; i < 10; i++) {
-    code += chars[bytes[i] % chars.length];
+    code += chars[crypto.randomInt(0, chars.length)];
   }
   return code;
 }

@@ -69,3 +69,16 @@ export function generatePCPorts(): CanvasPort[] {
         { id: 'wlan0', label: 'WLAN0', status: 'disconnected' as const, shutdown: true },
     ];
 }
+
+/** Generates firewall ports: Gi0/0 + Gi0/1 */
+export function generateFirewallPorts(): CanvasPort[] {
+    const formatMacFromNumber = (value: number): string => {
+        const base = value.toString(16).padStart(12, '0').toUpperCase();
+        return `${base.slice(0, 4)}.${base.slice(4, 8)}.${base.slice(8, 12)}`;
+    };
+    const baseMacNumber = 0x005000000000;
+    return [
+        { id: 'gi0/0', label: 'Gi0/0', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber) },
+        { id: 'gi0/1', label: 'Gi0/1', status: 'disconnected' as const, macAddress: formatMacFromNumber(baseMacNumber + 1) },
+    ];
+}

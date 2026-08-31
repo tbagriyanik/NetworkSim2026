@@ -30,7 +30,9 @@ export function usePageProjectStorage() {
   }, [loadedExampleId]);
 
   useEffect(() => {
-    try { localStorage.setItem('lastProjectName', projectName); } catch { /* storage unavailable */ }
+    try {
+      localStorage.setItem('lastProjectName', projectName);
+    } catch { /* storage unavailable */ }
   }, [projectName]);
 
   return { projectName, setProjectName, loadedExampleId, setLoadedExampleId };

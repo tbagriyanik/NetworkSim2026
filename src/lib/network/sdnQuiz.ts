@@ -233,8 +233,8 @@ export const lessonQuizzes: Record<string, SdnQuizQuestion[]> = {
       },
       answer: 0,
       explanation: {
-        tr: 'Cisco arayüzleri varsayılan olarak kapalıdır; "no shutdown" ile açılır.',
-        en: 'Cisco interfaces are shutdown by default; "no shutdown" enables them.'
+        tr: 'Arayüzler varsayılan olarak kapalıdır; "no shutdown" ile açılır.',
+        en: 'Interfaces are shutdown by default; "no shutdown" enables them.'
       },
       points: 10
     }
@@ -585,8 +585,8 @@ export const lessonQuizzes: Record<string, SdnQuizQuestion[]> = {
     {
       id: 'clibasics-1',
       question: {
-        tr: 'Cisco CLI\'da yetkili moda geçiş komutu nedir?',
-        en: 'Which command enters privileged mode in Cisco CLI?'
+        tr: 'CLI\'da yetkili moda geçiş komutu nedir?',
+        en: 'Which command enters privileged mode in CLI?'
       },
       choices: {
         tr: ['enable', 'configure', 'admin'],
@@ -704,7 +704,7 @@ export const defaultFallbackQuiz: SdnQuizQuestion[] = [
 
 export function getQuizQuestionsForProject(projectId?: string): SdnQuizQuestion[] {
   if (!projectId) return defaultFallbackQuiz;
-  
+
   // Direct match
   if (lessonQuizzes[projectId] && lessonQuizzes[projectId].length > 0) {
     return lessonQuizzes[projectId];
