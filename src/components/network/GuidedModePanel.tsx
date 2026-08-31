@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { toast } from "@/hooks/use-toast";
 import {
   CheckCircle2,
@@ -30,7 +30,7 @@ import { GuidedProject, getProgressPercentage } from '@/lib/network/guidedMode';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TutorialAnimationPlayer } from './TutorialAnimationPlayer';
 import { generateCertificate } from '@/lib/utils/certificateGenerator';
-import { answerSdnQuiz, sdnQuizQuestions } from '@/lib/network/sdnQuiz';
+import { answerSdnQuiz, getQuizQuestionsForProject, SdnQuizQuestion } from '@/lib/network/sdnQuiz';
 
 interface GuidedModePanelProps {
   project: GuidedProject | null;
@@ -114,27 +114,43 @@ export function GuidedModePanel({
   const [showSdnQuiz, setShowSdnQuiz] = useState(false);
   const [sdnQuizIndex, setSdnQuizIndex] = useState(0);
   const [sdnQuizScore, setSdnQuizScore] = useState(0);
+  const [quizEarnedPoints, setQuizEarnedPoints] = useState(0);
   const [sdnQuizAnswered, setSdnQuizAnswered] = useState<string[]>([]);
   const [sdnQuizFeedback, setSdnQuizFeedback] = useState<{ correct: boolean; explanation: string } | null>(null);
   const [sdnShuffledChoices, setSdnShuffledChoices] = useState<Array<{ text: string; originalIndex: number }>>([]);
 
+  const quizQuestions = useMemo<SdnQuizQuestion[]>(() => {
+    return project ? getQuizQuestionsForProject(project.id) : getQuizQuestionsForProject();
+  }, [project]);
+
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const saved = localStorage.getItem('sdn_quiz_progress');
+    if (typeof window === 'undefined' || !project) return;
+    const saved = localStorage.getItem(`sdn_quiz_progress_${project.id}`);
+    const savedPoints = localStorage.getItem(`quiz_earned_points_${project.id}`);
     if (saved) {
       try {
         const progress = JSON.parse(saved) as { score?: number; answered?: string[] };
         setSdnQuizScore(progress.score || 0);
         setSdnQuizAnswered(progress.answered || []);
       } catch { /* Ignore invalid previous progress. */ }
+    } else {
+      setSdnQuizScore(0);
+      setSdnQuizAnswered([]);
     }
-  }, []);
+    if (savedPoints) {
+      setQuizEarnedPoints(Number(savedPoints) || 0);
+    } else {
+      setQuizEarnedPoints(0);
+    }
+    setSdnQuizIndex(0);
+  }, [project]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('sdn_quiz_progress', JSON.stringify({ score: sdnQuizScore, answered: sdnQuizAnswered }));
+    if (typeof window !== 'undefined' && project) {
+      localStorage.setItem(`sdn_quiz_progress_${project.id}`, JSON.stringify({ score: sdnQuizScore, answered: sdnQuizAnswered }));
+      localStorage.setItem(`quiz_earned_points_${project.id}`, String(quizEarnedPoints));
     }
-  }, [sdnQuizScore, sdnQuizAnswered]);
+  }, [sdnQuizScore, sdnQuizAnswered, quizEarnedPoints, project]);
 
   // Save hint state to localStorage when it changes
   useEffect(() => {
@@ -426,13 +442,22 @@ export function GuidedModePanel({
   const completedCount = project?.steps.filter(s => s.completed).length || 0;
   const isAllCompleted = project ? completedCount === project.steps.length : false;
 
-  const currentPoints = React.useMemo(() => {
+  const stepsCurrentPoints = useMemo(() => {
     return project?.steps
       .filter(s => s.completed)
       .reduce((acc, s) => acc + (s.points || 0), 0) || 0;
   }, [project]);
 
-  const totalPoints = project?.totalPoints || project?.steps.reduce((acc, s) => acc + (s.points || 0), 0) || 0;
+  const quizTotalPoints = useMemo(() => {
+    return quizQuestions.reduce((acc: number, q: SdnQuizQuestion) => acc + (q.points || 10), 0);
+  }, [quizQuestions]);
+
+  const stepsTotalPoints = useMemo(() => {
+    return project?.totalPoints || project?.steps.reduce((acc, s) => acc + (s.points || 0), 0) || 0;
+  }, [project]);
+
+  const totalPoints = stepsTotalPoints + quizTotalPoints;
+  const currentPoints = stepsCurrentPoints + quizEarnedPoints;
 
   const handleDownloadCertificate = useCallback(async () => {
     if (!project) return;
@@ -483,16 +508,20 @@ export function GuidedModePanel({
 
   const progress = project ? getProgressPercentage(project.steps) : 0;
   const currentStep = project ? project.steps[currentStepIndex] : null;
-  const sdnQuestion = sdnQuizQuestions[sdnQuizIndex];
+  const sdnQuestion = quizQuestions[sdnQuizIndex];
 
   useEffect(() => {
-    const choices = sdnQuestion.choices.map((text, originalIndex) => ({ text, originalIndex }));
+    if (!sdnQuestion) return;
+    const rawChoices = typeof sdnQuestion.choices === 'object' && !Array.isArray(sdnQuestion.choices)
+      ? (sdnQuestion.choices[language === 'tr' ? 'tr' : 'en'] || sdnQuestion.choices.tr)
+      : sdnQuestion.choices;
+    const choices = (rawChoices as string[]).map((text: string, originalIndex: number) => ({ text, originalIndex }));
     for (let index = choices.length - 1; index > 0; index--) {
       const swapIndex = Math.floor(Math.random() * (index + 1));
       [choices[index], choices[swapIndex]] = [choices[swapIndex], choices[index]];
     }
     setSdnShuffledChoices(choices);
-  }, [sdnQuestion]);
+  }, [sdnQuestion, language]);
 
   const toggleStepExpand = (stepId: string) => {
     setExpandedSteps(prev =>
@@ -796,6 +825,7 @@ export function GuidedModePanel({
                               checkType: currentStep.checkType,
                               commandPattern: currentStep.checkParams?.commandPattern,
                               toIp: currentStep.checkParams?.toIp,
+                              deviceType: currentStep.checkParams?.deviceType,
                               targetDeviceId: currentStep.checkParams?.targetDeviceId || currentStep.checkParams?.fromDevice,
                               hintCommand: currentStep.hint.en || currentStep.hint.tr
                             }
@@ -852,7 +882,7 @@ export function GuidedModePanel({
             className="w-full rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 px-3 py-2 text-left text-xs font-bold text-primary-700 dark:text-primary-300"
           >
             🎓 {language === 'tr' ? 'Bilgi Quiz’i' : 'Knowledge Quiz'}
-            <span className="float-right">{sdnQuizScore}/{sdnQuizQuestions.length}</span>
+            <span className="float-right">{sdnQuizScore}/{quizQuestions.length} (+{quizEarnedPoints} {t.pts})</span>
           </button>
           {showSdnQuiz && sdnQuestion && (
             <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="sdn-quiz-title">
@@ -860,38 +890,50 @@ export function GuidedModePanel({
                 <div className="flex items-center justify-between border-b border-secondary-200 p-4 dark:border-secondary-700">
                   <div>
                     <h2 id="sdn-quiz-title" className="font-bold text-secondary-900 dark:text-secondary-100">🎓 {language === 'tr' ? 'Bilgi Quiz’i' : 'Knowledge Quiz'}</h2>
-                    <p className="text-xs text-secondary-500">{language === 'tr' ? 'Destek konusu' : 'Support topic'}</p>
+                    <p className="text-xs text-secondary-500">{language === 'tr' ? 'Ders Konu Soruları' : 'Lesson Topic Questions'}</p>
                   </div>
                   <button onClick={() => setShowSdnQuiz(false)} className="rounded p-1 hover:bg-secondary-100 dark:hover:bg-secondary-800" aria-label={language === 'tr' ? 'Quiz’i kapat' : 'Close quiz'}><X className="h-5 w-5" /></button>
                 </div>
                 <div className="overflow-y-auto overscroll-contain p-5 scrollbar-thin scrollbar-thumb-secondary-400 dark:scrollbar-thumb-secondary-600">
                   <div className="flex justify-between text-[10px] text-secondary-500">
-                    <span>{sdnQuizIndex + 1}/{sdnQuizQuestions.length}</span>
-                    <span>{language === 'tr' ? 'Skor' : 'Score'}: {sdnQuizScore}/{sdnQuizQuestions.length}</span>
+                    <span>{sdnQuizIndex + 1}/{quizQuestions.length}</span>
+                    <span>{language === 'tr' ? 'Doğru' : 'Score'}: {sdnQuizScore}/{quizQuestions.length} (+{quizEarnedPoints} {t.pts})</span>
                   </div>
-                  <p className="mt-3 text-sm font-medium text-secondary-800 dark:text-secondary-200">{sdnQuestion.question}</p>
-              {sdnShuffledChoices.map(({ text: choice, originalIndex }) => (
-                <button
-                  key={choice}
-                  disabled={sdnQuizFeedback !== null}
-                  onClick={() => {
-                    const result = answerSdnQuiz(sdnQuestion.id, originalIndex);
-                        if (!sdnQuizAnswered.includes(sdnQuestion.id)) {
-                          setSdnQuizAnswered(answered => [...answered, sdnQuestion.id]);
-                          if (result.correct) setSdnQuizScore(score => score + 1);
-                        }
-                        setSdnQuizFeedback(result);
-                      }}
-                      className="w-full whitespace-normal break-words rounded border border-secondary-200 dark:border-secondary-700 px-3 py-2 text-left text-sm hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-70"
-                    >{choice}</button>
-                  ))}
+                  <p className="mt-3 text-sm font-medium text-secondary-800 dark:text-secondary-200">
+                    {typeof sdnQuestion.question === 'object' ? (sdnQuestion.question[language === 'tr' ? 'tr' : 'en'] || sdnQuestion.question.tr) : sdnQuestion.question}
+                  </p>
+                  <div className="mt-3 space-y-2">
+                    {sdnShuffledChoices.map(({ text: choice, originalIndex }) => (
+                      <button
+                        key={choice}
+                        disabled={sdnQuizFeedback !== null}
+                        onClick={() => {
+                          const result = answerSdnQuiz(sdnQuestion.id, originalIndex, project?.id, language);
+                          if (!sdnQuizAnswered.includes(sdnQuestion.id)) {
+                            setSdnQuizAnswered(answered => [...answered, sdnQuestion.id]);
+                            if (result.correct) {
+                              setSdnQuizScore(score => score + 1);
+                              const pts = result.points || 10;
+                              setQuizEarnedPoints(prev => prev + pts);
+                              toast({
+                                title: language === 'tr' ? `+${pts} Puan Kazanıldı!` : `+${pts} Points Earned!`,
+                                description: language === 'tr' ? 'Quiz sorusu doğru cevaplandı!' : 'Quiz question answered correctly!'
+                              });
+                            }
+                          }
+                          setSdnQuizFeedback(result);
+                        }}
+                        className="w-full whitespace-normal break-words rounded border border-secondary-200 dark:border-secondary-700 px-3 py-2 text-left text-sm hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-70"
+                      >{choice}</button>
+                    ))}
+                  </div>
                   {sdnQuizFeedback && (
-                    <div className={cn('rounded p-2 text-[11px]', sdnQuizFeedback.correct ? 'bg-success-50 text-success-700' : 'bg-error-50 text-error-700')}>
+                    <div className={cn('mt-3 rounded p-2 text-[11px]', sdnQuizFeedback.correct ? 'bg-success-50 text-success-700 dark:bg-success-900/30 dark:text-success-300' : 'bg-error-50 text-error-700 dark:bg-error-900/30 dark:text-error-300')}>
                       <p className="font-bold">{sdnQuizFeedback.correct ? (language === 'tr' ? 'Doğru!' : 'Correct!') : (language === 'tr' ? 'Yanlış' : 'Incorrect')}</p>
                       <p>{sdnQuizFeedback.explanation}</p>
                       <button onClick={() => {
                         setSdnQuizFeedback(null);
-                        setSdnQuizIndex(index => (index + 1) % sdnQuizQuestions.length);
+                        setSdnQuizIndex(index => (index + 1) % quizQuestions.length);
                       }} className="mt-1 font-bold underline">
                         {language === 'tr' ? 'Sonraki soru' : 'Next question'}
                       </button>

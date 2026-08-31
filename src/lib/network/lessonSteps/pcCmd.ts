@@ -21,7 +21,7 @@ export const pcCmdGuidedSteps: GuidedStep[] = [
     hint: { tr: 'Terminalde "ipconfig" yazıp Enter\'a basın.', en: 'Type "ipconfig" in the terminal and press Enter.' },
     animationId: 'pc-ipconfig',
     checkType: 'command',
-    checkParams: { commandPattern: 'ipconfig' },
+    checkParams: { commandPattern: 'ipconfig', deviceType: 'pc' },
     completed: false,
     points: 10
   },
@@ -33,7 +33,7 @@ export const pcCmdGuidedSteps: GuidedStep[] = [
     hint: { tr: '"help" yazıp Enter\'a basın.', en: 'Type "help" and press Enter.' },
     animationId: 'pc-help',
     checkType: 'command',
-    checkParams: { commandPattern: 'help' },
+    checkParams: { commandPattern: 'help', deviceType: 'pc' },
     completed: false,
     points: 5
   }

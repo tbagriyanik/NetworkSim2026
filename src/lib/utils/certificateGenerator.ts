@@ -13,46 +13,10 @@ interface CertificateData {
   studentId?: string;
 }
 
-// ─── Font cache (avoid re-fetching on each certificate) ──────────────────────
-const _fontCache: { regular?: string; bold?: string } = {};
-
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = '';
-  const chunkSize = 8192;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    binary += String.fromCharCode(...bytes.subarray(i, Math.min(i + chunkSize, bytes.length)));
-  }
-  return btoa(binary);
-}
-
-async function fetchFontBase64(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    return arrayBufferToBase64(await res.arrayBuffer());
-  } catch {
-    return null;
-  }
-}
-
-async function loadFonts(): Promise<{ regular: string | null; bold: string | null }> {
-  if (_fontCache.regular && _fontCache.bold) {
-    return { regular: _fontCache.regular, bold: _fontCache.bold };
-  }
-  const [regular, bold] = await Promise.all([
-    fetchFontBase64('/fonts/Roboto-Regular.ttf'),
-    fetchFontBase64('/fonts/Roboto-Bold.ttf'),
-  ]);
-  if (regular) _fontCache.regular = regular;
-  if (bold) _fontCache.bold = bold;
-  return { regular, bold };
-}
-
 // ─── QR Code generator ───────────────────────────────────────────────────────
 async function fetchQRDataUrl(text: string): Promise<string | null> {
   try {
-    const size = 120;
+    const size = 180;
     const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}&format=png&ecc=M`;
     const response = await fetch(url);
     if (!response.ok) return null;
@@ -85,22 +49,223 @@ async function fetchLogoDataUrl(): Promise<string | null> {
   }
 }
 
-// ─── Fallback sanitizer (used only when Roboto fails to load) ─────────────────
-const sanitize = (s: string) =>
-  s
-    ? s
-      .replace(/ı/g, 'i').replace(/ğ/g, 'g').replace(/ü/g, 'u')
-      .replace(/ş/g, 's').replace(/ö/g, 'o').replace(/ç/g, 'c')
-      .replace(/İ/g, 'I').replace(/Ğ/g, 'G').replace(/Ü/g, 'U')
-      .replace(/Ş/g, 'S').replace(/Ö/g, 'O').replace(/Ç/g, 'C')
-    : '';
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = src;
+  });
+}
 
-// ─── Main generator ──────────────────────────────────────────────────────────
+// ─── Canvas Renderer (Guarantees 100% Perfect Turkish Character Support) ─────
+async function renderCertificateCanvas(
+  data: CertificateData,
+  verifyCode: string,
+  qrDataUrl: string | null,
+  logoDataUrl: string | null
+): Promise<string> {
+  const width = 2400;
+  const height = 1700;
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Failed to create canvas context');
+
+  const isTr = data.language === 'tr';
+
+  // 1. Background fill
+  ctx.fillStyle = '#F8FAFC';
+  ctx.fillRect(0, 0, width, height);
+
+  // 2. Outer decorative double border
+  ctx.strokeStyle = '#1E40AF';
+  ctx.lineWidth = 16;
+  ctx.strokeRect(60, 60, width - 120, height - 120);
+
+  ctx.strokeStyle = '#D97706';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(76, 76, width - 152, height - 152);
+
+  // Inner card container
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(84, 84, width - 168, height - 168);
+
+  // Accent header band
+  ctx.fillStyle = '#1E3A8A';
+  ctx.fillRect(84, 84, width - 168, 20);
+
+  // 3. Draw QR Code (Top-Left)
+  const qrX = 120;
+  const qrY = 130;
+  const qrSize = 180;
+
+  if (qrDataUrl) {
+    try {
+      const qrImg = await loadImage(qrDataUrl);
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+    } catch {
+      ctx.strokeStyle = '#2563EB';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(qrX, qrY, qrSize, qrSize);
+    }
+  }
+
+  // Verification Code below QR
+  ctx.font = 'bold 22px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.textAlign = 'left';
+  ctx.fillText(`${isTr ? 'Doğrulama Kodu' : 'Verify Code'}: ${verifyCode}`, qrX, qrY + qrSize + 35);
+
+  // 4. Draw Logo (Top-Right)
+  const logoSize = 180;
+  const logoX = width - 120 - logoSize;
+  const logoY = 130;
+
+  if (logoDataUrl) {
+    try {
+      const logoImg = await loadImage(logoDataUrl);
+      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+    } catch { /* Ignore if logo fails. */ }
+  }
+
+  // 5. Certificate Header & Title
+  const centerX = width / 2;
+
+  ctx.textAlign = 'center';
+
+  // Sub-header Badge
+  ctx.font = 'bold 26px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#D97706';
+  ctx.fillText('NETWORK SIMULATOR ACADEMY', centerX, 240);
+
+  // Main Title
+  ctx.font = 'bold 64px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#1E293B';
+  const titleText = isTr ? 'BAŞARI SERTİFİKASI' : 'CERTIFICATE OF ACHIEVEMENT';
+  ctx.fillText(titleText, centerX, 330);
+
+  // Decorative line under title
+  ctx.strokeStyle = '#2563EB';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(centerX - 250, 360);
+  ctx.lineTo(centerX + 250, 360);
+  ctx.stroke();
+
+  // Subtitle
+  ctx.font = '28px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#64748B';
+  const subtitleText = isTr
+    ? 'Bu belge aşağıdaki katılımcının modülü başarıyla tamamladığını onaylar:'
+    : 'This is to certify that';
+  ctx.fillText(subtitleText, centerX, 440);
+
+  // Student Name (Full Turkish Character Support)
+  ctx.font = 'bold 68px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#1D4ED8';
+  ctx.fillText(data.studentName.toUpperCase(), centerX, 550);
+
+  // Underline for Student Name
+  ctx.strokeStyle = '#93C5FD';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(centerX - 350, 580);
+  ctx.lineTo(centerX + 350, 580);
+  ctx.stroke();
+
+  // Project Info
+  ctx.font = '26px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#475569';
+  ctx.fillText(
+    isTr ? 'Tamamlanan Eğitim Modülü:' : 'Has successfully completed the lab module:',
+    centerX, 660
+  );
+
+  ctx.font = 'bold 44px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#0F172A';
+  ctx.fillText(data.projectTitle, centerX, 730);
+
+  // Score Badge
+  const scoreBoxWidth = 500;
+  const scoreBoxHeight = 80;
+  const scoreBoxX = centerX - scoreBoxWidth / 2;
+  const scoreBoxY = 790;
+
+  ctx.fillStyle = '#F0FDF4';
+  ctx.strokeStyle = '#16A34A';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(scoreBoxX, scoreBoxY, scoreBoxWidth, scoreBoxHeight, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.font = 'bold 32px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#15803D';
+  ctx.fillText(
+    `${isTr ? 'Başarı Puanı' : 'Achievement Score'}: ${data.score} / ${data.totalScore}`,
+    centerX, scoreBoxY + 52
+  );
+
+  // Date & Validity (Bottom Left)
+  ctx.textAlign = 'left';
+  ctx.font = '26px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#334155';
+  ctx.fillText(`${isTr ? 'Tarih' : 'Date'}: ${data.date}`, 160, 1050);
+
+  const expireDateObj = new Date();
+  expireDateObj.setFullYear(expireDateObj.getFullYear() + 1);
+  const expireDateStr = expireDateObj.toLocaleDateString(isTr ? 'tr-TR' : 'en-US');
+  ctx.fillText(`${isTr ? 'Geçerlilik Tarihi' : 'Expiration Date'}: ${expireDateStr}`, 160, 1100);
+
+  // Signature Lines (Bottom)
+  ctx.strokeStyle = '#94A3B8';
+  ctx.lineWidth = 3;
+
+  // Instructor Signature
+  ctx.beginPath();
+  ctx.moveTo(160, 1320);
+  ctx.lineTo(550, 1320);
+  ctx.stroke();
+
+  ctx.font = 'bold 24px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#1E293B';
+  ctx.fillText(isTr ? 'Eğitmen' : 'Instructor', 160, 1360);
+  ctx.font = '22px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.fillText('Network Simulator', 160, 1395);
+
+  // Director Signature
+  ctx.beginPath();
+  ctx.moveTo(width - 550, 1320);
+  ctx.lineTo(width - 160, 1320);
+  ctx.stroke();
+
+  ctx.font = 'bold 24px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#1E293B';
+  ctx.fillText(isTr ? 'Program Yöneticisi' : 'Program Director', width - 550, 1360);
+  ctx.font = '22px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#64748B';
+  ctx.fillText('...................', width - 550, 1395);
+
+  // Footer text
+  ctx.textAlign = 'center';
+  ctx.font = '20px "Segoe UI", Roboto, Arial, sans-serif';
+  ctx.fillStyle = '#94A3B8';
+  ctx.fillText('Network Simulator Certification System • Official Digital Document', centerX, 1550);
+
+  return canvas.toDataURL('image/png');
+}
+
+// ─── Main Generator ──────────────────────────────────────────────────────────
 export const generateCertificate = async (data: CertificateData): Promise<void> => {
   const { score, totalScore, language } = data;
   const isTr = language === 'tr';
 
-  // ─── Step 1: Register certificate on server and get verify code ───────────
+  // Step 1: Register certificate on server and get verify code
   const windowOrigin = typeof window !== 'undefined' ? window.location.origin : '';
   const PRODUCTION_URL = (process.env.NEXT_PUBLIC_APP_URL || windowOrigin).replace(/\/$/, '');
   let verifyCode = '';
@@ -181,157 +346,26 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
     return;
   }
 
-  // ─── Step 2: Fetch all resources in parallel ──────────────────────────────
-  const [qrDataUrl, logoDataUrl, fonts] = await Promise.all([
+  // Step 2: Fetch resources in parallel
+  const [qrDataUrl, logoDataUrl] = await Promise.all([
     fetchQRDataUrl(verifyUrl),
     fetchLogoDataUrl(),
-    loadFonts(),
   ]);
 
-  const hasTurkishFont = !!(fonts.regular && fonts.bold);
+  // Step 3: Render Certificate with 100% Turkish Character Support via High-DPI Canvas
+  const certificateImgData = await renderCertificateCanvas(data, verifyCode, qrDataUrl, logoDataUrl);
 
-  // Raw strings — used with Roboto (full Unicode)
-  const studentNameRaw = data.studentName.toUpperCase();
-  const projectTitleRaw = data.projectTitle;
-  const dateRaw = data.date;
-
-  // Sanitized fallback — used with Helvetica
-  const studentName = hasTurkishFont ? studentNameRaw : sanitize(data.studentName).toUpperCase();
-  const projectTitle = hasTurkishFont ? projectTitleRaw : sanitize(data.projectTitle);
-  const date = hasTurkishFont ? dateRaw : sanitize(data.date);
-
-  // ─── Step 3: Build PDF ────────────────────────────────────────────────────
+  // Step 4: Embed High-DPI Canvas Image into jsPDF (A4 Landscape)
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-  // Register Roboto fonts for Turkish character support
-  if (hasTurkishFont) {
-    doc.addFileToVFS('Roboto-Regular.ttf', fonts.regular ?? '');
-    doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
-    doc.addFileToVFS('Roboto-Bold.ttf', fonts.bold ?? '');
-    doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
-  }
-
-  const fontName = hasTurkishFont ? 'Roboto' : 'helvetica';
-  const setNormal = () => doc.setFont(fontName, 'normal');
-  const setBold = () => doc.setFont(fontName, 'bold');
-
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Draw border
-  doc.setDrawColor(41, 128, 185);
-  doc.setLineWidth(2);
-  doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
-  doc.setLineWidth(0.5);
-  doc.rect(12, 12, pageWidth - 24, pageHeight - 24);
-
-  // Background
-  doc.setFillColor(245, 247, 250);
-  doc.rect(13, 13, pageWidth - 26, pageHeight - 26, 'F');
-
-  // ─── QR (top-left) ────────────────────────────────────────────────────────
-  const qrSize = 28;
-  const qrX = 15;
-  const qrY = 15;
-
-  if (qrDataUrl) {
-    doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-  } else {
-    doc.setDrawColor(41, 128, 185);
-    doc.setLineWidth(0.5);
-    doc.rect(qrX, qrY, qrSize, qrSize);
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text('QR', qrX + qrSize / 2, qrY + qrSize / 2, { align: 'center' });
-  }
-
-  // Verification code below QR
-  doc.setFontSize(8);
-  setNormal();
-  doc.text(`${isTr ? 'Kod' : 'Code'}: ${verifyCode}`, qrX, qrY + qrSize + 10);
-
-  // ─── Logo (top-right) ─────────────────────────────────────────────────────
-  const logoSize = 28;
-  const logoX = pageWidth - logoSize - 15;
-  const logoY = 15;
-  if (logoDataUrl) {
-    doc.addImage(logoDataUrl, 'PNG', logoX, logoY, logoSize, logoSize);
-  }
-
-  // ─── Title ────────────────────────────────────────────────────────────────
-  doc.setTextColor(44, 62, 80);
-  setBold();
-  doc.setFontSize(26);
-  const titleText = isTr ? 'BAŞARI SERTİFİKASI' : 'CERTIFICATE OF ACHIEVEMENT';
-  doc.text(titleText, pageWidth / 2, 58, { align: 'center' });
-
-  // Subtitle
-  doc.setFontSize(16);
-  setNormal();
-  const subtitleText = isTr
-    ? 'Bu belge aşağıdaki kişinin başarıyla tamamladığını onaylar:'
-    : 'This is to certify that';
-  doc.text(subtitleText, pageWidth / 2, 72, { align: 'center' });
-
-  // Student Name
-  doc.setTextColor(41, 128, 185);
-  doc.setFontSize(30);
-  setBold();
-  doc.text(studentName, pageWidth / 2, 90, { align: 'center' });
-
-  // Project Info
-  doc.setTextColor(44, 62, 80);
-  doc.setFontSize(16);
-  setNormal();
-  doc.text(
-    isTr ? 'Eğitim Modülü:' : 'Has successfully completed the lab:',
-    pageWidth / 2, 108, { align: 'center' }
-  );
-
-  setBold();
-  doc.setFontSize(14);
-  doc.text(projectTitle, pageWidth / 2, 121, { align: 'center' });
-
-  // Score
-  setNormal();
-  doc.setFontSize(14);
-  doc.text(
-    `${isTr ? 'Başarı Puanı' : 'Achievement Score'}: ${score} / ${totalScore}`,
-    pageWidth / 2, 138, { align: 'center' }
-  );
-
-  // Date
-  doc.setFontSize(13);
-  doc.text(`${isTr ? 'Tarih' : 'Date'}: ${date}`, 40, 165);
-
-  // Expiration Date (1 Year validity)
-  const expireDateObj = new Date();
-  expireDateObj.setFullYear(expireDateObj.getFullYear() + 1);
-  const expireDateRaw = expireDateObj.toLocaleDateString(isTr ? 'tr-TR' : 'en-US');
-  const expireDate = hasTurkishFont ? expireDateRaw : sanitize(expireDateRaw);
-
-  doc.text(`${isTr ? 'Geçerlilik Tarihi' : 'Expiration Date'}: ${expireDate}`, 40, 172);
-
-  // Signature lines
-  doc.setDrawColor(189, 195, 199);
-  doc.line(40, 182, 100, 182);
-  doc.line(pageWidth - 100, 182, pageWidth - 40, 182);
-
-  doc.setTextColor(44, 62, 80);
-  doc.setFontSize(11);
-  doc.text(isTr ? 'Eğitmen' : 'Instructor', 70, 189, { align: 'center' });
-  doc.text(isTr ? 'Program Yöneticisi' : 'Program Director', pageWidth - 70, 189, { align: 'center' });
-
-  // Footer
-  setNormal();
-  doc.setFontSize(9);
-  doc.setTextColor(127, 140, 141);
-  doc.text('Network Simulator', pageWidth / 2, pageHeight - 15, { align: 'center' });
+  doc.addImage(certificateImgData, 'PNG', 0, 0, pageWidth, pageHeight);
 
   doc.save(`Sertifika-${data.studentName.replace(/\s+/g, '_')}.pdf`);
 
   toast({
     title: isTr ? '🎉 Sertifika İndirildi' : '🎉 Certificate Downloaded',
-    description: isTr ? 'Sertifikanız PDF formatında başarıyla kaydedildi.' : 'Your certificate has been successfully saved as PDF.',
+    description: isTr ? 'Sertifikanız PDF formatında Türkçe karakterlerle başarıyla kaydedildi.' : 'Your certificate has been successfully saved as PDF.',
   });
 };

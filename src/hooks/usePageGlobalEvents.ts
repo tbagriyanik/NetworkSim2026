@@ -95,21 +95,21 @@ export function usePageGlobalEvents({
 
   useEffect(() => {
     const handleShowMe = (e: Event) => {
-      const { targetDeviceId, hintCommand, commandPattern, checkType, toIp } = (e as CustomEvent).detail;
+      const { targetDeviceId, deviceType, stepId, hintCommand, commandPattern, checkType, toIp } = (e as CustomEvent).detail;
       let deviceId = targetDeviceId;
 
-      let cleanCommand = '';
+      let rawStr = '';
       if (checkType === 'ping' && toIp) {
-        cleanCommand = `ping ${toIp}`;
+        rawStr = `ping ${toIp}`;
       } else if (hintCommand) {
-        cleanCommand = String(hintCommand);
+        rawStr = String(hintCommand);
       } else if (commandPattern) {
-        cleanCommand = String(commandPattern).split('|')[0];
+        rawStr = String(commandPattern).split('|')[0];
       }
 
       // Try resolving target device from hint prefix (e.g. "router-1: ...") if not specified
-      if (!deviceId && hintCommand) {
-        const colonMatch = String(hintCommand).match(/^([^:]{1,40}):\s*/);
+      if (!deviceId && rawStr) {
+        const colonMatch = rawStr.match(/^([^:]{1,40}):\s*/);
         if (colonMatch) {
           const targetName = colonMatch[1].trim().toLowerCase();
           const found = topologyDevices.find(
@@ -121,20 +121,49 @@ export function usePageGlobalEvents({
         }
       }
 
+      let cleanCommand = '';
+
+      // Check if rawStr contains a quoted command like "ipconfig" or "show ip int brief"
+      const quoteMatch = rawStr.match(/["'“”]([^"'“”]+)["'“”]/);
+      if (quoteMatch && quoteMatch[1].trim()) {
+        cleanCommand = quoteMatch[1].trim();
+      } else {
+        cleanCommand = rawStr;
+      }
+
       // Clean device prefixes (e.g. "switch-1: ...") and prompt prefixes (e.g. "Switch# ", "Switch(config)# ", "Switch> ")
       cleanCommand = cleanCommand
+        .replace(/[\^$()]/g, '')
         .replace(/^[^:]{1,40}:\s*/i, '')
         .replace(/^[a-zA-Z0-9_-]+(\([^)]+\))?[>#]\s*/, '')
-        .replace(/^type\s+/i, '')
+        .replace(/^(type|yazın|yazin)\s+/i, '')
         .replace(/\s+(yazın|yazin)\.?$/i, '')
-        .replace(/\s+(and press enter|press enter)\.?$/i, '');
-      // Show Me must inject the command itself, not the surrounding prose
-      // punctuation (e.g. `"enable".` must become `enable`).
-      cleanCommand = cleanCommand.replace(/^["'“”]+|["'“”.,!?]+$/g, '').trim();
+        .replace(/\s+(and press enter|press enter)\.?$/i, '')
+        .replace(/^["'“”]+|["'“”.,!?]+$/g, '')
+        .trim();
+
+      if (!cleanCommand && commandPattern) {
+        cleanCommand = String(commandPattern).split('|')[0].replace(/[\^$()]/g, '').trim();
+      }
 
       if (!deviceId) {
-        if (cleanCommand.includes('ipconfig') || cleanCommand.includes('ping') || cleanCommand.includes('ftp') || cleanCommand.includes('tracert')) {
+        if (
+          deviceType === 'pc' ||
+          (stepId && (String(stepId).includes('pc') || String(stepId).startsWith('run-'))) ||
+          cleanCommand === 'help' ||
+          cleanCommand.includes('ipconfig') ||
+          cleanCommand.includes('ping') ||
+          cleanCommand.includes('ftp') ||
+          cleanCommand.includes('tracert') ||
+          cleanCommand.includes('cls') ||
+          cleanCommand.includes('dir') ||
+          cleanCommand.includes('nslookup')
+        ) {
           deviceId = topologyDevices.find(d => d.type === 'pc')?.id;
+        } else if (deviceType === 'switch') {
+          deviceId = topologyDevices.find(d => d.type === 'switchL2' || d.type === 'switchL3')?.id;
+        } else if (deviceType === 'router') {
+          deviceId = topologyDevices.find(d => d.type === 'router')?.id;
         } else {
           deviceId = topologyDevices.find(d => d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'router')?.id;
         }
