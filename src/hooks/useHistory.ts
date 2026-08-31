@@ -3,6 +3,7 @@ import { SwitchState, CableInfo } from '@/lib/network/types';
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType } from '@/components/network/networkTopology.types';
 import { TerminalOutput } from '@/components/network/Terminal';
 import { logger } from '@/lib/logger';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 interface PCOutputLine {
   id: string;
@@ -202,11 +203,11 @@ export function useHistory(initialState: ProjectState) {
       index: 0
     };
   });
-  // Save to localStorage when state changes
+  // Save to secureStorage when state changes
   useEffect(() => {
     try {
       if (state.items.length <= 1) {
-        localStorage.removeItem('netsim_history');
+        secureStorage.removeItem('netsim_history');
         return;
       }
 
@@ -219,7 +220,7 @@ export function useHistory(initialState: ProjectState) {
           index: idx
         };
         try {
-          localStorage.setItem('netsim_history', JSON.stringify(serialized));
+          secureStorage.setItem('netsim_history', JSON.stringify(serialized));
         } catch (e) {
           if (e instanceof DOMException && e.name === 'QuotaExceededError' && itemsToSave.length > 2) {
             const cutSize = Math.floor(itemsToSave.length / 2);

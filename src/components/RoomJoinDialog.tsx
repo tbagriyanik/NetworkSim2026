@@ -13,30 +13,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useRoom } from '@/contexts/RoomContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 export function RoomJoinDialog() {
   const { showRoomJoinDialog, setShowRoomJoinDialog, joinRoom, studentRoomCode, studentDisplayName, leaveRoom } = useRoom();
   const { t } = useLanguage();
-  const [code, setCode] = useState(() => localStorage.getItem('room-join-code') || '');
-  const [name, setName] = useState(() => localStorage.getItem('room-student-name') || '');
+  const [code, setCode] = useState(() => secureStorage.getItem('room-join-code') || '');
+  const [name, setName] = useState(() => secureStorage.getItem('room-student-name') || '');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [roomError, setRoomError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (studentRoomCode && studentDisplayName) {
+      setCode(studentRoomCode);
+      setName(studentDisplayName);
+    }
+  }, [studentRoomCode, studentDisplayName]);
+
+  // Periodic room presence check to notify if room closed/ended
   useEffect(() => {
     if (!studentRoomCode) return;
     let cancelled = false;
     const check = async () => {
       try {
         const res = await fetch(`/api/room/${studentRoomCode}`);
-        if (cancelled) return;
         const json = await res.json();
-        if (!json.success || !json.data?.exists) {
-          setRoomError(t.language === 'tr' ? 'Oda silinmiş veya zaman aşımına uğramış.' : 'Room deleted or expired.');
+        if (!cancelled && (!json.success || !json.data.exists)) {
+          leaveRoom();
+          setRoomError(t.language === 'tr' ? 'Oda sonlandırıldı.' : 'Room was closed by teacher.');
         }
-      } catch { /* ignore */ }
+      } catch {
+        // Network error ignored during period check
+      }
     };
-    check();
     const id = setInterval(check, 30000);
     return () => { cancelled = true; clearInterval(id); };
   }, [studentRoomCode, t]);
@@ -48,8 +58,8 @@ export function RoomJoinDialog() {
     return () => window.removeEventListener('mobile-back-pressed', handleMobileBack);
   }, [showRoomJoinDialog, setShowRoomJoinDialog]);
 
-  useEffect(() => { localStorage.setItem('room-join-code', code); }, [code]);
-  useEffect(() => { localStorage.setItem('room-student-name', name); }, [name]);
+  useEffect(() => { secureStorage.setItem('room-join-code', code); }, [code]);
+  useEffect(() => { secureStorage.setItem('room-student-name', name); }, [name]);
 
   const handleJoin = async () => {
     if (code.trim().length >= 4 && name.trim().length > 0) {

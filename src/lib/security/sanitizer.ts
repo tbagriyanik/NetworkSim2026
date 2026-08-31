@@ -43,16 +43,10 @@ export function sanitizeHTTPContent(input: string): string {
 
 export function sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
-    let sanitized = input.trim();
-    let prev: string;
-
-    // Strip HTML tags and dangerous characters recursively to prevent nested injection like "<<script>script>"
-    do {
-        prev = sanitized;
-        sanitized = sanitized.replace(/<[^>]*>?/gm, '').replace(/[<>`]/g, '');
-    } while (sanitized !== prev);
-
+    // Strip HTML tags, keeping their inner text
+    let sanitized = input.replace(/<[^>]*>/g, '');
     // Remove dangerous URI schemes recursively to prevent bypasses like "javas<javascript:>cript:"
+    let prev: string;
     do {
         prev = sanitized;
         sanitized = sanitized.replace(/(javascript|data|vbscript|file):/gi, '');

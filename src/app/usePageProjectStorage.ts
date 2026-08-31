@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 export function usePageProjectStorage() {
   const [projectName, setProjectName] = useState('Untitled');
@@ -7,7 +8,7 @@ export function usePageProjectStorage() {
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const savedName = localStorage.getItem('lastProjectName');
+      const savedName = secureStorage.getItem('lastProjectName');
       if (savedName) timer = setTimeout(() => setProjectName(savedName), 0);
     } catch { /* storage unavailable */ }
     return () => { if (timer) clearTimeout(timer); };
@@ -16,7 +17,7 @@ export function usePageProjectStorage() {
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      const savedExampleId = localStorage.getItem('lastLoadedExampleId');
+      const savedExampleId = secureStorage.getItem('lastLoadedExampleId');
       if (savedExampleId) timer = setTimeout(() => setLoadedExampleId(savedExampleId), 0);
     } catch { /* storage unavailable */ }
     return () => { if (timer) clearTimeout(timer); };
@@ -24,14 +25,14 @@ export function usePageProjectStorage() {
 
   useEffect(() => {
     try {
-      if (loadedExampleId) localStorage.setItem('lastLoadedExampleId', loadedExampleId);
-      else localStorage.removeItem('lastLoadedExampleId');
+      if (loadedExampleId) secureStorage.setItem('lastLoadedExampleId', loadedExampleId);
+      else secureStorage.removeItem('lastLoadedExampleId');
     } catch { /* storage unavailable */ }
   }, [loadedExampleId]);
 
   useEffect(() => {
     try {
-      localStorage.setItem('lastProjectName', projectName);
+      secureStorage.setItem('lastProjectName', projectName);
     } catch { /* storage unavailable */ }
   }, [projectName]);
 

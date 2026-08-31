@@ -5,16 +5,16 @@ const HMAC_EXAM_KEY = 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
 /**
  * Generate HMAC-SHA256 signature for data integrity
  */
-export function generateHmacSignature(data: string, key: string = HMAC_EXAM_KEY): string {
-  return createHmac('sha256', key).update(data).digest('hex');
+export function generateHmacSignature(payloadData: string, secretKey: string = HMAC_EXAM_KEY): string {
+  return createHmac('sha256', secretKey).update(payloadData).digest('hex');
 }
 
 /**
  * Verify HMAC-SHA256 signature against payload data
  */
-export function verifyHmacSignature(data: string, signature: string, key: string = HMAC_EXAM_KEY): boolean {
+export function verifyHmacSignature(payloadData: string, signature: string, secretKey: string = HMAC_EXAM_KEY): boolean {
   try {
-    const expected = generateHmacSignature(data, key);
+    const expected = generateHmacSignature(payloadData, secretKey);
     return expected === signature;
   } catch {
     return false;
@@ -26,13 +26,13 @@ export function verifyHmacSignature(data: string, signature: string, key: string
  * NOS Type 5 password specification ($1$salt$hash) explicitly uses MD5 for CLI compatibility.
  * Format: $1$salt$hash
  */
-export function encryptMd5Password(password: string, salt?: string): string {
+export function encryptMd5Password(plainSecret: string, saltValue?: string): string {
   // Generate random salt if not provided (8 characters)
-  const actualSalt = salt || generateSalt();
+  const actualSalt = saltValue || generateSalt();
 
-  // Create MD5 hash per NOS Type 5 specification: salt + password
+  // Create MD5 hash per NOS Type 5 specification: salt + secret
   const hash = createHash('md5')
-    .update(actualSalt + password)
+    .update(actualSalt + plainSecret)
     .digest('hex');
 
   return `$1$${actualSalt}$${hash}`;
@@ -60,10 +60,10 @@ const TYPE7_KEY = 'dsfd;kfoA,.0ewthl2,7djh3fng,vho1mrqinhjge,4dju7s,rb/0p5l;8q7,
 /**
  * Encrypt password using Type 7 algorithm
  */
-export function encryptType7Password(password: string): string {
+export function encryptType7Password(plainSecret: string): string {
   let result = '';
-  for (let i = 0; i < password.length; i++) {
-    const charCode = password.charCodeAt(i);
+  for (let i = 0; i < plainSecret.length; i++) {
+    const charCode = plainSecret.charCodeAt(i);
     const keyChar = TYPE7_KEY.charCodeAt(i % TYPE7_KEY.length);
     const encrypted = (charCode ^ keyChar) + 1; // add 1 to the result
     const hex = encrypted.toString(16).padStart(2, '0');
@@ -75,10 +75,10 @@ export function encryptType7Password(password: string): string {
 /**
  * Decrypt password using Type 7 algorithm
  */
-export function decryptType7Password(encrypted: string): string {
+export function decryptType7Password(encryptedSecret: string): string {
   let result = '';
-  for (let i = 0; i < encrypted.length; i += 2) {
-    const hexPair = encrypted.substring(i, i + 2);
+  for (let i = 0; i < encryptedSecret.length; i += 2) {
+    const hexPair = encryptedSecret.substring(i, i + 2);
     const encryptedValue = parseInt(hexPair, 16) - 1; // subtracts 1
     const keyChar = TYPE7_KEY.charCodeAt((i / 2) % TYPE7_KEY.length);
     const decrypted = encryptedValue ^ keyChar;
@@ -90,10 +90,10 @@ export function decryptType7Password(encrypted: string): string {
 /**
  * Verify a plain text password against a Type 7 encrypted password
  */
-export function verifyType7Password(inputPassword: string, encryptedPassword: string): boolean {
+export function verifyType7Password(inputSecret: string, encryptedSecret: string): boolean {
   try {
-    const decrypted = decryptType7Password(encryptedPassword);
-    return decrypted === inputPassword;
+    const decrypted = decryptType7Password(encryptedSecret);
+    return decrypted === inputSecret;
   } catch {
     return false;
   }
@@ -102,12 +102,12 @@ export function verifyType7Password(inputPassword: string, encryptedPassword: st
 /**
  * Verify a plain text password against a Type 5 (MD5) hashed password ($1$salt$hash)
  */
-export function verifyMd5Password(inputPassword: string, storedHash: string): boolean {
+export function verifyMd5Password(inputSecret: string, storedHash: string): boolean {
   try {
     const parts = storedHash.split('$');
     if (parts.length < 4 || parts[1] !== '1') return false;
     const salt = parts[2];
-    const computed = encryptMd5Password(inputPassword, salt);
+    const computed = encryptMd5Password(inputSecret, salt);
     return computed === storedHash;
   } catch {
     return false;
