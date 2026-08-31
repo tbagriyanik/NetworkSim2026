@@ -3,6 +3,7 @@ import { getPrompt } from './executorPrompt';
 import { generateBootMessages } from './executorBootMessages';
 import { findDeviceByHost, formatBytes } from './executorSessionUtils';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
   const needsLogin = !!(state.security.consoleLine.login && state.security.consoleLine.password);
@@ -175,7 +176,8 @@ function handleConfigSourceInput(_state: SwitchState, input: string, language: '
   };
 }
 
-function handlePasswordInput(state: SwitchState, password: string, language: 'tr' | 'en'): CommandResult {  if (state.passwordContext === 'enable') {
+function handlePasswordInput(state: SwitchState, password: string, language: 'tr' | 'en'): CommandResult {
+  if (state.passwordContext === 'enable') {
     // Check if enable password is configured
     const hasEnablePassword = !!(state.security.enableSecret || state.security.enablePassword);
 
@@ -481,23 +483,23 @@ function handleMailSessionCommand(
       let currentInbox = delivered.state.services?.mail?.inbox || [];
       if (typeof window !== 'undefined') {
         try {
-          const storedInbox = window.localStorage.getItem(`mail_inbox_${delivered.device.id}`);
+          const storedInbox = secureStorage.getItem(`mail_inbox_${delivered.device.id}`);
           if (storedInbox) currentInbox = JSON.parse(storedInbox);
-        } catch { /* localStorage error */ }
+        } catch { /* storage error */ }
       }
       const inbox = [{ from: session.address, subject, body: subject, timestamp }, ...currentInbox];
-      if (typeof window !== 'undefined') window.localStorage.setItem(`mail_inbox_${delivered.device.id}`, JSON.stringify(inbox));
+      if (typeof window !== 'undefined') secureStorage.setItem(`mail_inbox_${delivered.device.id}`, JSON.stringify(inbox));
 
       const sourceMail = state.services?.mail;
       let currentSent = sourceMail?.sent || [];
       if (ctx.sourceDeviceId && typeof window !== 'undefined') {
         try {
-          const storedSent = window.localStorage.getItem(`mail_sent_${ctx.sourceDeviceId}`);
+          const storedSent = secureStorage.getItem(`mail_sent_${ctx.sourceDeviceId}`);
           if (storedSent) currentSent = JSON.parse(storedSent);
-        } catch { /* localStorage error */ }
+        } catch { /* storage error */ }
       }
       const sent = [{ to: recipient, subject, body: subject, timestamp }, ...currentSent];
-      if (ctx.sourceDeviceId && typeof window !== 'undefined') window.localStorage.setItem(`mail_sent_${ctx.sourceDeviceId}`, JSON.stringify(sent));
+      if (ctx.sourceDeviceId && typeof window !== 'undefined') secureStorage.setItem(`mail_sent_${ctx.sourceDeviceId}`, JSON.stringify(sent));
 
       const updated = new Map(ctx.deviceStates || []);
       // Update recipient's inbox

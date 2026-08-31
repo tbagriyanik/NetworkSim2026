@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useEffect, useMemo, useState } from 'react';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 export type LearningMode = 'beginner' | 'intermediate' | 'advanced';
 
@@ -18,10 +19,10 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
     const [mode, setModeState] = useState<LearningMode>(DEFAULT_MODE);
     const [isHydrated, setIsHydrated] = useState(false);
 
-    // Load mode from localStorage on mount
+    // Load mode from secureStorage on mount
     useEffect(() => {
         try {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const saved = secureStorage.getItem(STORAGE_KEY);
             if (saved && isValidMode(saved)) {
                 setTimeout(() => setModeState(saved as LearningMode), 0);
             }
@@ -31,11 +32,11 @@ export function ModeProvider({ children }: { children: React.ReactNode }) {
         setTimeout(() => setIsHydrated(true), 0);
     }, []);
 
-    // Persist mode to localStorage when it changes
+    // Persist mode to secureStorage when it changes
     useEffect(() => {
         if (!isHydrated) return;
         try {
-            localStorage.setItem(STORAGE_KEY, mode);
+            secureStorage.setItem(STORAGE_KEY, mode);
         } catch {
             // ignore persistence failures
         }

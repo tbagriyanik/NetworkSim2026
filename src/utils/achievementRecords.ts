@@ -28,9 +28,11 @@ export interface AchievementSummary {
 
 const STORAGE_KEY = 'netsim_achievement_summary';
 
+import { secureStorage } from '@/lib/storage/secureStorage';
+
 export function getSummary(): AchievementSummary {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = secureStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : { totalSessionSeconds: 0, projects: [], guidedLessons: [], exams: [] };
   } catch {
     return { totalSessionSeconds: 0, projects: [], guidedLessons: [], exams: [] };
@@ -39,7 +41,7 @@ export function getSummary(): AchievementSummary {
 
 function saveSummary(summary: AchievementSummary): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(summary));
+    secureStorage.setItem(STORAGE_KEY, JSON.stringify(summary));
   } catch {
     // storage error
   }

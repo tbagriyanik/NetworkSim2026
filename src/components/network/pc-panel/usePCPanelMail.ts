@@ -7,6 +7,7 @@ import type { OutputLine } from './PCPanel.types';
 import { checkConnectivity } from '@/lib/network/connectivity';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { syncMailFilesToFs } from './pcFileSystem';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 interface UsePCPanelMailOptions {
   language: string;
@@ -128,13 +129,13 @@ export function usePCPanelMail({
       let existingInbox = targetDevice.services?.mail?.inbox || [];
       if (typeof window !== 'undefined') {
         try {
-          const stored = localStorage.getItem(`mail_inbox_${targetDevice.id}`);
+          const stored = secureStorage.getItem(`mail_inbox_${targetDevice.id}`);
           if (stored) existingInbox = JSON.parse(stored);
-        } catch {}
+        } catch { }
       }
       const updatedInbox = [newInboxEntry, ...existingInbox];
       if (typeof window !== 'undefined')
-        localStorage.setItem(`mail_inbox_${targetDevice.id}`, JSON.stringify(updatedInbox));
+        secureStorage.setItem(`mail_inbox_${targetDevice.id}`, JSON.stringify(updatedInbox));
       const newSentEntry = { from, to: recipient, subject: subj, body: bdy, timestamp };
       const nextSent = [newSentEntry, ...serviceMailSent];
       setServiceMailSent(nextSent);
@@ -276,18 +277,18 @@ export function usePCPanelMail({
       let existingInbox = targetDevice.services?.mail?.inbox || [];
       if (typeof window !== 'undefined') {
         try {
-          const stored = localStorage.getItem(`mail_inbox_${targetDevice.id}`);
+          const stored = secureStorage.getItem(`mail_inbox_${targetDevice.id}`);
           if (stored) {
             const parsed = JSON.parse(stored);
             if (Array.isArray(parsed) && parsed.length >= existingInbox.length) {
               existingInbox = parsed;
             }
           }
-        } catch {}
+        } catch { }
       }
       const updatedInbox = [newInboxEntry, ...existingInbox];
       if (typeof window !== 'undefined')
-        localStorage.setItem(`mail_inbox_${targetDevice.id}`, JSON.stringify(updatedInbox));
+        secureStorage.setItem(`mail_inbox_${targetDevice.id}`, JSON.stringify(updatedInbox));
       const newSentEntry = { from, to: msg.from, subject, body: replyBody, timestamp };
       const nextSent = [newSentEntry, ...serviceMailSent];
       setServiceMailSent(nextSent);

@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import type { CanvasConnection, CanvasDevice } from '../networkTopology.types';
 import { buildHopPacketInfos as buildHopPacketInfosFn } from '../PingPacketInfoPanel';
 import { checkDeviceConnectivity as checkDeviceConnectivityFn, getPingDiagnostics as getPingDiagnosticsFn, getWirelessDistance as getWirelessDistanceFn } from '@/lib/network/connectivity';
+import { secureStorage } from '@/lib/storage/secureStorage';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 
 export interface BroadcastAnimTarget {
@@ -261,7 +262,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
     const hadCachedArpEntry = (() => {
       if (typeof window === 'undefined' || !targetIp) return false;
       try {
-        const raw = localStorage.getItem(`pc_arp_${sourceId}`);
+        const raw = secureStorage.getItem(`pc_arp_${sourceId}`);
         const entries = raw ? JSON.parse(raw) as Array<{ ip?: string; mac?: string }> : [];
         return entries.some(entry => entry.ip === targetIp && !!entry.mac);
       } catch {
@@ -395,7 +396,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
 
       const addArpToStorage = (devId: string, ip: string, mac: string, isIot = false) => {
         try {
-          const raw = localStorage.getItem(`pc_arp_${devId}`);
+          const raw = secureStorage.getItem(`pc_arp_${devId}`);
           const list: Array<{ ip: string; mac: string; type: string }> = raw ? JSON.parse(raw) : [];
           const exists = list.find(e => e.ip === ip);
           let next;
@@ -404,8 +405,7 @@ export function usePingSequence(deps: PingSequenceDeps) {
           } else {
             next = [...list, { ip, mac, type: isIot ? 'dynamic (IoT)' : 'dynamic' }];
           }
-          // Simulated network ARP table state (no real data).
-          localStorage.setItem(`pc_arp_${devId}`, JSON.stringify(next));
+          secureStorage.setItem(`pc_arp_${devId}`, JSON.stringify(next));
         } catch { /* ignore */ }
       };
 

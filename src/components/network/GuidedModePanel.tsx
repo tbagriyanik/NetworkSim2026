@@ -30,6 +30,7 @@ import { GuidedProject, getProgressPercentage } from '@/lib/network/guidedMode';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TutorialAnimationPlayer } from './TutorialAnimationPlayer';
 import { generateCertificate } from '@/lib/utils/certificateGenerator';
+import { secureStorage } from '@/lib/storage/secureStorage';
 import { answerSdnQuiz, getQuizQuestionsForProject, SdnQuizQuestion } from '@/lib/network/sdnQuiz';
 
 interface GuidedModePanelProps {
@@ -86,7 +87,7 @@ export function GuidedModePanel({
   // Load hint and expanded states from localStorage
   const [showHint, setShowHint] = React.useState(() => {
     if (typeof window === 'undefined') return false;
-    const saved = localStorage.getItem('guided_show_hint');
+    const saved = secureStorage.getItem('guided_show_hint');
     return saved === 'true';
   });
 
@@ -106,7 +107,7 @@ export function GuidedModePanel({
 
   const [expandedSteps, setExpandedSteps] = React.useState<string[]>(() => {
     if (typeof window === 'undefined') return [];
-    const saved = localStorage.getItem('guided_expanded_steps');
+    const saved = secureStorage.getItem('guided_expanded_steps');
     return saved ? JSON.parse(saved) : [];
   });
 
@@ -125,8 +126,8 @@ export function GuidedModePanel({
 
   useEffect(() => {
     if (typeof window === 'undefined' || !project) return;
-    const saved = localStorage.getItem(`sdn_quiz_progress_${project.id}`);
-    const savedPoints = localStorage.getItem(`quiz_earned_points_${project.id}`);
+    const saved = secureStorage.getItem(`sdn_quiz_progress_${project.id}`);
+    const savedPoints = secureStorage.getItem(`quiz_earned_points_${project.id}`);
     if (saved) {
       try {
         const progress = JSON.parse(saved) as { score?: number; answered?: string[] };
@@ -147,24 +148,22 @@ export function GuidedModePanel({
 
   useEffect(() => {
     if (typeof window !== 'undefined' && project) {
-      // Simulated quiz progress (local lesson state).
-      localStorage.setItem(`sdn_quiz_progress_${project.id}`, JSON.stringify({ score: sdnQuizScore, answered: sdnQuizAnswered }));
-      localStorage.setItem(`quiz_earned_points_${project.id}`, String(quizEarnedPoints));
+      secureStorage.setItem(`sdn_quiz_progress_${project.id}`, JSON.stringify({ score: sdnQuizScore, answered: sdnQuizAnswered }));
+      secureStorage.setItem(`quiz_earned_points_${project.id}`, String(quizEarnedPoints));
     }
   }, [sdnQuizScore, sdnQuizAnswered, quizEarnedPoints, project]);
 
   // Save hint state to localStorage when it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('guided_show_hint', String(showHint));
+      secureStorage.setItem('guided_show_hint', String(showHint));
     }
   }, [showHint]);
 
   // Save expanded steps to localStorage when they change
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // UI preference (expanded step IDs); no sensitive data.
-      localStorage.setItem('guided_expanded_steps', JSON.stringify(expandedSteps));
+      secureStorage.setItem('guided_expanded_steps', JSON.stringify(expandedSteps));
     }
   }, [expandedSteps]);
 

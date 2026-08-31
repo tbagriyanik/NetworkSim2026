@@ -5,6 +5,7 @@ import { Laptop, Terminal as TerminalIcon, CornerDownLeft, Trash2, Pin } from 'l
 import { Button } from '@/components/ui/button';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { cn } from '@/lib/utils';
+import { secureStorage } from '@/lib/storage/secureStorage';
 import type { OutputLine, FtpSession, PythonSession } from './PCPanel.types';
 import { executeLinuxCommand, formatLinuxPath, getLinuxSuggestions } from './pcLinuxExecutor';
 
@@ -144,7 +145,7 @@ export function CommandLineTab({
   const [linuxOutput, setLinuxOutput] = useState<OutputLine[]>(() => {
     if (typeof localStorage !== 'undefined') {
       try {
-        const saved = localStorage.getItem(`pc_linux_output_${deviceId}`);
+        const saved = secureStorage.getItem(`pc_linux_output_${deviceId}`);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -163,7 +164,7 @@ export function CommandLineTab({
   const [linuxHistory, setLinuxHistory] = useState<string[]>(() => {
     if (typeof localStorage !== 'undefined') {
       try {
-        const saved = localStorage.getItem(`pc_linux_history_${deviceId}`);
+        const saved = secureStorage.getItem(`pc_linux_history_${deviceId}`);
         if (saved) {
           const parsed = JSON.parse(saved);
           if (Array.isArray(parsed)) return parsed;
@@ -189,7 +190,7 @@ export function CommandLineTab({
       setLinuxOutput(defaultOutput);
       if (typeof localStorage !== 'undefined') {
         try {
-          localStorage.removeItem(`pc_linux_output_${deviceId}`);
+          secureStorage.removeItem(`pc_linux_output_${deviceId}`);
         } catch { }
       }
     }
@@ -200,8 +201,7 @@ export function CommandLineTab({
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
       try {
-        // Simulated terminal output (no real data).
-        localStorage.setItem(`pc_linux_output_${deviceId}`, JSON.stringify(linuxOutput.slice(-200)));
+        secureStorage.setItem(`pc_linux_output_${deviceId}`, JSON.stringify(linuxOutput.slice(-200)));
       } catch { }
     }
   }, [linuxOutput, deviceId]);
@@ -210,8 +210,7 @@ export function CommandLineTab({
   useEffect(() => {
     if (typeof localStorage !== 'undefined') {
       try {
-        // Simulated terminal command history (no real data).
-        localStorage.setItem(`pc_linux_history_${deviceId}`, JSON.stringify(linuxHistory.slice(0, 50)));
+        secureStorage.setItem(`pc_linux_history_${deviceId}`, JSON.stringify(linuxHistory.slice(0, 50)));
       } catch { }
     }
   }, [linuxHistory, deviceId]);

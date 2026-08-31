@@ -4,6 +4,7 @@ import { CanvasDevice, CanvasConnection, CanvasNote } from '@/components/network
 import { SwitchState } from '@/lib/network/types';
 import { createTabSpecificStorage } from './tabStorage';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 // Environment settings types
 export type EnvironmentBackground = 'none' | 'house' | 'twoStoryGarage' | 'greenhouse';
@@ -325,14 +326,14 @@ const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => 
     addCapturedPacket: (packet: Omit<CapturedPacket, 'id' | 'timestamp'>) => {
         const { connectionId } = packet;
         const currentPackets = get().topology.capturedPackets[connectionId] || [];
-        
+
         // Deduplicate logic: if the exact same packet (source, target, protocol, info) was added in the last 100ms, ignore it (Strict Mode mitigation)
         const lastPacket = currentPackets[currentPackets.length - 1];
-        if (lastPacket && 
-            lastPacket.sourceIp === packet.sourceIp && 
-            lastPacket.targetIp === packet.targetIp && 
-            lastPacket.protocol === packet.protocol && 
-            lastPacket.info === packet.info && 
+        if (lastPacket &&
+            lastPacket.sourceIp === packet.sourceIp &&
+            lastPacket.targetIp === packet.targetIp &&
+            lastPacket.protocol === packet.protocol &&
+            lastPacket.info === packet.info &&
             (Date.now() - lastPacket.timestamp < 100)) {
             return;
         }
@@ -342,7 +343,7 @@ const createActions = (set: (partial: Partial<AppState> | ((state: AppState) => 
             id: `pkt-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             timestamp: Date.now(),
         };
-        
+
         set({
             topology: {
                 ...get().topology,
@@ -563,11 +564,11 @@ export const useAppStore = create<AppState>()(
 
                 if (error) {
                     try {
-                        const raw = localStorage.getItem(STORE_KEY);
+                        const raw = secureStorage.getItem(STORE_KEY);
                         if (raw) {
-                            localStorage.setItem(STORE_BACKUP_KEY, raw);
+                            secureStorage.setItem(STORE_BACKUP_KEY, raw);
                         }
-                        localStorage.removeItem(STORE_KEY);
+                        secureStorage.removeItem(STORE_KEY);
                     } catch (e) {
                         errorHandler.logError(STORAGE_ERRORS.SAVE_FAILED({ operation: 'onRehydrateStorage-backup', error: String(e) }));
                     }
@@ -575,7 +576,7 @@ export const useAppStore = create<AppState>()(
                 }
 
                 try {
-                    const raw = localStorage.getItem(STORE_KEY);
+                    const raw = secureStorage.getItem(STORE_KEY);
                     if (!raw) return;
                     const parsed = JSON.parse(raw);
                     const sanitized = migrateAndValidatePersistedState(parsed);
@@ -584,14 +585,14 @@ export const useAppStore = create<AppState>()(
                         state: sanitized,
                         version: STORE_VERSION,
                     };
-                    localStorage.setItem(STORE_KEY, JSON.stringify(sanitizedPayload));
-                    localStorage.setItem(STORE_BACKUP_KEY, JSON.stringify(sanitizedPayload));
+                    secureStorage.setItem(STORE_KEY, JSON.stringify(sanitizedPayload));
+                    secureStorage.setItem(STORE_BACKUP_KEY, JSON.stringify(sanitizedPayload));
                 } catch (e) {
                     try {
-                        const raw = localStorage.getItem(STORE_KEY);
+                        const raw = secureStorage.getItem(STORE_KEY);
                         if (raw) {
-                            localStorage.setItem(STORE_BACKUP_KEY, raw);
-                            localStorage.removeItem(STORE_KEY);
+                            secureStorage.setItem(STORE_BACKUP_KEY, raw);
+                            secureStorage.removeItem(STORE_KEY);
                         }
                     } catch (e2) {
                         errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'onRehydrateStorage-reset', error: String(e2) }));

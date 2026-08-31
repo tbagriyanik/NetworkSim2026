@@ -14,6 +14,7 @@ const localStorageMock = (() => {
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
+import { secureStorage } from '@/lib/storage/secureStorage';
 import { saveWindowPositions, restoreWindowPositions, clearWindowPositionsBackup, getWindowPositionsBackup } from '@/lib/storage/windowPositionManager';
 
 vi.mock('../../lib/logger', () => ({
@@ -53,8 +54,8 @@ describe('windowPositionManager', () => {
 
       restoreWindowPositions();
 
-      expect(localStorageMock.getItem('tasks-modal-position')).toBe(JSON.stringify({ x: 50, y: 60 }));
-      expect(localStorageMock.getItem('tasks-modal-size')).toBe(JSON.stringify({ width: 500, height: 400 }));
+      expect(secureStorage.getItem('tasks-modal-position')).toBe(JSON.stringify({ x: 50, y: 60 }));
+      expect(secureStorage.getItem('tasks-modal-size')).toBe(JSON.stringify({ width: 500, height: 400 }));
     });
 
     it('should do nothing if no backup exists', () => {

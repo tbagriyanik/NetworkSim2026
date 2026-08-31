@@ -28,6 +28,7 @@ import { FileEditorModal } from './pc-panel/FileEditorModal';
 import { loadFs, saveFs, writeFile, readFile, getFtpFilesFromUploadDir, syncMailFilesToFs, syncHttpContentToFs } from './pc-panel/pcFileSystem';
 import { HomeLauncher } from './pc-panel/HomeLauncher';
 import { PowerOffOverlay } from './pc-panel/PowerOffOverlay';
+import { secureStorage } from '@/lib/storage/secureStorage';
 import { getPCConfigDefaults } from './pc-panel/pcPanelFiles';
 import { usePCPanelSessionState } from './pc-panel/usePCPanelSessionState';
 import { usePCPanelNtp } from './pc-panel/usePCPanelNtp';
@@ -279,7 +280,7 @@ export function PCPanel({
   const [serviceMailInbox, setServiceMailInbox] = useState<Array<{ from: string; subject: string; body: string; timestamp?: string }>>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(`mail_inbox_${deviceId}`);
+        const stored = secureStorage.getItem(`mail_inbox_${deviceId}`);
         if (stored) return JSON.parse(stored);
       } catch { }
     }
@@ -288,7 +289,7 @@ export function PCPanel({
   const [serviceMailSent, setServiceMailSent] = useState<Array<{ to: string; subject: string; body: string; timestamp?: string }>>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const stored = localStorage.getItem(`mail_sent_${deviceId}`);
+        const stored = secureStorage.getItem(`mail_sent_${deviceId}`);
         if (stored) return JSON.parse(stored);
       } catch { }
     }
@@ -297,9 +298,8 @@ export function PCPanel({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Simulated mail client inbox/sent (fake data, no real credentials).
-      localStorage.setItem(`mail_inbox_${deviceId}`, JSON.stringify(serviceMailInbox));
-      localStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
+      secureStorage.setItem(`mail_inbox_${deviceId}`, JSON.stringify(serviceMailInbox));
+      secureStorage.setItem(`mail_sent_${deviceId}`, JSON.stringify(serviceMailSent));
     }
     syncMailFilesToFs(deviceId, serviceMailInbox, serviceMailSent);
   }, [serviceMailInbox, serviceMailSent, deviceId]);
@@ -587,9 +587,9 @@ export function PCPanel({
       let sentFromStorage = null;
       if (typeof window !== 'undefined') {
         try {
-          const storedInbox = localStorage.getItem(`mail_inbox_${deviceId}`);
+          const storedInbox = secureStorage.getItem(`mail_inbox_${deviceId}`);
           if (storedInbox) inboxFromStorage = JSON.parse(storedInbox);
-          const storedSent = localStorage.getItem(`mail_sent_${deviceId}`);
+          const storedSent = secureStorage.getItem(`mail_sent_${deviceId}`);
           if (storedSent) sentFromStorage = JSON.parse(storedSent);
         } catch { }
       }
@@ -1544,7 +1544,7 @@ export function PCPanel({
   // PC ARP Table state - synced via localStorage and custom event so topology right-click ping also updates it
   const [pcArpTable, setPcArpTable] = useState<Array<{ ip: string; mac: string; type: string }>>(() => {
     try {
-      const saved = localStorage.getItem(`pc_arp_${deviceId}`);
+      const saved = secureStorage.getItem(`pc_arp_${deviceId}`);
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -1563,7 +1563,7 @@ export function PCPanel({
         updated = [...prev, { ip: targetIp, mac: formattedMac, type: isIot ? 'dynamic (IoT)' : 'dynamic' }];
       }
       try {
-        localStorage.setItem(`pc_arp_${deviceId}`, JSON.stringify(updated));
+        secureStorage.setItem(`pc_arp_${deviceId}`, JSON.stringify(updated));
       } catch { /* ignore */ }
       return updated;
     });
@@ -1572,7 +1572,7 @@ export function PCPanel({
   const clearPcArpTable = useCallback(() => {
     setPcArpTable([]);
     try {
-      localStorage.removeItem(`pc_arp_${deviceId}`);
+      secureStorage.removeItem(`pc_arp_${deviceId}`);
     } catch { /* ignore */ }
   }, [deviceId]);
 
@@ -1580,7 +1580,7 @@ export function PCPanel({
     setPcArpTable((prev) => {
       const updated = prev.filter((entry) => entry.ip !== targetIp);
       try {
-        localStorage.setItem(`pc_arp_${deviceId}`, JSON.stringify(updated));
+        secureStorage.setItem(`pc_arp_${deviceId}`, JSON.stringify(updated));
       } catch { /* ignore */ }
       return updated;
     });

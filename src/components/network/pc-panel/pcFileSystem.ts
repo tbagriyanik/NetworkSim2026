@@ -1,6 +1,8 @@
 // pcFileSystem.ts
 // Simple in‑memory file system persisted in localStorage per PC device.
 
+import { secureStorage } from '@/lib/storage/secureStorage';
+
 export type FSNode =
   | { type: 'dir'; children: Record<string, FSNode>; modifiedAt?: string }
   | { type: 'file'; content: string; size?: number; modifiedAt?: string; isExecutable?: boolean };
@@ -296,7 +298,7 @@ export function loadFs(deviceId: string): FSNode {
   let fs: FSNode | null = null;
   if (typeof localStorage !== 'undefined') {
     try {
-      const raw = localStorage.getItem(`pc_fs_${deviceId}`);
+      const raw = secureStorage.getItem(`pc_fs_${deviceId}`);
       if (raw) {
         fs = JSON.parse(raw) as FSNode;
       }
@@ -321,8 +323,7 @@ export function saveFs(deviceId: string, fs: FSNode): void {
   fsStore[deviceId] = fs;
   if (typeof localStorage !== 'undefined') {
     try {
-      // Simulated virtual filesystem state (no real credentials/PII).
-      localStorage.setItem(`pc_fs_${deviceId}`, JSON.stringify(fs));
+      secureStorage.setItem(`pc_fs_${deviceId}`, JSON.stringify(fs));
     } catch {
       // ignore storage errors
     }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getDefaultPcFiles } from './pcPanelFiles';
 import type { FtpSession, PcFile, PythonSession, PCActiveTab } from './PCPanel.types';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 export function usePCPanelSessionState(
   deviceId: string,
@@ -12,13 +13,13 @@ export function usePCPanelSessionState(
   const [pythonSession, setPythonSession] = useState<PythonSession | null>(null);
   const [isFtpFilePickerOpen, setIsFtpFilePickerOpen] = useState(false);
   const [pcLocalFiles, setPcLocalFiles] = useState<PcFile[]>(() => {
-    try { const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(`pc_files_${deviceId}`) : null; if (stored) return JSON.parse(stored); } catch { /* storage unavailable */ }
+    try { const stored = secureStorage.getItem(`pc_files_${deviceId}`); if (stored) return JSON.parse(stored); } catch { /* storage unavailable */ }
     const defaults = getDefaultPcFiles(deviceId);
-    try { if (typeof localStorage !== 'undefined') localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults)); } catch { /* storage unavailable */ }
+    try { secureStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(defaults)); } catch { /* storage unavailable */ }
     return defaults;
   });
   const [desktopHistory, setDesktopHistory] = useState<string[]>(() => {
-    try { const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(`pc_history_${deviceId}`) : null; if (stored) return JSON.parse(stored); } catch { /* storage unavailable */ }
+    try { const stored = secureStorage.getItem(`pc_history_${deviceId}`); if (stored) return JSON.parse(stored); } catch { /* storage unavailable */ }
     return pcHistories?.get(deviceId) || [];
   });
   const [desktopHistoryIndex, setDesktopHistoryIndex] = useState(-1);
@@ -27,18 +28,18 @@ export function usePCPanelSessionState(
 
   useEffect(() => {
     try {
-      const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(`pc_files_${deviceId}`) : null;
+      const stored = secureStorage.getItem(`pc_files_${deviceId}`);
       const files = stored ? JSON.parse(stored) : getDefaultPcFiles(deviceId);
-      if (!stored && typeof localStorage !== 'undefined') localStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(files));
+      if (!stored) secureStorage.setItem(`pc_files_${deviceId}`, JSON.stringify(files));
       setPcLocalFiles(files);
     } catch { /* storage unavailable */ }
-    try { if (typeof localStorage !== 'undefined') localStorage.setItem(`pc_cwd_${deviceId}`, 'C:\\'); } catch { /* storage unavailable */ }
+    try { secureStorage.setItem(`pc_cwd_${deviceId}`, 'C:\\'); } catch { /* storage unavailable */ }
     setCurrentPath('C:\\');
     setDesktopHistoryIndex(-1); setConsoleHistoryIndex(-1);
   }, [deviceId, setCurrentPath]);
 
   useEffect(() => {
-    if (desktopHistory.length > 0) { try { if (typeof localStorage !== 'undefined') localStorage.setItem(`pc_history_${deviceId}`, JSON.stringify(desktopHistory)); } catch { /* storage unavailable */ } }
+    if (desktopHistory.length > 0) { try { secureStorage.setItem(`pc_history_${deviceId}`, JSON.stringify(desktopHistory)); } catch { /* storage unavailable */ } }
   }, [deviceId, desktopHistory]);
 
   useEffect(() => {

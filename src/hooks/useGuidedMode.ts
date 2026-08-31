@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { 
-  GuidedProject, 
+import {
+  GuidedProject,
   checkStepCompletion,
   getGuidedProjects,
   getCompletedStepsCount,
@@ -10,6 +10,7 @@ import {
   verifyGuidedIntegrity
 } from '@/lib/network/guidedMode';
 import { logger } from '@/lib/logger';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 interface UseGuidedModeReturn {
   // State
@@ -18,7 +19,7 @@ interface UseGuidedModeReturn {
   isGuidedModeActive: boolean;
   isPanelMinimized: boolean;
   lastCompletedStep: string | null;
-  
+
   // Actions
   startGuidedProject: (project: GuidedProject) => void;
   completeStep: (stepId: string) => void;
@@ -28,7 +29,7 @@ interface UseGuidedModeReturn {
   closeGuidedMode: () => void;
   togglePanelMinimize: () => void;
   expandPanel: () => void;
-  
+
   // Context check for auto-completion
   checkStepCompletionWithContext: (context: {
     lastCommand?: string;
@@ -40,10 +41,10 @@ interface UseGuidedModeReturn {
     topologyConnections?: unknown[];
     topologyDevices?: unknown[];
   }) => void;
-  
+
   // Step readiness check
   isCurrentStepReady: boolean;
-  
+
   // Helpers
   progress: number;
   completedCount: number;
@@ -117,21 +118,21 @@ export function useGuidedMode(): UseGuidedModeReturn {
     }
   }, []);
 
-  // Save to localStorage whenever state changes (only after mount)
+  // Save to secureStorage whenever state changes (only after mount)
   useEffect(() => {
     if (activeProject) {
-      localStorage.setItem(STORAGE_KEY, serializeProject(activeProject));
+      secureStorage.setItem(STORAGE_KEY, serializeProject(activeProject));
     } else {
-      localStorage.removeItem(STORAGE_KEY);
+      secureStorage.removeItem(STORAGE_KEY);
     }
   }, [activeProject]);
 
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY}_stepIndex`, currentStepIndex.toString());
+    secureStorage.setItem(`${STORAGE_KEY}_stepIndex`, currentStepIndex.toString());
   }, [currentStepIndex]);
 
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY}_minimized`, isPanelMinimized.toString());
+    secureStorage.setItem(`${STORAGE_KEY}_minimized`, isPanelMinimized.toString());
   }, [isPanelMinimized]);
 
   const isGuidedModeActive = activeProject !== null;
@@ -171,7 +172,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
   // Auto-advance to next incomplete step when steps change
   useEffect(() => {
     if (!activeProject) return;
-    
+
     // Find the next incomplete step
     const nextIndex = activeProject.steps.findIndex(s => !s.completed);
     if (nextIndex !== -1 && nextIndex !== currentStepIndex) {
@@ -233,7 +234,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
 
     setActiveProject(prev => {
       if (!prev) return null;
-      
+
       const stepIndex = prev.steps.findIndex(s => s.id === stepId);
       const updatedSteps = prev.steps.map((s, idx) => {
         // Uncomplete this step and all subsequent steps
@@ -242,10 +243,10 @@ export function useGuidedMode(): UseGuidedModeReturn {
         }
         return s;
       });
-      
+
       // Move current index to the uncompleted step
       setCurrentStepIndex(stepIndex);
-      
+
       const updated: GuidedProject = {
         ...prev,
         steps: updatedSteps
@@ -260,7 +261,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
 
   const skipStep = useCallback(() => {
     if (!activeProject) return;
-    
+
     const nextIndex = currentStepIndex + 1;
     if (nextIndex < activeProject.steps.length) {
       setCurrentStepIndex(nextIndex);
@@ -334,7 +335,7 @@ export function useGuidedMode(): UseGuidedModeReturn {
 
     const shouldComplete = checkStepCompletion(currentStep, context as Parameters<typeof checkStepCompletion>[1]);
     setIsCurrentStepReady(shouldComplete);
-    
+
     if (shouldComplete) {
       completeStep(currentStep.id);
     }

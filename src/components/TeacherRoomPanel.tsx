@@ -215,8 +215,8 @@ export function TeacherRoomPanel() {
   const [error, setError] = useState<string | null>(null);
   const [activeRoomCount, setActiveRoomCount] = useState<number | null>(null);
 
-  // Room code is stored in sessionStorage (not localStorage) so it does not persist on disk across
-  // browser sessions, reducing exposure of the classroom join code. (CodeQL: js/clear-text-storage-of-sensitive-information)
+  // Room code is stored in sessionStorage (not localStorage) so it does not persist across
+  // browser sessions, reducing exposure of the classroom join code.
   useEffect(() => {
     if (activeCode && typeof sessionStorage !== 'undefined') sessionStorage.setItem('teacher-room-code', activeCode);
   }, [activeCode]);

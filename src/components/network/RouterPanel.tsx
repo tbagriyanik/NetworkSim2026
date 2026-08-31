@@ -6,6 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { SwitchState, Port } from '@/lib/network/types';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { secureStorage } from '@/lib/storage/secureStorage';
 import { DraggableWindowWrapper } from './DraggableWindowWrapper';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
@@ -80,7 +81,7 @@ export function RouterPanel({
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
     if (typeof window === 'undefined') return {};
     try {
-      const saved = localStorage.getItem(`router-panel-collapsed-${deviceId}`);
+      const saved = secureStorage.getItem(`router-panel-collapsed-${deviceId}`);
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -89,7 +90,7 @@ export function RouterPanel({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`router-panel-collapsed-${deviceId}`, JSON.stringify(collapsedSections));
+      secureStorage.setItem(`router-panel-collapsed-${deviceId}`, JSON.stringify(collapsedSections));
     }
   }, [collapsedSections, deviceId]);
 

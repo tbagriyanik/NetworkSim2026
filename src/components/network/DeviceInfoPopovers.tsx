@@ -8,6 +8,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/component
 
 import { useDrag } from '@/hooks/useDrag';
 import { getWirelessSignalStrength } from '@/lib/network/connectivity';
+import { secureStorage } from '@/lib/storage/secureStorage';
 import { useState, useEffect } from 'react';
 import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
@@ -56,7 +57,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
     if (typeof window === 'undefined') return {};
     try {
-      const saved = localStorage.getItem(`pc-info-collapsed-${pc.id}`);
+      const saved = secureStorage.getItem(`pc-info-collapsed-${pc.id}`);
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -65,15 +66,14 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // UI preference (collapsed sections); no sensitive data.
-      localStorage.setItem(`pc-info-collapsed-${pc.id}`, JSON.stringify(collapsedSections));
+      secureStorage.setItem(`pc-info-collapsed-${pc.id}`, JSON.stringify(collapsedSections));
     }
   }, [collapsedSections, pc.id]);
 
   const [windowCollapsed, setWindowCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
-      return localStorage.getItem(`pc-info-window-collapsed-${pc.id}`) === 'true';
+      return secureStorage.getItem(`pc-info-window-collapsed-${pc.id}`) === 'true';
     } catch {
       return false;
     }
@@ -81,7 +81,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`pc-info-window-collapsed-${pc.id}`, String(windowCollapsed));
+      secureStorage.setItem(`pc-info-window-collapsed-${pc.id}`, String(windowCollapsed));
     }
   }, [windowCollapsed, pc.id]);
 
@@ -298,7 +298,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() => {
     if (typeof window === 'undefined') return {};
     try {
-      const saved = localStorage.getItem(`router-info-collapsed-${router.id}`);
+      const saved = secureStorage.getItem(`router-info-collapsed-${router.id}`);
       return saved ? JSON.parse(saved) : {};
     } catch {
       return {};
@@ -307,15 +307,14 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // UI preference (collapsed sections); no sensitive data.
-      localStorage.setItem(`router-info-collapsed-${router.id}`, JSON.stringify(collapsedSections));
+      secureStorage.setItem(`router-info-collapsed-${router.id}`, JSON.stringify(collapsedSections));
     }
   }, [collapsedSections, router.id]);
 
   const [windowCollapsed, setWindowCollapsed] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
     try {
-      return localStorage.getItem(`router-info-window-collapsed-${router.id}`) === 'true';
+      return secureStorage.getItem(`router-info-window-collapsed-${router.id}`) === 'true';
     } catch {
       return false;
     }
@@ -323,7 +322,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(`router-info-window-collapsed-${router.id}`, String(windowCollapsed));
+      secureStorage.setItem(`router-info-window-collapsed-${router.id}`, String(windowCollapsed));
     }
   }, [windowCollapsed, router.id]);
 

@@ -1,4 +1,5 @@
 import { logger } from '@/lib/logger';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 // Window Position Manager
 // Preserves and restores modal/dialog window positions during network refresh
@@ -78,7 +79,7 @@ export function saveWindowPositions(): void {
         });
 
         // Store backup
-        localStorage.setItem(WINDOW_POSITIONS_KEY, JSON.stringify(layouts));
+        secureStorage.setItem(WINDOW_POSITIONS_KEY, JSON.stringify(layouts));
     } catch (error) {
         logger.error('Failed to save window positions:', error);
     }
@@ -92,7 +93,7 @@ export function restoreWindowPositions(): void {
     try {
         if (typeof window === 'undefined') return;
 
-        const backup = localStorage.getItem(WINDOW_POSITIONS_KEY);
+        const backup = secureStorage.getItem(WINDOW_POSITIONS_KEY);
         if (!backup) return;
 
         const layouts: AllWindowLayouts = JSON.parse(backup);
@@ -106,8 +107,8 @@ export function restoreWindowPositions(): void {
             const layout = layouts[name];
             if (layout) {
                 try {
-                    localStorage.setItem(modalKeys[index], JSON.stringify(layout.position));
-                    localStorage.setItem(sizeKeys[index], JSON.stringify(layout.size));
+                    secureStorage.setItem(modalKeys[index], JSON.stringify(layout.position));
+                    secureStorage.setItem(sizeKeys[index], JSON.stringify(layout.size));
                 } catch (e) {
                     logger.warn(`Failed to restore ${name} window layout:`, e);
                 }
@@ -119,7 +120,7 @@ export function restoreWindowPositions(): void {
             if (key.startsWith('draggable_') && layout) {
                 const dialogId = key.replace('draggable_', '');
                 try {
-                    localStorage.setItem(`draggable_position_${dialogId}`, JSON.stringify(layout.position));
+                    secureStorage.setItem(`draggable_position_${dialogId}`, JSON.stringify(layout.position));
                 } catch (e) {
                     logger.warn(`Failed to restore draggable dialog ${dialogId} position:`, e);
                 }
@@ -136,7 +137,7 @@ export function restoreWindowPositions(): void {
 export function clearWindowPositionsBackup(): void {
     try {
         if (typeof window === 'undefined') return;
-        localStorage.removeItem(WINDOW_POSITIONS_KEY);
+        secureStorage.removeItem(WINDOW_POSITIONS_KEY);
     } catch (error) {
         logger.error('Failed to clear window positions backup:', error);
     }
@@ -148,7 +149,7 @@ export function clearWindowPositionsBackup(): void {
 export function getWindowPositionsBackup(): AllWindowLayouts | null {
     try {
         if (typeof window === 'undefined') return null;
-        const backup = localStorage.getItem(WINDOW_POSITIONS_KEY);
+        const backup = secureStorage.getItem(WINDOW_POSITIONS_KEY);
         return backup ? JSON.parse(backup) : null;
     } catch (error) {
         logger.error('Failed to get window positions backup:', error);

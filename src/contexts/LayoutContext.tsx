@@ -1,6 +1,8 @@
 'use client';
 
 import { logger } from '@/lib/logger';
+import { secureStorage } from '@/lib/storage/secureStorage';
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Breakpoint, getBreakpointFromWidth } from '@/lib/design-tokens';
 import { LayoutConfig, DEFAULT_LAYOUT_CONFIG } from '@/lib/layout/responsive';
@@ -61,8 +63,8 @@ export function LayoutProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const saveLayoutPreferences = () => {
-        if (typeof window !== 'undefined' && window.localStorage) {
-            localStorage.setItem(
+        if (typeof window !== 'undefined') {
+            secureStorage.setItem(
                 'layoutPreferences',
                 JSON.stringify({
                     sidebarCollapsed,

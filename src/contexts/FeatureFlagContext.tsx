@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useState, useEffect, useMemo } from 'react';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 export interface FeatureFlags {
   modernShell: boolean;
@@ -28,7 +29,7 @@ export function FeatureFlagProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = secureStorage.getItem(STORAGE_KEY);
       if (saved) {
         setTimeout(() => setFlags({ ...defaultFlags, ...JSON.parse(saved) }), 0);
       }
@@ -39,7 +40,7 @@ export function FeatureFlagProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(flags));
+      secureStorage.setItem(STORAGE_KEY, JSON.stringify(flags));
     } catch {
       // ignore persistence failures
     }

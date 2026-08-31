@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { CanvasDevice } from '../networkTopology.types';
 import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 export interface UsePCPanelBrowserStateParams {
   topologyDevices: CanvasDevice[];
@@ -44,8 +45,9 @@ export function usePCPanelBrowserState({
   }, [httpAppUrl, urlSuggestions]);
 
   const [browserWindow, setBrowserWindow] = useState(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('pc-browser-window-state') : null;
-    if (saved) {
+    if (typeof localStorage !== 'undefined') {
+      const saved = secureStorage.getItem('pc-browser-window-state');
+      if (!saved) return { x: 40, y: 140, width: 960, height: 400 };
       try {
         const parsed = JSON.parse(saved);
         return {
@@ -63,7 +65,7 @@ export function usePCPanelBrowserState({
   });
 
   useEffect(() => {
-    localStorage.setItem('pc-browser-window-state', JSON.stringify(browserWindow));
+    secureStorage.setItem('pc-browser-window-state', JSON.stringify(browserWindow));
   }, [browserWindow]);
 
   useEffect(() => {

@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { ExamProject, type ExamTask, getExamProjects, encryptExamData, generateExamIntegrityHash, verifyExamIntegrity } from '@/lib/network/examMode';
 import { checkStepCompletion, type GuidedStep } from '@/lib/network/guidedMode';
 import { logger } from '@/lib/logger';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 interface UseExamModeReturn {
   activeExam: ExamProject | null;
@@ -74,12 +75,12 @@ export function useExamMode(): UseExamModeReturn {
     }
   }, []);
 
-  // Save to localStorage
+  // Save to secureStorage
   useEffect(() => {
     if (activeExam) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(activeExam));
+      secureStorage.setItem(STORAGE_KEY, JSON.stringify(activeExam));
     } else {
-      localStorage.removeItem(STORAGE_KEY);
+      secureStorage.removeItem(STORAGE_KEY);
     }
   }, [activeExam]);
 
