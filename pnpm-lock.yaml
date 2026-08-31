@@ -1517,8 +1517,8 @@ packages:
   dom-accessibility-api@0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
 
-  dompurify@3.4.12:
-    resolution: {integrity: sha512-zQvGet8Z2sWbQhCmfFz/T5QWH2oBmjnqK3qvOjaqaNLrLEF912WamU+ohnTp0TCep/MFVHpdJuCZEdFOdTnEFg==}
+  dompurify@3.4.14:
+    resolution: {integrity: sha512-iJt78f44g7nFup0tIn3hTBAw6u4n36s/k1zefvCDe2S1s2xS64G/61T00a2lR2hV8k0h00C9a/N2yR33a41s==}
 
   enhanced-resolve@5.24.5:
     resolution: {integrity: sha512-L1l8TNvomm6UVW5B253AGxQagSQr+vGwhMlrrfRS2qmhx46AMpMVJKQYLvWYbysTMY8VoicOvzHzoHMbyzB+4A==}
@@ -3362,7 +3362,7 @@ snapshots:
 
   dom-accessibility-api@0.5.16: {}
 
-  dompurify@3.4.12:
+  dompurify@3.4.14:
     optionalDependencies:
       '@types/trusted-types': 2.0.7
     optional: true
@@ -3476,7 +3476,7 @@ snapshots:
     optionalDependencies:
       canvg: 3.0.11
       core-js: 3.49.0
-      dompurify: 3.4.12
+      dompurify: 3.4.14
       html2canvas: 1.4.1
 
   lightningcss-android-arm64@1.32.0:
