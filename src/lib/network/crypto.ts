@@ -1,4 +1,4 @@
-import { createHash, createHmac, pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from 'crypto';
 
 const HMAC_EXAM_KEY = 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
 
@@ -94,8 +94,9 @@ export function encryptMd5Password(cliConfigInput: string, saltValue?: string): 
 function generateSalt(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./';
   let salt = '';
+  const bytes = randomBytes(8);
   for (let i = 0; i < 8; i++) {
-    salt += chars.charAt(randomInt(0, chars.length));
+    salt += chars.charAt(bytes[i] % chars.length);
   }
   return salt;
 }

@@ -342,13 +342,13 @@ export const routingPatterns: Record<string, CommandPattern> = {
   },
   'mls qos': {
     pattern: /^mls\s+qos$/i,
-    modes: ['config'],
+    modes: ['config', 'interface'],
     minArgs: 0,
     maxArgs: 0
   },
   'no mls qos': {
     pattern: /^no\s+mls\s+qos$/i,
-    modes: ['config'],
+    modes: ['config', 'interface'],
     minArgs: 0,
     maxArgs: 0
   },

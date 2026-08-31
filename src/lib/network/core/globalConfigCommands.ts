@@ -588,7 +588,7 @@ function cmdIpDhcpSnooping(state: SwitchState, _input: string, _ctx: CommandCont
  * MLS QoS - Enable MLS QoS
  */
 function cmdMlsQos(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config') {
+  if (state.currentMode !== 'config' && state.currentMode !== 'interface') {
     return { success: false, error: iosModeError() };
   }
 
