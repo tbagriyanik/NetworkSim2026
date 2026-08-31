@@ -9,7 +9,10 @@ const PBKDF2_KEYLEN = 32;
 
 /**
  * Generate HMAC-SHA256 signature for data integrity verification
+ * Note: HMAC is used for signature verification, not password hashing.
+ * For password hashing, use hashPassword() which uses PBKDF2 with 100,000 iterations.
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export function generateHmacSignature(dataBuffer: string, secretKey: string = HMAC_EXAM_KEY): string {
   return createHmac('sha256', secretKey).update(dataBuffer).digest('hex');
 }
@@ -65,14 +68,18 @@ export function verifyPassword(tokenInput: string, stored: string): boolean {
 
 /**
  * MD5 encryption (NOS Type 5 specification for CLI compatibility)
- * NOS Type 5 specification ($1$salt$hash) explicitly uses MD5 for CLI compatibility.
+ * WARNING: MD5 is a weak cryptographic algorithm and should NOT be used for new password storage.
+ * This function is maintained solely for backward compatibility with legacy NOS Type 5 CLI configurations.
+ * For new password storage, use hashPassword() which uses PBKDF2-HMAC-SHA256 with 100,000 iterations.
  * Format: $1$salt$hash
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export function encryptMd5Password(cliConfigInput: string, saltValue?: string): string {
   // Generate random salt if not provided (8 characters)
   const actualSalt = saltValue || generateSalt();
 
   // Create MD5 hash per NOS Type 5 specification: salt + input
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   const hash = createHash('md5')
     .update(actualSalt + cliConfigInput)
     .digest('hex');
@@ -143,7 +150,11 @@ export function verifyType7Password(tokenInput: string, encryptedInput: string):
 
 /**
  * Verify a plain text string against a Type 5 (MD5) hashed value ($1$salt$hash)
+ * WARNING: MD5 is a weak cryptographic algorithm. This function is maintained solely for
+ * backward compatibility with legacy NOS Type 5 CLI configurations.
+ * For new password verification, use verifyPassword() which supports modern PBKDF2 hashes.
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export function verifyMd5Password(tokenInput: string, storedHash: string): boolean {
   try {
     const parts = storedHash.split('$');

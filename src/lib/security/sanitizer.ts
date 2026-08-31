@@ -53,10 +53,8 @@ export function sanitizeInput(input: string): string {
         prev = sanitized;
         sanitized = sanitized
             .replace(/<[^<>]*>/g, '')
-            .replace(/\s*j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
-            .replace(/\s*v\s*b\s*s\s*c\s*r\s*i\s*p\s*t\s*:/gi, '')
-            .replace(/\s*d\s*a\s*t\s*a\s*:/gi, '')
-            .replace(/\s*f\s*i\s*l\s*e\s*:/gi, '');
+            // Combine all dangerous URI schemes into a single regex to prevent bypass
+            .replace(/\s*(?:j\s*a\s*v\s*a\s*s\s*c\s*r\s*i\s*p\s*t\s*:|v\s*b\s*s\s*c\s*r\s*i\s*p\s*t\s*:|d\s*a\s*t\s*a\s*:|f\s*i\s*l\s*e\s*:)/gi, '');
     } while (sanitized !== prev);
 
     // Remove any residual unbalanced angle brackets that are not part of a complete tag, preventing
