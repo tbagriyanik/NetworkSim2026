@@ -12,6 +12,7 @@ import { useNetworkRefreshWithPositions } from '@/hooks/useNetworkRefreshWithPos
 import { useSpatialPartitioning } from '@/lib/performance/spatial';
 import { toast } from "@/hooks/use-toast";
 import { CanvasDevice, CanvasConnection, CanvasNote, DeviceType, ContextMenuState, NetworkTopologyProps } from './networkTopology.types';
+import type { CableType } from '@/lib/network/types';
 import { useCanvasHistory } from '@/hooks/useCanvasHistory';
 import LazyNetworkTopologyContextMenu from './LazyNetworkTopologyContextMenu';
 
@@ -791,13 +792,18 @@ export function NetworkTopology({
     zoomRef
   });
 
+  const previousCableTypeRef = useRef<CableType | null>(null);
+
   // Connection Drawing Hook
   const { cancelConnectionDrawing } = useConnectionDrawing({
     setIsDrawingConnection,
     setConnectionStart,
     setMobileConnectionSource,
     isDrawingConnectionRef,
-    connectionStartRef
+    connectionStartRef,
+    onCableChange,
+    cableInfo,
+    previousCableTypeRef,
   });
 
   // Ping Animation Hook
@@ -1382,9 +1388,9 @@ export function NetworkTopology({
           );
           if (isTextInput) break;
           e.preventDefault();
-          if (e.key === 'ArrowUp')    setPan(prev => ({ ...prev, y: prev.y + moveAmount }));
-          if (e.key === 'ArrowDown')  setPan(prev => ({ ...prev, y: prev.y - moveAmount }));
-          if (e.key === 'ArrowLeft')  setPan(prev => ({ ...prev, x: prev.x + moveAmount }));
+          if (e.key === 'ArrowUp') setPan(prev => ({ ...prev, y: prev.y + moveAmount }));
+          if (e.key === 'ArrowDown') setPan(prev => ({ ...prev, y: prev.y - moveAmount }));
+          if (e.key === 'ArrowLeft') setPan(prev => ({ ...prev, x: prev.x + moveAmount }));
           if (e.key === 'ArrowRight') setPan(prev => ({ ...prev, x: prev.x - moveAmount }));
           break;
         }
@@ -1447,6 +1453,7 @@ export function NetworkTopology({
     isTouchDraggingRef,
     language,
     t: { portInUse: t.portInUse },
+    previousCableTypeRef,
   });
 
   const {
@@ -1897,7 +1904,7 @@ export function NetworkTopology({
             language={language}
             selectionBox={selectionBox}
             hoveredConnectionId={hoveredConnectionId}
-                      handleCanvasMouseDown={handleCanvasMouseDown}
+            handleCanvasMouseDown={handleCanvasMouseDown}
             handleTouchStart={handleTouchStart}
             handleTouchMove={handleTouchMove}
             handleTouchEnd={handleTouchEnd}

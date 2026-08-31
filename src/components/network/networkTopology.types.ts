@@ -10,6 +10,7 @@ export interface CanvasPort {
   id: string;
   label: string;
   status: CanvasPortStatus;
+  type?: string;
   adminStatus?: 'up' | 'down';
   operStatus?: 'up' | 'down';
   linkStatus?: 'up' | 'down' | 'blocked' | 'err-disabled' | 'disconnected';
@@ -206,7 +207,7 @@ export interface CanvasDevice {
     }>;
     value?: number | boolean; // Current value/state of the device
     history?: number[]; // History of values for the sensor
-    };
+  };
   firewallRules?: FirewallRule[];
 }
 

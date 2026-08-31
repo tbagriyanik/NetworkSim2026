@@ -1,9 +1,9 @@
-import { SetStateAction, Dispatch } from 'react';
+import { SetStateAction, Dispatch, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Cable, LineSquiggle, Plug, TrendingUpDown, Wifi } from "lucide-react";
 import { CanvasDevice, CanvasConnection } from '../networkTopology.types';
-import { CableInfo } from '@/lib/network/types';
+import { CableInfo, CableType } from '@/lib/network/types';
 import type { PingAnimationState } from '../hooks/usePingSequence';
 import type { HopPacketInfo } from '../PingPacketInfoPanel';
 import type { CapturedPacket } from '@/lib/store/appStore';
@@ -13,6 +13,7 @@ import { PacketCapturePanel } from '../PacketCapturePanel';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { DEVICE_ICONS } from './DeviceIcons';
 import { flushSync } from 'react-dom';
+import { getInferredCableTypeForPort } from '../helpers/cableAutoSelection';
 
 const PingPacketInfoPanel = dynamic(
   () => import('../PingPacketInfoPanel').then((m) => m.PingPacketInfoPanel),
@@ -129,6 +130,8 @@ export function TopologyModals({
   capturedPacketsMap,
   t
 }: TopologyModalsProps) {
+  const modalPreviousCableTypeRef = useRef<CableType | null>(null);
+
   return (
     <>
       {/* Device Configuration Modal (Name & IP) */}
@@ -319,13 +322,30 @@ export function TopologyModals({
         portSelectorStep={portSelectorStep}
         selectedSourcePort={selectedSourcePort}
         onClose={() => {
+          if (modalPreviousCableTypeRef.current) {
+            onCableChange({ ...cableInfo, cableType: modalPreviousCableTypeRef.current });
+            modalPreviousCableTypeRef.current = null;
+          }
           setShowPortSelector(false);
           setPortSelectorStep('source');
           setSelectedSourcePort(null);
         }}
-        onCableTypeChange={(nextType) => onCableChange({ ...cableInfo, cableType: nextType })}
+        onCableTypeChange={(nextType) => {
+          modalPreviousCableTypeRef.current = nextType;
+          onCableChange({ ...cableInfo, cableType: nextType });
+        }}
         onSelectPort={(deviceId, portId) => {
+          if (modalPreviousCableTypeRef.current === null) {
+            modalPreviousCableTypeRef.current = cableInfo.cableType || 'straight';
+          }
+          const deviceObj = deviceMap.get(deviceId);
+          const portObj = deviceObj?.ports.find((p) => p.id === portId);
+
           if (portSelectorStep === 'source') {
+            const inferred = getInferredCableTypeForPort(portId, portObj?.type, cableInfo.cableType);
+            if (inferred !== cableInfo.cableType) {
+              onCableChange({ ...cableInfo, cableType: inferred });
+            }
             flushSync(() => {
               setSelectedSourcePort({ deviceId, portId });
               setPortSelectorStep('target');
@@ -334,15 +354,21 @@ export function TopologyModals({
             const srcPort = selectedSourcePort as { deviceId: string; portId: string };
             if (srcPort.deviceId === deviceId && srcPort.portId === portId) return;
 
+            const inferred = getInferredCableTypeForPort(portId, portObj?.type, cableInfo.cableType);
+            const activeCableType = inferred !== cableInfo.cableType ? inferred : cableInfo.cableType;
+
             const newConnection: CanvasConnection = {
               id: `conn-${Date.now()}`,
               sourceDeviceId: srcPort.deviceId,
               sourcePort: srcPort.portId,
               targetDeviceId: deviceId,
               targetPort: portId,
-              cableType: cableInfo.cableType,
+              cableType: activeCableType,
               active: true,
             };
+
+            const prevType = modalPreviousCableTypeRef.current || cableInfo.cableType || 'straight';
+            modalPreviousCableTypeRef.current = null;
 
             flushSync(() => {
               setConnections((prev) => [...prev, newConnection]);
@@ -373,6 +399,7 @@ export function TopologyModals({
               if (sourceDevice && targetDevice) {
                 onCableChange({
                   ...cableInfo,
+                  cableType: prevType,
                   connected: true,
                   sourceDevice: sourceDevice.type,
                   targetDevice: targetDevice.type,

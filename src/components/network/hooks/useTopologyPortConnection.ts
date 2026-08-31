@@ -1,11 +1,12 @@
 'use client';
 
-import { useCallback, MouseEvent as ReactMouseEvent } from 'react';
+import { useCallback, useRef, MouseEvent as ReactMouseEvent } from 'react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
-import type { CableInfo } from '@/lib/network/types';
+import type { CableInfo, CableType } from '@/lib/network/types';
 import { isCableCompatible } from '@/lib/network/types';
 import { getDeviceWidth, getDeviceHeight } from '../networkTopology.helpers';
 import { PC_PORT_SPACING, PORT_SPACING, PORT_START_X } from '../networkTopology.constants';
+import { getInferredCableTypeForPort } from '../helpers/cableAutoSelection';
 
 interface UseTopologyPortConnectionProps {
   deviceMap: Map<string, CanvasDevice>;
@@ -27,6 +28,7 @@ interface UseTopologyPortConnectionProps {
   isTouchDraggingRef: React.MutableRefObject<boolean>;
   language: 'tr' | 'en';
   t: { portInUse: string };
+  previousCableTypeRef?: React.MutableRefObject<CableType | null>;
 }
 
 export function useTopologyPortConnection({
@@ -49,7 +51,11 @@ export function useTopologyPortConnection({
   isTouchDraggingRef,
   language,
   t,
+  previousCableTypeRef: externalPreviousCableTypeRef,
 }: UseTopologyPortConnectionProps) {
+  const localRef = useRef<CableType | null>(null);
+  const previousCableTypeRef = externalPreviousCableTypeRef || localRef;
+
   const handlePortClick = useCallback((e: ReactMouseEvent, deviceId: string, portId: string) => {
     e.stopPropagation();
     if (isActuallyDraggingRef.current || isTouchDraggingRef.current) return;
@@ -72,6 +78,10 @@ export function useTopologyPortConnection({
       if (isDrawingConnection) {
         setConnectionError(t.portInUse);
         setTimeout(() => setConnectionError(null), 3000);
+        if (previousCableTypeRef.current) {
+          onCableChange({ ...cableInfo, cableType: previousCableTypeRef.current });
+          previousCableTypeRef.current = null;
+        }
         setIsDrawingConnection(false);
         setConnectionStart(null);
       }
@@ -86,6 +96,10 @@ export function useTopologyPortConnection({
           : 'A device cannot connect to itself!';
         setConnectionError(errorMsg);
         setTimeout(() => setConnectionError(null), 3000);
+        if (previousCableTypeRef.current) {
+          onCableChange({ ...cableInfo, cableType: previousCableTypeRef.current });
+          previousCableTypeRef.current = null;
+        }
         setIsDrawingConnection(false);
         setConnectionStart(null);
         return;
@@ -96,9 +110,11 @@ export function useTopologyPortConnection({
       const targetDevice = deviceMap.get(deviceId);
 
       if (sourceDevice && targetDevice) {
+        const activeCableType = getInferredCableTypeForPort(portId, port.type, cableInfo.cableType);
+
         const cableCheck: CableInfo = {
           connected: true,
-          cableType: cableInfo.cableType,
+          cableType: activeCableType,
           sourceDevice: sourceDevice.type,
           targetDevice: targetDevice.type,
           sourcePort: connectionStart.portId,
@@ -111,6 +127,10 @@ export function useTopologyPortConnection({
             : 'This device type does not support the selected connection type!';
           setConnectionError(errorMsg);
           setTimeout(() => setConnectionError(null), 3000);
+          if (previousCableTypeRef.current) {
+            onCableChange({ ...cableInfo, cableType: previousCableTypeRef.current });
+            previousCableTypeRef.current = null;
+          }
           cancelConnectionDrawing();
           return;
         }
@@ -123,7 +143,7 @@ export function useTopologyPortConnection({
           sourcePort: connectionStart.portId,
           targetDeviceId: deviceId,
           targetPort: portId,
-          cableType: cableInfo.cableType,
+          cableType: activeCableType,
           active: true,
         };
 
@@ -164,8 +184,12 @@ export function useTopologyPortConnection({
           detail: { connection: newConnection, topologyDevices: devices }
         }));
 
+        const prevCableType = previousCableTypeRef.current || cableInfo.cableType || 'straight';
+        previousCableTypeRef.current = null;
+
         onCableChange({
           ...cableInfo,
+          cableType: prevCableType,
           connected: true,
           sourceDevice: sourceDevice.type,
           targetDevice: targetDevice.type,
@@ -177,12 +201,9 @@ export function useTopologyPortConnection({
     } else {
       // Start connection
       const portIndex = device.ports.findIndex(p => p.id === portId);
-      const normalizedPortId = portId.toLowerCase();
-      const inferredCableType = normalizedPortId === 'wlan0'
-        ? 'wireless'
-        : ((normalizedPortId === 'com1' || normalizedPortId === 'console') && cableInfo.cableType === 'straight'
-          ? 'console'
-          : (cableInfo.cableType || 'straight'));
+      previousCableTypeRef.current = cableInfo.cableType || 'straight';
+      const inferredCableType = getInferredCableTypeForPort(portId, port.type, cableInfo.cableType);
+
       onCableChange({
         ...cableInfo,
         cableType: inferredCableType,
@@ -237,5 +258,5 @@ export function useTopologyPortConnection({
     t
   ]);
 
-  return { handlePortClick };
+  return { handlePortClick, previousCableTypeRef };
 }
