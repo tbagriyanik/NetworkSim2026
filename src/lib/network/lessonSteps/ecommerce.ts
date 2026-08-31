@@ -28,7 +28,7 @@ export const ecommerceGuidedSteps: GuidedStep[] = [
     order: 3,
     title: { tr: 'Web Erişimi (ACL)', en: 'Web Access (ACL)' },
     description: { tr: 'İnternetten sadece HTTP (port 80) trafiğine izin verin.', en: 'Allow only HTTP (port 80) traffic from the internet.' },
-    hint: { tr: 'ip access-list extended DMZ-IN -> permit tcp any host 172.16.50.10 eq 80', en: 'ip access-list extended DMZ-IN -> permit tcp any host 172.16.50.10 eq 80' },
+    hint: { tr: 'access-list 100 permit tcp any host 172.16.50.10 eq 80 (veya ip access-list extended DMZ-IN -> permit tcp any host 172.16.50.10 eq 80)', en: 'access-list 100 permit tcp any host 172.16.50.10 eq 80 (or ip access-list extended DMZ-IN -> permit tcp any host 172.16.50.10 eq 80)' },
     checkType: 'config',
     checkParams: { targetDeviceId: 'router-1', configKey: 'ports.gi0/0.accessGroupIn', configValue: 'DMZ-IN' },
     completed: false,

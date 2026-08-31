@@ -344,6 +344,7 @@ export function validateCommand(
   const capabilities = state ? getDeviceCapabilities({ type: inferredDeviceType as DeviceType }, state.switchModel) : undefined;
 
   // Exact pattern match must win over prefix-tree ambiguity.
+  let invalidModeError: CommandValidationResult | null = null;
   for (const [name, pattern] of Object.entries(commandPatterns)) {
     const match = resolvedInput.match(pattern.pattern);
     if (!match) continue;
@@ -355,12 +356,15 @@ export function validateCommand(
     }
 
     if (!pattern.modes.includes(currentMode)) {
-      // Standart davranış: Yanlış moddaki komut için de 'invalid input' hatası verilir.
-      return {
-        valid: false,
-        reason: 'invalid-mode',
-        error: getInvalidCommandError(parsed.rawInput, 0, currentMode)
-      };
+      // Record invalid mode error but continue searching for a pattern matching currentMode
+      if (!invalidModeError) {
+        invalidModeError = {
+          valid: false,
+          reason: 'invalid-mode',
+          error: getInvalidCommandError(parsed.rawInput, 0, currentMode)
+        };
+      }
+      continue;
     }
 
     // Cihaz uyumluluk kontrolü (Akıllı Destek)
@@ -376,6 +380,10 @@ export function validateCommand(
     }
 
     return { valid: true, reason: 'ok', matchedPattern: name };
+  }
+
+  if (invalidModeError) {
+    return invalidModeError;
   }
 
   const treeResolution = resolveByCommandTree(resolvedInput, currentMode, capabilities);

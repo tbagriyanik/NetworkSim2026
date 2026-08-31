@@ -327,25 +327,25 @@ export const systemPatterns: Record<string, CommandPattern> = {
   },
   'permit (ext-named-acl)': {
     pattern: /^permit\s+(.+)$/i,
-    modes: ['config-ext-nacl'],
+    modes: ['config-ext-nacl', 'config'],
     minArgs: 1,
     maxArgs: 10
   },
   'deny (ext-named-acl)': {
     pattern: /^deny\s+(.+)$/i,
-    modes: ['config-ext-nacl'],
+    modes: ['config-ext-nacl', 'config'],
     minArgs: 1,
     maxArgs: 10
   },
   'no permit (ext-named-acl)': {
     pattern: /^no\s+permit\s+(.+)$/i,
-    modes: ['config-ext-nacl'],
+    modes: ['config-ext-nacl', 'config'],
     minArgs: 1,
     maxArgs: 10
   },
   'no deny (ext-named-acl)': {
     pattern: /^no\s+deny\s+(.+)$/i,
-    modes: ['config-ext-nacl'],
+    modes: ['config-ext-nacl', 'config'],
     minArgs: 1,
     maxArgs: 10
   },
