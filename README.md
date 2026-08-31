@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-3.6.0-blue)
+![Version](https://img.shields.io/badge/version-3.7.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.2-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -26,6 +26,7 @@ npm install && npm run dev
 
 ## Recent Updates / Son Güncellemeler
 
+- **Rehberli Ders & Sınav Modu Geliştirmeleri (v3.7.0):** 19 rehberli ders konusuna özel 2-3 soruluk bilgi quiz'leri entegre edildi ve puan sistemine bağlandı. PDF sertifika oluşturucu Canvas High-DPI Türkçe karakter (Ş, İ, Ğ, Ç, Ö, Ü) motoru ile yenilendi. Rehberli Dersler ana sekme yapıldı. Statik Yönlendirme ve SOHO Ağ Kurulum derslerinin tüm CLI/DHCP/WiFi adımları ve ip geçit yönlendirmeleri sıfırdan doğrulandı.
 - **Linux Bash Shell & Standart Modüler Pencere UI/UX:** Linux Terminaline `for` döngüleri, `if/else` koşul blokları, Pipe (`|`) boru hattı, Çıktı yönlendirmeleri (`>` ve `>>`), `grep` ve `wc` filtreleme komutları eklendi. `ping 127.0.0.1` döngü adresi ve `chmod -x` izin mantığı düzeltildi. Uygulamadaki tüm modallar (`ModernPanel`, `TeacherRoomPanel`, `RoomJoinDialog`, `BasarilarimPanel`) standart kırmızı daire içinde beyaz X kapatma butonlarına ve tutarlı pencere mimarisine kavuşturuldu.
 - **Linux Bash Terminali & Betik/İzin Desteği:** PC panelindeki Linux Terminal sekmesinde `ftp`, `ssh`, `telnet` ağ bağlantı komutları, `history`, dosya izin yönetimi (`chmod +x`, `chmod 755`, `chown`), `ls -l` detaylı görünümü ve `./script.sh` şeklinde doğrudan yetkili betik çalıştırma desteği eklendi. Ayrıca `Ctrl+L` ekran temizleme ve cihaz yeniden başlatıldığında terminal sıfırlanması sağlandı.
 - **Gelişmiş Python Yorumlayıcısı & OOP Desteği:** PC Python ortamında nesne yönelimli programlama (`class`, `__init__`, kalıtım, `super()`, `isinstance()`, `@property`, `@staticmethod`, `@classmethod`), generator (`yield` / `yield from`), modül eklentileri (`json`, `re`, `socket`, `os.path`) ve dunder korumalı güvenlik katmanı aktif edildi.

@@ -1,6 +1,16 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 3.6.0 · **Son doğrulama / Last verified:** 2026-08-30
+**Sürüm / Version:** 3.7.0 · **Son doğrulama / Last verified:** 2026-08-31
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-08-31 - v3.7.0)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **Rehberli Ders Konu Quiz'leri & Skor Entegrasyonu** | 19 rehberli ders konusuna özel (IP, VLAN, Statik Yönlendirme, DHCP, DNS, SOHO vb.) 2-3 soruluk soru havuzu eklendi. Quiz sorularının puanları (+10 puan) canlı Rehberli Ders ilerleme skoruna ve localStorage kaydına bağlandı. |
+| **High-DPI Türkçe PDF Sertifika Motoru** | jsPDF içerisine entegre Canvas 2400x1700 High-DPI Türkçe karakter (Ş, İ, Ğ, Ç, Ö, Ü) çizim motoru geliştirildi. Sertifikalar tüm işletim sistemlerinde sıfır font hatası ve keskin görünüm ile indirilebilir. |
+| **Rehberli Ders Birincil Sekme Mimarisi** | Açılış projesi seçim modalında ve varsayılan panel ayarlarında "Rehberli Dersler" ilk sekme yapıldı. |
+| **Statik Yönlendirme 24 Adımlı Laboratuvar** | R1 ve R2 için Gi0/0 ve Gi0/1 (PC Gateway) IP atamaları, interface `no shutdown`, `exit`, statik rotalar ve `ping 192.168.2.10` uçtan uca test adımları detaylandırıldı. |
+| **SOHO Ofis Ağ Kurulumu & DHCP / WiFi Revizyonu** | DHCP havuz yapılandırma adımları (`ip dhcp pool OFIS`, `network`, `default-router`) ve Laptop (PC-2) kablosuz bağlantısı CLI & PC WiFi uygulaması ile uçtan uca senkronize edildi. `defaultRouter` / `defaultGateway` esnek doğrulama desteği sağlandı. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-08-30)
 

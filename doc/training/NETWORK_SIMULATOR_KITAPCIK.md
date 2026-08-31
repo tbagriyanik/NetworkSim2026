@@ -22,8 +22,12 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu (v3.6.0)
+### Güncel özellik durumu (v3.7.0)
 
+- **Rehberli Ders Konu Quiz'leri & Skor Motoru:** 19 rehberli ders konusuna özel 2-3 soruluk soru havuzu entegre edildi. Quiz sorularının puanları (+10 puan) canlı Rehberli Ders ilerleme skoruna ve localStorage kaydına bağlandı.
+- **High-DPI Türkçe PDF Sertifika Motoru:** jsPDF içerisine entegre Canvas High-DPI Türkçe karakter (Ş, İ, Ğ, Ç, Ö, Ü) çizim motoru ile tüm işletim sistemlerinde %100 keskin sertifika oluşturma.
+- **Rehberli Ders Birincil Sekme Düzeni:** Proje seçim modalında ve varsayılan panel ayarlarında "Rehberli Dersler" birincil sekme yapıldı.
+- **Statik Yönlendirme & SOHO Ağ Kurulum Adımları:** R1/R2 Gateway IP atamaları, DHCP pool adımları, WiFi istemci erişimleri 24 adıma genişletildi ve uçtan uca doğrulandı.
 - **Güvenlik & DHCP Snooping:** `ip dhcp snooping`, VLAN etkinleştirme (`ip dhcp snooping vlan`), `ip dhcp snooping trust` ve untrusted portlardan gelen sahte (rogue) DHCP OFFER/ACK paketlerinin engellenmesi. İstemci IP aldıkça canlı **DHCP Snooping Binding Table** kaydı tutulur (`show ip dhcp snooping binding`). DAI VLAN yapılandırması.
 - **FHRP (HSRP & VRRP):** HSRP v1 (`0000.0c07.acXX`), HSRP v2 (`0000.0c9f.fXXX`) ve VRRP (`0000.5e00.01XX`) için otomatik sanal MAC hesaplama motoru. Virtual IP adreslerinin yol çözümlemesinde aktif/master cihaza yönlendirilmesi.
 - **DHCP Relay (`ip helper-address`):** Cross-subnet DHCP broadcast paketlerinin unicast helper adresine yönlendirilmesi ve parametreli kaldırma (`no ip helper-address <ip>`).
@@ -179,7 +183,7 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.6.0 |
+| Version / Sürüm | 3.7.0 |
 | Total Lines / Toplam Satır (src/) | 145,145 |
 | Source Files / Kaynak Dosya | 644 |
 | Documentation Files / Dokümantasyon Dosya | 24 |
