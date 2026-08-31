@@ -4,7 +4,7 @@ import type { RoomApiResponse } from '@/lib/roomTypes';
 import { isRateLimited } from '@/lib/security/rateLimiter';
 import { sanitizeInput } from '@/lib/security/sanitizer';
 import { verifyScoreToken } from '@/lib/security/scoreSigner';
-import crypto from 'crypto';
+import { randomInt } from 'crypto';
 import { logger } from '@/lib/logger';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
 
@@ -13,9 +13,8 @@ export const dynamic = 'force-dynamic';
 function generateVerifyCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
-  const bytes = crypto.randomBytes(10);
   for (let i = 0; i < 10; i++) {
-    code += chars[bytes[i] % chars.length];
+    code += chars[randomInt(0, chars.length)];
   }
   return code;
 }

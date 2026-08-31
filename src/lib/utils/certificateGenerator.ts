@@ -257,7 +257,7 @@ async function renderCertificateCanvas(
   ctx.fillStyle = '#94A3B8';
   ctx.fillText('Network Simulator Certification System • Official Digital Document', centerX, 1550);
 
-  return canvas.toDataURL('image/png');
+  return canvas.toDataURL('image/jpeg', 0.85);
 }
 
 // ─── Main Generator ──────────────────────────────────────────────────────────
@@ -356,11 +356,11 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
   const certificateImgData = await renderCertificateCanvas(data, verifyCode, qrDataUrl, logoDataUrl);
 
   // Step 4: Embed High-DPI Canvas Image into jsPDF (A4 Landscape)
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  doc.addImage(certificateImgData, 'PNG', 0, 0, pageWidth, pageHeight);
+  doc.addImage(certificateImgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
 
   doc.save(`Sertifika-${data.studentName.replace(/\s+/g, '_')}.pdf`);
 

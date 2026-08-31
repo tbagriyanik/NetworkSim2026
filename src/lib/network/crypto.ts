@@ -1,4 +1,4 @@
-import { createHash, createHmac, pbkdf2Sync, randomBytes, timingSafeEqual } from 'crypto';
+import { createHash, createHmac, pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 
 const HMAC_EXAM_KEY = 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
 
@@ -13,6 +13,7 @@ const PBKDF2_KEYLEN = 32;
  * For password hashing, use hashPassword() which uses PBKDF2 with 100,000 iterations.
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
+// CodeQL: False positive - HMAC is for signature verification, not password hashing
 export function generateHmacSignature(dataBuffer: string, secretKey: string = HMAC_EXAM_KEY): string {
   return createHmac('sha256', secretKey).update(dataBuffer).digest('hex');
 }
@@ -74,6 +75,7 @@ export function verifyPassword(tokenInput: string, stored: string): boolean {
  * Format: $1$salt$hash
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
+// CodeQL: False positive - MD5 is required for NOS Type 5 CLI compatibility
 export function encryptMd5Password(cliConfigInput: string, saltValue?: string): string {
   // Generate random salt if not provided (8 characters)
   const actualSalt = saltValue || generateSalt();
@@ -89,14 +91,13 @@ export function encryptMd5Password(cliConfigInput: string, saltValue?: string): 
 
 /**
  * Generate random salt for MD5 encryption (8 characters)
- * Uses cryptographically secure random integers.
+ * Uses cryptographically secure random integers with randomInt to avoid modulo bias.
  */
 function generateSalt(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789./';
   let salt = '';
-  const bytes = randomBytes(8);
   for (let i = 0; i < 8; i++) {
-    salt += chars.charAt(bytes[i] % chars.length);
+    salt += chars.charAt(randomInt(0, chars.length));
   }
   return salt;
 }
