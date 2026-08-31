@@ -45,14 +45,14 @@ export function sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
     let sanitized = input.trim();
 
-    // Iterate tag stripping and scheme removal to a fixpoint. Repeating until no further changes
+    // Iterate sanitization and scheme removal to a fixpoint. Repeating until no further changes
     // (rather than a single greedy pass) prevents bypasses where overlapping, nested, or malformed
-    // tags (e.g. "<<script>script>", "java<javascript:>script:") leave dangerous syntax behind.
+    // payloads (e.g. "<<script>script>", "java<javascript:>script:") leave dangerous syntax behind.
     let prev: string;
     do {
         prev = sanitized;
         sanitized = sanitized
-            .replace(/<[^<>]*>/g, '')
+            .replace(/[<>]/g, '')
             // Combine all dangerous URI schemes into a single regex to prevent bypass
             // Using a more comprehensive pattern with character classes to catch obfuscations
             .replace(/(?:[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*(?:j[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*v[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*s[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*c[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*r[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*i[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*p[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*t[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:|v[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*b[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*s[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*c[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*r[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*i[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*p[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*t[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:|d[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*t[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:|f[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*i[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*l[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*e[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:))/gi, '');
