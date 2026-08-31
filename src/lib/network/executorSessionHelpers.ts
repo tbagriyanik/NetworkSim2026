@@ -4,6 +4,7 @@ import { generateBootMessages } from './executorBootMessages';
 import { findDeviceByHost, formatBytes } from './executorSessionUtils';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import { secureStorage } from '@/lib/storage/secureStorage';
+import { verifyPassword } from './crypto';
 
 function handleConsoleConnect(state: SwitchState, language: 'tr' | 'en'): CommandResult {
   const needsLogin = !!(state.security.consoleLine.login && state.security.consoleLine.password);
@@ -194,25 +195,10 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
 
     let validPassword = false;
 
-    // Check enable secret (MD5 encrypted)
+    // Check enable secret (prefers strong pbkdf2$..., supports legacy formats)
     if (state.security.enableSecret) {
       const storedSecret = state.security.enableSecret;
-      // If stored secret is already encrypted (starts with $1$), re-encrypt with the same salt
-      // so the hashes can be compared deterministically.
-      if (storedSecret.startsWith('$1$')) {
-        const parts = storedSecret.split('$');
-        // Format: $1$<salt>$<hash>
-        const storedSalt = parts[2];
-        if (storedSalt) {
-          validPassword = encryptMd5Password(password, storedSalt) === storedSecret;
-        } else {
-          // Legacy: plain text comparison
-          validPassword = password === storedSecret;
-        }
-      } else {
-        // Legacy: plain text comparison
-        validPassword = password === storedSecret;
-      }
+      validPassword = verifyPassword(password, storedSecret);
     }
     // Check enable password (Type 7 encrypted or plain text)
     else if (state.security.enablePassword) {
