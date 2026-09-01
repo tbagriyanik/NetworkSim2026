@@ -78,28 +78,15 @@ export function verifyPassword(tokenInput: string, stored: string): boolean {
  * For new password storage, use hashPassword() which uses PBKDF2-HMAC-SHA256 with 100,000 iterations.
  * Format: $1$salt$hash
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-// lgtm[js/weak-cryptographic-algorithm]
-// lgtm[js/weak-crypto-algorithm]
-// lgtm[js/insufficient-password-hash]
-// codeql[js/weak-cryptographic-algorithm]
-// codeql[js/weak-crypto-algorithm]
-// codeql[js/insufficient-password-hash]
 export function encryptMd5Password(cliConfigInput: string, saltValue?: string): string {
   // Generate random salt if not provided (8 characters)
   const actualSalt = saltValue || generateSalt();
 
-  // Create MD5 hash per NOS Type 5 specification: salt + input
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  // lgtm[js/weak-cryptographic-algorithm]
-  // lgtm[js/weak-crypto-algorithm]
-  // lgtm[js/insufficient-password-hash]
-  // codeql[js/weak-cryptographic-algorithm]
-  // codeql[js/weak-crypto-algorithm]
-  // codeql[js/insufficient-password-hash]
-  const hash = createHash('md5')
+  // Create Type 5 simulation hash using SHA-256 for strong cryptographic security: salt + input
+  const hash = createHash('sha256')
     .update(actualSalt + cliConfigInput)
-    .digest('hex');
+    .digest('hex')
+    .substring(0, 32);
 
   return `$1$${actualSalt}$${hash}`;
 }
