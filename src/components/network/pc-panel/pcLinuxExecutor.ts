@@ -4,7 +4,7 @@ import {
 } from './pcFileSystem';
 import { executePythonScript } from './pcPythonRunner';
 import { formatLinuxPath, formatWinToUnixPath } from './pcLinuxPathUtils';
-import { expandShellVariables, parseOutputRedirection, parseShellAssignment, setShellVariable, splitPipeline, splitShellWords } from './pcLinuxShellParser';
+import { expandShellVariables, parseGrepFlags, parseLogicalChain, parseOutputRedirection, parseShellAssignment, setShellVariable, splitPipeline, splitShellWords } from './pcLinuxShellParser';
 import { executeLinuxFileCommand } from './pcLinuxFileCommands';
 export { formatLinuxPath, formatWinToUnixPath } from './pcLinuxPathUtils';
 
@@ -183,6 +183,37 @@ export async function executeLinuxCommand(
 
   const linuxPrompt = `${isSudo ? 'root' : 'user'}@${internalPcHostname.toLowerCase()}:${formatLinuxPath(currentPath)}${isSudo ? '#' : '$'}`;
 
+  // 0. Handle Logical Operators (&& and ||)
+  if ((cleanCmd.includes('&&') || cleanCmd.includes('||')) && !params.silent) {
+    const chain = parseLogicalChain(cleanCmd);
+    if (chain.length > 1) {
+      addLocalOutput('command', rawCmd, linuxPrompt);
+      let lastSuccess = true;
+      for (const stage of chain) {
+        if (!stage.command) continue;
+        let stageFailed = false;
+        const stageAddOutput = (type: OutputLine['type'], content: string, prompt?: string) => {
+          if (type === 'error') stageFailed = true;
+          addLocalOutput(type, content, prompt);
+        };
+        await executeLinuxCommand(stage.command, {
+          ...params,
+          silent: true,
+          addLocalOutput: stageAddOutput
+        });
+
+        lastSuccess = !stageFailed;
+        if (stage.operator === '&&' && !lastSuccess) {
+          break;
+        }
+        if (stage.operator === '||' && lastSuccess) {
+          break;
+        }
+      }
+      return;
+    }
+  }
+
   // 1. Handle Pipe (|) Pipelines (e.g. ifconfig | grep inet, cat file.txt | grep -i test | wc -l)
   if (cleanCmd.includes('|') && !params.silent) {
     const pipeline = splitPipeline(cleanCmd);
@@ -205,9 +236,8 @@ export async function executeLinuxCommand(
         const stageArgs = stageParts.slice(1);
 
         if (stageName === 'grep') {
-          const isCaseInsensitive = stageArgs.some(a => a === '-i' || a === '-ic' || a === '-ci');
-          const isCountOnly = stageArgs.some(a => a === '-c' || a === '-ic' || a === '-ci');
-          const patternArg = stageArgs.find(a => !a.startsWith('-')) || '';
+          const { isCaseInsensitive, isInvert, isLineNumbers, isCountOnly, nonFlags } = parseGrepFlags(stageArgs);
+          const patternArg = nonFlags[0] || '';
           const cleanPattern = patternArg.replace(/^["']|["']$/g, '');
 
           if (!cleanPattern) {
@@ -217,7 +247,14 @@ export async function executeLinuxCommand(
             let regex: RegExp;
             try { regex = new RegExp(cleanPattern, isCaseInsensitive ? 'i' : ''); }
             catch { stageError = `grep: invalid regular expression: ${cleanPattern}`; regex = /$a/; }
-            const matched = lines.filter(l => regex.test(l));
+
+            const matched: string[] = [];
+            lines.forEach((line, idx) => {
+              const pass = isInvert ? !regex.test(line) : regex.test(line);
+              if (pass) {
+                matched.push(isLineNumbers ? `${idx + 1}:${line}` : line);
+              }
+            });
 
             if (isCountOnly) {
               stageOutput = matched.length.toString();
@@ -245,12 +282,12 @@ export async function executeLinuxCommand(
 
         if (stageError) {
           addLocalOutput('error', stageError);
-          return;
+          // In bash, stderr goes to terminal while stdout goes to the next pipe stage
         }
         pipeData = stageOutput;
       }
 
-      if (pipeData) {
+      if (pipeData !== '') {
         addLocalOutput('output', pipeData);
       }
       return;
@@ -599,9 +636,10 @@ export async function executeLinuxCommand(
     // Check if it is a python script or has python shebang
     const isPython = scriptArg.endsWith('.py') || content.startsWith('#!/usr/bin/env python') || content.startsWith('#!/usr/bin/python');
     if (isPython) {
-      const res = executePythonScript(content, args.slice(command === 'bash' || command === 'sh' ? 1 : 0), undefined, deviceId);
-      if (res.error) addLocalOutput('error', res.error);
-      else if (res.output) addLocalOutput('output', res.output);
+      const pyArgs = [scriptArg, ...(command === 'bash' || command === 'sh' ? args.slice(1) : args)];
+      const pyExecRes = executePythonScript(content, [], undefined, deviceId, pyArgs);
+      if (pyExecRes.error) addLocalOutput('error', pyExecRes.error);
+      else if (pyExecRes.output) addLocalOutput('output', pyExecRes.output);
       return;
     }
 
@@ -631,9 +669,9 @@ export async function executeLinuxCommand(
     }
     if (scriptArg === '-c') {
       const codeToRun = args.slice(1).join(' ').replace(/^["']|["']$/g, '');
-      const res = executePythonScript(codeToRun, [], undefined, deviceId);
-      if (res.error) addLocalOutput('error', res.error);
-      else if (res.output) addLocalOutput('output', res.output);
+      const pyCmdRes = executePythonScript(codeToRun, [], undefined, deviceId, ['-c']);
+      if (pyCmdRes.error) addLocalOutput('error', pyCmdRes.error);
+      else if (pyCmdRes.output) addLocalOutput('output', pyCmdRes.output);
       return;
     }
 
@@ -641,9 +679,9 @@ export async function executeLinuxCommand(
     const scriptPath = resolvePath(currentPath, scriptArg);
     const scriptContent = readFile(fs, scriptPath);
     if (scriptContent !== null) {
-      const res = executePythonScript(scriptContent, [], undefined, deviceId);
-      if (res.error) addLocalOutput('error', res.error);
-      else if (res.output) addLocalOutput('output', res.output);
+      const pyFileRes = executePythonScript(scriptContent, [], undefined, deviceId, args);
+      if (pyFileRes.error) addLocalOutput('error', pyFileRes.error);
+      else if (pyFileRes.output) addLocalOutput('output', pyFileRes.output);
     } else {
       addLocalOutput('error', `python: can't open file '${scriptArg}': No such file or directory`);
     }

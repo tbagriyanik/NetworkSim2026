@@ -15,7 +15,12 @@ export function evaluatePythonLiteral(
   const trimmed = expression.trim();
 
   if (isSingleStringLiteral(trimmed)) {
-    const raw = trimmed.slice(1, -1);
+    let raw = '';
+    if (trimmed.startsWith('"""') || trimmed.startsWith("'''")) {
+      raw = trimmed.slice(3, -3);
+    } else {
+      raw = trimmed.slice(1, -1);
+    }
     return handled(raw
       .replace(/\\n/g, '\n')
       .replace(/\\t/g, '\t')

@@ -4,6 +4,7 @@ import {
 } from './pcFileSystem';
 import type { FSNode } from './pcFileSystem';
 import { formatLinuxPath } from './pcLinuxPathUtils';
+import { getOldPwd, parseGrepFlags, setOldPwd } from './pcLinuxShellParser';
 
 export interface LinuxFileCommandContext {
   deviceId: string;
@@ -83,6 +84,7 @@ export function executeLinuxFileCommand(
       items.push({ name: '..', isDir: true, isExec: false, size: 4096, modifiedAt: 'Aug 27 12:00' });
     }
     Object.entries(targetNode.children).forEach(([name, child]) => {
+      if (!showAll && name.startsWith('.')) return;
       const isDir = child.type === 'dir';
       const isExec = child.type === 'file' && (child.isExecutable !== undefined ? child.isExecutable : (name.endsWith('.sh') || name.endsWith('.py')));
       const size = child.type === 'file' ? (child.size || child.content.length || 0) : 4096;
@@ -112,16 +114,27 @@ export function executeLinuxFileCommand(
 
   if (command === 'cd') {
     const targetArg = args[0] || '~';
+    if (targetArg === '-') {
+      const prev = getOldPwd(deviceId);
+      if (!prev) {
+        addLocalOutput('error', 'bash: cd: OLDPWD not set');
+        return true;
+      }
+      setOldPwd(deviceId, currentPath);
+      setCurrentPath(prev);
+      addLocalOutput('output', formatLinuxPath(prev));
+      return true;
+    }
+    let targetWinPath = currentPath;
     if (targetArg === '~' || targetArg === '/home/user' || targetArg === '/') {
-      setCurrentPath('C:\\');
-      return true;
+      targetWinPath = 'C:\\';
+    } else if (targetArg === '..') {
+      targetWinPath = resolvePath(currentPath, '..');
+    } else {
+      targetWinPath = resolvePath(currentPath, targetArg);
     }
-    if (targetArg === '..') {
-      setCurrentPath(resolvePath(currentPath, '..'));
-      return true;
-    }
+
     const fs = loadFs(deviceId);
-    const targetWinPath = resolvePath(currentPath, targetArg);
     const targetNode = getNode(fs, targetWinPath);
     if (!targetNode) {
       addLocalOutput('error', `bash: cd: ${targetArg}: No such file or directory`);
@@ -131,48 +144,113 @@ export function executeLinuxFileCommand(
       addLocalOutput('error', `bash: cd: ${targetArg}: Not a directory`);
       return true;
     }
+    setOldPwd(deviceId, currentPath);
     setCurrentPath(targetWinPath);
     return true;
   }
 
   if (command === 'cat') {
-    const fileName = args[0];
-    if (!fileName) {
+    const fileArgs = args.filter(arg => !arg.startsWith('-'));
+    if (fileArgs.length === 0) {
       addLocalOutput('error', 'cat: missing file operand');
       return true;
     }
-    const content = readFile(loadFs(deviceId), resolvePath(currentPath, fileName));
-    addLocalOutput(content !== null ? 'output' : 'error', content !== null ? content : `cat: ${fileName}: No such file or directory`);
+    const fs = loadFs(deviceId);
+    const outputs: string[] = [];
+    const errors: string[] = [];
+    for (const fileName of fileArgs) {
+      const content = readFile(fs, resolvePath(currentPath, fileName));
+      if (content !== null) {
+        outputs.push(content);
+      } else {
+        errors.push(`cat: ${fileName}: No such file or directory`);
+      }
+    }
+    if (errors.length > 0) {
+      addLocalOutput('error', errors.join('\n'));
+    }
+    if (outputs.length > 0) {
+      addLocalOutput('output', outputs.join('\n'));
+    }
     return true;
   }
 
   if (command === 'grep') {
-    const isCaseInsensitive = args.some(arg => arg === '-i' || arg === '-ic' || arg === '-ci');
-    const isCountOnly = args.some(arg => arg === '-c' || arg === '-ic' || arg === '-ci');
-    const nonFlags = args.filter(arg => !arg.startsWith('-'));
+    const { isCaseInsensitive, isInvert, isLineNumbers, isCountOnly, isRecursive, nonFlags } = parseGrepFlags(args);
     if (nonFlags.length < 1) {
       addLocalOutput('error', 'grep: option requires an argument');
       return true;
     }
-    const pattern = nonFlags[0];
-    const fileArg = nonFlags[1];
+    const pattern = nonFlags[0].replace(/^["']|["']$/g, '');
+    const fileArg = nonFlags[1] || (isRecursive ? '.' : '');
     if (!fileArg) {
       addLocalOutput('error', 'grep: missing target file');
       return true;
     }
-    const content = readFile(loadFs(deviceId), resolvePath(currentPath, fileArg));
-    if (content === null) {
+    const fs = loadFs(deviceId);
+    const targetWinPath = resolvePath(currentPath, fileArg);
+    const node = getNode(fs, targetWinPath);
+    if (!node) {
       addLocalOutput('error', `grep: ${fileArg}: No such file or directory`);
       return true;
     }
+
     let regex: RegExp;
     try { regex = new RegExp(pattern, isCaseInsensitive ? 'i' : ''); }
     catch {
       addLocalOutput('error', `grep: invalid regular expression: ${pattern}`);
       return true;
     }
-    const matched = content.split(/\r?\n/).filter(line => regex.test(line));
-    addLocalOutput('output', isCountOnly ? matched.length.toString() : matched.join('\n'));
+
+    const processFileContent = (content: string, prefix?: string): string[] => {
+      const lines = content.split(/\r?\n/);
+      const results: string[] = [];
+      lines.forEach((line, idx) => {
+        const matches = regex.test(line);
+        const pass = isInvert ? !matches : matches;
+        if (pass) {
+          let lineStr = line;
+          if (isLineNumbers) lineStr = `${idx + 1}:${lineStr}`;
+          if (prefix) lineStr = `${prefix}:${lineStr}`;
+          results.push(lineStr);
+        }
+      });
+      return results;
+    };
+
+    if (node.type === 'file') {
+      const matchedLines = processFileContent(node.content);
+      if (isCountOnly) {
+        addLocalOutput('output', matchedLines.length.toString());
+      } else {
+        addLocalOutput('output', matchedLines.join('\n'));
+      }
+      return true;
+    } else if (node.type === 'dir' && isRecursive) {
+      const allResults: string[] = [];
+      const collectDirFiles = (dirNode: FSNode, relPath: string) => {
+        if (dirNode.type !== 'dir') return;
+        Object.entries(dirNode.children).forEach(([childName, childNode]) => {
+          const childRelPath = relPath ? `${relPath}/${childName}` : childName;
+          if (childNode.type === 'file') {
+            const res = processFileContent(childNode.content, childRelPath);
+            allResults.push(...res);
+          } else if (childNode.type === 'dir') {
+            collectDirFiles(childNode, childRelPath);
+          }
+        });
+      };
+      collectDirFiles(node, fileArg === '.' ? '' : fileArg);
+      if (isCountOnly) {
+        addLocalOutput('output', allResults.length.toString());
+      } else {
+        addLocalOutput('output', allResults.join('\n'));
+      }
+      return true;
+    } else if (node.type === 'dir') {
+      addLocalOutput('error', `grep: ${fileArg}: Is a directory`);
+      return true;
+    }
     return true;
   }
 

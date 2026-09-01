@@ -9,12 +9,12 @@ export type Statement =
   | { type: 'class'; className: string; baseClasses: string[]; body: Statement[]; decorators?: string[] }
   | { type: 'yield'; expr: string; isYieldFrom?: boolean }
   | {
-      type: 'try';
-      body: Statement[];
-      exceptBranches: { errorType: string | null; varName: string | null; body: Statement[] }[];
-      elseBody?: Statement[];
-      finallyBody?: Statement[];
-    }
+    type: 'try';
+    body: Statement[];
+    exceptBranches: { errorType: string | null; varName: string | null; body: Statement[] }[];
+    elseBody?: Statement[];
+    finallyBody?: Statement[];
+  }
   | { type: 'with'; contextExpr: string; varName: string | null; body: Statement[] };
 
 export interface ParsedLine {
@@ -25,12 +25,42 @@ export interface ParsedLine {
 export function parseProgramLines(rawLines: string[]): ParsedLine[] {
   const parsedLines: ParsedLine[] = [];
   let continuationDepth = 0;
+  let tripleQuoteChar: string | null = null;
+  let accumulatedTripleLines: string[] = [];
+  let tripleIndent = 0;
+
   for (const l of rawLines) {
+    if (tripleQuoteChar !== null) {
+      accumulatedTripleLines.push(l);
+      if (l.includes(tripleQuoteChar)) {
+        const fullBlock = accumulatedTripleLines.join('\n');
+        parsedLines.push({ indent: tripleIndent, text: fullBlock.trim() });
+        tripleQuoteChar = null;
+        accumulatedTripleLines = [];
+      }
+      continue;
+    }
+
     const stripped = stripInlineComment(l);
     if (!stripped.trim() || stripped.trim().startsWith('#')) continue;
     const indentMatch = stripped.match(/^[ \t]*/);
     const indent = indentMatch ? indentMatch[0].replace(/\t/g, '    ').length : 0;
     const text = stripped.trim();
+
+    const countDouble = (text.match(/"""/g) || []).length;
+    const countSingle = (text.match(/'''/g) || []).length;
+    if (countDouble % 2 === 1) {
+      tripleQuoteChar = '"""';
+      tripleIndent = indent;
+      accumulatedTripleLines = [l];
+      continue;
+    } else if (countSingle % 2 === 1) {
+      tripleQuoteChar = "'''";
+      tripleIndent = indent;
+      accumulatedTripleLines = [l];
+      continue;
+    }
+
     if (continuationDepth > 0 && parsedLines.length > 0) {
       parsedLines[parsedLines.length - 1].text += ` ${text}`;
     } else {
@@ -50,6 +80,11 @@ export function parseProgramLines(rawLines: string[]): ParsedLine[] {
       else if (')]}'.includes(ch)) continuationDepth = Math.max(0, continuationDepth - 1);
     }
   }
+
+  if (tripleQuoteChar !== null && accumulatedTripleLines.length > 0) {
+    parsedLines.push({ indent: tripleIndent, text: accumulatedTripleLines.join('\n').trim() });
+  }
+
   return parsedLines;
 }
 

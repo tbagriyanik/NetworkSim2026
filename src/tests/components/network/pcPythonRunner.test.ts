@@ -300,5 +300,40 @@ describe('executePythonScript', () => {
     it('handles complex numbers', () => {
       expect(run(`print((3+4j).real, (3+4j).imag)`)).toBe('3.0 4.0');
     });
+
+    it('Item 14: supports os.path submodule functions', () => {
+      expect(run(`import os\nprint(os.path.join("a", "b"))`)).toBe('a\\b');
+      expect(run(`from os.path import basename, join\nprint(basename("C:\\\\dir\\\\file.txt"), join("x", "y"))`)).toBe('file.txt x\\y');
+      expect(run(`import os.path as osp\nprint(osp.basename("a/b/c.txt"))`)).toBe('c.txt');
+    });
+
+    it('Item 15: populates sys.argv correctly', () => {
+      const res = executePythonScript(`import sys\nprint(sys.argv)`, [], undefined, undefined, ['test.py', 'arg1', 'arg2']);
+      expect(res.error).toBeUndefined();
+      expect(res.output).toBe("['test.py', 'arg1', 'arg2']");
+    });
+
+    it('Item 16: input() is blocking and raises PythonInputRequiredException when input is missing', () => {
+      const res = executePythonScript(`name = input("Adınız: ")\nprint("Merhaba " + name)`);
+      expect(res.waitingForInput).toBe(true);
+      expect(res.inputPrompt).toBe('Adınız: ');
+
+      const res2 = executePythonScript(`name = input("Adınız: ")\nprint("Merhaba " + name)`, ['Ahmet']);
+      expect(res2.waitingForInput).toBeUndefined();
+      expect(res2.output).toBe('Adınız: \nMerhaba Ahmet');
+    });
+
+    it('Item 17: math domain functions throw ValueError on invalid domain', () => {
+      const resSqrt = executePythonScript(`import math\nmath.sqrt(-1)`);
+      expect(resSqrt.error).toContain('ValueError: math domain error');
+
+      const resLog = executePythonScript(`import math\nmath.log(0)`);
+      expect(resLog.error).toContain('ValueError: math domain error');
+    });
+
+    it('Item 18: handles multi-line triple-quoted strings ("""...""") correctly', () => {
+      const code = `text = """line 1\nline 2\nline 3"""\nprint(text)`;
+      expect(run(code)).toBe('line 1\nline 2\nline 3');
+    });
   });
 });

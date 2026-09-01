@@ -1072,10 +1072,26 @@ export function createExpressionEvaluator(
     }
 
     // Member property access: obj.prop or obj.sub.prop or (3+4j).real
-    const dotPropIdx = findOperatorIndex(trimmed, '.');
-    if (dotPropIdx !== -1 && !trimmed.endsWith(')')) {
-      const leftExpr = trimmed.slice(0, dotPropIdx).trim();
-      const attrName = trimmed.slice(dotPropIdx + 1).trim();
+    let lastDotIdx = -1;
+    {
+      let inQ = false;
+      let qChar = '';
+      let pDepth = 0;
+      for (let i = 0; i < trimmed.length; i++) {
+        const char = trimmed[i];
+        if ((char === '"' || char === "'") && (i === 0 || trimmed[i - 1] !== '\\')) {
+          if (!inQ) { inQ = true; qChar = char; }
+          else if (qChar === char) { inQ = false; }
+        } else if (!inQ) {
+          if (char === '(' || char === '[' || char === '{') pDepth++;
+          else if (char === ')' || char === ']' || char === '}') pDepth--;
+          else if (pDepth === 0 && char === '.') lastDotIdx = i;
+        }
+      }
+    }
+    if (lastDotIdx !== -1 && !trimmed.endsWith(')')) {
+      const leftExpr = trimmed.slice(0, lastDotIdx).trim();
+      const attrName = trimmed.slice(lastDotIdx + 1).trim();
       if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(attrName)) {
         let curr: unknown = evaluateExpr(leftExpr);
         if (curr instanceof PyInstance) {
@@ -1091,7 +1107,7 @@ export function createExpressionEvaluator(
           if (attrName === 'real') return Number.isInteger(curr.real) ? `${curr.real}.0` : curr.real;
           if (attrName === 'imag') return Number.isInteger(curr.imag) ? `${curr.imag}.0` : curr.imag;
         }
-        if (curr && typeof curr === 'object') {
+        if (curr && (typeof curr === 'object' || typeof curr === 'function')) {
           if (attrName in (curr as Record<string, unknown>)) {
             return (curr as Record<string, unknown>)[attrName];
           }

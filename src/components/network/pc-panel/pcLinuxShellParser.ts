@@ -96,6 +96,102 @@ export interface OutputRedirection {
   target: string;
 }
 
+const oldPwdMap = new Map<string, string>();
+
+export function getOldPwd(deviceId: string): string | undefined {
+  return oldPwdMap.get(deviceId);
+}
+
+export function setOldPwd(deviceId: string, path: string): void {
+  oldPwdMap.set(deviceId, path);
+}
+
+export interface LogicalStage {
+  command: string;
+  operator: '&&' | '||' | null;
+}
+
+export function parseLogicalChain(input: string): LogicalStage[] {
+  const stages: LogicalStage[] = [];
+  let current = '';
+  let quote: string | null = null;
+  let escaped = false;
+  let i = 0;
+
+  while (i < input.length) {
+    const char = input[i];
+    if (escaped) {
+      current += char;
+      escaped = false;
+      i++;
+    } else if (char === '\\') {
+      current += char;
+      escaped = true;
+      i++;
+    } else if (quote) {
+      current += char;
+      if (char === quote) quote = null;
+      i++;
+    } else if (char === '"' || char === "'") {
+      current += char;
+      quote = char;
+      i++;
+    } else if (input.startsWith('&&', i)) {
+      stages.push({ command: current.trim(), operator: '&&' });
+      current = '';
+      i += 2;
+    } else if (input.startsWith('||', i)) {
+      stages.push({ command: current.trim(), operator: '||' });
+      current = '';
+      i += 2;
+    } else {
+      current += char;
+      i++;
+    }
+  }
+
+  if (current.trim()) {
+    stages.push({ command: current.trim(), operator: null });
+  }
+
+  return stages;
+}
+
+export interface GrepFlags {
+  isCaseInsensitive: boolean;
+  isInvert: boolean;
+  isLineNumbers: boolean;
+  isCountOnly: boolean;
+  isRecursive: boolean;
+  nonFlags: string[];
+}
+
+export function parseGrepFlags(args: string[]): GrepFlags {
+  let isCaseInsensitive = false;
+  let isInvert = false;
+  let isLineNumbers = false;
+  let isCountOnly = false;
+  let isRecursive = false;
+  const nonFlags: string[] = [];
+
+  for (const arg of args) {
+    if (arg.startsWith('-') && arg.length > 1 && !arg.startsWith('--')) {
+      const chars = arg.slice(1);
+      for (const ch of chars) {
+        if (ch === 'i') isCaseInsensitive = true;
+        else if (ch === 'v') isInvert = true;
+        else if (ch === 'n') isLineNumbers = true;
+        else if (ch === 'c') isCountOnly = true;
+        else if (ch === 'r' || ch === 'R') isRecursive = true;
+      }
+    } else {
+      nonFlags.push(arg);
+    }
+  }
+
+  return { isCaseInsensitive, isInvert, isLineNumbers, isCountOnly, isRecursive, nonFlags };
+}
+
 export function parseOutputRedirection(input: string): OutputRedirection | null {
   let quote: string | null = null;
   let escaped = false;

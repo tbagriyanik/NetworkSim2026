@@ -7,10 +7,16 @@ export function evaluatePythonFunctionCall(
   scope: Record<string, unknown>,
   evaluateExpr: (expr: string) => unknown,
 ): PythonEvaluationResult {
-  const match = /^([a-zA-Z_][a-zA-Z0-9_]*)\s*\((.*)\)$/.exec(expression.trim());
+  const match = /^([a-zA-Z_][a-zA-Z0-9_.]*)\s*\((.*)\)$/.exec(expression.trim());
   if (!match) return { handled: false };
 
-  const fn = scope[match[1]];
+  const targetName = match[1];
+  let fn: unknown;
+  try {
+    fn = scope[targetName] !== undefined ? scope[targetName] : evaluateExpr(targetName);
+  } catch {
+    fn = undefined;
+  }
   if (!(fn instanceof PyClass) && typeof fn !== 'function') return { handled: false };
 
   const { positional, kwargs } = match[2].trim() ? parseFormatArgs(match[2], evaluateExpr) : { positional: [], kwargs: {} as Record<string, unknown> };

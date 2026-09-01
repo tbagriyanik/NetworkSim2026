@@ -19,6 +19,15 @@ export function handleImportStatement(line: string, scope: Record<string, unknow
       if (alias !== modName) scope[alias] = scope[modName];
     } else if (PYTHON_MODULES[modName]) {
       scope[alias] = PYTHON_MODULES[modName];
+    } else if (modName.includes('.')) {
+      const subParts = modName.split('.');
+      let curr: unknown = scope[subParts[0]] || PYTHON_MODULES[subParts[0]];
+      for (let i = 1; i < subParts.length && curr; i++) {
+        if (curr && typeof curr === 'object') {
+          curr = (curr as Record<string, unknown>)[subParts[i]];
+        }
+      }
+      scope[alias] = curr || {};
     } else {
       scope[alias] = {};
     }
@@ -32,7 +41,24 @@ export function handleFromImportStatement(line: string, scope: Record<string, un
 
   const modName = fromImportMatch[1].trim();
   const rawItems = splitOutsideQuotesAndParens(fromImportMatch[2], ',');
-  const modObj = (scope[modName] || PYTHON_MODULES[modName]) as Record<string, unknown> | undefined;
+
+  let modObj: Record<string, unknown> | undefined;
+  if (scope[modName]) {
+    modObj = scope[modName] as Record<string, unknown>;
+  } else if (PYTHON_MODULES[modName]) {
+    modObj = PYTHON_MODULES[modName];
+  } else if (modName.includes('.')) {
+    const subParts = modName.split('.');
+    let curr: unknown = scope[subParts[0]] || PYTHON_MODULES[subParts[0]];
+    for (let i = 1; i < subParts.length && curr; i++) {
+      if (curr && typeof curr === 'object') {
+        curr = (curr as Record<string, unknown>)[subParts[i]];
+      }
+    }
+    if (curr && typeof curr === 'object') {
+      modObj = curr as Record<string, unknown>;
+    }
+  }
 
   for (const item of rawItems) {
     const parts = item.split(/\s+as\s+/i);

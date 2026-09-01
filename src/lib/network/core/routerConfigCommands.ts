@@ -54,6 +54,12 @@ function cmdRoutingVersion(state: SwitchState, input: string): CommandResult {
  * network - Add network to routing process
  * Note: This command is only available in router-config mode via routerConfigHandlers
  */
+function isValidOctets(ip: string): boolean {
+    const parts = ip.split('.');
+    if (parts.length !== 4) return false;
+    return parts.every(p => /^\d{1,3}$/.test(p) && Number(p) >= 0 && Number(p) <= 255);
+}
+
 function cmdRouterNetwork(state: SwitchState, input: string): CommandResult {
     // IPv6 routing protocols (RIPng/OSPFv3) do not use network statements
     if (state.routingProtocol === 'ripng' || state.routingProtocol === 'ospfv3') {
@@ -67,6 +73,9 @@ function cmdRouterNetwork(state: SwitchState, input: string): CommandResult {
     if (state.routingProtocol === 'eigrp') {
         const eigrpMatch = input.match(/^network\s+([0-9.]+)\s+([0-9.]+)$/i);
         if (eigrpMatch) {
+            if (!isValidOctets(eigrpMatch[1]) || !isValidOctets(eigrpMatch[2])) {
+                return { success: false, error: '% Invalid IP address or wildcard mask.' };
+            }
             return {
                 success: true,
                 output: `${eigrpMatch[1]} with wildcard ${eigrpMatch[2]} added to EIGRP`,
@@ -84,6 +93,9 @@ function cmdRouterNetwork(state: SwitchState, input: string): CommandResult {
     if (state.routingProtocol === 'bgp') {
         const bgpMatch = input.match(/^network\s+([0-9.]+)\s+mask\s+([0-9.]+)$/i);
         if (bgpMatch) {
+            if (!isValidOctets(bgpMatch[1]) || !isValidOctets(bgpMatch[2])) {
+                return { success: false, error: '% Invalid IP address or subnet mask.' };
+            }
             return {
                 success: true,
                 output: `${bgpMatch[1]} with mask ${bgpMatch[2]} added to BGP`,
@@ -104,6 +116,9 @@ function cmdRouterNetwork(state: SwitchState, input: string): CommandResult {
         if (!ripMatch) {
             return { success: false, error: '% Invalid network command.' };
         }
+        if (!isValidOctets(ripMatch[1])) {
+            return { success: false, error: '% Invalid IP address.' };
+        }
 
         // RIP network
         return {
@@ -120,6 +135,10 @@ function cmdRouterNetwork(state: SwitchState, input: string): CommandResult {
 
     // OSPF network
     const [_, network, wildcard, area] = match;
+    if (!isValidOctets(network) || !isValidOctets(wildcard)) {
+        return { success: false, error: '% Invalid IP address or wildcard mask.' };
+    }
+
     return {
         success: true,
         output: `${network}/${wildcard} added to OSPF area ${area}`,

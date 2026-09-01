@@ -2,10 +2,15 @@ import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { SwitchState } from './types';
 import { ensureDeviceStatesMap } from './networkUtils';
 
+export function isValidIPv4Format(str: string): boolean {
+  const parts = str.trim().split('.');
+  if (parts.length !== 4) return false;
+  return parts.every(part => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);
+}
+
 export function isExternalDomain(hostname: string, devices: CanvasDevice[], deviceStates?: Map<string, SwitchState>): boolean {
   const cleanHostname = hostname.toLowerCase().replace(/^www\./, '');
-  const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-  if (ipRegex.test(cleanHostname)) return false;
+  if (isValidIPv4Format(cleanHostname)) return false;
 
   for (const device of devices) {
     if (device.name?.toLowerCase() === cleanHostname) return false;
@@ -54,16 +59,16 @@ export function simulateDnsLookup(hostname: string): string | null {
   for (let i = 0; i < cleanHostname.length; i++) {
     const char = cleanHostname.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; 
+    hash = hash & hash;
   }
 
-  const octet1 = Math.abs(hash % 224) + 1; 
+  const octet1 = Math.abs(hash % 224) + 1;
   const octet2 = Math.abs((hash >> 8) % 256);
   const octet3 = Math.abs((hash >> 16) % 256);
   const octet4 = Math.abs((hash >> 24) % 256);
 
   if (octet1 === 10 || (octet1 === 192 && octet2 === 168) || (octet1 === 172 && octet2 >= 16 && octet2 <= 31)) {
-    return simulateDnsLookup(cleanHostname + '1'); 
+    return simulateDnsLookup(cleanHostname + '1');
   }
 
   return `${octet1}.${octet2}.${octet3}.${octet4}`;

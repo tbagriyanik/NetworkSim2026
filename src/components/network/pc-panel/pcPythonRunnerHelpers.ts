@@ -254,6 +254,28 @@ export function formatPythonValue(val: unknown, inCollection: boolean = false): 
 export function isSingleStringLiteral(str: string): boolean {
   const trimmed = str.trim();
   if (trimmed.length < 2) return false;
+
+  if (trimmed.startsWith('"""') || trimmed.startsWith("'''")) {
+    const q3 = trimmed.slice(0, 3);
+    if (trimmed.length < 6 || !trimmed.endsWith(q3)) return false;
+    let escaped = false;
+    for (let i = 3; i < trimmed.length - 3; i++) {
+      const char = trimmed[i];
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (char === '\\') {
+        escaped = true;
+        continue;
+      }
+      if (trimmed.startsWith(q3, i)) {
+        return i === trimmed.length - 3;
+      }
+    }
+    return true;
+  }
+
   const qChar = trimmed[0];
   if (qChar !== '"' && qChar !== "'") return false;
   if (trimmed[trimmed.length - 1] !== qChar) return false;
@@ -279,18 +301,36 @@ export function isSingleStringLiteral(str: string): boolean {
 export function stripInlineComment(line: string): string {
   let inQuotes = false;
   let quoteChar = '';
-  for (let i = 0; i < line.length; i++) {
+  let i = 0;
+  while (i < line.length) {
     const char = line[i];
-    if ((char === '"' || char === "'") && (i === 0 || line[i - 1] !== '\\')) {
+    const isEscaped = i > 0 && line[i - 1] === '\\';
+    if (!isEscaped && (line.startsWith('"""', i) || line.startsWith("'''", i))) {
+      const q3 = line.slice(i, i + 3);
+      if (!inQuotes) {
+        inQuotes = true;
+        quoteChar = q3;
+        i += 3;
+        continue;
+      } else if (quoteChar === q3) {
+        inQuotes = false;
+        quoteChar = '';
+        i += 3;
+        continue;
+      }
+    }
+    if (!isEscaped && (char === '"' || char === "'")) {
       if (!inQuotes) {
         inQuotes = true;
         quoteChar = char;
       } else if (quoteChar === char) {
         inQuotes = false;
+        quoteChar = '';
       }
     } else if (char === '#' && !inQuotes) {
       return line.slice(0, i).trimEnd();
     }
+    i++;
   }
   return line;
 }

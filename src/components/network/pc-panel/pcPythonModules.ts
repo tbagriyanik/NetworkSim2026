@@ -226,20 +226,54 @@ export const PYTHON_MODULES: Record<string, Record<string, unknown>> = {
   math: {
     pi: Math.PI,
     e: Math.E,
-    sqrt: (x: unknown) => Math.sqrt(Number(x || 0)),
+    sqrt: (x: unknown) => {
+      const num = Number(x);
+      if (isNaN(num) || num < 0) throw new Error('ValueError: math domain error');
+      return Math.sqrt(num);
+    },
+    log: (x: unknown, base?: unknown) => {
+      const num = Number(x);
+      if (isNaN(num) || num <= 0) throw new Error('ValueError: math domain error');
+      if (base !== undefined) {
+        const b = Number(base);
+        if (isNaN(b) || b <= 0 || b === 1) throw new Error('ValueError: math domain error');
+        return Math.log(num) / Math.log(b);
+      }
+      return Math.log(num);
+    },
+    log10: (x: unknown) => {
+      const num = Number(x);
+      if (isNaN(num) || num <= 0) throw new Error('ValueError: math domain error');
+      return Math.log10(num);
+    },
+    log2: (x: unknown) => {
+      const num = Number(x);
+      if (isNaN(num) || num <= 0) throw new Error('ValueError: math domain error');
+      return Math.log2 ? Math.log2(num) : Math.log(num) / Math.LN2;
+    },
+    asin: (x: unknown) => {
+      const num = Number(x);
+      if (isNaN(num) || num < -1 || num > 1) throw new Error('ValueError: math domain error');
+      return Math.asin(num);
+    },
+    acos: (x: unknown) => {
+      const num = Number(x);
+      if (isNaN(num) || num < -1 || num > 1) throw new Error('ValueError: math domain error');
+      return Math.acos(num);
+    },
+    atan: (x: unknown) => Math.atan(Number(x || 0)),
+    factorial: (x: unknown) => {
+      const num = Number(x);
+      if (isNaN(num) || num < 0 || !Number.isInteger(num)) throw new Error('ValueError: factorial() not defined for negative or non-integer values');
+      let res = 1;
+      for (let i = 2; i <= num; i++) res *= i;
+      return res;
+    },
     trunc: (x: unknown) => Math.trunc(Number(x || 0)),
     pow: (x: unknown, y: unknown) => Math.pow(Number(x || 0), Number(y || 0)),
     sin: (x: unknown) => Math.sin(Number(x || 0)),
     cos: (x: unknown) => Math.cos(Number(x || 0)),
     tan: (x: unknown) => Math.tan(Number(x || 0)),
-    asin: (x: unknown) => Math.asin(Number(x || 0)),
-    acos: (x: unknown) => Math.acos(Number(x || 0)),
-    atan: (x: unknown) => Math.atan(Number(x || 0)),
-    log: (x: unknown, base?: unknown) => {
-      const num = Number(x || 0);
-      return base !== undefined ? Math.log(num) / Math.log(Number(base)) : Math.log(num);
-    },
-    log10: (x: unknown) => Math.log10(Number(x || 0)),
     floor: (x: unknown) => Math.floor(Number(x || 0)),
     ceil: (x: unknown) => Math.ceil(Number(x || 0)),
     fabs: (x: unknown) => Math.abs(Number(x || 0)),

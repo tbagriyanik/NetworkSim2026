@@ -584,6 +584,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
   <script>
     var isTurkish = ${isTurkish ? 'true' : 'false'};
+    function escH(s) { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
     var selectedIotDevices = new Set();
     var currentSsidList = ${jsCurrentSsidList};
     window.currentSsidList = currentSsidList;
@@ -902,17 +903,22 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           ? '<span class="status-badge" style="background:var(--color-success-500);">' + (isTurkish ? '● Etkin' : '● Active') + '</span>'
           : '<span class="status-badge" style="background:var(--color-secondary-400);">' + (isTurkish ? '○ Pasif' : '○ Disabled') + '</span>';
 
+        var safeDisplayName = escH(item.name || item.ssid);
+        var safeSsid = escH(item.ssid);
+        var safeSecText = escH(secText);
+        var safeBandText = escH(bandText);
+
         return '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:${colors.common.white};border:1px solid var(--color-secondary-200);border-radius:8px;margin-bottom:8px;gap:12px;">' +
           '<div style="min-w-0;">' +
             '<div style="font-weight:600;font-size:14px;color:var(--color-secondary-900);display:flex;align-items:center;gap:8px;">' +
-              '<span>📶 ' + (item.name || item.ssid) + '</span>' +
+              '<span>📶 ' + safeDisplayName + '</span>' +
               (isPrimary ? '<span class="badge badge-primary">' + (isTurkish ? 'Ana Yayın' : 'Primary') + '</span>' : '') +
               (item.hidden ? '<span class="badge badge-warning">🙈 ' + (isTurkish ? 'Gizli' : 'Hidden') + '</span>' : '') +
             '</div>' +
             '<div style="font-size:12px;color:var(--color-secondary-500);margin-top:2px;">' +
-              'SSID: <strong style="color:var(--color-primary-600);">' + item.ssid + '</strong> · ' +
-              (isTurkish ? 'Güvenlik' : 'Security') + ': <strong>' + secText + '</strong> · ' +
-              (isTurkish ? 'Bant' : 'Band') + ': <strong>' + bandText + '</strong>' +
+              'SSID: <strong style="color:var(--color-primary-600);">' + safeSsid + '</strong> · ' +
+              (isTurkish ? 'Güvenlik' : 'Security') + ': <strong>' + safeSecText + '</strong> · ' +
+              (isTurkish ? 'Bant' : 'Band') + ': <strong>' + safeBandText + '</strong>' +
             '</div>' +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:6px;shrink:0;">' +

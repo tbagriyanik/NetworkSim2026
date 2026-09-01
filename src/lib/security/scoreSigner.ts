@@ -1,11 +1,25 @@
 import crypto from 'crypto';
 
+function checkCertificateSecretStartup(): void {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.NEXT_PHASE !== 'phase-production-build' &&
+    !process.env.CERTIFICATE_SECRET
+  ) {
+    throw new Error(
+      '[SECURITY FATAL] CERTIFICATE_SECRET environment variable is missing in production. Refusing startup with insecure fallback key.'
+    );
+  }
+}
+
+checkCertificateSecretStartup();
+
 let warned = false;
 function getSecretKey(): string {
   const secret = process.env.CERTIFICATE_SECRET;
   if (!secret) {
     if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
-      throw new Error('CERTIFICATE_SECRET environment variable is required in production');
+      throw new Error('[SECURITY FATAL] CERTIFICATE_SECRET environment variable is missing in production.');
     }
     if (!warned) {
       warned = true;

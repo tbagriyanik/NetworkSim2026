@@ -5,6 +5,7 @@ import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult } from '../types';
 import { getL3Hops } from '../routing';
+import { isValidIPv4Format } from '../dns';
 
 /**
  * Generate ping latencies proportional to WiFi distance.
@@ -185,19 +186,9 @@ export function cmdPing(state: SwitchState, input: string, ctx: CommandContext):
             let packetLine = '';
             let successes = 0;
 
-            // For a successful ping, occasionally simulate ARP delay (first packet drops)
-            const dropFirst = Math.random() < 0.3; // 30% chance to simulate ARP timeout
-
             for (let i = 0; i < n; i++) {
-                if (i === 0 && dropFirst) {
-                    packetLine += '.';
-                } else if (!srcWired || !dstWired) {
-                    if (Math.random() < 0.05) packetLine += '.'; // Wireless random drop
-                    else { packetLine += '!'; successes++; }
-                } else {
-                    packetLine += '!';
-                    successes++;
-                }
+                packetLine += '!';
+                successes++;
             }
             output += packetLine;
             const successRate = Math.round((successes / n) * 100);
@@ -321,8 +312,7 @@ export function cmdSsh(state: SwitchState, input: string, ctx: CommandContext): 
 
     // Resolve hostname to show IP address
     let resolvedIp = host;
-    const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-    if (!ipRegex.test(host)) {
+    if (!isValidIPv4Format(host)) {
         const knownDomains: Record<string, string> = {
             'a10.com': '52.8.34.123',
             'portal.local': '192.0.2.10',
@@ -466,8 +456,7 @@ export function cmdTraceroute(state: SwitchState, input: string, ctx: CommandCon
 
         if (connectivity.success) {
             let resolvedIp = host;
-            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-            if (!ipRegex.test(host)) {
+            if (!isValidIPv4Format(host)) {
                 // For external domains, we'll simulate the IP
                 const knownDomains: Record<string, string> = {
                     'a10.com': '52.8.34.123',
@@ -514,8 +503,7 @@ export function cmdTraceroute(state: SwitchState, input: string, ctx: CommandCon
         } else {
             // For failed connections, still try to show resolved IP
             let resolvedIp = host;
-            const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
-            if (!ipRegex.test(host)) {
+            if (!isValidIPv4Format(host)) {
                 const knownDomains: Record<string, string> = {
                     'a10.com': '52.8.34.123',
                     'portal.local': '192.0.2.10',

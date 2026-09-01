@@ -59,12 +59,21 @@ export function executePythonScript(
   script: string,
   userInputs: string[] = [],
   onOutput?: (line: string, isAppend?: boolean) => void,
-  deviceId?: string
+  deviceId?: string,
+  scriptArgs: string[] = ['script.py']
 ): PythonExecutionResult {
   const scope: Record<string, unknown> = {
     PyGenerator,
     print: (...args: unknown[]) => {
       outputs.push(args.map(a => formatPythonValue(a)).join(' '));
+    },
+    sys: {
+      version: '3.11.0 (simulated)',
+      platform: 'win32',
+      argv: scriptArgs && scriptArgs.length > 0 ? scriptArgs : ['script.py'],
+      exit: (code?: unknown) => {
+        throw new Error(`sys.exit(${code !== undefined ? code : 0})`);
+      },
     },
   };
   const outputs: string[] = [];
@@ -98,7 +107,8 @@ export function executePythonScript(
         return false;
       }
       return Boolean(res);
-    } catch {
+    } catch (err) {
+      if (err instanceof PythonInputRequiredException) throw err;
       return false;
     }
   };
@@ -487,11 +497,20 @@ export async function executePythonScriptAsync(
   script: string,
   userInputs: string[] = [],
   onOutput?: (line: string, isAppend?: boolean) => void,
-  deviceId?: string
+  deviceId?: string,
+  scriptArgs: string[] = ['script.py']
 ): Promise<PythonExecutionResult> {
   const scope: Record<string, unknown> = {
     print: (...args: unknown[]) => {
       outputs.push(args.map(a => formatPythonValue(a)).join(' '));
+    },
+    sys: {
+      version: '3.11.0 (simulated)',
+      platform: 'win32',
+      argv: scriptArgs && scriptArgs.length > 0 ? scriptArgs : ['script.py'],
+      exit: (code?: unknown) => {
+        throw new Error(`sys.exit(${code !== undefined ? code : 0})`);
+      },
     },
   };
   const outputs: string[] = [];
@@ -525,7 +544,8 @@ export async function executePythonScriptAsync(
         return false;
       }
       return Boolean(res);
-    } catch {
+    } catch (err) {
+      if (err instanceof PythonInputRequiredException) throw err;
       return false;
     }
   };

@@ -50,4 +50,18 @@ describe('scoreSigner Security Unit Tests', () => {
     const expiredToken = Buffer.from(JSON.stringify(expiredObj)).toString('base64url');
     expect(verifyScoreToken(expiredToken, validPayload)).toBe(false);
   });
+
+  it('should throw an error in production when CERTIFICATE_SECRET is missing', () => {
+    const origEnv = process.env.NODE_ENV;
+    const origSecret = process.env.CERTIFICATE_SECRET;
+    try {
+      Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true, enumerable: true });
+      delete process.env.CERTIFICATE_SECRET;
+      delete process.env.NEXT_PHASE;
+      expect(() => generateScoreToken(validPayload)).toThrow(/CERTIFICATE_SECRET environment variable is missing/);
+    } finally {
+      Object.defineProperty(process.env, 'NODE_ENV', { value: origEnv, configurable: true, writable: true, enumerable: true });
+      if (origSecret) process.env.CERTIFICATE_SECRET = origSecret;
+    }
+  });
 });

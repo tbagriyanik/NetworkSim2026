@@ -229,7 +229,10 @@ export function cmdSpanningTreePriority(state: SwitchState, input: string, _ctx:
 
   const priority = parseInt(match[1]);
   if (priority < 0 || priority > 240 || priority % 16 !== 0) {
-    return { success: false, error: '% Priority must be a multiple of 16 between 0 and 240' };
+    return {
+      success: false,
+      error: '% Port priority must be in increments of 16 between 0 and 240 (allowed values: 0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240). Lower 4 bits are reserved for Port ID indexing.'
+    };
   }
 
   const updatePort = (port: Port) => ({ ...port, stpPriority: priority });
