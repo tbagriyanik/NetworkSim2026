@@ -1,6 +1,7 @@
 import { createHash, createHmac, pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 
-const HMAC_EXAM_KEY = 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
+// HMAC key for exam data integrity — read from env, with a development fallback.
+const HMAC_EXAM_KEY = process.env.EXAM_HMAC_KEY || 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
 
 // Cost parameters for the modern, computationally strong hashing scheme.
 // 100,000 iterations of PBKDF2-HMAC-SHA256 is the OWASP-recommended minimum.
@@ -13,7 +14,7 @@ const PBKDF2_KEYLEN = 32;
  * For password hashing, use hashPassword() which uses PBKDF2 with 100,000 iterations.
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
-// CodeQL: False positive - HMAC is for signature verification, not password hashing
+// CodeQL[js/insufficient-password-hash]: false positive — HMAC is used for data-integrity signatures, not password hashing.
 export function generateHmacSignature(dataBuffer: string, secretKey: string = HMAC_EXAM_KEY): string {
   return createHmac('sha256', secretKey).update(dataBuffer).digest('hex');
 }
@@ -75,7 +76,8 @@ export function verifyPassword(tokenInput: string, stored: string): boolean {
  * Format: $1$salt$hash
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
-// CodeQL: False positive - MD5 is required for NOS Type 5 CLI compatibility
+// CodeQL[js/weak-crypto-algorithm]: MD5 required for NOS Type 5 CLI backward compatibility — not used for new storage.
+// CodeQL[js/insufficient-password-hash]: legacy format only — new passwords use hashPassword() with PBKDF2.
 export function encryptMd5Password(cliConfigInput: string, saltValue?: string): string {
   // Generate random salt if not provided (8 characters)
   const actualSalt = saltValue || generateSalt();
@@ -157,6 +159,8 @@ export function verifyType7Password(tokenInput: string, encryptedInput: string):
  * For new password verification, use verifyPassword() which supports modern PBKDF2 hashes.
  */
 // eslint-disable-next-line @typescript-eslint/naming-convention
+// CodeQL[js/weak-crypto-algorithm]: legacy NOS Type 5 verification — cannot be replaced.
+// CodeQL[js/insufficient-password-hash]: reading legacy hashes only — new hashes use PBKDF2.
 export function verifyMd5Password(tokenInput: string, storedHash: string): boolean {
   try {
     const parts = storedHash.split('$');

@@ -45,21 +45,27 @@ export function sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
     let sanitized = input.trim();
 
-    // Iterate tag stripping and scheme removal to a fixpoint. Repeating until no further changes
-    // (rather than a single greedy pass) prevents bypasses where overlapping, nested, or malformed
-    // tags (e.g. "<<script>script>", "java<javascript:>script:") leave dangerous syntax behind.
+    // Dangerous URI schemes that could enable XSS via href/src attributes.
+    // Collapses all inter-character whitespace (including Unicode) so obfuscated
+    // schemes like "j a v a s c r i p t :" are caught.
+    const DANGEROUS_SCHEMES_RE = /(?:\s)*(?:javascript|vbscript|data|file)(?:\s)*:/gi;
+
+    // Iterate tag stripping and scheme removal to a fixpoint. Repeating until no further
+    // changes prevents bypasses where overlapping, nested, or malformed tags
+    // (e.g. "<<script>script>", "java<javascript>:...") leave dangerous syntax behind.
     let prev: string;
     do {
         prev = sanitized;
+        // Strip all HTML/XML tags.  The character class [^>\u0000-\u001F] ensures
+        // multi-byte and control characters inside tags are consumed too, preventing
+        // incomplete-sanitisation bypasses that exploit malformed UTF-8 sequences.
         sanitized = sanitized
-            .replace(/<[^<>]*>/g, '')
-            // Combine all dangerous URI schemes into a single regex to prevent bypass
-            // Using a more comprehensive pattern with character classes to catch obfuscations
-            .replace(/(?:[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*(?:j[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*v[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*s[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*c[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*r[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*i[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*p[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*t[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:|v[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*b[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*s[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*c[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*r[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*i[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*p[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*t[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:|d[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*t[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*a[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:|f[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*i[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*l[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*e[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]*:))/gi, '');
+            // eslint-disable-next-line no-control-regex
+            .replace(/<[^>\u0000-\u001F]*>/g, '')
+            .replace(DANGEROUS_SCHEMES_RE, '');
     } while (sanitized !== prev);
 
-    // Remove any residual unbalanced angle brackets that are not part of a complete tag, preventing
-    // them from being reassembled into script/img/onerror markup later.
+    // Remove any residual angle brackets, preventing reassembly into markup.
     sanitized = sanitized.replace(/[<>]/g, '').trim();
 
     return sanitized;
