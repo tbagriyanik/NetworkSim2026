@@ -1,4 +1,4 @@
-import { createHash, createHmac, pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
+import { createHmac, pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 
 // HMAC key for exam data integrity — read from env, with a development fallback.
 const HMAC_EXAM_KEY = process.env.EXAM_HMAC_KEY || 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
@@ -82,11 +82,9 @@ export function encryptMd5Password(cliConfigInput: string, saltValue?: string): 
   // Generate random salt if not provided (8 characters)
   const actualSalt = saltValue || generateSalt();
 
-  // Create Type 5 simulation hash using SHA-256 for strong cryptographic security: salt + input
-  const hash = createHash('sha256')
-    .update(actualSalt + cliConfigInput)
-    .digest('hex')
-    .substring(0, 32);
+  // Use PBKDF2 key-stretching for secure password hashing formatted as Type 5 ($1$salt$hash)
+  const derivedKey = pbkdf2Sync(cliConfigInput, actualSalt, 1000, 16, 'sha256');
+  const hash = derivedKey.toString('hex');
 
   return `$1$${actualSalt}$${hash}`;
 }
