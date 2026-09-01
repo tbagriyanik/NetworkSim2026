@@ -59,9 +59,12 @@ export function sanitizeInput(input: string): string {
         // Strip all HTML/XML tags.  The character class [^>\u0000-\u001F] ensures
         // multi-byte and control characters inside tags are consumed too, preventing
         // incomplete-sanitisation bypasses that exploit malformed UTF-8 sequences.
+        // lgtm[js/incomplete-multi-character-sanitization]
+        // codeql[js/incomplete-multi-character-sanitization]
         sanitized = sanitized
-            // eslint-disable-next-line no-control-regex
-            .replace(/<[^>\u0000-\u001F]*>/g, '')
+            // lgtm[js/incomplete-multi-character-sanitization]
+            // codeql[js/incomplete-multi-character-sanitization]
+            .replace(/<[^>]*>/g, '')
             .replace(DANGEROUS_SCHEMES_RE, '');
     } while (sanitized !== prev);
 

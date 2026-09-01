@@ -54,10 +54,13 @@ Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik 
 
 ---
 
-## Latest Updates (v3.5.0)
+## Latest Updates (v3.7.0)
 
 | English | Türkçe |
 | --- | --- |
+| **Guided Lessons Knowledge Quizzes**: Interactive 2-3 question knowledge quizzes added to 19 guided lesson topics with live progress points integration. | **Rehberli Ders Konu Quiz'leri**: 19 rehberli ders konusuna özel 2-3 soruluk bilgi quiz'leri entegre edildi ve canlı puan sistemine bağlandı. |
+| **High-DPI Turkish Character PDF Engine**: Canvas 2400x1700 High-DPI engine for Turkish characters (Ş, İ, Ğ, Ç, Ö, Ü) with ~150KB PDF file size compression. | **High-DPI Türkçe Karakter PDF Motoru**: Türkçe karakter destekli Canvas 2400x1700 High-DPI motoru ve ~150KB PDF sıkıştırma optimizasyonu. |
+| **CLI Parser Pattern Loop Fix**: Multi-pattern match resolution for ACL, `mls qos`, `permit/deny` and interface commands. | **CLI Parser Mod Ayrıştırma Düzeltmesi**: ACL, `mls qos`, `permit/deny` ve arayüz komutları için çoklu mod ayrıştırma eşleşmesi. |
 | **Advanced Packet Capture & Analysis**: Real-time IP/protocol search, multi-term exclude filter (`cdp, stp, arp`), pagination (10 pkts/page), protocol number display `STP (0x4242)`. | **Gelişmiş Paket Yakalama & Analiz**: Canlı IP/protokol arama, çoklu dışlama filtresi (`cdp, stp, arp`), sayfalama ve protokol numaraları `STP (0x4242)`. |
 | **Background Protocol Capture**: Automatic capture of DHCP DORA, STP BPDU, CDP, OSPF Hello, RIP/EIGRP updates, WLAN Beacons into the live capture table. | **Arka Plan Protokol Kaydı**: DHCP DORA, STP BPDU, CDP, OSPF Hello, RIP/EIGRP ve WLAN Beacon paketlerinin canlı tabloya otomatik kaydı. |
 | **Trunk Allowed VLAN Filtering**: `switchport trunk allowed vlan add/remove/except/all` with full PVST recalculation. | **Trunk VLAN Filtreleme**: `switchport trunk allowed vlan add/remove/except/all` sözdizimi ve PVST hesaplamaya tam entegrasyon. |

@@ -2,6 +2,10 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v3.7.0 — 2026-08-31
+
+**Rehberli Ders & Sınav Modu Quiz ve PDF Sertifika Güncellemesi** — 19 rehberli ders konusuna özel 2-3 soruluk bilgi quiz'leri entegre edildi ve canlı puan sistemine bağlandı. PDF sertifika oluşturucu Canvas High-DPI Türkçe karakter (Ş, İ, Ğ, Ç, Ö, Ü) motoru ile yenilendi ve PDF dosya boyutu ~150KB seviyesine düşürüldü. Rehberli Dersler ana sekme yapıldı. CLI komut ayrıştırıcı (parser) mod eşleşme döngüsü güncellenerek extended/standard ACL ve `mls qos` mod çakışmaları çözüldü.
+
 ## v3.5.0 — 2026-08-29
 
 Görev yöneticisi pencere listesi modernleştirildi; eksik örnek açıklamalarına not ve detaylar eklendi. OSPF, RIP ve ACL arıza örneklerine komut ipuçları eklendi. ROAS alt arayüzleri ve örnek topoloji kablo durumları düzeltildi. NTP istemci zamanı ile Linux terminal `date` komutu ve canvas not sürükleme davranışı iyileştirildi.

@@ -25,7 +25,7 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 ## 📦 Yüklü Paketler
 
 ### Core Dependencies
-- **Next.js 16.2** - React framework
+- **Next.js 16.3** - React framework
 - **React 19** - UI library
 - **TypeScript 7.0** - Type safety
 - **Tailwind CSS 4** - Styling
