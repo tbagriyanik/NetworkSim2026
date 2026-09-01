@@ -170,7 +170,7 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
       // Check compatibility, shutdown status, offline status, and STP blocking
       const srcPortObj = src.ports.find(p => p.id === conn.sourcePort);
       const tgtPortObj = dst.ports.find(p => p.id === conn.targetPort);
-      
+
       const isShutdown = srcPortObj?.shutdown || tgtPortObj?.shutdown;
       const isPoweredOff = src.status === 'offline' || dst.status === 'offline';
 
@@ -179,7 +179,7 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
       const srcSimPort = srcState?.ports?.[conn.sourcePort];
       const tgtSimPort = tgtState?.ports?.[conn.targetPort];
       const isSTPBlocking = srcSimPort?.spanningTree?.state === 'blocking' || srcSimPort?.spanningTree?.role === 'alternate' ||
-                            tgtSimPort?.spanningTree?.state === 'blocking' || tgtSimPort?.spanningTree?.role === 'alternate';
+        tgtSimPort?.spanningTree?.state === 'blocking' || tgtSimPort?.spanningTree?.role === 'alternate';
       const srcVlan = src.vlan || srcSimPort?.accessVlan || srcSimPort?.vlan || 1;
       const tgtVlan = dst.vlan || tgtSimPort?.accessVlan || tgtSimPort?.vlan || 1;
       const isVlan1 = srcVlan === 1 && tgtVlan === 1;
@@ -199,7 +199,7 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
           ? 'var(--color-secondary-400)' // Light-theme shutdown/STP block gray
           : isPoweredOff
             ? 'var(--color-secondary-400)' // Light-theme offline gray
-            : CABLE_COLORS[conn.cableType]?.primary || 'var(--color-primary-500)';
+            : (CABLE_COLORS[conn.cableType as keyof typeof CABLE_COLORS]?.primary || 'var(--color-primary-500)');
 
       const path = document.createElementNS(ns, 'path');
       path.setAttribute('d', pathD);
@@ -440,9 +440,9 @@ export function exportTopologyToPNG(options: ExportPNGOptions): void {
     // Download
     canvas.toBlob(async (blob) => {
       if (!blob) return;
-      
+
       const filename = `topology-${new Date().getTime()}.png`;
-      
+
       if (typeof navigator !== 'undefined' && navigator.canShare) {
         try {
           const file = new File([blob], filename, { type: 'image/png' });

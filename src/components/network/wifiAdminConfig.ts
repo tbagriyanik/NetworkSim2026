@@ -13,7 +13,7 @@ export function getDefaultWifiConfig(device: CanvasDevice): WifiAdminConfig {
     { id: 'ssid-1', name: 'Ana Ağ (Primary)', ssid: device.wifi?.ssid || `${device.name}_WiFi`, security: device.wifi?.security || 'wpa2', password: device.wifi?.password || 'password123', band: 'both', enabled: true, hidden: device.wifi?.hidden ?? false },
     { id: 'ssid-2', name: 'Misafir Ağ (Guest)', ssid: `${device.name}_Guest`, security: 'open', band: '2.4GHz', enabled: false, hidden: false },
   ];
-  return { enabled: device.wifi?.enabled ?? false, ssid: device.wifi?.ssid || `${device.name}_WiFi`, security: device.wifi?.security || 'wpa2', password: device.wifi?.password || 'password123', channel: device.wifi?.channel || '2.4GHz', mode: device.wifi?.mode || 'ap', hidden: device.wifi?.hidden ?? false, maxClients: device.wifi?.maxClients ?? 32, macFilterEnabled: device.wifi?.macFilterEnabled ?? false, macFilterMode: device.wifi?.macFilterMode || 'allow', macFilterList: device.wifi?.macFilterList || [], ssids: defaultSsids };
+  return { enabled: device.wifi?.enabled ?? false, ssid: device.wifi?.ssid || `${device.name}_WiFi`, security: device.wifi?.security || 'wpa2', password: device.wifi?.password || 'password123', channel: device.wifi?.channel || '2.4GHz', mode: (device.wifi?.mode === 'client' || device.wifi?.mode === 'sta') ? 'client' : 'ap', hidden: device.wifi?.hidden ?? false, maxClients: device.wifi?.maxClients ?? 32, macFilterEnabled: device.wifi?.macFilterEnabled ?? false, macFilterMode: device.wifi?.macFilterMode || 'allow', macFilterList: device.wifi?.macFilterList || [], ssids: defaultSsids };
 }
 
 export function getRouterWifiConfig(device: CanvasDevice, state?: SwitchState): WifiAdminConfig {

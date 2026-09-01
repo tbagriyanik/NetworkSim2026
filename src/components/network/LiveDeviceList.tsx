@@ -709,9 +709,14 @@ export function LiveDeviceList({
     const normalizedMode = normalizeWifiMode(runtimeWifi.mode);
     const enabled = !wlan.shutdown && normalizedMode !== 'disabled';
     const fallbackMode: 'ap' | 'client' = device.type === 'pc' ? 'client' : 'ap';
-    const resolvedMode: 'ap' | 'client' = normalizedMode === 'disabled'
-      ? (device.wifi?.mode || fallbackMode)
-      : (normalizedMode === 'client' ? 'client' : 'ap');
+    let resolvedMode: 'ap' | 'client';
+    if (normalizedMode === 'client') {
+      resolvedMode = 'client';
+    } else if (normalizedMode === 'ap') {
+      resolvedMode = 'ap';
+    } else {
+      resolvedMode = fallbackMode;
+    }
     return {
       ...device.wifi,
       enabled,

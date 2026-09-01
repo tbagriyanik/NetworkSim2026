@@ -41,11 +41,7 @@ export const handleRefreshNetwork = (params: {
     const normalizedMode = normalizeWifiMode(runtimeWifi.mode);
     const enabled = !wlan.shutdown && normalizedMode !== 'disabled';
     const fallbackMode: 'ap' | 'client' = device.type === 'pc' ? 'client' : 'ap';
-    const resolvedMode: 'ap' | 'client' = normalizedMode === 'disabled'
-      ? device.wifi?.mode || fallbackMode
-      : normalizedMode === 'client'
-      ? 'client'
-      : 'ap';
+    const resolvedMode: 'ap' | 'client' = normalizedMode === 'client' ? 'client' : (normalizedMode === 'ap' ? 'ap' : fallbackMode);
     return {
       ...device.wifi,
       enabled,

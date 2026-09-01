@@ -107,12 +107,12 @@ export function WirelessConfigTab({
                   const apDevice = topologyDevices.find(d => {
                     if (d.type !== 'router' && d.type !== 'switchL2' && d.type !== 'switchL3') return false;
                     if (!d.services?.http?.enabled) return false;
-                    
+
                     const wifi = getDeviceWifiConfig(d, safeStates);
                     if (!wifi || !wifi.enabled || wifi.mode !== 'ap') return false;
                     if (wifi.powerDisabled) return false;
                     if (wifi.ssid !== wifiSSID) return false;
-                    
+
                     return true;
                   });
                   const targetIp = apDevice?.ip || '192.168.1.1';
@@ -561,7 +561,7 @@ export function WirelessConfigTab({
                       macFilterList: Array.isArray(wlan.wifi?.macFilterList) ? wlan.wifi.macFilterList : [],
                     };
                     if (!wifiChannelMatches(apWifi, clientWifi)) {
-                      mismatchedApChannel = apWifi.channel;
+                      mismatchedApChannel = apWifi.channel || null;
                       return false;
                     }
                     if (!wifiMacFilterMatches(apWifi, currentDevice, safeStates)) {
@@ -581,7 +581,7 @@ export function WirelessConfigTab({
                     if (apSecurity !== wifiSecurity) return false;
                     if (apSecurity !== 'open' && apWifi.password !== wifiPassword) return false;
                     if (!wifiChannelMatches(apWifi, clientWifi)) {
-                      mismatchedApChannel = apWifi.channel;
+                      mismatchedApChannel = apWifi.channel || null;
                       return false;
                     }
                     if (!wifiMacFilterMatches(apWifi, currentDevice, safeStates)) {

@@ -2,13 +2,12 @@
 import { CanvasDevice } from '@/components/network/networkTopology.types';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 import { colors } from '@/lib/design-tokens/colors';
+import { IotRule } from './iotWebPanel.types';
+import { generateIotPanelStyles } from './iotWebPanel.styles';
+import { generateIotPanelScript } from './iotWebPanel.script';
 
-export type IotRule = {
-  id: string;
-  condition: string;
-  action: string;
-  enabled?: boolean;
-};
+// Re-export IotRule for backward compatibility
+export type { IotRule };
 
 export const generateIotWebPanelContent = (
   iotDevices: CanvasDevice[],
@@ -109,18 +108,7 @@ export const generateIotWebPanelContent = (
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>${isTurkish ? 'IoT Web Paneli' : 'IoT Web Panel'}</title>
         <style>
-          :root {
-            --color-primary-500: ${colors.status.info};
-            --color-primary-700: ${colors.blue['700']};
-            --color-secondary-500: ${colors.cables.console};
-            --color-secondary-600: ${colors.cables.disabled};
-            --color-secondary-200: ${colors.topology.noteText};
-            --color-secondary-300: ${colors.terminal.output};
-            --color-success-500: ${colors.status.active};
-            --color-success-600: ${colors.green['600']};
-            --color-error-500: ${colors.status.offline};
-            --color-error-600: ${colors.red['600']};
-          }
+          ${generateIotPanelStyles()}
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: ${colors.neutral['100']};
@@ -464,12 +452,6 @@ export const generateIotWebPanelContent = (
             margin-top: 5px;
             display: none;
           }
-          .password-error {
-            color: var(--color-error-500);
-            font-size: 12px;
-            margin-top: 5px;
-            display: none;
-          }
         </style>
       </head>
       <body>
@@ -522,222 +504,7 @@ export const generateIotWebPanelContent = (
         </div>
 
         <script>
-          const safeStorage = {
-            getItem: function(key) {
-              try {
-                return (typeof window !== 'undefined' && window.sessionStorage) ? window.sessionStorage.getItem(key) : (window['__iot_' + key] || null);
-              } catch (e) {
-                return window['__iot_' + key] || null;
-              }
-            },
-            setItem: function(key, value) {
-              try {
-                if (typeof window !== 'undefined' && window.sessionStorage) {
-                  window.sessionStorage.setItem(key, value);
-                } else {
-                  window['__iot_' + key] = value;
-                }
-              } catch (e) {
-                window['__iot_' + key] = value;
-              }
-            },
-            removeItem: function(key) {
-              try {
-                if (typeof window !== 'undefined' && window.sessionStorage) {
-                  window.sessionStorage.removeItem(key);
-                } else {
-                  delete window['__iot_' + key];
-                }
-              } catch (e) {
-                delete window['__iot_' + key];
-              }
-            }
-          };
-
-          window.checkPassword = function(e) {
-            try {
-              if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-              }
-              const get = (id) => document.getElementById(id);
-              const userEl = get('username');
-              const pwdEl = get('password');
-              const loginSection = get('loginSection');
-              const deviceSection = get('deviceSection');
-              const errorMessage = get('errorMessage');
-
-              const username = userEl ? (userEl.value || '') : '';
-              const password = pwdEl ? (pwdEl.value || '') : '';
-              const correctUsername = 'admin';
-              const correctPassword = safeStorage.getItem('iotPanelPassword') || 'admin';
-
-              if (username === correctUsername && password === correctPassword) {
-                safeStorage.setItem('iotPanelAuthenticated', 'true');
-                loginSection?.classList.add('hidden');
-                deviceSection?.classList.remove('hidden');
-              } else {
-                if (errorMessage) errorMessage.style.display = 'block';
-                if (userEl) userEl.value = '';
-                if (pwdEl) pwdEl.value = '';
-                try { userEl?.focus(); } catch (_) { /* ignore */ }
-              }
-            } catch (err) {
-              console.warn('IoT panel: checkPassword failed', err);
-            }
-          };
-
-          window.checkAuthentication = function() {
-            try {
-              const isAuthenticated = safeStorage.getItem('iotPanelAuthenticated');
-              const loginSection = document.getElementById('loginSection');
-              const deviceSection = document.getElementById('deviceSection');
-              if (isAuthenticated === 'true') {
-                loginSection?.classList.add('hidden');
-                deviceSection?.classList.remove('hidden');
-              } else {
-                loginSection?.classList.remove('hidden');
-                deviceSection?.classList.add('hidden');
-              }
-            } catch (err) {
-              console.warn('IoT panel: checkAuthentication failed', err);
-            }
-          };
-
-          window.logout = function() {
-            try {
-              safeStorage.removeItem('iotPanelAuthenticated');
-              const loginSection = document.getElementById('loginSection');
-              const deviceSection = document.getElementById('deviceSection');
-              const userEl = document.getElementById('username');
-              const pwdEl = document.getElementById('password');
-              const errorMessage = document.getElementById('errorMessage');
-              const settingsPopup = document.getElementById('settingsPopup');
-
-              loginSection?.classList.remove('hidden');
-              deviceSection?.classList.add('hidden');
-              if (userEl) userEl.value = 'admin';
-              if (pwdEl) pwdEl.value = '';
-              if (errorMessage) errorMessage.style.display = 'none';
-              settingsPopup?.classList.remove('show');
-            } catch (err) {
-              console.warn('IoT panel: logout failed', err);
-            }
-          };
-
-          window.toggleSettingsPopup = function() {
-            try {
-              const popup = document.getElementById('settingsPopup');
-              popup?.classList.toggle('show');
-            } catch (err) {
-              console.warn('IoT panel: toggleSettingsPopup failed', err);
-            }
-          };
-
-          window.changePassword = function() {
-            try {
-              const newPasswordEl = document.getElementById('newPassword');
-              const confirmPasswordEl = document.getElementById('confirmPassword');
-              const successMessage = document.getElementById('passwordSuccess');
-              const errorMessage = document.getElementById('passwordError');
-              const settingsPopup = document.getElementById('settingsPopup');
-
-              const newPassword = newPasswordEl ? (newPasswordEl.value || '') : '';
-              const confirmPassword = confirmPasswordEl ? (confirmPasswordEl.value || '') : '';
-
-              if (newPassword && newPassword === confirmPassword) {
-                safeStorage.setItem('iotPanelPassword', newPassword);
-                if (successMessage) successMessage.style.display = 'block';
-                if (errorMessage) errorMessage.style.display = 'none';
-                if (newPasswordEl) newPasswordEl.value = '';
-                if (confirmPasswordEl) confirmPasswordEl.value = '';
-                
-                // Hide success message after 3 seconds
-                setTimeout(() => {
-                  if (successMessage) successMessage.style.display = 'none';
-                }, 3000);
-
-                // Close popup after successful password change
-                setTimeout(() => {
-                  settingsPopup?.classList.remove('show');
-                }, 1500);
-              } else {
-                if (errorMessage) errorMessage.style.display = 'block';
-                if (successMessage) successMessage.style.display = 'none';
-              }
-            } catch (err) {
-              console.warn('IoT panel: changePassword failed', err);
-            }
-          };
-
-          // Avoid inline event attributes: srcDoc iframes on mobile can ignore or
-          // inconsistently resolve window-scoped inline handlers.
-          document.getElementById('loginSection')?.addEventListener('submit', function(event) {
-            window.checkPassword(event);
-          });
-          document.getElementById('settingsToggle')?.addEventListener('click', window.toggleSettingsPopup);
-          document.getElementById('changePasswordButton')?.addEventListener('click', window.changePassword);
-          document.getElementById('logoutButton')?.addEventListener('click', window.logout);
-          document.querySelectorAll('[data-iot-device-id]').forEach(function(button) {
-            button.addEventListener('click', function() {
-              const deviceId = button.getAttribute('data-iot-device-id');
-              if (deviceId) window.parent.postMessage({ type: 'open-iot-device', deviceId: deviceId }, '*');
-            });
-          });
-
-          // Close popup when clicking outside
-          try {
-            document.addEventListener('click', function(e) {
-              const popup = document.getElementById('settingsPopup');
-              const settingsIcon = document.querySelector('.settings-icon');
-              try {
-                if (popup && settingsIcon) {
-                  const target = e.target;
-                  if (target instanceof Node) {
-                    if (!popup.contains(target) && !settingsIcon.contains(target)) {
-                      popup.classList.remove('show');
-                    }
-                  }
-                }
-              } catch (_) {
-                // ignore
-              }
-            });
-          } catch (err) {
-            // Fail gracefully in restricted iframe environments
-            console.warn('IoT panel: failed to attach outside-click handler', err);
-          }
-
-          // Attach keyboard handlers only when elements exist to avoid runtime exceptions
-          try {
-            const pwdEl = document.getElementById('password');
-            if (pwdEl && typeof pwdEl.addEventListener === 'function') {
-              pwdEl.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                  try { checkPassword(); } catch (_) { /* ignore */ }
-                }
-              });
-            }
-
-            const userEl = document.getElementById('username');
-            if (userEl && typeof userEl.addEventListener === 'function') {
-              userEl.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                  try { document.getElementById('password')?.focus(); } catch (_) { /* ignore */ }
-                }
-              });
-            }
-          } catch (err) {
-            console.warn('IoT panel: failed to attach input key handlers', err);
-          }
-
-          // Check authentication on page load and run immediately
-          try {
-            window.addEventListener('load', window.checkAuthentication);
-            window.checkAuthentication();
-          } catch (err) {
-            console.warn('IoT panel: failed to run authentication check', err);
-          }
+          ${generateIotPanelScript()}
         </script>
       </body>
     </html>

@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './networkTopology.types';
-import { isCableCompatible } from '@/lib/network/types';
-import type { CableInfo } from '@/lib/network/types';
+import { isCableCompatible, CableInfo } from '@/lib/network/types';
 import { Trash2, Unplug, PlugZap } from 'lucide-react';
 
 const STUB_BG = 'var(--color-secondary-50)';
@@ -67,14 +66,15 @@ const ConnectionHandle = memo(function ConnectionHandle({
     3 * invT * tTrash * tTrash * controlPoint2.y +
     tTrash * tTrash * tTrash * target.y;
 
-  const isCompatible = isCableCompatible({
+  const cableInfo: CableInfo = {
     connected: true,
     cableType: connection.cableType,
     sourceDevice: sourceDevice.type,
     targetDevice: targetDevice.type,
     sourcePort: connection.sourcePort,
     targetPort: connection.targetPort,
-  } as CableInfo);
+  };
+  const isCompatible = isCableCompatible(cableInfo);
 
   return (
     <g key={`handle-${connection.id}`} data-connection-handle-id={connection.id} data-export-hide="true">

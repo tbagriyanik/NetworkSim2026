@@ -1,6 +1,12 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 3.7.0 · **Son doğrulama / Last verified:** 2026-08-31
+**Sürüm / Version:** 3.8.0 · **Son doğrulama / Last verified:** 2026-09-01
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-09-01 - v3.8.0)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **Not İçi Klavye & Giriş Koruması** | Topoloji tuvalindeki notlarda (`NoteNode`) ve metin kutularında yazı yazılırken `TAB`, `0`, `+`, `-`, `Home` gibi tuşların global kısayolları tetiklemesi engellendi; `TAB` tuşu yalnızca not içi 4-boşlukluk sekme/girinti ilerletmesi yapar. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-08-31 - v3.7.0)
 

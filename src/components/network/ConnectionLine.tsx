@@ -73,7 +73,7 @@ export const ConnectionLine = memo(function ConnectionLine({
   const target = getPortPosition(targetDevice, connection.targetPort);
 
   // Check cable compatibility - use pink color for incompatible cables
-  const cableInfoForConnection = {
+  const cableInfoForConnection: CableInfo = {
     connected: true,
     cableType: connection.cableType,
     sourceDevice: sourceDevice.type,
@@ -82,8 +82,7 @@ export const ConnectionLine = memo(function ConnectionLine({
     targetPort: connection.targetPort,
   };
 
-  // Cast to specific types to satisfy TS if needed, but the logic is sound
-  const isCompatible = isCableCompatible(cableInfoForConnection as CableInfo);
+  const isCompatible = isCableCompatible(cableInfoForConnection);
 
   // Check if either port is shutdown
   const sourcePort = sourceDevice.ports.find(p => p.id === connection.sourcePort);

@@ -1,10 +1,14 @@
-import type { CableInfo, SwitchState } from '@/lib/network/types';
-import type { CableType } from '@/lib/network/types';
-import type { DeviceWifiSsidProfile } from '@/lib/network/wireless';
+import type { CableInfo, SwitchState, PortMode, PortStatus, WifiConfig, WifiMode, CableType } from '@/lib/network/types';
+
+// Canvas-specific WiFi config that allows partial compatibility with legacy code
+export type CanvasWifiConfig = Partial<WifiConfig> & {
+  ssid: string;
+  mode: WifiMode;
+};
 
 export type DeviceType = 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc';
-export type CanvasPortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
-export type CanvasPortStatus = 'connected' | 'disconnected' | 'notconnect' | 'blocked' | 'disabled' | 'err-disabled';
+export type CanvasPortMode = PortMode;
+export type CanvasPortStatus = PortStatus;
 
 export interface CanvasPort {
   id: string;
@@ -27,20 +31,7 @@ export interface CanvasPort {
   ipAddress?: string;
   subnetMask?: string;
   macAddress?: string; // Per-port MAC address (for router ports)
-  wifi?: {
-    ssid: string;
-    security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
-    password?: string;
-    channel: '2.4GHz' | '5GHz' | string;
-    mode?: 'ap' | 'client' | 'disabled' | 'sta';
-    hidden?: boolean;
-    maxClients?: number;
-    macFilterEnabled?: boolean;
-    macFilterMode?: 'allow' | 'deny';
-    macFilterList?: string[];
-    ssids?: DeviceWifiSsidProfile[];
-    powerDisabled?: boolean;
-  };
+  wifi?: CanvasWifiConfig;
   spanningTree?: {
     role?: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';
     state?: 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled';
@@ -179,22 +170,7 @@ export interface CanvasDevice {
   status: 'online' | 'offline' | 'error';
   switchModel?: string; // WS-C2960-24TT-L (L2) veya WS-C3650-24PS (L3)
   ports: CanvasPort[];
-  wifi?: {
-    enabled: boolean;
-    ssid: string;
-    bssid?: string;
-    security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
-    password?: string;
-    channel: '2.4GHz' | '5GHz' | string;
-    mode: 'ap' | 'client';
-    hidden?: boolean;
-    maxClients?: number;
-    macFilterEnabled?: boolean;
-    macFilterMode?: 'allow' | 'deny';
-    macFilterList?: string[];
-    ssids?: DeviceWifiSsidProfile[];
-    powerDisabled?: boolean;
-  };
+  wifi?: CanvasWifiConfig;
   iot?: {
     sensorType: 'temperature' | 'sound' | 'motion' | 'humidity' | 'light';
     kind?: 'cooler' | 'lamp' | 'heater' | 'sensor';

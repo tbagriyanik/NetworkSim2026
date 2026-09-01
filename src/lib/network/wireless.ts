@@ -1,8 +1,6 @@
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
-import { SwitchState, Port } from './types';
+import { SwitchState, Port, WifiMode, WifiConfig } from './types';
 import { ensureDeviceStatesMap } from './networkUtils';
-
-export type WifiMode = 'ap' | 'client' | 'disabled' | 'sta';
 
 export interface WirelessChannelOption {
   value: string;
@@ -55,30 +53,15 @@ export interface DeviceWifiSsidProfile {
   hidden?: boolean;
 }
 
-export interface DeviceWifiConfig {
-  enabled: boolean;
-  ssid: string;
-  bssid?: string;
-  password?: string;
-  security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
-  channel: '2.4GHz' | '5GHz' | string;
-  mode: WifiMode;
-  hidden?: boolean;
-  maxClients?: number;
-  macFilterEnabled?: boolean;
-  macFilterMode?: 'allow' | 'deny';
-  macFilterList?: string[];
-  ssids?: DeviceWifiSsidProfile[];
-  powerDisabled?: boolean;
-}
+export type DeviceWifiConfig = WifiConfig;
 
 const normalizeWifiMode = (mode: string | undefined, fallback: WifiMode): WifiMode => {
   if (!mode) return fallback;
-  const words = mode.toLowerCase();
-  if (words === 'ap') return 'ap';
-  if (words === 'client') return 'client';
-  if (words === 'sta') return 'sta';
-  if (words === 'disabled') return 'disabled';
+  const normalized = mode.toLowerCase();
+  if (normalized === 'ap') return 'ap';
+  if (normalized === 'client') return 'client';
+  if (normalized === 'sta') return 'sta';
+  if (normalized === 'disabled') return 'disabled';
   return fallback;
 };
 
@@ -147,7 +130,7 @@ export function formatChannelDisplay(channel: string | undefined, language = 'tr
   return isTr ? `Kanal ${num}` : `Channel ${num}`;
 }
 
-export function wifiChannelMatches(apWifi: DeviceWifiConfig | undefined, clientWifi: DeviceWifiConfig): boolean {
+export function wifiChannelMatches(apWifi: WifiConfig | undefined, clientWifi: WifiConfig): boolean {
   if (!apWifi) return true;
   const apCh = normalizeChannel(apWifi.channel);
   const clientCh = normalizeChannel(clientWifi.channel);
@@ -208,7 +191,7 @@ export function getDeviceMacAddress(device: CanvasDevice | undefined, deviceStat
 }
 
 export function wifiMacFilterMatches(
-  apWifi: DeviceWifiConfig | undefined,
+  apWifi: WifiConfig | undefined,
   clientDevice: CanvasDevice | undefined,
   deviceStates?: Map<string, SwitchState>
 ): boolean {
@@ -234,7 +217,7 @@ export function wifiMacFilterMatches(
   return isInList;
 }
 
-export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStates?: Map<string, SwitchState>): DeviceWifiConfig | undefined {
+export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStates?: Map<string, SwitchState>): WifiConfig | undefined {
   if (!device) return undefined;
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const state = safeDeviceStates?.get(device.id);
@@ -422,14 +405,14 @@ export function getWirelessDistance(
   return minDist;
 }
 
-function getApMaxClients(apWifi: DeviceWifiConfig | undefined): number {
+function getApMaxClients(apWifi: WifiConfig | undefined): number {
   const value = Number(apWifi?.maxClients);
   if (!Number.isFinite(value) || value <= 0) return Number.POSITIVE_INFINITY;
   return Math.floor(value);
 }
 
 export function getApActiveSsids(
-  apWifi: DeviceWifiConfig | undefined,
+  apWifi: WifiConfig | undefined,
   state?: SwitchState,
   deviceStates?: Map<string, SwitchState>
 ): Array<{ ssid: string; security: string; password?: string }> {
@@ -509,7 +492,7 @@ export function getApActiveSsids(
   }
 
   const seen = new Set<string>();
-  return list.filter(item => {
+  return list.filter((item: { ssid: string }) => {
     const key = item.ssid.toLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
@@ -517,70 +500,116 @@ export function getApActiveSsids(
   });
 }
 
-export function buildImplicitWirelessConnections(
-  devices: CanvasDevice[],
-  deviceStates?: Map<string, SwitchState>,
-  idPrefix = 'wireless'
-): CanvasConnection[] {
-  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-  const apDevices = devices.filter(d => d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'router' || d.type === 'wlc');
-  const clientDevices = devices.filter(d => {
-    const wifi = getDeviceWifiConfig(d, safeDeviceStates);
-    return (d.type === 'pc' || d.type === 'iot') && !!wifi && wifi.enabled && !!wifi.ssid && (wifi.mode === 'client' || wifi.mode === 'sta');
-  });
+// Helper functions for wireless connection logic
+function isValidWirelessClient(device: CanvasDevice, deviceStates: Map<string, SwitchState>): boolean {
+  const wifi = getDeviceWifiConfig(device, deviceStates);
+  return (device.type === 'pc' || device.type === 'iot') &&
+         !!wifi &&
+         (wifi.enabled ?? true) &&
+         !!wifi.ssid &&
+         (wifi.mode === 'client' || wifi.mode === 'sta');
+}
 
-  const candidatesByAp = new Map<string, Array<{ client: CanvasDevice; dist: number; ssidIndex: number; ssid: string }>>();
+function isValidWirelessAp(device: CanvasDevice): boolean {
+  return device.type === 'switchL2' || device.type === 'switchL3' || device.type === 'router' || device.type === 'wlc';
+}
+
+function isWirelessConnectionCompatible(
+  clientWifi: WifiConfig,
+  apWifi: WifiConfig | undefined,
+  matchingSsid: { ssid: string; security: string; password?: string }
+): boolean {
+  if (!apWifi) return false;
+
+  const clientSec = (clientWifi.security || 'open').toLowerCase();
+  const apSec = (matchingSsid.security || 'open').toLowerCase();
+  if (clientSec !== apSec) return false;
+  if (apSec !== 'open' && matchingSsid.password !== clientWifi.password) return false;
+
+  return wifiChannelMatches(apWifi, clientWifi);
+}
+
+function calculateDistance(device1: CanvasDevice, device2: CanvasDevice): number {
+  const dx = (device1.x || 0) - (device2.x || 0);
+  const dy = (device1.y || 0) - (device2.y || 0);
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+interface WirelessConnectionCandidate {
+  client: CanvasDevice;
+  apId: string;
+  dist: number;
+  ssidIndex: number;
+  ssid: string;
+}
+
+function findWirelessCandidates(
+  apDevices: CanvasDevice[],
+  clientDevices: CanvasDevice[],
+  deviceStates: Map<string, SwitchState>
+): WirelessConnectionCandidate[] {
+  const candidates: WirelessConnectionCandidate[] = [];
 
   for (const ap of apDevices) {
-    const apState = safeDeviceStates?.get(ap.id);
-    const apWifi = getDeviceWifiConfig(ap, safeDeviceStates);
-    const activeSsids = getApActiveSsids(apWifi, apState, safeDeviceStates);
+    const apState = deviceStates?.get(ap.id);
+    const apWifi = getDeviceWifiConfig(ap, deviceStates);
+    const activeSsids = getApActiveSsids(apWifi, apState, deviceStates);
     if (activeSsids.length === 0) continue;
 
     for (const client of clientDevices) {
-      const clientWifi = getDeviceWifiConfig(client, safeDeviceStates);
+      const clientWifi = getDeviceWifiConfig(client, deviceStates);
       if (!clientWifi || !clientWifi.enabled || !clientWifi.ssid) continue;
       if (clientWifi.bssid && clientWifi.bssid !== ap.id) continue;
 
-      const matchingSsidIndex = activeSsids.findIndex(s => s.ssid.toLowerCase() === clientWifi.ssid.toLowerCase());
+      const matchingSsidIndex = activeSsids.findIndex(s =>
+        s.ssid.toLowerCase() === clientWifi.ssid.toLowerCase()
+      );
       if (matchingSsidIndex === -1) continue;
       const matchingSsid = activeSsids[matchingSsidIndex];
 
-      const clientSec = (clientWifi.security || 'open').toLowerCase();
-      const apSec = (matchingSsid.security || 'open').toLowerCase();
-      if (clientSec !== apSec) continue;
-      if (apSec !== 'open' && matchingSsid.password !== clientWifi.password) continue;
+      if (!isWirelessConnectionCompatible(clientWifi, apWifi, matchingSsid)) continue;
+      if (!wifiMacFilterMatches(apWifi, client, deviceStates)) continue;
 
-      if (!wifiChannelMatches(apWifi, clientWifi)) continue;
-      if (!wifiMacFilterMatches(apWifi, client, safeDeviceStates)) continue;
-
-      const dx = (client.x || 0) - (ap.x || 0);
-      const dy = (client.y || 0) - (ap.y || 0);
-      const dist = Math.sqrt(dx * dx + dy * dy);
+      const dist = calculateDistance(client, ap);
       if (dist >= 550) continue;
 
-      const list = candidatesByAp.get(ap.id) || [];
-      list.push({ client, dist, ssidIndex: matchingSsidIndex, ssid: matchingSsid.ssid });
-      candidatesByAp.set(ap.id, list);
+      candidates.push({
+        client,
+        apId: ap.id,
+        dist,
+        ssidIndex: matchingSsidIndex,
+        ssid: matchingSsid.ssid,
+      });
     }
   }
 
-  const wirelessConnections: CanvasConnection[] = [];
+  return candidates;
+}
 
-  // A client associates with one AP only. When multiple APs advertise the
-  // same SSID, prefer the closest eligible AP (unless BSSID is pinned above).
-  const allCandidates = Array.from(candidatesByAp.entries()).flatMap(([apId, candidates]) =>
-    candidates.map(candidate => ({ apId, ...candidate }))
+function selectBestWirelessConnections(
+  candidates: WirelessConnectionCandidate[],
+  apDevices: CanvasDevice[],
+  deviceStates: Map<string, SwitchState>,
+  idPrefix: string
+): CanvasConnection[] {
+  // Sort by distance (closest first), then by client ID, then by AP ID
+  candidates.sort((a, b) =>
+    a.dist - b.dist ||
+    a.client.id.localeCompare(b.client.id) ||
+    a.apId.localeCompare(b.apId)
   );
-  allCandidates.sort((a, b) => a.dist - b.dist || a.client.id.localeCompare(b.client.id) || a.apId.localeCompare(b.apId));
 
+  const wirelessConnections: CanvasConnection[] = [];
   const connectedClients = new Set<string>();
   const apClientCounts = new Map<string, number>();
-  for (const { apId, client, ssidIndex, ssid } of allCandidates) {
+
+  for (const { apId, client, ssidIndex, ssid } of candidates) {
     if (connectedClients.has(client.id)) continue;
+
     const ap = apDevices.find(device => device.id === apId);
     if (!ap) continue;
-    const limit = getApMaxClients(getDeviceWifiConfig(ap, safeDeviceStates));
+
+    const limit = getApMaxClients(getDeviceWifiConfig(ap, deviceStates));
     const currentCount = apClientCounts.get(apId) || 0;
     if (currentCount >= limit) continue;
 
@@ -595,9 +624,28 @@ export function buildImplicitWirelessConnections(
       ssidIndex,
       ssid,
     } as CanvasConnection);
+
     connectedClients.add(client.id);
     apClientCounts.set(apId, currentCount + 1);
   }
 
   return wirelessConnections;
+}
+
+export function buildImplicitWirelessConnections(
+  devices: CanvasDevice[],
+  deviceStates?: Map<string, SwitchState>,
+  idPrefix = 'wireless'
+): CanvasConnection[] {
+  const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
+
+  // Filter devices by type
+  const apDevices = devices.filter(isValidWirelessAp);
+  const clientDevices = devices.filter(d => isValidWirelessClient(d, safeDeviceStates));
+
+  // Find all possible wireless connection candidates
+  const candidates = findWirelessCandidates(apDevices, clientDevices, safeDeviceStates);
+
+  // Select the best connections (closest AP for each client, respecting client limits)
+  return selectBestWirelessConnections(candidates, apDevices, safeDeviceStates, idPrefix);
 }

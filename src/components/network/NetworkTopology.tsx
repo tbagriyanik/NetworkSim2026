@@ -946,9 +946,9 @@ export function NetworkTopology({
       return;
     }
 
-    // Wireless connections don't have power toggle - remove this functionality
-    return;
-  }, [deleteConnection, saveToHistory, setDevicesState, topologyConnections, visualConnections, toggleConnectionActive]);
+    // Wireless connections don't have power toggle functionality
+    // This is handled by enabling/disabling WiFi on the client device instead
+  }, [toggleConnectionActive, topologyConnections]);
 
   // Get dynamic canvas dimensions based on screen size
   const getCanvasDimensions = useCallback(() => {

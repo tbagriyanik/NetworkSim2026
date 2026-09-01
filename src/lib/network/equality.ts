@@ -20,8 +20,8 @@ export function areArraysEqual<T>(a: T[] | undefined | null, b: T[] | undefined 
  * Handles both CanvasDevice and CanvasPort WiFi structures.
  */
 export function areWifiConfigsEqual(
-  a: { ssid: string; security: string; password?: string; channel: string; mode?: string; bssid?: string } | undefined | null,
-  b: { ssid: string; security: string; password?: string; channel: string; mode?: string; bssid?: string } | undefined | null
+  a: { ssid: string; security?: string; password?: string; channel?: string; mode?: string; bssid?: string; enabled?: boolean } | undefined | null,
+  b: { ssid: string; security?: string; password?: string; channel?: string; mode?: string; bssid?: string; enabled?: boolean } | undefined | null
 ): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
@@ -32,7 +32,8 @@ export function areWifiConfigsEqual(
     a.password === b.password &&
     a.channel === b.channel &&
     a.mode === b.mode &&
-    a.bssid === b.bssid
+    a.bssid === b.bssid &&
+    a.enabled === b.enabled
   );
 }
 

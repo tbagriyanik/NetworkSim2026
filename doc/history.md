@@ -2,6 +2,10 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v3.8.0 — 2026-09-01
+
+**Topoloji Not İçi Klavye & Giriş Güvenliği ve Sekme Odak Yönetimi** — Not (`NoteNode`) ve metin düzenleme alanlarında yazı yazılırken global topoloji klavye kısayollarının (`TAB`, nümerik `0`, `+`, `-`, `Home`) devre dışı kalması sağlandı. `TAB` tuşunun not metni içerisinde 4 boşlukluk girinti (`indentation` / `outdentation`) olarak çalışması ve odağın not alanında kalması sağlandı. `0`, `+`, `-`, `Home` tuşlarının topoloji nesnesi seçmeden veya görünümü sıfırlamadan doğrudan not metnine karakter ve imleç hareketi olarak yansıması sağlandı. `useKeyboardShortcuts` capture dinleyicisinde `isEditable` alanı genişletilerek `data-note-id`, `input`, `textarea` odaklanmaları tam koruma altına alındı.
+
 ## v3.7.0 — 2026-08-31
 
 **Rehberli Ders & Sınav Modu Quiz ve PDF Sertifika Güncellemesi** — 19 rehberli ders konusuna özel 2-3 soruluk bilgi quiz'leri entegre edildi ve canlı puan sistemine bağlandı. PDF sertifika oluşturucu Canvas High-DPI Türkçe karakter (Ş, İ, Ğ, Ç, Ö, Ü) motoru ile yenilendi ve PDF dosya boyutu ~150KB seviyesine düşürüldü. Rehberli Dersler ana sekme yapıldı. CLI komut ayrıştırıcı (parser) mod eşleşme döngüsü güncellenerek extended/standard ACL ve `mls qos` mod çakışmaları çözüldü.

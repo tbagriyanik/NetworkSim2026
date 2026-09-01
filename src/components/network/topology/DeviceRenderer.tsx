@@ -487,7 +487,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
         if (showWifi) {
           if (isWlc) isEnabled = true; // WLC her zaman kablosuz yeteneğe sahiptir, açıksa aktiftir
           else if (wlanPort) isEnabled = !wlanPort.shutdown;
-          else if (pcWifi) isEnabled = pcWifi.enabled;
+          else if (pcWifi) isEnabled = Boolean(pcWifi.enabled);
         }
 
         // If all wireless connections for this device are inactive (power toggled off on connection handle), treat wifi as disabled/inactive
@@ -504,10 +504,24 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           if (ap.id === device.id || ap.status === 'offline') return false;
           const apState = deviceStates?.get(ap.id);
           const apWifi = getDeviceWifiConfig(ap, deviceStates);
-          if (!apWifi) return false;
+          if (!apWifi || !pcWifi) return false;
           const matchingSsid = getApActiveSsids(apWifi, apState, deviceStates)
             .find(item => item.ssid.toLowerCase() === pcWifi.ssid.toLowerCase());
-          if (!matchingSsid || !wifiChannelMatches(apWifi, pcWifi)) return false;
+          if (!matchingSsid) return false;
+
+          // Normalize configs for comparison
+          const normalizedApWifi = {
+            ...apWifi,
+            security: apWifi.security || 'open',
+            channel: apWifi.channel || '2.4GHz',
+          };
+          const normalizedPcWifi = {
+            ...pcWifi,
+            security: pcWifi.security || 'open',
+            channel: pcWifi.channel || '2.4GHz',
+          };
+
+          if (!wifiChannelMatches(normalizedApWifi, normalizedPcWifi)) return false;
           const clientSecurity = (pcWifi.security || 'open').toLowerCase();
           const apSecurity = (matchingSsid.security || 'open').toLowerCase();
           if (clientSecurity !== apSecurity) return false;

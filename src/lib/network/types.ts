@@ -3,6 +3,73 @@
 import type { SwitchModel } from './switchModels';
 import type { DeviceWifiSsidProfile } from './wireless';
 
+// ============================================
+// CENTRALIZED TYPE DEFINITIONS
+// ============================================
+
+// WiFi Mode Types (Centralized - used across the application)
+export type WifiMode = 'ap' | 'client' | 'disabled' | 'sta';
+
+// Port Status Types (Centralized - used across the application)
+export type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | 'err-disabled' | 'disconnected';
+
+// Port Mode Types (Centralized - used across the application)
+export type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
+
+// WiFi Configuration Types (Centralized - used across the application)
+export interface WifiConfig {
+  enabled?: boolean;
+  ssid: string;
+  bssid?: string;
+  password?: string;
+  security?: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
+  channel?: '2.4GHz' | '5GHz' | string;
+  mode: WifiMode;
+  hidden?: boolean;
+  maxClients?: number;
+  macFilterEnabled?: boolean;
+  macFilterMode?: 'allow' | 'deny';
+  macFilterList?: string[];
+  ssids?: DeviceWifiSsidProfile[];
+  powerDisabled?: boolean;
+}
+
+// Helper function to normalize WiFi config with defaults
+export function normalizeWifiConfig(config: Partial<WifiConfig> & { ssid: string; mode: WifiMode }): WifiConfig {
+  return {
+    enabled: config.enabled ?? true,
+    ssid: config.ssid,
+    mode: config.mode,
+    security: config.security ?? 'open',
+    channel: config.channel ?? '2.4GHz',
+    password: config.password,
+    bssid: config.bssid,
+    hidden: config.hidden,
+    maxClients: config.maxClients,
+    macFilterEnabled: config.macFilterEnabled,
+    macFilterMode: config.macFilterMode,
+    macFilterList: config.macFilterList,
+    ssids: config.ssids,
+    powerDisabled: config.powerDisabled,
+  };
+}
+
+// Helper function to ensure WiFi config has required fields for wireless functions
+export function ensureWifiConfig(config: Partial<WifiConfig> & { ssid: string; mode: WifiMode }): WifiConfig {
+  return normalizeWifiConfig(config);
+}
+
+// Helper function to normalize security type
+export function normalizeSecurityType(security: string | undefined): 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3' {
+  if (!security) return 'open';
+  const normalized = security.toLowerCase();
+  if (normalized === 'wpa3') return 'wpa3';
+  if (normalized === 'wpa2') return 'wpa2';
+  if (normalized === 'wpa') return 'wpa';
+  if (normalized === 'wep') return 'wep';
+  return 'open';
+}
+
 export type CommandMode =
   | 'user'           // Switch>
   | 'privileged'     // Switch#
@@ -21,8 +88,7 @@ export type CommandMode =
   | 'config-ipv6-acl'  // Router(config-ipv6-acl)# - Named IPv6 ACL
   | 'config-mst';      // Switch(config-mst)# - MST configuration mode
 
-type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | 'err-disabled' | 'disconnected';
-type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
+// Port status and mode types are now defined above as centralized types
 type VoiceVlanMode = number | 'dot1p' | 'none' | 'untagged';
 type EtherChannelProtocol = 'lacp' | 'pagp';
 export type DuplexMode = 'half' | 'full' | 'auto';
@@ -100,7 +166,10 @@ export interface Port {
   dot1qVlan?: number;           // Dot1q VLAN for subinterfaces
   nameif?: string;              // ASA interface name (inside, outside, etc.)
   securityLevel?: number;       // ASA security level (0-100)
-  wifi?: {
+  wifi?: Partial<WifiConfig> & {
+    ssid: string;
+    mode: WifiMode;
+  } | {
     ssid: string;
     security: 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
     password?: string;

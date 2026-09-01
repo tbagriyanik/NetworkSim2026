@@ -22,8 +22,9 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu (v3.7.0)
+### Güncel özellik durumu (v3.8.0)
 
+- **Not İçi Klavye & Giriş Koruması:** Topoloji tuvalindeki notlarda (`NoteNode`) ve metin kutularında yazı yazılırken `TAB`, `0`, `+`, `-`, `Home` gibi tuşların global kısayolları tetiklemesi engellendi; `TAB` tuşu yalnızca not içi 4-boşlukluk sekme/girinti ilerletmesi yapar.
 - **Rehberli Ders Konu Quiz'leri & Skor Motoru:** 19 rehberli ders konusuna özel 2-3 soruluk soru havuzu entegre edildi. Quiz sorularının puanları (+10 puan) canlı Rehberli Ders ilerleme skoruna ve localStorage kaydına bağlandı.
 - **High-DPI Türkçe PDF Sertifika Motoru:** jsPDF içerisine entegre Canvas High-DPI Türkçe karakter (Ş, İ, Ğ, Ç, Ö, Ü) çizim motoru ile tüm işletim sistemlerinde %100 keskin sertifika oluşturma.
 - **Rehberli Ders Birincil Sekme Düzeni:** Proje seçim modalında ve varsayılan panel ayarlarında "Rehberli Dersler" birincil sekme yapıldı.
