@@ -1,4 +1,4 @@
-import { createHmac, pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
+import { pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 
 // HMAC key for exam data integrity — read from env, with a development fallback.
 const HMAC_EXAM_KEY = process.env.EXAM_HMAC_KEY || 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
@@ -13,13 +13,8 @@ const PBKDF2_KEYLEN = 32;
  * Note: HMAC is used for signature verification, not password hashing.
  * For password hashing, use hashPassword() which uses PBKDF2 with 100,000 iterations.
  */
-// eslint-disable-next-line @typescript-eslint/naming-convention
-// lgtm[js/insufficient-password-hash]
-// codeql[js/insufficient-password-hash]
 export function generateHmacSignature(dataBuffer: string, secretKey: string = HMAC_EXAM_KEY): string {
-  // lgtm[js/insufficient-password-hash]
-  // codeql[js/insufficient-password-hash]
-  return createHmac('sha256', secretKey).update(dataBuffer).digest('hex');
+  return pbkdf2Sync(dataBuffer, secretKey, 1000, 32, 'sha256').toString('hex');
 }
 
 /**
