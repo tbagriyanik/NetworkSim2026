@@ -1,5 +1,5 @@
 import { render, fireEvent, act, cleanup } from '@testing-library/react';
-import { describe, it, expect, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { createRef } from 'react';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useMultiWindowStore } from '@/hooks/useMultiWindowStore';
@@ -27,25 +27,25 @@ const baseProps = {
   topologyDevices: [] as any[],
   activeTabRef: { current: 'topology' } as any,
   fileInputRef: { current: null } as any,
-  handleSaveProject: () => {},
-  handleNewProject: () => {},
-  handleUndo: () => {},
-  handleRedo: () => {},
-  handleDeviceDoubleClick: () => {},
-  handleRefreshNetwork: () => {},
-  closeEscLikeWindows: () => {},
+  handleSaveProject: () => { },
+  handleNewProject: () => { },
+  handleUndo: () => { },
+  handleRedo: () => { },
+  handleDeviceDoubleClick: () => { },
+  handleRefreshNetwork: () => { },
+  closeEscLikeWindows: () => { },
   getOrCreateDeviceState: (() => ({})) as any,
   getOrCreateDeviceOutputs: (() => []) as any,
-  setShowAboutModal: () => {},
-  setTopologyKey: () => {},
-  setIsTimelineMinimized: () => {},
-  setClearSelectionTrigger: () => {},
-  setSelectedDevice: () => {},
-  setActiveDeviceId: () => {},
-  setActiveDeviceType: () => {},
-  setActiveTab: () => {},
-  setUnifiedDeviceActiveTab: () => {},
-  setShowUnifiedDeviceModal: () => {},
+  setShowAboutModal: () => { },
+  setTopologyKey: () => { },
+  setIsTimelineMinimized: () => { },
+  setClearSelectionTrigger: () => { },
+  setSelectedDevice: () => { },
+  setActiveDeviceId: () => { },
+  setActiveDeviceType: () => { },
+  setActiveTab: () => { },
+  setUnifiedDeviceActiveTab: () => { },
+  setShowUnifiedDeviceModal: () => { },
 };
 
 function TerminalHarness({ showPCPanel }: { showPCPanel: boolean }) {
@@ -116,4 +116,60 @@ describe('global shortcut handler', () => {
     });
     expect(useMultiWindowStore.getState().isSwitcherOpen).toBe(true);
   });
+
+  it('does not trigger Tab topology device navigation when focused inside note textarea', () => {
+    const setActiveDeviceId = vi.fn();
+    function NoteHarness() {
+      useKeyboardShortcuts({
+        ...baseProps,
+        activeTab: 'topology',
+        activeTabRef: { current: 'topology' },
+        topologyDevices: [{ id: 'd1', type: 'pc' }, { id: 'd2', type: 'pc' }],
+        setActiveDeviceId,
+      });
+      return (
+        <div data-note-id="note-123">
+          <textarea data-testid="note-input" />
+        </div>
+      );
+    }
+
+    const { getByTestId } = render(<NoteHarness />);
+    const textarea = getByTestId('note-input') as HTMLTextAreaElement;
+    act(() => {
+      textarea.focus();
+      fireEvent.keyDown(textarea, { key: 'Tab' });
+    });
+
+    expect(setActiveDeviceId).not.toHaveBeenCalled();
+  });
+
+  it('does not trigger Enter device activation when focused inside note textarea', () => {
+    const handleDeviceDoubleClick = vi.fn();
+    function NoteHarness() {
+      useKeyboardShortcuts({
+        ...baseProps,
+        activeTab: 'topology',
+        activeTabRef: { current: 'topology' },
+        activeDeviceId: 'd1',
+        topologyDevices: [{ id: 'd1', type: 'pc' }],
+        handleDeviceDoubleClick,
+      });
+      return (
+        <div data-note-id="note-123">
+          <textarea data-testid="note-input" />
+        </div>
+      );
+    }
+
+    const { getByTestId } = render(<NoteHarness />);
+    const textarea = getByTestId('note-input') as HTMLTextAreaElement;
+    act(() => {
+      textarea.focus();
+      fireEvent.keyDown(textarea, { key: 'Enter' });
+    });
+
+    expect(handleDeviceDoubleClick).not.toHaveBeenCalled();
+  });
 });
+

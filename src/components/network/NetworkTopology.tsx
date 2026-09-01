@@ -1367,6 +1367,14 @@ export function NetworkTopology({
       // Only handle if canvas or its children have focus
       if (document.activeElement !== canvas && !canvas.contains(document.activeElement)) return;
 
+      const activeEl = document.activeElement;
+      const isTextInput = activeEl && (
+        activeEl.tagName === 'TEXTAREA' ||
+        activeEl.tagName === 'INPUT' ||
+        activeEl.getAttribute('contenteditable') === 'true'
+      );
+      if (isTextInput) return;
+
       const moveAmount = 20 * zoom;
 
       switch (e.key) {
@@ -1379,14 +1387,6 @@ export function NetworkTopology({
         case 'ArrowDown':
         case 'ArrowLeft':
         case 'ArrowRight': {
-          // Don't intercept arrow keys when a text input / note textarea has focus
-          const activeEl = document.activeElement;
-          const isTextInput = activeEl && (
-            activeEl.tagName === 'TEXTAREA' ||
-            activeEl.tagName === 'INPUT' ||
-            activeEl.getAttribute('contenteditable') === 'true'
-          );
-          if (isTextInput) break;
           e.preventDefault();
           if (e.key === 'ArrowUp') setPan(prev => ({ ...prev, y: prev.y + moveAmount }));
           if (e.key === 'ArrowDown') setPan(prev => ({ ...prev, y: prev.y - moveAmount }));

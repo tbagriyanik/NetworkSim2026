@@ -1440,3 +1440,5 @@ function cmdDefaultInterface(state: SwitchState, input: string, _ctx: CommandCon
   return { success: true, output: `Interface ${interfaceName} reset to default configuration`, newState: { ports: { ...state.ports, [interfaceName]: defaultPort } } };
 }
 
+
+

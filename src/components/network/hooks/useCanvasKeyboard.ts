@@ -87,11 +87,14 @@ export function useCanvasKeyboard({
     window.addEventListener('close-menus-broadcast', handleCloseBroadcast);
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      const activeEl = document.activeElement;
-      const isEditable = activeEl && (
-        activeEl.tagName === 'INPUT' ||
-        activeEl.tagName === 'TEXTAREA' ||
-        activeEl.getAttribute('contenteditable') === 'true'
+      const activeEl = document.activeElement as HTMLElement | null;
+      const isEditable = Boolean(
+        activeEl && (
+          activeEl.tagName === 'INPUT' ||
+          activeEl.tagName === 'TEXTAREA' ||
+          activeEl.getAttribute('contenteditable') === 'true' ||
+          activeEl.closest('[data-note-id], textarea, input, [contenteditable="true"]')
+        )
       );
 
       if (!e.key) return;

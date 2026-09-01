@@ -174,7 +174,7 @@ export function useHistory(initialState: ProjectState) {
   const [state, setState] = useState<HistoryState>(() => {
     if (typeof window !== 'undefined') {
       try {
-        const saved = localStorage.getItem('netsim_history');
+        const saved = secureStorage.getItem('netsim_history');
         if (saved) {
           const parsed = JSON.parse(saved);
           if (parsed && Array.isArray(parsed.items) && parsed.items.length > 0) {

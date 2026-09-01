@@ -490,8 +490,14 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           else if (pcWifi) isEnabled = pcWifi.enabled;
         }
 
+        // If all wireless connections for this device are inactive (power toggled off on connection handle), treat wifi as disabled/inactive
+        const hasActiveWirelessConn = deviceConnections.some(c => c.cableType === 'wireless' && c.active !== false);
+        if (usesWifiBars && isEnabled && !hasActiveWirelessConn && deviceConnections.some(c => c.cableType === 'wireless')) {
+          isEnabled = false;
+        }
+
         const isConnected = wlanState?.status === 'connected' ||
-          (isEnabled && deviceConnections.some(c => c.cableType === 'wireless' && c.active !== false));
+          (isEnabled && hasActiveWirelessConn);
 
         const activeWifiConfig = wlanState?.wifi || pcWifi;
         const isMacBlocked = usesWifiBars && !isConnected && !!pcWifi?.ssid && topologyDevices.some(ap => {

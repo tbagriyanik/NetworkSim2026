@@ -313,8 +313,10 @@ export function usePingSequence(deps: PingSequenceDeps) {
         const hopDuration = 1500;
 
         const isWirelessHop = (fromId: string, toId: string): boolean => {
-          const conn = connections.find(c => (c.sourceDeviceId === fromId && c.targetDeviceId === toId) || (c.sourceDeviceId === toId && c.targetDeviceId === fromId));
-          if (conn?.cableType === 'wireless') return true;
+          const conn = latestConnectionsRef.current.find(c => (c.sourceDeviceId === fromId && c.targetDeviceId === toId) || (c.sourceDeviceId === toId && c.targetDeviceId === fromId));
+          if (conn && conn.cableType === 'wireless') {
+            return conn.active !== false;
+          }
           const fromDev = deviceMap.get(fromId);
           const toDev = deviceMap.get(toId);
           if (!fromDev || !toDev) return false;
@@ -444,8 +446,10 @@ export function usePingSequence(deps: PingSequenceDeps) {
     let frameCount = 0;
 
     const isWirelessHop = (fromId: string, toId: string): boolean => {
-      const conn = connections.find(c => (c.sourceDeviceId === fromId && c.targetDeviceId === toId) || (c.sourceDeviceId === toId && c.targetDeviceId === fromId));
-      if (conn?.cableType === 'wireless') return true;
+      const conn = latestConnectionsRef.current.find(c => (c.sourceDeviceId === fromId && c.targetDeviceId === toId) || (c.sourceDeviceId === toId && c.targetDeviceId === fromId));
+      if (conn && conn.cableType === 'wireless') {
+        return conn.active !== false;
+      }
       const fromDev = deviceMap.get(fromId);
       const toDev = deviceMap.get(toId);
       if (!fromDev || !toDev) return false;

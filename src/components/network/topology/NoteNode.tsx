@@ -421,6 +421,7 @@ export const NoteNode = memo(function NoteNode({
             }}
             onKeyDown={(e) => {
               e.stopPropagation();
+              e.nativeEvent.stopImmediatePropagation();
               if (e.key === 'Tab') {
                 e.preventDefault();
                 e.stopPropagation();

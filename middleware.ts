@@ -89,6 +89,12 @@ export function middleware(request: NextRequest) {
   // Expose the nonce to the client for inline script tags
   response.headers.set('x-nonce', nonce);
   response.headers.set('Content-Security-Policy-Report-Only', cspReportOnly);
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  if (isProd) {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
 
   return response;
 }

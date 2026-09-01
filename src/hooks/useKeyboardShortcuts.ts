@@ -105,6 +105,15 @@ export function useKeyboardShortcuts({
       );
 
       const focusedElement = typeof document !== 'undefined' ? (document.activeElement as HTMLElement | null) : null;
+      const isEditable = Boolean(
+        focusedElement && (
+          focusedElement.tagName === 'INPUT' ||
+          focusedElement.tagName === 'TEXTAREA' ||
+          focusedElement.getAttribute('contenteditable') === 'true' ||
+          focusedElement.closest('[data-note-id], textarea, input, select, [contenteditable="true"]')
+        )
+      );
+
       const isWindowInteriorFocused = Boolean(
         focusedElement?.closest('[data-code-editor], [data-modal-content], [data-slot="dialog-content"], [role="dialog"], .dialog-content')
       );
@@ -140,13 +149,13 @@ export function useKeyboardShortcuts({
           );
           const focusables = container
             ? Array.from(
-                container.querySelectorAll<HTMLElement>(
-                  'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-                )
-              ).filter((el) => {
-                const s = getComputedStyle(el);
-                return s.display !== 'none' && s.visibility !== 'hidden';
-              })
+              container.querySelectorAll<HTMLElement>(
+                'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+              )
+            ).filter((el) => {
+              const s = getComputedStyle(el);
+              return s.display !== 'none' && s.visibility !== 'hidden';
+            })
             : [];
           if (focusables.length > 0) {
             const idx = focusables.indexOf(document.activeElement as HTMLElement);
@@ -169,13 +178,14 @@ export function useKeyboardShortcuts({
       }
 
       if (e.key === 'F1' || e.code === 'F1') {
+        if (isEditable) return;
         e.preventDefault();
         setShowAboutModal(prev => !prev);
         return;
       }
 
       if (e.key === 'F5') {
-        if (isModalOrWindowActive) return;
+        if (isModalOrWindowActive || isEditable) return;
         e.preventDefault();
         setTopologyKey(prev => prev + 1);
         handleRefreshNetwork();
@@ -188,9 +198,9 @@ export function useKeyboardShortcuts({
         }
       }
 
-      // Tab and Shift+Tab pass through to interior controls when a modal/window is open
+      // Tab and Shift+Tab pass through to interior controls when a modal/window or note/input is active
       if (e.key === 'Tab' || e.code === 'Tab') {
-        if (isModalOrWindowActive) {
+        if (isModalOrWindowActive || isEditable) {
           return;
         }
 
@@ -211,10 +221,9 @@ export function useKeyboardShortcuts({
         }
 
         const key = e.key.toLowerCase();
-        const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
-        const isEditable = tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
 
         if (key === 'p') {
+          if (isEditable) return;
           e.preventDefault();
           if (activeTabRef.current !== 'topology') {
             setActiveTab('topology');
@@ -241,17 +250,19 @@ export function useKeyboardShortcuts({
           handleSaveProject();
         }
         if (key === 'o') {
+          if (isEditable) return;
           e.preventDefault();
           fileInputRef.current?.click();
         }
         if (key === 'n' && !e.shiftKey) {
+          if (isEditable) return;
           e.preventDefault();
           handleNewProject();
         }
       }
 
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
-        if (isModalOrWindowActive) {
+        if (isModalOrWindowActive || isEditable) {
           return;
         }
 
@@ -263,17 +274,15 @@ export function useKeyboardShortcuts({
       }
 
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
-        if (isModalOrWindowActive) {
+        if (isModalOrWindowActive || isEditable) {
           return;
         }
 
-        const tag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
-        const isEditable = tag === 'input' || tag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable;
         const isWindowFocused = document.hasFocus();
         const isTopologyOnly = activeTabRef.current === 'topology'
           && !isAnyModalOpen;
 
-        if (!isEditable && isTopologyOnly) {
+        if (isTopologyOnly) {
           const key = e.key.toLowerCase();
           if (key === 's') {
             e.preventDefault();
@@ -296,7 +305,7 @@ export function useKeyboardShortcuts({
       }
 
       if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
-        if (isModalOrWindowActive) {
+        if (isModalOrWindowActive || isEditable) {
           return;
         }
         if (activeTab === 'topology' && topologyDevices.length > 0 && !showPCPanel && !showRouterPanel && !showUnifiedDeviceModal) {
@@ -327,11 +336,7 @@ export function useKeyboardShortcuts({
       }
 
       if (e.key === 'Enter') {
-        if (e.defaultPrevented || isModalOrWindowActive) return;
-        const activeTag = (document.activeElement as HTMLElement)?.tagName?.toLowerCase();
-        if (activeTag === 'input' || activeTag === 'textarea' || (document.activeElement as HTMLElement)?.isContentEditable) {
-          return;
-        }
+        if (e.defaultPrevented || isModalOrWindowActive || isEditable) return;
         if (confirmDialog?.show) {
           e.preventDefault();
           confirmDialog.onConfirm();
