@@ -607,7 +607,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
       var list = window.currentMacFilterList || [];
       if (countEl) {
-        countEl.innerHTML = list.length + ' ' + (isTurkish ? 'adres' : 'items');
+        countEl.textContent = list.length + ' ' + (isTurkish ? 'adres' : 'items');
       }
 
       if (list.length === 0) {
@@ -1065,6 +1065,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         var macDisplay = client.mac || 'Auto';
         var clientSsid = client.ssid || ${jsSsid} || 'WiFi';
         var jsId = JSON.stringify(client.id || '').replace(/"/g, '&quot;');
+        function escH(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
         var sigPct = typeof client.signalPercent === 'number' ? client.signalPercent : 90;
         var sigDbm = typeof client.rssiDbm === 'number' ? client.rssiDbm : Math.round(-95 + (sigPct * 0.65));
@@ -1076,10 +1077,10 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
             '<div class="client-icon">' + icon + '</div>' +
             '<div class="client-details">' +
               '<div class="client-title">' +
-                '<span>' + client.name + '</span>' +
-                '<span class="badge badge-primary">SSID: ' + clientSsid + '</span>' +
+                '<span>' + escH(client.name) + '</span>' +
+                '<span class="badge badge-primary">SSID: ' + escH(clientSsid) + '</span>' +
               '</div>' +
-              '<div class="client-sub">IP: ' + ipDisplay + ' · MAC: ' + macDisplay + '</div>' +
+              '<div class="client-sub">IP: ' + escH(ipDisplay) + ' · MAC: ' + escH(macDisplay) + '</div>' +
             '</div>' +
           '</div>' +
           '<div class="client-badges">' +

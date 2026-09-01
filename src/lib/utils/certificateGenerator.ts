@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { toast } from '@/hooks/use-toast';
 import { csrfHeaders } from '@/lib/security/csrf';
+import { colors } from '@/lib/design-tokens/colors';
 
 interface CertificateData {
   studentName: string;
@@ -78,24 +79,24 @@ async function renderCertificateCanvas(
   const isTr = data.language === 'tr';
 
   // 1. Background fill
-  ctx.fillStyle = '#F8FAFC';
+  ctx.fillStyle = colors.neutral[50];
   ctx.fillRect(0, 0, width, height);
 
   // 2. Outer decorative double border
-  ctx.strokeStyle = '#1E40AF';
+  ctx.strokeStyle = colors.blue[700];
   ctx.lineWidth = 16;
   ctx.strokeRect(60, 60, width - 120, height - 120);
 
-  ctx.strokeStyle = '#D97706';
+  ctx.strokeStyle = colors.amber[600];
   ctx.lineWidth = 4;
   ctx.strokeRect(76, 76, width - 152, height - 152);
 
   // Inner card container
-  ctx.fillStyle = '#FFFFFF';
+  ctx.fillStyle = colors.common.white;
   ctx.fillRect(84, 84, width - 168, height - 168);
 
   // Accent header band
-  ctx.fillStyle = '#1E3A8A';
+  ctx.fillStyle = colors.topology.bg;
   ctx.fillRect(84, 84, width - 168, 20);
 
   // 3. Draw QR Code (Top-Left)
@@ -108,7 +109,7 @@ async function renderCertificateCanvas(
       const qrImg = await loadImage(qrDataUrl);
       ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
     } catch {
-      ctx.strokeStyle = '#2563EB';
+      ctx.strokeStyle = colors.blue[600];
       ctx.lineWidth = 2;
       ctx.strokeRect(qrX, qrY, qrSize, qrSize);
     }
@@ -116,7 +117,7 @@ async function renderCertificateCanvas(
 
   // Verification Code below QR
   ctx.font = 'bold 22px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#475569';
+  ctx.fillStyle = colors.theme.secondary;
   ctx.textAlign = 'left';
   ctx.fillText(`${isTr ? 'Doğrulama Kodu' : 'Verify Code'}: ${verifyCode}`, qrX, qrY + qrSize + 35);
 
@@ -139,17 +140,17 @@ async function renderCertificateCanvas(
 
   // Sub-header Badge
   ctx.font = 'bold 26px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#D97706';
+  ctx.fillStyle = colors.amber[600];
   ctx.fillText('NETWORK SIMULATOR ACADEMY', centerX, 240);
 
   // Main Title
   ctx.font = 'bold 64px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = colors.topology.canvasBg;
   const titleText = isTr ? 'BAŞARI SERTİFİKASI' : 'CERTIFICATE OF ACHIEVEMENT';
   ctx.fillText(titleText, centerX, 330);
 
   // Decorative line under title
-  ctx.strokeStyle = '#2563EB';
+  ctx.strokeStyle = colors.blue[600];
   ctx.lineWidth = 4;
   ctx.beginPath();
   ctx.moveTo(centerX - 250, 360);
@@ -158,7 +159,7 @@ async function renderCertificateCanvas(
 
   // Subtitle
   ctx.font = '28px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#64748B';
+  ctx.fillStyle = colors.cables.console;
   const subtitleText = isTr
     ? 'Bu belge aşağıdaki katılımcının modülü başarıyla tamamladığını onaylar:'
     : 'This is to certify that';
@@ -166,11 +167,11 @@ async function renderCertificateCanvas(
 
   // Student Name (Full Turkish Character Support)
   ctx.font = 'bold 68px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#1D4ED8';
+  ctx.fillStyle = colors.blue[700];
   ctx.fillText(data.studentName.toUpperCase(), centerX, 550);
 
   // Underline for Student Name
-  ctx.strokeStyle = '#93C5FD';
+  ctx.strokeStyle = colors.sky[200];
   ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(centerX - 350, 580);
@@ -179,14 +180,14 @@ async function renderCertificateCanvas(
 
   // Project Info
   ctx.font = '26px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#475569';
+  ctx.fillStyle = colors.theme.secondary;
   ctx.fillText(
     isTr ? 'Tamamlanan Eğitim Modülü:' : 'Has successfully completed the lab module:',
     centerX, 660
   );
 
   ctx.font = 'bold 44px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#0F172A';
+  ctx.fillStyle = colors.topology.bg;
   ctx.fillText(data.projectTitle, centerX, 730);
 
   // Score Badge
@@ -195,8 +196,8 @@ async function renderCertificateCanvas(
   const scoreBoxX = centerX - scoreBoxWidth / 2;
   const scoreBoxY = 790;
 
-  ctx.fillStyle = '#F0FDF4';
-  ctx.strokeStyle = '#16A34A';
+  ctx.fillStyle = colors.green[50];
+  ctx.strokeStyle = colors.green[600];
   ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.roundRect(scoreBoxX, scoreBoxY, scoreBoxWidth, scoreBoxHeight, 16);
@@ -204,7 +205,7 @@ async function renderCertificateCanvas(
   ctx.stroke();
 
   ctx.font = 'bold 32px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#15803D';
+  ctx.fillStyle = colors.green[700];
   ctx.fillText(
     `${isTr ? 'Başarı Puanı' : 'Achievement Score'}: ${data.score} / ${data.totalScore}`,
     centerX, scoreBoxY + 52
@@ -213,7 +214,7 @@ async function renderCertificateCanvas(
   // Date & Validity (Bottom Left)
   ctx.textAlign = 'left';
   ctx.font = '26px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#334155';
+  ctx.fillStyle = colors.topology.gridLine;
   ctx.fillText(`${isTr ? 'Tarih' : 'Date'}: ${data.date}`, 160, 1050);
 
   const expireDateObj = new Date();
@@ -222,7 +223,7 @@ async function renderCertificateCanvas(
   ctx.fillText(`${isTr ? 'Geçerlilik Tarihi' : 'Expiration Date'}: ${expireDateStr}`, 160, 1100);
 
   // Signature Lines (Bottom)
-  ctx.strokeStyle = '#94A3B8';
+  ctx.strokeStyle = colors.cables.default;
   ctx.lineWidth = 3;
 
   // Instructor Signature
@@ -232,10 +233,10 @@ async function renderCertificateCanvas(
   ctx.stroke();
 
   ctx.font = 'bold 24px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = colors.topology.canvasBg;
   ctx.fillText(isTr ? 'Eğitmen' : 'Instructor', 160, 1360);
   ctx.font = '22px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#64748B';
+  ctx.fillStyle = colors.cables.console;
   ctx.fillText('Network Simulator', 160, 1395);
 
   // Director Signature
@@ -245,16 +246,16 @@ async function renderCertificateCanvas(
   ctx.stroke();
 
   ctx.font = 'bold 24px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#1E293B';
+  ctx.fillStyle = colors.topology.canvasBg;
   ctx.fillText(isTr ? 'Program Yöneticisi' : 'Program Director', width - 550, 1360);
   ctx.font = '22px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#64748B';
+  ctx.fillStyle = colors.cables.console;
   ctx.fillText('...................', width - 550, 1395);
 
   // Footer text
   ctx.textAlign = 'center';
   ctx.font = '20px "Segoe UI", Roboto, Arial, sans-serif';
-  ctx.fillStyle = '#94A3B8';
+  ctx.fillStyle = colors.cables.default;
   ctx.fillText('Network Simulator Certification System • Official Digital Document', centerX, 1550);
 
   return canvas.toDataURL('image/jpeg', 0.85);

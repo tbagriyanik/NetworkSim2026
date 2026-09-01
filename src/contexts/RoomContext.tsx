@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import { secureStorage } from '@/lib/storage/secureStorage';
 
 interface RoomContextValue {
   studentRoomCode: string | null;
@@ -25,15 +26,15 @@ export function RoomProvider({ children }: { children: ReactNode }) {
     setStudentRoomCode(code.toUpperCase());
     setStudentDisplayName(name);
     setShowRoomJoinDialog(false);
-    localStorage.setItem('room-joined-code', code.toUpperCase());
-    localStorage.setItem('room-student-name', name);
+    secureStorage.setItem('room-joined-code', code.toUpperCase());
+    secureStorage.setItem('room-student-name', name);
   }, []);
 
   const leaveRoom = useCallback(() => {
     setStudentRoomCode(null);
     setStudentDisplayName('');
-    localStorage.removeItem('room-joined-code');
-    localStorage.removeItem('room-student-name');
+    secureStorage.removeItem('room-joined-code');
+    secureStorage.removeItem('room-student-name');
   }, []);
 
   return (

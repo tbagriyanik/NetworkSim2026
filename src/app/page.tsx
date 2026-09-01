@@ -669,16 +669,6 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
   }, [topologyKey]);
 
-  useEffect(() => {
-    let savedData: string | null = null;
-    try { savedData = localStorage.getItem('netsim_autosave'); } catch { /* storage unavailable */ }
-    if (!savedData) {
-      setTopologyDevices([]);
-      setTopologyConnections([]);
-      setTopologyNotes([]);
-    }
-  }, []);
-
 
 
   // Modal drag/resize — unified hook

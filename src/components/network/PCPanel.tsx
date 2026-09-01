@@ -21,6 +21,7 @@ import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { generateRouterAdminPage, isRouterDevice } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
 import { errorHandler } from '@/lib/errors/errorHandler';
+import { colors } from '@/lib/design-tokens/colors';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
 import { PCPanelNavigation } from './pc-panel/PCPanelNavigation';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
@@ -1990,12 +1991,10 @@ export function PCPanel({
                     : "rounded-[2rem] border border-white/70 bg-transparent")
               )}
             >
-              <div className={cn(
-                "relative flex-1 min-h-0 flex flex-col overflow-hidden",
-                isDark
-                  ? 'bg-[linear-gradient(180deg,#020617_0%,#0f172a_45%,#111827_100%)]'
-                  : 'bg-[linear-gradient(180deg,#ffffff_0%,#eff6ff_55%,#dbeafe_100%)]'
-              )}>
+              <div
+                className="relative flex-1 min-h-0 flex flex-col overflow-hidden"
+                style={{ background: isDark ? `linear-gradient(180deg, ${colors.neutral[900]} 0%, ${colors.topology.bg} 45%, ${colors.neutral[800]} 100%)` : `linear-gradient(180deg, ${colors.common.white} 0%, ${colors.blue[100]} 55%, ${colors.blue[100]} 100%)` }}
+              >
                 <div className="pointer-events-none absolute inset-0">
                 </div>
                 <ModernPanel
