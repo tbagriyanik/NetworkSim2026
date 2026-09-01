@@ -33,7 +33,7 @@ export const generateIotWebPanelContent = (
         }
       }
       // Check if device is connected via WiFi to this router's SSID
-      if (routerSsid && device.wifi?.ssid === routerSsid && device.wifi?.enabled) {
+      if (routerSsid && device.wifi?.ssid === routerSsid && device.wifi?.enabled && !(device.wifi?.powerDisabled ?? false)) {
         return true;
       }
       // If no router-specific connection found, don't include this device
@@ -54,7 +54,7 @@ export const generateIotWebPanelContent = (
         if (isWiredConnected) return true;
 
         // WiFi connection check
-        if (device.wifi?.enabled) {
+        if (device.wifi?.enabled && !(device.wifi?.powerDisabled ?? false)) {
           // If routerSsid is provided, check connection to that specific router
           if (routerSsid) {
             return device.wifi.ssid === routerSsid;

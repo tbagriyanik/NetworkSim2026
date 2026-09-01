@@ -104,38 +104,40 @@ const ConnectionHandle = memo(function ConnectionHandle({
             />
           </g>
 
-          {/* Break/Fix Button */}
-          <g
-            className="cursor-pointer group"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleActive?.(connection.id);
-            }}
-          >
-            <circle
-              cx="9.5"
-              cy="-0.5"
-              r="9"
-              fill={isDark ? STUB_BG_DARK : STUB_BG}
-              opacity="0.72"
-              className="drop-shadow-sm group-hover:fill-warning-500/10 transition-colors"
-            />
-            {connection.active ? (
-              <Unplug
-                className="w-3 h-3 text-warning-500"
-                width={15}
-                height={15}
-                style={{ transform: 'translate(2px, -8px)' }}
+          {/* Break/Fix Button - only for wired connections, not wireless */}
+          {connection.cableType !== 'wireless' && (
+            <g
+              className="cursor-pointer group"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleActive?.(connection.id);
+              }}
+            >
+              <circle
+                cx="9.5"
+                cy="-0.5"
+                r="9"
+                fill={isDark ? STUB_BG_DARK : STUB_BG}
+                opacity="0.72"
+                className="drop-shadow-sm group-hover:fill-warning-500/10 transition-colors"
               />
-            ) : (
-              <PlugZap
-                className="w-3 h-3 text-success-500"
-                width={15}
-                height={15}
-                style={{ transform: 'translate(2px, -8px)' }}
-              />
-            )}
-          </g>
+              {connection.active ? (
+                <Unplug
+                  className="w-3 h-3 text-warning-500"
+                  width={15}
+                  height={15}
+                  style={{ transform: 'translate(2px, -8px)' }}
+                />
+              ) : (
+                <PlugZap
+                  className="w-3 h-3 text-success-500"
+                  width={15}
+                  height={15}
+                  style={{ transform: 'translate(2px, -8px)' }}
+                />
+              )}
+            </g>
+          )}
         </g>
       )}
       {!isCompatible && (

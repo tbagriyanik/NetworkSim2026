@@ -946,44 +946,8 @@ export function NetworkTopology({
       return;
     }
 
-    // Implicit wireless links are derived from the client Wi-Fi settings, so
-    // toggling their handle must disconnect/reconnect the client rather than
-    // persisting a temporary auto-generated connection.
-    const connection = visualConnections.find((item) => item.id === connectionId);
-    if (!connection || connection.cableType !== 'wireless') return;
-
-    const devices = topologyDevices.filter((d) =>
-      connection.sourceDeviceId === d.id || connection.targetDeviceId === d.id
-    );
-    if (devices.length !== 2) return;
-
-    // Determine which device is the client (PC/IoT) vs AP (Router/Switch/WLC)
-    const clientDevice = devices.find(d => d.type === 'pc' || d.type === 'iot');
-    
-    if (!clientDevice) return; // Only toggle if there's a client device
-
-    saveToHistory();
-    const clientId = clientDevice.id;
-    // The wrench/plug handle is shown when active is false -> reconnect.
-    const currentlyActive = connection.active !== false;
-    setDevicesState((previous) => previous.map((device) => {
-      if (device.id !== clientId) return device;
-      return {
-        ...device,
-        wifi: device.wifi ? { ...device.wifi, powerDisabled: currentlyActive } : device.wifi,
-        ip: currentlyActive ? device.ip : '',
-        subnet: currentlyActive ? device.subnet : '',
-        gateway: currentlyActive ? device.gateway : '',
-        ports: device.ports.map((port) => port.id === 'wlan0'
-          ? { 
-              ...port, 
-              status: !currentlyActive ? 'connected' : 'disconnected' as const,
-              ipAddress: currentlyActive ? port.ipAddress : undefined,
-              subnetMask: currentlyActive ? port.subnetMask : undefined
-            }
-          : port)
-      };
-    }));
+    // Wireless connections don't have power toggle - remove this functionality
+    return;
   }, [deleteConnection, saveToHistory, setDevicesState, topologyConnections, visualConnections, toggleConnectionActive]);
 
   // Get dynamic canvas dimensions based on screen size

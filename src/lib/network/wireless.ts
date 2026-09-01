@@ -268,7 +268,7 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
   if (device.wifi?.ssid) {
     const mode = normalizeWifiMode(device.wifi.mode, defaultMode);
     return {
-      enabled: device.wifi.enabled ?? true,
+      enabled: (device.wifi.enabled ?? true) && !(device.wifi.powerDisabled ?? false),
       ssid: device.wifi.ssid,
       password: device.wifi.password,
       security: normalizeSecurity(device.wifi.security),
@@ -280,6 +280,7 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       macFilterMode: device.wifi.macFilterMode === 'deny' ? 'deny' : 'allow',
       macFilterList: Array.isArray(device.wifi.macFilterList) ? device.wifi.macFilterList : [],
       ssids: Array.isArray(device.wifi.ssids) ? device.wifi.ssids : [],
+      powerDisabled: device.wifi.powerDisabled,
     };
   }
 
@@ -287,7 +288,7 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
   if (wlanPort && wlanPort.wifi) {
     const mode = normalizeWifiMode(wlanPort.wifi.mode, defaultMode);
     return {
-      enabled: mode !== 'disabled' && !(wlanPort.shutdown ?? false),
+      enabled: mode !== 'disabled' && !(wlanPort.shutdown ?? false) && !(device.wifi?.powerDisabled ?? false),
       ssid: wlanPort.wifi.ssid,
       password: wlanPort.wifi.password,
       security: normalizeSecurity(wlanPort.wifi.security),
@@ -303,6 +304,7 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       ssids: Array.isArray(wlanPort.wifi.ssids) && wlanPort.wifi.ssids.length > 0
         ? wlanPort.wifi.ssids
         : (Array.isArray(device.wifi?.ssids) ? device.wifi.ssids : []),
+      powerDisabled: device.wifi?.powerDisabled,
     };
   }
 
