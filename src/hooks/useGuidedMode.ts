@@ -89,11 +89,11 @@ export function useGuidedMode(): UseGuidedModeReturn {
   const [lastCompletedStep, setLastCompletedStep] = useState<string | null>(null);
   const [isCurrentStepReady, setIsCurrentStepReady] = useState(false);
 
-  // Load from localStorage after mount (client-side only)
+  // Load from secureStorage after mount (client-side only)
   useEffect(() => {
-    const savedProject = localStorage.getItem(STORAGE_KEY);
-    const savedStepIndex = localStorage.getItem(`${STORAGE_KEY}_stepIndex`);
-    const savedMinimized = localStorage.getItem(`${STORAGE_KEY}_minimized`);
+    const savedProject = secureStorage.getItem(STORAGE_KEY);
+    const savedStepIndex = secureStorage.getItem(`${STORAGE_KEY}_stepIndex`);
+    const savedMinimized = secureStorage.getItem(`${STORAGE_KEY}_minimized`);
 
     if (savedProject) {
       const deserialized = deserializeProject(savedProject);
@@ -102,9 +102,9 @@ export function useGuidedMode(): UseGuidedModeReturn {
         if (deserialized.integrityHash && !verifyGuidedIntegrity(deserialized)) {
           logger.error('Guided mode integrity compromised! Resetting progress...');
           // Tampering detected, don't load the saved state
-          localStorage.removeItem(STORAGE_KEY);
-          localStorage.removeItem(`${STORAGE_KEY}_stepIndex`);
-          localStorage.removeItem(`${STORAGE_KEY}_minimized`);
+          secureStorage.removeItem(STORAGE_KEY);
+          secureStorage.removeItem(`${STORAGE_KEY}_stepIndex`);
+          secureStorage.removeItem(`${STORAGE_KEY}_minimized`);
           return;
         }
         setTimeout(() => setActiveProject(deserialized), 0);

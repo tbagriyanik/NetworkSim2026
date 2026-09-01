@@ -211,7 +211,10 @@ export function useProjectApplication({
     resetWorkspaceUiState();
     resetToEmptyProject();
     startExamProject(project);
-  }, [startExamProject, closeGuidedMode, setIsExamLoadedFromFile, resetWorkspaceUiState, resetToEmptyProject]);
+    if (project.data) {
+      loadProjectData(project.data);
+    }
+  }, [startExamProject, closeGuidedMode, setIsExamLoadedFromFile, resetWorkspaceUiState, resetToEmptyProject, loadProjectData]);
 
   const handleConvertProjectToExam = useCallback((projectData: unknown) => {
     document.body.style.cursor = 'wait';
@@ -224,8 +227,8 @@ export function useProjectApplication({
     toggleEditor(true);
     document.body.style.cursor = '';
     toast({
-      title: language === 'tr' ? 'Proje D\u00F6n\u00FC\u015Ft\u00FCr\u00FCld\u00FC' : 'Project Converted',
-      description: language === 'tr' ? 'G\u00F6revler otomatik olarak \u00E7\u0131kar\u0131ld\u0131 ve S\u0131nav D\u00FCzenleyici a\u00E7\u0131ld\u0131.' : 'Tasks were automatically extracted and the Exam Editor was opened.',
+      title: language === 'tr' ? 'Proje Dönüştürüldü' : 'Project Converted',
+      description: language === 'tr' ? 'Görevler otomatik olarak çıkarıldı ve Sınav Düzenleyici açıldı.' : 'Tasks were automatically extracted and the Exam Editor was opened.',
     });
   }, [closeExam, closeGuidedMode, language, startExamProject, loadProjectData, toggleEditor, toast, resetWorkspaceUiState, resetToEmptyProject]);
 
@@ -234,7 +237,10 @@ export function useProjectApplication({
     resetWorkspaceUiState();
     resetToEmptyProject();
     startGuidedProject(project);
-  }, [startGuidedProject, closeExam, resetWorkspaceUiState, resetToEmptyProject]);
+    if (project.data) {
+      loadProjectData(project.data);
+    }
+  }, [startGuidedProject, closeExam, resetWorkspaceUiState, resetToEmptyProject, loadProjectData]);
 
   return {
     applyExampleProjectAsTemplate,

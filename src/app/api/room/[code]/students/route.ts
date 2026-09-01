@@ -4,6 +4,7 @@ import type { RoomApiResponse, StudentProgress } from '@/lib/roomTypes';
 import { isRateLimited } from '@/lib/security/rateLimiter';
 import { sanitizeInput } from '@/lib/security/sanitizer';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
+import { validateRoomCode, validateUserId } from '@/lib/security/roomValidation';
 
 interface RouteParams {
   code: string;
@@ -31,24 +32,10 @@ export const GET = withErrorHandling(async (
   }
   const { code } = await params;
 
-  if (!code) {
+  const codeValidation = validateRoomCode(code);
+  if (!codeValidation.valid) {
     return NextResponse.json(
-      { success: false, error: 'Missing room code', code: 'MISSING_CODE' },
-      { status: 400 },
-    );
-  }
-
-  const upperCode = code.toUpperCase().trim();
-  if (upperCode.length < 4 || upperCode.length > 10) {
-    return NextResponse.json(
-      { success: false, error: 'Room code must be 4-10 characters', code: 'INVALID_CODE' },
-      { status: 400 },
-    );
-  }
-
-  if (!/^[A-Z0-9]+$/.test(upperCode)) {
-    return NextResponse.json(
-      { success: false, error: 'Room code must be alphanumeric', code: 'INVALID_CODE_FORMAT' },
+      { success: false, error: codeValidation.error, code: codeValidation.code },
       { status: 400 },
     );
   }
@@ -56,21 +43,15 @@ export const GET = withErrorHandling(async (
   const url = new URL(req.url);
   const rawTeacherId = url.searchParams.get('teacherId');
   const teacherId = rawTeacherId ? sanitizeInput(rawTeacherId) : null;
-
-  if (!teacherId || teacherId.length < 8 || teacherId.length > 100) {
+  const teacherValidation = validateUserId(teacherId, 'teacher');
+  if (!teacherValidation.valid) {
     return NextResponse.json(
-      { success: false, error: 'Valid teacher ID is required (8-100 chars)', code: 'INVALID_TEACHER_ID' },
+      { success: false, error: teacherValidation.error, code: teacherValidation.code },
       { status: 400 },
     );
   }
 
-  if (!/^[a-zA-Z0-9-]+$/.test(teacherId)) {
-    return NextResponse.json(
-      { success: false, error: 'Teacher ID must be alphanumeric and hyphens only', code: 'INVALID_TEACHER_ID_FORMAT' },
-      { status: 400 },
-    );
-  }
-  const meta = await getRoomMeta(upperCode);
+  const meta = await getRoomMeta(codeValidation.normalized);
   if (!meta) {
     return NextResponse.json(
       { success: false, error: 'Room not found', code: 'ROOM_NOT_FOUND' },
@@ -80,14 +61,14 @@ export const GET = withErrorHandling(async (
 
   // Backward compatibility: if room has no teacherId, claim it for this browser
   if (!meta.teacherId) {
-    await claimRoom(upperCode, teacherId);
-  } else if (meta.teacherId !== teacherId) {
+    await claimRoom(codeValidation.normalized, teacherValidation.normalized);
+  } else if (meta.teacherId !== teacherValidation.normalized) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized to view this room', code: 'UNAUTHORIZED' },
       { status: 403 },
     );
   }
 
-  const students = await getRoomStudents(upperCode);
+  const students = await getRoomStudents(codeValidation.normalized);
   return NextResponse.json({ success: true, data: students }, { status: 200 });
 });

@@ -44,9 +44,9 @@ export function useExamMode(): UseExamModeReturn {
   const [isPanelMinimized, setIsPanelMinimized] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
 
-  // Load from localStorage after mount
+  // Load from secureStorage after mount
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = secureStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -64,13 +64,14 @@ export function useExamMode(): UseExamModeReturn {
           if (!verifyExamIntegrity(tempProject as ExamProject)) {
             logger.error('Exam integrity compromised! Resetting exam...');
             // Tampering detected, don't load the saved state
-            localStorage.removeItem(STORAGE_KEY);
+            secureStorage.removeItem(STORAGE_KEY);
             return;
           }
         }
         setTimeout(() => setActiveExam(parsed), 0);
       } catch (e) {
         logger.error('Failed to load exam state', e);
+        secureStorage.removeItem(STORAGE_KEY);
       }
     }
   }, []);

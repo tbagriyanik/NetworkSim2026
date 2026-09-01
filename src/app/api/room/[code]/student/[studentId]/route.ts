@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { updateStudent } from '@/lib/roomStore';
 import type { RoomApiResponse, StudentProgress } from '@/lib/roomTypes';
 import { isRateLimited } from '@/lib/security/rateLimiter';
-import { sanitizeInput, sanitizeObject } from '@/lib/security/sanitizer';
+import { sanitizeObject } from '@/lib/security/sanitizer';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
+import { validateRoomCode, validateUserId } from '@/lib/security/roomValidation';
 
 interface RouteParams {
   code: string;
@@ -31,43 +32,23 @@ export const PATCH = withErrorHandling(async (
     );
   }
   const { code, studentId: rawStudentId } = await params;
-  const studentId = sanitizeInput(rawStudentId);
 
-  if (!code || !studentId) {
+  const codeValidation = validateRoomCode(code);
+  if (!codeValidation.valid) {
     return NextResponse.json(
-      { success: false, error: 'Missing room code or student ID', code: 'MISSING_PARAMS' },
+      { success: false, error: codeValidation.error, code: codeValidation.code },
       { status: 400 },
     );
   }
 
-  const upperCode = code.toUpperCase().trim();
-  if (upperCode.length < 4 || upperCode.length > 10) {
+  const studentValidation = validateUserId(rawStudentId, 'student');
+  if (!studentValidation.valid) {
     return NextResponse.json(
-      { success: false, error: 'Room code must be 4-10 characters', code: 'INVALID_CODE' },
+      { success: false, error: studentValidation.error, code: studentValidation.code },
       { status: 400 },
     );
   }
-
-  if (!/^[A-Z0-9]+$/.test(upperCode)) {
-    return NextResponse.json(
-      { success: false, error: 'Room code must be alphanumeric', code: 'INVALID_CODE_FORMAT' },
-      { status: 400 },
-    );
-  }
-
-  if (studentId.length < 8 || studentId.length > 100) {
-    return NextResponse.json(
-      { success: false, error: 'Student ID must be 8-100 characters', code: 'INVALID_ID' },
-      { status: 400 },
-    );
-  }
-
-  if (!/^[a-zA-Z0-9-]+$/.test(studentId)) {
-    return NextResponse.json(
-      { success: false, error: 'Student ID must be alphanumeric and hyphens only', code: 'INVALID_ID_FORMAT' },
-      { status: 400 },
-    );
-  }
+  const studentId = studentValidation.normalized;
 
   const rawBody = await req.json();
   const body = sanitizeObject(rawBody) as Record<string, unknown>;
@@ -115,7 +96,7 @@ export const PATCH = withErrorHandling(async (
     );
   }
 
-  const student = await updateStudent(upperCode, studentId, {
+  const student = await updateStudent(codeValidation.normalized, studentId, {
     displayName,
     currentTask,
     completedTasks,

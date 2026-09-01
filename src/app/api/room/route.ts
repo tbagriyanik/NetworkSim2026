@@ -4,6 +4,7 @@ import type { RoomApiResponse, RoomData } from '@/lib/roomTypes';
 import { isRateLimited } from '@/lib/security/rateLimiter';
 import { sanitizeObject } from '@/lib/security/sanitizer';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
+import { validateRoomCode, validateUserId } from '@/lib/security/roomValidation';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,42 +40,22 @@ export const POST = withErrorHandling(async (req: NextRequest): Promise<NextResp
   const body = sanitizeObject(rawBody) as Record<string, unknown>;
   const { code, teacherId } = body;
 
-  if (!code || typeof code !== 'string') {
+  const codeValidation = validateRoomCode(code as string | undefined);
+  if (!codeValidation.valid) {
     return NextResponse.json(
-      { success: false, error: 'Room code is required', code: 'MISSING_CODE' },
+      { success: false, error: codeValidation.error, code: codeValidation.code },
       { status: 400 },
     );
   }
 
-  if (!teacherId || typeof teacherId !== 'string' || teacherId.length < 8 || teacherId.length > 100) {
+  const teacherValidation = validateUserId(teacherId as string | undefined, 'teacher');
+  if (!teacherValidation.valid) {
     return NextResponse.json(
-      { success: false, error: 'Valid teacher ID is required (8-100 chars)', code: 'MISSING_TEACHER_ID' },
+      { success: false, error: teacherValidation.error, code: teacherValidation.code },
       { status: 400 },
     );
   }
 
-  if (!/^[a-zA-Z0-9-]+$/.test(teacherId)) {
-    return NextResponse.json(
-      { success: false, error: 'Teacher ID must be alphanumeric and hyphens only', code: 'INVALID_TEACHER_ID' },
-      { status: 400 },
-    );
-  }
-
-  const trimmed = code.trim().toUpperCase();
-  if (trimmed.length < 4 || trimmed.length > 10) {
-    return NextResponse.json(
-      { success: false, error: 'Room code must be 4-10 characters', code: 'INVALID_CODE' },
-      { status: 400 },
-    );
-  }
-
-  if (!/^[A-Z0-9]+$/.test(trimmed)) {
-    return NextResponse.json(
-      { success: false, error: 'Room code must be alphanumeric', code: 'INVALID_CODE_FORMAT' },
-      { status: 400 },
-    );
-  }
-
-  const room = await createRoom(trimmed, teacherId);
+  const room = await createRoom(codeValidation.normalized, teacherValidation.normalized);
   return NextResponse.json({ success: true, data: room }, { status: 200 });
 });

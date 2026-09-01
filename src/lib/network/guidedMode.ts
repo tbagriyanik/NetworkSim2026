@@ -438,9 +438,16 @@ export const getGuidedProjects = (language: 'tr' | 'en'): GuidedProject[] => {
         version: '1.0', timestamp: new Date().toISOString(), devices: [], deviceOutputs: [], pcOutputs: [], pcHistories: [],
         topology: {
           devices: [
-            { id: 'router-1', type: 'router', name: 'R1-Gateway', x: 400, y: 100, ip: '', status: 'online', ports: generateRouterPorts() },
+            {
+              id: 'router-1', type: 'router', name: 'R1-Gateway', x: 400, y: 100, ip: '', status: 'online',
+              ports: generateRouterPorts().map(p => {
+                if (p.id === 'gi0/0') return { ...p, ipAddress: '203.0.113.1', subnetMask: '255.255.255.0', status: 'connected' as const, shutdown: false };
+                if (p.id === 'gi0/1') return { ...p, ipAddress: '172.16.50.1', subnetMask: '255.255.255.0', status: 'connected' as const, shutdown: false };
+                return p;
+              })
+            },
             { id: 'switch-1', type: 'switchL2', name: 'SW-Core', x: 400, y: 250, ip: '', status: 'online', ports: generateSwitchPorts() },
-            { id: 'pc-1', type: 'pc', name: 'Office-PC', x: 150, y: 350, ip: '172.16.10.10', subnet: '255.255.255.0', gateway: '172.16.10.1', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] },
+            { id: 'pc-1', type: 'pc', name: 'Office-PC', x: 150, y: 350, ip: '172.16.50.20', subnet: '255.255.255.0', gateway: '172.16.50.1', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] },
             { id: 'server-1', type: 'pc', name: 'Web-Server', x: 400, y: 400, ip: '172.16.50.10', subnet: '255.255.255.0', gateway: '172.16.50.1', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] },
             { id: 'pc-2', type: 'pc', name: 'Internet-Client', x: 700, y: 100, ip: '203.0.113.100', status: 'online', ports: [{ id: 'eth0', label: 'Eth0', status: 'connected' as const }] }
           ],
@@ -746,7 +753,11 @@ export const checkStepCompletion = (
           if (property === 'enabled' && configKey.includes('portSecurity')) return port.portSecurity?.enabled === configValue;
 
           // Additional port checks
-          if (property === 'accessGroupIn') return port.accessGroupIn === configValue;
+          if (property === 'accessGroupIn') {
+            const hasAnyAclIn = Object.values(targetState?.ports || {}).some((p: Port) => !!p.accessGroupIn);
+            const hasAnyAclRule = targetState?.accessLists && Object.keys(targetState.accessLists).length > 0;
+            return !!port.accessGroupIn || hasAnyAclIn || !!hasAnyAclRule;
+          }
           if (property === 'accessGroupOut') return port.accessGroupOut === configValue;
           if (property === 'nativeVlan') return Number(port.nativeVlan) === Number(configValue);
           if (property === 'allowedVlans') {

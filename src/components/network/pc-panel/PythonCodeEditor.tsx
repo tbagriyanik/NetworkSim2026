@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { ClipboardPaste, Copy, ListChecks, Scissors, Trash2 } from 'lucide-react';
+import { colors } from '@/lib/design-tokens/colors';
 
 interface PythonCodeEditorProps {
   value: string;
@@ -32,12 +33,12 @@ function escapeHtml(value: string): string {
 }
 
 export const SYNTAX_COLORS = {
-  keyword: '#c084fc',
-  builtin: '#38bdf8',
-  string: '#4ade80',
-  number: '#fbbf24',
+  keyword: colors.purple[400],
+  builtin: colors.theme.accent,
+  string: colors.green[300],
+  number: colors.amber[400],
   constant: '#fb7185',
-  comment: '#94a3b8',
+  comment: colors.topology.subText,
 } as const;
 
 function highlightCode(code: string): string {

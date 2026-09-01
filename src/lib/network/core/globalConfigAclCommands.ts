@@ -181,45 +181,50 @@ export function cmdNamedAclNoDeny(state: SwitchState, input: string, _ctx: Comma
 }
 
 export function cmdExtAclPermit(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config-ext-nacl' || !state.currentExtendedAcl) {
-    return { success: false, error: iosModeError() };
-  }
+  const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
   const match = input.match(/^permit\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid permit command' };
 
-  const aclName = state.currentExtendedAcl;
   const accessLists = { ...state.accessLists };
   accessLists[aclName] = [...(accessLists[aclName] || []), `permit ${match[1]}`];
 
-  return { success: true, newState: { accessLists } };
+  return {
+    success: true,
+    newState: {
+      accessLists,
+      currentExtendedAcl: aclName,
+      currentMode: 'config-ext-nacl'
+    }
+  };
 }
 
 export function cmdExtAclDeny(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config-ext-nacl' || !state.currentExtendedAcl) {
-    return { success: false, error: iosModeError() };
-  }
+  const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
   const match = input.match(/^deny\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid deny command' };
 
-  const aclName = state.currentExtendedAcl;
   const accessLists = { ...state.accessLists };
   accessLists[aclName] = [...(accessLists[aclName] || []), `deny ${match[1]}`];
 
-  return { success: true, newState: { accessLists } };
+  return {
+    success: true,
+    newState: {
+      accessLists,
+      currentExtendedAcl: aclName,
+      currentMode: 'config-ext-nacl'
+    }
+  };
 }
 
 export function cmdExtAclNoPermit(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config-ext-nacl' || !state.currentExtendedAcl) {
-    return { success: false, error: iosModeError() };
-  }
+  const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
   const match = input.match(/^no\s+permit\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const rule = `permit ${match[1]}`;
-  const aclName = state.currentExtendedAcl;
   const accessLists = { ...state.accessLists };
   accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
 
@@ -227,15 +232,12 @@ export function cmdExtAclNoPermit(state: SwitchState, input: string, _ctx: Comma
 }
 
 export function cmdExtAclNoDeny(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  if (state.currentMode !== 'config-ext-nacl' || !state.currentExtendedAcl) {
-    return { success: false, error: iosModeError() };
-  }
+  const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
   const match = input.match(/^no\s+deny\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const rule = `deny ${match[1]}`;
-  const aclName = state.currentExtendedAcl;
   const accessLists = { ...state.accessLists };
   accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
 
