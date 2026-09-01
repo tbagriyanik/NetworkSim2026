@@ -69,6 +69,7 @@ export interface DeviceWifiConfig {
   macFilterMode?: 'allow' | 'deny';
   macFilterList?: string[];
   ssids?: DeviceWifiSsidProfile[];
+  powerDisabled?: boolean;
 }
 
 const normalizeWifiMode = (mode: string | undefined, fallback: WifiMode): WifiMode => {
@@ -260,6 +261,7 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
       ssids: Array.isArray(wlanState.wifi.ssids) && wlanState.wifi.ssids.length > 0
         ? wlanState.wifi.ssids
         : (Array.isArray(device.wifi?.ssids) ? device.wifi.ssids : []),
+      powerDisabled: device.wifi?.powerDisabled,
     };
   }
 
@@ -346,6 +348,7 @@ export function getWirelessSignalStrength(
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const pcWifi = getDeviceWifiConfig(device, safeDeviceStates);
   if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) return 0;
+  if (pcWifi.powerDisabled) return 0;
   if (pcWifi.mode !== 'client' && pcWifi.mode !== 'sta') return 0;
 
   const targetSsid = pcWifi.ssid.toLowerCase();

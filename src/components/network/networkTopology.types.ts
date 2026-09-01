@@ -39,6 +39,7 @@ export interface CanvasPort {
     macFilterMode?: 'allow' | 'deny';
     macFilterList?: string[];
     ssids?: DeviceWifiSsidProfile[];
+    powerDisabled?: boolean;
   };
   spanningTree?: {
     role?: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';
@@ -192,6 +193,7 @@ export interface CanvasDevice {
     macFilterMode?: 'allow' | 'deny';
     macFilterList?: string[];
     ssids?: DeviceWifiSsidProfile[];
+    powerDisabled?: boolean;
   };
   iot?: {
     sensorType: 'temperature' | 'sound' | 'motion' | 'humidity' | 'light';

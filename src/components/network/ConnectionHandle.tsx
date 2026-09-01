@@ -67,17 +67,14 @@ const ConnectionHandle = memo(function ConnectionHandle({
     3 * invT * tTrash * tTrash * controlPoint2.y +
     tTrash * tTrash * tTrash * target.y;
 
-  const isCompatible =
-    connection.cableType === 'console'
-      ? isCableCompatible({
-          connected: true,
-          cableType: connection.cableType,
-          sourceDevice: sourceDevice.type,
-          targetDevice: targetDevice.type,
-          sourcePort: connection.sourcePort,
-          targetPort: connection.targetPort,
-        } as CableInfo)
-      : true;
+  const isCompatible = isCableCompatible({
+    connected: true,
+    cableType: connection.cableType,
+    sourceDevice: sourceDevice.type,
+    targetDevice: targetDevice.type,
+    sourcePort: connection.sourcePort,
+    targetPort: connection.targetPort,
+  } as CableInfo);
 
   return (
     <g key={`handle-${connection.id}`} data-connection-handle-id={connection.id} data-export-hide="true">

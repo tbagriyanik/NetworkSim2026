@@ -366,7 +366,9 @@ export function PCPanel({
     maxUsers: 50,
   });
   const [editingDhcpIndex, setEditingDhcpIndex] = useState<number | null>(null);
-  const [wifiEnabled, setWifiEnabled] = useState(deviceFromTopology?.wifi?.enabled ?? false);
+  const [wifiEnabled, setWifiEnabled] = useState(
+    (deviceFromTopology?.wifi?.enabled ?? false) && !(deviceFromTopology?.wifi?.powerDisabled ?? false)
+  );
   const [wifiSSID, setWifiSSID] = useState(deviceFromTopology?.wifi?.ssid ?? '');
   const [wifiSecurity, setWifiSecurity] = useState(deviceFromTopology?.wifi?.security ?? 'open');
   const [wifiPassword, setWifiPassword] = useState(deviceFromTopology?.wifi?.password ?? '');
@@ -621,7 +623,7 @@ export function PCPanel({
         maxUsers: 50,
       });
       setEditingDhcpIndex(null);
-      setWifiEnabled(deviceFromTopology?.wifi?.enabled ?? false);
+      setWifiEnabled((deviceFromTopology?.wifi?.enabled ?? false) && !(deviceFromTopology?.wifi?.powerDisabled ?? false));
       setWifiSSID(deviceFromTopology?.wifi?.ssid ?? '');
       setWifiSecurity(deviceFromTopology?.wifi?.security ?? 'open');
       setWifiPassword(deviceFromTopology?.wifi?.password ?? '');
@@ -1159,7 +1161,7 @@ export function PCPanel({
         // Only client/STA radios are wireless clients. APs and WLCs can
         // advertise the same SSID but must never appear in this list.
         const isWirelessClient = clientWifi?.mode === 'client' || clientWifi?.mode === 'sta';
-        if (isWirelessClient && clientWifi.enabled && clientWifi.ssid) {
+        if (isWirelessClient && clientWifi.enabled && !clientWifi.powerDisabled && clientWifi.ssid) {
           const clientSsidLower = clientWifi.ssid.toLowerCase();
           const matchedSsid = routerSsids.get(clientSsidLower);
           if (matchedSsid) {

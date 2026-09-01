@@ -157,7 +157,7 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
                   <span className="font-mono opacity-30 text-xs">{pc?.macAddress ? normalizeMAC(pc.macAddress) : (language === 'tr' ? 'Yok' : 'N/A')}</span>
                 </div>
               </TooltipWrapper>
-              {pc?.wifi && pc.wifi.enabled && (
+              {pc?.wifi && pc.wifi.enabled && !(pc.wifi.powerDisabled ?? false) && (
                 <Collapsible open={!collapsedSections.wifi} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, wifi: !open }))}>
                   <CollapsibleTrigger asChild>
                     <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
@@ -332,7 +332,7 @@ export function RouterInfoPopover({ router, routerState, t, language, isDark, on
     conn.sourceDeviceId === router.id || conn.targetDeviceId === router.id
   ).length || 0;
   const dhcpPools = routerState?.dhcpPools ? Object.keys(routerState.dhcpPools).length : 0;
-  const wifiEnabled = routerState?.ports?.['wlan0']?.wifi?.mode === 'ap' || router?.wifi?.enabled;
+  const wifiEnabled = (routerState?.ports?.['wlan0']?.wifi?.mode === 'ap' || router?.wifi?.enabled) && !(router?.wifi?.powerDisabled ?? false);
   const wifiConfig = routerState?.ports?.['wlan0']?.wifi || router?.wifi;
   const ipAddresses = ports
     .filter((p) => p.ipAddress && !p.shutdown)

@@ -103,11 +103,18 @@ export function WirelessConfigTab({
               onClick={() => {
                 navigateToProgram('desktop');
                 setTimeout(() => {
-                  const apDevice = topologyDevices.find(d =>
-                    (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3') &&
-                    d.services?.http?.enabled &&
-                    (d.wifi?.ssid === wifiSSID || d.ports?.some((p: { wifi?: { ssid?: string } }) => p.wifi?.ssid === wifiSSID))
-                  );
+                  const safeStates = ensureDeviceStatesMap(deviceStates);
+                  const apDevice = topologyDevices.find(d => {
+                    if (d.type !== 'router' && d.type !== 'switchL2' && d.type !== 'switchL3') return false;
+                    if (!d.services?.http?.enabled) return false;
+                    
+                    const wifi = getDeviceWifiConfig(d, safeStates);
+                    if (!wifi || !wifi.enabled || wifi.mode !== 'ap') return false;
+                    if (wifi.powerDisabled) return false;
+                    if (wifi.ssid !== wifiSSID) return false;
+                    
+                    return true;
+                  });
                   const targetIp = apDevice?.ip || '192.168.1.1';
                   setInput(`curl ${targetIp}`);
                   void executeCommand(`curl ${targetIp}`);
@@ -123,7 +130,7 @@ export function WirelessConfigTab({
               onClick={() => {
                 const enabled = !wifiEnabled;
                 setWifiEnabled(enabled);
-                dispatchDeviceConfig({
+                const config: Record<string, unknown> = {
                   wifi: {
                     enabled: enabled,
                     ssid: wifiSSID,
@@ -133,7 +140,14 @@ export function WirelessConfigTab({
                     channel: wifiChannel,
                     mode: 'client'
                   }
-                });
+                };
+                if (!enabled) {
+                  config.ip = '';
+                  config.subnet = '';
+                  config.gateway = '';
+                  config.ports = [{ id: 'wlan0', status: 'disconnected' as const, ipAddress: undefined, subnetMask: undefined }];
+                }
+                dispatchDeviceConfig(config);
               }}
               className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full border transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/60 ${wifiEnabled
                 ? 'bg-purple-500 border-purple-400'
@@ -378,8 +392,9 @@ export function WirelessConfigTab({
               password: wifiPassword,
               channel: normalizeChannel(wifiChannel),
               mode: 'client',
+              powerDisabled: currentDevice?.wifi?.powerDisabled ?? false,
             };
-            const isConnected = Array.from(safeStates.entries()).some(([id, state]) => {
+            const isConnected = wifiEnabled && wifiSignalStrength > 0 && Array.from(safeStates.entries()).some(([id, state]) => {
               if (state.wlcWlans) {
                 const wlan = Object.values(state.wlcWlans).find(w => w.status === 'enabled' && w.ssid === wifiSSID);
                 if (wlan) {
@@ -438,6 +453,7 @@ export function WirelessConfigTab({
                 password: wifiPassword,
                 channel: normalizeChannel(wifiChannel),
                 mode: 'client',
+                powerDisabled: currentDevice?.wifi?.powerDisabled ?? false,
               };
               const isConnected = Array.from(safeStates.entries()).some(([id, state]) => {
                 if (state.wlcWlans) {
@@ -504,6 +520,7 @@ export function WirelessConfigTab({
                     password: wifiPassword,
                     channel: normalizeChannel(wifiChannel),
                     mode: 'client',
+                    powerDisabled: currentDevice?.wifi?.powerDisabled ?? false,
                   };
 
                   let mismatchedApChannel: string | null = null;
@@ -574,7 +591,7 @@ export function WirelessConfigTab({
                     return true;
                   });
 
-                  const isConnected = !!foundInStates || !!foundInTopology;
+                  const isConnected = wifiEnabled && (!!foundInStates || !!foundInTopology);
                   if (isConnected && wifiSSID) {
                     const chLabel = formatChannelDisplay(wifiChannel, language);
                     return language === 'tr' ? `Bağlı • SSID: ${wifiSSID} (${chLabel})` : `Connected • SSID: ${wifiSSID} (${chLabel})`;

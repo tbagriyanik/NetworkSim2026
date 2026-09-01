@@ -117,7 +117,18 @@ export function NetworkTopology({
     // Keep the derived link ids aligned with connectivity packet captures so
     // clicking a wireless link opens the same per-link packet list as wired links.
     const implicitWireless = buildImplicitWirelessConnections(topologyDevices, deviceStates, 'wireless')
-      .filter((connection) => !existing.has(`${connection.sourceDeviceId}:${connection.sourcePort}-${connection.targetDeviceId}:${connection.targetPort}`));
+      .filter((connection) => !existing.has(`${connection.sourceDeviceId}:${connection.sourcePort}-${connection.targetDeviceId}:${connection.targetPort}`))
+      .map((connection) => {
+        // Check if the client device has power disabled, if so set active to false
+        const clientDevice = topologyDevices.find(d => 
+          (d.id === connection.sourceDeviceId && (d.type === 'pc' || d.type === 'iot')) ||
+          (d.id === connection.targetDeviceId && (d.type === 'pc' || d.type === 'iot'))
+        );
+        if (clientDevice && clientDevice.wifi?.powerDisabled) {
+          return { ...connection, active: false };
+        }
+        return connection;
+      });
     return [...topologyConnections, ...implicitWireless];
   }, [topologyConnections, topologyDevices, deviceStates]);
   // BOLT: Memoize connection map for O(1) lookups during culling
@@ -912,8 +923,17 @@ export function NetworkTopology({
       return {
         ...device,
         wifi: device.wifi ? { ...device.wifi, enabled: false, ssid: '' } : device.wifi,
+        ip: '',
+        subnet: '',
+        gateway: '',
         ports: device.ports.map((port) => port.id === 'wlan0'
-          ? { ...port, status: 'disconnected' as const, wifi: port.wifi ? { ...port.wifi, ssid: '' } : port.wifi }
+          ? { 
+              ...port, 
+              status: 'disconnected' as const, 
+              wifi: port.wifi ? { ...port.wifi, ssid: '' } : port.wifi,
+              ipAddress: undefined,
+              subnetMask: undefined
+            }
           : port)
       };
     }));
@@ -932,22 +952,35 @@ export function NetworkTopology({
     const connection = visualConnections.find((item) => item.id === connectionId);
     if (!connection || connection.cableType !== 'wireless') return;
 
-    const clientDevices = topologyDevices.filter((d) =>
+    const devices = topologyDevices.filter((d) =>
       connection.sourceDeviceId === d.id || connection.targetDeviceId === d.id
     );
-    if (clientDevices.length !== 1) return;
+    if (devices.length !== 2) return;
+
+    // Determine which device is the client (PC/IoT) vs AP (Router/Switch/WLC)
+    const clientDevice = devices.find(d => d.type === 'pc' || d.type === 'iot');
+    
+    if (!clientDevice) return; // Only toggle if there's a client device
 
     saveToHistory();
-    const clientId = clientDevices[0].id;
+    const clientId = clientDevice.id;
     // The wrench/plug handle is shown when active is false -> reconnect.
     const currentlyActive = connection.active !== false;
     setDevicesState((previous) => previous.map((device) => {
       if (device.id !== clientId) return device;
       return {
         ...device,
-        wifi: device.wifi ? { ...device.wifi, enabled: !currentlyActive, ssid: currentlyActive ? '' : (device.wifi.ssid || '') } : device.wifi,
+        wifi: device.wifi ? { ...device.wifi, powerDisabled: currentlyActive } : device.wifi,
+        ip: currentlyActive ? device.ip : '',
+        subnet: currentlyActive ? device.subnet : '',
+        gateway: currentlyActive ? device.gateway : '',
         ports: device.ports.map((port) => port.id === 'wlan0'
-          ? { ...port, status: !currentlyActive ? 'connected' : 'disconnected' as const, wifi: port.wifi ? { ...port.wifi, ssid: currentlyActive ? '' : (port.wifi?.ssid || '') } : port.wifi }
+          ? { 
+              ...port, 
+              status: !currentlyActive ? 'connected' : 'disconnected' as const,
+              ipAddress: currentlyActive ? port.ipAddress : undefined,
+              subnetMask: currentlyActive ? port.subnetMask : undefined
+            }
           : port)
       };
     }));
