@@ -200,15 +200,7 @@ function handlePasswordInput(state: SwitchState, password: string, language: 'tr
       // If stored secret is already encrypted (starts with $1$), re-encrypt with the same salt
       // so the hashes can be compared deterministically.
       if (storedSecret.startsWith('$1$')) {
-        const parts = storedSecret.split('$');
-        // Format: $1$<salt>$<hash>
-        const storedSalt = parts[2];
-        if (storedSalt) {
-          validPassword = encryptMd5Password(password, storedSalt) === storedSecret;
-        } else {
-          // Legacy: plain text comparison
-          validPassword = password === storedSecret;
-        }
+        validPassword = verifyMd5Password(password, storedSecret);
       } else {
         // Legacy: plain text comparison
         validPassword = password === storedSecret;
@@ -517,7 +509,7 @@ function handleMailSessionCommand(
 }
 
 // Import encryption functions
-import { encryptMd5Password, encryptType7Password } from './crypto';
+import { verifyMd5Password, encryptType7Password } from './crypto';
 import { IOS_ERRORS } from './core/iosErrors';
 
 export {
