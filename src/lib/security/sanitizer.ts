@@ -41,6 +41,22 @@ export function sanitizeHTTPContent(input: string): string {
     return safe;
 }
 
+function stripHtmlTags(str: string): string {
+    let result = '';
+    let insideTag = false;
+    for (let i = 0; i < str.length; i++) {
+        const char = str[i];
+        if (char === '<') {
+            insideTag = true;
+        } else if (char === '>') {
+            insideTag = false;
+        } else if (!insideTag) {
+            result += char;
+        }
+    }
+    return result;
+}
+
 export function sanitizeInput(input: string): string {
     if (typeof input !== 'string') return '';
     let sanitized = input.trim();
@@ -56,16 +72,7 @@ export function sanitizeInput(input: string): string {
     let prev: string;
     do {
         prev = sanitized;
-        // Strip all HTML/XML tags.  The character class [^>\u0000-\u001F] ensures
-        // multi-byte and control characters inside tags are consumed too, preventing
-        // incomplete-sanitisation bypasses that exploit malformed UTF-8 sequences.
-        // lgtm[js/incomplete-multi-character-sanitization]
-        // codeql[js/incomplete-multi-character-sanitization]
-        sanitized = sanitized
-            // lgtm[js/incomplete-multi-character-sanitization]
-            // codeql[js/incomplete-multi-character-sanitization]
-            .replace(/<[^>]*>/g, '')
-            .replace(DANGEROUS_SCHEMES_RE, '');
+        sanitized = stripHtmlTags(sanitized).replace(DANGEROUS_SCHEMES_RE, '');
     } while (sanitized !== prev);
 
     // Remove any residual angle brackets, preventing reassembly into markup.
