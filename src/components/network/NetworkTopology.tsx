@@ -919,6 +919,40 @@ export function NetworkTopology({
     }));
   }, [deleteConnection, saveToHistory, setDevicesState, topologyConnections, visualConnections]);
 
+  const toggleVisualConnectionActive = useCallback((connectionId: string) => {
+    // Stored (wired) connections toggle their active flag normally.
+    if (topologyConnections.some((connection) => connection.id === connectionId)) {
+      toggleConnectionActive(connectionId);
+      return;
+    }
+
+    // Implicit wireless links are derived from the client Wi-Fi settings, so
+    // toggling their handle must disconnect/reconnect the client rather than
+    // persisting a temporary auto-generated connection.
+    const connection = visualConnections.find((item) => item.id === connectionId);
+    if (!connection || connection.cableType !== 'wireless') return;
+
+    const clientDevices = topologyDevices.filter((d) =>
+      connection.sourceDeviceId === d.id || connection.targetDeviceId === d.id
+    );
+    if (clientDevices.length !== 1) return;
+
+    saveToHistory();
+    const clientId = clientDevices[0].id;
+    // The wrench/plug handle is shown when active is false -> reconnect.
+    const currentlyActive = connection.active !== false;
+    setDevicesState((previous) => previous.map((device) => {
+      if (device.id !== clientId) return device;
+      return {
+        ...device,
+        wifi: device.wifi ? { ...device.wifi, enabled: !currentlyActive, ssid: currentlyActive ? '' : (device.wifi.ssid || '') } : device.wifi,
+        ports: device.ports.map((port) => port.id === 'wlan0'
+          ? { ...port, status: !currentlyActive ? 'connected' : 'disconnected' as const, wifi: port.wifi ? { ...port.wifi, ssid: currentlyActive ? '' : (port.wifi?.ssid || '') } : port.wifi }
+          : port)
+      };
+    }));
+  }, [deleteConnection, saveToHistory, setDevicesState, topologyConnections, visualConnections, toggleConnectionActive]);
+
   // Get dynamic canvas dimensions based on screen size
   const getCanvasDimensions = useCallback(() => {
     if (typeof window === 'undefined') return { width: VIRTUAL_CANVAS_WIDTH_DESKTOP, height: VIRTUAL_CANVAS_HEIGHT_DESKTOP };
@@ -1937,7 +1971,7 @@ export function NetworkTopology({
             handleConnectionMouseLeave={handleConnectionMouseLeave}
             handleConnectionClick={handleConnectionClick}
             onDeleteConnection={deleteVisualConnection}
-            onToggleConnectionActive={toggleConnectionActive}
+            onToggleConnectionActive={toggleVisualConnectionActive}
             pingAnimation={pingAnimation}
             handleEnvelopeClick={handleEnvelopeClick}
             isDarkForPing={isDark}

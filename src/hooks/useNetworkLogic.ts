@@ -170,7 +170,10 @@ export function useNetworkLogic(
 
     const visited = new Set<string>([sourceDeviceId]);
     const queue = [sourceDeviceId];
-    const activeConnections = connectionsOverride ?? conns;
+    // Build a local copy so the wireless entries pushed below never mutate the
+    // shared topology connections store (which would leak duplicate
+    // wireless-dhcp-* connections into state and break React keys downstream).
+    const activeConnections = (connectionsOverride ?? conns).slice();
     const adjacency = new Map<string, CanvasConnection[]>();
     activeConnections.forEach((connection) => {
       if (connection.active === false) return;

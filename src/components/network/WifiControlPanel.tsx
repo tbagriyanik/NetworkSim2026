@@ -1085,7 +1085,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           '</div>' +
           '<div class="client-badges">' +
             '<span class="badge ' + sigBadgeClass + '">' + sigDisplay + '</span>' +
-            '<span class="badge badge-success">' + (isTurkish ? '● Bağlı' : '● Connected') + '</span>' +
+            '<span class="badge ' + (client.connected ? 'badge-success"' : 'badge-danger"') + '>' + (client.connected ? (isTurkish ? '● Bağlı' : '● Connected') : (isTurkish ? '● Bağlı Değil' : '● Disconnected')) + '</span>' +
             '<button type="button" class="btn btn-secondary" style="padding:4px 8px;font-size:11px;" onclick="renewIotDevice(' + jsId + ')" title="' + (isTurkish ? 'IP Yenile' : 'Renew IP') + '">🔄</button>' +
             '<button type="button" class="btn btn-danger" style="padding:4px 8px;font-size:11px;" onclick="disconnectIotDevice(' + jsId + ')" title="' + (isTurkish ? 'Bağlantıyı Kes' : 'Disconnect') + '">🔌</button>' +
           '</div>' +

@@ -1231,7 +1231,34 @@ export function PCPanel({
         }
 
         const clientWifi = getDeviceWifiConfig(d, deviceStates);
+        const routerWifi = getDeviceWifiConfig(routerDevice, deviceStates);
         const macAddr = getDeviceMacAddress(d, deviceStates) || d.macAddress || d.ports?.[0]?.macAddress || `00:11:22:${d.id.slice(-2)}:33:44`;
+
+        // A device is "connected" if it is physically wired to the router OR it
+        // is actually associated to this AP's SSID (wifi enabled + matching
+        // SSID/security). A client whose wireless link was cut (wifi disabled
+        // or ssid cleared) must not remain reported as connected.
+        const clientMode = clientWifi?.mode || d.wifi?.mode;
+        const isWirelessClient = clientMode === 'client' || clientMode === 'sta';
+        let isAssociated = false;
+        const clientSsid = clientWifi?.ssid || '';
+        if (isWirelessClient && clientWifi?.enabled && clientSsid) {
+          const matchedSsid = routerSsids.get(clientSsid.toLowerCase());
+          if (matchedSsid) {
+            const clientSec = (clientWifi.security || 'open').toLowerCase();
+            const apSec = (matchedSsid.security || 'open').toLowerCase();
+            if (clientSec === apSec && (apSec === 'open' || matchedSsid.password === clientWifi.password)) {
+              const routerApWifi = routerWifi;
+              if (wifiMacFilterMatches(routerApWifi, d, deviceStates)) {
+                isAssociated = true;
+              }
+            }
+          }
+        }
+        if (isWirelessClient && (clientWifi?.bssid === routerId || d.wifi?.bssid === routerId)) {
+          isAssociated = true;
+        }
+
         let signalPercent = 100;
         if (!isWiredConnected) {
           const dx = (d.x || 0) - (routerDevice.x || 0);
@@ -1250,10 +1277,10 @@ export function PCPanel({
           id: d.id,
           name: d.name,
           sensorType: (d.iot?.sensorType || (d.type === 'pc' ? 'Laptop/PC' : d.type)) as 'temperature' | 'sound' | 'motion' | 'humidity' | 'light',
-          connected: !!(isWiredConnected || (d.status !== 'offline' && clientWifi?.enabled !== false)),
+          connected: !!(isWiredConnected || isAssociated),
           ip: deviceIp || d.ip,
           mac: macAddr,
-          ssid: clientWifi?.ssid || d.wifi?.ssid || routerDevice.wifi?.ssid || 'WiFi',
+          ssid: d.status !== 'offline' ? (clientSsid || routerDevice.wifi?.ssid || 'WiFi') : (clientSsid || 'WiFi'),
           isWired: isWiredConnected,
           signalPercent,
           rssiDbm,
