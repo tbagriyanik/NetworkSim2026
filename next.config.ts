@@ -57,7 +57,6 @@ const config = async () => {
   const version = getAppVersion();
 
   const nextConfig: NextConfig = {
-    output: "standalone",
     productionBrowserSourceMaps: false,
     experimental: {
       optimizePackageImports: ["lucide-react"],
