@@ -136,6 +136,8 @@ export interface Port {
     };
   };
   staticMacs?: string[]; // Static MAC addresses for port security
+  stickyMacs?: string[]; // Sticky MAC addresses for port security
+  protected?: boolean; // Protected port (PVLAN edge)
   ipv6Address?: string;
   ipv6Prefix?: number;
   ipv6LinkLocal?: string;

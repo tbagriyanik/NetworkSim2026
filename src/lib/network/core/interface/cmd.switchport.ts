@@ -60,10 +60,17 @@ export function cmdSwitchportPortSecurityViolation(state: SwitchState, input: st
 /**
  * Switchport Port-Security MAC-Address Sticky
  */
-export function cmdSwitchportPortSecuritySticky(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+export function cmdSwitchportPortSecuritySticky(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const match = input.match(/^switchport\s+port-security\s+mac-address\s+sticky(?:\s+([0-9a-fA-F.:-]+))?$/i);
+  const mac = match && match[1] ? match[1].toLowerCase() : undefined;
   return mutatePortAtInterface(state, (port) => {
     const portSecurity = port.portSecurity ?? { enabled: false };
-    return { ...port, portSecurity: { ...portSecurity, sticky: true } };
+    const stickyMacs = mac ? Array.from(new Set([...(port.stickyMacs || []), mac])) : port.stickyMacs;
+    return {
+      ...port,
+      portSecurity: { ...portSecurity, sticky: true },
+      stickyMacs,
+    };
   });
 }
 
@@ -490,14 +497,15 @@ export function cmdSwitchportTrunkEncapsulation(state: SwitchState, input: strin
 /**
  * Encapsulation dot1Q (subinterface)
  */
-export function cmdSwitchportProtected(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+export function cmdSwitchportProtected(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const updatePort = (port: Port) => ({ ...port, protected: true });
+  const isNo = input.trim().toLowerCase().startsWith('no ');
+  const updatePort = (port: Port) => ({ ...port, protected: !isNo });
   if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
   newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
-  return { success: true, output: 'Port protected mode enabled', newState: { ports: newPorts } };
+  return { success: true, output: `Port protected mode ${isNo ? 'disabled' : 'enabled'}`, newState: { ports: newPorts } };
 }
 
 /**
@@ -505,14 +513,17 @@ export function cmdSwitchportProtected(state: SwitchState, _input: string, _ctx:
  */
 export function cmdSwitchportBlock(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
-  const match = input.match(/^switchport\s+block\s+(unicast|multicast)$/i);
+  const isNo = input.trim().toLowerCase().startsWith('no ');
+  const match = input.match(/^(?:no\s+)?switchport\s+block\s+(unicast|multicast)$/i);
   if (!match) return { success: false, error: '% Invalid switchport block command' };
-  const updatePort = (port: Port) => ({ ...port, [`block${match[1]}`]: true });
+  const type = match[1].toLowerCase();
+  const key = type === 'unicast' ? 'blockUnicast' : 'blockMulticast';
+  const updatePort = (port: Port) => ({ ...port, [key]: !isNo });
   if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };
   newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
-  return { success: true, output: `${match[1]} blocking enabled`, newState: { ports: newPorts } };
+  return { success: true, output: `${match[1]} blocking ${isNo ? 'disabled' : 'enabled'}`, newState: { ports: newPorts } };
 }
 
 /**
@@ -566,6 +577,7 @@ export function cmdSwitchportPortSecurityAgingTime(state: SwitchState, input: st
     };
   });
 }
+
 export function cmdSwitchportPortSecurityAgingType(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) {
     return { success: false, error: iosModeError() };
@@ -589,6 +601,5 @@ export function cmdSwitchportPortSecurityAgingType(state: SwitchState, input: st
     };
   });
 }
-
 
 

@@ -430,6 +430,18 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'no switchport protected': {
+    pattern: /^no\s+switchport\s+protected$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no switchport block': {
+    pattern: /^no\s+switchport\s+block\s+(unicast|multicast)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'switchport port-security': {
     pattern: /^switchport\s+port-security$/i,
     modes: ['interface', 'config-if-range'],
@@ -454,17 +466,17 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'switchport port-security mac-address sticky': {
+    pattern: /^switchport\s+port-security\s+mac-address\s+sticky(\s+([0-9a-fA-F.:-]+))?$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'switchport port-security mac-address': {
     pattern: /^switchport\s+port-security\s+mac-address\s+(.+?)(\s+vlan\s+(\d+))?$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 1,
     maxArgs: 3
-  },
-  'switchport port-security mac-address sticky': {
-    pattern: /^switchport\s+port-security\s+mac-address\s+sticky$/i,
-    modes: ['interface', 'config-if-range'],
-    minArgs: 0,
-    maxArgs: 0
   },
   'switchport port-security aging time': {
     pattern: /^switchport\s+port-security\s+aging\s+time\s+(\d+)$/i,
@@ -799,6 +811,18 @@ export const interfacePatterns: Record<string, CommandPattern> = {
   },
   'no ip dhcp snooping trust': {
     pattern: /^no\s+ip\s+dhcp\s+snooping\s+trust$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'ip dhcp snooping limit rate': {
+    pattern: /^ip\s+dhcp\s+snooping\s+limit\s+rate\s+(\d+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no ip dhcp snooping limit rate': {
+    pattern: /^no\s+ip\s+dhcp\s+snooping\s+limit\s+rate$/i,
     modes: ['interface', 'config-if-range'],
     minArgs: 0,
     maxArgs: 0

@@ -17,6 +17,19 @@ export function cmdNoIpDhcpSnooping(state: SwitchState, _input: string, _ctx: Co
   };
 }
 
+export function cmdIpDhcpSnoopingInformationOption(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') {
+    return { success: false, error: iosModeError() };
+  }
+  const isNo = input.trim().toLowerCase().startsWith('no ');
+  return {
+    success: true,
+    newState: {
+      dhcpOption82: !isNo
+    }
+  };
+}
+
 /**
  * IP DHCP Snooping VLAN
  */

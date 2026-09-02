@@ -59,7 +59,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
     lines.push('service timestamps debug datetime msec');
     lines.push('service timestamps log datetime msec');
 
-    if (state.security.servicePasswordEncryption) {
+    if (state.security?.servicePasswordEncryption) {
         lines.push('service password-encryption');
     }
 
@@ -74,10 +74,10 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
-    if (state.security.enableSecret) {
+    if (state.security?.enableSecret) {
         lines.push(`enable secret ${state.security.enableSecret}`);
     }
-    if (state.security.enablePassword) {
+    if (state.security?.enablePassword) {
         if (state.security.servicePasswordEncryption) {
             lines.push(`enable password 7 ${encryptType7Password(state.security.enablePassword)}`);
         } else {
@@ -91,10 +91,10 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
-    state.security.users.forEach(user => {
+    (state.security?.users || []).forEach(user => {
         lines.push(`username ${user.username} privilege ${user.privilege} secret 5 ${encryptMd5Password(user.password)}`);
     });
-    if (state.security.users.length > 0) {
+    if ((state.security?.users?.length || 0) > 0) {
         lines.push('!');
     }
 
@@ -614,17 +614,17 @@ export function buildRunningConfig(state: SwitchState): string[] {
         } else {
             lines.push(` password ${state.startupConfig.security.consoleLine.password}`);
         }
-    } else if (state.security.consoleLine.password) {
+    } else if (state.security?.consoleLine?.password) {
         if (state.security.servicePasswordEncryption) {
             lines.push(` password 7 ${encryptType7Password(state.security.consoleLine.password)}`);
         } else {
             lines.push(` password ${state.security.consoleLine.password}`);
         }
     }
-    if (state.security.consoleLine.login) {
+    if (state.security?.consoleLine?.login) {
         lines.push(' login');
     }
-    if (state.security.consoleLine.execTimeout) {
+    if (state.security?.consoleLine?.execTimeout) {
         lines.push(` exec-timeout ${state.security.consoleLine.execTimeout.minutes} ${state.security.consoleLine.execTimeout.seconds}`);
     }
     lines.push('!');
@@ -637,23 +637,23 @@ export function buildRunningConfig(state: SwitchState): string[] {
         } else {
             lines.push(` password ${state.startupConfig.security.vtyLines.password}`);
         }
-    } else if (state.security.vtyLines.password) {
+    } else if (state.security?.vtyLines?.password) {
         if (state.security.servicePasswordEncryption) {
             lines.push(` password 7 ${encryptType7Password(state.security.vtyLines.password)}`);
         } else {
             lines.push(` password ${state.security.vtyLines.password}`);
         }
     }
-    if (state.security.vtyLines.login) {
+    if (state.security?.vtyLines?.login) {
         lines.push(' login');
     }
     if (
-        state.security.vtyLines.transportInput.length > 0 &&
-        state.security.vtyLines.transportInput[0] !== 'all'
+        (state.security?.vtyLines?.transportInput?.length || 0) > 0 &&
+        state.security?.vtyLines?.transportInput?.[0] !== 'all'
     ) {
-        lines.push(` transport input ${state.security.vtyLines.transportInput.join(' ')}`);
+        lines.push(` transport input ${state.security!.vtyLines!.transportInput.join(' ')}`);
     }
-    if (state.security.vtyLines.execTimeout) {
+    if (state.security?.vtyLines?.execTimeout) {
         lines.push(` exec-timeout ${state.security.vtyLines.execTimeout.minutes} ${state.security.vtyLines.execTimeout.seconds}`);
     }
     lines.push('!');

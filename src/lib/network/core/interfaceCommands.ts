@@ -239,6 +239,7 @@ import {
   cmdVrrpPriority,
   cmdVrrpPreempt,
   cmdQosSetDscp,
+  cmdIpDhcpSnoopingLimitRate,
 } from './interface/cmd.misc';
 
 // Interface-level komutlar (interface, shutdown, speed, duplex, switchport, ip address, vs.)
@@ -357,7 +358,9 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'no ppp authentication': cmdNoPppAuth,
   'ppp pap sent-username': cmdPppPapSentUsername,
   'switchport protected': cmdSwitchportProtected,
+  'no switchport protected': cmdSwitchportProtected,
   'switchport block': cmdSwitchportBlock,
+  'no switchport block': cmdSwitchportBlock,
   'switchport port-security mac-address': cmdSwitchportPortSecurityMacAddress,
   'switchport port-security aging time': cmdSwitchportPortSecurityAgingTime,
   'switchport port-security aging type': cmdSwitchportPortSecurityAgingType,
@@ -372,6 +375,8 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'tunnel source': cmdTunnelSource,
   'tunnel destination': cmdTunnelDestination,
   'no ip dhcp snooping trust': cmdNoIpDhcpSnoopingTrust,
+  'ip dhcp snooping limit rate': cmdIpDhcpSnoopingLimitRate,
+  'no ip dhcp snooping limit rate': cmdIpDhcpSnoopingLimitRate,
   'ip arp inspection trust': cmdIpArpInspectionTrust,
   'no ip arp inspection trust': cmdNoIpArpInspectionTrust,
   'bandwidth': cmdBandwidth,

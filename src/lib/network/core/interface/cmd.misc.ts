@@ -910,6 +910,19 @@ export function cmdQosSetDscp(state: SwitchState, input: string, _ctx: CommandCo
   return { success: true, output: `DSCP marked ${match[1]}`, newState: { ports: { ...state.ports, [state.currentInterface]: { ...port, qosDscp: match[1], qos: { ...port?.qos, enabled: true } } } } };
 }
 
+export function cmdIpDhcpSnoopingLimitRate(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
+  const isNo = input.trim().toLowerCase().startsWith('no ');
+  const match = input.match(/^(?:no\s+)?ip\s+dhcp\s+snooping\s+limit\s+rate(?:\s+(\d+))?$/i);
+  const rate = isNo ? undefined : (match && match[1] ? parseInt(match[1], 10) : 15);
+  const updatePort = (port: Port) => ({ ...port, dhcpSnoopingLimitRate: rate });
+  if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
+  if (!state.currentInterface) return { success: false, error: '% No interface selected' };
+  const newPorts = { ...state.ports };
+  newPorts[state.currentInterface] = updatePort(newPorts[state.currentInterface] || {});
+  return { success: true, newState: { ports: newPorts } };
+}
+
 /**
  * IP DHCP Snooping Trust
  */

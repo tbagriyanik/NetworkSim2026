@@ -1,6 +1,7 @@
 import { iosModeError } from './iosErrors';
 import type { CommandContext } from './commandTypes';
 import type { SwitchState, CommandResult } from '../types';
+import { buildRunningConfig } from './configBuilder';
 
 /**
  * Reload - Reboot device
@@ -117,11 +118,20 @@ export function cmdTest(_state: SwitchState, _input: string, _ctx: CommandContex
     return { success: true, output: '\n% Diagnostic test completed successfully.\n' };
 }
 
-/**
- * More command
- */
-export function cmdMore(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-    return { success: true, output: '\n% File display not supported in this version.\n' };
+export function cmdMore(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+    const arg = input.replace(/^more\s+/i, '').trim().toLowerCase();
+    if (!arg) return { success: false, error: '% Usage: more <filename>' };
+
+    if (arg.includes('running-config') || arg.includes('system:running-config')) {
+        return { success: true, output: '\n' + buildRunningConfig(state) };
+    }
+    if (arg.includes('startup-config') || arg.includes('nvram:startup-config')) {
+        return { success: true, output: '\n' + ((state as any).savedConfig || buildRunningConfig(state)) };
+    }
+    if (arg.includes('vlan.dat') || arg.includes('flash:vlan.dat')) {
+        return { success: true, output: '\nVLAN database file (binary format vlan.dat)\n' };
+    }
+    return { success: true, output: `\n-- More (${arg}) --\nContent of ${arg}\n` };
 }
 
 /**

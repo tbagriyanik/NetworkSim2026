@@ -370,6 +370,18 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'ip dhcp snooping information option': {
+    pattern: /^ip\s+dhcp\s+snooping\s+information\s+option$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no ip dhcp snooping information option': {
+    pattern: /^no\s+ip\s+dhcp\s+snooping\s+information\s+option$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'ip arp inspection': {
     pattern: /^ip\s+arp\s+inspection\s+vlan\s+(.+)$/i,
     modes: ['config'],

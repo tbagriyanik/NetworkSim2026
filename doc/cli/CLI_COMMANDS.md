@@ -102,7 +102,7 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `delete nvram:` | Delete NVRAM contents |
 | `reload` | Reload the device |
 | `clock set <hh:mm:ss> <day> <month> <year>` | Set system clock |
-| `more <filename>` | ⚠️ Stub - Display contents of a file |
+| `more <filename>` | Display contents of a file or configuration (`running-config`, `startup-config`, `vlan.dat`) |
 | `setup` | ⚠️ Stub - Enter initial setup dialog |
 | `test <type>` | ⚠️ Stub - Run diagnostics |
 | `configure replace <url>` | ⚠️ Stub - Replace running config with file |
@@ -114,15 +114,15 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no debug all` | Disable all debugging |
 | `undebug all` | Disable all debugging |
 | `undebug` | Disable all debugging (alias) |
-| `terminal length <n>` | ⚠️ Stub - Set terminal page length |
-| `terminal width <n>` | ⚠️ Stub - Set terminal width |
+| `terminal length <n>` | Set terminal page length |
+| `terminal width <n>` | Set terminal width |
 | `terminal monitor` | Enable terminal monitoring |
 | `terminal no monitor` | ⚠️ Stub - Disable terminal monitoring |
 | `clear arp-cache` | Clear ARP cache |
 | `clear mac address-table` | Clear MAC address table |
 | `clear counters` | Clear interface counters |
-| `clear line <n>` | ⚠️ Stub - Clear a terminal line |
-| `clear interface <name>` | ⚠️ Stub - Clear interface counters |
+| `clear line <n>` | Clear a terminal line session |
+| `clear interface <name>` | Clear interface counters and state |
 | `do <command>` | Execute privileged command from config mode |
 | `help` | Display help system information |
 | `show access-lists` | Display all access lists |
@@ -157,6 +157,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ip ssh time-out` | Remove SSH timeout |
 | `ip dhcp snooping` | Enable DHCP snooping |
 | `ip dhcp snooping vlan <ids>` | Enable DHCP snooping on VLANs |
+| `ip dhcp snooping information option` | Enable DHCP Option 82 insertion |
+| `no ip dhcp snooping information option` | Disable DHCP Option 82 insertion |
 | `no ip dhcp snooping` | Disable DHCP snooping |
 | `ip arp inspection` | Enable ARP inspection |
 | `service password-encryption` | Encrypt passwords |
@@ -324,18 +326,20 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `switchport port-security` | Enable port security |
 | `switchport port-security maximum <n>` | Set max MAC addresses |
 | `switchport port-security violation {protect|restrict|shutdown}` | Set violation action |
-| `switchport port-security mac-address sticky` | Enable sticky MAC |
+| `switchport port-security mac-address sticky [mac]` | Enable sticky MAC / configure sticky MAC address |
+| `switchport port-security mac-address <mac>` | Configure static MAC address |
+| `switchport port-security aging time <min>` | Set aging time in minutes |
+| `switchport port-security aging type {absolute|inactivity}` | Set aging type (absolute or inactivity) |
 | `no switchport port-security` | Disable port security |
-| `switchport port-security aging time <min>` | ⚠️ Stub - Set aging time |
-| `switchport port-security aging type <type>` | ⚠️ Stub - Set aging type |
-| `switchport port-security mac-address <mac>` | ⚠️ Stub - Set static MAC address |
 
 #### Blocking and Isolation
 
 | Command | Description |
 |---------|-------------|
-| `switchport block {unicast|multicast}` | ⚠️ Stub - Block traffic |
-| `switchport protected` | ⚠️ Stub - Protected port |
+| `switchport block {unicast|multicast}` | Enable unknown unicast or multicast traffic blocking |
+| `no switchport block {unicast|multicast}` | Disable traffic blocking |
+| `switchport protected` | Enable protected port (PVLAN edge isolation) |
+| `no switchport protected` | Disable protected port isolation |
 
 #### IP Configuration
 
@@ -347,6 +351,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ip default-gateway` | Remove default gateway |
 | `ip helper-address <ip>` | Set DHCP relay |
 | `no ip helper-address` | Remove DHCP relay |
+| `ip dhcp snooping limit rate <pps>` | Set DHCP packet rate limit (packets per second) |
+| `no ip dhcp snooping limit rate` | Remove DHCP packet rate limit |
 | `ip verify source` | Enable IP Source Guard |
 
 #### IPv6 Interface Configuration

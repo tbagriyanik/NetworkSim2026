@@ -11,7 +11,7 @@ import { getDeviceCapabilities } from '../capabilities';
 import { validateIpRoutingSupport } from './L3Validation';
 import { createStubHandler } from './stubCommandHints';
 import { cmdAccessList, cmdNoAccessList } from './interface/cmd.misc';
-import { cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress, cmdIpDhcpSnoopingVlan, cmdNoIpDhcpSnooping } from './globalConfigDhcpCommands';
+import { cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress, cmdIpDhcpSnoopingVlan, cmdNoIpDhcpSnooping, cmdIpDhcpSnoopingInformationOption } from './globalConfigDhcpCommands';
 import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdLldpTlvSelect, cmdSpanningTreeMst, cmdIpPrefixList, cmdRouteMap, cmdIpv6RouterEigrp, cmdSpanningTreeLoopguardDefault, cmdIpFlowExport } from './globalConfigNetworkCommands';
 import { cmdClassMap, cmdPolicyMap } from './qosMqcCommands';
 import { cmdDot1xSystem } from './dot1xCommands';
@@ -163,6 +163,8 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   // SSH version
   'ip ssh version': cmdIpSshVersion,
   'ip dhcp snooping vlan': cmdIpDhcpSnoopingVlan,
+  'ip dhcp snooping information option': cmdIpDhcpSnoopingInformationOption,
+  'no ip dhcp snooping information option': cmdIpDhcpSnoopingInformationOption,
   'ip arp inspection': cmdIpArpInspection,
   'no ip arp inspection': cmdNoIpArpInspection,
   'errdisable recovery': cmdErrdisableRecovery,
