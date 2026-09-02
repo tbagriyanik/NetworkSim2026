@@ -6,6 +6,9 @@ import { sanitizeObject } from '@/lib/security/sanitizer';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
 import { validateRoomCode, validateUserId } from '@/lib/security/roomValidation';
 
+import { getClientIp } from '@/lib/security/clientIp';
+import { generateRoomSessionToken } from '@/lib/security/roomSession';
+
 export const dynamic = 'force-dynamic';
 
 export const GET = withErrorHandling(async (_req: NextRequest): Promise<NextResponse> => {
@@ -20,7 +23,7 @@ export const GET = withErrorHandling(async (_req: NextRequest): Promise<NextResp
 });
 
 export const POST = withErrorHandling(async (req: NextRequest): Promise<NextResponse<RoomApiResponse<RoomData>>> => {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  const ip = getClientIp(req);
   const { allowed } = await isRateLimited(`room_create_${ip}`, 5, 60 * 60 * 1000); // 5 rooms per hour
 
   if (!allowed) {
@@ -57,5 +60,11 @@ export const POST = withErrorHandling(async (req: NextRequest): Promise<NextResp
   }
 
   const room = await createRoom(codeValidation.normalized, teacherValidation.normalized);
-  return NextResponse.json({ success: true, data: room }, { status: 200 });
+  const sessionToken = generateRoomSessionToken({
+    roomCode: codeValidation.normalized,
+    userId: teacherValidation.normalized,
+    role: 'teacher',
+  });
+
+  return NextResponse.json({ success: true, data: { ...room, sessionToken } }, { status: 200 });
 });

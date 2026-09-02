@@ -64,9 +64,11 @@ function validateContactData(data: Partial<ContactFormData>): { valid: boolean; 
  * POST /api/contact
  * Handle contact form submissions
  */
+import { getClientIp } from '@/lib/security/clientIp';
+
 export const POST = withErrorHandling(async (req: NextRequest): Promise<NextResponse<ApiResponse>> => {
   // Rate limiting: 5 submissions per hour per IP
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  const ip = getClientIp(req);
   const { allowed, remaining, resetTime } = await isRateLimited(
     `contact_${ip}`,
     5,

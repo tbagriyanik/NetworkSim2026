@@ -19,13 +19,12 @@ function generateVerifyCode(): string {
   return code;
 }
 
+import { getClientIp } from '@/lib/security/clientIp';
+
 export const POST = withErrorHandling(async (
   req: NextRequest,
 ): Promise<NextResponse<RoomApiResponse<{ verifyCode: string }>>> => {
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown';
+  const ip = getClientIp(req);
   const { allowed } = await isRateLimited(`cert_${ip}`, 20, 60 * 60 * 1000); // 20 certs per hour
   if (!allowed) {
     return NextResponse.json(

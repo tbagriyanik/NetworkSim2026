@@ -6,6 +6,9 @@ import { sanitizeInput } from '@/lib/security/sanitizer';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
 import { validateRoomCode, validateUserId } from '@/lib/security/roomValidation';
 
+import { getClientIp } from '@/lib/security/clientIp';
+import { verifyRoomSessionToken } from '@/lib/security/roomSession';
+
 interface RouteParams {
   code: string;
 }
@@ -14,7 +17,7 @@ export const GET = withErrorHandling(async (
   req: NextRequest,
   { params }: { params: Promise<RouteParams> },
 ): Promise<NextResponse<RoomApiResponse<StudentProgress[]>>> => {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  const ip = getClientIp(req);
   const { allowed } = await isRateLimited(`room_view_${ip}`, 100, 60 * 1000); // 100 requests per minute
 
   if (!allowed) {
@@ -59,10 +62,18 @@ export const GET = withErrorHandling(async (
     );
   }
 
+  // Session Token Authorization Check for Teacher
+  const sessionToken = req.headers.get('x-room-session-token');
+  const isValidSession = verifyRoomSessionToken(sessionToken, {
+    roomCode: codeValidation.normalized,
+    userId: teacherValidation.normalized,
+    role: 'teacher',
+  });
+
   // Backward compatibility: if room has no teacherId, claim it for this browser
   if (!meta.teacherId) {
     await claimRoom(codeValidation.normalized, teacherValidation.normalized);
-  } else if (meta.teacherId !== teacherValidation.normalized) {
+  } else if (meta.teacherId !== teacherValidation.normalized || !isValidSession) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized to view this room', code: 'UNAUTHORIZED' },
       { status: 403 },

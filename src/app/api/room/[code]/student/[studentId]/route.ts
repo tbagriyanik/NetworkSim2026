@@ -6,6 +6,9 @@ import { sanitizeObject } from '@/lib/security/sanitizer';
 import { withErrorHandling } from '@/lib/api/withErrorHandling';
 import { validateRoomCode, validateUserId } from '@/lib/security/roomValidation';
 
+import { getClientIp } from '@/lib/security/clientIp';
+import { verifyRoomSessionToken } from '@/lib/security/roomSession';
+
 interface RouteParams {
   code: string;
   studentId: string;
@@ -15,7 +18,7 @@ export const PATCH = withErrorHandling(async (
   req: NextRequest,
   { params }: { params: Promise<RouteParams> },
 ): Promise<NextResponse<RoomApiResponse<StudentProgress>>> => {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  const ip = getClientIp(req);
   const { allowed } = await isRateLimited(`room_update_${ip}`, 30, 60 * 1000); // 30 updates per minute
 
   if (!allowed) {
@@ -49,6 +52,21 @@ export const PATCH = withErrorHandling(async (
     );
   }
   const studentId = studentValidation.normalized;
+
+  // Session Token Authorization Check
+  const sessionToken = req.headers.get('x-room-session-token');
+  const isValidSession = verifyRoomSessionToken(sessionToken, {
+    roomCode: codeValidation.normalized,
+    userId: studentId,
+    role: 'student',
+  });
+
+  if (!isValidSession) {
+    return NextResponse.json(
+      { success: false, error: 'Invalid or missing room session token', code: 'UNAUTHORIZED' },
+      { status: 401 },
+    );
+  }
 
   const rawBody = await req.json();
   const body = sanitizeObject(rawBody) as Record<string, unknown>;

@@ -28,6 +28,7 @@ export function useRoomSync({
 
   useEffect(() => {
     if (!roomCode) return;
+    const currentRoomCode = roomCode;
 
     if (!studentIdRef.current) {
       const stored = localStorage.getItem('room-student-id');
@@ -45,13 +46,37 @@ export function useRoomSync({
 
     const timeoutId = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/room/${roomCode}/student/${studentIdRef.current}`, {
+        let sessionToken = sessionStorage.getItem(`room-session-token-${currentRoomCode}`);
+        if (!sessionToken) {
+          const tokenRes = await fetch(`/api/room/${currentRoomCode}/session`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+            body: JSON.stringify({ userId: studentIdRef.current, role: 'student' }),
+          });
+          if (tokenRes.ok) {
+            const tokenJson = await tokenRes.json();
+            const token = tokenJson.data?.sessionToken;
+            if (tokenJson.success && typeof token === 'string') {
+              sessionToken = token;
+              sessionStorage.setItem(`room-session-token-${currentRoomCode}`, token);
+            }
+          }
+        }
+
+        const res = await fetch(`/api/room/${currentRoomCode}/student/${studentIdRef.current}`, {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(sessionToken ? { 'x-room-session-token': sessionToken } : {}),
+            ...csrfHeaders(),
+          },
           body: JSON.stringify({ displayName, currentTask, completedTasks, totalTasks, projectFile, durationMinutes }),
         });
-        if (res.status === 404) {
+        if (res.status === 404 || res.status === 401) {
           lastPayloadRef.current = '';
+          if (res.status === 401) {
+            sessionStorage.removeItem(`room-session-token-${currentRoomCode}`);
+          }
         }
       } catch {
         lastPayloadRef.current = '';

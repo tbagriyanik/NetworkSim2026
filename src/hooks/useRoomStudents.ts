@@ -18,10 +18,32 @@ export function useRoomStudents(roomCode: string | null) {
 
   const fetchStudents = useCallback(async () => {
     if (!roomCode) return;
+    const currentRoomCode = roomCode;
     const teacherId = getTeacherId();
     try {
-      const res = await fetch(`/api/room/${roomCode}/students?teacherId=${encodeURIComponent(teacherId)}`);
+      let sessionToken = sessionStorage.getItem(`room-session-token-${currentRoomCode}`);
+      if (!sessionToken) {
+        const tokenRes = await fetch(`/api/room/${currentRoomCode}/session`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: teacherId, role: 'teacher' }),
+        });
+        if (tokenRes.ok) {
+          const tokenJson = await tokenRes.json();
+          const token = tokenJson.data?.sessionToken;
+          if (tokenJson.success && typeof token === 'string') {
+            sessionToken = token;
+            sessionStorage.setItem(`room-session-token-${currentRoomCode}`, token);
+          }
+        }
+      }
+      const headers: Record<string, string> = {};
+      if (sessionToken) {
+        headers['x-room-session-token'] = sessionToken;
+      }
+      const res = await fetch(`/api/room/${currentRoomCode}/students?teacherId=${encodeURIComponent(teacherId)}`, { headers });
       if (res.status === 403 || res.status === 401) {
+        sessionStorage.removeItem(`room-session-token-${currentRoomCode}`);
         setStudents([]);
         setError('unauthorized');
         return;

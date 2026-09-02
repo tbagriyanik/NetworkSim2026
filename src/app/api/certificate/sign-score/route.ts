@@ -7,13 +7,12 @@ import type { RoomApiResponse } from '@/lib/roomTypes';
 
 export const dynamic = 'force-dynamic';
 
+import { getClientIp } from '@/lib/security/clientIp';
+
 export const POST = withErrorHandling(async (
   req: NextRequest
 ): Promise<NextResponse<RoomApiResponse<{ scoreToken: string }>>> => {
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    'unknown';
+  const ip = getClientIp(req);
 
   const { allowed } = await isRateLimited(`sign_score_${ip}`, 30, 60 * 60 * 1000);
   if (!allowed) {

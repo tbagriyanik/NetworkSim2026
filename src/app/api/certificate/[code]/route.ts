@@ -10,11 +10,13 @@ interface RouteParams {
   code: string;
 }
 
+import { getClientIp } from '@/lib/security/clientIp';
+
 export const GET = withErrorHandling(async (
   req: NextRequest,
   { params }: { params: Promise<RouteParams> },
 ): Promise<NextResponse<RoomApiResponse<CertificateRecord>>> => {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown';
+  const ip = getClientIp(req);
   const { allowed } = await isRateLimited(`cert_verify_${ip}`, 600, 60 * 60 * 1000); // 600 verifications per hour
 
   if (!allowed) {
