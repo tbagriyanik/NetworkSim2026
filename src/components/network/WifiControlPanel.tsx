@@ -161,7 +161,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-family: system-ui, sans-serif;
       background: ${colors.topology.deviceText};
       color: var(--color-secondary-900);
       line-height: 1.5;

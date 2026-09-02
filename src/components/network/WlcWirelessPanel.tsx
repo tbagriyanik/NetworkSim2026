@@ -115,7 +115,7 @@ export function WlcWirelessPanel({
             {/* Quick WLAN creation */}
             <Card className={cardClass}>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{tr('Create New WLAN / SSID (CCNA Standard)', 'Yeni WLAN / SSID Oluştur (CCNA Standardı)')}</CardTitle>
+                    <CardTitle className="text-sm">{tr('Create New WLAN / SSID', 'Yeni WLAN / SSID Oluştur')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -309,7 +309,7 @@ export function WlcWirelessPanel({
                 </CardContent>
             </Card>
 
-            {/* AP list (CAPWAP / AP Join CCNA view) */}
+            {/* AP list (CAPWAP / AP Join view) */}
             <Card className={cardClass}>
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">

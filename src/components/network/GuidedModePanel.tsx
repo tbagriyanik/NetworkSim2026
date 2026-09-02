@@ -564,9 +564,9 @@ export function GuidedModePanel({
     const utterance = new SpeechSynthesisUtterance(textToRead);
     utterance.lang = language === 'tr' ? 'tr-TR' : 'en-US';
 
-    // Try to find a better voice if available
+    // Prefer a higher-quality voice when the browser exposes one.
     const voices = synthRef.current.getVoices();
-    const preferredVoice = voices.find(v => v.lang.startsWith(language) && (v.name.includes('Google') || v.name.includes('Premium')));
+    const preferredVoice = voices.find(v => v.lang.startsWith(language) && v.name.includes('Premium'));
     if (preferredVoice) utterance.voice = preferredVoice;
 
     utterance.onend = () => setIsSpeaking(false);

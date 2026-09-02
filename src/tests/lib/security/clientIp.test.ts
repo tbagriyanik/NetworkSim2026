@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 import { getClientIp } from '@/lib/security/clientIp';
 
 describe('getClientIp Security Helper', () => {
-  it('should prioritize x-vercel-forwarded-for header', () => {
+  it('should prioritize the primary proxy forwarding header', () => {
     const req = new NextRequest('http://localhost', {
       headers: {
         'x-vercel-forwarded-for': '203.0.113.195, 10.0.0.1',

@@ -190,7 +190,7 @@ Kaynak kodları inceleyin
 ✅ Sınav Modu & Sınav İçe Aktarma
 ✅ Başarım Sistemi (Rozetler)
 
-**Ağ & Protokol (CCNA 200-301 Destekli)**
+**Ağ & Protokol**
 ✅ ACL Standard (1-99) & Extended (100-199), IPv6 ACLs
 ✅ NAT Static/Dynamic/PAT (port kolonlu `show ip nat translations`)
 ✅ SLAAC IPv6 Otomatik Adresleme (`no ipv6 nd suppress-ra` & EUI-64)

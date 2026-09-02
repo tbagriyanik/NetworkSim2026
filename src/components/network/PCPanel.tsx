@@ -1051,7 +1051,7 @@ export function PCPanel({
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       html, body { margin: 0; padding: 0; }
-      body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; }
+      body { font-family: system-ui, sans-serif; }
     </style>
   </head>
   <body>${httpAppContent}</body>

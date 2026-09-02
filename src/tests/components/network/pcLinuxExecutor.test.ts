@@ -121,14 +121,14 @@ describe('Linux CLI feature enhancements (Items 8-13)', () => {
 
     it('Item 9: supports grep flag combinations (-i, -v, -n, -c)', async () => {
         const { params, outputs } = createTestParams();
-        await executeLinuxCommand('echo "Apple\nbanana\nCHERRY\ndate" > fruits.txt', params);
+        await executeLinuxCommand('echo "Apricot\nbanana\nCHERRY\ndate" > fruits.txt', params);
 
         // grep -i -v (case insensitive invert)
         outputs.length = 0;
         await executeLinuxCommand('grep -i -v "a" fruits.txt', params);
         let outStr = outputs.filter(o => o.type === 'output').map(o => o.content).join('\n');
         expect(outStr).toContain('CHERRY');
-        expect(outStr).not.toContain('Apple');
+        expect(outStr).not.toContain('Apricot');
         expect(outStr).not.toContain('banana');
 
         // grep -n (line numbers)

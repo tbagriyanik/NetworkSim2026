@@ -181,7 +181,7 @@ export function usePCPanelBrowser({
       setHttpAppDeviceId(null);
       setHttpAppTitle('Access Denied');
       setHttpAppContent(`
-        <main style="padding:32px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;text-align:center;">
+        <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
           <div style="font-size:64px;margin-bottom:16px;">🛡️</div>
           <h1 style="margin:0 0 8px;font-size:24px;color:var(--color-error-500);">${language === 'tr' ? 'Erişim Engellendi' : 'Access Denied'}</h1>
           <p style="margin:0 0 12px;font-size:16px;color:var(--color-muted-foreground);">${connectivityResult.error}</p>
@@ -208,7 +208,7 @@ export function usePCPanelBrowser({
       setHttpAppDeviceId(null);
       setHttpAppTitle('404 Not Found');
       setHttpAppContent(`
-        <main style="padding:32px;font-family:system-ui,-apple-system,Segoe UI,sans-serif;">
+        <main style="padding:32px;font-family:system-ui,sans-serif;">
           <h1 style="margin:0 0 8px;font-size:28px;">404</h1>
           <p style="margin:0 0 12px;font-size:16px;">${language === 'tr' ? 'Sayfa bulunamadı' : 'Page not found'}</p>
           <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:var(--color-secondary-100);color:var(--color-secondary-900);">${displayUrl}</code>

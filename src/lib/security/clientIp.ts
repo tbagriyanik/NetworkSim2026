@@ -2,21 +2,21 @@ import { NextRequest } from 'next/server';
 
 /**
  * Safely extracts client IP address from NextRequest headers.
- * Prioritizes trusted platform headers (Vercel, Cloudflare, x-real-ip).
+ * Prioritizes trusted proxy headers before falling back to forwarded addresses.
  * For X-Forwarded-For, parses carefully to prevent IP spoofing via client-supplied headers.
  */
 export function getClientIp(req: NextRequest): string {
-  // 1. Vercel trusted IP header
-  const vercelIp = req.headers.get('x-vercel-forwarded-for') || req.headers.get('x-vercel-ip');
-  if (vercelIp) {
-    const trimmed = vercelIp.split(',')[0].trim();
+  // 1. Trusted proxy IP headers
+  const proxyIp = req.headers.get('x-vercel-forwarded-for') || req.headers.get('x-vercel-ip');
+  if (proxyIp) {
+    const trimmed = proxyIp.split(',')[0].trim();
     if (trimmed) return trimmed;
   }
 
-  // 2. Cloudflare trusted IP header
-  const cfIp = req.headers.get('cf-connecting-ip');
-  if (cfIp && cfIp.trim()) {
-    return cfIp.trim();
+  // 2. Alternate trusted proxy IP header
+  const alternateProxyIp = req.headers.get('cf-connecting-ip');
+  if (alternateProxyIp && alternateProxyIp.trim()) {
+    return alternateProxyIp.trim();
   }
 
   // 3. Direct real IP header set by reverse proxy

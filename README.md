@@ -8,7 +8,7 @@
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-153,652-lightgrey)
 
-A comprehensive, client-side, browser-based network simulator for learning switching, routing, wireless, security, IoT, CLI terminal workflows, and CCNA 200-301 prep.
+A comprehensive, client-side, browser-based network simulator for learning switching, routing, wireless, security, IoT, CLI terminal workflows.
 
 **Live App:** [network2026.vercel.app](https://network2026.vercel.app) · **Alternative:** [tuzlanet.vercel.app](https://tuzlanet.vercel.app)
 
@@ -59,8 +59,7 @@ npm test
 | Documentation Files / Dokümantasyon Dosya | 31 |
 | Example Projects / Örnek Proje | 46 |
 | Guided Lessons / Rehberli Ders | 19 |
-| Exams / Sınavlar | Sınav modu ve sertifika motoru |
-| CLI Commands / CLI Komutları | 100+ Cisco IOS uyumlu komut |
+| Exams / Sınavlar | 6 |
 
 ---
 

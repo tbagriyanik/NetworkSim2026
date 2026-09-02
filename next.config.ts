@@ -37,9 +37,8 @@ function getAppVersion(): string {
   }
 }
 
-const FALLBACK_COMMIT_COUNT = 1656; // Fallback value when git history is unavailable and API fetch fails
+const FALLBACK_COMMIT_COUNT = 1656;
 
-// Function to fetch the total commits dynamically
 async function getCommitCount(): Promise<number> {
   let localCount = 0;
   try {
@@ -49,34 +48,6 @@ async function getCommitCount(): Promise<number> {
     // Ignore
   }
 
-  // If local count is high, we can return it directly (means we are on localhost with full history)
-  if (localCount >= 1000) {
-    return localCount;
-  }
-
-  // Otherwise, we are likely on Vercel with shallow clone. Let us try to fetch from GitHub API.
-  try {
-    const res = await fetch("https://api.github.com/repos/tbagriyanik/networksimulator/commits?per_page=1", {
-      headers: { "User-Agent": "Mozilla/5.0" },
-      signal: AbortSignal.timeout(5000)
-    });
-    if (res.ok) {
-      const link = res.headers.get("link");
-      if (link) {
-        const match = link.match(/&page=(\d+)>; rel="last"/);
-        if (match) {
-          const apiCount = parseInt(match[1], 10);
-          if (apiCount > 0) {
-            return apiCount;
-          }
-        }
-      }
-    }
-  } catch {
-    // Ignore fetch error
-  }
-
-  // Fallback to local count if above 0, else a sensible baseline
   return localCount > 0 ? localCount : FALLBACK_COMMIT_COUNT;
 }
 
@@ -86,9 +57,7 @@ const config = async () => {
   const version = getAppVersion();
 
   const nextConfig: NextConfig = {
-    // Vercel kendi Next.js runtime'ını kullanır; standalone çıktısı Vercel'in
-    // build çıktısı analizini bozabiliyor. Diğer ortamlarda Docker için korunur.
-    output: process.env.VERCEL ? undefined : "standalone",
+    output: "standalone",
     productionBrowserSourceMaps: false,
     experimental: {
       optimizePackageImports: ["lucide-react"],

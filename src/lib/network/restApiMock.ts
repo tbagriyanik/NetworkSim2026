@@ -59,7 +59,7 @@ export function handleRestApiRequest(
       id: d.id,
       hostname: d.name || `Device-${d.id}`,
       managementIpAddress: d.ip || `10.0.0.${index + 1}`,
-      type: d.type === 'router' ? 'Cisco ISR4331 Router' : d.type.startsWith('switch') ? 'Cisco Catalyst 9300 Switch' : 'Cisco Enterprise Host',
+      type: d.type === 'router' ? 'ISR4331 Router' : d.type.startsWith('switch') ? 'Catalyst 9300 Switch' : 'Enterprise Host',
       family: d.type === 'router' ? 'Routers' : d.type.startsWith('switch') ? 'Switches and Hubs' : 'Unified AP',
       macAddress: d.macAddress || `00:1A:2B:3C:4D:${(index + 10).toString(16)}`,
       upTime: '14 days, 03:22:15',
@@ -70,7 +70,7 @@ export function handleRestApiRequest(
     return {
       status: 200,
       statusText: 'OK',
-      headers: { 'Content-Type': 'application/json', 'x-cisco-dnac-version': '2.3.5.3' },
+      headers: { 'Content-Type': 'application/json', 'x-dnac-version': '2.3.5.3' },
       data: {
         response: devicesList,
         version: '1.0',

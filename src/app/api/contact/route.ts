@@ -127,7 +127,7 @@ export const POST = withErrorHandling(async (req: NextRequest): Promise<NextResp
   const userAgent = req.headers.get('user-agent') || 'unknown';
 
   // Get submission endpoint from environment
-  const CONTACT_SUBMISSION_URL = process.env.GOOGLE_SHEETS_CONTACT_URL;
+  const CONTACT_SUBMISSION_URL = process.env.CONTACT_FORM_ENDPOINT;
 
   if (!CONTACT_SUBMISSION_URL) {
     // Log to console for local development
@@ -149,7 +149,7 @@ export const POST = withErrorHandling(async (req: NextRequest): Promise<NextResp
     );
   }
 
-  // Send to external endpoint (Google Sheets, etc.)
+  // Send to the configured external endpoint.
   try {
     const response = await fetch(CONTACT_SUBMISSION_URL, {
       method: 'POST',

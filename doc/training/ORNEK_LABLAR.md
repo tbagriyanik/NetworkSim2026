@@ -6,7 +6,7 @@ Kitapçık (`NETWORK_SIMULATOR_KITAPCIK.md`) ve özellik envanteri (`ProjeOzelli
 
 > Komut sözdiziminin kanonik kaynağı [CLI_COMMANDS.md](../cli/CLI_COMMANDS.md), genel kullanımın kanonik kaynağı [USAGE.md](../getting-started/USAGE.md)'dir. Bu dosya yalnızca laboratuvar akışlarını ve beklenen sonuçları içerir.
 
-> Tüm örnekler gerçek simülasyon motoruyla uyumludur (CCNA 200-301 müfredatı).
+> Tüm örnekler gerçek simülasyon motoruyla uyumludur.
 
 ---
 

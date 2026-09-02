@@ -25,7 +25,7 @@ export function RestApiExplorerWindow({
   const [method, setMethod] = useState<'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'>('GET');
   const [url, setUrl] = useState('https://dnac/dna/intent/api/v1/network-device');
   const [headers, setHeaders] = useState('Content-Type: application/json\nx-auth-token: demo_token_123');
-  const [body, setBody] = useState('{\n  "name": "Router-1",\n  "type": "cisco"\n}');
+  const [body, setBody] = useState('{\n  "name": "Router-1",\n  "type": "netsim"\n}');
   const [activeTab, setActiveTab] = useState<'headers' | 'body'>('headers');
   const [response, setResponse] = useState<RestApiResponse | null>(null);
   const [isCopied, setIsCopied] = useState(false);
@@ -67,7 +67,7 @@ export function RestApiExplorerWindow({
               <h2 className="text-xs font-bold uppercase tracking-wider">
                 {isTr ? 'REST API Explorer & DNA Center Intent Tester' : 'REST API Explorer & DNA Center Intent Tester'}
               </h2>
-              <p className="text-[10px] opacity-60">Cisco SD-Access Intent API & RESTCONF Data Models</p>
+              <p className="text-[10px] opacity-60">SD-Access Intent API & RESTCONF Data Models</p>
             </div>
           </div>
 

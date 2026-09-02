@@ -263,12 +263,7 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
                 <p className="text-sm">{t.termsText}</p>
                 <div className="p-3 bg-accent-500/5 rounded-lg border border-accent-500/20">
                   <p className="mt-2 text-xs text-secondary-500 dark:text-secondary-400">{t.openSourceInfo}</p>
-                  <a
-                    href="https://github.com/tbagriyanik/networksimulator"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary-500 hover:underline break-all"
-                  >{t.gitAddressLabel}</a>
+                  <span className="text-sm text-primary-500">{t.gitAddressLabel}</span>
                 </div>
                 <div className="text-center">
                   <a
@@ -294,7 +289,7 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] text-secondary-500 dark:text-secondary-400 uppercase font-bold">
-                      {isTR ? 'GitHub Commit' : 'GitHub Commits'}
+                      {isTR ? 'Commit Sayısı' : 'Commits'}
                     </span>
                     <span className="text-sm font-semibold text-secondary-800 dark:text-secondary-200">
                       {process.env.NEXT_PUBLIC_GIT_COMMIT_COUNT || '1656'}

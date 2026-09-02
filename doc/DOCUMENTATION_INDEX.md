@@ -53,10 +53,10 @@ Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve iç
 ---
 
 ### 💻 cli/CLI_COMMANDS.md
-**Amaç**: CCNA 200-301 Desteklenen Tüm Komutlar ve CLI Referansı  
+**Amaç**: CLI Komutları 
 **Okuma Süresi**: 15 dakika  
 **İçerik**:
-- Kapsamlı CLI komutları (CCNA 200-301 müfredat uyumlu)
+- Kapsamlı CLI komutları (müfredat uyumlu)
 - Tüm modlar (User EXEC, Privileged, Global, Interface, VLAN, Router Config, MST Config, SSID, Dot11, WLAN, DHCP)
 - BGP (Eşleşen komşuluklarda dinamik `Established` / `Idle` durumu), OSPFv2/OSPFv3, EIGRP DUAL, EIGRP for IPv6, RIP/RIPng, Rota Yeniden Dağıtımı
 - IP & IPv6 Prefix-List kural motoru (`ip/ipv6 prefix-list`) ve Route-Map politika motoru (`route-map match/set`)

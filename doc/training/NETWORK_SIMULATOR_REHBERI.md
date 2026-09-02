@@ -28,7 +28,7 @@ Network Simulator; bilgisayar ağları, anahtarlama (switching), yönlendirme (r
 - **%100 İstemci Taraflı (Client-Side) ve Hızlı:** React 19, Next.js 16 ve TypeScript altyapısıyla herhangi bir sunucu kurulumu gerektirmeden tarayıcıda çalışır.
 - **Sürükle-Bırak Topoloji Tasarımı:** Cihazları tuval üzerine sürükleyerek saniyeler içinde karmaşık kurumsal ağ topolojileri oluşturabilirsiniz.
 - **Yüksek Performanslı Çizim ve Spatial Partitioning:** 100+ cihaz ve yüzlerce kablo bağlantısı içeren büyük ağlarda bile 60 FPS akıcı performans sağlar.
-- **Gerçekçi Cisco IOS CLI Terminali:** Cihazlarda `User EXEC`, `Privileged EXEC`, `Global Configuration`, `Interface`, `VLAN`, `Router`, `DHCP` ve `ACL` modlarında gerçek zamanlı komut çalıştırma.
+- **Gerçekçi CLI Terminali:** Cihazlarda `User EXEC`, `Privileged EXEC`, `Global Configuration`, `Interface`, `VLAN`, `Router`, `DHCP` ve `ACL` modlarında gerçek zamanlı komut çalıştırma.
 - **Canlı Paket Yakalama ve İnceleme (Packet Capture):** Ağdaki paket trafiğini Wireshark benzeri derinlemesine katman katman (L2 Ethernet, L3 IP, L4 TCP/UDP/ICMP/DHCP/DNS/ARP) inceleme imkanı.
 - **Rehberli Dersler ve İnteraktif Quiz Motoru:** 19 adet adım adım rehberli laboratuvar dersi, her konuya özel bilgi quiz'leri ve canlı skor puanlama sistemi.
 - **High-DPI Türkçe Destekli Sertifika Motoru:** Tamamlanan başarılar için Türkçe karakterleri (`Ş`, `İ`, `Ğ`, `Ç`, `Ö`, `Ü`) kusursuz işleyen yüksek çözünürlüklü PDF sertifika üretimi.
@@ -331,7 +331,7 @@ Simülatörde 9 farklı kategoride cihaz türü bulunmaktadır:
 
 | Cihaz Türü | Açıklama ve Port Kapasitesi | Desteklenen Ana Modlar |
 |---|---|---|
-| **Router (Yönlendirici)** | Cisco IOS tabanlı katman-3 yönlendirici. 4x Gi0/0-Gi0/3, 3x Serial, 1x Console, 1x WLAN0. | Static Route, RIP, OSPF, EIGRP, BGP, NAT, ACL, DHCP Server/Relay, GRE. |
+| **Router (Yönlendirici)** | NOS tabanlı katman-3 yönlendirici. 4x Gi0/0-Gi0/3, 3x Serial, 1x Console, 1x WLAN0. | Static Route, RIP, OSPF, EIGRP, BGP, NAT, ACL, DHCP Server/Relay, GRE. |
 | **L2 Switch (Anahtar)** | Katman-2 anahtarlayıcı. 24x Fa0/1-Fa0/24, 2x Gi0/1-Gi0/2, 1x Console. | VLAN, 802.1Q Trunk, VTP, STP/RSTP, Port Security, EtherChannel, DHCP Snooping. |
 | **L3 Switch (Çok Katmanlı Switch)** | Katman-3 anahtarlayıcı. 24x Gi1/0/1-24, 4x Gi1/1/1-4, 1x Console, 1x WLAN0. | SVI (`interface vlan`), IP Routing, OSPF, EtherChannel L3, Inter-VLAN Routing. |
 | **PC / Laptop** | Masaüstü ve Dizüstü İstemci Cihazı. Ethernet + WLAN0 portları. | Windows CMD, Linux Bash, Python IDE, Web Browser, WiFi İstemcisi, IP Config. |

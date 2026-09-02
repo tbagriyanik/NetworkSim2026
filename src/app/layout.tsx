@@ -60,7 +60,7 @@ const geistMono = localFont({
   variable: "--font-geist-mono",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://network2026.vercel.app';
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 export const metadata: Metadata = {
   title: "Network Simulator",
@@ -77,11 +77,6 @@ export const metadata: Metadata = {
     url: siteUrl,
     siteName: "Network Simulator",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Network Simulator",
-    description: "Practice Network NOS commands in an interactive web-based simulator",
   },
 };
 
@@ -105,7 +100,8 @@ export default async function RootLayout({
       <head>
         {/* Apply the nonce to a placeholder script so Next’s internal inline scripts inherit it */}
         <Script id="csp-nonce" strategy="beforeInteractive" nonce={nonce} dangerouslySetInnerHTML={{ __html: '' }} />
-        <Script id="secure-storage-interceptor" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `
+        <Script id="secure-storage-interceptor" strategy="beforeInteractive" dangerouslySetInnerHTML={{
+          __html: `
           (function() {
             try {
               var IGNORED_KEYS = ['theme', 'next-themes', 'netsim-language', 'ally-supports-cache'];
@@ -184,14 +180,7 @@ export default async function RootLayout({
         `}} />
         <meta name="theme-color" content={colors.topology.bg} />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="NetSim" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="apple-touch-icon" href="/icon192.svg" />
-        <link rel="apple-touch-icon" sizes="152x152" href="/icon192.svg" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icon192.svg" />
-        <link rel="apple-touch-icon" sizes="167x167" href="/icon192.svg" />
       </head>
       <body
         className={`${inriaSans.variable} ${geistMono.variable} antialiased`}
