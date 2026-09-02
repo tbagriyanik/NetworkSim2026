@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ArrowLeft, Globe, Settings } from 'lucide-react';
+import { ArrowLeft, Globe, Settings, Code } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { WifiSignalMeter } from '../PCPanelWidgets';
@@ -141,6 +141,23 @@ export function PCPanelHeader({
                 aria-label={language === 'tr' ? 'Ayarlar' : 'Settings'}
               >
                 <Settings className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              </Button>
+            </TooltipWrapper>
+            <TooltipWrapper title={language === 'tr' ? 'REST API' : 'REST API'}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => onNavigateToProgram('rest-api')}
+                disabled={isPcPoweredOff}
+                className={cn(
+                  "h-7 w-7 md:h-9 md:w-9 rounded-full",
+                  activeTab === 'rest-api'
+                    ? (isDark ? "bg-amber-500/20 text-amber-300" : "bg-amber-100 text-amber-700")
+                    : (isDark ? "text-amber-300 hover:bg-white/5" : "text-amber-700 hover:bg-secondary-100")
+                )}
+                aria-label="REST API"
+              >
+                <Code className="w-3.5 h-3.5 md:w-4 md:h-4" />
               </Button>
             </TooltipWrapper>
             {terminalToolbar}

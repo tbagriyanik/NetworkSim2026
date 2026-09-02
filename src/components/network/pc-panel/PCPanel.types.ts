@@ -3,7 +3,7 @@ import type { CableInfo, SwitchState } from '@/lib/network/types';
 import type { TerminalOutput } from '../Terminal';
 import type { CanvasDevice } from '../networkTopology.types';
 
-export type PCActiveTab = 'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless' | 'iot';
+export type PCActiveTab = 'home' | 'desktop' | 'terminal' | 'settings' | 'services' | 'wireless' | 'iot' | 'rest-api';
 
 export interface OutputLine {
   id: string;

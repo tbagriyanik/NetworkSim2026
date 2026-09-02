@@ -16,6 +16,7 @@ import {
 } from './pcFileSystem';
 import { executePythonScript, executePythonScriptAsync } from './pcPythonRunner';
 import { resolveBatchFilePath, executeBatchScript } from './pcBatchRunner';
+import { handleRestApiRequest } from '@/lib/network/restApiMock';
 
 
 // Per-device previous working directory (cd -). Mirrors the Linux OLDPWD support.
@@ -622,6 +623,39 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             };
 
             await sendBatch(replyCount);
+          }
+        } else if (cmd === 'curl') {
+          let method = 'GET';
+          let url = '';
+          const reqHeaders: Record<string, string> = {};
+          let dataBody = '';
+
+          for (let ai = 0; ai < args.length; ai++) {
+            const a = args[ai];
+            if (a === '-X' && args[ai + 1]) {
+              method = args[ai + 1].toUpperCase();
+              ai++;
+            } else if (a === '-H' && args[ai + 1]) {
+              const parts = args[ai + 1].split(':');
+              if (parts.length >= 2) {
+                reqHeaders[parts[0].trim()] = parts.slice(1).join(':').trim();
+              }
+              ai++;
+            } else if (a === '-d' && args[ai + 1]) {
+              dataBody = args[ai + 1];
+              if (method === 'GET') method = 'POST';
+              ai++;
+            } else if (!url && !a.startsWith('-')) {
+              url = a;
+            }
+          }
+
+          if (!url) {
+            emit('output', 'Usage: curl [-X GET|POST|PUT|DELETE] [-H "Header: Value"] [-d "data"] <URL>');
+          } else {
+            const res = handleRestApiRequest(method, url, reqHeaders, dataBody, topologyDevices);
+            const jsonText = JSON.stringify(res.data, null, 2);
+            emit('output', `HTTP/1.1 ${res.status} ${res.statusText}\n${jsonText}`);
           }
         } else if (cmd === 'nslookup') {
           const typeFlagIdx = args.findIndex(a => /^-type=/i.test(a));

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { Map, ChevronDown, ChevronUp } from 'lucide-react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 
@@ -15,6 +15,10 @@ interface MinimapNavigatorProps {
   onToggle?: () => void;
 }
 
+// Device icon width & height on topology canvas (centered target point offsets)
+const DEVICE_CENTER_X = 40;
+const DEVICE_CENTER_Y = 30;
+
 export function MinimapNavigator({
   devices,
   connections,
@@ -28,10 +32,13 @@ export function MinimapNavigator({
   onToggle,
 }: MinimapNavigatorProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const minimapRef = useRef<HTMLDivElement>(null);
+
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
   const toggleOpen = onToggle || (() => setInternalIsOpen(!internalIsOpen));
 
-  // Compute bounding box of all topology elements
+  // Compute bounding box of all topology elements based on device centers
   const bounds = useMemo(() => {
     if (devices.length === 0) {
       return { minX: 0, maxX: 1000, minY: 0, maxY: 800, width: 1000, height: 800 };
@@ -42,13 +49,15 @@ export function MinimapNavigator({
     let maxY = -Infinity;
 
     devices.forEach((d) => {
-      minX = Math.min(minX, d.x);
-      maxX = Math.max(maxX, d.x + 80);
-      minY = Math.min(minY, d.y);
-      maxY = Math.max(maxY, d.y + 60);
+      const cx = d.x + DEVICE_CENTER_X;
+      const cy = d.y + DEVICE_CENTER_Y;
+      minX = Math.min(minX, cx);
+      maxX = Math.max(maxX, cx);
+      minY = Math.min(minY, cy);
+      maxY = Math.max(maxY, cy);
     });
 
-    const padding = 100;
+    const padding = 120;
     minX -= padding;
     maxX += padding;
     minY -= padding;
@@ -64,9 +73,8 @@ export function MinimapNavigator({
     };
   }, [devices]);
 
-  // Viewport rect calculation in minimap scale
-  const MAP_WIDTH = 180;
-  const MAP_HEIGHT = 120;
+  const MAP_WIDTH = 200;
+  const MAP_HEIGHT = 135;
 
   const scaleX = MAP_WIDTH / bounds.width;
   const scaleY = MAP_HEIGHT / bounds.height;
@@ -75,10 +83,9 @@ export function MinimapNavigator({
   const viewWidth = canvasRef.current ? canvasRef.current.clientWidth : 800;
   const viewHeight = canvasRef.current ? canvasRef.current.clientHeight : 600;
 
-  // Transform canvas view coordinates to minimap coordinates
-  // Canvas coordinate (0,0) mapped to minimap:
-  const mapX = (x: number) => (x - bounds.minX) * scale;
-  const mapY = (y: number) => (y - bounds.minY) * scale;
+  // Map world center coordinates to minimap coordinates
+  const mapX = useCallback((x: number) => (x - bounds.minX) * scale, [bounds.minX, scale]);
+  const mapY = useCallback((y: number) => (y - bounds.minY) * scale, [bounds.minY, scale]);
 
   // Visible viewport bounding box on topology:
   const visibleWorldMinX = -pan.x / zoom;
@@ -93,20 +100,39 @@ export function MinimapNavigator({
     height: visibleWorldHeight * scale,
   };
 
-  const handleMinimapClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickY = e.clientY - rect.top;
+  const updatePanFromMinimap = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!minimapRef.current) return;
+      const rect = minimapRef.current.getBoundingClientRect();
+      const clickX = Math.max(0, Math.min(MAP_WIDTH, clientX - rect.left));
+      const clickY = Math.max(0, Math.min(MAP_HEIGHT, clientY - rect.top));
 
-    // Convert minimap click position to world coordinates
-    const targetWorldX = bounds.minX + clickX / scale;
-    const targetWorldY = bounds.minY + clickY / scale;
+      // Convert minimap click position to world coordinates
+      const targetWorldX = bounds.minX + clickX / scale;
+      const targetWorldY = bounds.minY + clickY / scale;
 
-    // Center viewport on target world coordinates
-    setPan({
-      x: viewWidth / 2 - targetWorldX * zoom,
-      y: viewHeight / 2 - targetWorldY * zoom,
-    });
+      // Center viewport on target world coordinates
+      setPan({
+        x: viewWidth / 2 - targetWorldX * zoom,
+        y: viewHeight / 2 - targetWorldY * zoom,
+      });
+    },
+    [bounds.minX, bounds.minY, scale, setPan, viewHeight, viewWidth, zoom]
+  );
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+    setIsDragging(true);
+    updatePanFromMinimap(e.clientX, e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    updatePanFromMinimap(e.clientX, e.clientY);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
   };
 
   return (
@@ -118,7 +144,7 @@ export function MinimapNavigator({
       {/* Minimap Card Header / Toggle Button */}
       <div
         onClick={toggleOpen}
-        className={`flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-t-xl cursor-pointer border shadow-md backdrop-blur-md transition-colors ${
+        className={`flex items-center justify-between gap-2 px-3 py-1.5 rounded-t-xl cursor-pointer border shadow-md backdrop-blur-md transition-colors ${
           isOpen ? 'rounded-b-none' : 'rounded-b-xl'
         } ${
           isDark
@@ -143,60 +169,76 @@ export function MinimapNavigator({
       {/* Minimap Body */}
       {isOpen && (
         <div
-          onClick={handleMinimapClick}
+          ref={minimapRef}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
           style={{ width: MAP_WIDTH, height: MAP_HEIGHT }}
-          className={`relative border border-t-0 rounded-b-xl overflow-hidden cursor-crosshair shadow-xl backdrop-blur-md ${
-            isDark ? 'bg-secondary-950/80 border-secondary-700/60' : 'bg-slate-900/90 border-secondary-200/80'
-          }`}
+          className={`relative border border-t-0 rounded-b-xl overflow-hidden cursor-grab active:cursor-grabbing shadow-2xl backdrop-blur-md transition-shadow ${
+            isDark ? 'bg-secondary-950/85 border-secondary-700/70' : 'bg-slate-900/90 border-secondary-300'
+          } ${isDragging ? 'ring-2 ring-amber-400/50' : ''}`}
         >
-          {/* Render Connection Lines */}
+          {/* Render Connection Lines (Precise node-to-node centers) */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
             {connections.map((conn) => {
               const srcDev = devices.find((d) => d.id === conn.sourceDeviceId);
               const tgtDev = devices.find((d) => d.id === conn.targetDeviceId);
               if (!srcDev || !tgtDev) return null;
+              const x1 = mapX(srcDev.x + DEVICE_CENTER_X);
+              const y1 = mapY(srcDev.y + DEVICE_CENTER_Y);
+              const x2 = mapX(tgtDev.x + DEVICE_CENTER_X);
+              const y2 = mapY(tgtDev.y + DEVICE_CENTER_Y);
               return (
                 <line
                   key={conn.id}
-                  x1={mapX(srcDev.x + 30)}
-                  y1={mapY(srcDev.y + 20)}
-                  x2={mapX(tgtDev.x + 30)}
-                  y2={mapY(tgtDev.y + 20)}
-                  stroke="rgba(255,255,255,0.3)"
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={conn.active !== false ? 'rgba(56, 189, 248, 0.6)' : 'rgba(239, 68, 68, 0.5)'}
                   strokeWidth="1.5"
+                  strokeDasharray={conn.cableType === 'wireless' ? '3 2' : undefined}
                 />
               );
             })}
           </svg>
 
-          {/* Render Device Nodes */}
-          {devices.map((d) => (
-            <div
-              key={d.id}
-              style={{
-                left: `${mapX(d.x)}px`,
-                top: `${mapY(d.y)}px`,
-              }}
-              className={`absolute w-2 h-2 -ml-1 -mt-1 rounded-full shadow-sm ${
-                d.type === 'router'
-                  ? 'bg-purple-400'
-                  : d.type.startsWith('switch')
-                  ? 'bg-emerald-400'
-                  : 'bg-sky-400'
-              }`}
-              title={d.name}
-            />
-          ))}
+          {/* Render Device Nodes (Circles centered exactly at node coordinate) */}
+          {devices.map((d) => {
+            const cx = mapX(d.x + DEVICE_CENTER_X);
+            const cy = mapY(d.y + DEVICE_CENTER_Y);
+            return (
+              <div
+                key={d.id}
+                style={{
+                  left: `${cx}px`,
+                  top: `${cy}px`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+                className={`absolute w-2.5 h-2.5 rounded-full border border-white/60 shadow-sm pointer-events-none ${
+                  d.type === 'router'
+                    ? 'bg-purple-500'
+                    : d.type.startsWith('switch')
+                    ? 'bg-emerald-400'
+                    : 'bg-sky-400'
+                }`}
+                title={d.name}
+              />
+            );
+          })}
 
           {/* Render Active Viewport Rect */}
           <div
             style={{
-              left: `${Math.max(0, Math.min(MAP_WIDTH - 20, viewportRect.x))}px`,
-              top: `${Math.max(0, Math.min(MAP_HEIGHT - 20, viewportRect.y))}px`,
+              left: `${Math.max(0, Math.min(MAP_WIDTH - 16, viewportRect.x))}px`,
+              top: `${Math.max(0, Math.min(MAP_HEIGHT - 16, viewportRect.y))}px`,
               width: `${Math.min(MAP_WIDTH, Math.max(16, viewportRect.width))}px`,
               height: `${Math.min(MAP_HEIGHT, Math.max(16, viewportRect.height))}px`,
             }}
-            className="absolute border-2 border-amber-400 bg-amber-400/20 rounded pointer-events-none transition-all duration-75 shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+            className={`absolute border-2 border-amber-400 bg-amber-400/20 rounded pointer-events-none shadow-[0_0_10px_rgba(251,191,36,0.6)] ${
+              isDragging ? 'border-amber-300 bg-amber-400/35' : 'transition-all duration-75'
+            }`}
           />
         </div>
       )}

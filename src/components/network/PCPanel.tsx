@@ -23,6 +23,7 @@ import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
 import { errorHandler } from '@/lib/errors/errorHandler';
 import { colors } from '@/lib/design-tokens/colors';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
+import { RestApiExplorerWindow } from './pc-panel/RestApiExplorerWindow';
 import { PCPanelNavigation } from './pc-panel/PCPanelNavigation';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
 import { FileEditorModal } from './pc-panel/FileEditorModal';
@@ -2384,6 +2385,14 @@ export function PCPanel({
                           setInput={setInput}
                           executeCommand={executeCommand}
                           mobileVerticalScrollStyle={mobileVerticalScrollStyle}
+                        />
+                      )}
+
+                      {activeTab === 'rest-api' && (
+                        <RestApiExplorerWindow
+                          isDark={isDark}
+                          language={language}
+                          topologyDevices={topologyDevices}
                         />
                       )}
                     </div>
