@@ -33,8 +33,6 @@ npm run lint
 npm test
 ```
 
----
-
 ## 🚀 Key Features & Version Highlights (v4.0.0)
 
 - **🌐 Advanced Routing & Policy Engine:** 

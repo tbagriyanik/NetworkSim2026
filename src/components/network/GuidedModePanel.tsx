@@ -477,7 +477,7 @@ export function GuidedModePanel({
       description: language === 'tr' ? 'QR kod oluşturuluyor, lütfen bekleyin.' : 'Generating QR code, please wait.',
     });
 
-    await generateCertificate({
+    const generated = await generateCertificate({
       studentName,
       projectTitle: project.title,
       score: currentPoints,
@@ -486,10 +486,12 @@ export function GuidedModePanel({
       language
     });
 
-    toast({
-      title: language === 'tr' ? 'Sertifika Oluşturuldu!' : 'Certificate Generated!',
-      description: language === 'tr' ? 'PDF dosyanız indiriliyor.' : 'Your PDF file is being downloaded.',
-    });
+    if (generated) {
+      toast({
+        title: language === 'tr' ? 'Sertifika Oluşturuldu!' : 'Certificate Generated!',
+        description: language === 'tr' ? 'PDF dosyanız indiriliyor.' : 'Your PDF file is being downloaded.',
+      });
+    }
   }, [project, language, currentPoints, totalPoints, openPrompt]);
 
   useEffect(() => {

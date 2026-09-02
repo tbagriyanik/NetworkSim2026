@@ -282,7 +282,7 @@ async function renderCertificateCanvas(
 }
 
 // ─── Main Generator ──────────────────────────────────────────────────────────
-export const generateCertificate = async (data: CertificateData): Promise<void> => {
+export const generateCertificate = async (data: CertificateData): Promise<boolean> => {
   const { score, totalScore, language } = data;
   const isTr = language === 'tr';
 
@@ -315,12 +315,15 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
           totalScore,
         }),
       });
-      if (signRes.ok) {
-        const signJson = await signRes.json();
-        if (signJson.success && signJson.data?.scoreToken) {
-          scoreToken = signJson.data.scoreToken;
-        }
+      let signJson: { success?: boolean; data?: { scoreToken?: string }; error?: string } = {};
+      try {
+        signJson = await signRes.json();
+      } catch {
       }
+      if (!signRes.ok || !signJson.success || !signJson.data?.scoreToken) {
+        throw new Error(signJson.error || `Score signing failed (${signRes.status})`);
+      }
+      scoreToken = signJson.data.scoreToken;
     }
 
     const res = await fetch('/api/certificate', {
@@ -364,35 +367,45 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
         : `Failed to register certificate on server: ${errMsg}`,
       variant: 'destructive',
     });
-    return;
+    return false;
   }
 
-  // Step 2: Fetch resources in parallel
-  const [qrDataUrl, logoDataUrl] = await Promise.all([
-    fetchQRDataUrl(verifyUrl),
-    fetchLogoDataUrl(),
-  ]);
+  try {
+    // Step 2: Fetch resources in parallel
+    const [qrDataUrl, logoDataUrl] = await Promise.all([
+      fetchQRDataUrl(verifyUrl),
+      fetchLogoDataUrl(),
+    ]);
 
-  const isSoloMode = !data.roomCode;
-  const fullData: CertificateData = {
-    ...data,
-    isSoloMode: isSoloMode || data.isSoloMode,
-  };
+    const isSoloMode = !data.roomCode;
+    const fullData: CertificateData = {
+      ...data,
+      isSoloMode: isSoloMode || data.isSoloMode,
+    };
 
-  // Step 3: Render Certificate with 100% Turkish Character Support via High-DPI Canvas
-  const certificateImgData = await renderCertificateCanvas(fullData, verifyCode, qrDataUrl, logoDataUrl);
+    // Step 3: Render Certificate with 100% Turkish Character Support via High-DPI Canvas
+    const certificateImgData = await renderCertificateCanvas(fullData, verifyCode, qrDataUrl, logoDataUrl);
 
-  // Step 4: Embed High-DPI Canvas Image into jsPDF (A4 Landscape)
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
+    // Step 4: Embed High-DPI Canvas Image into jsPDF (A4 Landscape)
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-  doc.addImage(certificateImgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+    doc.addImage(certificateImgData, 'JPEG', 0, 0, pageWidth, pageHeight, undefined, 'FAST');
+    doc.save(`Sertifika-${data.studentName.replace(/\s+/g, '_')}.pdf`);
 
-  doc.save(`Sertifika-${data.studentName.replace(/\s+/g, '_')}.pdf`);
-
-  toast({
-    title: isTr ? '🎉 Sertifika İndirildi' : '🎉 Certificate Downloaded',
-    description: isTr ? 'Sertifikanız PDF formatında Türkçe karakterlerle başarıyla kaydedildi.' : 'Your certificate has been successfully saved as PDF.',
-  });
+    toast({
+      title: isTr ? 'Sertifika İndirildi' : 'Certificate Downloaded',
+      description: isTr ? 'Sertifikanız PDF formatında Türkçe karakterlerle başarıyla kaydedildi.' : 'Your certificate has been successfully saved as PDF.',
+    });
+    return true;
+  } catch (error: unknown) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    toast({
+      title: isTr ? 'Sertifika İndirilemedi' : 'Certificate Download Failed',
+      description: isTr ? `PDF oluşturulamadı: ${errMsg}` : `The PDF could not be created: ${errMsg}`,
+      variant: 'destructive',
+    });
+    return false;
+  }
 };
