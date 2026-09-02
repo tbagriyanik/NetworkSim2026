@@ -860,6 +860,41 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `show ip nat statistics` | Display NAT statistics |
 | `show ip ospf` | Display OSPF information and ABR status |
 | `show standby [brief]` | Display HSRP status |
+| `show glbp [brief]` | Display GLBP status and AVG election |
+| `show ip cache flow` | Display NetFlow active flow cache table |
+| `show ip flow export` | Display NetFlow export parameters |
+| `show route-map` | Display route-map policies and rules |
+| `show ip prefix-list` | Display IPv4 prefix lists |
+| `show ipv6 prefix-list` | Display IPv6 prefix lists |
+| `show ipv6 eigrp neighbors` | Display IPv6 EIGRP neighbors |
+| `show ipv6 eigrp topology` | Display IPv6 EIGRP topology table |
+
+### Advanced Network Protocols (v3.9.0)
+
+| Command | Mode | Description |
+|---------|------|-------------|
+| `ipv6 router eigrp <as-number>` | Config | Enable EIGRP for IPv6 routing process |
+| `eigrp router-id <ip-address>` | Router Config | Set EIGRP IPv6 router ID |
+| `ipv6 eigrp <as-number>` | Interface | Enable EIGRP for IPv6 on interface |
+| `ip prefix-list <name> [seq <n>] {permit\|deny} <prefix> [ge <ge>] [le <le>]` | Config | Define IPv4 prefix-list filter |
+| `ipv6 prefix-list <name> [seq <n>] {permit\|deny} <prefix> [ge <ge>] [le <le>]` | Config | Define IPv6 prefix-list filter |
+| `route-map <name> {permit\|deny} [<seq>]` | Config | Create route-map entry and enter route-map configuration mode |
+| `match ip address prefix-list <name>` | Route-Map | Match IPv4 prefix-list in route-map |
+| `match ipv6 address prefix-list <name>` | Route-Map | Match IPv6 prefix-list in route-map |
+| `match interface <interface>` | Route-Map | Match interface in route-map |
+| `set metric <value>` | Route-Map | Set metric attribute in route-map |
+| `set ip next-hop <ip>` | Route-Map | Set IPv4 next-hop in route-map |
+| `set ipv6 next-hop <ipv6>` | Route-Map | Set IPv6 next-hop in route-map |
+| `set local-preference <value>` | Route-Map | Set BGP local preference in route-map |
+| `glbp <group> ip <ip-address>` | Interface | Configure GLBP virtual gateway IP address |
+| `glbp <group> priority <priority>` | Interface | Set GLBP AVG election priority (1-255) |
+| `glbp <group> preempt` | Interface | Enable GLBP AVG preemption |
+| `glbp <group> weighting <weight>` | Interface | Set GLBP weighting value |
+| `spanning-tree loopguard default` | Config | Enable STP Loop Guard globally on all non-designated ports |
+| `spanning-tree guard loop` | Interface | Enable STP Loop Guard on specific interface |
+| `ip flow-export destination <ip> <port>` | Config | Set NetFlow export collector IP and UDP port |
+| `ip flow-export version <5\|9>` | Config | Set NetFlow export protocol version (5 or 9) |
+| `ip flow ingress` / `ip flow egress` | Interface | Enable NetFlow traffic monitoring on interface |
 
 ## Command Modes
 - **User Mode** (`>`) - Basic monitoring commands

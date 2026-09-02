@@ -816,7 +816,7 @@ export interface SwitchState {
   ipSlaOperations?: Record<string, IpSlaOperation>;
   ipSlaTracks?: Record<string, { operationId: string; state: 'up' | 'down'; lastChange: number }>;
   qosClassMaps?: Record<string, { match: 'all' | 'any'; criteria: string[] }>;
-  qosPolicyMaps?: Record<string, { classes: Record<string, { priority?: boolean; bandwidthPercent?: number }> }>;
+  qosPolicyMaps?: Record<string, { classes: Record<string, { priority?: boolean; bandwidthPercent?: number; setDscp?: string; setCos?: number; policeRate?: number; match?: 'all' | 'any' }> }>;
   qosServicePolicies?: Record<string, { direction: 'input' | 'output'; policy: string }>;
   dot1xSystemAuthControl?: boolean;
   dot1xSessions?: Record<string, import('./dot1x').Dot1xSession>;

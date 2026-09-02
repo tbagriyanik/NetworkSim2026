@@ -1,6 +1,17 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 3.8.0 · **Son doğrulama / Last verified:** 2026-09-01
+**Sürüm / Version:** 3.9.0 · **Son doğrulama / Last verified:** 2026-09-02
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-09-02 - v3.9.0)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **EIGRP for IPv6** | `ipv6 router eigrp <as>`, router-id tanımı, arayüz bazlı `ipv6 eigrp <as>` aktifleştirme, DUAL IPv6 metric hesaplaması ve `show ipv6 eigrp neighbors/topology` komutları eklendi. |
+| **IP & IPv6 Prefix-List** | `ip/ipv6 prefix-list <name> [seq <n>] {permit\|deny} <prefix> [ge <ge>] [le <le>]` kural motoru, ön ek eşleme doğrulama ve `show ip/ipv6 prefix-list` raporlaması entegre edildi. |
+| **Route-Map Politika Motoru** | `route-map <name> {permit\|deny} [<seq>]` mod yapılandırması, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference` alt komutları ve `show route-map` çıktısı eklendi. |
+| **GLBP (Gateway Load Balancing Protocol)** | `glbp <group> ip <ip>`, `glbp priority/preempt/weighting` komutları, AVG (Active Virtual Gateway) seçimi, `0007.b400.XXXX` sanal MAC adresi üretimi ve `show glbp [brief]` raporlaması desteklendi. |
+| **STP Loop Guard** | `spanning-tree loopguard default` (global) ve `spanning-tree guard loop` (interface) yapılandırmaları ile BPDU kaybında portun `loop-inconsistent` engel moduna geçirilmesi sağlandı. |
+| **NetFlow İletim Motoru** | `ip flow-export destination <ip> <port>`, `ip flow-export version <5\|9>`, interface `ip flow ingress/egress` ve canlı `show ip cache flow` istatistik izleme ekranı eklendi. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-09-01 - v3.8.0)
 
