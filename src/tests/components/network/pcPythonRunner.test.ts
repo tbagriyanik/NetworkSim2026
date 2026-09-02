@@ -215,10 +215,8 @@ describe('executePythonScript', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // KNOWN LIMITATIONS — these tests document features that are NOT yet
-  // implemented in the Python interpreter. They are written against the
-  // *correct* CPython behaviour and are marked `it.fails` so the suite stays
-  // green while making the gaps visible. Each comment names the missing piece.
+  // EXTENDED FEATURES — these tests document CPython behaviour that is now
+  // fully implemented. Each comment names the feature under test.
   // ---------------------------------------------------------------------------
   describe('known limitations (expected failures)', () => {
     it('handles string repetition', () => {

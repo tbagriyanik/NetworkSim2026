@@ -104,18 +104,42 @@ export function cmdIpv6AclDeny(state: SwitchState, input: string, _ctx: CommandC
   };
 }
 
+function addOrReplaceAclRule(existingRules: string[], ruleText: string, seqNum?: number): string[] {
+  let rules = [...existingRules];
+  if (seqNum !== undefined) {
+    const seqStr = String(seqNum);
+    const formattedRule = `${seqStr} ${ruleText}`;
+    const existingIndex = rules.findIndex(r => r.startsWith(`${seqStr} `));
+    if (existingIndex !== -1) {
+      rules[existingIndex] = formattedRule;
+    } else {
+      rules.push(formattedRule);
+      rules.sort((a, b) => {
+        const seqA = parseInt(a.split(/\s+/)[0], 10);
+        const seqB = parseInt(b.split(/\s+/)[0], 10);
+        if (isNaN(seqA) || isNaN(seqB)) return 0;
+        return seqA - seqB;
+      });
+    }
+  } else {
+    rules.push(ruleText);
+  }
+  return rules;
+}
+
 export function cmdNamedAclPermit(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config-std-nacl' || !state.currentNamedAcl) {
     return { success: false, error: iosModeError() };
   }
 
-  const match = input.match(/^permit\s+(.+)$/i);
+  const match = input.match(/^(?:(\d+)\s+)?permit\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid permit command' };
 
-  const rule = `permit ${match[1]}`;
+  const seqNum = match[1] ? parseInt(match[1], 10) : undefined;
+  const ruleText = `permit ${match[2]}`;
   const accessLists = { ...state.accessLists };
   const aclName = state.currentNamedAcl;
-  accessLists[aclName] = [...(accessLists[aclName] || []), rule];
+  accessLists[aclName] = addOrReplaceAclRule(accessLists[aclName] || [], ruleText, seqNum);
 
   return {
     success: true,
@@ -128,13 +152,14 @@ export function cmdNamedAclDeny(state: SwitchState, input: string, _ctx: Command
     return { success: false, error: iosModeError() };
   }
 
-  const match = input.match(/^deny\s+(.+)$/i);
+  const match = input.match(/^(?:(\d+)\s+)?deny\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid deny command' };
 
-  const rule = `deny ${match[1]}`;
+  const seqNum = match[1] ? parseInt(match[1], 10) : undefined;
+  const ruleText = `deny ${match[2]}`;
   const accessLists = { ...state.accessLists };
   const aclName = state.currentNamedAcl;
-  accessLists[aclName] = [...(accessLists[aclName] || []), rule];
+  accessLists[aclName] = addOrReplaceAclRule(accessLists[aclName] || [], ruleText, seqNum);
 
   return {
     success: true,
@@ -147,13 +172,21 @@ export function cmdNamedAclNoPermit(state: SwitchState, input: string, _ctx: Com
     return { success: false, error: iosModeError() };
   }
 
+  const seqMatch = input.match(/^no\s+(\d+)$/i);
+  const aclName = state.currentNamedAcl;
+  const accessLists = { ...state.accessLists };
+
+  if (seqMatch) {
+    const seqStr = seqMatch[1];
+    accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => !r.startsWith(`${seqStr} `));
+    return { success: true, newState: { accessLists } };
+  }
+
   const match = input.match(/^no\s+permit\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const rule = `permit ${match[1]}`;
-  const aclName = state.currentNamedAcl;
-  const accessLists = { ...state.accessLists };
-  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
+  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule && !r.endsWith(` ${rule}`));
 
   return {
     success: true,
@@ -166,13 +199,21 @@ export function cmdNamedAclNoDeny(state: SwitchState, input: string, _ctx: Comma
     return { success: false, error: iosModeError() };
   }
 
+  const seqMatch = input.match(/^no\s+(\d+)$/i);
+  const aclName = state.currentNamedAcl;
+  const accessLists = { ...state.accessLists };
+
+  if (seqMatch) {
+    const seqStr = seqMatch[1];
+    accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => !r.startsWith(`${seqStr} `));
+    return { success: true, newState: { accessLists } };
+  }
+
   const match = input.match(/^no\s+deny\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const rule = `deny ${match[1]}`;
-  const aclName = state.currentNamedAcl;
-  const accessLists = { ...state.accessLists };
-  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
+  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule && !r.endsWith(` ${rule}`));
 
   return {
     success: true,
@@ -183,11 +224,13 @@ export function cmdNamedAclNoDeny(state: SwitchState, input: string, _ctx: Comma
 export function cmdExtAclPermit(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
-  const match = input.match(/^permit\s+(.+)$/i);
+  const match = input.match(/^(?:(\d+)\s+)?permit\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid permit command' };
 
+  const seqNum = match[1] ? parseInt(match[1], 10) : undefined;
+  const ruleText = `permit ${match[2]}`;
   const accessLists = { ...state.accessLists };
-  accessLists[aclName] = [...(accessLists[aclName] || []), `permit ${match[1]}`];
+  accessLists[aclName] = addOrReplaceAclRule(accessLists[aclName] || [], ruleText, seqNum);
 
   return {
     success: true,
@@ -202,11 +245,13 @@ export function cmdExtAclPermit(state: SwitchState, input: string, _ctx: Command
 export function cmdExtAclDeny(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
-  const match = input.match(/^deny\s+(.+)$/i);
+  const match = input.match(/^(?:(\d+)\s+)?deny\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid deny command' };
 
+  const seqNum = match[1] ? parseInt(match[1], 10) : undefined;
+  const ruleText = `deny ${match[2]}`;
   const accessLists = { ...state.accessLists };
-  accessLists[aclName] = [...(accessLists[aclName] || []), `deny ${match[1]}`];
+  accessLists[aclName] = addOrReplaceAclRule(accessLists[aclName] || [], ruleText, seqNum);
 
   return {
     success: true,
@@ -221,12 +266,20 @@ export function cmdExtAclDeny(state: SwitchState, input: string, _ctx: CommandCo
 export function cmdExtAclNoPermit(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
+  const seqMatch = input.match(/^no\s+(\d+)$/i);
+  const accessLists = { ...state.accessLists };
+
+  if (seqMatch) {
+    const seqStr = seqMatch[1];
+    accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => !r.startsWith(`${seqStr} `));
+    return { success: true, newState: { accessLists } };
+  }
+
   const match = input.match(/^no\s+permit\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const rule = `permit ${match[1]}`;
-  const accessLists = { ...state.accessLists };
-  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
+  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule && !r.endsWith(` ${rule}`));
 
   return { success: true, newState: { accessLists } };
 }
@@ -234,12 +287,20 @@ export function cmdExtAclNoPermit(state: SwitchState, input: string, _ctx: Comma
 export function cmdExtAclNoDeny(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   const aclName = state.currentExtendedAcl || state.currentNamedAcl || 'EXTENDED-ACL';
 
+  const seqMatch = input.match(/^no\s+(\d+)$/i);
+  const accessLists = { ...state.accessLists };
+
+  if (seqMatch) {
+    const seqStr = seqMatch[1];
+    accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => !r.startsWith(`${seqStr} `));
+    return { success: true, newState: { accessLists } };
+  }
+
   const match = input.match(/^no\s+deny\s+(.+)$/i);
   if (!match) return { success: false, error: '% Invalid command' };
 
   const rule = `deny ${match[1]}`;
-  const accessLists = { ...state.accessLists };
-  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule);
+  accessLists[aclName] = (accessLists[aclName] || []).filter((r: string) => r !== rule && !r.endsWith(` ${rule}`));
 
   return { success: true, newState: { accessLists } };
 }

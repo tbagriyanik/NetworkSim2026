@@ -723,6 +723,22 @@ svg {
   touch-action: none;
 }
 
+/* Topology canvas – full gesture control for JS touch handling */
+.topology-canvas {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media (pointer: coarse) {
+  .topology-canvas {
+    touch-action: none;
+    overscroll-behavior: none;
+  }
+}
+
 /* Better touch handling for draggable elements */
 [draggable="true"] {
   touch-action: none;

@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react';
 import type { TouchEvent as ReactTouchEvent } from 'react';
 import type { CanvasDevice, ContextMenuMode, DeviceType } from '../networkTopology.types';
+import { MOMENTUM_DECAY, MOMENTUM_MIN_SPEED, MOMENTUM_THRESHOLD } from '../networkTopology.constants';
 
 export interface UseTopologyTouchProps {
   canvasRef: React.RefObject<HTMLDivElement | null>;
@@ -114,6 +115,18 @@ export function useTopologyTouch({
   const isTouchDraggingRef = React.useRef(isTouchDragging);
   const lastTapTimeRef = React.useRef(0);
   const lastTappedDeviceRef = React.useRef<string | null>(null);
+
+  // Touch gesture smoothing (EMA)
+  const ZOOM_SMOOTHING = 0.65;
+  const PAN_SMOOTHING = 0.55;
+  const lastSmoothedZoomRef = React.useRef<number | null>(null);
+  const lastSmoothedPanRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  // Touch velocity tracking for momentum
+  const touchVelocityRef = React.useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastTouchMoveTimeRef = React.useRef(0);
+  const lastTouchMovePosRef = React.useRef<{ x: number; y: number } | null>(null);
+  const touchMomentumFrameRef = React.useRef<number | null>(null);
 
   React.useLayoutEffect(() => {
     isPanningRef.current = isPanning;
@@ -264,6 +277,17 @@ export function useTopologyTouch({
         svgContentGroupRef.current.style.transition = 'none';
       }
 
+      // Cancel any running momentum animation
+      if (touchMomentumFrameRef.current) {
+        cancelAnimationFrame(touchMomentumFrameRef.current);
+        touchMomentumFrameRef.current = null;
+      }
+
+      // Initialize velocity tracking for this gesture
+      touchVelocityRef.current = { x: 0, y: 0 };
+      lastTouchMoveTimeRef.current = Date.now();
+      lastTouchMovePosRef.current = { x: touch.clientX, y: touch.clientY };
+
       const timer = setTimeout(() => {
         openContextMenu(touch.clientX, touch.clientY, null);
         setLongPressTimer(null);
@@ -281,6 +305,8 @@ export function useTopologyTouch({
         x: (a.clientX + b.clientX) / 2,
         y: (a.clientY + b.clientY) / 2
       });
+      lastSmoothedZoomRef.current = null;
+      lastSmoothedPanRef.current = null;
     }
   }, [longPressTimer, getDistance]);
 
@@ -305,6 +331,21 @@ export function useTopologyTouch({
       }
       pendingPanRef.current = { x: newPanX, y: newPanY };
       panRef.current = { x: newPanX, y: newPanY };
+
+      // Track velocity for momentum on touchend
+      const now = Date.now();
+      const dt = now - lastTouchMoveTimeRef.current;
+      if (dt > 0) {
+        const dx = touch.clientX - lastTouchMovePosRef.current!.x;
+        const dy = touch.clientY - lastTouchMovePosRef.current!.y;
+        touchVelocityRef.current = {
+          x: touchVelocityRef.current.x * 0.3 + (dx / dt) * 0.7,
+          y: touchVelocityRef.current.y * 0.3 + (dy / dt) * 0.7,
+        };
+      }
+      lastTouchMoveTimeRef.current = now;
+      lastTouchMovePosRef.current = { x: touch.clientX, y: touch.clientY };
+
     } else if (e.touches.length === 2 && lastTouchDistance !== null && lastTouchCenter !== null) {
       const a = e.touches[0];
       const b = e.touches[1];
@@ -317,11 +358,33 @@ export function useTopologyTouch({
 
       const currentZoom = zoomRef.current;
       const currentPan = panRef.current;
-      const zoomFactor = newDistance / lastTouchDistance;
-      let newZoom = currentZoom * zoomFactor;
+      const rawZoomFactor = newDistance / lastTouchDistance;
+
+      // Smooth zoom factor with EMA to reduce jitter
+      const prevSmoothedZoom = lastSmoothedZoomRef.current;
+      const smoothedZoomFactor = prevSmoothedZoom !== null
+        ? prevSmoothedZoom * (1 - ZOOM_SMOOTHING) + rawZoomFactor * ZOOM_SMOOTHING
+        : rawZoomFactor;
+      lastSmoothedZoomRef.current = smoothedZoomFactor;
+
+      let newZoom = currentZoom * smoothedZoomFactor;
       newZoom = Math.max(MIN_ZOOM, Math.min(newZoom, MAX_ZOOM));
 
-      if (Math.abs(newZoom - currentZoom) > 0.01) {
+      // Raw pan delta from center movement
+      const rawPanDeltaX = newCenter.x - lastTouchCenter.x;
+      const rawPanDeltaY = newCenter.y - lastTouchCenter.y;
+
+      // Smooth pan delta with EMA
+      const prevSmoothedPan = lastSmoothedPanRef.current;
+      const smoothedPanDeltaX = prevSmoothedPan !== null
+        ? prevSmoothedPan.x * (1 - PAN_SMOOTHING) + rawPanDeltaX * PAN_SMOOTHING
+        : rawPanDeltaX;
+      const smoothedPanDeltaY = prevSmoothedPan !== null
+        ? prevSmoothedPan.y * (1 - PAN_SMOOTHING) + rawPanDeltaY * PAN_SMOOTHING
+        : rawPanDeltaY;
+      lastSmoothedPanRef.current = { x: smoothedPanDeltaX, y: smoothedPanDeltaY };
+
+      if (Math.abs(newZoom - currentZoom) > 0.005) {
         const rect = canvasRef.current.getBoundingClientRect();
         const cursorX = newCenter.x - rect.left;
         const cursorY = newCenter.y - rect.top;
@@ -329,10 +392,7 @@ export function useTopologyTouch({
         const deltaX = cursorX - (cursorX - currentPan.x) * (newZoom / currentZoom);
         const deltaY = cursorY - (cursorY - currentPan.y) * (newZoom / currentZoom);
 
-        const panDeltaX = newCenter.x - lastTouchCenter.x;
-        const panDeltaY = newCenter.y - lastTouchCenter.y;
-
-        const newPan = { x: deltaX + panDeltaX, y: deltaY + panDeltaY };
+        const newPan = { x: deltaX + smoothedPanDeltaX, y: deltaY + smoothedPanDeltaY };
         setZoom(newZoom);
         setPan(newPan);
         const g = svgContentGroupRef.current;
@@ -340,9 +400,7 @@ export function useTopologyTouch({
           g.style.transform = `translate3d(${newPan.x}px, ${newPan.y}px, 0px) scale(${newZoom})`;
         }
       } else {
-        const panDeltaX = newCenter.x - lastTouchCenter.x;
-        const panDeltaY = newCenter.y - lastTouchCenter.y;
-        const newPan = { x: currentPan.x + panDeltaX, y: currentPan.y + panDeltaY };
+        const newPan = { x: currentPan.x + smoothedPanDeltaX, y: currentPan.y + smoothedPanDeltaY };
         setPan(newPan);
         const g = svgContentGroupRef.current;
         if (g) {
@@ -363,19 +421,63 @@ export function useTopologyTouch({
 
     const touchesLength = (e as ReactTouchEvent).touches ? (e as ReactTouchEvent).touches.length : 0;
     if (touchesLength === 0) {
+      // Reset pinch-to-zoom smoothing state
+      lastSmoothedZoomRef.current = null;
+      lastSmoothedPanRef.current = null;
+
       setLastTouchDistance(null);
       setLastTouchCenter(null);
       setTouchStart(null);
       setIsPanning(false);
       isPanningRef.current = false;
+
       if (pendingPanRef.current) {
         setPan(pendingPanRef.current);
         pendingPanRef.current = null;
       }
-      if (svgContentGroupRef.current) {
+
+      // Momentum / inertia for single-finger pan
+      const vel = touchVelocityRef.current;
+      const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y);
+      if (speed > MOMENTUM_THRESHOLD && svgContentGroupRef.current) {
+        const g = svgContentGroupRef.current;
+        g.style.willChange = 'transform';
+        let mVelX = vel.x;
+        let mVelY = vel.y;
+        let mPanX = panRef.current.x;
+        let mPanY = panRef.current.y;
+        const animateMomentum = () => {
+          mVelX *= MOMENTUM_DECAY;
+          mVelY *= MOMENTUM_DECAY;
+          mPanX += mVelX;
+          mPanY += mVelY;
+          g.style.transform = `translate3d(${mPanX}px, ${mPanY}px, 0px) scale(${zoomRef.current})`;
+          panRef.current = { x: mPanX, y: mPanY };
+          const remainingSpeed = Math.sqrt(mVelX * mVelX + mVelY * mVelY);
+          if (remainingSpeed > MOMENTUM_MIN_SPEED) {
+            touchMomentumFrameRef.current = requestAnimationFrame(animateMomentum);
+          } else {
+            touchMomentumFrameRef.current = null;
+            setPan({ x: mPanX, y: mPanY });
+            g.style.willChange = '';
+          }
+        };
+        touchMomentumFrameRef.current = requestAnimationFrame(animateMomentum);
+      }
+      touchVelocityRef.current = { x: 0, y: 0 };
+      lastTouchMoveTimeRef.current = 0;
+      lastTouchMovePosRef.current = null;
+
+      if (svgContentGroupRef.current && speed <= MOMENTUM_THRESHOLD) {
         svgContentGroupRef.current.style.willChange = '';
       }
     } else if (touchesLength === 1) {
+      // Cancel momentum if a new touch starts
+      if (touchMomentumFrameRef.current) {
+        cancelAnimationFrame(touchMomentumFrameRef.current);
+        touchMomentumFrameRef.current = null;
+      }
+
       const touch = (e as ReactTouchEvent).touches[0];
       setIsPanning(true);
       isPanningRef.current = true;
@@ -385,6 +487,13 @@ export function useTopologyTouch({
       panStartRef.current = ps;
       setLastTouchDistance(null);
       setLastTouchCenter(null);
+      lastSmoothedZoomRef.current = null;
+      lastSmoothedPanRef.current = null;
+
+      // Reset velocity tracking for fresh start
+      touchVelocityRef.current = { x: 0, y: 0 };
+      lastTouchMoveTimeRef.current = Date.now();
+      lastTouchMovePosRef.current = { x: touch.clientX, y: touch.clientY };
     }
   }, [longPressTimer]);
 
@@ -530,6 +639,10 @@ export function useTopologyTouch({
       window.removeEventListener('touchmove', handleGlobalTouchMove);
       window.removeEventListener('touchend', handleGlobalTouchEnd);
       window.removeEventListener('touchcancel', handleGlobalTouchEnd);
+      if (touchMomentumFrameRef.current) {
+        cancelAnimationFrame(touchMomentumFrameRef.current);
+        touchMomentumFrameRef.current = null;
+      }
     };
   }, [longPressTimer]);
 

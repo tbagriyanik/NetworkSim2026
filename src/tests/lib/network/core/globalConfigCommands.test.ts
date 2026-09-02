@@ -58,4 +58,31 @@ describe('Global Configuration Commands', () => {
     expect('ip sla 1').toContain('ip sla');
     expect('spanning-tree mode mst').toContain('mst');
   });
+
+  it('should support sequence-numbered named ACL entries and deletion', async () => {
+    const { cmdNamedAclPermit, cmdNamedAclDeny, cmdNamedAclNoPermit } = await import('@/lib/network/core/globalConfigAclCommands');
+    let state = {
+      currentMode: 'config-std-nacl',
+      currentNamedAcl: 'SECURE-ACL',
+      accessLists: {},
+    } as any;
+
+    const res1 = cmdNamedAclPermit(state, '20 permit 192.168.1.0 0.0.0.255', {} as any);
+    state = { ...state, ...res1.newState };
+    const res2 = cmdNamedAclDeny(state, '10 deny host 10.0.0.1', {} as any);
+    state = { ...state, ...res2.newState };
+
+    expect(state.accessLists['SECURE-ACL']).toEqual([
+      '10 deny host 10.0.0.1',
+      '20 permit 192.168.1.0 0.0.0.255',
+    ]);
+
+    const res3 = cmdNamedAclNoPermit(state, 'no 10', {} as any);
+    state = { ...state, ...res3.newState };
+
+    expect(state.accessLists['SECURE-ACL']).toEqual([
+      '20 permit 192.168.1.0 0.0.0.255',
+    ]);
+  });
 });
+

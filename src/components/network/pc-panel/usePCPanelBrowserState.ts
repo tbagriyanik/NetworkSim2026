@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { CanvasDevice } from '../networkTopology.types';
-import { errorHandler, STORAGE_ERRORS } from '@/lib/errors/errorHandler';
+
 import { secureStorage } from '@/lib/storage/secureStorage';
 
 export interface UsePCPanelBrowserStateParams {
@@ -45,23 +45,24 @@ export function usePCPanelBrowserState({
   }, [httpAppUrl, urlSuggestions]);
 
   const [browserWindow, setBrowserWindow] = useState(() => {
+    const defaultValue = { x: 40, y: 140, width: 960, height: 400 };
     if (typeof localStorage !== 'undefined') {
       const saved = secureStorage.getItem('pc-browser-window-state');
-      if (!saved) return { x: 40, y: 140, width: 960, height: 400 };
+      if (!saved) return defaultValue;
       try {
         const parsed = JSON.parse(saved);
         return {
-          x: typeof parsed.x === 'number' ? parsed.x : 40,
-          y: typeof parsed.y === 'number' ? parsed.y : 140,
-          width: typeof parsed.width === 'number' ? parsed.width : 960,
-          height: typeof parsed.height === 'number' ? parsed.height : 400,
+          x: typeof parsed.x === 'number' ? parsed.x : defaultValue.x,
+          y: typeof parsed.y === 'number' ? parsed.y : defaultValue.y,
+          width: typeof parsed.width === 'number' ? parsed.width : defaultValue.width,
+          height: typeof parsed.height === 'number' ? parsed.height : defaultValue.height,
         };
-      } catch (err) {
-        errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ key: 'pc-browser-window-state', savedValue: saved, parseError: String(err) }));
-        return { x: 40, y: 140, width: 960, height: 400 };
+      } catch {
+        secureStorage.removeItem('pc-browser-window-state');
+        return defaultValue;
       }
     }
-    return { x: 40, y: 140, width: 960, height: 400 };
+    return defaultValue;
   });
 
   useEffect(() => {

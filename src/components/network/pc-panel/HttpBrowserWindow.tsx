@@ -120,15 +120,13 @@ export function HttpBrowserWindow({
             }
           }}
           placeholder="http://"
-          className={`mt-1 w-full text-[16px] sm:text-xs rounded-md px-2 py-1 border ${
-            isDark ? 'bg-secondary-900 border-secondary-700 text-secondary-200' : 'bg-white border-secondary-300 text-secondary-700'
-          }`}
+          className={`mt-1 w-full text-[16px] sm:text-xs rounded-md px-2 py-1 border ${isDark ? 'bg-secondary-900 border-secondary-700 text-secondary-200' : 'bg-white border-secondary-300 text-secondary-700'
+            }`}
         />
         {showSuggestions && suggestions.length > 0 && (
           <div
-            className={`absolute top-full left-0 right-0 mt-1 rounded-md border shadow-lg max-h-48 overflow-y-auto overflow-x-hidden custom-scrollbar z-50 ${
-              isDark ? 'bg-secondary-900 border-secondary-700' : 'bg-white border-secondary-300'
-            }`}
+            className={`absolute top-full left-0 right-0 mt-1 rounded-md border shadow-lg max-h-48 overflow-y-auto overflow-x-hidden custom-scrollbar z-50 ${isDark ? 'bg-secondary-900 border-secondary-700' : 'bg-white border-secondary-300'
+              }`}
           >
             {suggestions.slice(0, 10).map((suggestion, index) => (
               <button
@@ -140,13 +138,12 @@ export function HttpBrowserWindow({
                   onOpenWebPage(suggestion);
                 }}
                 onMouseEnter={() => onSetSelectedSuggestionIndex(index)}
-                className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${
-                  index === selectedSuggestionIndex
+                className={`w-full text-left px-2 py-1.5 text-xs cursor-pointer ${index === selectedSuggestionIndex
                     ? isDark
                       ? 'bg-secondary-700'
                       : 'bg-secondary-200'
                     : 'hover:bg-secondary-100 dark:hover:bg-secondary-800'
-                } ${isDark ? 'text-secondary-200' : 'text-secondary-700'}`}
+                  } ${isDark ? 'text-secondary-200' : 'text-secondary-700'}`}
               >
                 {suggestion}
               </button>
@@ -188,7 +185,7 @@ export function HttpBrowserWindow({
         <iframe
           title={title}
           srcDoc={srcDoc}
-          sandbox="allow-forms allow-scripts allow-same-origin allow-modals"
+          sandbox="allow-forms allow-scripts allow-modals"
           className="h-full w-full border-0 bg-white"
           style={{ display: 'block', touchAction: 'manipulation' }}
         />

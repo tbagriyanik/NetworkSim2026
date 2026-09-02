@@ -222,8 +222,9 @@ export function useHistory(initialState: ProjectState) {
         try {
           secureStorage.setItem('netsim_history', JSON.stringify(serialized));
         } catch (e) {
-          if (e instanceof DOMException && e.name === 'QuotaExceededError' && itemsToSave.length > 2) {
-            const cutSize = Math.floor(itemsToSave.length / 2);
+          const isQuotaError = e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014);
+          if (isQuotaError && itemsToSave.length > 2) {
+            const cutSize = Math.max(1, Math.floor(itemsToSave.length / 2));
             trySave(itemsToSave.slice(cutSize), Math.max(0, idx - cutSize));
           } else {
             logger.warn('Could not save history to localStorage', e);

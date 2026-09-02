@@ -584,6 +584,7 @@ export async function executePythonScriptAsync(
 
   const execStatementsSync = (stmts: Statement[]): ExecResult => {
     for (const stmt of stmts) {
+      checkExecutionTimeout();
       if (stmt.type === 'line') {
         if (stmt.text === 'break') return 'break';
         if (stmt.text === 'continue') return 'continue';
@@ -933,7 +934,11 @@ export async function executePythonScriptAsync(
     if (sleepMatch) {
       const secVal = Number(evaluateExpr(sleepMatch[1]) || 0);
       if (secVal > 0) {
-        await new Promise(resolve => setTimeout(resolve, Math.min(secVal, 10) * 1000));
+        const delayMs = Math.min(secVal, 10) * 1000;
+        if (Date.now() + delayMs > deadline) {
+          throw new PythonTimeoutException(`TimeoutError: Execution exceeded time limit of ${timeoutMs / 1000}s`);
+        }
+        await new Promise(resolve => setTimeout(resolve, delayMs));
       }
       return;
     }

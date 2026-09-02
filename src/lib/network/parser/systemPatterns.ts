@@ -301,6 +301,18 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 4
   },
   // Named ACL sub-mode commands
+  'seq permit/deny (named-acl)': {
+    pattern: /^(?:(\d+)\s+)?(permit|deny)\s+(.+)$/i,
+    modes: ['config-std-nacl', 'config-ext-nacl'],
+    minArgs: 1,
+    maxArgs: 10
+  },
+  'no (named-acl)': {
+    pattern: /^no\s+(\d+|(?:permit|deny)\s+.+)$/i,
+    modes: ['config-std-nacl', 'config-ext-nacl'],
+    minArgs: 1,
+    maxArgs: 10
+  },
   'permit (named-acl)': {
     pattern: /^permit\s+(.+)$/i,
     modes: ['config-std-nacl'],

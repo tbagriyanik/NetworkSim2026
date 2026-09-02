@@ -34,6 +34,7 @@ export interface LinuxExecutorParams {
   linuxHistory?: string[];
   silent?: boolean;
   getNtpNow?: () => Date | null;
+  executionDeadline?: number;
 }
 
 export const LINUX_SUGGESTIONS = [
@@ -48,6 +49,11 @@ const FILE_COMMANDS = new Set([
 ]);
 
 const UNSUPPORTED_LINUX_COMMANDS = new Set(['type', 'edit', 'ipconfig']);
+
+function isUnsafeRegexPattern(pattern: string): boolean {
+  if (pattern.length > 256) return true;
+  return /\([^)]*[+*?](?:[^()]|\([^)]*\))*\)[+*?{]/.test(pattern);
+}
 
 export function getLinuxSuggestions(
   inputVal: string,
@@ -133,6 +139,13 @@ export async function executeLinuxCommand(
   cmdLine: string,
   params: LinuxExecutorParams
 ): Promise<void> {
+  const executionDeadline = params.executionDeadline ?? Date.now() + 3000;
+  const checkExecutionTimeout = () => {
+    if (Date.now() > executionDeadline) {
+      throw new Error('bash: execution timed out (exceeded 3s limit)');
+    }
+  };
+  checkExecutionTimeout();
   const {
     deviceId,
     internalPcHostname,
@@ -198,6 +211,7 @@ export async function executeLinuxCommand(
         };
         await executeLinuxCommand(stage.command, {
           ...params,
+          executionDeadline,
           silent: true,
           addLocalOutput: stageAddOutput
         });
@@ -245,7 +259,10 @@ export async function executeLinuxCommand(
           } else {
             const lines = pipeData.split(/\r?\n/);
             let regex: RegExp;
-            try { regex = new RegExp(cleanPattern, isCaseInsensitive ? 'i' : ''); }
+            try {
+              if (isUnsafeRegexPattern(cleanPattern)) throw new Error('unsafe pattern');
+              regex = new RegExp(cleanPattern, isCaseInsensitive ? 'i' : '');
+            }
             catch { stageError = `grep: invalid regular expression: ${cleanPattern}`; regex = /$a/; }
 
             const matched: string[] = [];
@@ -275,6 +292,7 @@ export async function executeLinuxCommand(
           // Execute stage command collecting output
           await executeLinuxCommand(stageCmd, {
             ...params,
+            executionDeadline,
             silent: true,
             addLocalOutput: stageAddOutput
           });
@@ -314,6 +332,7 @@ export async function executeLinuxCommand(
 
       await executeLinuxCommand(targetCmdStr, {
         ...params,
+        executionDeadline,
         silent: true,
         addLocalOutput: redirectAddOutput
       });
@@ -383,13 +402,14 @@ export async function executeLinuxCommand(
       const timeoutMs = 3000;
 
       for (const item of items) {
+        checkExecutionTimeout();
         if (Date.now() - loopStartTime > timeoutMs) {
           addLocalOutput('error', 'bash: loop terminated: execution timed out (exceeded 3s limit)');
           return;
         }
         // Replace $varName or ${varName} in body with current item value
         const subCmd = loopBody.replace(new RegExp(`\\$${varName}\\b|\\$\\{${varName}\\}`, 'g'), item);
-        await executeLinuxCommand(subCmd, { ...params, silent: false });
+        await executeLinuxCommand(subCmd, { ...params, executionDeadline, silent: false });
       }
       return;
     }
@@ -425,11 +445,12 @@ export async function executeLinuxCommand(
 
       while (evalBashCond(rawCondition)) {
         iterations++;
+        checkExecutionTimeout();
         if (Date.now() - loopStartTime > timeoutMs || iterations > maxIterations) {
           addLocalOutput('error', 'bash: loop terminated: execution timed out (exceeded 3s limit)');
           return;
         }
-        await executeLinuxCommand(loopBody, { ...params, silent: false });
+        await executeLinuxCommand(loopBody, { ...params, executionDeadline, silent: false });
       }
       return;
     }
@@ -465,7 +486,7 @@ export async function executeLinuxCommand(
         targetCmd = elifResult ? elifBody : elseBody;
       } else if (!targetCmd) targetCmd = elseBody;
       if (targetCmd) {
-        await executeLinuxCommand(targetCmd, { ...params, silent: false });
+        await executeLinuxCommand(targetCmd, { ...params, executionDeadline, silent: false });
       }
       return;
     }
@@ -684,7 +705,7 @@ export async function executeLinuxCommand(
     const isPython = scriptArg.endsWith('.py') || content.startsWith('#!/usr/bin/env python') || content.startsWith('#!/usr/bin/python');
     if (isPython) {
       const pyArgs = [scriptArg, ...(command === 'bash' || command === 'sh' ? args.slice(1) : args)];
-      const pyExecRes = executePythonScript(content, [], undefined, deviceId, pyArgs);
+      const pyExecRes = executePythonScript(content, [], undefined, deviceId, pyArgs, Math.max(1, executionDeadline - Date.now()));
       if (pyExecRes.error) addLocalOutput('error', pyExecRes.error);
       else if (pyExecRes.output) addLocalOutput('output', pyExecRes.output);
       return;
@@ -700,6 +721,7 @@ export async function executeLinuxCommand(
     }
     if (pending) lines.push(pending);
     for (const line of lines) {
+      checkExecutionTimeout();
       const trimmedLine = line.trim();
       if (!trimmedLine || trimmedLine.startsWith('#')) continue;
       await executeLinuxCommand(trimmedLine, params);
@@ -716,7 +738,7 @@ export async function executeLinuxCommand(
     }
     if (scriptArg === '-c') {
       const codeToRun = args.slice(1).join(' ').replace(/^["']|["']$/g, '');
-      const pyCmdRes = executePythonScript(codeToRun, [], undefined, deviceId, ['-c']);
+      const pyCmdRes = executePythonScript(codeToRun, [], undefined, deviceId, ['-c'], Math.max(1, executionDeadline - Date.now()));
       if (pyCmdRes.error) addLocalOutput('error', pyCmdRes.error);
       else if (pyCmdRes.output) addLocalOutput('output', pyCmdRes.output);
       return;
@@ -726,7 +748,7 @@ export async function executeLinuxCommand(
     const scriptPath = resolvePath(currentPath, scriptArg);
     const scriptContent = readFile(fs, scriptPath);
     if (scriptContent !== null) {
-      const pyFileRes = executePythonScript(scriptContent, [], undefined, deviceId, args);
+      const pyFileRes = executePythonScript(scriptContent, [], undefined, deviceId, args, Math.max(1, executionDeadline - Date.now()));
       if (pyFileRes.error) addLocalOutput('error', pyFileRes.error);
       else if (pyFileRes.output) addLocalOutput('output', pyFileRes.output);
     } else {
