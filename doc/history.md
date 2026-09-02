@@ -2,6 +2,10 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v4.0.0 — 2026-09-02
+
+**Kurumsal Ağ & Gelişmiş Protokol Mimarisi** — EIGRP for IPv6, IP/IPv6 Prefix-List, Route-Map politika motoru (`match` & `set`), GLBP (Gateway Load Balancing Protocol sanal router grubu, AVG seçimi), STP Loop Guard ve NetFlow trafik izleme motoru ile tam dokümantasyon ve yardım entegrasyonu tamamlanarak Sürüm 4.0.0 ana yayın seviyesine geçildi.
+
 ## v3.9.0 — 2026-09-02
 
 **Gelişmiş Ağ Protokolleri & CLI Dokümantasyon/Yardım Entegrasyonu** — EIGRP for IPv6 (`ipv6 router eigrp`, `ipv6 eigrp <as>`, DUAL IPv6 metric hesabı), IP/IPv6 Prefix-List (`ip/ipv6 prefix-list`), Route-Map politika motoru (`route-map`, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference`), GLBP (Gateway Load Balancing Protocol sanal router grubu, AVG seçimi ve `0007.b400.XXXX` sanal MAC üretimi), STP Loop Guard (`spanning-tree loopguard default`, `spanning-tree guard loop`) ve NetFlow (`ip flow-export`, `ip flow ingress/egress`, `show ip cache flow`) protokol simülasyonları eklendi. Tüm yeni komutlar CLI yardım penceresine, inline tab-completion mimarisine ve `CLI_COMMANDS.md` dokümantasyonuna entegre edildi.

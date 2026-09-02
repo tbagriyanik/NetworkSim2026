@@ -49,7 +49,8 @@
 | `Switch(config-if)#` | Interface | Port config (`switchport`, `ip address`, `shutdown`) |
 | `Switch(config-line)#` | Line | Console/VTY config (`password`, `login`) |
 | `Switch(config-vlan)#` | VLAN | VLAN config (`name`, `state`) |
-| `Switch(config-router)#` | Router | RIP/OSPF config (`network`, `router-id`) |
+| `Switch(config-router)#` | Router | RIP/OSPF/EIGRP/IPv6 EIGRP config (`network`, `router-id`) |
+| `Switch(config-route-map)#` | Route-Map | Route policy config (`match`, `set`) |
 | `Switch(dhcp-config)#` | DHCP Pool | DHCP config (`network`, `default-router`) |
 | `Switch(config-ssid)#` | SSID Config | SSID security (`authentication`, `guest-mode`, `mbssid`) |
 | `Switch(config-dot11)#` | Dot11 Wireless | Wireless radio (`channel`, `speed`, `station-role`, `power`) |

@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-3.9.0-blue)
+![Version](https://img.shields.io/badge/version-4.0.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.3-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -8,9 +8,9 @@
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
 ![Total Lines](https://img.shields.io/badge/total--lines-153,637-lightgrey)
 
-A browser-based network simulator for learning switching, routing, wireless, IoT, CLI, and exam workflows.
+A comprehensive, client-side, browser-based network simulator for learning switching, routing, wireless, security, IoT, CLI terminal workflows, and CCNA 200-301 prep.
 
-**Live app:** [network2026.vercel.app](https://network2026.vercel.app) · **Alternatif Adres:** [tuzlanet.vercel.app](https://tuzlanet.vercel.app)
+**Live App:** [network2026.vercel.app](https://network2026.vercel.app) · **Alternative:** [tuzlanet.vercel.app](https://tuzlanet.vercel.app)
 
 ### Demo & Videos / Tanıtım Videoları
 - 📺 **Tanıtım 1:** [https://www.youtube.com/watch?v=2Xo-ZP5qgXI](https://www.youtube.com/watch?v=2Xo-ZP5qgXI)
@@ -18,32 +18,55 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 ---
 
-## Quick Start
+## ⚡ Quick Start / Hızlı Başlangıç
 
 ```bash
-npm install && npm run dev
+# Depoyu klonlayın ve bağımlılıkları yükleyin
+npm install
+
+# Geliştirme sunucusunu başlatın (http://localhost:3000)
+npm run dev
+
+# Tip kontrolü, lint ve testleri çalıştırın
+npx tsc --noEmit
+npm run lint
+npm test
 ```
 
-## Recent Updates / Son Güncellemeler
+---
 
-- **Gelişmiş Ağ Protokolleri & CLI Dokümantasyon/Yardım Entegrasyonu (v3.9.0):** EIGRP for IPv6, IP/IPv6 Prefix-List, Route-Map politika motoru (`match` & `set`), GLBP sanal router grubu ve AVG seçimi, STP Loop Guard (`spanning-tree loopguard default`, `spanning-tree guard loop`) ve NetFlow (`ip flow-export`, `ip flow ingress/egress`, `show ip cache flow`) protokol simülasyonları eklendi. Tüm yeni komutlar CLI yardım penceresine, inline tab-completion mimarisine ve dokümantasyona entegre edildi.
-- **Topoloji Not İçi Klavye & Giriş Koruması (v3.8.0):** Not (`NoteNode`) ve metin düzenleme alanlarında yazı yazılırken global topoloji klavye kısayollarının (`TAB`, nümerik `0`, `+`, `-`, `Home`) engellenmesi sağlandı. `TAB` tuşunun not metni içinde 4 boşlukluk girinti (`indentation` / `outdentation`) yapacak şekilde özelleştirildi; `0`, `+`, `-`, `Home` gibi tuşların nesne seçimi veya görünüm sıfırlama tetiklemeden doğrudan metne yansıması sağlandı.
-- **Rehberli Ders & Sınav Modu Geliştirmeleri (v3.7.0):** 19 rehberli ders konusuna özel 2-3 soruluk bilgi quiz'leri entegre edildi ve puan sistemine bağlandı. PDF sertifika oluşturucu Canvas High-DPI Türkçe karakter (Ş, İ, Ğ, Ç, Ö, Ü) motoru ile yenilendi. Rehberli Dersler ana sekme yapıldı. Statik Yönlendirme ve SOHO Ağ Kurulum derslerinin tüm CLI/DHCP/WiFi adımları ve ip geçit yönlendirmeleri sıfırdan doğrulandı.
+## 🚀 Key Features & Version Highlights (v4.0.0)
 
-## Stats / İstatistikler
+- **🌐 Advanced Routing & Policy Engine:** 
+  - **EIGRP for IPv6:** `ipv6 router eigrp <as>`, router-id configuration, interface-based `ipv6 eigrp <as>`, DUAL IPv6 metric calculation, and `show ipv6 eigrp neighbors/topology`.
+  - **IP & IPv6 Prefix-List:** `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` policy engine with prefix matching verification.
+  - **Route-Map Engine:** `route-map <name> {permit|deny} [<seq>]`, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference`, and `show route-map`.
+  - **GLBP (Gateway Load Balancing Protocol):** Active Virtual Gateway (AVG) election, `0007.b400.XXXX` virtual MAC generation, `glbp priority/preempt/weighting`, and `show glbp [brief]`.
+  - **STP Loop Guard:** `spanning-tree loopguard default` (global) and `spanning-tree guard loop` (interface) preventing bridge loops under unidirectional links.
+  - **NetFlow Export Engine:** `ip flow-export destination <ip> <port>`, `ip flow-export version {5|9}`, interface `ip flow ingress/egress`, and live `show ip cache flow` monitoring.
+- **🎓 Guided Lessons & Interactive Quiz Engine:** 19 step-by-step guided tutorials with topic-specific quizzes and real-time score tracking.
+- **📄 High-DPI PDF Certificate Generator:** Canvas 2400x1700 High-DPI renderer with 100% accurate Turkish character support (`Ş`, `İ`, `Ğ`, `Ç`, `Ö`, `Ü`).
+- **🛡️ Security & Switching:** 802.1Q Trunking, VTP, Port Security, DHCP Snooping, Dynamic ARP Inspection (DAI), IP Source Guard, NAT/PAT, GRE Tunnels, PPPoE, and SSH v2.
+- **📊 Packet Capture:** Deep inspection of L2 Ethernet, L3 IP/IPv6, L4 TCP/UDP, ICMP, DHCP, DNS, and ARP frames.
+
+---
+
+## 📊 Stats / İstatistikler
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.9.0 |
-| Total Lines / Toplam Satır (src/) | 153,637 |
+| Version / Sürüm | 4.0.0 |
+| Total Lines / Toplam Satır (`src/`) | 153,637 |
 | Source Files / Kaynak Dosya | 666 |
 | Documentation Files / Dokümantasyon Dosya | 31 |
 | Example Projects / Örnek Proje | 46 |
 | Guided Lessons / Rehberli Ders | 19 |
-| Exams / Sınavlar | Sınav modu desteği |
-| CLI Commands / CLI Komutları | CLI referansında listelenen komutlar |
+| Exams / Sınavlar | Sınav modu ve sertifika motoru |
+| CLI Commands / CLI Komutları | 100+ Cisco IOS uyumlu komut |
 
-## Documentation / Dokümantasyon
+---
+
+## 📖 Documentation / Dokümantasyon
 
 | Bölüm / Section | Doküman / Document | Açıklama / Description |
 | --- | --- | --- |
@@ -63,9 +86,10 @@ npm install && npm run dev
 |  | [history.md](doc/history.md) | Sürüm geçmişi / Changelog |
 | **Geliştirme / Development** | [CONTRIBUTING.md](doc/development/CONTRIBUTING.md) | Katkı ve geliştirme rehberi / Contribution guide |
 
-## Keyboard Shortcuts / Klavye Kısayolları
+---
 
-For a quick reference of simulator controls, expand the list below. For more details, see [USAGE.md](doc/getting-started/USAGE.md).
+## ⌨️ Keyboard Shortcuts / Klavye Kısayolları
+
 Simülatör kontrollerine hızlıca göz atmak için aşağıdaki listeyi genişletin. Daha fazla detay için [USAGE.md](doc/getting-started/USAGE.md) dosyasına bakın.
 
 <details>
@@ -125,13 +149,20 @@ Simülatör kontrollerine hızlıca göz atmak için aşağıdaki listeyi geniş
 
 </details>
 
+---
 
-## Tech Stack / Teknoloji
+## 🛠️ Tech Stack / Teknoloji
 
-Next.js 16.3, React 19, TypeScript 7.0, Tailwind CSS 4, Radix UI, Zustand 5.0
+- **Framework:** Next.js 16 (App Router), React 19
+- **Language:** TypeScript 7.0
+- **Styling:** Tailwind CSS 4, Radix UI Icons & Components
+- **State Management:** Zustand 5.0
+- **PDF Engine:** jsPDF + High-DPI HTML5 Canvas
 
-## License / Lisans
+---
 
-Free and open source. See [LICENSE](LICENSE).
+## 📜 License / Lisans
+
+Free and open source under the MIT License. See [LICENSE](LICENSE).
 
 Özgür ve açık kaynak. [LICENSE](LICENSE) dosyasına bakın.
