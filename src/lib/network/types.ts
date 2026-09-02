@@ -86,7 +86,8 @@ export type CommandMode =
   | 'config-std-nacl'  // Router(config-std-nacl)# - Named standard ACL
   | 'config-ext-nacl'  // Router(config-ext-nacl)# - Named extended ACL
   | 'config-ipv6-acl'  // Router(config-ipv6-acl)# - Named IPv6 ACL
-  | 'config-mst';      // Switch(config-mst)# - MST configuration mode
+  | 'config-mst'        // Switch(config-mst)# - MST configuration mode
+  | 'config-route-map'; // Router(config-route-map)# - Route-map configuration mode
 
 // Port status and mode types are now defined above as centralized types
 type VoiceVlanMode = number | 'dot1p' | 'none' | 'untagged';
@@ -187,6 +188,8 @@ export interface Port {
     state?: 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled';
     portfast?: boolean;
     bpduguard?: boolean;
+    loopguard?: 'enable' | 'disable' | 'default';
+    loopInconsistent?: boolean;
     instances?: Record<number, {
       role?: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';
       state?: 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled';
@@ -338,6 +341,24 @@ export interface Port {
       state?: 'Init' | 'Backup' | 'Master';
     }>;
   };
+  glbp?: {
+    groups?: Record<number, {
+      virtualIp?: string;
+      priority?: number;
+      preempt?: boolean;
+      loadBalancing?: 'round-robin' | 'weighted' | 'host-dependent';
+      weighting?: number;
+      state?: 'Listen' | 'Speak' | 'Standby' | 'Active';
+      avgMac?: string;
+      avfMacs?: Record<number, string>;
+    }>;
+  };
+  ipv6Eigrp?: {
+    enabled: boolean;
+    as: string;
+  };
+  netflowIngress?: boolean;
+  netflowEgress?: boolean;
   ipv6TrafficFilterIn?: string;
   ipv6TrafficFilterOut?: string;
   natSide?: 'inside' | 'outside';
@@ -503,6 +524,48 @@ export interface SwitchState {
   startupConfig?: StartupConfig;
   flashFiles?: Record<string, string[]>;
   flashStartupConfigs?: Record<string, StartupConfig>;
+  loopguardDefault?: boolean;
+  eigrp6Config?: {
+    as?: string;
+    routerId?: string;
+    shutdown?: boolean;
+  };
+  prefixLists?: Record<string, {
+    seq: number;
+    action: 'permit' | 'deny';
+    prefix: string;
+    ge?: number;
+    le?: number;
+  }[]>;
+  ipv6PrefixLists?: Record<string, {
+    seq: number;
+    action: 'permit' | 'deny';
+    prefix: string;
+    ge?: number;
+    le?: number;
+  }[]>;
+  currentRouteMap?: string;
+  routeMaps?: Record<string, {
+    seq: number;
+    action: 'permit' | 'deny';
+    matchRules: Record<string, unknown>;
+    setRules: Record<string, unknown>;
+  }[]>;
+  netflowConfig?: {
+    exportDestination?: string;
+    exportPort?: number;
+    version?: number;
+  };
+  netflowCache?: {
+    srcIp: string;
+    dstIp: string;
+    proto: string;
+    srcPort: number;
+    dstPort: number;
+    pkts: number;
+    bytes: number;
+    active: number;
+  }[];
   // New routing fields
   isLayer3Switch?: boolean;        // L3 switch capability
   staticRoutes?: Route[];          // Static routing table

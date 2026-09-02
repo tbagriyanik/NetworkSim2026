@@ -2,6 +2,7 @@ import { iosModeError } from './iosErrors';
 import type { CommandContext } from './commandTypes';
 import type { SwitchState, CommandResult, Port } from '../types';
 import type { CanvasDevice } from '@/components/network/networkTopology.types';
+import { isValidIPv4Format } from '../dns';
 
 /**
  * Write Memory - Save configuration
@@ -173,8 +174,8 @@ export function cmdCopyTftp(state: SwitchState, input: string, ctx: CommandConte
         filename = state.hostname ? `${state.hostname.toLowerCase()}-config` : 'router-config';
     }
 
-    // Validate IP
-    const isIp = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(targetIp);
+    // Validate IP (octet range 0-255 enforced)
+    const isIp = isValidIPv4Format(targetIp);
     if (!isIp) {
         return { success: false, error: `% Invalid target address: ${targetIp}` };
     }

@@ -265,7 +265,13 @@ export function expandKeywordPrefixes(input: string, currentMode: CommandMode, c
     }
     if (matches.length === 0) break;
     const uniqueKeywords = Array.from(new Set(matches.map(m => m.keyword)));
-    if (uniqueKeywords.length === 1) {
+    if (uniqueKeywords.includes(token)) {
+      expanded[i] = token;
+      const matched = matches.find(m => m.keyword === token);
+      if (matched) {
+        frontier = [matched.child];
+      }
+    } else if (uniqueKeywords.length === 1) {
       expanded[i] = uniqueKeywords[0];
       const matched = matches.find(m => m.keyword === uniqueKeywords[0]);
       if (matched) {

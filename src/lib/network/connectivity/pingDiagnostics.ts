@@ -100,7 +100,11 @@ export function getPingDiagnostics(
 
   // Resolve hostname to IP if necessary
   let resolvedTargetIp = targetIp;
-  const isIpAddress = (val: string) => /^(\d{1,3}\.){3}\d{1,3}$/.test(val) || val.includes(':');
+  const isIpAddress = (val: string) => {
+    if (val.includes(':')) return true;
+    const parts = val.split('.');
+    return parts.length === 4 && parts.every(p => /^\d{1,3}$/.test(p) && Number(p) >= 0 && Number(p) <= 255);
+  };
   if (!isIpAddress(targetIp)) {
     const resolvedIp = resolveHostname(targetIp, devices, deviceStates, deviceMap);
     if (!resolvedIp) {

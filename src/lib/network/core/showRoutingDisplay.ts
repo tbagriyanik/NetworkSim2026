@@ -1135,8 +1135,149 @@ export function cmdShowIpv6Neighbors(state: SwitchState, _input: string, _ctx: C
     const paddedAge = ageStr.padStart(3, ' ');
     const paddedMac = mac.padEnd(15, ' ');
     const paddedState = entry.state.padEnd(5, ' ');
-
     output += `${paddedAddress} ${paddedAge} ${paddedMac} ${paddedState} ${entry.interface}\n`;
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowPrefixList(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  const isIpv6 = /ipv6/i.test(input);
+  const targetKey = isIpv6 ? 'ipv6PrefixLists' : 'prefixLists';
+  const prefixLists = state[targetKey] || {};
+  const names = Object.keys(prefixLists);
+
+  if (names.length === 0) {
+    return { success: true, output: `\n% No ${isIpv6 ? 'ipv6' : 'ip'} prefix-lists configured\n` };
+  }
+
+  let output = '\n';
+  names.forEach(name => {
+    const entries = prefixLists[name];
+    output += `${isIpv6 ? 'ipv6' : 'ip'} prefix-list ${name}: ${entries.length} entries\n`;
+    entries.forEach(e => {
+      let line = `   seq ${e.seq} ${e.action} ${e.prefix}`;
+      if (e.ge !== undefined) line += ` ge ${e.ge}`;
+      if (e.le !== undefined) line += ` le ${e.le}`;
+      output += `${line}\n`;
+    });
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowRouteMap(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const routeMaps = state.routeMaps || {};
+  const names = Object.keys(routeMaps);
+
+  if (names.length === 0) {
+    return { success: true, output: '\n% No route-maps configured\n' };
+  }
+
+  let output = '\n';
+  names.forEach(name => {
+    const clauses = routeMaps[name];
+    clauses.forEach(c => {
+      output += `route-map ${name}, ${c.action}, sequence ${c.seq}\n`;
+      output += '  Match clauses:\n';
+      const mKeys = Object.keys(c.matchRules || {});
+      if (mKeys.length === 0) {
+        output += '    none\n';
+      } else {
+        if (c.matchRules.prefixList) output += `    ip address prefix-list ${c.matchRules.prefixList}\n`;
+        if (c.matchRules.acl) output += `    ip address ${c.matchRules.acl}\n`;
+        if (c.matchRules.interface) output += `    interface ${c.matchRules.interface}\n`;
+      }
+      output += '  Set clauses:\n';
+      const sKeys = Object.keys(c.setRules || {});
+      if (sKeys.length === 0) {
+        output += '    none\n';
+      } else {
+        if (c.setRules.metric !== undefined) output += `    metric ${c.setRules.metric}\n`;
+        if (c.setRules.nextHop) output += `    ip next-hop ${c.setRules.nextHop}\n`;
+        if (c.setRules.localPreference !== undefined) output += `    local-preference ${c.setRules.localPreference}\n`;
+      }
+    });
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowIpv6EigrpNeighbors(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const as = state.eigrp6Config?.as;
+  if (!as) return { success: true, output: '\n% EIGRPv6 is not configured\n' };
+
+  let output = `\nEIGRP-IPv6 Neighbors for AS(${as})\n`;
+  output += 'H   Address                                 Interface       Hold Uptime   SRTT   RTO  Q  Seq\n';
+  output += '                                                            (sec)         (ms)        Cnt Num\n';
+
+  let hIdx = 0;
+  Object.values(state.ports || {}).forEach(port => {
+    if (port.ipv6Eigrp?.enabled && !port.shutdown) {
+      const neighborIp = port.ipv6LinkLocal || 'FE80::1';
+      output += `${hIdx.toString().padEnd(4)} ${neighborIp.padEnd(39)} ${port.id.padEnd(15)} 14 00:04:12    1   200  0  5\n`;
+      hIdx++;
+    }
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowGlbp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  let output = '\n';
+  let found = false;
+
+  Object.entries(state.ports || {}).forEach(([portId, port]) => {
+    if (port.glbp?.groups) {
+      Object.entries(port.glbp.groups).forEach(([gId, group]) => {
+        found = true;
+        output += `${portId} - Group ${gId}\n`;
+        output += `  State is ${group.state || 'Listen'}\n`;
+        output += `  Virtual IP address is ${group.virtualIp || '192.168.1.254'}\n`;
+        output += `  Active is ${group.state === 'Active' ? 'local' : '192.168.1.1'}\n`;
+        output += `  Standby is ${group.state === 'Standby' ? 'local' : '192.168.1.2'}\n`;
+        output += `  Virtual MAC address is ${group.avgMac || '0007.b400.0101'} (Active)\n`;
+        if (group.loadBalancing) {
+          output += `  Load balancing mode is ${group.loadBalancing}\n`;
+        }
+      });
+    }
+  });
+
+  if (!found) {
+    return { success: true, output: '\n% GLBP is not configured on any interface\n' };
+  }
+
+  return { success: true, output };
+}
+
+export function cmdShowIpFlowExport(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const conf = state.netflowConfig;
+  if (!conf || !conf.exportDestination) {
+    return { success: true, output: '\nNetFlow export is disabled\n' };
+  }
+
+  let output = '\nNetFlow export status:\n';
+  output += `  Version ${conf.version || 5} export flow records\n`;
+  output += `  Exporting flows to ${conf.exportDestination} port ${conf.exportPort || 2055}\n`;
+  output += '  Exporting source loopback 0\n';
+  output += '  1542 packets exported, 34 exports executed\n';
+  return { success: true, output };
+}
+
+export function cmdShowIpCacheFlow(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const cache = state.netflowCache || [
+    { srcIp: '10.0.0.5', dstIp: '192.168.1.100', proto: '06', srcPort: 443, dstPort: 80, pkts: 24, bytes: 14200, active: 12 },
+    { srcIp: '10.0.0.8', dstIp: '172.16.0.2', proto: '11', srcPort: 53, dstPort: 53, pkts: 4, bytes: 320, active: 2 }
+  ];
+
+  let output = '\nIP packet size distribution (100 total packets):\n';
+  output += '  1-32   64  128  256  512 1024\n';
+  output += '  .000 .800 .100 .050 .050 .000\n\n';
+  output += 'SrcIf          SrcIPaddress    DstIf          DstIPaddress    Pr SrcP DstP  Pkts\n';
+
+  cache.forEach(c => {
+    output += `Gi0/0          ${c.srcIp.padEnd(15)} Gi0/1          ${c.dstIp.padEnd(15)} ${c.proto} ${c.srcPort.toString().padStart(4, '0')} ${c.dstPort.toString().padStart(4, '0')} ${c.pkts.toString().padStart(5)}\n`;
   });
 
   return { success: true, output };

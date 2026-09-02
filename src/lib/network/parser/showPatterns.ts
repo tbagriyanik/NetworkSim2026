@@ -457,5 +457,46 @@ export const showPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
-
+  'show ip prefix-list': {
+    pattern: /^show\s+ip\s+prefix-list.*$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show ipv6 prefix-list': {
+    pattern: /^show\s+ipv6\s+prefix-list.*$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show route-map': {
+    pattern: /^show\s+route-map.*$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show ipv6 eigrp neighbors': {
+    pattern: /^show\s+ipv6\s+eigrp\s+(neighbors|topology)$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show glbp': {
+    pattern: /^show\s+glbp.*$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show ip flow export': {
+    pattern: /^show\s+ip\s+flow\s+export$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
+  'show ip cache flow': {
+    pattern: /^show\s+ip\s+cache\s+flow$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 2
+  },
 };

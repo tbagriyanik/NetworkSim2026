@@ -37,7 +37,9 @@ import {
   cmdShowIpEigrpNeighbors, cmdShowIpEigrpInterfaces, cmdShowIpBgpSummary,
   cmdShowIpBgp, cmdShowIpv6Rip, cmdShowIpv6Ospf,
   cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
-  cmdShowIpv6Neighbors,
+  cmdShowIpv6Neighbors, cmdShowPrefixList, cmdShowRouteMap,
+  cmdShowIpv6EigrpNeighbors, cmdShowGlbp, cmdShowIpFlowExport,
+  cmdShowIpCacheFlow,
 } from './showRoutingDisplay';
 
 // Show komutları (show running-config, show vlan, show ip route, vs.)
@@ -158,6 +160,15 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show vrrp brief': cmdShowVrrpBrief,
   'show ipv6 access-list': cmdShowIpv6AccessList,
   'show ipv6 access-lists': cmdShowIpv6AccessList,
+  'show ip prefix-list': cmdShowPrefixList,
+  'show ipv6 prefix-list': cmdShowPrefixList,
+  'show route-map': cmdShowRouteMap,
+  'show ipv6 eigrp neighbors': cmdShowIpv6EigrpNeighbors,
+  'show ipv6 eigrp topology': cmdShowIpv6EigrpNeighbors,
+  'show glbp': cmdShowGlbp,
+  'show glbp brief': cmdShowGlbp,
+  'show ip flow export': cmdShowIpFlowExport,
+  'show ip cache flow': cmdShowIpCacheFlow,
 };
 
 function cmdShowIpSlaStatistics(state: SwitchState): CommandResult {
@@ -644,69 +655,25 @@ function cmdDoShow(
   input: string,
   ctx: CommandContext
 ): CommandResult {
-  // Extract the show command from "do show ..." or "do sh ..."
   const match = input.match(/^do\s+(sh(?:ow)?\s+.+)$/i);
   if (!match) {
     return { success: false, error: '% Invalid command' };
   }
 
   let showCommand = match[1];
-  // Normalize "sh" to "show"
   if (showCommand.startsWith('sh ')) {
     showCommand = 'show ' + showCommand.substring(3);
   }
 
-  // Parse the show command
-  const parts = showCommand.split(/\s+/);
-  const cmd = parts[0].toLowerCase();
-  const subCmd = parts.slice(1).join(' ').toLowerCase();
-
-  // Route to appropriate show handler
-  if (cmd === 'show') {
-    if (subCmd.startsWith('running-config') || subCmd.startsWith('run')) {
-      return cmdShowRunningConfig(state, showCommand, ctx);
-    } else if (subCmd.startsWith('startup-config') || subCmd.startsWith('start')) {
-      return cmdShowStartupConfig(state, showCommand, ctx);
-    } else if (subCmd.startsWith('version') || subCmd.startsWith('ver')) {
-      return cmdShowVersion(state, showCommand, ctx);
-    } else if (subCmd.startsWith('interfaces') || subCmd.startsWith('int')) {
-      return cmdShowInterfaces(state, showCommand, ctx);
-    } else if (subCmd.startsWith('interface')) {
-      return cmdShowInterface(state, showCommand, ctx);
-    } else if (subCmd.startsWith('ip interface brief') || subCmd.startsWith('ip interfaces brief') || subCmd.startsWith('ip int br')) {
-      return cmdShowIpInterfaceBrief(state, showCommand, ctx);
-    } else if (subCmd.startsWith('ip interface') || subCmd.startsWith('ip int')) {
-      return cmdShowIpInterfaceBrief(state, showCommand, ctx);
-    } else if (subCmd.startsWith('vlan') || subCmd.startsWith('vl')) {
-      return cmdShowVlan(state, showCommand, ctx);
-    } else if (subCmd.startsWith('mac address-table') || subCmd.startsWith('mac')) {
-      return cmdShowMacAddressTable(state, showCommand, ctx);
-    } else if (subCmd.startsWith('cdp neighbors') || subCmd.startsWith('cdp')) {
-      return cmdShowCdpNeighbors(state, showCommand, ctx);
-    } else if (subCmd.startsWith('lldp neighbors') || subCmd.startsWith('lldp')) {
-      return cmdShowLldp(state, showCommand, ctx);
-    } else if (subCmd.startsWith('ip route') || subCmd.startsWith('ip ro')) {
-      return cmdShowIpRoute(state, showCommand, ctx);
-    } else if (subCmd.startsWith('clock')) {
-      return cmdShowClock(state, showCommand, ctx);
-    } else if (subCmd.startsWith('flash')) {
-      return cmdShowFlash(state, showCommand, ctx);
-    } else if (subCmd.startsWith('boot')) {
-      return cmdShowBoot(state, showCommand, ctx);
-    } else if (subCmd.startsWith('spanning-tree') || subCmd.startsWith('sp')) {
-      return cmdShowSpanningTree(state, showCommand, ctx);
-    } else if (subCmd.startsWith('port-security') || subCmd.startsWith('port')) {
-      return cmdShowPortSecurity(state, showCommand, ctx);
-    } else if (subCmd.startsWith('wireless')) {
-      return cmdShowWireless(state, showCommand, ctx);
-    } else if (subCmd.startsWith('ssh')) {
-      return cmdShowSsh(state, showCommand, ctx);
-    } else {
-      return { success: false, error: "% Invalid input detected at '^' marker." };
-    }
+  const lowered = showCommand.toLowerCase();
+  const showKey = Object.keys(showHandlers)
+    .filter(key => lowered === key || lowered.startsWith(`${key} `))
+    .sort((a, b) => b.length - a.length)[0];
+  if (showKey && showHandlers[showKey]) {
+    return showHandlers[showKey](state, showCommand, ctx);
   }
 
-  return { success: false, error: '% Invalid command' };
+  return { success: false, error: "% Invalid input detected at '^' marker." };
 }
 
 /**

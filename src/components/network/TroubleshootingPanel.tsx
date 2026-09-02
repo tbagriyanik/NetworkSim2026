@@ -21,6 +21,7 @@ import { checkFaultResolved, FaultDefinition } from '@/lib/network/faults';
 import { ExamTask } from '@/lib/network/examMode';
 import { bringElementToFront } from '@/lib/utils/zIndex';
 import { generateCertificate } from '@/lib/utils/certificateGenerator';
+import { usePrompt } from '@/contexts/PromptContext';
 
 interface TroubleshootingPanelProps {
   project: ExampleProject | null;
@@ -42,6 +43,7 @@ export function TroubleshootingPanel({
   isMinimized
 }: TroubleshootingPanelProps) {
   const { t, language } = useLanguage();
+  const { openPrompt } = usePrompt();
 
   // Drag state
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -121,7 +123,13 @@ export function TroubleshootingPanel({
 
   const handleDownloadCertificate = async () => {
     if (!project) return;
-    const studentName = prompt(language === 'tr' ? 'Sertifika için adınızı girin:' : 'Enter your name for the certificate:') || 'Student';
+    const result = await openPrompt({
+      title: language === 'tr' ? 'Sertifika' : 'Certificate',
+      message: language === 'tr' ? 'Sertifika için adınızı girin:' : 'Enter your name for the certificate:',
+      confirmLabel: language === 'tr' ? 'İndir' : 'Download',
+      cancelLabel: language === 'tr' ? 'Vazgeç' : 'Cancel',
+    });
+    const studentName = result.confirmed && result.value.trim() ? result.value.trim() : 'Student';
 
     await generateCertificate({
       studentName,

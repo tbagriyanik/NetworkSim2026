@@ -243,6 +243,30 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 3
   },
+  'ipv6 eigrp': {
+    pattern: /^ipv6\s+eigrp\s+(\d+)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'glbp': {
+    pattern: /^glbp\s+\d+\s+(?:ip(?:\s+\S+)?|priority\s+\d+|preempt|load-balancing\s+(?:round-robin|weighted|host-dependent))$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 4
+  },
+  'spanning-tree guard loop': {
+    pattern: /^spanning-tree\s+guard\s+(?:loop|none)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'ip flow ingress': {
+    pattern: /^ip\s+flow\s+(?:ingress|egress)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'no shutdown': {
     pattern: /^no\s+shutdown$/i,
     modes: ['interface', 'config-if-range', 'dot11-config'],

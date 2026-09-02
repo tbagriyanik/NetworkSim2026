@@ -6,6 +6,7 @@ import { LayoutProvider } from '@/contexts/LayoutContext';
 import { FeatureFlagProvider } from '@/contexts/FeatureFlagContext';
 import { ModeProvider } from '@/contexts/ModeContext';
 import { RoomProvider } from '@/contexts/RoomContext';
+import { PromptProvider } from '@/contexts/PromptContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { GlobalDragManager } from '@/hooks/useDrag';
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <FeatureFlagProvider>
               <ModeProvider>
                 <RoomProvider>
+                  <PromptProvider>
                   <TooltipProvider delayDuration={0}>
                     <SidebarProvider>
                       <GlobalDragManager />
@@ -28,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                       <Toaster />
                     </SidebarProvider>
                   </TooltipProvider>
+                  </PromptProvider>
                 </RoomProvider>
               </ModeProvider>
             </FeatureFlagProvider>

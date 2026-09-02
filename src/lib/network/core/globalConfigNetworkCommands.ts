@@ -270,3 +270,112 @@ export function cmdSpanningTreeMst(state: SwitchState, _input: string, _ctx: Com
     newState: { currentMode: 'config-mst', spanningTreeMode: 'mst' }
   };
 }
+
+export function cmdIpPrefixList(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^(?:ip|ipv6)\s+prefix-list\s+(\S+)(?:\s+seq\s+(\d+))?\s+(permit|deny)\s+(\S+)(?:\s+ge\s+(\d+))?(?:\s+le\s+(\d+))?$/i);
+  const isIpv6 = /^ipv6/i.test(input);
+  if (!match) return { success: false, error: `% Invalid ${isIpv6 ? 'ipv6' : 'ip'} prefix-list command syntax` };
+
+  const name = match[1];
+  const seq = match[2] ? parseInt(match[2], 10) : 5;
+  const action = match[3].toLowerCase() as 'permit' | 'deny';
+  const prefix = match[4];
+  const ge = match[5] ? parseInt(match[5], 10) : undefined;
+  const le = match[6] ? parseInt(match[6], 10) : undefined;
+
+  const targetKey = isIpv6 ? 'ipv6PrefixLists' : 'prefixLists';
+  const existingMap: Record<string, { seq: number; action: 'permit' | 'deny'; prefix: string; ge?: number; le?: number }[]> = { ...state[targetKey] };
+  const entries = [...(existingMap[name] ?? [])];
+
+  entries.push({ seq, action, prefix, ge, le });
+  entries.sort((a, b) => a.seq - b.seq);
+  existingMap[name] = entries;
+
+  const newState = { [targetKey]: existingMap };
+  const updatedState = { ...state, ...newState };
+
+  return {
+    success: true,
+    output: '',
+    newState: { ...newState, runningConfig: buildRunningConfig(updatedState) }
+  };
+}
+
+export function cmdRouteMap(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^route-map\s+(\S+)(?:\s+(permit|deny))?(?:\s+(\d+))?$/i);
+  if (!match) return { success: false, error: '% Invalid route-map command syntax' };
+
+  const name = match[1];
+  const action = (match[2] || 'permit').toLowerCase() as 'permit' | 'deny';
+  const seq = match[3] ? parseInt(match[3], 10) : 10;
+
+  const existingMap = { ...state.routeMaps };
+  const clauses = [...(existingMap[name] || [])];
+  if (!clauses.some(c => c.seq === seq)) {
+    clauses.push({ seq, action, matchRules: {}, setRules: {} });
+    clauses.sort((a, b) => a.seq - b.seq);
+    existingMap[name] = clauses;
+  }
+
+  return {
+    success: true,
+    output: '',
+    newState: {
+      currentMode: 'config-route-map',
+      currentRouteMap: `${name}:${seq}`,
+      routeMaps: existingMap
+    }
+  };
+}
+
+export function cmdIpv6RouterEigrp(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^ipv6\s+router\s+eigrp\s+(\d+)$/i);
+  if (!match) return { success: false, error: '% Invalid ipv6 router eigrp command syntax' };
+
+  const as = match[1];
+  const eigrp6Config = { ...state.eigrp6Config, as, shutdown: false };
+
+  return {
+    success: true,
+    output: '',
+    newState: {
+      currentMode: 'router-config',
+      eigrp6Config,
+      routingProtocol: 'eigrp'
+    }
+  };
+}
+
+export function cmdSpanningTreeLoopguardDefault(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const isNo = /^no\s+/i.test(input);
+  return {
+    success: true,
+    output: isNo ? 'Spanning-tree loopguard default disabled' : 'Spanning-tree loopguard default enabled',
+    newState: { loopguardDefault: !isNo }
+  };
+}
+
+export function cmdIpFlowExport(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  if (/^no\s+ip\s+flow-export/i.test(input)) {
+    return { success: true, output: 'NetFlow export disabled', newState: { netflowConfig: undefined } };
+  }
+
+  const destMatch = input.match(/^ip\s+flow-export\s+destination\s+(\S+)\s+(\d+)$/i);
+  if (destMatch) {
+    const netflowConfig = { ...state.netflowConfig, exportDestination: destMatch[1], exportPort: parseInt(destMatch[2], 10) };
+    return { success: true, output: `NetFlow destination ${destMatch[1]}:${destMatch[2]} configured`, newState: { netflowConfig } };
+  }
+
+  const verMatch = input.match(/^ip\s+flow-export\s+version\s+(5|9)$/i);
+  if (verMatch) {
+    const netflowConfig = { ...state.netflowConfig, version: parseInt(verMatch[1], 10) };
+    return { success: true, output: `NetFlow export version ${verMatch[1]} configured`, newState: { netflowConfig } };
+  }
+
+  return { success: false, error: '% Invalid ip flow-export command syntax' };
+}

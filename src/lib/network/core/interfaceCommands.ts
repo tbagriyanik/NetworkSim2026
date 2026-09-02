@@ -1,8 +1,132 @@
 import type { CommandHandler } from './commandTypes';
+import type { SwitchState } from '../types';
+import { buildRunningConfig } from './configBuilder';
+
+const getTargetPortKey = (state: SwitchState): string | undefined => {
+  if (!state.currentInterface) return undefined;
+  const target = state.currentInterface.toLowerCase();
+  return Object.keys(state.ports || {}).find(k => k.toLowerCase() === target) || state.currentInterface;
+};
+
+const cmdIpv6Eigrp: CommandHandler = (state, input, _ctx) => {
+  const match = input.match(/^ipv6\s+eigrp\s+(\d+)$/i);
+  if (!match || !state.currentInterface) return { success: false, error: '% Invalid ipv6 eigrp command syntax' };
+  const as = match[1];
+  const portKey = getTargetPortKey(state);
+  if (!portKey) return { success: false, error: '% Interface not found' };
+
+  const ports = { ...state.ports };
+  const port = ports[portKey];
+  if (!port) return { success: false, error: '% Interface not found' };
+
+  ports[portKey] = {
+    ...port,
+    ipv6Eigrp: { enabled: true, as }
+  };
+
+  const newState = { ports };
+  return {
+    success: true,
+    output: '',
+    newState: { ...newState, runningConfig: buildRunningConfig({ ...state, ...newState }) }
+  };
+};
+
+const cmdGlbp: CommandHandler = (state, input, _ctx) => {
+  const portKey = getTargetPortKey(state);
+  if (!portKey) return { success: false, error: '% No interface selected' };
+  const ipMatch = input.match(/^glbp\s+(\d+)\s+ip(?:\s+(\S+))?/i);
+  const prioMatch = input.match(/^glbp\s+(\d+)\s+priority\s+(\d+)/i);
+  const preemptMatch = input.match(/^glbp\s+(\d+)\s+preempt/i);
+  const lbMatch = input.match(/^glbp\s+(\d+)\s+load-balancing\s+(round-robin|weighted|host-dependent)/i);
+
+  const ports = { ...state.ports };
+  const port = ports[portKey];
+  if (!port) return { success: false, error: '% Interface not found' };
+
+  const glbp = { ...port.glbp, groups: { ...port.glbp?.groups } };
+
+  if (ipMatch) {
+    const groupId = parseInt(ipMatch[1], 10);
+    const virtualIp = ipMatch[2];
+    glbp.groups[groupId] = {
+      ...glbp.groups[groupId],
+      virtualIp: virtualIp || glbp.groups[groupId]?.virtualIp
+    };
+  } else if (prioMatch) {
+    const groupId = parseInt(prioMatch[1], 10);
+    glbp.groups[groupId] = {
+      ...glbp.groups[groupId],
+      priority: parseInt(prioMatch[2], 10)
+    };
+  } else if (preemptMatch) {
+    const groupId = parseInt(preemptMatch[1], 10);
+    glbp.groups[groupId] = {
+      ...glbp.groups[groupId],
+      preempt: true
+    };
+  } else if (lbMatch) {
+    const groupId = parseInt(lbMatch[1], 10);
+    glbp.groups[groupId] = {
+      ...glbp.groups[groupId],
+      loadBalancing: lbMatch[2].toLowerCase() as 'round-robin' | 'weighted' | 'host-dependent'
+    };
+  } else {
+    return { success: false, error: '% Invalid glbp command syntax' };
+  }
+
+  ports[portKey] = { ...port, glbp };
+  const newState = { ports };
+  return {
+    success: true,
+    output: '',
+    newState: { ...newState, runningConfig: buildRunningConfig({ ...state, ...newState }) }
+  };
+};
+
+const cmdSpanningTreeGuardLoop: CommandHandler = (state, input, _ctx) => {
+  const portKey = getTargetPortKey(state);
+  if (!portKey) return { success: false, error: '% No interface selected' };
+  const ports = { ...state.ports };
+  const port = ports[portKey];
+  if (!port) return { success: false, error: '% Interface not found' };
+
+  const isNone = /none/i.test(input) || /^no\s+/i.test(input);
+  const stp = { ...port.spanningTree, loopguard: (isNone ? 'disable' : 'enable') as 'enable' | 'disable' };
+  ports[portKey] = { ...port, spanningTree: stp };
+
+  const newState = { ports };
+  return {
+    success: true,
+    output: '',
+    newState: { ...newState, runningConfig: buildRunningConfig({ ...state, ...newState }) }
+  };
+};
+
+const cmdIpFlowInterface: CommandHandler = (state, input, _ctx) => {
+  const portKey = getTargetPortKey(state);
+  if (!portKey) return { success: false, error: '% No interface selected' };
+  const ports = { ...state.ports };
+  const port = ports[portKey];
+  if (!port) return { success: false, error: '% Interface not found' };
+
+  const isIngress = /ingress/i.test(input);
+  const isEgress = /egress/i.test(input);
+
+  if (isIngress) port.netflowIngress = true;
+  if (isEgress) port.netflowEgress = true;
+
+  const newState = { ports };
+  return {
+    success: true,
+    output: '',
+    newState: { ...newState, runningConfig: buildRunningConfig({ ...state, ...newState }) }
+  };
+};
 const cmdServicePolicy: CommandHandler = (state, input) => {
   const m = input.match(/^service-policy\s+(input|output)\s+(\S+)$/i);
   if (!m || !state.currentInterface) return { success: false, error: '% Invalid service-policy syntax' };
-  return { success: true, output: `Service-policy ${m[2]} applied ${m[1]} on ${state.currentInterface}`, newState: { qosServicePolicies: { ...state.qosServicePolicies, [state.currentInterface]: { direction: m[1].toLowerCase() as 'input'|'output', policy: m[2] } } } };
+  return { success: true, output: `Service-policy ${m[2]} applied ${m[1]} on ${state.currentInterface}`, newState: { qosServicePolicies: { ...state.qosServicePolicies, [state.currentInterface]: { direction: m[1].toLowerCase() as 'input' | 'output', policy: m[2] } } } };
 };
 import { cmdStormControl, cmdStormControlAction, cmdMlsQosTrust, cmdMlsQosCos, cmdPriorityQueueOut, cmdQueueSet, cmdTxQueue } from './interface/cmd.qos';
 import { cmdDot1xPort } from './dot1xCommands';
@@ -270,4 +394,10 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'no ip nat inside': cmdNoIpNatInside,
   'ip nat outside': cmdIpNatOutside,
   'no ip nat outside': cmdNoIpNatOutside,
+  'ipv6 eigrp': cmdIpv6Eigrp,
+  'glbp': cmdGlbp,
+  'spanning-tree guard loop': cmdSpanningTreeGuardLoop,
+  'spanning-tree guard none': cmdSpanningTreeGuardLoop,
+  'ip flow ingress': cmdIpFlowInterface,
+  'ip flow egress': cmdIpFlowInterface,
 };

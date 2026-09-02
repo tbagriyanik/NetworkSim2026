@@ -193,6 +193,103 @@ export function calculateEigrpRoutes(
   return routes;
 }
 
+/**
+ * Build EIGRPv6 Topology Table from device states
+ */
+export function buildEigrp6TopologyTable(
+  deviceId: string,
+  deviceStates: Map<string, SwitchState>
+): EigrpTopologyEntry[] {
+  const state = deviceStates.get(deviceId);
+  const myAs = state?.eigrp6Config?.as;
+  if (!state || !myAs || state.eigrp6Config?.shutdown) return [];
+
+  const topologyTable: EigrpTopologyEntry[] = [];
+
+  deviceStates.forEach((otherState, otherId) => {
+    if (otherId === deviceId) return;
+    const otherAs = otherState.eigrp6Config?.as;
+    if (!otherAs || otherAs !== myAs || otherState.eigrp6Config?.shutdown) return;
+
+    // Find connected IPv6 port to this neighbor
+    let connectedPort: Port | undefined;
+    let neighborIp: string | undefined;
+
+    for (const port of Object.values(state.ports)) {
+      if ((!port.ipv6Address && !port.ipv6LinkLocal) || port.shutdown || !port.ipv6Eigrp?.enabled || port.ipv6Eigrp.as !== myAs) continue;
+
+      const neighborPort = Object.values(otherState.ports).find(p =>
+        (p.ipv6Address || p.ipv6LinkLocal) && !p.shutdown && p.ipv6Eigrp?.enabled && p.ipv6Eigrp.as === myAs
+      );
+
+      if (neighborPort) {
+        connectedPort = port;
+        neighborIp = neighborPort.ipv6LinkLocal || neighborPort.ipv6Address?.split('/')[0];
+        break;
+      }
+    }
+
+    if (!connectedPort || !neighborIp) return;
+    const port = connectedPort;
+    const nip = neighborIp;
+
+    // 1. Neighbor's connected IPv6 networks
+    Object.values(otherState.ports).forEach(otherPort => {
+      if (!otherPort.ipv6Address || otherPort.shutdown) return;
+
+      const [addr, lenStr] = otherPort.ipv6Address.split('/');
+      const len = lenStr || '64';
+      const dest = addr;
+
+      const rd = 0;
+      const linkBw = getPortBandwidthKbps(port);
+      const linkDelay = getPortDelayUsec(port);
+      const cd = calculateEigrpMetric(linkBw, linkDelay) + rd;
+
+      topologyTable.push({
+        destination: dest,
+        subnetMask: len,
+        neighborId: otherId,
+        neighborIp: nip,
+        interfaceId: port.id,
+        reportedDistance: rd,
+        computedDistance: cd,
+        feasibleDistance: cd,
+        isSuccessor: false,
+        isFeasibleSuccessor: false,
+        state: 'Passive'
+      });
+    });
+  });
+
+  return runEigrpDual(topologyTable);
+}
+
+/**
+ * Calculate EIGRPv6 routes for a device
+ */
+export function calculateEigrp6Routes(
+  deviceId: string,
+  deviceStates: Map<string, SwitchState>
+): Route[] {
+  const convergedTable = buildEigrp6TopologyTable(deviceId, deviceStates);
+  const routes: Route[] = [];
+
+  convergedTable.forEach(entry => {
+    if (entry.isSuccessor) {
+      routes.push({
+        destination: entry.destination,
+        subnetMask: entry.subnetMask,
+        nextHop: entry.neighborIp,
+        type: 'dynamic',
+        metric: entry.computedDistance
+      });
+    }
+  });
+
+  return routes;
+}
+
 function getPortBandwidthKbps(port: Port): number {
   if (port.bandwidth) return port.bandwidth;
   if (port.type === 'gigabitethernet') return 1000000;

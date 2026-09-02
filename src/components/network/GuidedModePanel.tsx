@@ -32,6 +32,7 @@ import { TutorialAnimationPlayer } from './TutorialAnimationPlayer';
 import { generateCertificate } from '@/lib/utils/certificateGenerator';
 import { secureStorage } from '@/lib/storage/secureStorage';
 import { answerSdnQuiz, getQuizQuestionsForProject, SdnQuizQuestion } from '@/lib/network/sdnQuiz';
+import { usePrompt } from '@/contexts/PromptContext';
 
 interface GuidedModePanelProps {
   project: GuidedProject | null;
@@ -83,6 +84,7 @@ export function GuidedModePanel({
   onCheckAutoComplete
 }: GuidedModePanelProps) {
   const { t, language } = useLanguage();
+  const { openPrompt } = usePrompt();
 
   // Load hint and expanded states from localStorage
   const [showHint, setShowHint] = React.useState(() => {
@@ -462,7 +464,13 @@ export function GuidedModePanel({
 
   const handleDownloadCertificate = useCallback(async () => {
     if (!project) return;
-    const studentName = prompt(language === 'tr' ? 'Sertifika için adınızı girin:' : 'Enter your name for the certificate:') || 'Student';
+    const result = await openPrompt({
+      title: language === 'tr' ? 'Sertifika' : 'Certificate',
+      message: language === 'tr' ? 'Sertifika için adınızı girin:' : 'Enter your name for the certificate:',
+      confirmLabel: language === 'tr' ? 'İndir' : 'Download',
+      cancelLabel: language === 'tr' ? 'Vazgeç' : 'Cancel',
+    });
+    const studentName = result.confirmed && result.value.trim() ? result.value.trim() : 'Student';
 
     toast({
       title: language === 'tr' ? 'Sertifika hazırlanıyor...' : 'Preparing certificate...',
@@ -482,7 +490,7 @@ export function GuidedModePanel({
       title: language === 'tr' ? 'Sertifika Oluşturuldu!' : 'Certificate Generated!',
       description: language === 'tr' ? 'PDF dosyanız indiriliyor.' : 'Your PDF file is being downloaded.',
     });
-  }, [project, language, currentPoints, totalPoints]);
+  }, [project, language, currentPoints, totalPoints, openPrompt]);
 
   useEffect(() => {
     if (project && isAllCompleted) {

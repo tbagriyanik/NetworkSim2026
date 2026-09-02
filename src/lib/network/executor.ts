@@ -7,6 +7,7 @@ import { applyPipeFilterOutput as applyPipeFilterOutputExternal, processCommandR
 import { getSmartHint as getSmartHintExternal } from './executorHints';
 import { ensureDeviceStatesMap } from './networkUtils';
 import { IOS_ERRORS, iosModeError } from './core/iosErrors';
+import { buildRunningConfig } from './core/configBuilder';
 import type { CanvasDevice, CanvasConnection, DeviceType } from '@/components/network/networkTopology.types';
 
 // Import modular components
@@ -185,7 +186,6 @@ export function executeCommand(
   }
 
   const validation = validateCommand(parsed, state.currentMode, state);
-
   if (!validation.valid) {
     return processCommandResultExternal({
       success: false,
@@ -375,6 +375,64 @@ const commandHandlers: Record<string, CommandHandler> = {
   'no ip default-gateway': (state, input, ctx) => {
     if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['no ip default-gateway'](state, input, ctx);
     return globalConfigHandlers['no ip default-gateway'](state, input, ctx);
+  },
+  'match': (state, input, _ctx) => {
+    if (state.currentMode !== 'config-route-map' || !state.currentRouteMap) return { success: false, error: iosModeError() };
+    const [mapName, seqStr] = state.currentRouteMap.split(':');
+    const seq = parseInt(seqStr, 10);
+    const existing = { ...state.routeMaps };
+    const clauses = [...(existing[mapName] || [])];
+    const clauseIdx = clauses.findIndex(c => c.seq === seq);
+    if (clauseIdx === -1) return { success: false, error: '% Route-map clause not found' };
+
+    const matchRules = { ...clauses[clauseIdx].matchRules };
+    const matchPrefixList = input.match(/^match\s+(?:ip|ipv6)\s+address\s+prefix-list\s+(\S+)/i);
+    const matchAcl = input.match(/^match\s+ip\s+address\s+(\S+)/i);
+    const matchIntf = input.match(/^match\s+interface\s+(\S+)/i);
+
+    if (matchPrefixList) {
+      matchRules['prefixList'] = matchPrefixList[1];
+    } else if (matchAcl) {
+      matchRules['acl'] = matchAcl[1];
+    } else if (matchIntf) {
+      matchRules['interface'] = matchIntf[1];
+    } else {
+      return { success: false, error: '% Invalid match command' };
+    }
+
+    clauses[clauseIdx] = { ...clauses[clauseIdx], matchRules };
+    existing[mapName] = clauses;
+    const newState = { routeMaps: existing, currentMode: state.currentMode, currentRouteMap: state.currentRouteMap };
+    return { success: true, output: '', newState: { ...newState, runningConfig: buildRunningConfig({ ...state, ...newState }) } };
+  },
+  'set': (state, input, _ctx) => {
+    if (state.currentMode !== 'config-route-map' || !state.currentRouteMap) return { success: false, error: iosModeError() };
+    const [mapName, seqStr] = state.currentRouteMap.split(':');
+    const seq = parseInt(seqStr, 10);
+    const existing = { ...state.routeMaps };
+    const clauses = [...(existing[mapName] || [])];
+    const clauseIdx = clauses.findIndex(c => c.seq === seq);
+    if (clauseIdx === -1) return { success: false, error: '% Route-map clause not found' };
+
+    const setRules = { ...clauses[clauseIdx].setRules };
+    const setMetric = input.match(/^set\s+metric\s+(\d+)/i);
+    const setNextHop = input.match(/^set\s+(?:ip|ipv6)\s+next-hop\s+(\S+)/i);
+    const setLocalPref = input.match(/^set\s+local-preference\s+(\d+)/i);
+
+    if (setMetric) {
+      setRules['metric'] = parseInt(setMetric[1], 10);
+    } else if (setNextHop) {
+      setRules['nextHop'] = setNextHop[1];
+    } else if (setLocalPref) {
+      setRules['localPreference'] = parseInt(setLocalPref[1], 10);
+    } else {
+      return { success: false, error: '% Invalid set command' };
+    }
+
+    clauses[clauseIdx] = { ...clauses[clauseIdx], setRules };
+    existing[mapName] = clauses;
+    const newState = { routeMaps: existing, currentMode: state.currentMode, currentRouteMap: state.currentRouteMap };
+    return { success: true, output: '', newState: { ...newState, runningConfig: buildRunningConfig({ ...state, ...newState }) } };
   }
 };
 

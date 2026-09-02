@@ -27,6 +27,19 @@ function generatePingLatencies(distance: number): { min: number; avg: number; ma
 }
 
 /**
+ * Three probe times for a single traceroute hop, consistent with the path latency.
+ * Wired hops stay at 1ms (<1 msec); wireless paths grow toward the destination RTT.
+ * Only a bounded ±1ms jitter is applied so the timing reflects the actual link.
+ */
+function formatHopTimes(base: number): string {
+    const fmt = (ms: number) => ms <= 1 ? '<1' : String(ms);
+    const t1 = Math.max(1, base);
+    const t2 = Math.max(1, base + (Math.random() > 0.5 ? 1 : 0));
+    const t3 = Math.max(1, base + (Math.random() > 0.5 ? 1 : 0));
+    return `${fmt(t1)} msec ${fmt(t2)} msec ${fmt(t3)} msec`;
+}
+
+/**
  * Ping - Test connectivity
  */
 export function cmdPing(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
@@ -42,6 +55,12 @@ export function cmdPing(state: SwitchState, input: string, ctx: CommandContext):
     const host = match[1];
     const size = match[2] || '56';
     const count = match[3] || '5';
+
+    // If target looks like a dotted IPv4 (and is not purely a name), enforce octet range 0-255.
+    if (/^[\d.]+$/.test(host) && host.split('.').length >= 2 && !isValidIPv4Format(host)) {
+        return { success: false, error: `% Invalid host address: ${host}` };
+    }
+
     if (ctx?.sourceDeviceId && Array.isArray(ctx.devices)) {
         const connectivity = checkConnectivity(
             ctx.sourceDeviceId,
@@ -206,13 +225,10 @@ export function cmdPing(state: SwitchState, input: string, ctx: CommandContext):
             const n = parseInt(count, 10) || 5;
             const isUnreachable = connectivity?.error?.toLowerCase().includes('unreachable') ||
                 connectivity?.hops?.length === 0;
+            const packetSymbol = isUnreachable ? 'U' : '.';
             let packetLine = '';
             for (let i = 0; i < n; i++) {
-                if (isUnreachable) {
-                    packetLine += Math.random() < 0.3 ? '.' : 'U';
-                } else {
-                    packetLine += '.';
-                }
+                packetLine += packetSymbol;
             }
             let failOutput = `\nType escape sequence to abort.\nSending ${count}, ${size}-byte ICMP Echos to ${host}, timeout is 2 seconds:\n${packetLine}\n`;
             failOutput += `Success rate is 0 percent (0/${n})\n`;
@@ -482,20 +498,32 @@ export function cmdTraceroute(state: SwitchState, input: string, ctx: CommandCon
                 ctx.deviceStates
             );
 
+            // Hop latency values consistent with ping: wired stays at <1ms,
+            // wireless grows toward the destination RTT (distance-based).
+            const trDevices = (ctx.devices || []) as CanvasDevice[];
+            const trSourceDevice = ctx.sourceDeviceId ? trDevices.find(d => d.id === ctx.sourceDeviceId) : undefined;
+            const trTargetDevice = connectivity.targetId ? trDevices.find(d => d.id === connectivity.targetId) : undefined;
+            const trSrcDist = getWirelessDistance(trSourceDevice, trDevices, ctx.deviceStates);
+            const trDstDist = getWirelessDistance(trTargetDevice, trDevices, ctx.deviceStates);
+            const trSrcWired = trSrcDist === Infinity;
+            const trDstWired = trDstDist === Infinity;
+            const destLatency = trSrcWired && trDstWired
+                ? 1
+                : generatePingLatencies((trSrcWired ? 0 : trSrcDist) + (trDstWired ? 0 : trDstDist)).avg;
+
             if (l3Hops && l3Hops.length > 0) {
-                for (let i = 0; i < l3Hops.length; i++) {
+                const totalHops = l3Hops.length;
+                for (let i = 0; i < totalHops; i++) {
                     const hop = l3Hops[i];
-                    const hopTime = Math.floor(Math.random() * 20) + 1; // 1-20ms
+                    const progress = (i + 1) / totalHops;
+                    const base = Math.max(1, Math.round(destLatency * progress));
                     const namePart = hop.name === hop.ip ? hop.ip : `${hop.name} (${hop.ip})`;
-                    output += `  ${i + 1} ${namePart} ${hopTime} msec ${hopTime} msec ${hopTime} msec\n`;
+                    output += `  ${i + 1} ${namePart} ${formatHopTimes(base)}\n`;
                 }
             } else {
-                // Fallback hops
-                const hops = Math.floor(Math.random() * 3) + 2; // 2-4 hops
-                for (let i = 1; i <= hops; i++) {
-                    const hopTime = Math.floor(Math.random() * 20) + 1; // 1-20ms
-                    output += `  ${i} ${connectivity.targetId || '192.168.1.1'} ${hopTime} msec ${hopTime} msec ${hopTime} msec\n`;
-                }
+                // Directly reachable destination (no enumerated L3 hops): single hop
+                const base = Math.max(1, Math.round(destLatency));
+                output += `  1 ${connectivity.targetId || '192.168.1.1'} ${formatHopTimes(base)}\n`;
             }
 
             output += `\nTrace complete.\n`;

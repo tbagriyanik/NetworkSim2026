@@ -165,6 +165,10 @@ function cmdNoRouterNetwork(state: SwitchState, input: string): CommandResult {
     if (!match) return { success: false, error: '% Invalid no network command' };
 
     const network = match[1];
+    if (!isValidOctets(network)) {
+        return { success: false, error: '% Invalid IP address.' };
+    }
+
     const dynamicRoutes = (state.dynamicRoutes || []).filter((r: { destination: string }) => r.destination !== network);
 
     return {

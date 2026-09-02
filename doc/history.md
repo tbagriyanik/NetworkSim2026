@@ -2,6 +2,10 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v3.9.0 — 2026-09-02
+
+**Gelişmiş Ağ Protokolleri & CLI Dokümantasyon/Yardım Entegrasyonu** — EIGRP for IPv6 (`ipv6 router eigrp`, `ipv6 eigrp <as>`, DUAL IPv6 metric hesabı), IP/IPv6 Prefix-List (`ip/ipv6 prefix-list`), Route-Map politika motoru (`route-map`, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference`), GLBP (Gateway Load Balancing Protocol sanal router grubu, AVG seçimi ve `0007.b400.XXXX` sanal MAC üretimi), STP Loop Guard (`spanning-tree loopguard default`, `spanning-tree guard loop`) ve NetFlow (`ip flow-export`, `ip flow ingress/egress`, `show ip cache flow`) protokol simülasyonları eklendi. Tüm yeni komutlar CLI yardım penceresine, inline tab-completion mimarisine ve `CLI_COMMANDS.md` dokümantasyonuna entegre edildi.
+
 ## v3.8.0 — 2026-09-01
 
 **Topoloji Not İçi Klavye & Giriş Güvenliği ve Sekme Odak Yönetimi** — Not (`NoteNode`) ve metin düzenleme alanlarında yazı yazılırken global topoloji klavye kısayollarının (`TAB`, nümerik `0`, `+`, `-`, `Home`) devre dışı kalması sağlandı. `TAB` tuşunun not metni içerisinde 4 boşlukluk girinti (`indentation` / `outdentation`) olarak çalışması ve odağın not alanında kalması sağlandı. `0`, `+`, `-`, `Home` tuşlarının topoloji nesnesi seçmeden veya görünümü sıfırlamadan doğrudan not metnine karakter ve imleç hareketi olarak yansıması sağlandı. `useKeyboardShortcuts` capture dinleyicisinde `isEditable` alanı genişletilerek `data-note-id`, `input`, `textarea` odaklanmaları tam koruma altına alındı.

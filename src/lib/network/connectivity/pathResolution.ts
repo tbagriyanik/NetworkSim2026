@@ -84,7 +84,11 @@ export function checkConnectivity(
   let routingRequired = false;
 
   // Check if targetIp is a hostname (not an IP address)
-  const isIp = (val: string) => /^(\d{1,3}\.){3}\d{1,3}$/.test(val) || val.includes(':');
+  const isIp = (val: string) => {
+    if (val.includes(':')) return true;
+    const parts = val.split('.');
+    return parts.length === 4 && parts.every(p => /^\d{1,3}$/.test(p) && Number(p) >= 0 && Number(p) <= 255);
+  };
   const isDhcpBroadcast = targetIp === '255.255.255.255' && options?.protocol === 'udp' && (options.port === '67' || options.port === '68');
   if (!isIp(targetIp) && !isDhcpBroadcast) {
     // Check if source device has domain lookup disabled

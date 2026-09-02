@@ -14,6 +14,7 @@ export const systemHandlers: Record<string, CommandHandler> = {
   'exit': cmdExit,
   'end': cmdEnd,
   'do': cmdDo,
+  'do show': cmdDo,
 };
 
 /**
@@ -34,7 +35,7 @@ function cmdEnable(
 
   // Build output with banners
   let output = '';
-  
+
   // Display login banner before password prompt (if configured and password is required)
   if (needsPassword && state.bannerLogin) {
     output = `\n${state.bannerLogin}\n\nPassword: `;
@@ -61,7 +62,7 @@ function cmdEnable(
   if (state.bannerExec) {
     output = `\n${state.bannerExec}\n`;
   }
-  
+
   return {
     success: true,
     output: output,
@@ -302,33 +303,21 @@ function cmdDo(
   input: string,
   ctx: CommandContext
 ): CommandResult {
+  console.log('CMDDO ENTERED:', input);
   const withOriginalMode = (result: CommandResult) => {
     if (result?.newState) result.newState = { ...result.newState, currentMode: originalMode };
     else result.newState = { currentMode: originalMode };
     return result;
   };
-  // Extract the command after "do"
-  const match = input.match(/^do\s*(.*)$/i);
-  if (!match) {
-    return { success: false, error: '% Invalid command' };
-  }
 
-  const subCommand = match[1].trim();
-  const subCommandLower = subCommand.toLowerCase();
-
-  // If no subcommand, show error
-  if (!subCommandLower) {
-    return { success: false, error: '% Incomplete command' };
-  }
-
-  // Save original mode
+  const subCommand = input.replace(/^do\s+/i, '').trim();
   const originalMode = state.currentMode;
 
   // Temporarily change mode to privileged for execution
   const privilegedState = { ...state, currentMode: 'privileged' as CommandMode };
 
   // Parse and validate the sub-command in privileged mode
-  const parsedSub = parseCommand(subCommand, 'privileged');
+  const parsedSub = parseCommand(subCommand, 'privileged', privilegedState);
   if (!parsedSub) {
     return { success: false, error: `% Invalid input detected at '^' marker.\n${subCommand ? `% ${subCommand}` : ''}` };
   }

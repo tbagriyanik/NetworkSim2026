@@ -20,6 +20,7 @@ import { ExamProject } from '@/lib/network/examMode';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useIsMobile } from '@/hooks/use-breakpoint';
 import { generateCertificate } from '@/lib/utils/certificateGenerator';
+import { usePrompt } from '@/contexts/PromptContext';
 
 interface ExamModePanelProps {
   project: ExamProject | null;
@@ -71,6 +72,7 @@ export function ExamModePanel({
 }: ExamModePanelProps) {
   const { t, language } = useLanguage();
   const isMobile = useIsMobile();
+  const { openPrompt } = usePrompt();
 
   const [isChecklistExpanded, setIsChecklistExpanded] = useState(true);
   const [position, setPosition] = useState({ x: 0, y: 80 });
@@ -84,7 +86,13 @@ export function ExamModePanel({
 
   const handleDownloadCertificate = async () => {
     if (!project) return;
-    const studentName = prompt(language === 'tr' ? 'Sertifika için adınızı girin:' : 'Enter your name for the certificate:') || 'Student';
+    const result = await openPrompt({
+      title: language === 'tr' ? 'Sertifika' : 'Certificate',
+      message: language === 'tr' ? 'Sertifika için adınızı girin:' : 'Enter your name for the certificate:',
+      confirmLabel: language === 'tr' ? 'İndir' : 'Download',
+      cancelLabel: language === 'tr' ? 'Vazgeç' : 'Cancel',
+    });
+    const studentName = result.confirmed && result.value.trim() ? result.value.trim() : 'Student';
 
     // Toplam puanı (score) ağırlıklara göre yüzdelik hesaplama
     // score prop is the percentage out of 100

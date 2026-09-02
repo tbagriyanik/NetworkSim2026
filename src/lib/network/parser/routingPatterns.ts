@@ -448,5 +448,64 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 3
   },
-
+  'ipv6 router eigrp': {
+    pattern: /^ipv6\s+router\s+eigrp\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'ip prefix-list': {
+    pattern: /^ip\s+prefix-list\s+(\S+)(?:\s+seq\s+\d+)?\s+(?:permit|deny)\s+\S+(?:\s+ge\s+\d+)?(?:\s+le\s+\d+)?$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 9
+  },
+  'ipv6 prefix-list': {
+    pattern: /^ipv6\s+prefix-list\s+(\S+)(?:\s+seq\s+\d+)?\s+(?:permit|deny)\s+\S+(?:\s+ge\s+\d+)?(?:\s+le\s+\d+)?$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 9
+  },
+  'route-map': {
+    pattern: /^route-map\s+(\S+)(?:\s+(?:permit|deny))?(?:\s+\d+)?$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 3
+  },
+  'match': {
+    pattern: /^match\s+(?:(?:ip|ipv6)\s+address\s+(?:prefix-list\s+)?\S+|interface\s+\S+)$/i,
+    modes: ['config-route-map'],
+    minArgs: 1,
+    maxArgs: 4
+  },
+  'set': {
+    pattern: /^set\s+(?:metric\s+\d+|(?:ip|ipv6)\s+next-hop\s+\S+|local-preference\s+\d+)$/i,
+    modes: ['config-route-map'],
+    minArgs: 1,
+    maxArgs: 3
+  },
+  'ip flow-export': {
+    pattern: /^ip\s+flow-export\s+(?:destination\s+\S+\s+\d+|version\s+(?:5|9))$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 3
+  },
+  'no ip flow-export': {
+    pattern: /^no\s+ip\s+flow-export.*$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 4
+  },
+  'spanning-tree loopguard default': {
+    pattern: /^spanning-tree\s+loopguard\s+default$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no spanning-tree loopguard default': {
+    pattern: /^no\s+spanning-tree\s+loopguard\s+default$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
 };

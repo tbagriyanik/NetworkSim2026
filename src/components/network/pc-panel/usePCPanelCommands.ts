@@ -18,6 +18,9 @@ import { executePythonScript, executePythonScriptAsync } from './pcPythonRunner'
 import { resolveBatchFilePath, executeBatchScript } from './pcBatchRunner';
 
 
+// Per-device previous working directory (cd -). Mirrors the Linux OLDPWD support.
+const winPrevDirMap = new Map<string, string>();
+
 export interface UsePCPanelCommandsParams {
   activeTabRef: React.MutableRefObject<PCActiveTab>;
   applyDhcpLeaseRef: React.MutableRefObject<((force?: boolean) => { ip: string; subnetMask: string; gateway: string; dns: string; serverName: string; poolName: string } | null) | null>;
@@ -1205,12 +1208,22 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           emit('output', ` ${hours}:${mins}:${secs} up 1 day, 4:20, 1 user, load average: 0.08, 0.03, 0.01`);
         } else if (cmd === 'cd' || cmd === 'chdir') {
           const targetArg = args.join(' ').trim();
-          if (!targetArg || targetArg === '.') {
+          if (targetArg === '-') {
+            const prev = winPrevDirMap.get(deviceId);
+            if (!prev) {
+              emit('error', 'The system cannot find the previous directory path.');
+              return;
+            }
+            winPrevDirMap.set(deviceId, currentPath);
+            setCurrentPath(prev);
+            emit('output', prev);
+          } else if (!targetArg || targetArg === '.') {
             emit('output', currentPath);
           } else {
             const fs = loadFs(deviceId);
             const targetPath = resolvePath(currentPath, targetArg);
             if (isDir(fs, targetPath)) {
+              winPrevDirMap.set(deviceId, currentPath);
               setCurrentPath(targetPath);
             } else {
               emit('error', t.pathNotFound);
@@ -1248,13 +1261,16 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
           }
         } else if (cmd === 'dir' || cmd === 'ls') {
           const fs = loadFs(deviceId);
-          const targetArg = args.join(' ').trim();
-          const targetPath = targetArg ? resolvePath(currentPath, targetArg) : currentPath;
+          const flagArgs = args.filter(arg => /^[-/]/.test(arg));
+          const showAll = flagArgs.some(flag => flag.toLowerCase().includes('a'));
+          const targetArgs = args.filter(arg => !/^[-/]/.test(arg));
+          const targetPath = targetArgs.length > 0 ? resolvePath(currentPath, targetArgs.join(' ')) : currentPath;
 
           if (!isDir(fs, targetPath)) {
             emit('error', t.pathNotFound);
           } else {
-            const entries = listDir(fs, targetPath);
+            const allEntries = listDir(fs, targetPath);
+            const entries = allEntries.filter(name => showAll || !name.startsWith('.'));
             let totalFiles = 0;
             let totalSize = 0;
             let totalDirs = 2; // '.' and '..'
@@ -1306,23 +1322,31 @@ export function usePCPanelCommands(params: UsePCPanelCommandsParams) {
             emit('output', dirOutput);
           }
         } else if (cmd === 'type' || cmd === 'cat') {
-          const fileName = args.join(' ').trim();
-          if (!fileName) {
+          const fileArgs = args.filter(arg => !/^[-/]/.test(arg));
+          if (fileArgs.length === 0) {
             emit('output', t.commandSyntaxError);
           } else {
             const fs = loadFs(deviceId);
-            const targetPath = resolvePath(currentPath, fileName);
-            const content = readFile(fs, targetPath);
-            if (content !== null) {
-              emit('output', content);
-            } else {
+            const outputs: string[] = [];
+            const missing: string[] = [];
+            for (const fileName of fileArgs) {
+              const targetPath = resolvePath(currentPath, fileName);
+              const content = readFile(fs, targetPath);
+              if (content !== null) {
+                outputs.push(content);
+                continue;
+              }
               const isRoot = currentPath === 'C:\\' || currentPath === 'C:';
               const localFile = isRoot ? pcLocalFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase()) : null;
               if (localFile) {
-                emit('output', `[File ${localFile.name} (${localFile.size} bytes)]`);
+                outputs.push(`[File ${localFile.name} (${localFile.size} bytes)]`);
               } else {
-                emit('error', t.fileNotFound);
+                missing.push(fileName);
               }
+            }
+            if (outputs.length > 0) emit('output', outputs.join('\n'));
+            if (missing.length > 0) {
+              emit('error', missing.length === 1 ? t.fileNotFound : `${t.fileNotFound}: ${missing.join(', ')}`);
             }
           }
         } else if (cmd === 'del' || cmd === 'delete' || cmd === 'rm') {

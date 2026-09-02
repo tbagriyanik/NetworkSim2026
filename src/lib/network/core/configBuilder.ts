@@ -8,7 +8,7 @@ const TIMESTAMP = '2026-02-26 22:00:00';
  */
 function subnetMaskToWildcard(subnetMask: string): string {
     if (!subnetMask) return '0.0.0.0';
-    
+
     const octets = subnetMask.split('.').map(Number);
     const wildcardOctets = octets.map(octet => 255 - octet);
     return wildcardOctets.join('.');
@@ -209,6 +209,61 @@ export function buildRunningConfig(state: SwitchState): string[] {
                 }
             });
 
+        if (state.loopguardDefault) {
+            lines.push('spanning-tree loopguard default');
+        }
+
+        lines.push('!');
+    }
+
+    // IP Prefix-Lists
+    if (state.prefixLists && Object.keys(state.prefixLists).length > 0) {
+        Object.entries(state.prefixLists).forEach(([name, entries]) => {
+            entries.forEach(e => {
+                let line = `ip prefix-list ${name} seq ${e.seq} ${e.action} ${e.prefix}`;
+                if (e.ge !== undefined) line += ` ge ${e.ge}`;
+                if (e.le !== undefined) line += ` le ${e.le}`;
+                lines.push(line);
+            });
+        });
+        lines.push('!');
+    }
+
+    // IPv6 Prefix-Lists
+    if (state.ipv6PrefixLists && Object.keys(state.ipv6PrefixLists).length > 0) {
+        Object.entries(state.ipv6PrefixLists).forEach(([name, entries]) => {
+            entries.forEach(e => {
+                let line = `ipv6 prefix-list ${name} seq ${e.seq} ${e.action} ${e.prefix}`;
+                if (e.ge !== undefined) line += ` ge ${e.ge}`;
+                if (e.le !== undefined) line += ` le ${e.le}`;
+                lines.push(line);
+            });
+        });
+        lines.push('!');
+    }
+
+    // Route-Maps
+    if (state.routeMaps && Object.keys(state.routeMaps).length > 0) {
+        Object.entries(state.routeMaps).forEach(([name, clauses]) => {
+            clauses.forEach(c => {
+                lines.push(`route-map ${name} ${c.action} ${c.seq}`);
+                if (c.matchRules.prefixList) lines.push(` match ip address prefix-list ${c.matchRules.prefixList}`);
+                if (c.matchRules.acl) lines.push(` match ip address ${c.matchRules.acl}`);
+                if (c.matchRules.interface) lines.push(` match interface ${c.matchRules.interface}`);
+                if (c.setRules.metric !== undefined) lines.push(` set metric ${c.setRules.metric}`);
+                if (c.setRules.nextHop) lines.push(` set ip next-hop ${c.setRules.nextHop}`);
+                if (c.setRules.localPreference !== undefined) lines.push(` set local-preference ${c.setRules.localPreference}`);
+            });
+        });
+        lines.push('!');
+    }
+
+    // NetFlow Export
+    if (state.netflowConfig?.exportDestination) {
+        lines.push(`ip flow-export destination ${state.netflowConfig.exportDestination} ${state.netflowConfig.exportPort || 2055}`);
+        if (state.netflowConfig.version) {
+            lines.push(`ip flow-export version ${state.netflowConfig.version}`);
+        }
         lines.push('!');
     }
 
@@ -401,6 +456,25 @@ export function buildRunningConfig(state: SwitchState): string[] {
                     }
                 });
             }
+            if (port.ipv6Eigrp?.enabled) {
+                lines.push(` ipv6 eigrp ${port.ipv6Eigrp.as}`);
+            }
+            if (port.glbp?.groups) {
+                Object.entries(port.glbp.groups).forEach(([group, config]) => {
+                    if (config.virtualIp) lines.push(` glbp ${group} ip ${config.virtualIp}`);
+                    if (config.priority !== undefined) lines.push(` glbp ${group} priority ${config.priority}`);
+                    if (config.preempt) lines.push(` glbp ${group} preempt`);
+                    if (config.loadBalancing) lines.push(` glbp ${group} load-balancing ${config.loadBalancing}`);
+                });
+            }
+            if (port.spanningTree?.loopguard === 'enable') {
+                lines.push(' spanning-tree guard loop');
+            } else if (port.spanningTree?.loopguard === 'disable') {
+                lines.push(' spanning-tree guard none');
+            }
+            if (port.netflowIngress) lines.push(' ip flow ingress');
+            if (port.netflowEgress) lines.push(' ip flow egress');
+
             if (port.shutdown) {
                 lines.push(' shutdown');
             } else if (!isRoutedPort) {

@@ -12,7 +12,7 @@ import { validateIpRoutingSupport } from './L3Validation';
 import { createStubHandler } from './stubCommandHints';
 import { cmdAccessList, cmdNoAccessList } from './interface/cmd.misc';
 import { cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress, cmdIpDhcpSnoopingVlan, cmdNoIpDhcpSnooping } from './globalConfigDhcpCommands';
-import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdLldpTlvSelect, cmdSpanningTreeMst } from './globalConfigNetworkCommands';
+import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdLldpTlvSelect, cmdSpanningTreeMst, cmdIpPrefixList, cmdRouteMap, cmdIpv6RouterEigrp, cmdSpanningTreeLoopguardDefault, cmdIpFlowExport } from './globalConfigNetworkCommands';
 import { cmdClassMap, cmdPolicyMap } from './qosMqcCommands';
 import { cmdDot1xSystem } from './dot1xCommands';
 import { cmdAaaNewModel, cmdNoAaaNewModel, cmdAaaAuthentication, cmdRadiusServerHost, cmdTacacsServerHost, cmdRadiusServerKey, cmdTacacsServerKey } from './globalConfigAaaCommands';
@@ -179,8 +179,16 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no ipv6 route': cmdNoIpv6Route,
   'ipv6 router rip': cmdIpv6RouterRip,
   'ipv6 router ospf': cmdIpv6RouterOspf,
+  'ipv6 router eigrp': cmdIpv6RouterEigrp,
   'no ipv6 router rip': cmdNoIpv6RouterRip,
   'no ipv6 router ospf': cmdNoIpv6RouterOspf,
+  'ip prefix-list': cmdIpPrefixList,
+  'ipv6 prefix-list': cmdIpPrefixList,
+  'route-map': cmdRouteMap,
+  'spanning-tree loopguard default': cmdSpanningTreeLoopguardDefault,
+  'no spanning-tree loopguard default': cmdSpanningTreeLoopguardDefault,
+  'ip flow-export': cmdIpFlowExport,
+  'no ip flow-export': cmdIpFlowExport,
   'ip ssh authentication-retries': cmdIpSshAuthRetries,
   'crypto key generate rsa': cmdCryptoKeyGenerateRsa,
   'crypto key zeroize rsa': cmdCryptoKeyZeroizeRsa,

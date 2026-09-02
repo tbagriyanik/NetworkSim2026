@@ -993,7 +993,6 @@ export const commandAliases: Record<string, string> = {
   'test': 'test',
 
   // Setup
-  'set': 'setup',
   'setu': 'setup',
   'setup': 'setup',
 

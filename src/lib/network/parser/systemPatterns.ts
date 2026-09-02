@@ -81,14 +81,14 @@ export const systemPatterns: Record<string, CommandPattern> = {
 
   // Do komutları (config moddan show çalıştırma)
   'do show': {
-    pattern: /^do\s+(sh(?:ow)?\s+.+)$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config', 'dhcp-config', 'config-std-nacl'],
+    pattern: /^do\s+sh(?:ow)?\s+.*$/i,
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config', 'dhcp-config', 'config-std-nacl', 'config-ext-nacl', 'config-ipv6-acl', 'config-mst', 'config-route-map'],
     minArgs: 1,
-    maxArgs: 1
+    maxArgs: 10
   },
   'do': {
     pattern: /^do\s+(.*)$/i,
-    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config', 'dhcp-config', 'config-std-nacl', 'config-ext-nacl'],
+    modes: ['config', 'interface', 'config-if-range', 'line', 'vlan', 'router-config', 'dhcp-config', 'config-std-nacl', 'config-ext-nacl', 'config-ipv6-acl', 'config-mst', 'config-route-map'],
     minArgs: 0,
     maxArgs: 10
   },
