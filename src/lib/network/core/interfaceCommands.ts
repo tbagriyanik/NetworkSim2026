@@ -110,11 +110,17 @@ const cmdIpFlowInterface: CommandHandler = (state, input, _ctx) => {
   const port = ports[portKey];
   if (!port) return { success: false, error: '% Interface not found' };
 
+  const isNo = /^no\s+/i.test(input);
   const isIngress = /ingress/i.test(input);
   const isEgress = /egress/i.test(input);
 
-  if (isIngress) port.netflowIngress = true;
-  if (isEgress) port.netflowEgress = true;
+  if (isNo) {
+    if (isIngress) port.netflowIngress = false;
+    if (isEgress) port.netflowEgress = false;
+  } else {
+    if (isIngress) port.netflowIngress = true;
+    if (isEgress) port.netflowEgress = true;
+  }
 
   const newState = { ports };
   return {
@@ -405,4 +411,6 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'spanning-tree guard none': cmdSpanningTreeGuardLoop,
   'ip flow ingress': cmdIpFlowInterface,
   'ip flow egress': cmdIpFlowInterface,
+  'no ip flow ingress': cmdIpFlowInterface,
+  'no ip flow egress': cmdIpFlowInterface,
 };

@@ -379,3 +379,36 @@ export function cmdIpFlowExport(state: SwitchState, input: string, _ctx: Command
 
   return { success: false, error: '% Invalid ip flow-export command syntax' };
 }
+
+export function cmdNoIpPrefixList(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^no\s+ip\s+prefix-list\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid no ip prefix-list syntax' };
+  const name = match[1];
+  const existingMap = { ...state.prefixLists };
+  delete existingMap[name];
+  const updatedState = { ...state, prefixLists: existingMap };
+  return { success: true, output: `Prefix-list ${name} removed`, newState: { prefixLists: existingMap, runningConfig: buildRunningConfig(updatedState) } };
+}
+
+export function cmdNoIpv6PrefixList(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^no\s+ipv6\s+prefix-list\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid no ipv6 prefix-list syntax' };
+  const name = match[1];
+  const existingMap = { ...state.ipv6PrefixLists };
+  delete existingMap[name];
+  const updatedState = { ...state, ipv6PrefixLists: existingMap };
+  return { success: true, output: `IPv6 prefix-list ${name} removed`, newState: { ipv6PrefixLists: existingMap, runningConfig: buildRunningConfig(updatedState) } };
+}
+
+export function cmdNoRouteMap(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^no\s+route-map\s+(\S+)$/i);
+  if (!match) return { success: false, error: '% Invalid no route-map syntax' };
+  const name = match[1];
+  const existingMap = { ...state.routeMaps };
+  delete existingMap[name];
+  const updatedState = { ...state, routeMaps: existingMap };
+  return { success: true, output: `Route-map ${name} removed`, newState: { routeMaps: existingMap, runningConfig: buildRunningConfig(updatedState) } };
+}

@@ -216,6 +216,40 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     }
 
+    // QoS Global
+    if (state.mlsQosEnabled) {
+        lines.push('mls qos');
+        lines.push('!');
+    }
+    if (state.qosClassMaps && Object.keys(state.qosClassMaps).length > 0) {
+        Object.entries(state.qosClassMaps).forEach(([name, cm]) => {
+            lines.push(`class-map match-${cm.match} ${name}`);
+        });
+        lines.push('!');
+    }
+    if (state.qosPolicyMaps && Object.keys(state.qosPolicyMaps).length > 0) {
+        Object.entries(state.qosPolicyMaps).forEach(([name, pm]) => {
+            lines.push(`policy-map ${name}`);
+            Object.entries(pm.classes || {}).forEach(([className, cls]) => {
+                lines.push(` class ${className}`);
+                if (cls.setDscp) lines.push(`  set dscp ${cls.setDscp}`);
+                if (cls.setCos !== undefined) lines.push(`  set cos ${cls.setCos}`);
+                if (cls.policeRate !== undefined) lines.push(`  police rate ${cls.policeRate}`);
+                if (cls.bandwidthPercent !== undefined) lines.push(`  bandwidth ${cls.bandwidthPercent}%`);
+                if (cls.priority) lines.push('  priority');
+            });
+        });
+        lines.push('!');
+    }
+
+    // EIGRPv6 Global
+    if (state.eigrp6Config?.as) {
+        lines.push(`ipv6 router eigrp ${state.eigrp6Config.as}`);
+        if (state.eigrp6Config.routerId) lines.push(` eigrp router-id ${state.eigrp6Config.routerId}`);
+        if (state.eigrp6Config.shutdown) lines.push(' shutdown');
+        lines.push('!');
+    }
+
     // IP Prefix-Lists
     if (state.prefixLists && Object.keys(state.prefixLists).length > 0) {
         Object.entries(state.prefixLists).forEach(([name, entries]) => {
@@ -474,6 +508,28 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             if (port.netflowIngress) lines.push(' ip flow ingress');
             if (port.netflowEgress) lines.push(' ip flow egress');
+            if (port.qos?.enabled) {
+                if (port.qos.egressQueue) lines.push(` queue-set ${port.qos.egressQueue}`);
+                if (port.qos.ingressQueue) lines.push(` tx-queue ${port.qos.ingressQueue}`);
+                if (port.qos.priorityQueue?.enabled) lines.push(' priority-queue out');
+            }
+            if (port.qosDscp) lines.push(` set dscp ${port.qosDscp}`);
+            if (port.qosTrust) lines.push(` mls qos trust ${port.qosTrust}`);
+            if (port.qosCos !== undefined) lines.push(` mls qos cos ${port.qosCos}`);
+            if (port.stormControl?.broadcast?.enabled) {
+                const bc = port.stormControl.broadcast;
+                lines.push(` storm-control broadcast level ${bc.threshold ?? ''}`);
+            }
+            if (port.stormControl?.multicast?.enabled) {
+                const mc = port.stormControl.multicast;
+                lines.push(` storm-control multicast level ${mc.threshold ?? ''}`);
+            }
+            if (port.stormControl?.unicast?.enabled) {
+                const uc = port.stormControl.unicast;
+                lines.push(` storm-control unicast level ${uc.threshold ?? ''}`);
+            }
+            const svcPolicy = state.qosServicePolicies?.[portKey];
+            if (svcPolicy) lines.push(` service-policy ${svcPolicy.direction} ${svcPolicy.policy}`);
 
             if (port.shutdown) {
                 lines.push(' shutdown');

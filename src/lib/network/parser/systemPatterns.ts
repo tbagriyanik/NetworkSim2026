@@ -442,6 +442,48 @@ export const systemPatterns: Record<string, CommandPattern> = {
     maxArgs: 1
   },
 
+  // Class within policy-map (QoS MQC)
+  'class': {
+    pattern: /^class\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
+  // Policy actions (QoS MQC)
+  'set dscp': {
+    pattern: /^set\s+dscp\s+(\S+)$/i,
+    modes: ['config', 'interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'set cos': {
+    pattern: /^set\s+cos\s+(\d+)$/i,
+    modes: ['config', 'interface', 'config-if-range'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'police': {
+    pattern: /^police\s+rate\s+(\d+)$/i,
+    modes: ['config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+
+  // Remove class-map / policy-map
+  'no class-map': {
+    pattern: /^no\s+class-map\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no policy-map': {
+    pattern: /^no\s+policy-map\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+
   // IP SLA operation and schedule definitions
   'ip sla': {
     pattern: /^ip\s+sla\s+(?:(?:\d+\s+(?:icmp-echo|jitter)\s+\S+(?:\s+frequency\s+\d+)?)|(?:schedule\s+\d+\s+life\s+forever\s+start\s+now))$/i,

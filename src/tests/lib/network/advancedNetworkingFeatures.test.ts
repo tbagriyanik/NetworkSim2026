@@ -301,5 +301,103 @@ describe('Advanced Networking Features', () => {
       expect(res.success).toBe(true);
       expect(res.output).toContain('IP packet size distribution');
     });
+
+    it('disables NetFlow per-interface with no command', () => {
+      let state = createMockState();
+      state = { ...state, ...executeCommand(state, 'configure terminal').newState };
+      state = { ...state, ...executeCommand(state, 'interface gi0/0').newState };
+
+      let res = executeCommand(state, 'ip flow ingress');
+      expect(res.success).toBe(true);
+      state = { ...state, ...res.newState };
+      expect(state.ports['gi0/0'].netflowIngress).toBe(true);
+
+      res = executeCommand(state, 'no ip flow ingress');
+      expect(res.success).toBe(true);
+      state = { ...state, ...res.newState };
+      expect(state.ports['gi0/0'].netflowIngress).toBe(false);
+    });
+
+    it('removes route-map and prefix-list with no commands', () => {
+      let state = createMockState();
+      state = { ...state, ...executeCommand(state, 'configure terminal').newState };
+
+      let res = executeCommand(state, 'ip prefix-list MYLIST seq 10 permit 10.0.0.0/8');
+      expect(res.success).toBe(true);
+      state = { ...state, ...res.newState };
+      res = executeCommand(state, 'no ip prefix-list MYLIST');
+      expect(res.success).toBe(true);
+      state = { ...state, ...res.newState };
+      expect(state.prefixLists?.['MYLIST']).toBeUndefined();
+
+      res = executeCommand(state, 'route-map RM permit 10');
+      state = { ...state, ...res.newState };
+      state = { ...state, ...executeCommand(state, 'exit').newState };
+      res = executeCommand(state, 'no route-map RM');
+      expect(res.success).toBe(true);
+      state = { ...state, ...res.newState };
+      expect(state.routeMaps?.['RM']).toBeUndefined();
+    });
+  });
+
+  describe('QoS MQC (class-map / policy-map / set / police)', () => {
+    it('creates class-map and policy-map', () => {
+      let state = createMockState();
+      state = { ...state, ...executeCommand(state, 'configure terminal').newState };
+
+      let res = executeCommand(state, 'class-map match-any VOICE');
+      expect(res.success).toBe(true);
+      state = { ...state, ...res.newState };
+      expect(state.qosClassMaps?.['VOICE']?.match).toBe('any');
+
+      res = executeCommand(state, 'policy-map QOS');
+      expect(res.success).toBe(true);
+      state = { ...state, ...res.newState };
+      expect(state.qosPolicyMaps?.['QOS']).toBeDefined();
+    });
+
+    it('associates class with policy and applies set dscp / police', () => {
+      let state = createMockState();
+      state = { ...state, ...executeCommand(state, 'configure terminal').newState };
+
+      executeCommand(state, 'class-map match-any VOICE');
+      state = { ...state, ...executeCommand(state, 'class-map match-any VOICE').newState };
+      state = { ...state, ...executeCommand(state, 'policy-map QOS').newState };
+
+      const resClass = executeCommand(state, 'class VOICE');
+      expect(resClass.success).toBe(true);
+      state = { ...state, ...resClass.newState };
+
+      const resSet = executeCommand(state, 'set dscp ef');
+      expect(resSet.success).toBe(true);
+      state = { ...state, ...resSet.newState };
+
+      const resPolice = executeCommand(state, 'police rate 1000000');
+      expect(resPolice.success).toBe(true);
+      state = { ...state, ...resPolice.newState };
+
+      const policy = state.qosPolicyMaps?.['QOS'];
+      expect(policy?.classes?.['VOICE']?.setDscp).toBe('ef');
+      expect(policy?.classes?.['VOICE']?.policeRate).toBe(1000000);
+    });
+
+    it('shows policy-map and class-map details', () => {
+      let state = createMockState();
+      state = { ...state, ...executeCommand(state, 'configure terminal').newState };
+      state = { ...state, ...executeCommand(state, 'class-map match-any VOICE').newState };
+      state = { ...state, ...executeCommand(state, 'policy-map QOS').newState };
+      state = { ...state, ...executeCommand(state, 'class VOICE').newState };
+      state = { ...state, ...executeCommand(state, 'set dscp ef').newState };
+
+      const resShow = executeCommand(state, 'do show policy-map');
+      expect(resShow.success).toBe(true);
+      expect(resShow.output).toContain('QOS');
+      expect(resShow.output).toContain('VOICE');
+      expect(resShow.output).toContain('ef');
+
+      const resShowClass = executeCommand(state, 'do show class-map');
+      expect(resShowClass.success).toBe(true);
+      expect(resShowClass.output).toContain('VOICE');
+    });
   });
 });

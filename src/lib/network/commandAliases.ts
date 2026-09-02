@@ -693,7 +693,6 @@ export const commandAliases: Record<string, string> = {
   // Class-map
   'cla': 'class-map',
   'clas': 'class-map',
-  'class': 'class-map',
   'class-': 'class-map',
   'class-m': 'class-map',
   'class-ma': 'class-map',

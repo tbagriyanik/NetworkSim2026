@@ -801,6 +801,8 @@ export function getModePrompt(mode: CommandMode, hostname: string, _context?: st
       return `${hostname}(config-ipv6-acl)#`;
     case 'config-mst':
       return `${hostname}(config-mst)#`;
+    case 'config-route-map':
+      return `${hostname}(config-route-map)#`;
     case 'dhcp-config':
       return `${hostname}(dhcp-config)#`;
     case 'ssid-config':

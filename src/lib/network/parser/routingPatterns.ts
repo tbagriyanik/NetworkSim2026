@@ -484,6 +484,24 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 3
   },
+  'no route-map': {
+    pattern: /^no\s+route-map\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no ip prefix-list': {
+    pattern: /^no\s+ip\s+prefix-list\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no ipv6 prefix-list': {
+    pattern: /^no\s+ipv6\s+prefix-list\s+(\S+)$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'match': {
     pattern: /^match\s+(?:(?:ip|ipv6)\s+address\s+(?:prefix-list\s+)?\S+|interface\s+\S+)$/i,
     modes: ['config-route-map'],

@@ -4,16 +4,16 @@ import type { SwitchState, CommandResult } from '../types';
 const STUB_COMMAND_HINTS: Record<string, { tr: string; en: string }> = {
   'channel-protocol': { tr: 'Kanal protokolü (PAgP/LACP) yapılandırması henüz simüle edilmiyor.', en: 'Channel protocol configuration (PAgP/LACP) not yet simulated.' },
   'priority-queue out': {
-    tr: 'priority-queue out, arayüz çıkışında yüksek öncelikli bir kuyruk (expedite queue) oluşturur. VoIP gibi gecikmeye duyarlı trafiğin her zaman gönderilmesini sağlar. Kullanım: interface altında "priority-queue out". Not: Bu QoS özelliği henüz simüle edilmiyor.',
-    en: 'priority-queue out creates an expedite queue on the egress interface. Ensures delay-sensitive traffic (e.g., VoIP) is always transmitted first. Usage: under interface "priority-queue out". Note: This QoS feature is not yet simulated.'
+    tr: 'priority-queue out, arayüz çıkışında yüksek öncelikli bir kuyruk (expedite queue) oluşturur. VoIP gibi gecikmeye duyarlı trafiğin her zaman gönderilmesini sağlar.',
+    en: 'priority-queue out creates an expedite queue on the egress interface. Ensures delay-sensitive traffic (e.g., VoIP) is always transmitted first.'
   },
   'queue-set': {
-    tr: 'queue-set, bir arayüz için kuyruk kuyruk kümesi (threshold ve shape değerleri) tanımlar. Örn: queue-set 1 threshold 1 80. Not: Bu QoS özelliği henüz simüle edilmiyor.',
-    en: 'queue-set defines a queue set with threshold and shape values for an interface. E.g.: queue-set 1 threshold 1 80. Note: This QoS feature is not yet simulated.'
+    tr: 'queue-set, bir arayüz için kuyruk kümesini yapılandırır.',
+    en: 'queue-set configures the queue set for an interface.'
   },
   'tx-queue': {
-    tr: 'tx-queue, arayüz çıkış kuyruğu parametrelerini (limit, priority level) yapılandırır. Genellikle priority-queue out ile birlikte kullanılır. Not: Bu QoS özelliği henüz simüle edilmiyor.',
-    en: 'tx-queue configures egress queue parameters (limit, priority level). Typically used with priority-queue out. Note: This QoS feature is not yet simulated.'
+    tr: 'tx-queue, arayüz çıkış kuyruğu parametrelerini yapılandırır.',
+    en: 'tx-queue configures egress queue parameters.'
   },
   'power inline': { tr: 'PoE (Power over Ethernet) yapılandırması henüz simüle edilmiyor.', en: 'PoE (Power over Ethernet) configuration not yet simulated.' },
   'power inline consumption': { tr: 'PoE tüketim değeri yapılandırması henüz simüle edilmiyor.', en: 'PoE consumption value configuration not yet simulated.' },
@@ -33,12 +33,12 @@ const STUB_COMMAND_HINTS: Record<string, { tr: string; en: string }> = {
   'configure replace': { tr: 'Yapılandırma değiştirme (replace) henüz simüle edilmiyor.', en: 'Configuration replace not yet simulated.' },
   'mac access-list': { tr: 'MAC erişim listesi yapılandırması henüz simüle edilmiyor.', en: 'MAC access-list configuration not yet simulated.' },
   'class-map': {
-    tr: 'Temel class-map tanımı kaydedilir. Örn: class-map match-any VOICE. Ayrıntılı match alt komutları henüz simüle edilmiyor.',
-    en: 'Basic class-map definitions are stored. E.g.: class-map match-any VOICE. Detailed match subcommands are not yet simulated.'
+    tr: 'class-map tanımı oluşturulur ve kaydedilir. Örn: class-map match-any VOICE. Class-map altında match komutları henüz simüle edilmiyor.',
+    en: 'Class-map is created and stored. E.g.: class-map match-any VOICE. Match subcommands under class-map are not yet simulated.'
   },
   'policy-map': {
-    tr: 'Temel policy-map tanımı kaydedilir. Örn: policy-map QOS. class/set/police gibi ayrıntılı eylem alt komutları henüz simüle edilmiyor.',
-    en: 'Basic policy-map definitions are stored. E.g.: policy-map QOS. Detailed class/set/police actions are not yet simulated.'
+    tr: 'policy-map tanımı oluşturulur. class, set ve police alt komutları desteklenir. Örn: policy-map QOS然后 class VOICE然后 set dscp ef然后 police rate 1000000.',
+    en: 'Policy-map is created. Class, set and police subcommands are supported. E.g.: policy-map QOS then class VOICE then set dscp ef then police rate 1000000.'
   },
   'template': { tr: 'Şablon (template) yapılandırması henüz simüle edilmiyor.', en: 'Template configuration not yet simulated.' },
   'transport output': { tr: 'Çıkış protokolü yapılandırması henüz simüle edilmiyor.', en: 'Output transport configuration not yet simulated.' },

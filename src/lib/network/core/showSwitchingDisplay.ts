@@ -289,7 +289,11 @@ export function cmdShowSpanningTree(
     output += `  Bridge ID  Priority    ${vStp.bridgeId.split('.')[0]}  (priority ${parseInt(vStp.bridgeId.split('.')[0]) - vlanId} sys-id-ext ${vlanId})\n`;
     output += `             Address     ${state.macAddress || '001A.2B3C.4D5E'}\n`;
     output += `             Hello Time   2 sec  Max Age 20 sec  Forward Delay 15 sec\n`;
-    output += `             Aging Time  300\n\n`;
+    output += `             Aging Time  300`;
+    if (state.loopguardDefault) {
+      output += `\n             Loopguard default            enabled`;
+    }
+    output += `\n\n`;
 
     output += `Interface           Role Sts Cost      Prio.Nbr Type\n`;
     output += `------------------- ---- --- --------- -------- --------------------------------\n`;
@@ -311,7 +315,10 @@ export function cmdShowSpanningTree(
       const prioNbr = `${port.stpPriority ?? 128}.${portNum}`;
 
       const interfaceName = portId.length <= 18 ? portId : portId.substring(0, 18);
-      output += `${interfaceName.padEnd(19)}${role.padStart(4)} ${status.padStart(3)} ${cost.toString().padStart(9)} ${prioNbr.padStart(8)}    P2p\n`;
+      let guardInfo = 'P2p';
+      if (port.spanningTree?.loopguard === 'enable') guardInfo = 'P2p *LG';
+      else if (port.spanningTree?.loopguard === 'disable') guardInfo = 'P2p *noLG';
+      output += `${interfaceName.padEnd(19)}${role.padStart(4)} ${status.padStart(3)} ${cost.toString().padStart(9)} ${prioNbr.padStart(8)}    ${guardInfo}\n`;
     });
   });
 
@@ -354,6 +361,13 @@ export function cmdShowSpanningTreeInterface(
     }
     if (stp.bpduguard) {
       output += `  BPDU Guard: enabled\n`;
+    }
+    if (stp.loopguard === 'enable') {
+      output += `  Loop Guard: enabled\n`;
+    } else if (stp.loopguard === 'disable') {
+      output += `  Loop Guard: disabled\n`;
+    } else if (state.loopguardDefault) {
+      output += `  Loop Guard: default (enabled globally)\n`;
     }
 
     if (isDetail) {

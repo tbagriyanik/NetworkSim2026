@@ -267,6 +267,12 @@ export const interfacePatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'no ip flow ingress': {
+    pattern: /^no\s+ip\s+flow\s+(?:ingress|egress)$/i,
+    modes: ['interface', 'config-if-range'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'no shutdown': {
     pattern: /^no\s+shutdown$/i,
     modes: ['interface', 'config-if-range', 'dot11-config'],

@@ -90,15 +90,15 @@ export function cmdSetCoS(state: SwitchState, input: string, _ctx: CommandContex
 
 export function cmdPolice(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
-  const m = input.match(/^police\s+rate\s+(\d+)$/i); if (!m) return { success: false, error: '% Invalid police rate syntax. Use: police rate <bps>' };
-  if (!state.qosPolicyMaps) return { success: false, error: '% Policy-map not configured' };
+  const m = input.match(/^police\s+rate\s+(\d+)$/i); if (!m) return { success:false,error:'% Invalid police rate syntax. Use: police rate <bps>' };
+  if (!state.qosPolicyMaps) return { success:false,error:'% Policy-map not configured' };
   const policyName = Object.keys(state.qosPolicyMaps)[0];
-  if (!policyName) return { success: false, error: '% No policy-map configured' };
+  if (!policyName) return { success:false,error:'% No policy-map configured' };
   const className = Object.keys(state.qosPolicyMaps[policyName].classes)[0];
-  if (!className) return { success: false, error: '% No class configured under policy' };
+  if (!className) return { success:false,error:'% No class configured under policy' };
   return {
-    success: true,
-    output: `Policed at ${m[1]} bps on class ${className}`,
+    success:true,
+    output:`Policed at ${m[1]} bps on class ${className}`,
     newState: {
       qosPolicyMaps: {
         ...state.qosPolicyMaps,
@@ -111,4 +111,22 @@ export function cmdPolice(state: SwitchState, input: string, _ctx: CommandContex
       }
     }
   };
+}
+
+export function cmdNoClassMap(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const m = input.match(/^no\s+class-map\s+(\S+)$/i); if (!m) return { success:false,error:'% Invalid no class-map syntax' };
+  const name = m[1];
+  const existing = { ...state.qosClassMaps };
+  delete existing[name];
+  return { success:true, output:`Class-map ${name} removed`, newState:{ qosClassMaps: existing } };
+}
+
+export function cmdNoPolicyMap(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const m = input.match(/^no\s+policy-map\s+(\S+)$/i); if (!m) return { success:false,error:'% Invalid no policy-map syntax' };
+  const name = m[1];
+  const existing = { ...state.qosPolicyMaps };
+  delete existing[name];
+  return { success:true, output:`Policy-map ${name} removed`, newState:{ qosPolicyMaps: existing } };
 }

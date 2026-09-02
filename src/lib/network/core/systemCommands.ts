@@ -182,6 +182,14 @@ function cmdExit(
           currentMode: 'config'
         }
       };
+    case 'config-route-map':
+      return {
+        success: true,
+        newState: {
+          currentMode: 'config',
+          currentRouteMap: undefined
+        }
+      };
     case 'config-ext-nacl':
       return {
         success: true,

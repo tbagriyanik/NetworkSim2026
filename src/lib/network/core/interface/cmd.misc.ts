@@ -879,7 +879,8 @@ export function cmdMlsQosTrust(state: SwitchState, input: string, _ctx: CommandC
   if (!isInInterfaceMode(state)) return { success: false, error: iosModeError() };
   const match = input.match(/^mls\s+qos\s+trust\s+(cos|dscp|ip-precedence)$/i);
   if (!match) return { success: false, error: '% Invalid mls qos trust command' };
-  const updatePort = (port: Port) => ({ ...port, qosTrust: match[1] });
+  const trustVal = match[1] as 'cos' | 'dscp' | 'ip-precedence';
+  const updatePort = (port: Port) => ({ ...port, qosTrust: trustVal });
   if (state.selectedInterfaces?.length) return { success: true, newState: { ports: applyToSelectedPorts(state, updatePort) } };
   if (!state.currentInterface) return { success: false, error: '% No interface selected' };
   const newPorts = { ...state.ports };

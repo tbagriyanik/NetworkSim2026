@@ -336,6 +336,7 @@ const commandHandlers: Record<string, CommandHandler> = {
   // Global configuration commands - AFTER privileged so these take precedence for overlapping commands
   ...Object.fromEntries(Object.entries(globalConfigHandlers).filter(([k]) =>
     k !== 'no spanning-tree' && k !== 'spanning-tree portfast' && k !== 'ip default-gateway' && k !== 'no ip default-gateway'
+      && k !== 'set dscp' && k !== 'set cos'
   )),
 
   // Router configuration commands (OSPF/RIP)
@@ -375,6 +376,14 @@ const commandHandlers: Record<string, CommandHandler> = {
   'no ip default-gateway': (state, input, ctx) => {
     if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['no ip default-gateway'](state, input, ctx);
     return globalConfigHandlers['no ip default-gateway'](state, input, ctx);
+  },
+  'set dscp': (state, input, ctx) => {
+    if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['set dscp'](state, input, ctx);
+    return globalConfigHandlers['set dscp'](state, input, ctx);
+  },
+  'set cos': (state, input, ctx) => {
+    if (state.currentMode === 'interface' || state.currentMode === 'config-if-range') return interfaceHandlers['set cos']?.(state, input, ctx) ?? { success: false, error: iosModeError() };
+    return globalConfigHandlers['set cos'](state, input, ctx);
   },
   'match': (state, input, _ctx) => {
     if (state.currentMode !== 'config-route-map' || !state.currentRouteMap) return { success: false, error: iosModeError() };

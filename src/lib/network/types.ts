@@ -224,6 +224,8 @@ export interface Port {
     };
   };
   qosDscp?: string;
+  qosTrust?: 'cos' | 'dscp' | 'ip-precedence';
+  qosCos?: number;
   bandwidth?: number;               // Bandwidth in kbps (for routing protocols)
   delay?: number;                   // Delay in microseconds (for routing protocols)
   stpPriority?: number;

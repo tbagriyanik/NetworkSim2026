@@ -12,8 +12,8 @@ import { validateIpRoutingSupport } from './L3Validation';
 import { createStubHandler } from './stubCommandHints';
 import { cmdAccessList, cmdNoAccessList } from './interface/cmd.misc';
 import { cmdIpDhcpPool, cmdNoIpDhcpPool, cmdIpv6DhcpPool, cmdIpDhcpExcludedAddress, cmdNoIpDhcpExcludedAddress, cmdIpDhcpSnoopingVlan, cmdNoIpDhcpSnooping, cmdIpDhcpSnoopingInformationOption } from './globalConfigDhcpCommands';
-import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdLldpTlvSelect, cmdSpanningTreeMst, cmdIpPrefixList, cmdRouteMap, cmdIpv6RouterEigrp, cmdSpanningTreeLoopguardDefault, cmdIpFlowExport } from './globalConfigNetworkCommands';
-import { cmdClassMap, cmdPolicyMap } from './qosMqcCommands';
+import { cmdIpNatPool, cmdIpNatInsideSourceStatic, cmdIpNatInsideSourceList, cmdLoggingHost, cmdLoggingTrap, cmdNtpServer, cmdClockTimezone, cmdIpNameServer, cmdIpHost, cmdAliasExec, cmdNoAliasExec, cmdIpSla, cmdLldpTlvSelect, cmdSpanningTreeMst, cmdIpPrefixList, cmdRouteMap, cmdIpv6RouterEigrp, cmdSpanningTreeLoopguardDefault, cmdIpFlowExport, cmdNoIpPrefixList, cmdNoIpv6PrefixList, cmdNoRouteMap } from './globalConfigNetworkCommands';
+import { cmdClassMap, cmdPolicyMap, cmdClass, cmdSetDscp, cmdSetCoS, cmdPolice, cmdNoClassMap, cmdNoPolicyMap } from './qosMqcCommands';
 import { cmdDot1xSystem } from './dot1xCommands';
 import { cmdAaaNewModel, cmdNoAaaNewModel, cmdAaaAuthentication, cmdRadiusServerHost, cmdTacacsServerHost, cmdRadiusServerKey, cmdTacacsServerKey } from './globalConfigAaaCommands';
 import {
@@ -186,7 +186,10 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'no ipv6 router ospf': cmdNoIpv6RouterOspf,
   'ip prefix-list': cmdIpPrefixList,
   'ipv6 prefix-list': cmdIpPrefixList,
+  'no ip prefix-list': cmdNoIpPrefixList,
+  'no ipv6 prefix-list': cmdNoIpv6PrefixList,
   'route-map': cmdRouteMap,
+  'no route-map': cmdNoRouteMap,
   'spanning-tree loopguard default': cmdSpanningTreeLoopguardDefault,
   'no spanning-tree loopguard default': cmdSpanningTreeLoopguardDefault,
   'ip flow-export': cmdIpFlowExport,
@@ -215,7 +218,13 @@ export const globalConfigHandlers: Record<string, CommandHandler> = {
   'configure replace': createStubHandler('configure replace'),
   'mac access-list': createStubHandler('mac access-list'),
   'class-map': cmdClassMap,
+  'no class-map': cmdNoClassMap,
   'policy-map': cmdPolicyMap,
+  'no policy-map': cmdNoPolicyMap,
+  'class': cmdClass,
+  'police': cmdPolice,
+  'set dscp': cmdSetDscp,
+  'set cos': cmdSetCoS,
   'template': createStubHandler('template'),
   'access-list': cmdAccessList,
   'no access-list': cmdNoAccessList,

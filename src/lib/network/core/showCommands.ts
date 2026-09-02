@@ -1085,15 +1085,35 @@ function cmdShowSnmp(state: SwitchState, _input: string, _ctx: CommandContext): 
 /**
  * Show Policy Map
  */
-function cmdShowPolicyMap(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return { success: true, output: '\n% No policy maps configured.\n' };
+function cmdShowPolicyMap(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const maps = state.qosPolicyMaps;
+  if (!maps || Object.keys(maps).length === 0) return { success: true, output: '\n% No policy maps configured.\n' };
+  let output = '';
+  Object.entries(maps).forEach(([name, policy]) => {
+    output += `Policy-map ${name}\n`;
+    Object.entries(policy.classes || {}).forEach(([className, cls]) => {
+      output += `  Class ${className}\n`;
+      if (cls.setDscp) output += `    set dscp ${cls.setDscp}\n`;
+      if (cls.setCos !== undefined) output += `    set cos ${cls.setCos}\n`;
+      if (cls.policeRate !== undefined) output += `    police rate ${cls.policeRate}\n`;
+      if (cls.bandwidthPercent !== undefined) output += `    bandwidth ${cls.bandwidthPercent}%\n`;
+      if (cls.priority) output += '    priority\n';
+    });
+  });
+  return { success: true, output };
 }
 
 /**
  * Show Class Map
  */
-function cmdShowClassMap(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-  return { success: true, output: '\n% No class maps configured.\n' };
+function cmdShowClassMap(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const maps = state.qosClassMaps;
+  if (!maps || Object.keys(maps).length === 0) return { success: true, output: '\n% No class maps configured.\n' };
+  let output = '';
+  Object.entries(maps).forEach(([name, cm]) => {
+    output += `Class-map: ${name} (match-${cm.match})\n`;
+  });
+  return { success: true, output };
 }
 
 /**
