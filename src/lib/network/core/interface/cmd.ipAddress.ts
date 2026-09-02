@@ -541,6 +541,7 @@ export function cmdIpOspfArea(state: SwitchState, input: string, _ctx: CommandCo
 
   const processId = match[1];
   const area = match[2];
+  const areaNum = parseInt(area, 10);
   const updatePort = (port: Port) => ({
     ...port,
     ospfEnabled: true,
@@ -548,8 +549,24 @@ export function cmdIpOspfArea(state: SwitchState, input: string, _ctx: CommandCo
     ospfArea: area
   });
   const newPorts = applyToSelectedPorts(state, updatePort);
+  const currentAreas = new Set(state.ospfAreas || []);
+  currentAreas.add(areaNum);
 
-  return { success: true, newState: { ports: newPorts } };
+  const updatedState = {
+    ...state,
+    routingProtocol: state.routingProtocol || 'ospf',
+    ospfProcessId: state.ospfProcessId || processId,
+    ospfAreas: Array.from(currentAreas),
+    ports: newPorts,
+  };
+
+  return {
+    success: true,
+    newState: {
+      ...updatedState,
+      runningConfig: buildRunningConfig(updatedState)
+    }
+  };
 }
 
 /**

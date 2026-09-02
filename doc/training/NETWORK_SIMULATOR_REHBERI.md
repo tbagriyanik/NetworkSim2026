@@ -1,6 +1,6 @@
 # Network Simulator — Kapsamlı Uygulama ve Kullanım Rehberi
 
-**Sürüm / Version:** 3.8.0  
+**Sürüm / Version:** 3.9.0  
 **Doküman Tipi:** Kullanım, Mimari, Komut Referansı ve Laboratuvar Kılavuzu  
 **Dil:** Türkçe (Turkish)
 
@@ -42,18 +42,22 @@ Network Simulator; bilgisayar ağları, anahtarlama (switching), yönlendirme (r
 - **VLAN Mimarisi:** Standart ve genişletilmiş VLAN tanımlama (VLAN 1–4094), port erişim (`access`) ve taşıyıcı (`trunk`) modları.
 - **802.1Q Trunking & Native VLAN:** Etiketli paket iletimi ve etiketlenmemiş Native VLAN yönetimi.
 - **VTP (VLAN Trunking Protocol):** VTP Server, Client ve Transparent modları; VTP domain ve parola yapılandırması.
-- **Spanning Tree Protocol (STP / RSTP / MSTP):** 802.1D STP, 802.1w RSTP ve 802.1s MSTP döngü engelleme, root bridge seçimi, BPDU yönetimi ve PortFast.
+- **Spanning Tree Protocol (STP / RSTP / MSTP):** 802.1D STP, 802.1w RSTP ve 802.1s MSTP döngü engelleme, root bridge seçimi, BPDU yönetimi, PortFast ve **STP Loop Guard** (`spanning-tree loopguard default` / `spanning-tree guard loop`).
 - **EtherChannel (Port Aggregation):** LACP (802.3ad), PAgP ve Static EtherChannel ile çoklu link birleştirme ve bant genişliği artırma.
 - **Port Security:** MAC adresi kısıtlama, `sticky` MAC öğrenme, maksimum cihaz sınırı ve ihlal modları (`shutdown`, `restrict`, `protect`).
 - **Voice VLAN:** IP telefon trafiği için öncelikli ses VLAN yapılandırması.
 - **DHCP Snooping & DAI:** Sahte (rogue) DHCP sunucularını engelleme, `trust` port tanımlama, canlı **DHCP Snooping Binding Table** ve Dynamic ARP Inspection.
 
-### 🌐 Yönlendirme (Routing)
+### 🌐 Yönlendirme & Politika Motoru (Routing & Policy Engine)
 - **Static & Default Routing:** Statik rotalar, varsayılan rotalar (`0.0.0.0 0.0.0.0`), Administrative Distance ve Floating Static yedeği.
-- **RIPv2 (Routing Information Protocol):** Metrik hesabı (hop count), `no auto-summary`, passive-interface.
-- **OSPFv2 (Open Shortest Path First):** Single-Area ve Multi-Area OSPF yapılandırması, Router ID, wildcard maskeler, DR/BDR seçimi ve cost hesabı.
-- **EIGRP (Enhanced Interior Gateway Routing Protocol):** AS numarası, wildcard ağ tanımları, komşuluk ilişkileri ve metrik hesaplama.
+- **RIPv2 & RIPng:** Metrik hesabı (hop count), `no auto-summary`, passive-interface.
+- **OSPFv2 & OSPFv3:** Single-Area ve Multi-Area OSPF yapılandırması, Router ID, wildcard maskeler, DR/BDR seçimi ve cost hesabı.
+- **EIGRP & EIGRP for IPv6:** IPv4/IPv6 AS numarası, `ipv6 router eigrp <as>`, router-id tanımı, arayüz bazlı `ipv6 eigrp <as>` aktifleştirme, DUAL IPv6 metric hesaplaması ve `show ipv6 eigrp neighbors/topology` raporlaması.
 - **BGP (Border Gateway Protocol):** eBGP ve iBGP komşuluk tanımları, AS path ve prefix duyuruları.
+- **IP & IPv6 Prefix-List:** `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` kural motoru, ön ek eşleme doğrulama ve `show ip/ipv6 prefix-list` çıktısı.
+- **Route-Map Politika Motoru:** `route-map <name> {permit|deny} [<seq>]` mod yapılandırması, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference` politikaları ve `show route-map` raporlaması.
+- **GLBP & FHRP Sanal Yönlendirme:** HSRP, VRRP ve **GLBP (Gateway Load Balancing Protocol)** sanal router grupları (`glbp <group> ip <ip>`, `glbp priority/preempt/weighting`), AVG (Active Virtual Gateway) seçimi, `0007.b400.XXXX` sanal MAC üretimi ve `show glbp [brief]` izlemesi.
+- **NetFlow Trafik İletim Motoru:** `ip flow-export destination <ip> <port>`, `ip flow-export version <5|9>`, arayüz `ip flow ingress/egress` ve canlı `show ip cache flow` istatistik izleme ekranı.
 - **Inter-VLAN Routing:** Router-on-a-Stick (Sub-interfaces + `encapsulation dot1q`) ve L3 Switch SVI (`interface vlan`) ile VLAN'lar arası yönlendirme.
 - **GRE Tünelleme:** `interface Tunnel`, IP adresi, `tunnel source` ve `tunnel destination` ile noktadan noktaya mantıksal tünel kurulumu.
 - **PPPoE & Dialer:** `interface Dialer`, PPP kapsülleme, CHAP/PAP kimlik doğrulaması.

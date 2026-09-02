@@ -100,6 +100,9 @@ export function MinimapNavigator({
     height: visibleWorldHeight * scale,
   };
 
+  const isDraggingRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
+
   const updatePanFromMinimap = useCallback(
     (clientX: number, clientY: number) => {
       if (!minimapRef.current) return;
@@ -120,19 +123,33 @@ export function MinimapNavigator({
     [bounds.minX, bounds.minY, scale, setPan, viewHeight, viewWidth, zoom]
   );
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    e.preventDefault();
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    isDraggingRef.current = true;
     setIsDragging(true);
     updatePanFromMinimap(e.clientX, e.clientY);
   };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    updatePanFromMinimap(e.clientX, e.clientY);
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current) return;
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    rafIdRef.current = requestAnimationFrame(() => {
+      updatePanFromMinimap(clientX, clientY);
+    });
   };
 
-  const handleMouseUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
+    isDraggingRef.current = false;
     setIsDragging(false);
+    if (rafIdRef.current) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
   };
 
   return (
@@ -170,13 +187,13 @@ export function MinimapNavigator({
       {isOpen && (
         <div
           ref={minimapRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          style={{ width: MAP_WIDTH, height: MAP_HEIGHT }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          style={{ width: MAP_WIDTH, height: MAP_HEIGHT, touchAction: 'none' }}
           className={`relative border border-t-0 rounded-b-xl overflow-hidden cursor-grab active:cursor-grabbing shadow-2xl backdrop-blur-md transition-shadow ${
-            isDark ? 'bg-secondary-950/85 border-secondary-700/70' : 'bg-slate-900/90 border-secondary-300'
+            isDark ? 'bg-secondary-955/85 border-secondary-700/70' : 'bg-slate-900/90 border-secondary-300'
           } ${isDragging ? 'ring-2 ring-amber-400/50' : ''}`}
         >
           {/* Render Connection Lines (Precise node-to-node centers) */}
@@ -237,7 +254,7 @@ export function MinimapNavigator({
               height: `${Math.min(MAP_HEIGHT, Math.max(16, viewportRect.height))}px`,
             }}
             className={`absolute border-2 border-amber-400 bg-amber-400/20 rounded pointer-events-none shadow-[0_0_10px_rgba(251,191,36,0.6)] ${
-              isDragging ? 'border-amber-300 bg-amber-400/35' : 'transition-all duration-75'
+              isDragging ? 'border-amber-300 bg-amber-400/35' : ''
             }`}
           />
         </div>

@@ -332,8 +332,11 @@ export function buildRunningConfig(state: SwitchState): string[] {
 
         const isSerial = port.type === 'serial';
         const isWlan = normalizedPortId.startsWith('wlan');
+        const isPortChannel = normalizedPortId.startsWith('po') && /^po\d+$/i.test(normalizedPortId);
         let portUpper: string;
-        if (isSerial) {
+        if (isPortChannel) {
+            portUpper = `Port-channel${normalizedPortId.slice(2)}`;
+        } else if (isSerial) {
             portUpper = portId.toUpperCase().replace(/^S(\d+)\/(\d+)\/(\d+)$/, 'Serial$1/$2/$3');
         } else if (isWlan) {
             portUpper = portId.toUpperCase();
@@ -378,6 +381,10 @@ export function buildRunningConfig(state: SwitchState): string[] {
             }
             if (port.bandwidth) {
                 lines.push(` bandwidth ${port.bandwidth}`);
+            }
+            const isPoRouted = port.mode === 'routed' || port.isRoutedPort;
+            if (isPoRouted) {
+                lines.push(' no switchport');
             }
             if (port.ipAddress && port.subnetMask) {
                 lines.push(` ip address ${port.ipAddress} ${port.subnetMask}`);
@@ -468,6 +475,9 @@ export function buildRunningConfig(state: SwitchState): string[] {
                 lines.push(` ip address ${port.ipAddress} ${port.subnetMask}`);
             } else if (isRouterInterface) {
                 lines.push(' no ip address');
+            }
+            if (port.ospfEnabled && port.ospfProcessId && port.ospfArea !== undefined) {
+                lines.push(` ip ospf ${port.ospfProcessId} area ${port.ospfArea}`);
             }
             if (port.ipv6Address && port.ipv6Prefix) {
                 lines.push(` ipv6 address ${port.ipv6Address}/${port.ipv6Prefix}`);

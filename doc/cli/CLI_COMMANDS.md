@@ -268,10 +268,14 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `no ip nat ...` | Remove NAT configuration |
 | `ip route <network> <mask> <next-hop>` | Add static IPv4 route |
 | `no ip route <network> <mask> [next-hop]` | Remove static IPv4 route (next-hop optional if single route) |
-| `ipv6 route <prefix>/<len> <next-hop>` | Add static IPv6 route |
-| `no ipv6 route <prefix>/<len> [next-hop]` | Remove static IPv6 route |
+| `ipv6 router eigrp <as>` | Enable IPv6 EIGRP routing process |
+| `ip prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` | Configure IP prefix list rule |
+| `ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` | Configure IPv6 prefix list rule |
+| `route-map <name> {permit|deny} [<seq>]` | Create/edit Route-Map policy |
+| `ip flow-export destination <ip> <port>` | Configure NetFlow export destination IP and UDP port |
+| `ip flow-export version {5|9}` | Set NetFlow export version |
+| `spanning-tree loopguard default` | Enable global STP Loop Guard |
 
-### Interface Configuration Commands
 ### Interface Configuration Commands
 
 #### Interface Properties
@@ -366,14 +370,27 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `ipv6 nd suppress-ra` | Suppress IPv6 Router Advertisements on interface |
 | `ipv6 traffic-filter <acl-name> {in\|out}` | Apply IPv6 ACL to interface |
 
-#### NAT Configuration
+| `standby <group> ip <virtual-ip>` | Configure HSRP virtual IP |
+| `standby <group> priority <prio>` | Set HSRP priority |
+| `glbp <group> ip <virtual-ip>` | Configure GLBP virtual IP address |
+| `glbp <group> priority <prio>` | Set GLBP priority (influences Active Virtual Gateway AVG selection) |
+| `glbp <group> preempt` | Enable GLBP preempt mode |
+| `glbp <group> weighting <weight>` | Set GLBP forwarder weighting |
+| `ip flow {ingress|egress}` | Enable NetFlow traffic monitoring on interface (ingress or egress) |
+| `spanning-tree guard loop` | Enable STP Loop Guard on interface |
+| `ipv6 eigrp <as>` | Enable IPv6 EIGRP on interface for AS number |
+
+#### Route-Map & Policy Mode Commands
 
 | Command | Description |
 |---------|-------------|
-| `ip nat {inside | outside}` | Set interface NAT side |
-| `no ip nat {inside | outside}` | Remove NAT side |
-| `standby <group> ip <virtual-ip>` | Configure HSRP virtual IP |
-| `standby <group> priority <prio>` | Set HSRP priority |
+| `match ip address prefix-list <name>` | Match IP prefix list in route-map |
+| `match ipv6 address prefix-list <name>` | Match IPv6 prefix list in route-map |
+| `match interface <interface>` | Match interface in route-map |
+| `set metric <value>` | Set metric in route-map |
+| `set ip next-hop <ip>` | Set IPv4 next-hop IP in route-map |
+| `set ipv6 next-hop <ipv6>` | Set IPv6 next-hop IP in route-map |
+| `set local-preference <value>` | Set BGP local preference in route-map |
 | `standby <group> preempt` | Enable HSRP preemption |
 | `no standby <group> ...` | Remove HSRP configuration |
 

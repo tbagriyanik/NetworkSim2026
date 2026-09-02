@@ -98,13 +98,18 @@ export function cmdNoSwitchport(state: SwitchState, _input: string, _ctx: Comman
     return { success: false, error: '% Invalid command on WLAN interface' };
   }
 
-  const newPorts = applyToSelectedPorts(state, (port: Port) => {
-    // Convert port from L2 switchport mode to L3 routed mode
-    return {
-      ...port,
+  const targets = Array.isArray(state.selectedInterfaces) && state.selectedInterfaces.length > 0
+    ? state.selectedInterfaces
+    : [state.currentInterface];
+
+  const newPorts = { ...state.ports };
+
+  targets.forEach((portId) => {
+    const existing = newPorts[portId] || { id: portId, type: 'gigabitethernet' };
+    newPorts[portId] = {
+      ...existing,
       mode: 'routed',
       isRoutedPort: true,
-      // Clear Layer 2 specific settings when converting to routed port
       accessVlan: undefined,
       nativeVlan: undefined,
       allowedVlans: undefined,
@@ -114,11 +119,29 @@ export function cmdNoSwitchport(state: SwitchState, _input: string, _ctx: Comman
       trunkNativeVlan: undefined,
       voiceVlan: undefined,
     };
+
+    // If this is a Port-channel interface (e.g. po1), propagate routed mode to member ports
+    const poMatch = portId.match(/^po(\d+)$/i);
+    if (poMatch) {
+      const groupId = parseInt(poMatch[1], 10);
+      Object.keys(newPorts).forEach((pId) => {
+        if (newPorts[pId]?.channelGroup === groupId) {
+          newPorts[pId] = {
+            ...newPorts[pId],
+            mode: 'routed',
+            isRoutedPort: true,
+            accessVlan: undefined,
+            nativeVlan: undefined,
+            allowedVlans: undefined,
+          };
+        }
+      });
+    }
   });
 
   let output = `\n`;
-  if (state.selectedInterfaces && state.selectedInterfaces.length > 1) {
-    output += `Interfaces ${state.selectedInterfaces.join(', ')} converted to routed ports\n`;
+  if (targets.length > 1) {
+    output += `Interfaces ${targets.join(', ')} converted to routed ports\n`;
   } else {
     output += `Interface ${state.currentInterface} converted to routed port\n`;
   }
@@ -127,7 +150,11 @@ export function cmdNoSwitchport(state: SwitchState, _input: string, _ctx: Comman
   return {
     success: true,
     output,
-    newState: { ports: newPorts }
+    newState: { ports: newPorts },
+    hint: {
+      tr: '💡 Gerçek dünyada: "no switchport" komutu L3 Switch portunu (veya Port-channel arayüzünü) Katman 2 (switchport) modundan Katman 3 (routed port) moduna geçirir. Böylece arayüze doğrudan IP adresi atanabilir.',
+      en: '💡 In the real world: "no switchport" converts an L3 Switch port (or Port-channel interface) from Layer 2 (switchport) mode to Layer 3 (routed port) mode, allowing direct IP address assignment.'
+    }
   };
 }
 

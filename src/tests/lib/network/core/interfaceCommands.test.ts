@@ -127,4 +127,20 @@ describe('interfaceHandlers - previously stubbed interface commands', () => {
     const power = interfaceHandlers['power inline consumption'](state, 'power inline consumption 15400', mockCtx);
     expect(power.newState?.ports?.['gi0/1'].powerInline).toEqual({ enabled: true, consumption: 15400 });
   });
+
+  it('persists interface-level OSPF activation: ip ospf <process> area <area>', () => {
+    const state = stateWithInterface();
+    const ospf = interfaceHandlers['ip ospf area'](state, 'ip ospf 1 area 0', mockCtx);
+    expect(ospf.success).toBe(true);
+    expect(ospf.newState?.ports?.['gi0/1'].ospfEnabled).toBe(true);
+    expect(ospf.newState?.ports?.['gi0/1'].ospfProcessId).toBe('1');
+    expect(ospf.newState?.ports?.['gi0/1'].ospfArea).toBe('0');
+    expect(ospf.newState?.routingProtocol).toBe('ospf');
+    expect(ospf.newState?.ospfAreas).toContain(0);
+
+    const noOspf = interfaceHandlers['no ip ospf area'](ospf.newState as any, 'no ip ospf 1 area 0', mockCtx);
+    expect(noOspf.success).toBe(true);
+    expect(noOspf.newState?.ports?.['gi0/1'].ospfEnabled).toBe(false);
+    expect(noOspf.newState?.ports?.['gi0/1'].ospfArea).toBeUndefined();
+  });
 });

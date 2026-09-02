@@ -401,9 +401,12 @@ export function cmdShowIpInterfaceBrief(
   // Show port-channel interfaces first
   Object.entries(channelGroups).forEach(([group, ports]) => {
     const poName = `Po${group}`;
-    const status = 'up';
+    const poPort = state.ports[`po${group}`];
+    const status = poPort?.shutdown ? 'administratively down' : 'up';
     const protocol = ports.every(p => !state.ports[p]?.shutdown) ? 'up' : 'down';
-    output += `${poName.padEnd(22)} unassigned      YES manual ${status.padEnd(23)} ${protocol.padEnd(8)} \n`;
+    const ipStr = (poPort?.ipAddress && poPort?.subnetMask) ? poPort.ipAddress : 'unassigned';
+    const ipMethod = (poPort?.ipAddress && poPort?.subnetMask) ? 'manual' : 'unset';
+    output += `${poName.padEnd(22)} ${ipStr.padEnd(15)} YES ${ipMethod.padEnd(6)} ${status.padEnd(23)} ${protocol.padEnd(8)} \n`;
   });
 
   // Show regular interfaces

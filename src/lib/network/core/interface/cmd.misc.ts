@@ -203,14 +203,68 @@ export function cmdEncryption(state: SwitchState, input: string, _ctx: CommandCo
 }
 
 export function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
-  const match = input.match(/^wlan\s+(\S+)\s+(\d+)\s+(\S+)$/i);
+  // Support wlan enable <id> / wlan disable <id>
+  const enableMatch = input.match(/^wlan\s+(enable|disable)\s+(\d+)$/i);
+  if (enableMatch) {
+    const action = enableMatch[1].toLowerCase();
+    const wlanId = enableMatch[2];
+    if (state.deviceType === 'wlc' && state.wlcWlans?.[wlanId]) {
+      const newWlcWlans = { ...state.wlcWlans };
+      newWlcWlans[wlanId] = {
+        ...newWlcWlans[wlanId],
+        status: action === 'enable' ? 'enabled' : 'disabled',
+      };
+      return { success: true, newState: { wlcWlans: newWlcWlans } };
+    }
+    return { success: true };
+  }
+
+  // Support wlan security <id> <security> [password]
+  const secMatch = input.match(/^wlan\s+security\s+(\d+)\s+(open|wep|wpa|wpa2|wpa3|802\.1x)(?:\s+(\S+))?$/i);
+  if (secMatch) {
+    const wlanId = secMatch[1];
+    const sec = secMatch[2].toLowerCase() as 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3';
+    const pwd = secMatch[3];
+    if (state.deviceType === 'wlc' && state.wlcWlans?.[wlanId]) {
+      const newWlcWlans = { ...state.wlcWlans };
+      newWlcWlans[wlanId] = {
+        ...newWlcWlans[wlanId],
+        security: sec,
+        password: pwd || newWlcWlans[wlanId].password,
+      };
+      return { success: true, newState: { wlcWlans: newWlcWlans } };
+    }
+    return { success: true };
+  }
+
+  // Support wlan interface/vlan mapping: wlan interface <id> <vlanId>
+  const ifMatch = input.match(/^wlan\s+(?:interface|vlan)\s+(\d+)\s+(\d+)$/i);
+  if (ifMatch) {
+    const wlanId = ifMatch[1];
+    const vlanId = parseInt(ifMatch[2], 10);
+    if (state.deviceType === 'wlc' && state.wlcWlans?.[wlanId]) {
+      const newWlcWlans = { ...state.wlcWlans };
+      newWlcWlans[wlanId] = {
+        ...newWlcWlans[wlanId],
+        vlan: vlanId,
+      };
+      return { success: true, newState: { wlcWlans: newWlcWlans } };
+    }
+    return { success: true };
+  }
+
+  // Main create command: wlan <name> <id> <ssid> [vlan <vlanId>] [security <sec>] [password <key>]
+  const match = input.match(/^wlan\s+(\S+)\s+(\d+)\s+(\S+)(?:\s+vlan\s+(\d+))?(?:\s+security\s+(\S+))?(?:\s+password\s+(\S+))?$/i);
   if (!match) {
-    return { success: false, error: '% Invalid WLAN command. Usage: wlan <name> <id> <ssid>' };
+    return { success: false, error: '% Invalid WLAN command. Usage: wlan <name> <id> <ssid> [vlan <id>] [security <open|wpa2|wpa3|802.1x>]' };
   }
 
   const wlanName = match[1];
   const wlanId = match[2];
   const ssid = match[3];
+  const vlan = match[4] ? parseInt(match[4], 10) : undefined;
+  const security = (match[5]?.toLowerCase() as 'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3') || 'open';
+  const password = match[6];
 
   // WLC stores WLANs in wlcWlans (centralized controller state)
   if (state.deviceType === 'wlc') {
@@ -220,7 +274,9 @@ export function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext)
       name: wlanName,
       ssid,
       status: 'enabled',
-      security: 'open',
+      security,
+      password,
+      vlan,
     };
     return { success: true, newState: { wlcWlans: newWlcWlans } };
   }
@@ -234,7 +290,7 @@ export function cmdWlan(state: SwitchState, input: string, _ctx: CommandContext)
   if (newPorts['wlan0']) {
     newPorts['wlan0'] = {
       ...newPorts['wlan0'],
-      wifi: { ...(newPorts['wlan0'].wifi ?? { security: 'open', channel: '2.4GHz', mode: 'ap' }), ssid }
+      wifi: { ...(newPorts['wlan0'].wifi ?? { security: 'open', channel: '2.4GHz', mode: 'ap' }), ssid, security, password }
     };
   }
 

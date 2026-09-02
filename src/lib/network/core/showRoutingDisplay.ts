@@ -33,9 +33,11 @@ export function cmdShowIpOspfInterface(state: SwitchState, input: string, _ctx: 
   (portEntries as [string, Port][]).forEach(([name, port]) => {
     if (port.ipAddress && !port.shutdown) {
       found = true;
+      const portArea = port.ospfArea !== undefined ? port.ospfArea : '0';
+      const portProcess = port.ospfProcessId || state.ospfProcessId || '1';
       output += `${name} is up, line protocol is up\n`;
-      output += `  Internet Address ${port.ipAddress}/${getPrefixLength(port.subnetMask)}, Area 0\n`;
-      output += `  Process ID 1, Router ID ${state.ip || '192.168.1.1'}, Network Type BROADCAST, Cost: ${getSTPCost(port)}\n`;
+      output += `  Internet Address ${port.ipAddress}/${getPrefixLength(port.subnetMask)}, Area ${portArea}\n`;
+      output += `  Process ID ${portProcess}, Router ID ${state.ospfRouterId || state.ip || '192.168.1.1'}, Network Type BROADCAST, Cost: ${getSTPCost(port)}\n`;
       output += `  Transmit Delay is 1 sec, State DR, Priority 1\n`;
       output += `  Designated Router (ID) ${state.ip || '192.168.1.1'}, Interface address ${port.ipAddress}\n`;
       output += `  Backup Designated router (ID) 0.0.0.0, Interface address 0.0.0.0\n`;

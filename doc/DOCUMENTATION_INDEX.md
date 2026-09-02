@@ -25,23 +25,48 @@ Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve iç
 
 ---
 
+# 📚 Dokümantasyon İndeksi
+
+Bu indeks, Network Simulator projesinin tüm dokümantasyon dosyalarını ve içeriklerini listeler.
+
+---
+
+## 📖 Dokümantasyon Dosyaları
+
+### 🎓 cli/CLI_GUIDED_TUTORIAL.md
+**Amaç**: Tüm CLI komutlarının pratik rehberli dersleri  
+**Okuma Süresi**: 2-3 saat (tüm dersler)  
+**İçerik**:
+- Pratik dersler (Başlangıç → İleri)
+- Adım adım örnekler
+- Her ders için beklenen sonuçlar
+- 5 pratik senaryo
+- Hızlı referans tablosu
+- Sorun giderme ipuçları
+
+**Ne Zaman Okuyacağım?**
+- CLI komutlarını öğrenmek istiyorsanız
+- Pratik örnekler istiyorsanız
+- Ağ konfigürasyonu yapmak istiyorsanız
+- Belirli bir komut hakkında bilgi istiyorsanız
+
+---
+
 ### 💻 cli/CLI_COMMANDS.md
 **Amaç**: CCNA 200-301 Desteklenen Tüm Komutlar ve CLI Referansı  
 **Okuma Süresi**: 15 dakika  
 **İçerik**:
 - Kapsamlı CLI komutları (CCNA 200-301 müfredat uyumlu)
 - Tüm modlar (User EXEC, Privileged, Global, Interface, VLAN, Router Config, MST Config, SSID, Dot11, WLAN, DHCP)
-- BGP (Eşleşen komşuluklarda dinamik `Established` / `Idle` durumu), OSPFv2/OSPFv3, EIGRP DUAL, RIP/RIPng, Rota Yeniden Dağıtımı
+- BGP (Eşleşen komşuluklarda dinamik `Established` / `Idle` durumu), OSPFv2/OSPFv3, EIGRP DUAL, EIGRP for IPv6, RIP/RIPng, Rota Yeniden Dağıtımı
+- IP & IPv6 Prefix-List kural motoru (`ip/ipv6 prefix-list`) ve Route-Map politika motoru (`route-map match/set`)
+- GLBP (`glbp ip/priority/preempt`), STP Loop Guard (`spanning-tree loopguard default`), NetFlow iletim motoru (`ip flow-export`, `ip flow ingress/egress`, `show ip cache flow`)
 - NAT/PAT (`show ip nat translations` port kolonlu çıktı `Pro`, `Inside global:port`, `Inside local:port`, `Outside local:port`, `Outside global:port`)
 - SLAAC IPv6 otomatik adresleme (`no ipv6 nd suppress-ra` & EUI-64)
 - AAA (`aaa new-model`, RADIUS & TACACS+ sunucu yapılandırması)
 - Seri/WAN, IoT, Güvenlik Duvarı, Port Security, DHCP Snooping, DAI, IP Source Guard komutları
-- Ağ terimleri sözlüğü: VLAN/trunk, yönlendirme, FHRP, DHCP relay/snooping, QoS, LLDP-MED, 802.1X, IPsec ve SDN otomasyonu
+- Ağ terimleri sözlüğü: VLAN/trunk, yönlendirme, FHRP/GLBP, DHCP relay/snooping, QoS, LLDP-MED, 802.1X, IPsec ve SDN otomasyonu
 - Klavye kısayolları ve komut sözdizimi
-
-**Ne Zaman Okuyacağım?**
-- Belirli bir komutun sözdizimini arıyorsanız
-- CCNA 200-301 komutlarına hızlı başvuru yapmak istiyorsanız
 
 ---
 

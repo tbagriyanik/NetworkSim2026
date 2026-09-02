@@ -35,7 +35,9 @@ export function WlcWirelessPanel({
     const [wlanName, setWlanName] = useState('');
     const [wlanId, setWlanId] = useState('');
     const [wlanSsid, setWlanSsid] = useState('');
-    const [wlanSecurity, setWlanSecurity] = useState<'open' | 'wpa2'>('open');
+    const [wlanVlan, setWlanVlan] = useState('1');
+    const [wlanSecurity, setWlanSecurity] = useState<'open' | 'wpa2' | 'wpa3' | '802.1x'>('open');
+    const [wlanPassword, setWlanPassword] = useState('');
     const [busy, setBusy] = useState(false);
 
     const wlans = state.wlcWlans || {};
@@ -45,14 +47,16 @@ export function WlcWirelessPanel({
         if (!wlanName || !wlanId || !wlanSsid) return;
         setBusy(true);
         try {
-            await onExecuteCommand(`wlan ${wlanName} ${wlanId} ${wlanSsid}`);
-            if (wlanSecurity === 'wpa2') {
-                await onExecuteCommand(`wlan security ${wlanId} wpa2`);
-            }
+            const vlanArg = wlanVlan ? ` vlan ${wlanVlan}` : '';
+            const secArg = ` security ${wlanSecurity}`;
+            const pwdArg = wlanPassword ? ` password ${wlanPassword}` : '';
+            await onExecuteCommand(`wlan ${wlanName} ${wlanId} ${wlanSsid}${vlanArg}${secArg}${pwdArg}`);
             await onExecuteCommand(`wlan enable ${wlanId}`);
             setWlanName('');
             setWlanId('');
             setWlanSsid('');
+            setWlanPassword('');
+            setWlanVlan('1');
         } finally {
             setBusy(false);
         }
@@ -111,44 +115,79 @@ export function WlcWirelessPanel({
             {/* Quick WLAN creation */}
             <Card className={cardClass}>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{tr('Create New WLAN / SSID', 'Yeni WLAN / SSID Oluştur')}</CardTitle>
+                    <CardTitle className="text-sm">{tr('Create New WLAN / SSID (CCNA Standard)', 'Yeni WLAN / SSID Oluştur (CCNA Standardı)')}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                        <Input
-                            placeholder={tr('Profile name (e.g. Guest)', 'Profil adı (örn. Guest)')}
-                            value={wlanName}
-                            onChange={(e) => setWlanName(e.target.value)}
-                            disabled={isDevicePoweredOff || busy}
-                        />
-                        <Input
-                            placeholder={tr('WLAN ID (e.g. 2)', 'WLAN ID (örn. 2)')}
-                            value={wlanId}
-                            onChange={(e) => setWlanId(e.target.value.replace(/[^0-9]/g, ''))}
-                            disabled={isDevicePoweredOff || busy}
-                        />
-                        <Input
-                            placeholder={tr('SSID (e.g. Guest-WiFi)', 'SSID (örn. Guest-WiFi)')}
-                            value={wlanSsid}
-                            onChange={(e) => setWlanSsid(e.target.value)}
-                            disabled={isDevicePoweredOff || busy}
-                        />
-                        <select
-                            className={`flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors ${isDark ? 'bg-secondary-800 text-white border-secondary-700' : 'bg-white text-secondary-900 border-secondary-300'}`}
-                            value={wlanSecurity}
-                            onChange={(e) => setWlanSecurity(e.target.value as 'open' | 'wpa2')}
-                            disabled={isDevicePoweredOff || busy}
-                        >
-                            <option value="open">{tr('Open (No password)', 'Açık (Şifresiz)')}</option>
-                            <option value="wpa2">{tr('WPA2-PSK', 'WPA2-PSK')}</option>
-                        </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                            <label className="text-[11px] font-medium block mb-1">{tr('Profile Name', 'Profil Adı')}</label>
+                            <Input
+                                placeholder={tr('e.g. Employee-WiFi', 'örn. Employee-WiFi')}
+                                value={wlanName}
+                                onChange={(e) => setWlanName(e.target.value)}
+                                disabled={isDevicePoweredOff || busy}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[11px] font-medium block mb-1">{tr('WLAN ID', 'WLAN ID')}</label>
+                            <Input
+                                placeholder="1 - 512"
+                                value={wlanId}
+                                onChange={(e) => setWlanId(e.target.value.replace(/[^0-9]/g, ''))}
+                                disabled={isDevicePoweredOff || busy}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[11px] font-medium block mb-1">{tr('SSID Broadcast Name', 'SSID Yayın Adı')}</label>
+                            <Input
+                                placeholder={tr('e.g. Corp_Wireless', 'örn. Corp_Wireless')}
+                                value={wlanSsid}
+                                onChange={(e) => setWlanSsid(e.target.value)}
+                                disabled={isDevicePoweredOff || busy}
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                            <label className="text-[11px] font-medium block mb-1">{tr('Interface / Dynamic VLAN', 'Arayüz / Dinamik VLAN')}</label>
+                            <Input
+                                placeholder={tr('VLAN ID (e.g. 10, 20)', 'VLAN ID (örn. 10, 20)')}
+                                value={wlanVlan}
+                                onChange={(e) => setWlanVlan(e.target.value.replace(/[^0-9]/g, ''))}
+                                disabled={isDevicePoweredOff || busy}
+                            />
+                        </div>
+                        <div>
+                            <label className="text-[11px] font-medium block mb-1">{tr('Security & Key Mgmt', 'Güvenlik & Anahtar Yönetimi')}</label>
+                            <select
+                                className={`flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors ${isDark ? 'bg-secondary-800 text-white border-secondary-700' : 'bg-white text-secondary-900 border-secondary-300'}`}
+                                value={wlanSecurity}
+                                onChange={(e) => setWlanSecurity(e.target.value as 'open' | 'wpa2' | 'wpa3' | '802.1x')}
+                                disabled={isDevicePoweredOff || busy}
+                            >
+                                <option value="open">{tr('Open (None)', 'Açık (Şifresiz)')}</option>
+                                <option value="wpa2">{tr('WPA2-PSK (AES)', 'WPA2-PSK (AES)')}</option>
+                                <option value="wpa3">{tr('WPA3-SAE (Personal)', 'WPA3-SAE (Kişisel)')}</option>
+                                <option value="802.1x">{tr('WPA2/WPA3 Enterprise (802.1X)', 'WPA2/WPA3 Kurumsal (802.1X)')}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-[11px] font-medium block mb-1">{tr('Pre-Shared Key / Secret', 'Ön Paylaşımlı Parola')}</label>
+                            <Input
+                                type="password"
+                                placeholder={wlanSecurity === 'open' ? tr('(Not applicable)', '(Gerekli Değil)') : (wlanSecurity === '802.1x' ? tr('RADIUS Secret Key', 'RADIUS Gizli Anahtarı') : tr('Min 8 characters', 'En az 8 karakter'))}
+                                value={wlanPassword}
+                                onChange={(e) => setWlanPassword(e.target.value)}
+                                disabled={isDevicePoweredOff || busy || wlanSecurity === 'open'}
+                            />
+                        </div>
                     </div>
                     <Button
                         size="sm"
                         onClick={createWlan}
                         disabled={isDevicePoweredOff || busy || !wlanName || !wlanId || !wlanSsid}
                     >
-                        {tr('Add SSID / WLAN', 'SSID / WLAN Ekle')}
+                        {tr('Apply / Create WLAN', 'Uygula / WLAN Oluştur')}
                     </Button>
                 </CardContent>
             </Card>
@@ -156,7 +195,7 @@ export function WlcWirelessPanel({
             {/* Configured WLAN list */}
             <Card className={cardClass}>
                 <CardHeader className="pb-2">
-                    <CardTitle className="text-sm">{tr('Configured WLANs / SSIDs', 'Yapılandırılmış WLAN\'lar / SSID\'ler')}</CardTitle>
+                    <CardTitle className="text-sm">{tr('Configured WLANs / Dynamic VLAN Mapping', 'Yapılandırılmış WLAN\'lar / Dinamik VLAN Eşlemesi')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {Object.keys(wlans).length === 0 ? (
@@ -169,8 +208,14 @@ export function WlcWirelessPanel({
                                         <div className="text-sm font-medium truncate flex items-center gap-2">
                                             <span>{wlan.name}</span>
                                             <Badge variant="outline" className="text-[10px] py-0 px-1.5 font-mono">ID: {wlan.id}</Badge>
+                                            {wlan.vlan && (
+                                                <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-mono">VLAN {wlan.vlan}</Badge>
+                                            )}
                                         </div>
-                                        <div className={`text-xs ${muted}`}>SSID: <span className="font-semibold text-primary">{wlan.ssid}</span> · {tr('Security', 'Güvenlik')}: {(wlan.security || 'open').toUpperCase()}</div>
+                                        <div className={`text-xs ${muted}`}>
+                                            SSID: <span className="font-semibold text-primary">{wlan.ssid}</span> · {tr('Security', 'Güvenlik')}: <span className="font-mono uppercase">{wlan.security || 'open'}</span>
+                                            {wlan.vlan ? ` · ${tr('Interface: Dynamic-Vlan', 'Arayüz: Dinamik-Vlan')}${wlan.vlan}` : ''}
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <Badge variant={wlan.status === 'enabled' ? 'outline' : 'secondary'} className={wlan.status === 'enabled' ? 'bg-success-500 text-white border-transparent' : ''}>
@@ -186,7 +231,9 @@ export function WlcWirelessPanel({
                                                 setWlanName(wlan.name);
                                                 setWlanId(String(wlan.id));
                                                 setWlanSsid(wlan.ssid);
-                                                setWlanSecurity(wlan.security === 'open' ? 'open' : 'wpa2');
+                                                setWlanVlan(wlan.vlan ? String(wlan.vlan) : '1');
+                                                setWlanSecurity((wlan.security as 'open' | 'wpa2' | 'wpa3' | '802.1x') || 'open');
+                                                setWlanPassword(wlan.password || '');
                                             }}
                                         >
                                             <Edit3 className="w-3.5 h-3.5" />
@@ -262,11 +309,11 @@ export function WlcWirelessPanel({
                 </CardContent>
             </Card>
 
-            {/* AP list */}
+            {/* AP list (CAPWAP / AP Join CCNA view) */}
             <Card className={cardClass}>
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm">{tr('Joined Access Points', 'Bağlı Erişim Noktaları')}</CardTitle>
+                        <CardTitle className="text-sm">{tr('Joined Access Points (CAPWAP / DTLS)', 'Bağlı Erişim Noktaları (CAPWAP / DTLS)')}</CardTitle>
                         <Badge variant="outline" className="text-xs">
                             {Object.keys(aps).length} AP
                         </Badge>
@@ -274,18 +321,25 @@ export function WlcWirelessPanel({
                 </CardHeader>
                 <CardContent>
                     {Object.keys(aps).length === 0 ? (
-                        <p className={`text-xs ${muted}`}>{tr('No APs joined.', 'Bağlı AP yok.')}</p>
+                        <p className={`text-xs ${muted}`}>{tr('No APs joined. Connect an AP to establish CAPWAP tunnel.', 'Bağlı AP yok. CAPWAP tüneli kurmak için bir AP bağlayın.')}</p>
                     ) : (
                         <div className="space-y-2">
                             {Object.entries(aps).map(([name, ap]) => (
                                 <div key={name} className="flex items-center justify-between gap-2 rounded-md border border-secondary-200 dark:border-secondary-700 px-3 py-2">
                                     <div className="min-w-0">
-                                        <div className="text-sm font-medium truncate">{ap.name}</div>
-                                        <div className={`text-xs ${muted}`}>{ap.macAddress}</div>
+                                        <div className="text-sm font-medium truncate flex items-center gap-2">
+                                            <span>{ap.name}</span>
+                                            <Badge variant="outline" className="text-[10px] py-0 px-1 font-mono">{ap.model || 'AIR-CAP3702I'}</Badge>
+                                        </div>
+                                        <div className={`text-xs ${muted} font-mono mt-0.5`}>
+                                            MAC: {ap.macAddress} · {tr('Mode: Local', 'Mod: Local')} · {tr('Tunnel: CAPWAP Data Encrypt', 'Tünel: CAPWAP Veri Şifreleme')}
+                                        </div>
                                     </div>
-                                    <Badge variant={ap.status === 'joined' ? 'outline' : 'secondary'} className={ap.status === 'joined' ? 'bg-success-500 text-white border-transparent' : ''}>
-                                        {ap.status === 'joined' ? tr('Joined', 'Bağlı') : tr('Down', 'Kapalı')}
-                                    </Badge>
+                                    <div className="flex items-center gap-1.5">
+                                        <Badge variant={ap.status === 'joined' ? 'outline' : 'secondary'} className={ap.status === 'joined' ? 'bg-success-500 text-white border-transparent text-[11px]' : 'text-[11px]'}>
+                                            {ap.status === 'joined' ? tr('Registered', 'Kayıtlı (Joined)') : tr('Down', 'Kapalı')}
+                                        </Badge>
+                                    </div>
                                 </div>
                             ))}
                         </div>
