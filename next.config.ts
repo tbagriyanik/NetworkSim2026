@@ -48,6 +48,28 @@ async function getCommitCount(): Promise<number> {
     // Ignore
   }
 
+  // Query the remote repository when the deployment contains a shallow clone.
+  try {
+    const res = await fetch("https://api.github.com/repos/tbagriyanik/networksimulator/commits?per_page=1", {
+      headers: { "User-Agent": "Mozilla/5.0" },
+      signal: AbortSignal.timeout(5000)
+    });
+    if (res.ok) {
+      const link = res.headers.get("link");
+      if (link) {
+        const match = link.match(/&page=(\d+)>; rel="last"/);
+        if (match) {
+          const apiCount = parseInt(match[1], 10);
+          if (apiCount > 0) {
+            return apiCount;
+          }
+        }
+      }
+    }
+  } catch {
+    // Ignore fetch error
+  }
+
   return localCount > 0 ? localCount : FALLBACK_COMMIT_COUNT;
 }
 

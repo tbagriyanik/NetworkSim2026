@@ -263,6 +263,10 @@ export function TeacherRoomPanel() {
       if (json.success) {
         setRoomCodeInput(code);
         setActiveCode(code);
+        const sessionToken = json.data?.sessionToken;
+        if (typeof sessionToken === 'string') {
+          sessionStorage.setItem(`room-session-token-${code}`, sessionToken);
+        }
       } else {
         setError(json.error || 'Failed to create room');
       }
