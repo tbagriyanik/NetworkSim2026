@@ -1,17 +1,45 @@
 import { pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 
-if (
-  process.env.NODE_ENV === 'production' &&
-  process.env.NEXT_PHASE !== 'phase-production-build' &&
-  !process.env.EXAM_HMAC_KEY
-) {
-  throw new Error(
-    '[SECURITY FATAL] EXAM_HMAC_KEY environment variable is missing in production. Refusing startup with insecure fallback key.'
-  );
+function checkExamHmacKeyStartup(): void {
+  if (
+    process.env.NODE_ENV === 'production' &&
+    process.env.NEXT_PHASE !== 'phase-production-build' &&
+    typeof window === 'undefined' &&
+    !process.env.EXAM_HMAC_KEY &&
+    !process.env.NEXT_PUBLIC_EXAM_HMAC_KEY
+  ) {
+    throw new Error(
+      '[SECURITY FATAL] EXAM_HMAC_KEY environment variable is missing in production. Refusing startup with insecure fallback key.'
+    );
+  }
 }
 
-// HMAC key for exam data integrity — read from env, with a development fallback.
-const HMAC_EXAM_KEY = process.env.EXAM_HMAC_KEY || 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
+checkExamHmacKeyStartup();
+
+let warned = false;
+
+export function getExamHmacKey(): string {
+  const key = process.env.NEXT_PUBLIC_EXAM_HMAC_KEY || process.env.EXAM_HMAC_KEY;
+  if (!key) {
+    if (
+      process.env.NODE_ENV === 'production' &&
+      process.env.NEXT_PHASE !== 'phase-production-build' &&
+      typeof window === 'undefined'
+    ) {
+      throw new Error(
+        '[SECURITY FATAL] EXAM_HMAC_KEY environment variable is missing in production. Refusing startup with insecure fallback key.'
+      );
+    }
+    if (!warned) {
+      warned = true;
+      console.warn(
+        '[SECURITY] EXAM_HMAC_KEY not set — using insecure development fallback. Do NOT deploy without setting this env var.'
+      );
+    }
+    return 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
+  }
+  return key;
+}
 
 // Cost parameters for the modern, computationally strong hashing scheme.
 // 100,000 iterations of PBKDF2-HMAC-SHA256 is the OWASP-recommended minimum.
@@ -23,14 +51,15 @@ const PBKDF2_KEYLEN = 32;
  * Note: HMAC is used for signature verification, not password hashing.
  * For password hashing, use hashPassword() which uses PBKDF2 with 100,000 iterations.
  */
-export function generateHmacSignature(dataBuffer: string, secretKey: string = HMAC_EXAM_KEY): string {
-  return pbkdf2Sync(dataBuffer, secretKey, 1000, 32, 'sha256').toString('hex');
+export function generateHmacSignature(dataBuffer: string, secretKey?: string): string {
+  const key = secretKey || getExamHmacKey();
+  return pbkdf2Sync(dataBuffer, key, 1000, 32, 'sha256').toString('hex');
 }
 
 /**
  * Verify HMAC-SHA256 signature against payload data
  */
-export function verifyHmacSignature(dataBuffer: string, signature: string, secretKey: string = HMAC_EXAM_KEY): boolean {
+export function verifyHmacSignature(dataBuffer: string, signature: string, secretKey?: string): boolean {
   try {
     const expected = generateHmacSignature(dataBuffer, secretKey);
     return expected === signature;

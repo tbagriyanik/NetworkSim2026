@@ -1,7 +1,90 @@
 import { describe, it, expect } from 'vitest';
-import { encryptMd5Password, encryptType7Password, decryptType7Password, verifyType7Password, verifyMd5Password, hashPassword, verifyPassword } from '@/lib/network/crypto';
+import {
+  encryptMd5Password,
+  encryptType7Password,
+  decryptType7Password,
+  verifyType7Password,
+  verifyMd5Password,
+  hashPassword,
+  verifyPassword,
+  generateHmacSignature,
+  verifyHmacSignature,
+  getExamHmacKey,
+} from '@/lib/network/crypto';
 
 describe('Crypto Module', () => {
+  describe('generateHmacSignature / verifyHmacSignature / EXAM_HMAC_KEY', () => {
+    it('should generate and verify valid HMAC signatures', () => {
+      const data = 'test-exam-data-payload';
+      const sig = generateHmacSignature(data, 'custom-secret-key');
+      expect(typeof sig).toBe('string');
+      expect(sig.length).toBeGreaterThan(10);
+      expect(verifyHmacSignature(data, sig, 'custom-secret-key')).toBe(true);
+      expect(verifyHmacSignature(data, 'wrong-signature', 'custom-secret-key')).toBe(false);
+      expect(verifyHmacSignature('tampered-data', sig, 'custom-secret-key')).toBe(false);
+    });
+
+    it('should resolve key from NEXT_PUBLIC_EXAM_HMAC_KEY or EXAM_HMAC_KEY', () => {
+      const origKey = process.env.EXAM_HMAC_KEY;
+      const origPublic = process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
+      try {
+        process.env.EXAM_HMAC_KEY = 'server-key-123';
+        delete process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
+        expect(getExamHmacKey()).toBe('server-key-123');
+
+        process.env.NEXT_PUBLIC_EXAM_HMAC_KEY = 'public-key-456';
+        expect(getExamHmacKey()).toBe('public-key-456');
+      } finally {
+        if (origKey) process.env.EXAM_HMAC_KEY = origKey; else delete process.env.EXAM_HMAC_KEY;
+        if (origPublic) process.env.NEXT_PUBLIC_EXAM_HMAC_KEY = origPublic; else delete process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
+      }
+    });
+
+    it('should throw an error in production server context when EXAM_HMAC_KEY is missing', () => {
+      const origEnv = process.env.NODE_ENV;
+      const origKey = process.env.EXAM_HMAC_KEY;
+      const origPublic = process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
+      const origPhase = process.env.NEXT_PHASE;
+      const origWindow = globalThis.window;
+      try {
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true, enumerable: true });
+        delete process.env.EXAM_HMAC_KEY;
+        delete process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
+        delete process.env.NEXT_PHASE;
+        // @ts-expect-error - Simulating server environment where window is undefined
+        delete globalThis.window;
+        expect(() => getExamHmacKey()).toThrow(/EXAM_HMAC_KEY environment variable is missing in production/);
+      } finally {
+        Object.defineProperty(process.env, 'NODE_ENV', { value: origEnv, configurable: true, writable: true, enumerable: true });
+        if (origKey) process.env.EXAM_HMAC_KEY = origKey;
+        if (origPublic) process.env.NEXT_PUBLIC_EXAM_HMAC_KEY = origPublic;
+        if (origPhase) process.env.NEXT_PHASE = origPhase;
+        if (origWindow !== undefined) globalThis.window = origWindow;
+      }
+    });
+
+    it('should not throw in browser client context when EXAM_HMAC_KEY is missing in production', () => {
+      const origEnv = process.env.NODE_ENV;
+      const origKey = process.env.EXAM_HMAC_KEY;
+      const origPublic = process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
+      const origPhase = process.env.NEXT_PHASE;
+      try {
+        Object.defineProperty(process.env, 'NODE_ENV', { value: 'production', configurable: true, writable: true, enumerable: true });
+        delete process.env.EXAM_HMAC_KEY;
+        delete process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
+        delete process.env.NEXT_PHASE;
+        expect(typeof window).not.toBe('undefined');
+        expect(() => getExamHmacKey()).not.toThrow();
+        expect(getExamHmacKey()).toBe('SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE');
+      } finally {
+        Object.defineProperty(process.env, 'NODE_ENV', { value: origEnv, configurable: true, writable: true, enumerable: true });
+        if (origKey) process.env.EXAM_HMAC_KEY = origKey;
+        if (origPublic) process.env.NEXT_PUBLIC_EXAM_HMAC_KEY = origPublic;
+        if (origPhase) process.env.NEXT_PHASE = origPhase;
+      }
+    });
+  });
+
   describe('hashPassword / verifyPassword (PBKDF2-SHA256)', () => {
     it('should produce a strong hash with the expected format', () => {
       const result = hashPassword('secret123');
