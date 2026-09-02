@@ -1,5 +1,15 @@
 import { pbkdf2Sync, randomBytes, randomInt, timingSafeEqual } from 'crypto';
 
+if (
+  process.env.NODE_ENV === 'production' &&
+  process.env.NEXT_PHASE !== 'phase-production-build' &&
+  !process.env.EXAM_HMAC_KEY
+) {
+  throw new Error(
+    '[SECURITY FATAL] EXAM_HMAC_KEY environment variable is missing in production. Refusing startup with insecure fallback key.'
+  );
+}
+
 // HMAC key for exam data integrity — read from env, with a development fallback.
 const HMAC_EXAM_KEY = process.env.EXAM_HMAC_KEY || 'SENTINEL_EXAM_HMAC_KEY_2026_SECURE_SIGNATURE';
 

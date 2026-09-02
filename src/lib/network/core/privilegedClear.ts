@@ -132,13 +132,23 @@ export function cmdClearCounters(state: SwitchState, input: string, _ctx: Comman
 /**
  * Clear Line
  */
-export function cmdClearLine(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-    return { success: true, output: '[confirm]\n' };
+export function cmdClearLine(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+    const match = input.trim().match(/^clear\s+line(?:\s+(vty\s+\d+|console\s+\d+|aux\s+\d+|\d+))?$/i);
+    const lineTarget = match?.[1] || 'all';
+    return {
+        success: true,
+        output: `[confirm]\n% Resetting line ${lineTarget}\n`
+    };
 }
 
 /**
  * Clear Interface
  */
-export function cmdClearInterface(_state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
-    return { success: true, output: '[confirm]\n' };
+export function cmdClearInterface(_state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+    const match = input.trim().match(/^clear\s+interface\s+(\S+)$/i);
+    const intf = match?.[1] || 'all';
+    return {
+        success: true,
+        output: `[confirm]\n% Resetting interface ${intf}\n`
+    };
 }

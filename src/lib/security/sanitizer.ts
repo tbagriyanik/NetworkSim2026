@@ -6,12 +6,22 @@
 
 export function sanitizeHTML(input: string): string {
     if (!input) return '';
-    return input
+    let safe = input
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+
+    // Unescape safe syntax highlight span tags safely (only styling attributes)
+    safe = safe
+        .replace(/&lt;span style=&quot;([^&"]+)&quot;&gt;/gi, (_, styleStr) => {
+            const cleanStyle = styleStr.replace(/[^a-zA-Z0-9#;.:\s()%-]/g, '');
+            return `<span style="${cleanStyle}">`;
+        })
+        .replace(/&lt;\/span&gt;/gi, '</span>');
+
+    return safe;
 }
 
 /**

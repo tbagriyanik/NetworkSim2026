@@ -303,7 +303,6 @@ function cmdDo(
   input: string,
   ctx: CommandContext
 ): CommandResult {
-  console.log('CMDDO ENTERED:', input);
   const withOriginalMode = (result: CommandResult) => {
     if (result?.newState) result.newState = { ...result.newState, currentMode: originalMode };
     else result.newState = { currentMode: originalMode };

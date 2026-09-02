@@ -3,6 +3,7 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { ClipboardPaste, Copy, ListChecks, Scissors, Trash2 } from 'lucide-react';
 import { colors } from '@/lib/design-tokens/colors';
+import { sanitizeHTML } from '@/lib/security/sanitizer';
 
 interface PythonCodeEditorProps {
   value: string;
@@ -90,7 +91,7 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
   const [editorWidth, setEditorWidth] = useState(800);
 
   const wrapThreshold = Math.max(20, Math.floor((editorWidth - 64) / Math.max(1, fontSize * 0.6)));
-  const highlighted = useMemo(() => highlightCode(value), [value]);
+  const highlighted = useMemo(() => sanitizeHTML(highlightCode(value)), [value]);
   const gutterRows = useMemo(() => {
     const rows: Array<{ label: string; lineIndex: number }> = [];
     value.split('\n').forEach((line, lineIndex) => {
@@ -313,9 +314,8 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
       <pre
         ref={preRef}
         aria-hidden="true"
-        className={`pointer-events-none absolute inset-0 m-0 overflow-hidden p-4 pl-16 font-mono text-xs leading-relaxed sm:text-sm ${wordWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre' } ${
-          isDark ? 'text-secondary-200' : 'text-secondary-900'
-        }`}
+        className={`pointer-events-none absolute inset-0 m-0 overflow-hidden p-4 pl-16 font-mono text-xs leading-relaxed sm:text-sm ${wordWrap ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'} ${isDark ? 'text-secondary-200' : 'text-secondary-900'
+          }`}
         style={{
           tabSize: 4,
           fontSize,
@@ -352,11 +352,10 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
         placeholder={placeholder}
         spellCheck={false}
         style={{ tabSize: 4, fontSize, lineHeight: String(Math.round(fontSize * 1.5)) + 'px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', color: 'transparent', WebkitTextFillColor: 'transparent' }}
-        className={`relative z-10 h-full w-full resize-none bg-transparent p-4 pl-16 font-mono text-xs leading-relaxed caret-primary-400 outline-none sm:text-sm ${
-          isDark
+        className={`relative z-10 h-full w-full resize-none bg-transparent p-4 pl-16 font-mono text-xs leading-relaxed caret-primary-400 outline-none sm:text-sm ${isDark
             ? 'text-transparent placeholder:text-secondary-600 selection:bg-primary-800/50'
             : 'text-transparent placeholder:text-secondary-400 selection:bg-primary-200/60'
-        }`}
+          }`}
         autoFocus
       />
       {contextMenu && (
@@ -379,9 +378,8 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
       )}
       {suggestionsOpen && suggestions.length > 0 && (
         <div
-          className={`absolute z-30 min-w-44 overflow-hidden rounded-lg border shadow-2xl transition-all ${
-            isDark ? 'border-secondary-700 bg-secondary-900/95 backdrop-blur-md' : 'border-secondary-300 bg-white/95 backdrop-blur-md'
-          }`}
+          className={`absolute z-30 min-w-44 overflow-hidden rounded-lg border shadow-2xl transition-all ${isDark ? 'border-secondary-700 bg-secondary-900/95 backdrop-blur-md' : 'border-secondary-300 bg-white/95 backdrop-blur-md'
+            }`}
           style={{ top: `${caretPos.top}px`, left: `${caretPos.left}px` }}
         >
           <div className={`px-2 py-1 text-[10px] font-sans font-semibold border-b ${isDark ? 'border-secondary-800 text-secondary-400' : 'border-secondary-200 text-secondary-500'}`}>
@@ -395,15 +393,14 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
                 event.preventDefault();
                 complete(suggestion);
               }}
-              className={`block w-full px-3 py-1.5 text-left font-mono text-xs transition-colors ${
-                index === suggestionIndex
+              className={`block w-full px-3 py-1.5 text-left font-mono text-xs transition-colors ${index === suggestionIndex
                   ? isDark
                     ? 'bg-primary-900/80 text-primary-200 font-bold'
                     : 'bg-primary-100 text-primary-800 font-bold'
                   : isDark
-                  ? 'text-secondary-200 hover:bg-secondary-800'
-                  : 'text-secondary-700 hover:bg-secondary-100'
-              }`}
+                    ? 'text-secondary-200 hover:bg-secondary-800'
+                    : 'text-secondary-700 hover:bg-secondary-100'
+                }`}
             >
               {suggestion}
             </button>
