@@ -533,7 +533,9 @@ function calculateRipRoutes(
         subnetMask: otherPort.subnetMask,
         nextHop: neighborIp,
         type: 'dynamic',
-        metric: 120
+        metric: 120,
+        code: 'R',
+        administrativeDistance: 120
       });
     }
 
@@ -555,7 +557,9 @@ function calculateRipRoutes(
         subnetMask: route.subnetMask,
         nextHop: neighborIp,
         type: 'dynamic',
-        metric: 120
+        metric: 120,
+        code: 'R',
+        administrativeDistance: 120
       });
     }
   }
@@ -625,7 +629,7 @@ function calculateRipngRoutes(
         prefixLength: otherPort.ipv6Prefix,
         nextHop: otherPort.ipv6Address,
         type: 'dynamic',
-        metric: 120
+        metric: 1
       });
     }
   }

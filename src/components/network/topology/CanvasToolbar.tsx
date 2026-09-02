@@ -13,6 +13,7 @@ interface CanvasToolbarProps {
   setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   resetView: () => void;
+  zoomToFit: () => void;
   handleZoomMouseDown: (e: React.MouseEvent) => void;
   handleZoomWheel: (e: React.WheelEvent) => void;
   isDraggingZoom: boolean;
@@ -30,6 +31,7 @@ export function CanvasToolbar({
   setPan,
   canvasRef,
   resetView,
+  zoomToFit,
   handleZoomMouseDown,
   handleZoomWheel,
   isDraggingZoom,
@@ -146,6 +148,20 @@ export function CanvasToolbar({
           <ShortcutBadge shortcut="Alt+R" variant="primary" />
         </TooltipContent>
       </Tooltip>
+
+      <TooltipWrapper title={language === 'tr' ? 'Tümünü Ekrana Sığdır' : 'Zoom to Fit'}>
+        <button
+          aria-label={language === 'tr' ? 'Tümünü Ekrana Sığdır' : 'Zoom to Fit'}
+          onClick={zoomToFit}
+          className={`w-7 h-7 flex items-center justify-center rounded transition-colors ${
+            isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+          </svg>
+        </button>
+      </TooltipWrapper>
 
       <div className={`w-px h-5 ${isDark ? 'bg-secondary-600' : 'bg-secondary-300'} mx-1`} />
 

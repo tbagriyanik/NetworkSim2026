@@ -226,10 +226,65 @@ export function useCanvasZoomPan({
     document.addEventListener('mouseup', handleMouseUp);
   }, [zoom, setZoom, setPan, canvasRef, zoomRef]);
 
+  // Zoom to Fit (Tümünü Ekrana Sığdır)
+  const zoomToFit = useCallback(() => {
+    if (devices.length === 0 && notes.length === 0) {
+      resetView();
+      return;
+    }
+
+    const deviceWidth = 80;
+    const deviceHeight = 60;
+
+    const minDeviceX = devices.length ? Math.min(...devices.map(d => d.x)) : Infinity;
+    const maxDeviceX = devices.length ? Math.max(...devices.map(d => d.x + deviceWidth)) : -Infinity;
+    const minDeviceY = devices.length ? Math.min(...devices.map(d => d.y)) : Infinity;
+    const maxDeviceY = devices.length ? Math.max(...devices.map(d => d.y + deviceHeight)) : -Infinity;
+
+    const minNoteX = notes.length ? Math.min(...notes.map(n => n.x)) : Infinity;
+    const maxNoteX = notes.length ? Math.max(...notes.map(n => n.x + n.width)) : -Infinity;
+    const minNoteY = notes.length ? Math.min(...notes.map(n => n.y)) : Infinity;
+    const maxNoteY = notes.length ? Math.max(...notes.map(n => n.y + n.height)) : -Infinity;
+
+    const minX = Math.min(minDeviceX, minNoteX);
+    const maxX = Math.max(maxDeviceX, maxNoteX);
+    const minY = Math.min(minDeviceY, minNoteY);
+    const maxY = Math.max(maxDeviceY, maxNoteY);
+
+    const boundsWidth = maxX - minX;
+    const boundsHeight = maxY - minY;
+
+    if (!canvasRef.current || boundsWidth <= 0 || boundsHeight <= 0) {
+      resetView();
+      return;
+    }
+
+    const rect = canvasRef.current.getBoundingClientRect();
+    const padding = 60;
+    const availableWidth = Math.max(100, rect.width - padding * 2);
+    const availableHeight = Math.max(100, rect.height - padding * 2);
+
+    const targetZoomX = availableWidth / boundsWidth;
+    const targetZoomY = availableHeight / boundsHeight;
+    let targetZoom = Math.min(targetZoomX, targetZoomY);
+
+    targetZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, targetZoom));
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+
+    const targetPanX = rect.width / 2 - centerX * targetZoom;
+    const targetPanY = rect.height / 2 - centerY * targetZoom;
+
+    setZoom(targetZoom);
+    setPan({ x: targetPanX, y: targetPanY });
+  }, [devices, notes, setZoom, setPan, canvasRef, resetView]);
+
   return {
     handleZoomWheel,
     handleZoomMouseDown,
     isDraggingZoom,
-    resetView
+    resetView,
+    zoomToFit
   };
 }

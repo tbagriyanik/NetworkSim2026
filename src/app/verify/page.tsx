@@ -12,6 +12,7 @@ interface CertificateRecord {
   date: string;
   language: 'tr' | 'en';
   issuedAt: number;
+  isSoloMode?: boolean;
 }
 
 function VerifyContent() {
@@ -175,6 +176,16 @@ function VerifyContent() {
               <h2 className="text-emerald-300 font-bold text-lg">{tx.found}</h2>
             </div>
             <div className="space-y-3 text-sm">
+              {record.isSoloMode && (
+                <div className="bg-amber-500/10 border border-amber-400/30 rounded-xl p-3 mb-2 flex items-center gap-2 text-amber-300 text-xs">
+                  <span className="text-base">⚠️</span>
+                  <span>
+                    {lang === 'tr'
+                      ? 'Bu sertifika Solo Modda (bireysel çalışma) üretilmiştir. Puan sunucu tarafında doğrulanmamış olup istemci beyanına dayanmaktadır.'
+                      : 'This certificate was generated in Solo Mode. Score is unverified on server and based on client self-reporting.'}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between items-center py-2 border-b border-white/10">
                 <span className="text-white/50">{tx.student}</span>
                 <span className="text-white font-semibold">{record.studentName}</span>

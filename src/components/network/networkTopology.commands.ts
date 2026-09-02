@@ -11,6 +11,29 @@ export interface CommandDefinition {
 export function getCommandCategories(isTR: boolean): CommandDefinition[] {
   return [
     {
+      id: 'keyboard_shortcuts',
+      icon: Keyboard,
+      title: isTR ? 'Klavye Kısayolları' : 'Keyboard Shortcuts',
+      type: 'info',
+      cmds: [
+        ['F1', isTR ? 'Yardım / Klavye Kısayolları panelini aç' : 'Open Help / Keyboard Shortcuts panel'],
+        ['F5', isTR ? 'Ağı yenile' : 'Refresh network'],
+        ['Escape', isTR ? 'Pencereleri kapat / Seçimi kaldır' : 'Close windows / Clear selection'],
+        ['Tab', isTR ? 'Cihazlar arasında gezin' : 'Navigate between devices'],
+        ['Shift+Tab', isTR ? 'Ters yönde cihaz gezinimi' : 'Navigate devices in reverse'],
+        ['Ctrl+S', isTR ? 'Projeyi kaydet' : 'Save project'],
+        ['Ctrl+O', isTR ? 'Proje aç' : 'Open project'],
+        ['Ctrl+N', isTR ? 'Yeni proje' : 'New project'],
+        ['Ctrl+Z', isTR ? 'Geri al' : 'Undo'],
+        ['Ctrl+Y', isTR ? 'İleri al' : 'Redo'],
+        ['Ctrl+P', isTR ? 'Yazdır' : 'Print'],
+        ['Alt+N', isTR ? 'Yeni proje' : 'New project'],
+        ['S', isTR ? 'Simülasyon modunu aç/kapat' : 'Toggle simulation mode'],
+        ['"', isTR ? 'Timeline panelini aç/kapat' : 'Toggle timeline panel'],
+        ['Enter', isTR ? 'Seçili cihazı aç' : 'Open selected device'],
+      ]
+    },
+    {
       id: 'command_modes',
       icon: Layers,
       title: isTR ? 'Komut Modları' : 'Command Modes',

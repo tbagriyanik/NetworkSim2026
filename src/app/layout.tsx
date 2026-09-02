@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import Script from "next/script";
 import localFont from "next/font/local";
 import "./globals.css";
-import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/Providers";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 import { AppErrorBoundary } from "@/components/ui/AppErrorBoundary";
@@ -211,7 +210,6 @@ export default async function RootLayout({
             </div>
           </AppErrorBoundary>
         </Providers>
-        <Toaster />
         <ServiceWorkerRegister />
       </body>
     </html>

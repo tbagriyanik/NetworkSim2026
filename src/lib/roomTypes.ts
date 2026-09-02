@@ -39,4 +39,5 @@ export interface CertificateRecord {
   date: string;
   language: 'tr' | 'en';
   issuedAt: number;
+  isSoloMode?: boolean;
 }

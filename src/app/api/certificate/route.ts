@@ -130,6 +130,8 @@ export const POST = withErrorHandling(async (
 
   const verifyCode = generateVerifyCode();
 
+  const isSoloMode = !roomCode || !studentId;
+
   await saveCertificate({
     verifyCode,
     studentName: cleanStudentName,
@@ -139,6 +141,7 @@ export const POST = withErrorHandling(async (
     date: sanitizeInput(String(date)).slice(0, 30),
     language: language === 'tr' ? 'tr' : 'en',
     issuedAt: Date.now(),
+    isSoloMode,
   });
 
   return NextResponse.json({ success: true, data: { verifyCode } }, { status: 200 });

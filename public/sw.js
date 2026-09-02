@@ -145,6 +145,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
+  // Same-origin check: only handle requests from the same origin
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   // API requests: network-first, no dynamic cache put for sensitive data
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(fetch(event.request).catch(() => new Response('Offline', { status: 408 })));

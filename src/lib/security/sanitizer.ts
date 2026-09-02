@@ -1,5 +1,7 @@
 
 
+import DOMPurify from 'dompurify';
+
 /**
  * Security utilities for input sanitization and data protection
  */
@@ -25,30 +27,21 @@ export function sanitizeHTML(input: string): string {
 }
 
 /**
- * Sanitize HTML content allowing only <b>, <i>, and <u> tags for HTTP service content.
- * Replaced DOMPurify with strict unescaping to avoid Vercel 500 errors.
+ * Sanitize HTML content for HTTP service content using DOMPurify.
+ * Allows basic formatting and layout tags while preventing XSS.
  */
 export function sanitizeHTTPContent(input: string): string {
     if (!input) return '';
 
-    let safe = input.replace(/&/g, '&amp;');
-    safe = safe.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // Whitelist formatting and layout tags safely
-    safe = safe
-        .replace(/&lt;b&gt;/gi, '<b>').replace(/&lt;\/b&gt;/gi, '</b>')
-        .replace(/&lt;i&gt;/gi, '<i>').replace(/&lt;\/i&gt;/gi, '</i>')
-        .replace(/&lt;u&gt;/gi, '<u>').replace(/&lt;\/u&gt;/gi, '</u>')
-        .replace(/&lt;br\s*\/?&gt;/gi, '<br />')
-        .replace(/&lt;p&gt;/gi, '<p>').replace(/&lt;\/p&gt;/gi, '</p>')
-        .replace(/&lt;span&gt;/gi, '<span>').replace(/&lt;\/span&gt;/gi, '</span>')
-        .replace(/&lt;h([1-6])&gt;/gi, '<h$1>').replace(/&lt;\/h([1-6])&gt;/gi, '</h$1>');
-
-    // Safe link transformation (disallow javascript: URIs)
-    safe = safe.replace(/&lt;a\s+href=&quot;(https?:\/\/[^&"]+)&quot;&gt;/gi, '<a href="$1" target="_blank" rel="noopener noreferrer">')
-        .replace(/&lt;\/a&gt;/gi, '</a>');
-
-    return safe;
+    return DOMPurify.sanitize(input, {
+        ALLOWED_TAGS: ['b', 'i', 'u', 'br', 'p', 'span', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a'],
+        ALLOWED_ATTR: ['href', 'target', 'rel'],
+        ALLOW_DATA_ATTR: false,
+        FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur'],
+        SANITIZE_DOM: true,
+        ADD_ATTR: ['target'],
+    });
 }
 
 function stripHtmlTags(str: string): string {

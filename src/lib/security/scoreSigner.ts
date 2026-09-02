@@ -14,18 +14,13 @@ function checkCertificateSecretStartup(): void {
 
 checkCertificateSecretStartup();
 
-let warned = false;
 function getSecretKey(): string {
   const secret = process.env.CERTIFICATE_SECRET;
   if (!secret) {
-    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE !== 'phase-production-build') {
-      throw new Error('[SECURITY FATAL] CERTIFICATE_SECRET environment variable is missing in production.');
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('[SECURITY FATAL] CERTIFICATE_SECRET environment variable is missing.');
     }
-    if (!warned) {
-      warned = true;
-      console.warn('[SECURITY] CERTIFICATE_SECRET not set — using insecure development fallback. Do NOT deploy without setting this env var.');
-    }
-    return 'netsim-dev-insecure-fallback-key-2026';
+    return 'dev_secret_fallback_key_32bytes_long!';
   }
   return secret;
 }

@@ -9,7 +9,7 @@ export interface TopologySelectionToolbarProps {
   t: Record<string, string>;
   selectedDeviceIds: string[];
   deviceMap: Map<string, CanvasDevice>;
-  handleAlign: (alignment: 'left' | 'top') => void;
+  handleAlign: (alignment: 'left' | 'right' | 'top' | 'bottom' | 'h-center' | 'v-center') => void;
   setSelectedDeviceIds: (ids: string[]) => void;
   onDeviceSelect: (type: DeviceType, id: string | undefined, model: string | undefined, name: string | undefined) => void;
   saveToHistory: () => void;
@@ -52,7 +52,7 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
         e.stopPropagation();
       }}
     >
-      <TooltipWrapper title={t.alignLeft}>
+      <TooltipWrapper title={t.alignLeft || 'Align Left'}>
         <button
           aria-label={t.alignLeft || 'Align Left'}
           onClick={(e) => {
@@ -68,7 +68,23 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
           </svg>
         </button>
       </TooltipWrapper>
-      <TooltipWrapper title={t.alignTop}>
+      <TooltipWrapper title={t.alignHCenter || 'Align Horizontal Center'}>
+        <button
+          aria-label={t.alignHCenter || 'Align Horizontal Center'}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            logger.debug('[Toolbar] Align horizontal center clicked');
+            handleAlign('h-center');
+          }}
+          className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v20M8 6h8M6 12h12M7 18h10" />
+          </svg>
+        </button>
+      </TooltipWrapper>
+      <TooltipWrapper title={t.alignTop || 'Align Top'}>
         <button
           aria-label={t.alignTop || 'Align Top'}
           onClick={(e) => {
@@ -81,6 +97,22 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
+          </svg>
+        </button>
+      </TooltipWrapper>
+      <TooltipWrapper title={t.alignVCenter || 'Align Vertical Center'}>
+        <button
+          aria-label={t.alignVCenter || 'Align Vertical Center'}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            logger.debug('[Toolbar] Align vertical center clicked');
+            handleAlign('v-center');
+          }}
+          className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 12h20M6 8v8M12 6v12M18 7v10" />
           </svg>
         </button>
       </TooltipWrapper>

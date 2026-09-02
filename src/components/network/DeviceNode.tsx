@@ -102,7 +102,7 @@ export const DeviceNode = memo(function DeviceNode({
         }
         onTouchEnd(e);
       }}
-      style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none', outline: 'none' }}
+      style={{ cursor: isDragging ? 'grabbing' : 'grab', touchAction: 'none' }}
     >
       {/* Invisible touch target area for better mobile interaction */}
       <rect

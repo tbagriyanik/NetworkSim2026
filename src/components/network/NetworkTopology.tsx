@@ -530,6 +530,7 @@ export function NetworkTopology({
     handleZoomMouseDown,
     isDraggingZoom,
     resetView,
+    zoomToFit,
   } = useCanvasZoomPan({
     zoom,
     setZoom,
@@ -1982,6 +1983,7 @@ export function NetworkTopology({
             setPan={setPan}
             canvasRef={canvasRef}
             resetView={resetView}
+            zoomToFit={zoomToFit}
             handleZoomMouseDown={handleZoomMouseDown}
             handleZoomWheel={handleZoomWheel}
             isDraggingZoom={isDraggingZoom}

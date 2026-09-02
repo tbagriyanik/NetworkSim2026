@@ -12,6 +12,7 @@ interface CertificateData {
   language: 'tr' | 'en';
   roomCode?: string;
   studentId?: string;
+  isSoloMode?: boolean;
 }
 
 // ─── QR Code generator ───────────────────────────────────────────────────────
@@ -77,6 +78,7 @@ async function renderCertificateCanvas(
   if (!ctx) throw new Error('Failed to create canvas context');
 
   const isTr = data.language === 'tr';
+  const isSoloMode = data.isSoloMode;
 
   // 1. Background fill
   ctx.fillStyle = colors.neutral[50];
@@ -138,23 +140,39 @@ async function renderCertificateCanvas(
 
   ctx.textAlign = 'center';
 
+  // Solo Mode Badge (if applicable)
+  if (isSoloMode) {
+    ctx.fillStyle = colors.amber[100];
+    ctx.strokeStyle = colors.amber[600];
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(centerX - 250, 190, 500, 40, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.font = 'bold 20px "Segoe UI", Roboto, Arial, sans-serif';
+    ctx.fillStyle = colors.amber[700];
+    const soloBadgeText = isTr ? 'SOLO MOD - DOĞRULANMAMIŞ / BEYANİ ÇALIŞMA' : 'SOLO MODE - UNVERIFIED / SELF-REPORTED';
+    ctx.fillText(soloBadgeText, centerX, 217);
+  }
+
   // Sub-header Badge
   ctx.font = 'bold 26px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.amber[600];
-  ctx.fillText('NETWORK SIMULATOR ACADEMY', centerX, 240);
+  ctx.fillText('NETWORK SIMULATOR ACADEMY', centerX, isSoloMode ? 280 : 240);
 
   // Main Title
   ctx.font = 'bold 64px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.topology.canvasBg;
   const titleText = isTr ? 'BAŞARI SERTİFİKASI' : 'CERTIFICATE OF ACHIEVEMENT';
-  ctx.fillText(titleText, centerX, 330);
+  ctx.fillText(titleText, centerX, isSoloMode ? 370 : 330);
 
   // Decorative line under title
   ctx.strokeStyle = colors.blue[600];
   ctx.lineWidth = 4;
   ctx.beginPath();
-  ctx.moveTo(centerX - 250, 360);
-  ctx.lineTo(centerX + 250, 360);
+  ctx.moveTo(centerX - 250, isSoloMode ? 400 : 360);
+  ctx.lineTo(centerX + 250, isSoloMode ? 400 : 360);
   ctx.stroke();
 
   // Subtitle
@@ -163,19 +181,19 @@ async function renderCertificateCanvas(
   const subtitleText = isTr
     ? 'Bu belge aşağıdaki katılımcının modülü başarıyla tamamladığını onaylar:'
     : 'This is to certify that';
-  ctx.fillText(subtitleText, centerX, 440);
+  ctx.fillText(subtitleText, centerX, isSoloMode ? 480 : 440);
 
   // Student Name (Full Turkish Character Support)
   ctx.font = 'bold 68px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.blue[700];
-  ctx.fillText(data.studentName.toUpperCase(), centerX, 550);
+  ctx.fillText(data.studentName.toUpperCase(), centerX, isSoloMode ? 590 : 550);
 
   // Underline for Student Name
   ctx.strokeStyle = colors.sky[200];
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(centerX - 350, 580);
-  ctx.lineTo(centerX + 350, 580);
+  ctx.moveTo(centerX - 350, isSoloMode ? 620 : 580);
+  ctx.lineTo(centerX + 350, isSoloMode ? 620 : 580);
   ctx.stroke();
 
   // Project Info
@@ -183,18 +201,18 @@ async function renderCertificateCanvas(
   ctx.fillStyle = colors.theme.secondary;
   ctx.fillText(
     isTr ? 'Tamamlanan Eğitim Modülü:' : 'Has successfully completed the lab module:',
-    centerX, 660
+    centerX, isSoloMode ? 700 : 660
   );
 
   ctx.font = 'bold 44px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.topology.bg;
-  ctx.fillText(data.projectTitle, centerX, 730);
+  ctx.fillText(data.projectTitle, centerX, isSoloMode ? 770 : 730);
 
   // Score Badge
   const scoreBoxWidth = 500;
   const scoreBoxHeight = 80;
   const scoreBoxX = centerX - scoreBoxWidth / 2;
-  const scoreBoxY = 790;
+  const scoreBoxY = isSoloMode ? 830 : 790;
 
   ctx.fillStyle = colors.green[50];
   ctx.strokeStyle = colors.green[600];
@@ -215,48 +233,50 @@ async function renderCertificateCanvas(
   ctx.textAlign = 'left';
   ctx.font = '26px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.topology.gridLine;
-  ctx.fillText(`${isTr ? 'Tarih' : 'Date'}: ${data.date}`, 160, 1050);
+  ctx.fillText(`${isTr ? 'Tarih' : 'Date'}: ${data.date}`, 160, isSoloMode ? 1090 : 1050);
 
   const expireDateObj = new Date();
   expireDateObj.setFullYear(expireDateObj.getFullYear() + 1);
   const expireDateStr = expireDateObj.toLocaleDateString(isTr ? 'tr-TR' : 'en-US');
-  ctx.fillText(`${isTr ? 'Geçerlilik Tarihi' : 'Expiration Date'}: ${expireDateStr}`, 160, 1100);
+  ctx.fillText(`${isTr ? 'Geçerlilik Tarihi' : 'Expiration Date'}: ${expireDateStr}`, 160, isSoloMode ? 1140 : 1100);
 
   // Signature Lines (Bottom)
   ctx.strokeStyle = colors.cables.default;
   ctx.lineWidth = 3;
 
+  const signatureY = isSoloMode ? 1360 : 1320;
+
   // Instructor Signature
   ctx.beginPath();
-  ctx.moveTo(160, 1320);
-  ctx.lineTo(550, 1320);
+  ctx.moveTo(160, signatureY);
+  ctx.lineTo(550, signatureY);
   ctx.stroke();
 
   ctx.font = 'bold 24px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.topology.canvasBg;
-  ctx.fillText(isTr ? 'Eğitmen' : 'Instructor', 160, 1360);
+  ctx.fillText(isTr ? 'Eğitmen' : 'Instructor', 160, signatureY + 40);
   ctx.font = '22px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.cables.console;
-  ctx.fillText('Network Simulator', 160, 1395);
+  ctx.fillText('Network Simulator', 160, signatureY + 75);
 
   // Director Signature
   ctx.beginPath();
-  ctx.moveTo(width - 550, 1320);
-  ctx.lineTo(width - 160, 1320);
+  ctx.moveTo(width - 550, signatureY);
+  ctx.lineTo(width - 160, signatureY);
   ctx.stroke();
 
   ctx.font = 'bold 24px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.topology.canvasBg;
-  ctx.fillText(isTr ? 'Program Yöneticisi' : 'Program Director', width - 550, 1360);
+  ctx.fillText(isTr ? 'Program Yöneticisi' : 'Program Director', width - 550, signatureY + 40);
   ctx.font = '22px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.cables.console;
-  ctx.fillText('...................', width - 550, 1395);
+  ctx.fillText('...................', width - 550, signatureY + 75);
 
   // Footer text
   ctx.textAlign = 'center';
   ctx.font = '20px "Segoe UI", Roboto, Arial, sans-serif';
   ctx.fillStyle = colors.cables.default;
-  ctx.fillText('Network Simulator Certification System • Official Digital Document', centerX, 1550);
+  ctx.fillText('Network Simulator Certification System • Official Digital Document', centerX, isSoloMode ? 1590 : 1550);
 
   return canvas.toDataURL('image/jpeg', 0.85);
 }
@@ -353,8 +373,14 @@ export const generateCertificate = async (data: CertificateData): Promise<void> 
     fetchLogoDataUrl(),
   ]);
 
+  const isSoloMode = !data.roomCode;
+  const fullData: CertificateData = {
+    ...data,
+    isSoloMode: isSoloMode || data.isSoloMode,
+  };
+
   // Step 3: Render Certificate with 100% Turkish Character Support via High-DPI Canvas
-  const certificateImgData = await renderCertificateCanvas(data, verifyCode, qrDataUrl, logoDataUrl);
+  const certificateImgData = await renderCertificateCanvas(fullData, verifyCode, qrDataUrl, logoDataUrl);
 
   // Step 4: Embed High-DPI Canvas Image into jsPDF (A4 Landscape)
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4', compress: true });

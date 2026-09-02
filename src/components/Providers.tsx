@@ -12,12 +12,14 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { GlobalDragManager } from '@/hooks/useDrag';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
+import { LangUpdater } from '@/components/LangUpdater';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ThemeProvider>
       <AppErrorBoundary>
         <LanguageProvider>
+          <LangUpdater />
           <LayoutProvider>
             <FeatureFlagProvider>
               <ModeProvider>
