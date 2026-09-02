@@ -1016,7 +1016,8 @@ function cmdShowSessions(_state: SwitchState, _input: string, _ctx: CommandConte
  */
 export function cmdShowNtp(state: SwitchState, input: string, ctx: CommandContext): CommandResult {
   const servers = state.ntpServers || [];
-  if (servers.length === 0) {
+  const masterStratum = state.ntpMasterStratum;
+  if (servers.length === 0 && !masterStratum) {
     return { success: true, output: '\n% NTP is not enabled.\n' };
   }
 
@@ -1039,6 +1040,17 @@ export function cmdShowNtp(state: SwitchState, input: string, ctx: CommandContex
   }
 
   if (isStatus || input.trim() === 'show ntp') {
+    if (masterStratum) {
+      let output = '\nClock is synchronized, NTP master (stratum ' + masterStratum + ')\n';
+      output += 'nominal freq is 250.0000 Hz, actual freq is 249.9998 Hz, precision is 2**18\n';
+      output += 'reference time is LOCAL(0)\n';
+      output += 'clock offset is 0.0000 msec, root delay is 0.00 msec\n';
+      output += 'root dispersion is 0.00 msec, peer dispersion is 0.00 msec\n';
+      output += 'loopfilter state is \'FREQ\' (Normal), drift is 0.00000000 s/s\n';
+      output += 'system poll interval is 64 s\n';
+      output += '\n  NTP servers configured as master (stratum ' + masterStratum + ')\n';
+      return { success: true, output };
+    }
     let output = '\nClock is synchronized, stratum 2, reference is ' + referenceIp + '\n';
     output += 'nominal freq is 250.0000 Hz, actual freq is 249.9998 Hz, precision is 2**18\n';
     output += 'reference time is E8D1A543.64D29810 (20:12:00.393 UTC Wed Sep 2 2026)\n';

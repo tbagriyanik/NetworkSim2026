@@ -18,7 +18,7 @@ export function sanitizeHTML(input: string): string {
     // Unescape safe syntax highlight span tags safely (only styling attributes)
     safe = safe
         .replace(/&lt;span style=&quot;([^&"]+)&quot;&gt;/gi, (_, styleStr) => {
-            const cleanStyle = styleStr.replace(/[^a-zA-Z0-9#;.:\s()%-]/g, '');
+            const cleanStyle = styleStr.replace(/[^a-zA-Z0-9#;.:\s%-]/g, '');
             return `<span style="${cleanStyle}">`;
         })
         .replace(/&lt;\/span&gt;/gi, '</span>');

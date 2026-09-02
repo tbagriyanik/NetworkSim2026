@@ -6,7 +6,8 @@ import { CABLE_COLORS } from './networkTopology.constants';
 import { getConnectionStatusMessage } from './networkTopology.helpers';
 import { DraggableWindowWrapper } from './DraggableWindowWrapper';
 import { useDrag } from '@/hooks/useDrag';
-import { PacketLayerDetails } from './PacketLayerDetails';
+import { ProtocolTreeDetails } from './ProtocolTreeDetails';
+import { PacketHexDump } from './PacketHexDump';
 import type { CanvasConnection } from './networkTopology.types';
 
 interface PacketCapturePanelProps {
@@ -60,9 +61,9 @@ export const PacketCapturePanel = ({
 
   const dragProps = useDrag({
     storageKey: 'packetCapture',
-    defaultPosition: typeof window !== 'undefined' ? { x: Math.max(16, window.innerWidth - 420), y: window.innerHeight - 340 } : { x: 0, y: 0 },
-    defaultSize: { width: 440, height: 340 },
-    minSize: { width: 280, height: 160 },
+    defaultPosition: typeof window !== 'undefined' ? { x: Math.max(16, window.innerWidth - 640), y: window.innerHeight - 520 } : { x: 0, y: 0 },
+    defaultSize: { width: 620, height: 500 },
+    minSize: { width: 450, height: 350 },
     mode: 'drag-resize'
   });
 
@@ -80,7 +81,6 @@ export const PacketCapturePanel = ({
   const filteredPackets = useMemo(() => {
     let list = [...rawPackets].reverse();
 
-    // Positive search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = list.filter(pkt =>
@@ -91,7 +91,6 @@ export const PacketCapturePanel = ({
       );
     }
 
-    // Multi-term Exclude filter (e.g. "cdp, arp, stp" or "cdp arp 192.168.1.1")
     if (excludeQuery.trim()) {
       const terms = excludeQuery
         .toLowerCase()
@@ -106,7 +105,6 @@ export const PacketCapturePanel = ({
           const proto = pkt.protocol.toLowerCase();
           const info = pkt.info.toLowerCase();
 
-          // Exclude if packet matches ANY of the exclude terms
           return !terms.some(term =>
             src.includes(term) ||
             tgt.includes(term) ||
@@ -119,6 +117,14 @@ export const PacketCapturePanel = ({
 
     return list;
   }, [rawPackets, searchQuery, excludeQuery]);
+
+  // Auto-select first packet if none selected or if selected is lost
+  const activePacket = useMemo(() => {
+    if (selectedPacket && filteredPackets.some(p => p.id === selectedPacket.id)) {
+      return selectedPacket;
+    }
+    return filteredPackets[0] || null;
+  }, [selectedPacket, filteredPackets]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPackets.length / ITEMS_PER_PAGE));
   const paginatedPackets = useMemo(() => {
@@ -237,9 +243,9 @@ export const PacketCapturePanel = ({
         </>
       }
     >
-      <div className="flex-1 flex flex-col min-h-0 relative">
-        {/* Search & Filter Bar */}
-        <div className={`p-1.5 border-b flex flex-col gap-1.5 text-[11px] ${graphicsQuality === 'low' ? (isDark ? 'border-secondary-800 bg-secondary-950' : 'border-secondary-200 bg-white') : (isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50/60')}`}>
+      <div className="flex-1 flex flex-col min-h-0 relative h-full">
+        {/* Filter Bar */}
+        <div className={`p-1.5 border-b flex flex-col gap-1.5 text-[11px] shrink-0 ${graphicsQuality === 'low' ? (isDark ? 'border-secondary-800 bg-secondary-950' : 'border-secondary-200 bg-white') : (isDark ? 'border-secondary-800 bg-secondary-900/60' : 'border-secondary-200 bg-secondary-50/60')}`}>
           <div className="flex items-center gap-1.5 w-full">
             <Search className="w-3.5 h-3.5 opacity-50 shrink-0" />
             <input
@@ -259,11 +265,10 @@ export const PacketCapturePanel = ({
             )}
             <button
               onClick={() => setShowExclude(!showExclude)}
-              className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${
-                showExclude || excludeQuery
+              className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${showExclude || excludeQuery
                   ? isDark ? 'border-amber-500/60 text-amber-300 bg-amber-500/10' : 'border-amber-500 text-amber-800 bg-amber-50'
                   : isDark ? 'border-secondary-700 text-secondary-300 opacity-60 hover:opacity-100' : 'border-secondary-300 text-secondary-700 opacity-60 hover:opacity-100'
-              }`}
+                }`}
               title={language === 'tr' ? 'Dışlama filtresini aç/kapat' : 'Toggle exclude filter'}
             >
               {language === 'tr' ? 'Dışla' : 'Exclude'}
@@ -294,104 +299,143 @@ export const PacketCapturePanel = ({
           )}
         </div>
 
-        {/* Table View */}
-        <div className="custom-scrollbar p-0 bg-transparent flex-1 overflow-auto w-full">
-          <table className="w-full text-[10px] text-left border-collapse">
-            <thead className={`sticky top-0 z-10 ${graphicsQuality === 'low' ? (isDark ? 'bg-secondary-950' : 'bg-secondary-100') : (isDark ? 'bg-secondary-950/80' : 'bg-secondary-100/80')} ${graphicsQuality === 'high' ? 'backdrop-blur-sm' : ''}`}>
-              <tr>
-                {columnOrder.map((col, idx) => renderHeader(col, idx))}
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedPackets.length ? (
-                paginatedPackets.map((pkt: { id: string; timestamp: number; sourceIp: string; targetIp: string; protocol: string; info: string; }) => (
-                  <tr key={pkt.id} onClick={() => setSelectedPacket(pkt)} title={language === 'tr' ? 'OSI katmanlarını görmek için tıklayın' : 'Click to inspect OSI layers'} className={`border-b last:border-0 cursor-pointer ${isDark ? 'border-secondary-800/40 hover:bg-secondary-800/35' : 'border-secondary-100/30 hover:bg-secondary-50/40'}`}>
-                    {columnOrder.map(col => {
-                      switch (col) {
-                        case 'time': {
-                          const date = new Date(pkt.timestamp);
-                          const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
-                          return <td className="px-2 py-1 font-mono opacity-60 text-right" key="time">{timeStr}</td>;
-                        }
-                        case 'source':
-                          return <td className="px-2 py-1 font-mono" key="source">{pkt.sourceIp}</td>;
-                        case 'dest':
-                          return <td className="px-2 py-1 font-mono" key="dest">{pkt.targetIp}</td>;
-                        case 'protocol': {
-                          const getProtocolColor = (proto: string) => {
-                            switch (proto.toUpperCase()) {
-                              case 'ICMP': return 'text-primary-500';
-                              case 'ICMPV6':
-                              case 'NDP': return 'text-cyan-500 dark:text-cyan-400';
-                              case 'ARP': return 'text-amber-500';
-                              case 'STP': return 'text-emerald-500';
-                              case 'HTTP': return 'text-sky-500 dark:text-sky-400';
-                              case 'HTTPS': return 'text-blue-500 dark:text-blue-400';
-                              case 'FTP': return 'text-cyan-500 dark:text-cyan-400';
-                              case 'SMTP':
-                              case 'POP3':
-                              case 'IMAP':
-                              case 'MAIL': return 'text-rose-500 dark:text-rose-400';
-                              case 'DNS': return 'text-indigo-500 dark:text-indigo-400';
-                              case 'DHCP': return 'text-orange-500 dark:text-orange-400';
-                              case 'SSH':
-                              case 'TELNET': return 'text-teal-500 dark:text-teal-400';
-                              default: return 'text-purple-500';
-                            }
-                          };
-                          return <td className={`px-2 py-1 font-bold ${getProtocolColor(pkt.protocol)}`} key="proto">{protocolWithNumber(pkt.protocol)}</td>;
-                        }
-                        case 'info':
-                          return <td className="px-2 py-1 italic opacity-80" key="info">{pkt.info}</td>;
-                        default:
-                          return null;
-                      }
-                    })}
+        {/* 3-Pane Split View */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+          {/* Pane 1: Top Packet List */}
+          <div className="h-[45%] flex flex-col min-h-0 border-b dark:border-secondary-800 border-secondary-200">
+            <div className="custom-scrollbar flex-1 overflow-auto w-full">
+              <table className="w-full text-[10px] text-left border-collapse">
+                <thead className={`sticky top-0 z-10 ${graphicsQuality === 'low' ? (isDark ? 'bg-secondary-950' : 'bg-secondary-100') : (isDark ? 'bg-secondary-950/90' : 'bg-secondary-100/90')} ${graphicsQuality === 'high' ? 'backdrop-blur-sm' : ''}`}>
+                  <tr>
+                    {columnOrder.map((col, idx) => renderHeader(col, idx))}
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={columnOrder.length} className="px-4 py-8 text-center opacity-40 italic">
-                    {searchQuery ? (language === 'tr' ? 'Aramayla eşleşen paket bulunamadı.' : 'No packets matching search query.') : t.noPacketsCaptured}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination Bar */}
-        {filteredPackets.length > 0 && (
-          <div className={`px-2 py-1.5 border-t flex items-center justify-between text-[10px] select-none ${graphicsQuality === 'low' ? (isDark ? 'border-secondary-800 bg-secondary-950' : 'border-secondary-200 bg-secondary-100') : (isDark ? 'border-secondary-800 bg-secondary-950/60' : 'border-secondary-200 bg-secondary-100/60')}`}>
-            <span className="opacity-60">
-              {language === 'tr'
-                ? `Toplam ${filteredPackets.length} paket (Sayfa ${currentPage} / ${totalPages})`
-                : `Total ${filteredPackets.length} packets (Page ${currentPage} of ${totalPages})`}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                className="p-1 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                title={language === 'tr' ? 'Önceki Sayfa' : 'Previous Page'}
-              >
-                <ChevronLeft className="w-3.5 h-3.5" />
-              </button>
-              <span className="px-1.5 font-bold font-mono text-[11px]">{currentPage}</span>
-              <button
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                className="p-1 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:pointer-events-none transition-colors"
-                title={language === 'tr' ? 'Sonraki Sayfa' : 'Next Page'}
-              >
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
+                </thead>
+                <tbody>
+                  {paginatedPackets.length ? (
+                    paginatedPackets.map((pkt: { id: string; timestamp: number; sourceIp: string; targetIp: string; protocol: string; info: string; }) => {
+                      const isSelected = activePacket?.id === pkt.id;
+                      return (
+                        <tr
+                          key={pkt.id}
+                          onClick={() => setSelectedPacket(pkt)}
+                          className={`border-b last:border-0 cursor-pointer select-none transition-colors ${isSelected
+                              ? isDark ? 'bg-primary-600/40 text-white font-semibold' : 'bg-primary-500/20 text-slate-900 font-semibold'
+                              : isDark ? 'border-secondary-800/40 hover:bg-secondary-800/35' : 'border-secondary-100/30 hover:bg-secondary-50/40'
+                            }`}
+                        >
+                          {columnOrder.map(col => {
+                            switch (col) {
+                              case 'time': {
+                                const date = new Date(pkt.timestamp);
+                                const timeStr = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
+                                return <td className="px-2 py-1 font-mono opacity-60 text-right" key="time">{timeStr}</td>;
+                              }
+                              case 'source':
+                                return <td className="px-2 py-1 font-mono" key="source">{pkt.sourceIp}</td>;
+                              case 'dest':
+                                return <td className="px-2 py-1 font-mono" key="dest">{pkt.targetIp}</td>;
+                              case 'protocol': {
+                                const getProtocolColor = (proto: string) => {
+                                  switch (proto.toUpperCase()) {
+                                    case 'ICMP': return 'text-primary-500';
+                                    case 'ICMPV6':
+                                    case 'NDP': return 'text-cyan-500 dark:text-cyan-400';
+                                    case 'ARP': return 'text-amber-500';
+                                    case 'STP': return 'text-emerald-500';
+                                    case 'HTTP': return 'text-sky-500 dark:text-sky-400';
+                                    case 'HTTPS': return 'text-blue-500 dark:text-blue-400';
+                                    case 'FTP': return 'text-cyan-500 dark:text-cyan-400';
+                                    case 'SMTP':
+                                    case 'POP3':
+                                    case 'IMAP':
+                                    case 'MAIL': return 'text-rose-500 dark:text-rose-400';
+                                    case 'DNS': return 'text-indigo-500 dark:text-indigo-400';
+                                    case 'DHCP': return 'text-orange-500 dark:text-orange-400';
+                                    case 'SSH':
+                                    case 'TELNET': return 'text-teal-500 dark:text-teal-400';
+                                    default: return 'text-purple-500';
+                                  }
+                                };
+                                return <td className={`px-2 py-1 font-bold ${getProtocolColor(pkt.protocol)}`} key="proto">{protocolWithNumber(pkt.protocol)}</td>;
+                              }
+                              case 'info':
+                                return <td className="px-2 py-1 italic opacity-80" key="info">{pkt.info}</td>;
+                              default:
+                                return null;
+                            }
+                          })}
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={columnOrder.length} className="px-4 py-8 text-center opacity-40 italic">
+                        {searchQuery ? (language === 'tr' ? 'Aramayla eşleşen paket bulunamadı.' : 'No packets matching search query.') : t.noPacketsCaptured}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
+
+            {/* Pagination Bar */}
+            {filteredPackets.length > 0 && (
+              <div className={`px-2 py-1 border-t flex items-center justify-between text-[10px] select-none shrink-0 ${graphicsQuality === 'low' ? (isDark ? 'border-secondary-800 bg-secondary-950' : 'border-secondary-200 bg-secondary-100') : (isDark ? 'border-secondary-800 bg-secondary-950/60' : 'border-secondary-200 bg-secondary-100/60')}`}>
+                <span className="opacity-60">
+                  {language === 'tr'
+                    ? `Toplam ${filteredPackets.length} paket (Sayfa ${currentPage} / ${totalPages})`
+                    : `Total ${filteredPackets.length} packets (Page ${currentPage} of ${totalPages})`}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className="p-0.5 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+                  <span className="px-1.5 font-bold font-mono text-[10px]">{currentPage}</span>
+                  <button
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className="p-0.5 rounded hover:bg-secondary-200 dark:hover:bg-secondary-700 disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Pane 2: Middle Protocol Details Tree */}
+          <div className="h-[35%] border-b dark:border-secondary-800 border-secondary-200 overflow-hidden flex flex-col min-h-0">
+            <div className={`px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase border-b ${isDark ? 'bg-secondary-900/90 text-secondary-400 border-secondary-800' : 'bg-secondary-100 text-secondary-600 border-secondary-200'}`}>
+              {language === 'tr' ? '2. Katman / Protokol Ağacı (Packet Details)' : '2. Protocol Details Tree'}
+            </div>
+            {activePacket ? (
+              <ProtocolTreeDetails packet={activePacket} isDark={isDark} language={language} />
+            ) : (
+              <div className="p-4 text-center text-xs opacity-40 italic">
+                {language === 'tr' ? 'Detayları görmek için listeden paket seçin' : 'Select a packet from the list to inspect protocol tree'}
+              </div>
+            )}
+          </div>
+
+          {/* Pane 3: Bottom Hex & ASCII Dump */}
+          <div className="h-[20%] overflow-hidden flex flex-col min-h-0">
+            <div className={`px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase border-b ${isDark ? 'bg-secondary-900/90 text-secondary-400 border-secondary-800' : 'bg-secondary-100 text-secondary-600 border-secondary-200'}`}>
+              {language === 'tr' ? '3. Bayt Dökümü (Packet Bytes - Hex / ASCII)' : '3. Packet Bytes (Hex / ASCII)'}
+            </div>
+            {activePacket ? (
+              <PacketHexDump packet={activePacket} isDark={isDark} />
+            ) : (
+              <div className="p-4 text-center text-xs opacity-40 italic">
+                {language === 'tr' ? 'Bayt dökümü için paket seçin' : 'Select a packet to view hex bytes'}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      {selectedPacket && <PacketLayerDetails packet={selectedPacket} onClose={() => setSelectedPacket(null)} isDark={isDark} language={language} />}
     </DraggableWindowWrapper>
   );
 };
-

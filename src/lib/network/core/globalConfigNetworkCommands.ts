@@ -42,6 +42,50 @@ export function cmdNtpServer(state: SwitchState, input: string, _ctx: CommandCon
   };
 }
 
+export function cmdNtpMaster(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^ntp\s+master\s+(\d{1,2})$/i);
+  if (!match) return { success: false, error: '% Invalid ntp master command' };
+  const stratum = Number(match[1]);
+  if (stratum < 1 || stratum > 15) return { success: false, error: '% Stratum must be between 1 and 15' };
+  const updatedState = { ...state, ntpMasterStratum: stratum };
+  return {
+    success: true,
+    output: `NTP master clock configured at stratum ${stratum}`,
+    newState: {
+      ntpMasterStratum: stratum,
+      runningConfig: buildRunningConfig(updatedState)
+    },
+  };
+}
+
+export function cmdNoNtpServer(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+  const match = input.match(/^no\s+ntp\s+server(?:\s+(\S+))?$/i);
+  if (!match) return { success: false, error: '% Invalid no ntp server command' };
+  if (match[1]) {
+    const servers = (state.ntpServers || []).filter(s => s !== match[1]);
+    const updatedState = { ...state, ntpServers: servers };
+    return {
+      success: true,
+      output: `NTP server ${match[1]} removed`,
+      newState: {
+        ntpServers: servers,
+        runningConfig: buildRunningConfig(updatedState)
+      },
+    };
+  }
+  const updatedState = { ...state, ntpServers: [] };
+  return {
+    success: true,
+    output: 'All NTP servers removed',
+    newState: {
+      ntpServers: [],
+      runningConfig: buildRunningConfig(updatedState)
+    },
+  };
+}
+
 export function cmdClockTimezone(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
   const match = input.match(/^clock\s+timezone\s+(\S+)\s+([+-]?\d+)(?:\s+(\d+))?$/i);

@@ -521,6 +521,7 @@ export interface SwitchState {
   mlsQosEnabled?: boolean;
   dhcpSnoopingEnabled?: boolean;
   ntpServers?: string[];
+  ntpMasterStratum?: number;
   systemClock?: { time: string; day: string; month: string; year: string };
   ipv6Enabled?: boolean;
   ipRouting: boolean;

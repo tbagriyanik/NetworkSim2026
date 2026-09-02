@@ -145,6 +145,14 @@ export function buildRunningConfig(state: SwitchState): string[] {
         state.ntpServers.forEach(server => {
             lines.push(`ntp server ${server}`);
         });
+    }
+
+    // NTP Master
+    if (state.ntpMasterStratum) {
+        lines.push(`ntp master ${state.ntpMasterStratum}`);
+    }
+
+    if ((state.ntpServers && state.ntpServers.length > 0) || state.ntpMasterStratum) {
         lines.push('!');
     }
 

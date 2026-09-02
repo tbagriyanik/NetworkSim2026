@@ -4,7 +4,7 @@ import React from 'react';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Map } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CanvasToolbarProps {
@@ -23,6 +23,8 @@ interface CanvasToolbarProps {
   MAX_ZOOM: number;
   onToggleLogPanel: () => void;
   logCount: number;
+  onToggleMinimap?: () => void;
+  isMinimapOpen?: boolean;
 }
 
 export function CanvasToolbar({
@@ -41,6 +43,8 @@ export function CanvasToolbar({
   MAX_ZOOM,
   onToggleLogPanel,
   logCount,
+  onToggleMinimap,
+  isMinimapOpen = false,
 }: CanvasToolbarProps) {
   const { language } = useLanguage();
   return (
@@ -160,6 +164,22 @@ export function CanvasToolbar({
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
           </svg>
+        </button>
+      </TooltipWrapper>
+
+      <TooltipWrapper title={language === 'tr' ? 'Mini Haritayı Aç/Kapat' : 'Toggle Mini-map'}>
+        <button
+          aria-label={language === 'tr' ? 'Mini Haritayı Aç/Kapat' : 'Toggle Mini-map'}
+          onClick={onToggleMinimap}
+          className={`w-7 h-7 flex items-center justify-center rounded transition-colors ${
+            isMinimapOpen
+              ? 'bg-primary-500 text-white'
+              : isDark
+              ? 'hover:bg-secondary-700 text-secondary-300'
+              : 'hover:bg-secondary-100 text-secondary-600'
+          }`}
+        >
+          <Map className="w-4 h-4" />
         </button>
       </TooltipWrapper>
 

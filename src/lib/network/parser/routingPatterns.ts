@@ -430,6 +430,18 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 1,
     maxArgs: 1
   },
+  'no ntp server': {
+    pattern: /^no\s+ntp\s+server(?:\s+(\S+))?$/i,
+    modes: ['config'],
+    minArgs: 0,
+    maxArgs: 1
+  },
+  'ntp master': {
+    pattern: /^ntp\s+master\s+(\d{1,2})$/i,
+    modes: ['config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
   'clock timezone': {
     pattern: /^clock\s+timezone\s+(\S+)\s+([+-]?\d+)(:\d+)?$/i,
     modes: ['config'],

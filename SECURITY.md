@@ -25,5 +25,5 @@ This project implements the following security measures:
 - **Input sanitization** against XSS and prototype pollution
 - **Rate limiting** on all API endpoints (Redis-backed with in-memory fallback)
 - **HMAC-signed tokens** for certificate score verification (server-side secret)
-- **Secure localStorage encryption** for sensitive client-side data
+- **Client-side data obfuscation** (XOR + Base64) for sensitive localStorage data — not a substitute for server-side encryption
 - **HTTP security headers** (HSTS, X-Frame-Options, X-Content-Type-Options, etc.)

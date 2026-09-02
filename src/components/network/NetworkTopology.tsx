@@ -64,6 +64,7 @@ import { TopologyFullscreenButton } from './topology/TopologyFullscreenButton';
 import { buildImplicitWirelessConnections } from '@/lib/network/wireless';
 import { TopologyPaletteSheet } from './topology/TopologyPaletteSheet';
 import { TopologyTooltips } from './topology/TopologyTooltips';
+import { MinimapNavigator } from './topology/MinimapNavigator';
 
 export function NetworkTopology({
   cableInfo,
@@ -97,6 +98,7 @@ export function NetworkTopology({
   const isTR = language === 'tr';
 
   const [isExporting, setIsExporting] = useState(false);
+  const [isMinimapOpen, setIsMinimapOpen] = useState(false);
 
   // Zustand store state - using granular selectors to prevent cascading re-renders
   const topologyDevices = useTopologyDevices();
@@ -1993,6 +1995,8 @@ export function NetworkTopology({
             MAX_ZOOM={MAX_ZOOM}
             onToggleLogPanel={() => setShowLogPanel(!showLogPanel)}
             logCount={networkEventLogs.length}
+            onToggleMinimap={() => setIsMinimapOpen(!isMinimapOpen)}
+            isMinimapOpen={isMinimapOpen}
           />
 
           <NetworkEventLogPanel
@@ -2123,7 +2127,18 @@ export function NetworkTopology({
         capturedPacketsMap={capturedPacketsMap}
         t={t}
       />
-
+      <MinimapNavigator
+        devices={devices}
+        connections={connections}
+        zoom={zoom}
+        pan={pan}
+        setPan={setPan}
+        canvasRef={canvasRef}
+        isDark={isDark}
+        language={language}
+        isOpen={isMinimapOpen}
+        onToggle={() => setIsMinimapOpen(!isMinimapOpen)}
+      />
     </div>
   );
 };
