@@ -186,29 +186,51 @@ export const WindowSwitcherModal: React.FC<WindowSwitcherModalProps> = ({
               <AppWindow className="w-5 h-5 text-emerald-400" />
             </div>
             <div>
-            <h3 className="text-base font-bold tracking-tight">
-              {language === 'tr' ? 'Görev Yöneticisi Pencere Listesi' : 'Task Switcher Windows'}
-            </h3>
-            <p className="text-[11px] text-secondary-400 mt-0.5">{language === 'tr' ? 'Açık cihaz pencereleri' : 'Open device windows'}</p>
+              <h3 className="text-base font-bold tracking-tight">
+                {language === 'tr' ? 'Görev Yöneticisi Pencere Listesi' : 'Task Switcher Windows'}
+              </h3>
+              <p className="text-[11px] text-secondary-400 mt-0.5">{language === 'tr' ? 'Açık cihaz pencereleri' : 'Open device windows'}</p>
             </div>
           </div>
           <div className="ml-auto flex items-center gap-2">
-          <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-            {displayList.length} {language === 'tr' ? 'Öğe' : 'Items'}
-          </span>
-          {openWindows.length > 0 && (
             <button
               type="button"
               onClick={() => {
-                closeAllDeviceWindows();
+                useMultiWindowStore.getState().splitViewSideBySide();
                 closeSwitcher();
               }}
-              className="ml-2 inline-flex items-center gap-1 rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50"
+              className="inline-flex items-center gap-1 rounded border border-blue-400/40 bg-blue-500/10 px-2 py-1 text-xs font-medium text-blue-400 transition-colors hover:bg-blue-500/20"
+              title={language === 'tr' ? 'Pencereleri Yan Yana (Bölünmüş Ekran) Yerleştir' : 'Arrange Windows Side-by-Side'}
             >
-              <X className="h-3 w-3" />
-              {language === 'tr' ? 'Tümünü kapat' : 'Close all'}
+              {language === 'tr' ? 'Yan Yana (Böl)' : 'Side-by-Side'}
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => {
+                useMultiWindowStore.getState().setLayoutMode('tabs');
+                closeSwitcher();
+              }}
+              className="inline-flex items-center gap-1 rounded border border-emerald-400/40 bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
+              title={language === 'tr' ? 'Sekmeli Görünüm Moduna Geç' : 'Switch to Tabbed Layout'}
+            >
+              {language === 'tr' ? 'Sekmeli Görünüm' : 'Tabbed View'}
+            </button>
+            <span className="text-xs font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+              {displayList.length} {language === 'tr' ? 'Öğe' : 'Items'}
+            </span>
+            {openWindows.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  closeAllDeviceWindows();
+                  closeSwitcher();
+                }}
+                className="ml-1 inline-flex items-center gap-1 rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:hover:bg-red-950/40"
+              >
+                <X className="h-3 w-3" />
+                {language === 'tr' ? 'Tümünü kapat' : 'Close all'}
+              </button>
+            )}
           </div>
         </div>
 

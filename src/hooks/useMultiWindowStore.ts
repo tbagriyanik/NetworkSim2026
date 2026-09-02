@@ -12,6 +12,8 @@ export interface DeviceWindowItem {
   height?: number;
 }
 
+export type WindowLayoutMode = 'free' | 'split' | 'tabs';
+
 interface MultiWindowStoreState {
   openWindows: DeviceWindowItem[];
   windowPositions: Record<string, { x: number; y: number }>;
@@ -19,6 +21,8 @@ interface MultiWindowStoreState {
   windowRestoreRequests: Record<string, number>;
   isSwitcherOpen: boolean;
   switcherSelectedIndex: number;
+  layoutMode: WindowLayoutMode;
+  activeTabId: string | null;
 
   openDeviceWindow: (id: string, type: string, initialTab?: string) => void;
   closeDeviceWindow: (id: string) => void;
@@ -27,6 +31,11 @@ interface MultiWindowStoreState {
   updateWindowSize: (id: string, size: { width: number; height: number }) => void;
   restoreWindow: (id: string) => void;
   isWindowOpen: (id: string) => boolean;
+
+  setLayoutMode: (mode: WindowLayoutMode) => void;
+  setActiveTabId: (id: string) => void;
+  tileWindows: () => void;
+  splitViewSideBySide: () => void;
 
   openSwitcher: (activeWindowId: string | null, reverse?: boolean) => void;
   stepSwitcher: (reverse?: boolean, totalCount?: number) => void;
@@ -64,6 +73,60 @@ export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => (
   windowRestoreRequests: {},
   isSwitcherOpen: false,
   switcherSelectedIndex: 0,
+  layoutMode: 'free',
+  activeTabId: null,
+
+  setLayoutMode: (mode: WindowLayoutMode) => {
+    set({ layoutMode: mode });
+  },
+
+  setActiveTabId: (id: string) => {
+    set({ activeTabId: id });
+  },
+
+  splitViewSideBySide: () => {
+    const { openWindows } = get();
+    if (openWindows.length === 0 || typeof window === 'undefined') return;
+
+    const screenW = window.innerWidth;
+    const screenH = window.innerHeight;
+    const topMargin = 60;
+    const bottomMargin = 40;
+    const availH = Math.max(300, screenH - topMargin - bottomMargin);
+
+    const count = openWindows.length;
+    const cols = count === 1 ? 1 : count <= 4 ? 2 : Math.min(3, count);
+    const rows = Math.ceil(count / cols);
+
+    const colW = Math.floor(screenW / cols);
+    const rowH = Math.floor(availH / rows);
+
+    const newPositions: Record<string, { x: number; y: number }> = {};
+    const newSizes: Record<string, { width: number; height: number }> = {};
+
+    openWindows.forEach((win, index) => {
+      const col = index % cols;
+      const row = Math.floor(index / cols);
+      newPositions[win.id] = {
+        x: col * colW,
+        y: topMargin + row * rowH,
+      };
+      newSizes[win.id] = {
+        width: colW,
+        height: rowH,
+      };
+    });
+
+    set({
+      layoutMode: 'split',
+      windowPositions: newPositions,
+      windowSizes: newSizes,
+    });
+  },
+
+  tileWindows: () => {
+    get().splitViewSideBySide();
+  },
 
   openDeviceWindow: (id: string, type: string, initialTab?: string) => {
     const { openWindows, windowPositions, windowSizes } = get();
@@ -78,6 +141,7 @@ export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => (
       };
       set((state) => ({
         openWindows: updated,
+        activeTabId: id,
         windowRestoreRequests: {
           ...state.windowRestoreRequests,
           [id]: (state.windowRestoreRequests[id] || 0) + 1,
@@ -103,6 +167,7 @@ export const useMultiWindowStore = create<MultiWindowStoreState>((set, get) => (
           ...openWindows,
           { id, type, initialTab, x: pos.x, y: pos.y, width: size.width, height: size.height },
         ],
+        activeTabId: id,
         windowPositions: { ...windowPositions, [id]: pos },
         windowSizes: { ...windowSizes, [id]: size },
       });

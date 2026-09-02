@@ -58,20 +58,110 @@ export function MultiDeviceWindowManager({
   confirmDialog,
   setConfirmDialog,
 }: MultiDeviceWindowManagerProps) {
-  const { openWindows, closeDeviceWindow, windowPositions, windowSizes, windowRestoreRequests, updateWindowPosition, updateWindowSize } = useMultiWindowStore();
+  const {
+    openWindows,
+    closeDeviceWindow,
+    windowPositions,
+    windowSizes,
+    windowRestoreRequests,
+    updateWindowPosition,
+    updateWindowSize,
+    layoutMode,
+    setLayoutMode,
+    splitViewSideBySide,
+    activeTabId,
+    setActiveTabId,
+  } = useMultiWindowStore();
   const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
 
-  // Tablet uses the same floating-window presentation as desktop.
   if (openWindows.length === 0) return null;
+
+  const currentTabId = activeTabId && openWindows.some((w) => w.id === activeTabId) ? activeTabId : openWindows[0]?.id;
 
   return (
     <>
+      {/* Floating Window Controls / Layout Toolbar when multiple windows open */}
+      {openWindows.length > 1 && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[9990] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary-900/90 text-white border border-secondary-700/60 shadow-xl backdrop-blur-md text-xs select-none">
+          <span className="font-semibold text-emerald-400 mr-1 flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            {openWindows.length} {language === 'tr' ? 'Pencere' : 'Windows'}
+          </span>
+          <div className="w-px h-4 bg-secondary-700 mx-1" />
+          <button
+            type="button"
+            onClick={() => setLayoutMode('free')}
+            className={`px-2.5 py-1 rounded-full font-medium transition-all ${layoutMode === 'free' ? 'bg-emerald-500 text-white shadow' : 'hover:bg-secondary-800 text-secondary-300'}`}
+          >
+            {language === 'tr' ? 'Serbest' : 'Free Float'}
+          </button>
+          <button
+            type="button"
+            onClick={() => splitViewSideBySide()}
+            className={`px-2.5 py-1 rounded-full font-medium transition-all ${layoutMode === 'split' ? 'bg-blue-500 text-white shadow' : 'hover:bg-secondary-800 text-secondary-300'}`}
+          >
+            {language === 'tr' ? 'Yan Yana (Böl)' : 'Side-by-Side'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLayoutMode('tabs')}
+            className={`px-2.5 py-1 rounded-full font-medium transition-all ${layoutMode === 'tabs' ? 'bg-purple-500 text-white shadow' : 'hover:bg-secondary-800 text-secondary-300'}`}
+          >
+            {language === 'tr' ? 'Sekmeli Görünüm' : 'Tabbed View'}
+          </button>
+        </div>
+      )}
+
+      {/* Tabbed View Navigation Bar when Tabs layout mode is enabled */}
+      {layoutMode === 'tabs' && openWindows.length > 0 && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[9989] flex items-center gap-1 p-1 rounded-xl bg-secondary-950/95 text-white border border-secondary-800 shadow-2xl backdrop-blur-lg max-w-4xl overflow-x-auto custom-scrollbar">
+          {openWindows.map((win) => {
+            const devObj = topologyDevices.find((d) => d.id === win.id);
+            const devName = devObj?.name || win.id;
+            const isActive = win.id === currentTabId;
+            return (
+              <button
+                key={`tab-nav-${win.id}`}
+                type="button"
+                onClick={() => setActiveTabId(win.id)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${isActive
+                    ? 'bg-emerald-600 text-white shadow-md border border-emerald-400/30'
+                    : 'bg-secondary-900/60 text-secondary-300 hover:bg-secondary-800 hover:text-white'
+                  }`}
+              >
+                <span className="truncate max-w-[120px]">{devName}</span>
+                <span className="text-[10px] opacity-60 uppercase">({win.type})</span>
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    closeDeviceWindow(win.id);
+                  }}
+                  className="hover:text-red-400 ml-1 rounded p-0.5"
+                >
+                  ×
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {openWindows.map((win: DeviceWindowItem) => {
+        if (layoutMode === 'tabs' && win.id !== currentTabId) {
+          return null;
+        }
+
         const deviceObj = topologyDevices.find((d) => d.id === win.id);
         const deviceName = deviceObj?.name || win.id;
         const deviceType = (deviceObj?.type || win.type) as DeviceType;
-        const position = windowPositions[win.id] || { x: win.x || 120, y: win.y || 80 };
-        const size = windowSizes[win.id] || { width: win.width || 720, height: win.height || 540 };
+        const position = layoutMode === 'tabs'
+          ? { x: typeof window !== 'undefined' ? Math.max(0, Math.floor((window.innerWidth - 800) / 2)) : 100, y: 120 }
+          : (windowPositions[win.id] || { x: win.x || 120, y: win.y || 80 });
+        const size = layoutMode === 'tabs'
+          ? { width: typeof window !== 'undefined' ? Math.min(1000, window.innerWidth - 40) : 800, height: typeof window !== 'undefined' ? Math.min(650, window.innerHeight - 150) : 600 }
+          : (windowSizes[win.id] || { width: win.width || 720, height: win.height || 540 });
 
         const handlePointerDown = (e: React.PointerEvent) => {
           // Pointer capture for dragging

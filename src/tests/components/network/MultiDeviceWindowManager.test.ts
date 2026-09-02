@@ -133,4 +133,32 @@ describe('useMultiWindowStore multi-window tests', () => {
     useMultiWindowStore.getState().closeSwitcher();
     expect(useMultiWindowStore.getState().isSwitcherOpen).toBe(false);
   });
+
+  it('should calculate side-by-side split view layout positions', () => {
+    const store = useMultiWindowStore.getState();
+
+    store.openDeviceWindow('pc-1', 'pc');
+    store.openDeviceWindow('router-1', 'router');
+
+    store.splitViewSideBySide();
+
+    expect(useMultiWindowStore.getState().layoutMode).toBe('split');
+    const positions = useMultiWindowStore.getState().windowPositions;
+    const sizes = useMultiWindowStore.getState().windowSizes;
+
+    expect(positions['pc-1']).toBeDefined();
+    expect(positions['router-1']).toBeDefined();
+    expect(sizes['pc-1'].width).toBeGreaterThan(0);
+    expect(sizes['router-1'].width).toBeGreaterThan(0);
+  });
+
+  it('should change layoutMode state correctly', () => {
+    const store = useMultiWindowStore.getState();
+
+    store.setLayoutMode('tabs');
+    expect(useMultiWindowStore.getState().layoutMode).toBe('tabs');
+
+    store.setLayoutMode('free');
+    expect(useMultiWindowStore.getState().layoutMode).toBe('free');
+  });
 });
