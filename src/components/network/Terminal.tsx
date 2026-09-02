@@ -1376,6 +1376,47 @@ export function Terminal({
           <Download className="w-4 h-4" aria-hidden="true" />
         </Button>
       </TooltipWrapper>
+      <TooltipWrapper title={t.clearTerminalBtn || 'Clear'}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={clearTerminalView}
+          className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-error-500 hover:text-error-600 hover:bg-error-500/10")}
+          aria-label={t.clearTerminalBtn}
+        >
+          <Trash2 className="w-4 h-4" aria-hidden="true" />
+        </Button>
+      </TooltipWrapper>
+      <TooltipWrapper title={language === 'tr' ? 'Yazı Boyutunu Küçült (A-)' : 'Decrease Font Size (A-)'}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const next = Math.max(10, fontSize - 1);
+            setFontSize(next);
+            try { localStorage.setItem('terminal-font-size', String(next)); } catch { }
+          }}
+          className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900 font-bold text-xs select-none", isDark && "text-secondary-300 hover:text-secondary-100")}
+          aria-label="A-"
+        >
+          A-
+        </Button>
+      </TooltipWrapper>
+      <TooltipWrapper title={language === 'tr' ? 'Yazı Boyutunu Büyüt (A+)' : 'Increase Font Size (A+)'}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            const next = Math.min(20, fontSize + 1);
+            setFontSize(next);
+            try { localStorage.setItem('terminal-font-size', String(next)); } catch { }
+          }}
+          className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900 font-bold text-xs select-none", isDark && "text-secondary-300 hover:text-secondary-100")}
+          aria-label="A+"
+        >
+          A+
+        </Button>
+      </TooltipWrapper>
       <TooltipWrapper title={t.fontLabel}>
         <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900", showSettings && "bg-accent", isDark && "text-secondary-300 hover:text-secondary-100")}>
           <Type className="w-4 h-4" aria-hidden="true" />

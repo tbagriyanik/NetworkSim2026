@@ -10,6 +10,7 @@ export interface PythonExecutionResult {
 
 import {
   PythonInputRequiredException,
+  PythonTimeoutException,
   PyClass,
   PyGenerator,
   formatPythonValue,
@@ -19,7 +20,7 @@ import { Statement, parseProgramLines, parseBlockAt } from './pcPythonParser';
 import { createExpressionEvaluator } from './pcPythonEvaluator';
 import { executeSinglePythonLine } from './pcPythonStatementParser';
 
-export { PyComplex, pythonRange, formatPythonValue, PyClass, PyInstance, PySuper, PyGenerator } from './pcPythonRunnerHelpers';
+export { PyComplex, pythonRange, formatPythonValue, PyClass, PyInstance, PySuper, PyGenerator, PythonTimeoutException } from './pcPythonRunnerHelpers';
 
 export interface ExceptBranchMeta {
   errorType: string | null;
@@ -60,8 +61,19 @@ export function executePythonScript(
   userInputs: string[] = [],
   onOutput?: (line: string, isAppend?: boolean) => void,
   deviceId?: string,
-  scriptArgs: string[] = ['script.py']
+  scriptArgs: string[] = ['script.py'],
+  timeoutMs: number = 3000
 ): PythonExecutionResult {
+  const startTime = Date.now();
+  const deadline = timeoutMs > 0 ? startTime + timeoutMs : Infinity;
+  let opCount = 0;
+
+  const checkExecutionTimeout = () => {
+    opCount++;
+    if (opCount % 128 === 0 && Date.now() > deadline) {
+      throw new PythonTimeoutException(`TimeoutError: Execution exceeded time limit of ${timeoutMs / 1000}s`);
+    }
+  };
   const scope: Record<string, unknown> = {
     PyGenerator,
     print: (...args: unknown[]) => {
@@ -119,6 +131,7 @@ export function executePythonScript(
 
   const execStatementsSync = (stmts: Statement[]): ExecResult => {
     for (const stmt of stmts) {
+      checkExecutionTimeout();
       if (stmt.type === 'line') {
         if (stmt.text === 'break') return 'break';
         if (stmt.text === 'continue') return 'continue';
@@ -370,7 +383,11 @@ export function executePythonScript(
       } else if (stmt.type === 'while') {
         let iterLimit = 10000;
         let brokeOut = false;
-        while (evalCondition(stmt.condition) && iterLimit-- > 0) {
+        while (evalCondition(stmt.condition)) {
+          checkExecutionTimeout();
+          if (--iterLimit <= 0) {
+            throw new PythonTimeoutException(`TimeoutError: Execution exceeded time limit or max iteration count`);
+          }
           const sig = execStatementsSync(stmt.body);
           if (sig === 'break') {
             brokeOut = true;
@@ -434,7 +451,7 @@ export function executePythonScript(
             if (elseSig !== 'normal') brokeOrReturn = elseSig;
           }
         } catch (err) {
-          if (err instanceof PythonInputRequiredException) throw err;
+          if (err instanceof PythonInputRequiredException || err instanceof PythonTimeoutException) throw err;
           if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
             const errName = err instanceof Error ? err.message : String(err);
             for (const ex of stmt.exceptBranches) {
@@ -498,8 +515,19 @@ export async function executePythonScriptAsync(
   userInputs: string[] = [],
   onOutput?: (line: string, isAppend?: boolean) => void,
   deviceId?: string,
-  scriptArgs: string[] = ['script.py']
+  scriptArgs: string[] = ['script.py'],
+  timeoutMs: number = 3000
 ): Promise<PythonExecutionResult> {
+  const startTime = Date.now();
+  const deadline = timeoutMs > 0 ? startTime + timeoutMs : Infinity;
+  let opCount = 0;
+
+  const checkExecutionTimeout = () => {
+    opCount++;
+    if (opCount % 128 === 0 && Date.now() > deadline) {
+      throw new PythonTimeoutException(`TimeoutError: Execution exceeded time limit of ${timeoutMs / 1000}s`);
+    }
+  };
   const scope: Record<string, unknown> = {
     print: (...args: unknown[]) => {
       outputs.push(args.map(a => formatPythonValue(a)).join(' '));
@@ -915,6 +943,7 @@ export async function executePythonScriptAsync(
 
   const execStatements = async (stmts: Statement[]): Promise<ExecResult> => {
     for (const stmt of stmts) {
+      checkExecutionTimeout();
       if (stmt.type === 'line') {
         if (stmt.text === 'break') return 'break';
         if (stmt.text === 'continue') return 'continue';
@@ -972,7 +1001,11 @@ export async function executePythonScriptAsync(
       } else if (stmt.type === 'while') {
         let iterLimit = 10000;
         let brokeOut = false;
-        while (evalCondition(stmt.condition) && iterLimit-- > 0) {
+        while (evalCondition(stmt.condition)) {
+          checkExecutionTimeout();
+          if (--iterLimit <= 0) {
+            throw new PythonTimeoutException(`TimeoutError: Execution exceeded time limit or max iteration count`);
+          }
           const sig = await execStatements(stmt.body);
           if (sig === 'break') {
             brokeOut = true;
@@ -1032,7 +1065,7 @@ export async function executePythonScriptAsync(
             if (elseSig !== 'normal') brokeOrReturn = elseSig;
           }
         } catch (err) {
-          if (err instanceof PythonInputRequiredException) throw err;
+          if (err instanceof PythonInputRequiredException || err instanceof PythonTimeoutException) throw err;
           if (stmt.exceptBranches && stmt.exceptBranches.length > 0) {
             const errName = err instanceof Error ? err.message : String(err);
             for (const ex of stmt.exceptBranches) {

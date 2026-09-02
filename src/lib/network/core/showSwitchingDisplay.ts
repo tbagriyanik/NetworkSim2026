@@ -175,59 +175,133 @@ export function cmdShowMacAddressTable(
  */
 export function cmdShowCdpNeighbors(
   state: SwitchState,
-  _input: string,
+  input: string,
   ctx: CommandContext
 ): CommandResult {
+  const cdpEnabled = state.cdpEnabled !== false;
+  if (!cdpEnabled) {
+    return { success: true, output: '\n% CDP is not enabled\n' };
+  }
+
+  const connections = ctx.connections || [];
+  const sourceDeviceId = ctx.sourceDeviceId as string;
+  const devices = ctx.devices || [];
+
+  const deviceConnections = connections.filter(
+    (conn: CanvasConnection) => conn.sourceDeviceId === sourceDeviceId || conn.targetDeviceId === sourceDeviceId
+  );
+
+  const isDetail = /detail|det/i.test(input);
+
+  if (isDetail) {
+    if (deviceConnections.length === 0) {
+      return { success: true, output: '\nNo CDP neighbors found\n' };
+    }
+
+    let output = '\n';
+    deviceConnections.forEach((conn: CanvasConnection) => {
+      const isSource = conn.sourceDeviceId === sourceDeviceId;
+      const localPort = isSource ? conn.sourcePort : conn.targetPort;
+      const connectedDeviceId = isSource ? conn.targetDeviceId : conn.sourceDeviceId;
+      const remotePort = isSource ? conn.targetPort : conn.sourcePort;
+
+      const connectedDevice = devices.find((d: CanvasDevice) => d.id === connectedDeviceId);
+      if (connectedDevice) {
+        const deviceType = connectedDevice.type;
+        let capability = 'Switch';
+        let platform = 'WS-C2960-24TT-L';
+        let version = 'NOS Software, C2960 Software (C2960-LANBASEK9-M), Version 15.0(2)SE4, RELEASE SOFTWARE (fc1)';
+
+        if (deviceType === 'router') {
+          capability = 'Router';
+          platform = 'C2911';
+          version = 'NOS Software, C2900 Software (C2900-UNIVERSALK9-M), Version 15.1(4)M4, RELEASE SOFTWARE (fc2)';
+        } else if (deviceType === 'pc') {
+          capability = 'Host';
+          platform = 'PC / Workstation';
+          version = 'Network OS Workstation Kernel 6.1.0';
+        } else if (deviceType === 'iot') {
+          capability = 'Host';
+          platform = 'IoT Device';
+          version = 'Embedded MicroOS v2.4';
+        } else if (deviceType === 'wlc') {
+          capability = 'Switch, WLAN';
+          platform = 'AIR-CT2504-K9';
+          version = 'NOS Software, Version 8.5.140.0';
+        } else if (deviceType === 'firewall') {
+          capability = 'Router';
+          platform = 'ASA5505';
+          version = 'NOS Software, Version 9.1(2)';
+        }
+
+        const neighborState = ctx.deviceStates?.get(connectedDeviceId);
+        let managementIp = connectedDevice.ip || '';
+        if (!managementIp && neighborState) {
+          const portIp = Object.values(neighborState.ports || {}).find(p => p.ipAddress)?.ipAddress;
+          if (portIp) managementIp = portIp;
+        }
+        if (!managementIp) {
+          managementIp = '0.0.0.0';
+        }
+
+        output += `-------------------------\n`;
+        output += `Device ID: ${connectedDevice.name}\n`;
+        output += `Entry address(es):\n`;
+        output += `  IP address: ${managementIp}\n`;
+        output += `Platform: ${platform},  Capabilities: ${capability}\n`;
+        output += `Interface: ${localPort},  Port ID (outgoing port): ${remotePort}\n`;
+        output += `Holdtime : 140 sec\n\n`;
+        output += `Version :\n${version}\n\n`;
+        output += `advertisement version: 2\n`;
+        output += `Duplex: full\n`;
+      }
+    });
+
+    output += `-------------------------\n`;
+    output += `Total cdp entries displayed : ${deviceConnections.length}\n`;
+    return { success: true, output };
+  }
+
   let output = '\nCapability Codes: R - Router, T - Trans Bridge, B - Source Route Bridge\n';
   output += '                  S - Switch, H - Host, I - IGMP, r - Repeater, P - Phone\n\n';
   output += 'Device ID        Local Intrfce     Holdtme    Capability  Platform  Port ID\n';
 
-  // Get real neighbors from topology
-  const connections = ctx.connections || [];
-  const sourceDeviceId = ctx.sourceDeviceId as string;
-  const devices = ctx.devices || [];
-  const cdpEnabled = state.cdpEnabled !== false;
-
-  if (!cdpEnabled) {
-    output += 'CDP is not enabled\n';
+  if (deviceConnections.length === 0) {
+    output += 'No CDP neighbors found\n';
   } else {
-    // Find connections to this device
-    const deviceConnections = connections.filter(
-      (conn: CanvasConnection) => conn.sourceDeviceId === sourceDeviceId || conn.targetDeviceId === sourceDeviceId
-    );
+    deviceConnections.forEach((conn: CanvasConnection) => {
+      const isSource = conn.sourceDeviceId === sourceDeviceId;
+      const localPort = isSource ? conn.sourcePort : conn.targetPort;
+      const connectedDeviceId = isSource ? conn.targetDeviceId : conn.sourceDeviceId;
+      const remotePort = isSource ? conn.targetPort : conn.sourcePort;
 
-    if (deviceConnections.length === 0) {
-      output += 'No CDP neighbors found\n';
-    } else {
-      deviceConnections.forEach((conn: CanvasConnection) => {
-        const isSource = conn.sourceDeviceId === sourceDeviceId;
-        const localPort = isSource ? conn.sourcePort : conn.targetPort;
-        const connectedDeviceId = isSource ? conn.targetDeviceId : conn.sourceDeviceId;
-        const remotePort = isSource ? conn.targetPort : conn.sourcePort;
+      const connectedDevice = devices.find((d: CanvasDevice) => d.id === connectedDeviceId);
 
-        const connectedDevice = devices.find((d: CanvasDevice) => d.id === connectedDeviceId);
+      if (connectedDevice) {
+        const deviceType = connectedDevice.type;
+        let capability = 'S';
+        let platform = 'WS-C2960-24TT-L';
 
-        if (connectedDevice) {
-          // Determine capability based on device type
-          const deviceType = connectedDevice.type;
-          let capability = 'S'; // Switch
-          if (deviceType === 'router') capability = 'R';
-          else if (deviceType === 'pc') capability = 'H';
-          else if (deviceType === 'iot') capability = 'H';
-
-          // Platform based on device type
-          let platform = 'WS-C2960-24TT-L';
-          if (deviceType === 'router') platform = 'C2911';
-          else if (deviceType === 'pc') platform = 'PC';
-          else if (deviceType === 'iot') platform = 'IoT';
-
-          output += `${connectedDevice.name.padEnd(16)}${localPort.padEnd(18)}${'140'.padEnd(12)}${capability.padEnd(12)}${platform.padEnd(11)}${remotePort}\n`;
+        if (deviceType === 'router') {
+          capability = 'R';
+          platform = 'C2911';
+        } else if (deviceType === 'pc' || deviceType === 'iot') {
+          capability = 'H';
+          platform = deviceType === 'pc' ? 'PC' : 'IoT';
+        } else if (deviceType === 'wlc') {
+          capability = 'S';
+          platform = 'AIR-CT2504';
+        } else if (deviceType === 'firewall') {
+          capability = 'R';
+          platform = 'ASA5505';
         }
-      });
-    }
+
+        output += `${connectedDevice.name.padEnd(16)}${localPort.padEnd(18)}${'140'.padEnd(12)}${capability.padEnd(12)}${platform.padEnd(11)}${remotePort}\n`;
+      }
+    });
   }
 
-  output += '\nTotal entries displayed: ' + (cdpEnabled ? connections.filter((c: CanvasConnection) => c.sourceDeviceId === sourceDeviceId || c.targetDeviceId === sourceDeviceId).length : 0) + '\n';
+  output += '\nTotal entries displayed: ' + deviceConnections.length + '\n';
   output += '!\n';
   return { success: true, output };
 }

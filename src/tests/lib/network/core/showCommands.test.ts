@@ -84,4 +84,26 @@ describe('Show Commands Suite', () => {
     expect(brief).toHaveLength(4);
     expect(brief[3].interface).toBe('gi0/1');
   });
+
+  it('should render show ntp status and show ntp associations', async () => {
+    const { cmdShowNtp } = await import('@/lib/network/core/showCommands');
+    const disabled = cmdShowNtp({ hostname: 'SW1' } as any, 'show ntp status', {} as any);
+    expect(disabled.output).toContain('NTP is not enabled');
+
+    const stateWithNtp = {
+      hostname: 'SW1',
+      ntpServers: ['192.168.1.100', '192.168.1.200'],
+    } as any;
+
+    const status = cmdShowNtp(stateWithNtp, 'show ntp status', { devices: [{ id: 'srv', ip: '192.168.1.100' }] } as any);
+    expect(status.success).toBe(true);
+    expect(status.output).toContain('Clock is synchronized');
+    expect(status.output).toContain('192.168.1.100');
+
+    const assoc = cmdShowNtp(stateWithNtp, 'show ntp associations', { devices: [{ id: 'srv', ip: '192.168.1.100' }] } as any);
+    expect(assoc.success).toBe(true);
+    expect(assoc.output).toContain('*~192.168.1.100');
+    expect(assoc.output).toContain('+192.168.1.200');
+  });
 });
+

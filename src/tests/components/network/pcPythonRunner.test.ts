@@ -335,5 +335,11 @@ describe('executePythonScript', () => {
       const code = `text = """line 1\nline 2\nline 3"""\nprint(text)`;
       expect(run(code)).toBe('line 1\nline 2\nline 3');
     });
+
+    it('terminates infinite while loops with TimeoutError', () => {
+      const res = executePythonScript(`while True:\n  pass`, [], undefined, undefined, ['test.py'], 50);
+      expect(res.error).toContain('TimeoutError');
+    });
   });
 });
+

@@ -379,10 +379,57 @@ export async function executeLinuxCommand(
         items = itemsRaw.split(/\s+/).filter(Boolean);
       }
 
+      const loopStartTime = Date.now();
+      const timeoutMs = 3000;
+
       for (const item of items) {
+        if (Date.now() - loopStartTime > timeoutMs) {
+          addLocalOutput('error', 'bash: loop terminated: execution timed out (exceeded 3s limit)');
+          return;
+        }
         // Replace $varName or ${varName} in body with current item value
         const subCmd = loopBody.replace(new RegExp(`\\$${varName}\\b|\\$\\{${varName}\\}`, 'g'), item);
         await executeLinuxCommand(subCmd, { ...params, silent: false });
+      }
+      return;
+    }
+  }
+
+  // Handle Bash While Loops (e.g., while true; do echo ping; done OR while [ condition ]; do ...; done)
+  if (cleanCmd.startsWith('while ')) {
+    const whileMatch = cleanCmd.match(/^while\s+(.+?)\s*;\s*do\s+(.+?)\s*;\s*done$/i)
+      || cleanCmd.match(/^while\s+(.+?)\s*\n\s*do\s*\n\s*(.+?)\s*\n\s*done$/i);
+
+    if (whileMatch) {
+      const rawCondition = whileMatch[1].trim();
+      const loopBody = whileMatch[2].trim();
+
+      const loopStartTime = Date.now();
+      const timeoutMs = 3000;
+      let iterations = 0;
+      const maxIterations = 5000;
+
+      const evalBashCond = (condStr: string): boolean => {
+        let c = condStr.trim();
+        if (c.startsWith('[') && c.endsWith(']')) {
+          c = c.slice(1, -1).trim();
+        }
+        if (c === 'true' || c === '1' || c === ':') return true;
+        if (c === 'false' || c === '0' || !c) return false;
+        const eqMatch = c.match(/^"?(.*?)"?\s*(==|=|!=)\s*"?(.*?)"?$/);
+        if (eqMatch) {
+          return eqMatch[2] === '!=' ? eqMatch[1] !== eqMatch[3] : eqMatch[1] === eqMatch[3];
+        }
+        return true;
+      };
+
+      while (evalBashCond(rawCondition)) {
+        iterations++;
+        if (Date.now() - loopStartTime > timeoutMs || iterations > maxIterations) {
+          addLocalOutput('error', 'bash: loop terminated: execution timed out (exceeded 3s limit)');
+          return;
+        }
+        await executeLinuxCommand(loopBody, { ...params, silent: false });
       }
       return;
     }

@@ -2046,6 +2046,9 @@ export function PCPanel({
                     isMobile={isMobile}
                     language={language}
                     showCmdSettings={showCmdSettings}
+                    fontSize={fontSize}
+                    onFontSizeChange={handleFontSizeChange}
+                    onClear={() => setPcOutput([])}
                     onSearchOpen={() => setSearchOpen(true)}
                     onCopyAll={handleCopyAll}
                     onToggleCmdSettings={() => setShowCmdSettings(!showCmdSettings)}

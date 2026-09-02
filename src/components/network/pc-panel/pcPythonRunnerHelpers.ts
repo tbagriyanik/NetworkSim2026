@@ -2,6 +2,13 @@ export class PythonInputRequiredException {
   constructor(public prompt: string) { }
 }
 
+export class PythonTimeoutException extends Error {
+  constructor(message: string = 'TimeoutError: Script execution timed out (limit exceeded)') {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
 export class PyType {
   constructor(public name: string) { }
 

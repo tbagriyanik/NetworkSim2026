@@ -1,4 +1,5 @@
 import type { CableType } from '@/lib/network/types';
+import type { CanvasDevice, CanvasPort, DeviceType } from '../networkTopology.types';
 
 /**
  * Automatically infers the cable type based on the port ID and port type.
@@ -31,4 +32,55 @@ export function getInferredCableTypeForPort(
   }
   return currentCableType;
 }
+
+/**
+ * Determines the ideal cable type between two devices based on their types:
+ * - Same layer devices (Router-Router, Switch-Switch, PC-PC, Router-PC) -> crossover (or serial if serial ports)
+ * - Different layer devices (PC-Switch, Router-Switch) -> straight-through
+ */
+export function getAutoCableTypeBetweenDevices(
+  sourceType: DeviceType,
+  targetType: DeviceType
+): CableType {
+  const isRouter = (t: DeviceType) => t === 'router' || t === 'firewall';
+  const isSwitch = (t: DeviceType) => t === 'switchL2' || t === 'switchL3' || t === 'wlc';
+  const isHost = (t: DeviceType) => t === 'pc' || t === 'iot';
+
+  if ((isHost(sourceType) && isHost(targetType)) ||
+    (isSwitch(sourceType) && isSwitch(targetType)) ||
+    (isRouter(sourceType) && isRouter(targetType)) ||
+    (isRouter(sourceType) && isHost(targetType)) ||
+    (isHost(sourceType) && isRouter(targetType))) {
+    return 'crossover';
+  }
+
+  return 'straight';
+}
+
+/**
+ * Finds the first available non-console, non-shutdown, non-connected physical port for auto-cabling.
+ */
+export function findOptimalFreePort(
+  device: CanvasDevice,
+  connectedPortIds: Set<string>
+): CanvasPort | null {
+  if (!device.ports || device.ports.length === 0) return null;
+
+  // Filter out console, management, wireless, and already connected ports
+  const availablePorts = device.ports.filter(port => {
+    const pId = port.id.toLowerCase();
+    const isSpecial = pId === 'console' || pId === 'rs232' || pId === 'com1' || pId === 'com2' ||
+      pId.startsWith('wlan') || port.type === 'console' || port.type === 'wireless';
+    if (isSpecial) return false;
+    if (connectedPortIds.has(`${device.id}-${port.id}`)) return false;
+    if (port.status === 'connected') return false;
+    return true;
+  });
+
+  if (availablePorts.length === 0) return null;
+
+  // Prefer GigabitEthernet/FastEthernet ports in natural order
+  return availablePorts[0];
+}
+
 

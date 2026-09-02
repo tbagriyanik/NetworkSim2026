@@ -58,4 +58,33 @@ describe('Show Switching Display', () => {
     expect(etherchannel.ports).toHaveLength(2);
     expect(etherchannel.protocol).toBe('LACP');
   });
+
+  it('should render show cdp neighbors and show cdp neighbors detail', async () => {
+    const { cmdShowCdpNeighbors } = await import('@/lib/network/core/showSwitchingDisplay');
+    const mockState = { hostname: 'SW1', cdpEnabled: true } as any;
+    const mockContext = {
+      sourceDeviceId: 'sw-1',
+      devices: [
+        { id: 'sw-1', name: 'SW1', type: 'switchL2', ports: [] },
+        { id: 'r-1', name: 'R1', type: 'router', ip: '192.168.1.1', ports: [] },
+      ],
+      connections: [
+        { id: 'c-1', sourceDeviceId: 'sw-1', sourcePort: 'gi0/1', targetDeviceId: 'r-1', targetPort: 'gi0/0' },
+      ],
+    } as any;
+
+    const brief = cmdShowCdpNeighbors(mockState, 'show cdp neighbors', mockContext);
+    expect(brief.success).toBe(true);
+    expect(brief.output).toContain('R1');
+    expect(brief.output).toContain('gi0/1');
+    expect(brief.output).toContain('gi0/0');
+
+    const detail = cmdShowCdpNeighbors(mockState, 'show cdp neighbors detail', mockContext);
+    expect(detail.success).toBe(true);
+    expect(detail.output).toContain('Device ID: R1');
+    expect(detail.output).toContain('IP address: 192.168.1.1');
+    expect(detail.output).toContain('Capabilities: Router');
+    expect(detail.output).toContain('Interface: gi0/1,  Port ID (outgoing port): gi0/0');
+  });
 });
+

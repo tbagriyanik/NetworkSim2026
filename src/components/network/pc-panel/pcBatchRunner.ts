@@ -148,7 +148,17 @@ export async function executeBatchScript(options: BatchExecutionOptions): Promis
   }
 
   let lineIdx = 0;
+  const batchStartTime = Date.now();
+  const batchTimeoutMs = 3000;
+  let batchStepCount = 0;
+  const maxBatchSteps = 5000;
+
   while (lineIdx < lines.length) {
+    batchStepCount++;
+    if (Date.now() - batchStartTime > batchTimeoutMs || batchStepCount > maxBatchSteps) {
+      emitOutput('error', 'Batch file execution terminated: timeout exceeded (3s limit reached or infinite loop detected)');
+      break;
+    }
     const rawLine = lines[lineIdx];
     lineIdx++;
 

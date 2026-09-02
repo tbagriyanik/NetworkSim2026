@@ -47,4 +47,3 @@ if (sourceFilesRegex.test(readme)) {
 }
 
 fs.writeFileSync(README_PATH, readme, 'utf-8');
-//console.log(`README updated: ${formatted} total lines, ${files} source files`);
