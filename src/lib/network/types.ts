@@ -32,7 +32,9 @@ export interface WifiConfig {
   macFilterList?: string[];
   ssids?: DeviceWifiSsidProfile[];
   powerDisabled?: boolean;
+  txPowerDbm?: number;
 }
+
 
 // Helper function to normalize WiFi config with defaults
 export function normalizeWifiConfig(config: Partial<WifiConfig> & { ssid: string; mode: WifiMode }): WifiConfig {
@@ -796,7 +798,9 @@ export interface SwitchState {
   // Spanning-tree portfast default (global)
   spanningTreePortfastDefault?: boolean;
   // STP calculation results
+  cryptoIsakmpKeys?: Record<string, string>;
   stpState?: Record<number, StpVlanState>;
+
   // Firewall ASA-specific state
   firewallObjects?: Record<string, {
     name: string;

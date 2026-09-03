@@ -92,8 +92,8 @@ export function recalculateStp(
     // 2. Fallback to ID-based prefix check if deviceType is missing
     // 3. Check switchLayer
     const isExplicitExcluded = state?.deviceType === 'pc' || state?.deviceType === 'iot' ||
-                               state?.deviceType === 'router' || state?.deviceType === 'firewall' || state?.deviceType === 'wlc' ||
-                               id.startsWith('pc-') || id.startsWith('iot-') || id.startsWith('router-') || id.startsWith('firewall-') || id.startsWith('wlc-');
+      state?.deviceType === 'router' || state?.deviceType === 'firewall' || state?.deviceType === 'wlc' ||
+      id.startsWith('pc-') || id.startsWith('iot-') || id.startsWith('router-') || id.startsWith('firewall-') || id.startsWith('wlc-');
 
     const isSwitch = !isExplicitExcluded && (
       state?.deviceType === 'switch' ||
@@ -334,8 +334,8 @@ function runStpForVlan(
 
           const oldBest = deviceBestBpdu.get(dstId);
           if (!oldBest || bestBpForDst.rootBridgeId !== oldBest.rootBridgeId ||
-              bestBpForDst.rootPathCost !== oldBest.rootPathCost ||
-              bestPortForDst !== rootPortIdMap.get(dstId)) {
+            bestBpForDst.rootPathCost !== oldBest.rootPathCost ||
+            bestPortForDst !== rootPortIdMap.get(dstId)) {
             deviceBestBpdu.set(dstId, bestBpForDst);
             rootPortIdMap.set(dstId, bestPortForDst);
             changed = true;

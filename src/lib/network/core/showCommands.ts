@@ -37,12 +37,18 @@ import {
   cmdShowIpEigrpNeighbors, cmdShowIpEigrpInterfaces, cmdShowIpBgpSummary,
   cmdShowIpBgp, cmdShowIpv6Rip, cmdShowIpv6Ospf,
   cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
-  cmdShowIpv6Neighbors, cmdShowPrefixList, cmdShowRouteMap,
-  cmdShowIpv6EigrpNeighbors, cmdShowGlbp, cmdShowIpFlowExport,
-  cmdShowIpCacheFlow,
+  cmdShowPrefixList, cmdShowRouteMap, cmdShowIpv6EigrpNeighbors,
+  cmdShowGlbp, cmdShowIpFlowExport, cmdShowIpCacheFlow, cmdShowIpv6Neighbors
 } from './showRoutingDisplay';
 
+
+import {
+  cmdShowCryptoIsakmpSa, cmdShowCryptoIpsecSa, cmdShowCryptoMap
+} from './cryptoCommands';
+
+
 // Show komutları (show running-config, show vlan, show ip route, vs.)
+
 
 export const showHandlers: Record<string, CommandHandler> = {
   'show running-config': cmdShowRunningConfig,
@@ -108,6 +114,10 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip dhcp pool': cmdShowIpDhcpPool,
   'show ip dhcp binding': cmdShowIpDhcpBinding,
   'show ip source binding': cmdShowIpSourceBinding,
+  'show crypto isakmp sa': cmdShowCryptoIsakmpSa,
+  'show crypto ipsec sa': cmdShowCryptoIpsecSa,
+  'show crypto map': cmdShowCryptoMap,
+
   'show ip verify source': cmdShowIpVerifySource,
   'show': cmdShowParent,
   'show ip interface': cmdShowIpInterface,

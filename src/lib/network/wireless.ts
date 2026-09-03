@@ -504,10 +504,10 @@ export function getApActiveSsids(
 function isValidWirelessClient(device: CanvasDevice, deviceStates: Map<string, SwitchState>): boolean {
   const wifi = getDeviceWifiConfig(device, deviceStates);
   return (device.type === 'pc' || device.type === 'iot') &&
-         !!wifi &&
-         (wifi.enabled ?? true) &&
-         !!wifi.ssid &&
-         (wifi.mode === 'client' || wifi.mode === 'sta');
+    !!wifi &&
+    (wifi.enabled ?? true) &&
+    !!wifi.ssid &&
+    (wifi.mode === 'client' || wifi.mode === 'sta');
 }
 
 function isValidWirelessAp(device: CanvasDevice): boolean {
@@ -541,6 +541,33 @@ interface WirelessConnectionCandidate {
   dist: number;
   ssidIndex: number;
   ssid: string;
+  rssi?: number;
+}
+
+
+/**
+ * Calculate RSSI in dBm based on AP TxPower and distance (Log-distance path loss model)
+ */
+export function calculateRssiDbm(
+  txPowerDbm = 20,
+  distance: number,
+  frequencyGhz = 2.4
+): number {
+  const safeDist = Math.max(1, distance);
+  // Path loss exponent n = 3.0 (indoor/office environment)
+  const pathLoss = 20 * Math.log10(frequencyGhz * 1000) + 30 * Math.log10(safeDist) - 27.55;
+  return Math.round(txPowerDbm - pathLoss);
+}
+
+/**
+ * Determine if client should roam to candidate AP (Hysteresis threshold default 5 dBm)
+ */
+export function shouldClientRoam(
+  currentRssi: number,
+  candidateRssi: number,
+  roamingHysteresisDbm = 5
+): boolean {
+  return candidateRssi > currentRssi + roamingHysteresisDbm;
 }
 
 function findWirelessCandidates(
@@ -573,18 +600,23 @@ function findWirelessCandidates(
       const dist = calculateDistance(client, ap);
       if (dist >= 550) continue;
 
+      const txPower = apWifi?.txPowerDbm ?? 20;
+      const rssi = calculateRssiDbm(txPower, dist);
+
       candidates.push({
         client,
         apId: ap.id,
         dist,
         ssidIndex: matchingSsidIndex,
         ssid: matchingSsid.ssid,
+        rssi
       });
     }
   }
 
   return candidates;
 }
+
 
 function selectBestWirelessConnections(
   candidates: WirelessConnectionCandidate[],

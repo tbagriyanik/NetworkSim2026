@@ -138,9 +138,98 @@ export const cmdTunnelGroup: CommandHandler = (state, input, _ctx) => {
     return { success: false, error: IOS_ERRORS.invalidInput };
 };
 
+export const cmdCryptoIsakmpKey: CommandHandler = (state, input, _ctx) => {
+    if (state.currentMode !== 'config') {
+        return { success: false, error: iosModeError() };
+    }
+
+    const match = input.match(/^crypto\s+isakmp\s+key\s+(\S+)\s+address\s+([0-9.]+)/i);
+    if (!match) {
+        return { success: false, error: IOS_ERRORS.invalidInput };
+    }
+
+    const key = match[1];
+    const peerAddress = match[2];
+
+    if (!state.cryptoIsakmpKeys) {
+        state.cryptoIsakmpKeys = {};
+    }
+
+    state.cryptoIsakmpKeys[peerAddress] = key;
+
+    return {
+        success: true,
+        output: `ISAKMP key configured for peer ${peerAddress}`
+    };
+};
+
+export const cmdShowCryptoIsakmpSa: CommandHandler = (state, _input, _ctx) => {
+    let output = '\nIPv4 Crypto ISAKMP SA\n';
+    output += 'dst             src             state          conn-id slot status\n';
+    output += '-------------------------------------------------------------------\n';
+
+    const keys = state.cryptoIsakmpKeys || {};
+    const peers = Object.keys(keys);
+
+    if (peers.length === 0) {
+        output += 'No ISAKMP SAs active\n';
+    } else {
+        peers.forEach((peerIp, idx) => {
+            const localIp = state.ip || '10.0.0.1';
+            output += `${peerIp.padEnd(16)}${localIp.padEnd(16)}QM_IDLE         ${1001 + idx}    0   ACTIVE\n`;
+        });
+    }
+
+    return { success: true, output };
+};
+
+export const cmdShowCryptoIpsecSa: CommandHandler = (state, _input, _ctx) => {
+    let output = '\ninterface: Tunnel0\n';
+    output += '    Crypto map tag: IPSEC-MAP, local addr ' + (state.ip || '10.0.0.1') + '\n\n';
+
+    output += '   protected vrf: (none)\n';
+    output += '   local ident (addr/mask/prot/port): (0.0.0.0/0.0.0.0/0/0)\n';
+    output += '   remote ident (addr/mask/prot/port): (0.0.0.0/0.0.0.0/0/0)\n';
+    output += '   current_peer 203.0.113.2 port 500\n';
+    output += '     PERMIT, flags={origin_is_acl,}\n';
+    output += '    #pkts encaps: 142, #pkts encrypt: 142, #pkts digest: 142\n';
+    output += '    #pkts decaps: 142, #pkts decrypt: 142, #pkts verify: 142\n';
+    output += '    #send errors 0, #recv errors 0\n';
+
+    return { success: true, output };
+};
+
+export const cmdShowCryptoMap: CommandHandler = (state, _input, _ctx) => {
+    const maps = state.cryptoMaps || {};
+    const mapNames = Object.keys(maps);
+
+    if (mapNames.length === 0) {
+        return { success: true, output: '\nNo crypto maps configured\n' };
+    }
+
+    let output = '\nCrypto Map Table\n';
+    mapNames.forEach(name => {
+        const seqs = maps[name];
+        Object.keys(seqs).forEach(seqStr => {
+            const entry = seqs[Number(seqStr)];
+            output += `Crypto Map "${name}" ${seqStr} ipsec-isakmp\n`;
+            output += `    Peer = ${entry.setPeer || 'none'}\n`;
+            output += `    Transform set = ${entry.setTransformSet || 'none'}\n`;
+            output += `    Match address = ${entry.matchAddress || 'none'}\n`;
+        });
+    });
+
+    return { success: true, output };
+};
+
 export const cryptoHandlers: Record<string, CommandHandler> = {
     'crypto isakmp policy': cmdCryptoIsakmpPolicy,
+    'crypto isakmp key': cmdCryptoIsakmpKey,
     'crypto ipsec transform-set': cmdCryptoIpsecTransformSet,
     'crypto map': cmdCryptoMap,
     'tunnel-group': cmdTunnelGroup,
+    'show crypto isakmp sa': cmdShowCryptoIsakmpSa,
+    'show crypto ipsec sa': cmdShowCryptoIpsecSa,
+    'show crypto map': cmdShowCryptoMap
 };
+

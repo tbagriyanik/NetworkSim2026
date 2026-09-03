@@ -9,6 +9,9 @@ export const routerConfigHandlers: Record<string, CommandHandler> = {
     'network': cmdRouterNetwork,
     'version': cmdRoutingVersion,
     'neighbor remote-as': cmdNeighborRemoteAs,
+    'neighbor route-map': cmdNeighborRouteMap,
+    'neighbor weight': cmdNeighborWeight,
+
     'no auto-summary': cmdNoAutoSummary,
     'router-id': cmdRouterId,
     'passive-interface': cmdPassiveInterface,
@@ -271,7 +274,9 @@ function cmdNeighborRemoteAs(state: SwitchState, input: string): CommandResult {
 
     const [_, neighborIp, remoteAs] = match;
     const bgpNeighbors = state.bgpNeighbors || [];
-    const newNeighbors = [...bgpNeighbors.filter((n: { ip: string }) => n.ip !== neighborIp), { ip: neighborIp, as: remoteAs }];
+    const existing = bgpNeighbors.find((n: { ip: string }) => n.ip === neighborIp) || { ip: neighborIp, as: remoteAs };
+    const updated = { ...existing, ip: neighborIp, as: remoteAs };
+    const newNeighbors = [...bgpNeighbors.filter((n: { ip: string }) => n.ip !== neighborIp), updated];
 
     return {
         success: true,
@@ -279,6 +284,47 @@ function cmdNeighborRemoteAs(state: SwitchState, input: string): CommandResult {
         newState: { bgpNeighbors: newNeighbors }
     };
 }
+
+function cmdNeighborRouteMap(state: SwitchState, input: string): CommandResult {
+    if (state.routingProtocol !== 'bgp') return { success: false, error: iosModeError() };
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+route-map\s+(\S+)\s+(in|out)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> route-map <map> in|out' };
+
+    const [_, neighborIp, mapName, dir] = match;
+    const bgpNeighbors = state.bgpNeighbors || [];
+    const existing = bgpNeighbors.find((n: any) => n.ip === neighborIp) || { ip: neighborIp, as: '65000' };
+    const updated = {
+        ...existing,
+        [dir.toLowerCase() === 'in' ? 'routeMapIn' : 'routeMapOut']: mapName
+    };
+    const newNeighbors = [...bgpNeighbors.filter((n: any) => n.ip !== neighborIp), updated];
+
+    return {
+        success: true,
+        output: `BGP neighbor ${neighborIp} route-map ${mapName} ${dir} configured`,
+        newState: { bgpNeighbors: newNeighbors }
+    };
+}
+
+function cmdNeighborWeight(state: SwitchState, input: string): CommandResult {
+    if (state.routingProtocol !== 'bgp') return { success: false, error: iosModeError() };
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+weight\s+(\d+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> weight <value>' };
+
+    const [_, neighborIp, weightStr] = match;
+    const weight = parseInt(weightStr, 10);
+    const bgpNeighbors = state.bgpNeighbors || [];
+    const existing = bgpNeighbors.find((n: any) => n.ip === neighborIp) || { ip: neighborIp, as: '65000' };
+    const updated = { ...existing, weight };
+    const newNeighbors = [...bgpNeighbors.filter((n: any) => n.ip !== neighborIp), updated];
+
+    return {
+        success: true,
+        output: `BGP neighbor ${neighborIp} weight set to ${weight}`,
+        newState: { bgpNeighbors: newNeighbors }
+    };
+}
+
 
 /**
  * no auto-summary
