@@ -165,6 +165,30 @@ describe('STP Algorithm', () => {
     expect(stp2?.ports['fa0/2'].role).toBe('alternate');
   });
 
+  it('should simulate Rapid-PVST proposal/agreement on a converged link', () => {
+    const sw1 = { ...createMockSwitch('SW1', '0000.0000.0001', 4096), spanningTreeMode: 'rapid-pvst' as const };
+    const sw2 = { ...createMockSwitch('SW2', '0000.0000.0002'), spanningTreeMode: 'rapid-pvst' as const };
+    const states = new Map<string, SwitchState>([['sw1', sw1], ['sw2', sw2]]);
+    const connections: CanvasConnection[] = [{ id: 'c1', sourceDeviceId: 'sw1', sourcePort: 'fa0/1', targetDeviceId: 'sw2', targetPort: 'fa0/1', cableType: 'straight', active: true }];
+
+    const updatedStates = recalculateStp(states, connections);
+
+    expect(updatedStates.get('sw1')?.stpState?.[1].ports['fa0/1']).toMatchObject({ role: 'designated', proposal: true });
+    expect(updatedStates.get('sw2')?.stpState?.[1].ports['fa0/1']).toMatchObject({ role: 'root', agreement: true });
+  });
+
+  it('should not use proposal/agreement for classic PVST', () => {
+    const sw1 = createMockSwitch('SW1', '0000.0000.0001', 4096);
+    const sw2 = createMockSwitch('SW2', '0000.0000.0002');
+    const states = new Map<string, SwitchState>([['sw1', sw1], ['sw2', sw2]]);
+    const connections: CanvasConnection[] = [{ id: 'c1', sourceDeviceId: 'sw1', sourcePort: 'fa0/1', targetDeviceId: 'sw2', targetPort: 'fa0/1', cableType: 'straight', active: true }];
+
+    const updatedStates = recalculateStp(states, connections);
+
+    expect(updatedStates.get('sw1')?.stpState?.[1].ports['fa0/1']).not.toHaveProperty('proposal');
+    expect(updatedStates.get('sw2')?.stpState?.[1].ports['fa0/1']).not.toHaveProperty('agreement');
+  });
+
   it('should never include PCs in STP calculation even if they have superior Bridge IDs', () => {
     const sw1 = createMockSwitch('sw-1', '0000.0000.0010', 32768);
     const sw2 = createMockSwitch('sw-2', '0000.0000.0020', 32768);

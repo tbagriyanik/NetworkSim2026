@@ -142,6 +142,26 @@ export function evaluateDhcpv6ForDevice(
 
     const gateway = remotePort.ipv6Address || remotePort.ipv6LinkLocal || 'fe80::1';
 
+    // Store DHCPv6 binding entry on the server router
+    const bindingDuid = `00:03:00:01:${cleanMac.slice(0, 4)}:${cleanMac.slice(4, 8)}:${cleanMac.slice(8, 12)}`;
+    const existingBindings = remoteState.dhcpv6Bindings || [];
+    if (!existingBindings.some(b => b.ipv6Address === ipv6Address || b.duid === bindingDuid)) {
+      remoteState.dhcpv6Bindings = [
+        ...existingBindings,
+        {
+          iaid: '0x00010001',
+          duid: bindingDuid,
+          ipv6Address,
+          type: 'IA_NA',
+          preferredLifetime: 604800,
+          validLifetime: 2592000,
+          interfaceId: remotePortId,
+          clientHostname: state.hostname,
+          leaseTime: Date.now()
+        }
+      ];
+    }
+
     return {
       ipv6Address,
       ipv6Prefix: pool.addressPrefix.split('/')[1] ? parseInt(pool.addressPrefix.split('/')[1]) : 64,
@@ -151,3 +171,4 @@ export function evaluateDhcpv6ForDevice(
 
   return null;
 }
+

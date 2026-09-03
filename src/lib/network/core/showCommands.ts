@@ -38,8 +38,10 @@ import {
   cmdShowIpBgp, cmdShowIpBgpNeighbors, cmdShowIpv6Rip, cmdShowIpv6Ospf,
   cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
   cmdShowPrefixList, cmdShowRouteMap, cmdShowIpv6EigrpNeighbors, cmdShowIpv6EigrpTopology, cmdShowIpv6EigrpInterfaces,
-  cmdShowGlbp, cmdShowIpFlowExport, cmdShowIpCacheFlow, cmdShowIpv6Neighbors
+  cmdShowGlbp, cmdShowIpFlowExport, cmdShowIpCacheFlow, cmdShowIpv6Neighbors,
+  cmdShowIpv6DhcpBinding, cmdShowPppoeSession, cmdShowCaller
 } from './showRoutingDisplay';
+
 
 
 
@@ -126,6 +128,12 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ipv6 neighbors': cmdShowIpv6Neighbors,
   'show ipv6 interface brief': cmdShowIpv6InterfaceBrief,
   'show ipv6 dhcp pool': cmdShowIpv6DhcpPool,
+  'show ipv6 dhcp binding': cmdShowIpv6DhcpBinding,
+  'show pppoe session': cmdShowPppoeSession,
+  'show pppoe summary': cmdShowPppoeSession,
+  'show caller': cmdShowCaller,
+  'show caller ip': cmdShowCaller,
+
   'show mac address-table static': cmdShowMacStatic,
   'show authentication': cmdShowAuth,
   'show sessions': cmdShowSessions,

@@ -14,6 +14,8 @@ interface Bpdu {
   rootPathCost: number;
   senderBridgeId: string;
   senderPortId: string;
+  proposal?: boolean;
+  agreement?: boolean;
 }
 
 /**
@@ -485,6 +487,30 @@ function runStpForVlan(
     if (vlanId === 1) {
       syncPortStatusVlan1(state, vlanStpState);
     }
+  });
+
+  // Rapid-PVST synchronizes an eligible link with a proposal/agreement exchange.
+  // This runs after all port roles are known so both ends can participate.
+  switchIds.forEach(deviceId => {
+    const state = deviceStates.get(deviceId);
+    const localVlanState = state?.stpState?.[vlanId];
+    if (!state || !localVlanState || state.spanningTreeMode !== 'rapid-pvst') return;
+
+    connections.forEach(conn => {
+      if (!conn.active) return;
+      const peerId = conn.sourceDeviceId === deviceId ? conn.targetDeviceId : conn.sourceDeviceId;
+      if (!switchIds.includes(peerId)) return;
+      const localPortId = conn.sourceDeviceId === deviceId ? conn.sourcePort : conn.targetPort;
+      const peerPortId = conn.sourceDeviceId === deviceId ? conn.targetPort : conn.sourcePort;
+      const peerState = deviceStates.get(peerId);
+      const localPort = localVlanState.ports[localPortId];
+      const peerVlanState = peerState?.stpState?.[vlanId];
+      const peerPort = peerVlanState?.ports[peerPortId];
+      if (!peerState || !localPort || !peerPort || peerState.spanningTreeMode !== 'rapid-pvst') return;
+
+      if (localPort.role === 'designated') localPort.proposal = true;
+      if (localPort.role === 'root' && peerPort.role === 'designated') localPort.agreement = true;
+    });
   });
 }
 

@@ -17,7 +17,39 @@ export type PortStatus = 'connected' | 'notconnect' | 'disabled' | 'blocked' | '
 export type PortMode = 'access' | 'trunk' | 'routed' | 'dynamic-auto' | 'dynamic-desirable' | 'dot1q-tunnel';
 
 // WiFi Configuration Types (Centralized - used across the application)
+export interface Dhcpv6Binding {
+  iaid: string; // Identity Association ID (e.g. 0x00010001)
+  duid: string; // Client DUID (e.g. 00:03:00:01:00:50:56:C0:00:01)
+  ipv6Address: string; // Leased IPv6 address
+  type: 'IA_NA' | 'IA_PD'; // Non-temporary Address or Prefix Delegation
+  preferredLifetime: number; // e.g. 604800 sec
+  validLifetime: number; // e.g. 2592000 sec
+  interfaceId: string; // Ingress interface (e.g. Gi0/0)
+  clientHostname?: string;
+  leaseTime: number; // Timestamp when leased
+}
+
+export interface PppoeSession {
+  sessionId: number; // e.g. 101
+  clientDeviceId: string; // e.g. 'r1'
+  clientInterfaceId: string; // e.g. 'gi0/0' or 'dialer1'
+  clientMac: string;
+  serverDeviceId: string; // e.g. 'r2'
+  serverInterfaceId: string; // e.g. 'gi0/0'
+  serverMac: string;
+  discoveryState: 'IDLE' | 'PADI_SENT' | 'PADO_RCVD' | 'PADR_SENT' | 'PADS_RCVD' | 'ESTABLISHED';
+  lcpState: 'Initial' | 'Starting' | 'ReqSent' | 'AckRcvd' | 'Opened';
+  authProtocol: 'CHAP' | 'PAP' | 'NONE';
+  authenticated: boolean;
+  ipcpState: 'Initial' | 'ReqSent' | 'AckRcvd' | 'Opened';
+  assignedIp: string;
+  peerIp: string;
+  primaryDns?: string;
+  uptime: number; // seconds
+}
+
 export interface WifiConfig {
+
   enabled?: boolean;
   ssid: string;
   bssid?: string;
@@ -158,7 +190,14 @@ export interface Port {
   ospfArea?: string;
   ipv6DhcpServer?: string;
   ipv6DhcpServerPool?: string; // Pool name for 'ipv6 dhcp server <pool>' on interface
+  pppoeClientDialPool?: number; // pppoe-client dial-pool-number N
+  pppoeEnableGroup?: string; // pppoe enable group <group>
+  dialerPool?: number; // dialer pool N
+  pppAuthentication?: string; // ppp authentication chap pap
+  pppChapHostname?: string;
+  pppChapPassword?: string;
   helperAddresses?: string[];
+
   lldpTransmit?: boolean;       // default: true when LLDP enabled
   lldpReceive?: boolean;        // default: true when LLDP enabled
   isRoutedPort?: boolean;       // For L3 switch routed ports
@@ -424,6 +463,8 @@ export interface StpVlanState {
     role: 'root' | 'designated' | 'alternate' | 'backup' | 'disabled';
     state: 'forwarding' | 'blocking' | 'listening' | 'learning' | 'disabled';
     cost: number;
+    proposal?: boolean;
+    agreement?: boolean;
   }>;
 }
 
@@ -643,7 +684,12 @@ export interface SwitchState {
   currentIpv6DhcpPool?: string;
   ipv6DhcpPools?: Record<string, {
     addressPrefix?: string;
+    dnsServer?: string;
+    domainName?: string;
   }>;
+  dhcpv6Bindings?: Dhcpv6Binding[];
+  pppoeSessions?: PppoeSession[];
+
   // Services (DHCP, DNS, HTTP, FTP, Mail)
   services?: {
     dhcp?: {

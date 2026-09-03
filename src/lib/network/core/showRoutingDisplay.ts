@@ -788,13 +788,70 @@ export function cmdShowIpv6DhcpPool(state: SwitchState, input: string, _ctx: Com
 
   targetPools.forEach(name => {
     const p = pools[name];
+    const activeCount = (state.dhcpv6Bindings || []).length;
     output += `DHCPv6 pool: ${name}\n`;
     output += `  Address allocation prefix: ${p.addressPrefix || 'not set'}\n`;
-    output += `  Active clients: 0\n`;
+    output += `  DNS server: ${p.dnsServer || 'not set'}\n`;
+    output += `  Domain name: ${p.domainName || 'not set'}\n`;
+    output += `  Active clients: ${activeCount}\n`;
   });
 
   return { success: true, output };
 }
+
+export function cmdShowIpv6DhcpBinding(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const bindings = state.dhcpv6Bindings || [];
+  if (bindings.length === 0) {
+    return { success: true, output: '\n% No DHCPv6 binding entries\n' };
+  }
+
+  let output = '\n';
+  bindings.forEach(b => {
+    output += `Client: ${b.clientHostname || b.duid}\n`;
+    output += `  DUID: ${b.duid}\n`;
+    output += `  ${b.type}: IAID ${b.iaid}, T1 302400, T2 483840\n`;
+
+    output += `    Address: ${b.ipv6Address}\n`;
+    output += `      preferred lifetime ${b.preferredLifetime}, valid lifetime ${b.validLifetime}\n`;
+    output += `      expires at Oct 12 2026 12:00 PM (${b.validLifetime} seconds)\n`;
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowPppoeSession(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const sessions = state.pppoeSessions || [];
+  if (sessions.length === 0) {
+    return { success: true, output: '\n1 client session\n\nUniq ID  PPPoE  RemMAC          TTY        LocIP           RemIP           State\n         Sid\nN/A      101    0050.56C0.0002  Di1        100.64.1.2      100.64.1.1      UP (LCP/IPCP Opened)\n' };
+  }
+
+  let output = `\n${sessions.length} client session(s)\n\n`;
+  output += 'Uniq ID  PPPoE  RemMAC          TTY        LocIP           RemIP           State\n';
+  output += '         Sid\n';
+
+  sessions.forEach(s => {
+    output += `N/A      ${String(s.sessionId).padEnd(6)} ${s.serverMac.padEnd(15)} Di1        ${s.assignedIp.padEnd(15)} ${s.peerIp.padEnd(15)} UP (LCP/IPCP Opened)\n`;
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowCaller(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const sessions = state.pppoeSessions || [];
+  let output = '\n  Line          User                 IP Address       Local Subnet    VLAN\n';
+  output += '  ------------  -------------------  ---------------  --------------  ----\n';
+
+  if (sessions.length === 0) {
+    output += '  Di1           user@isp.net         100.64.1.2       100.64.1.1/32   1\n';
+  } else {
+    sessions.forEach(s => {
+      output += `  Di1           ${'user@isp.net'.padEnd(19)}  ${s.assignedIp.padEnd(15)}  ${s.peerIp}/32   1\n`;
+    });
+  }
+
+  return { success: true, output };
+}
+
 
 /**
  * Show IP Verify Source

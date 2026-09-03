@@ -10,7 +10,9 @@ import { isSwitchDeviceType, isWirelessMatch, validateTopologyConnections, relea
 import { recalculateStp } from '@/lib/network/stp';
 import { evaluateSlaacForDevice, evaluateDhcpv6ForDevice } from '@/lib/network/eui64';
 import { recalculateBgpNeighbors } from '@/lib/network/routing';
+import { evaluatePppoeSessions } from '@/lib/network/pppoeEngine';
 import { normalizeMAC } from '@/lib/utils';
+
 import { useAppStore } from '@/lib/store/appStore';
 
 export function useRefreshNetwork({
@@ -149,6 +151,7 @@ export function useRefreshNetwork({
       const vtpUpdatedStates = propagateVtpVlans(refreshedDevices, releasedDeviceStates, sanitizedConnections);
       const stpUpdatedStates = recalculateStp(vtpUpdatedStates, sanitizedConnections);
       const bgpUpdatedStates = recalculateBgpNeighbors(stpUpdatedStates);
+      const pppoeUpdatedStates = evaluatePppoeSessions(bgpUpdatedStates, sanitizedConnections);
       const stpUpdatedCount = Array.from(vtpUpdatedStates.keys()).filter(id => {
         const d = refreshedDevices.find(dev => dev.id === id);
         return d && (d.type === 'switchL2' || d.type === 'switchL3');
@@ -161,7 +164,7 @@ export function useRefreshNetwork({
       // Evaluate SLAAC for PCs attached to routers configured with RA enabled (no ipv6 nd suppress-ra)
       refreshedDevices.forEach(d => {
         if (d.type === 'pc' || d.type === 'iot') {
-          const slaac = evaluateSlaacForDevice(d.id, bgpUpdatedStates, sanitizedConnections);
+          const slaac = evaluateSlaacForDevice(d.id, pppoeUpdatedStates, sanitizedConnections);
           if (slaac?.ipv6Address) {
             const idx = finalDevicesForRefresh.findIndex(dev => dev.id === d.id);
             if (idx !== -1) {
@@ -177,7 +180,8 @@ export function useRefreshNetwork({
       // Evaluate DHCPv6 for PCs attached to routers with 'ipv6 dhcp server <pool>' configured
       refreshedDevices.forEach(d => {
         if (d.type === 'pc' || d.type === 'iot') {
-          const dhcpv6 = evaluateDhcpv6ForDevice(d.id, bgpUpdatedStates, sanitizedConnections);
+          const dhcpv6 = evaluateDhcpv6ForDevice(d.id, pppoeUpdatedStates, sanitizedConnections);
+
           if (dhcpv6?.ipv6Address) {
             const idx = finalDevicesForRefresh.findIndex(dev => dev.id === d.id);
             if (idx !== -1) {
