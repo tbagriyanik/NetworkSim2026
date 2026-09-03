@@ -72,7 +72,12 @@ export function useTopologyEventListeners({
       else if (deviceType === 'iot') addDevice('iot');
       else if (deviceType === 'firewall') addDevice('firewall');
       else if (deviceType === 'wlc') addDevice('wlc');
+      else if (deviceType === 'hub') addDevice('hub');
+      else if (deviceType === 'cloud') addDevice('cloud');
+      else if (deviceType === 'mobile') addDevice('mobile');
+      else if (deviceType === 'printer') addDevice('printer');
     };
+
 
     const handleTogglePingMode = () => {
       setPingMode((m) => {

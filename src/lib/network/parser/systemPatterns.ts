@@ -887,6 +887,12 @@ export const systemPatterns: Record<string, CommandPattern> = {
     minArgs: 0,
     maxArgs: 0
   },
+  'show ip bgp neighbors': {
+    pattern: /^show\s+ip\s+bgp\s+neighbors?(?:\s+(\S+))?$/i,
+    modes: ['privileged'],
+    minArgs: 0,
+    maxArgs: 1
+  },
   'show ip bgp': {
     pattern: /^show\s+ip\s+bgp(?:\s+(\S+))?$/i,
     modes: ['privileged'],

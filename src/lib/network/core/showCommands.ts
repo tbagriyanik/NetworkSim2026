@@ -35,7 +35,7 @@ import {
   cmdShowIpSourceBinding, cmdShowIpVerifySource,
   cmdShowIpArpInspection,
   cmdShowIpEigrpNeighbors, cmdShowIpEigrpInterfaces, cmdShowIpBgpSummary,
-  cmdShowIpBgp, cmdShowIpv6Rip, cmdShowIpv6Ospf,
+  cmdShowIpBgp, cmdShowIpBgpNeighbors, cmdShowIpv6Rip, cmdShowIpv6Ospf,
   cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
   cmdShowPrefixList, cmdShowRouteMap, cmdShowIpv6EigrpNeighbors,
   cmdShowGlbp, cmdShowIpFlowExport, cmdShowIpCacheFlow, cmdShowIpv6Neighbors
@@ -164,6 +164,7 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip eigrp interfaces': cmdShowIpEigrpInterfaces,
   'show ip bgp summary': cmdShowIpBgpSummary,
   'show ip bgp': cmdShowIpBgp,
+  'show ip bgp neighbors': cmdShowIpBgpNeighbors,
   'show ipv6 rip': cmdShowIpv6Rip,
   'show ipv6 ospf': cmdShowIpv6Ospf,
   'show vrrp': cmdShowVrrp,

@@ -6,12 +6,21 @@
 
 | Özellik | Güncel kapsam ve sınır |
 |---|---|
+| **Yeni Cihaz Desteği (Hub, Cloud, Mobile, Printer)** | Topolojiye 4 yeni cihaz tipi eklendi: Layer-1 Multiport **Hub** (`hub`), Dış İnternet **Cloud/WAN** (`cloud`), Kablosuz **Akıllı Telefon/Tablet** (`mobile`) ve Ağ **Yazıcısı** (`printer`). Tuval üzerinde gerçekçi SVG gövde/ikon çizimleri ve 2-satırlı ultra-kompakt araç çubuğu entegre edildi. |
+| **MSTP Bölge Sınırı İzolasyonu (IEEE 802.1s)** | MST bölge adı, revizyonu ve digest kontrolü (`areSameMstRegion`) eklendi. CIST BPDUs bölge dışına taşınırken MSTI BPDUs bölge sınırında izole edildi. |
+| **802.1X EAPOL Port Güvenliği** | EAPOL-Start, Identity Request/Response, EAPOL-Success/Failure paket seviyesinde port kontrolü ve RADIUS doğrulaması uygulandı. |
+| **QoS Token Bucket Police & Shape** | Traffic Policing (`police <rate>`) ve Traffic Shaping (`shape average <rate>`) bant genişliği limitleme motoru entegre edildi. |
+| **IPsec Site-to-Site GRE over IPsec** | `crypto isakmp policy/key`, `crypto ipsec transform-set`, `crypto map` komutları, ESP tünel şifreleme ve `show crypto sa` komutları tamamlandı. |
+| **BGP Politika & Ağırlık Atamaları** | `neighbor route-map` ve `neighbor weight` komutları ile BGP best-path karar mekanizması derinleştirildi. |
+| **DHCP Snooping Option 82 & Rate-Limit** | `ip dhcp snooping information option` ve interface `ip dhcp snooping limit rate` CLI komut desteği eklendi. |
+| **Wireless Roaming & RF Parametreleri** | AP kapsama alanı, sinyal seviyesi (RSSI), kanal çakışması denetimi ve AP'ler arası kesintisiz müşteri roaming geçişi desteklendi. |
 | **EIGRP for IPv6** | `ipv6 router eigrp <as>`, router-id tanımı, arayüz bazlı `ipv6 eigrp <as>` aktifleştirme, DUAL IPv6 metric hesaplaması ve `show ipv6 eigrp neighbors/topology` komutları eklendi. |
 | **IP & IPv6 Prefix-List** | `ip/ipv6 prefix-list <name> [seq <n>] {permit\|deny} <prefix> [ge <ge>] [le <le>]` kural motoru, ön ek eşleme doğrulama ve `show ip/ipv6 prefix-list` raporlaması entegre edildi. |
 | **Route-Map Politika Motoru** | `route-map <name> {permit\|deny} [<seq>]` mod yapılandırması, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference` alt komutları ve `show route-map` çıktısı eklendi. |
 | **GLBP (Gateway Load Balancing Protocol)** | `glbp <group> ip <ip>`, `glbp priority/preempt/weighting` komutları, AVG (Active Virtual Gateway) seçimi, `0007.b400.XXXX` sanal MAC adresi üretimi ve `show glbp [brief]` raporlaması desteklendi. |
 | **STP Loop Guard** | `spanning-tree loopguard default` (global) ve `spanning-tree guard loop` (interface) yapılandırmaları ile BPDU kaybında portun `loop-inconsistent` engel moduna geçirilmesi sağlandı. |
 | **NetFlow İletim Motoru** | `ip flow-export destination <ip> <port>`, `ip flow-export version <5\|9>`, interface `ip flow ingress/egress` ve canlı `show ip cache flow` istatistik izleme ekranı eklendi. |
+
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-09-01 - v3.8.0)
 

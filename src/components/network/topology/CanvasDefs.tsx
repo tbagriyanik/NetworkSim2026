@@ -91,6 +91,16 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
         <stop offset="30%" stopColor="var(--color-purple-700)" />
         <stop offset="100%" stopColor="var(--color-purple-900)" />
       </linearGradient>
+      <linearGradient id="hubGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="var(--color-cyan-400)" />
+        <stop offset="30%" stopColor="var(--color-cyan-600)" />
+        <stop offset="100%" stopColor="var(--color-cyan-800)" />
+      </linearGradient>
+      <linearGradient id="cloudGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="var(--color-sky-400)" />
+        <stop offset="30%" stopColor="var(--color-sky-600)" />
+        <stop offset="100%" stopColor="var(--color-sky-800)" />
+      </linearGradient>
       <linearGradient id="firewallGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="var(--color-error-500)" />
         <stop offset="30%" stopColor="var(--color-error-600)" />
@@ -113,6 +123,14 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
       <linearGradient id="routerGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="var(--color-purple-50)" />
         <stop offset="100%" stopColor="var(--color-purple-100)" />
+      </linearGradient>
+      <linearGradient id="hubGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="var(--color-cyan-50)" />
+        <stop offset="100%" stopColor="var(--color-cyan-200)" />
+      </linearGradient>
+      <linearGradient id="cloudGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="var(--color-sky-50)" />
+        <stop offset="100%" stopColor="var(--color-sky-200)" />
       </linearGradient>
       <linearGradient id="firewallGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="var(--color-error-100)" />

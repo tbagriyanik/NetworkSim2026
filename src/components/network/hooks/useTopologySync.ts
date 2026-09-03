@@ -9,8 +9,9 @@ interface UseTopologySyncProps {
   connections: CanvasConnection[];
   setDevices: React.Dispatch<React.SetStateAction<CanvasDevice[]>>;
   devices: CanvasDevice[];
-  getCounterKey: (type: string) => 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc';
-  deviceCounterRef: React.MutableRefObject<{ pc: number; iot: number; switch: number; router: number; firewall: number; wlc: number }>;
+  getCounterKey: (type: string) => string;
+  deviceCounterRef: React.MutableRefObject<Record<string, number>>;
+
 }
 
 export function useTopologySync({
@@ -24,7 +25,7 @@ export function useTopologySync({
   // Sync device counters with current devices to prevent ID collisions
   useEffect(() => {
     if (devices.length > 0) {
-      const counters = { pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0 };
+      const counters: Record<string, number> = { pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0, hub: 0, cloud: 0, mobile: 0, printer: 0 };
       devices.forEach((d) => {
         const match = d.id.match(/^(\w+)-(\d+)$/);
         if (match) {
@@ -33,10 +34,13 @@ export function useTopologySync({
           const num = parseInt(match[2]);
           if (counters[type] !== undefined) {
             counters[type] = Math.max(counters[type], num);
+          } else {
+            counters[type] = num;
           }
         }
       });
       deviceCounterRef.current = counters;
+
     }
   }, [devices, getCounterKey, deviceCounterRef]);
 

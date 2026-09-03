@@ -42,13 +42,18 @@ export const REFRESH_DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
   router: 'Router',
   switchL3: 'L3 SW',
   switchL2: 'L2 SW',
+  hub: 'Hub',
+  cloud: 'Cloud (WAN)',
+  mobile: 'Smartphone',
+  printer: 'Printer',
   pc: 'PC',
   iot: 'IoT',
   firewall: 'Firewall',
   wlc: 'WLC',
 };
 
-export const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = ['router', 'switchL3', 'switchL2', 'pc', 'iot', 'firewall', 'wlc'];
+export const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = ['router', 'switchL3', 'switchL2', 'hub', 'cloud', 'mobile', 'printer', 'pc', 'iot', 'firewall', 'wlc'];
+
 
 // ─── Helper Functions for CLI & Settings ──────────────────────────────────────
 

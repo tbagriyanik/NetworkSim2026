@@ -1,7 +1,7 @@
 import { iosModeError } from './iosErrors';
 
 import type { CommandHandler } from './commandTypes';
-import type { SwitchState, CommandResult } from '../types';
+import type { SwitchState, CommandResult, BgpNeighbor } from '../types';
 
 // Router config commands (router ospf, router rip, etc.)
 
@@ -11,6 +11,48 @@ export const routerConfigHandlers: Record<string, CommandHandler> = {
     'neighbor remote-as': cmdNeighborRemoteAs,
     'neighbor route-map': cmdNeighborRouteMap,
     'neighbor weight': cmdNeighborWeight,
+    'neighbor next-hop-self': cmdNeighborNextHopSelf,
+    'neighbor ebgp-multihop': cmdNeighborEbgpMultihop,
+    'neighbor update-source': cmdNeighborUpdateSource,
+    'neighbor timers': cmdNeighborTimers,
+    'neighbor password': cmdNeighborPassword,
+    'neighbor description': cmdNeighborDescription,
+    'neighbor shutdown': cmdNeighborShutdown,
+    'neighbor default-originate': cmdNeighborDefaultOriginate,
+    'neighbor remove-private-as': cmdNeighborRemovePrivateAs,
+    'neighbor maximum-prefix': cmdNeighborMaximumPrefix,
+    'neighbor allowas-in': cmdNeighborAllowAsIn,
+    'neighbor send-community': cmdNeighborSendCommunity,
+    'neighbor route-reflector-client': cmdNeighborRouteReflectorClient,
+    'neighbor as-override': cmdNeighborAsOverride,
+    'neighbor soft-reconfiguration': cmdNeighborSoftReconfig,
+    'no neighbor next-hop-self': cmdNoNeighborNextHopSelf,
+    'no neighbor ebgp-multihop': cmdNoNeighborEbgpMultihop,
+    'no neighbor update-source': cmdNoNeighborUpdateSource,
+    'no neighbor timers': cmdNoNeighborTimers,
+    'no neighbor password': cmdNoNeighborPassword,
+    'no neighbor description': cmdNoNeighborDescription,
+    'no neighbor shutdown': cmdNoNeighborShutdown,
+    'no neighbor default-originate': cmdNoNeighborDefaultOriginate,
+    'no neighbor remove-private-as': cmdNoNeighborRemovePrivateAs,
+    'no neighbor maximum-prefix': cmdNoNeighborMaximumPrefix,
+    'no neighbor allowas-in': cmdNoNeighborAllowAsIn,
+    'no neighbor send-community': cmdNoNeighborSendCommunity,
+    'no neighbor route-reflector-client': cmdNoNeighborRouteReflectorClient,
+    'no neighbor as-override': cmdNoNeighborAsOverride,
+    'no neighbor soft-reconfiguration': cmdNoNeighborSoftReconfig,
+    'aggregate-address': cmdAggregateAddress,
+    'no aggregate-address': cmdNoAggregateAddress,
+    'maximum-paths': cmdMaximumPaths,
+    'no maximum-paths': cmdNoMaximumPaths,
+    'bgp graceful-restart': cmdBgpGracefulRestart,
+    'no bgp graceful-restart': cmdNoBgpGracefulRestart,
+    'bgp cluster-id': cmdBgpClusterId,
+    'no bgp cluster-id': cmdNoBgpClusterId,
+    'synchronization': cmdBgpSynchronization,
+    'no synchronization': cmdNoBgpSynchronization,
+    'timers bgp': cmdBgpTimers,
+    'no timers bgp': cmdNoBgpTimers,
 
     'no auto-summary': cmdNoAutoSummary,
     'router-id': cmdRouterId,
@@ -571,6 +613,421 @@ function cmdNoRedistribute(state: SwitchState, input: string): CommandResult {
             redistributeRules: updatedRules
         }
     };
+}
+
+// ============================================================================
+// ADVANCED BGP COMMANDS
+// ============================================================================
+
+/** Guard: command only valid inside BGP router-config mode. */
+function requireBgp(state: SwitchState): CommandResult | null {
+    if (state.routingProtocol !== 'bgp') {
+        return { success: false, error: iosModeError() };
+    }
+    return null;
+}
+
+/** Merge a patch into an existing BGP neighbor (creating it when absent). */
+function patchBgpNeighbor(
+    state: SwitchState,
+    neighborIp: string,
+    patch: Partial<BgpNeighbor>
+): { neighbors: BgpNeighbor[]; neighbor: BgpNeighbor } {
+    const bgpNeighbors: BgpNeighbor[] = state.bgpNeighbors || [];
+    const existing = bgpNeighbors.find(n => n.ip === neighborIp);
+    const neighbor: BgpNeighbor = {
+        ip: neighborIp,
+        as: existing?.as || '65000',
+        ...existing,
+        ...patch
+
+    };
+    const neighbors = [...bgpNeighbors.filter(n => n.ip !== neighborIp), neighbor];
+    return { neighbors, neighbor };
+}
+
+function cmdNeighborNextHopSelf(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+next-hop-self$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> next-hop-self' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { nextHopSelf: true });
+    return { success: true, output: `BGP neighbor ${match[1]} next-hop-self enabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborNextHopSelf(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+next-hop-self$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { nextHopSelf: false });
+    return { success: true, output: `BGP neighbor ${match[1]} next-hop-self disabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborEbgpMultihop(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+ebgp-multihop(?:\s+(\d+))?$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> ebgp-multihop [<hops>]' };
+    const hops = match[2] ? parseInt(match[2], 10) : 2;
+    const { neighbors } = patchBgpNeighbor(state, match[1], { ebgpMultihop: hops });
+    return { success: true, output: `BGP neighbor ${match[1]} ebgp-multihop set to ${hops}`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborEbgpMultihop(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+ebgp-multihop$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { ebgpMultihop: undefined });
+    return { success: true, output: `BGP neighbor ${match[1]} ebgp-multihop removed`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborUpdateSource(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+update-source\s+(\S+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> update-source <interface>' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { updateSource: match[2] });
+    return { success: true, output: `BGP neighbor ${match[1]} update-source ${match[2]} configured`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborUpdateSource(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+update-source$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { updateSource: undefined });
+    return { success: true, output: `BGP neighbor ${match[1]} update-source removed`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborTimers(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+timers\s+(\d+)\s+(\d+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> timers <keepalive> <holdtime>' };
+    const keepalive = parseInt(match[2], 10);
+    const holdtime = parseInt(match[3], 10);
+    const { neighbors } = patchBgpNeighbor(state, match[1], { timersKeepalive: keepalive, timersHoldtime: holdtime });
+    return { success: true, output: `BGP neighbor ${match[1]} timers updated (keepalive ${keepalive}s, holdtime ${holdtime}s)`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborTimers(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+timers$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { timersKeepalive: undefined, timersHoldtime: undefined });
+    return { success: true, output: `BGP neighbor ${match[1]} timers reset to defaults`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborPassword(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+password\s+(\S+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> password <password>' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { password: match[2] });
+    return { success: true, output: `BGP neighbor ${match[1]} MD5 password configured`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborPassword(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+password$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { password: undefined });
+    return { success: true, output: `BGP neighbor ${match[1]} MD5 password removed`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborDescription(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+description\s+(.+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> description <text>' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { description: match[2].trim() });
+    return { success: true, output: `BGP neighbor ${match[1]} description set`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborDescription(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+description$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { description: undefined });
+    return { success: true, output: `BGP neighbor ${match[1]} description removed`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborShutdown(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+shutdown$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> shutdown' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { shutdown: true });
+    return { success: true, output: `BGP neighbor ${match[1]} administratively shut down`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborShutdown(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+shutdown$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { shutdown: false });
+    return { success: true, output: `BGP neighbor ${match[1]} re-activated`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborDefaultOriginate(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+default-originate$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> default-originate' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { defaultOriginate: true });
+    return { success: true, output: `BGP neighbor ${match[1]} default-originate enabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborDefaultOriginate(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+default-originate$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { defaultOriginate: false });
+    return { success: true, output: `BGP neighbor ${match[1]} default-originate disabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborRemovePrivateAs(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+remove-private-as$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> remove-private-as' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { removePrivateAs: true });
+    return { success: true, output: `BGP neighbor ${match[1]} remove-private-as enabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborRemovePrivateAs(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+remove-private-as$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { removePrivateAs: false });
+    return { success: true, output: `BGP neighbor ${match[1]} remove-private-as disabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborMaximumPrefix(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+maximum-prefix\s+(\d+)(?:\s+(\d+))?$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> maximum-prefix <limit> [<threshold>]' };
+    const limit = parseInt(match[2], 10);
+    const { neighbors } = patchBgpNeighbor(state, match[1], { maximumPrefix: limit });
+    const threshold = match[3] ? ` (threshold ${match[3]}%)` : '';
+    return { success: true, output: `BGP neighbor ${match[1]} maximum-prefix set to ${limit}${threshold}`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborMaximumPrefix(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+maximum-prefix$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { maximumPrefix: undefined });
+    return { success: true, output: `BGP neighbor ${match[1]} maximum-prefix removed`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborAllowAsIn(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+allowas-in(?:\s+(\d+))?$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> allowas-in [<number>]' };
+    const count = match[2] ? parseInt(match[2], 10) : 1;
+    const { neighbors } = patchBgpNeighbor(state, match[1], { allowAsIn: count });
+    return { success: true, output: `BGP neighbor ${match[1]} allowas-in enabled (${count})`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborAllowAsIn(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+allowas-in$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { allowAsIn: undefined });
+    return { success: true, output: `BGP neighbor ${match[1]} allowas-in disabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborSendCommunity(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+send-community(?:\s+\w+)?$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> send-community [both|standard|extended]' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { sendCommunity: true });
+    return { success: true, output: `BGP neighbor ${match[1]} send-community enabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborSendCommunity(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+send-community$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { sendCommunity: false });
+    return { success: true, output: `BGP neighbor ${match[1]} send-community disabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborRouteReflectorClient(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+route-reflector-client$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> route-reflector-client' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { routeReflectorClient: true });
+    return { success: true, output: `BGP neighbor ${match[1]} configured as route-reflector client`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborRouteReflectorClient(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+route-reflector-client$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { routeReflectorClient: false });
+    return { success: true, output: `BGP neighbor ${match[1]} route-reflector client removed`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborAsOverride(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+as-override$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> as-override' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { asOverride: true });
+    return { success: true, output: `BGP neighbor ${match[1]} as-override enabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborAsOverride(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+as-override$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { asOverride: false });
+    return { success: true, output: `BGP neighbor ${match[1]} as-override disabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNeighborSoftReconfig(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^neighbor\s+([0-9.]+)\s+soft-reconfiguration\s+inbound$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: neighbor <ip> soft-reconfiguration inbound' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { softReconfiguration: true });
+    return { success: true, output: `BGP neighbor ${match[1]} soft-reconfiguration inbound enabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdNoNeighborSoftReconfig(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+neighbor\s+([0-9.]+)\s+soft-reconfiguration$/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    const { neighbors } = patchBgpNeighbor(state, match[1], { softReconfiguration: false });
+    return { success: true, output: `BGP neighbor ${match[1]} soft-reconfiguration disabled`, newState: { bgpNeighbors: neighbors } };
+}
+
+function cmdAggregateAddress(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^aggregate-address\s+([0-9.]+)\s+([0-9.]+)(?:\s+summary-only)?$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: aggregate-address <network> <mask> [summary-only]' };
+    const aggregates = state.bgpAggregateAddresses || [];
+    if (aggregates.some(a => a.network === match[1] && a.mask === match[2])) {
+        return { success: true, output: `Aggregate ${match[1]} ${match[2]} already configured`, newState: {} };
+    }
+    return {
+        success: true,
+        output: `Aggregate ${match[1]} ${match[2]} added`,
+        newState: {
+            bgpAggregateAddresses: [...aggregates, { network: match[1], mask: match[2], summaryOnly: !!match[3] }]
+        }
+    };
+}
+
+function cmdNoAggregateAddress(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+aggregate-address\s+([0-9.]+)\s+([0-9.]+)/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: no aggregate-address <network> <mask>' };
+    const aggregates = (state.bgpAggregateAddresses || []).filter(a => !(a.network === match[1] && a.mask === match[2]));
+    return { success: true, output: `Aggregate ${match[1]} ${match[2]} removed`, newState: { bgpAggregateAddresses: aggregates } };
+}
+
+function cmdMaximumPaths(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^maximum-paths\s+(\d+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: maximum-paths <number>' };
+    const paths = parseInt(match[1], 10);
+    return { success: true, output: `BGP maximum-paths set to ${paths}`, newState: { bgpMaximumPaths: paths } };
+}
+
+function cmdNoMaximumPaths(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^no\s+maximum-paths/i);
+    if (!match) return { success: false, error: '% Invalid command' };
+    return { success: true, output: 'BGP maximum-paths reset to default (1)', newState: { bgpMaximumPaths: 1 } };
+}
+
+function cmdBgpGracefulRestart(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    void input;
+    return { success: true, output: 'BGP graceful-restart enabled', newState: { bgpGracefulRestart: true } };
+}
+
+function cmdNoBgpGracefulRestart(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    void input;
+    return { success: true, output: 'BGP graceful-restart disabled', newState: { bgpGracefulRestart: false } };
+}
+
+function cmdBgpClusterId(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^bgp\s+cluster-id\s+([0-9.]+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: bgp cluster-id <id>' };
+    return { success: true, output: `BGP cluster-id set to ${match[1]}`, newState: { bgpClusterId: match[1] } };
+}
+
+function cmdNoBgpClusterId(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    void input;
+    return { success: true, output: 'BGP cluster-id removed', newState: { bgpClusterId: undefined } };
+}
+
+function cmdBgpSynchronization(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    void input;
+    return { success: true, output: 'BGP synchronization enabled', newState: { bgpSynchronization: true } };
+}
+
+function cmdNoBgpSynchronization(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    void input;
+    return { success: true, output: 'BGP synchronization disabled', newState: { bgpSynchronization: false } };
+}
+
+function cmdBgpTimers(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    const match = input.match(/^timers\s+bgp\s+(\d+)\s+(\d+)$/i);
+    if (!match) return { success: false, error: '% Invalid command. Usage: timers bgp <keepalive> <holdtime>' };
+    const keepalive = parseInt(match[1], 10);
+    const holdtime = parseInt(match[2], 10);
+    return {
+        success: true,
+        output: `BGP routing process timers updated (keepalive ${keepalive}s, holdtime ${holdtime}s)`,
+        newState: { bgpTimers: { keepalive, holdtime } }
+    };
+}
+
+function cmdNoBgpTimers(state: SwitchState, input: string): CommandResult {
+    const err = requireBgp(state);
+    if (err) return err;
+    void input;
+    return { success: true, output: 'BGP timers reset to defaults (60/180)', newState: { bgpTimers: undefined } };
 }
 
 

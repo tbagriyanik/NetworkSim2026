@@ -24,6 +24,10 @@ export const DEVICE_ICON_COLORS = {
   router: 'var(--color-warning-600)',
   firewall: 'var(--color-error-500)',
   wlc: 'var(--color-warning-400)',
+  hub: 'var(--color-cyan-500)',
+  cloud: 'var(--color-sky-500)',
+  mobile: 'var(--color-emerald-500)',
+  printer: 'var(--color-amber-500)',
 } as const;
 
 export const DEVICE_ICONS = {
@@ -68,6 +72,32 @@ export const DEVICE_ICONS = {
       <path strokeLinecap="round" strokeLinejoin="round" d="m9 12 2 2 4-4" />
     </svg>
   ),
+  hub: (
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.hub} viewBox="0 0 24 24" strokeWidth={1.5}>
+      <rect x="2" y="7" width="20" height="10" rx="2" />
+      <circle cx="6" cy="12" r="1" fill="currentColor" />
+      <circle cx="10" cy="12" r="1" fill="currentColor" />
+      <circle cx="14" cy="12" r="1" fill="currentColor" />
+      <circle cx="18" cy="12" r="1" fill="currentColor" />
+    </svg>
+  ),
+  cloud: (
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.cloud} viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 0 1 4-4 5 5 0 0 1 9.9-1 4 4 0 0 1 2.1 7.9H7a4 4 0 0 1-4-2.9z" />
+    </svg>
+  ),
+  mobile: (
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.mobile} viewBox="0 0 24 24" strokeWidth={1.5}>
+      <rect x="7" y="2" width="10" height="20" rx="2" />
+      <line x1="11" y1="18" x2="13" y2="18" strokeLinecap="round" />
+    </svg>
+  ),
+  printer: (
+    <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.printer} viewBox="0 0 24 24" strokeWidth={1.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+    </svg>
+  ),
+
   wlc: (
     <svg className="w-8 h-8 sm:w-10 sm:h-10" fill="none" stroke={DEVICE_ICON_COLORS.wlc} viewBox="0 0 24 24" strokeWidth={1.5}>
       <circle cx="12" cy="12" r="9" />

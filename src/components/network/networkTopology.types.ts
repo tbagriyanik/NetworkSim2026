@@ -6,7 +6,8 @@ export type CanvasWifiConfig = Partial<WifiConfig> & {
   mode: WifiMode;
 };
 
-export type DeviceType = 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc';
+export type DeviceType = 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc' | 'hub' | 'cloud' | 'mobile' | 'printer';
+
 export type CanvasPortMode = PortMode;
 export type CanvasPortStatus = PortStatus;
 

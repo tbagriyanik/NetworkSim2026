@@ -70,6 +70,15 @@ export function generatePCPorts(): CanvasPort[] {
     ];
 }
 
+/** Generates classic 8-port hub ports: 8x FastEthernet fa0/1 - fa0/8 */
+export function generateHubPorts(): CanvasPort[] {
+    const ports: CanvasPort[] = [];
+    for (let i = 1; i <= 8; i++) {
+        ports.push({ id: `fa0/${i}`, label: `Fa0/${i}`, status: 'disconnected' as const });
+    }
+    return ports;
+}
+
 /** Generates firewall ports: Gi0/0 + Gi0/1 */
 export function generateFirewallPorts(): CanvasPort[] {
     const formatMacFromNumber = (value: number): string => {

@@ -619,11 +619,47 @@ export function buildRunningConfig(state: SwitchState): string[] {
         lines.push('!');
     } else if (state.routingProtocol === 'bgp') {
         lines.push(`router bgp ${state.bgpAs || '65000'}`);
+        // Advertised networks (network <ip> mask <mask>)
+        if (state.bgpNetworks && state.bgpNetworks.length > 0) {
+            state.bgpNetworks.forEach(n => {
+                if (n.network && n.mask) lines.push(`  network ${n.network} mask ${n.mask}`);
+            });
+        }
+        // Legacy: dynamic route-sourced network statements
         (state.dynamicRoutes || []).forEach(r => {
-            if (r.type === 'dynamic') lines.push(`  network ${r.destination} mask ${r.subnetMask}`);
+            const exists = (state.bgpNetworks || []).some(n => n.network === r.destination);
+            if (r.type === 'dynamic' && r.subnetMask && !exists) lines.push(`  network ${r.destination} mask ${r.subnetMask}`);
         });
-        (state.bgpNeighbors || []).forEach((n: { ip: string; as: string }) => {
+        // Neighbors with their full advanced sub-commands
+        (state.bgpNeighbors || []).forEach((n: any) => {
             lines.push(`  neighbor ${n.ip} remote-as ${n.as}`);
+            if (n.description) lines.push(`  neighbor ${n.ip} description ${n.description}`);
+            if (n.nextHopSelf) lines.push(`  neighbor ${n.ip} next-hop-self`);
+            if (n.ebgpMultihop !== undefined) lines.push(`  neighbor ${n.ip} ebgp-multihop ${n.ebgpMultihop}`);
+            if (n.updateSource) lines.push(`  neighbor ${n.ip} update-source ${n.updateSource}`);
+            if (n.timersKeepalive !== undefined && n.timersHoldtime !== undefined) lines.push(`  neighbor ${n.ip} timers ${n.timersKeepalive} ${n.timersHoldtime}`);
+            if (n.password) lines.push(`  neighbor ${n.ip} password ${n.password}`);
+            if (n.shutdown) lines.push(`  neighbor ${n.ip} shutdown`);
+            if (n.defaultOriginate) lines.push(`  neighbor ${n.ip} default-originate`);
+            if (n.removePrivateAs) lines.push(`  neighbor ${n.ip} remove-private-as`);
+            if (n.maximumPrefix !== undefined) lines.push(`  neighbor ${n.ip} maximum-prefix ${n.maximumPrefix}`);
+            if (n.allowAsIn !== undefined) lines.push(`  neighbor ${n.ip} allowas-in ${n.allowAsIn}`);
+            if (n.sendCommunity) lines.push(`  neighbor ${n.ip} send-community`);
+            if (n.routeReflectorClient) lines.push(`  neighbor ${n.ip} route-reflector-client`);
+            if (n.asOverride) lines.push(`  neighbor ${n.ip} as-override`);
+            if (n.softReconfiguration) lines.push(`  neighbor ${n.ip} soft-reconfiguration inbound`);
+            if (n.routeMapIn) lines.push(`  neighbor ${n.ip} route-map ${n.routeMapIn} in`);
+            if (n.routeMapOut) lines.push(`  neighbor ${n.ip} route-map ${n.routeMapOut} out`);
+            if (n.weight !== undefined) lines.push(`  neighbor ${n.ip} weight ${n.weight}`);
+        });
+        // Global BGP knobs
+        if (state.bgpMaximumPaths !== undefined && state.bgpMaximumPaths !== 1) lines.push(`  maximum-paths ${state.bgpMaximumPaths}`);
+        if (state.bgpGracefulRestart) lines.push(`  bgp graceful-restart`);
+        if (state.bgpClusterId) lines.push(`  bgp cluster-id ${state.bgpClusterId}`);
+        if (state.bgpSynchronization) lines.push(`  synchronization`);
+        if (state.bgpTimers) lines.push(`  timers bgp ${state.bgpTimers.keepalive} ${state.bgpTimers.holdtime}`);
+        (state.bgpAggregateAddresses || []).forEach(agg => {
+            lines.push(`  aggregate-address ${agg.network} ${agg.mask}${agg.summaryOnly ? ' summary-only' : ''}`);
         });
         (state.redistributeRules || []).filter(r => r.targetProtocol === 'bgp').forEach(r => {
             lines.push(`  redistribute ${r.sourceProtocol}${r.processId ? ' ' + r.processId : ''}${r.metric !== undefined ? ' metric ' + r.metric : ''}`);

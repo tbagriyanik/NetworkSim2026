@@ -3,6 +3,8 @@ import type { CanvasConnection } from '@/components/network/networkTopology.type
 import { dispatchCapturedPackets } from '../../utils/packetCapture';
 import { detectEtherChannelBundles } from './etherchannel';
 import { buildConnectionIndex, getConnectionAtPort, type ConnectionIndex } from './connectionIndex';
+import { areSameMstRegion } from './mstp';
+
 
 /**
  * Spanning Tree Protocol Bridge Protocol Data Unit (BPDU)
@@ -291,7 +293,16 @@ function runStpForVlan(
         if (!srcPortObj || !dstPortObj || srcPortObj.shutdown || dstPortObj.shutdown) return;
         if (!isPortVlanMember(srcPortObj, vlanId) || !isPortVlanMember(dstPortObj, vlanId)) return;
 
+        // MSTP IEEE 802.1s Boundary Check: MSTI (Instances 1..N) BPDUs do not cross MST Region boundaries
+        if (srcState.spanningTreeMode === 'mst' || dstState.spanningTreeMode === 'mst') {
+          const instId = getMstInstanceForVlan(srcState, vlanId);
+          if (instId > 0 && !areSameMstRegion(srcState, dstState)) {
+            return;
+          }
+        }
+
         // Source sends its best BPDU (the one it would advertise)
+
         const bestBp = deviceBestBpdu.get(srcId);
         if (!bestBp) return;
 

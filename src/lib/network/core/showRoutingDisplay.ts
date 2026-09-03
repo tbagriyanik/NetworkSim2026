@@ -2,7 +2,7 @@ import type { CommandContext } from './commandTypes';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult, Route, Port, DhcpSnoopingBinding } from '../types';
 import { buildOSPFLinkStateDatabase } from '../ospf';
-import { recalculateBgpNeighbors } from '../routing';
+import { recalculateBgpNeighbors, calculateBgpRoutes } from '../routing';
 import { ensureDeviceStatesMap } from '../networkUtils';
 import {
   getPrefixLength, getNetworkAddress, formatPortName, isIpInNetwork, getSTPCost,
@@ -973,30 +973,53 @@ export function cmdShowIpBgpSummary(state: SwitchState, _input: string, ctx?: Co
 /**
  * Show IP BGP Table
  */
-export function cmdShowIpBgp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+export function cmdShowIpBgp(state: SwitchState, input: string, ctx?: CommandContext): CommandResult {
   const routerId = state.routerId || state.defaultGateway || '1.1.1.1';
   const bgpNetworks = state.bgpNetworks || [];
   const dynamicRoutes = state.dynamicRoutes || [];
 
-  // Merge BGP-advertised networks with dynamic routes, preferring bgpNetworks
-  const entries: Array<{ network: string; prefixLength: number; nextHop: string; metric: number }>
+  const entries: Array<{ network: string; prefixLength: number; nextHop: string; metric: number; asPath?: string; localPref?: number; weight?: number; internal?: boolean }>
     = bgpNetworks.map(n => ({
       network: n.network,
       prefixLength: getPrefixLength(n.mask),
       nextHop: '0.0.0.0',
       metric: 0,
+      asPath: 'i',
+      weight: 32768,
     }));
 
-  // Also include any BGP dynamic routes not already in bgpNetworks
+  const learnedRoutes = ctx?.deviceStates && ctx?.sourceDeviceId
+    ? calculateBgpRoutes(ctx.sourceDeviceId, ctx.deviceStates)
+    : dynamicRoutes.filter(r => r.code === 'B');
+
+  learnedRoutes.forEach(r => {
+    const routeObj = r as any;
+    if (!bgpNetworks.some(n => n.network === routeObj.destination)) {
+      entries.push({
+        network: routeObj.destination,
+        prefixLength: routeObj.prefixLength || getPrefixLength(routeObj.mask || routeObj.subnetMask || '255.255.255.0'),
+        nextHop: routeObj.nextHop || '0.0.0.0',
+        metric: routeObj.metric ?? 0,
+        asPath: routeObj.asPath || 'i',
+        localPref: routeObj.localPreference ?? 100,
+        weight: routeObj.weight,
+        internal: routeObj.administrativeDistance === 200,
+      });
+    }
+  });
+
+
   if (state.routingProtocol === 'bgp') {
-    const advertisedNets = new Set(bgpNetworks.map(n => n.network));
+    const knownNets = new Set(entries.map(e => e.network));
     dynamicRoutes.forEach(r => {
-      if (!advertisedNets.has(r.destination)) {
+      if (!knownNets.has(r.destination)) {
         entries.push({
           network: r.destination,
           prefixLength: r.prefixLength || getPrefixLength(r.mask || r.subnetMask || '255.255.255.0'),
           nextHop: r.nextHop || '0.0.0.0',
           metric: r.metric ?? 0,
+          asPath: r.asPath || 'i',
+          localPref: r.localPreference ?? 100,
         });
       }
     });
@@ -1014,9 +1037,86 @@ export function cmdShowIpBgp(state: SwitchState, _input: string, _ctx: CommandCo
       const netStr = `${r.network}/${r.prefixLength}`;
       const nextHop = r.nextHop;
       const metric = r.metric ?? 0;
-      output += `*> ${netStr.padEnd(16)} ${nextHop.padEnd(20)} ${String(metric).padEnd(6)}     0 32768 i\n`;
+      const flag = r.internal ? '*>i' : '*>';
+      output += `${flag} ${netStr.padEnd(16)} ${String(nextHop).padEnd(20)} ${String(metric).padEnd(5)} ${String(r.localPref ?? 100).padEnd(6)} ${String(r.weight ?? 0).padEnd(6)} ${r.asPath || 'i'}\n`;
     });
   }
+  void input;
+  return { success: true, output };
+}
+
+/**
+ * Show IP BGP Neighbors (detailed per neighbor or compact list)
+ */
+export function cmdShowIpBgpNeighbors(state: SwitchState, input: string, ctx?: CommandContext): CommandResult {
+  let currentState = state;
+  if (ctx?.deviceStates && ctx?.sourceDeviceId) {
+    const updatedStates = recalculateBgpNeighbors(ctx.deviceStates);
+    const updatedMyState = updatedStates.get(ctx.sourceDeviceId);
+    if (updatedMyState) currentState = updatedMyState;
+  }
+
+  const routerId = currentState.routerId || currentState.defaultGateway || '1.1.1.1';
+  const localAs = currentState.bgpAs || 65000;
+  const neighbors = currentState.bgpNeighbors || [];
+
+  if (neighbors.length === 0) {
+    return { success: true, output: '\n% BGP is not configured on this device\n' };
+  }
+
+  // Optional specific neighbor: show ip bgp neighbors <ip>
+  const specificMatch = input.match(/^show\s+ip\s+bgp\s+neighbors?\s+([0-9.]+)$/i);
+
+  let learnedRoutes: Route[] = [];
+  if (ctx?.deviceStates && ctx?.sourceDeviceId) {
+    learnedRoutes = calculateBgpRoutes(ctx.sourceDeviceId, ctx.deviceStates);
+  }
+  const learnedByNeighbor = new Map<string, number>();
+  learnedRoutes.forEach(r => {
+    learnedByNeighbor.set(r.nextHop, (learnedByNeighbor.get(r.nextHop) || 0) + 1);
+  });
+
+  if (specificMatch) {
+    const n = neighbors.find(x => x.ip === specificMatch[1]);
+    if (!n) {
+      return { success: true, output: `% BGP neighbor ${specificMatch[1]} does not exist\n` };
+    }
+    const keepalive = n.timersKeepalive ?? 60;
+    const holdtime = n.timersHoldtime ?? 180;
+    const nState = n.state || currentState.bgpNeighborState?.[n.ip] || 'Idle';
+    let output = `BGP neighbor is ${n.ip}, remote AS ${n.as}${n.as === localAs ? ', internal link' : ', external link'}\n`;
+    output += `  BGP version 4, remote router ID ${routerId}\n`;
+    output += `  BGP state = ${nState}, up for 00:15:20\n`;
+    output += `  Last read 00:00:${Math.max(1, keepalive - 20)}, hold time is ${holdtime}, keepalive interval is ${keepalive} seconds\n`;
+    if (n.description) output += `  Description: ${n.description}\n`;
+    if (n.shutdown) output += `  Administratively shut down\n`;
+    if (n.updateSource) output += `  Update source is ${n.updateSource}\n`;
+    if (n.ebgpMultihop !== undefined) output += `  External BGP multihop: ${n.ebgpMultihop} hops\n`;
+    if (n.password) output += `  Message Digest based authentication enabled\n`;
+    if (n.nextHopSelf) output += `  Next-hop-self is enabled\n`;
+    if (n.defaultOriginate) output += `  Default information originate is enabled\n`;
+    if (n.routeReflectorClient) output += `  Route-Reflector Client, cluster-id ${currentState.bgpClusterId || routerId}\n`;
+    if (n.maximumPrefix !== undefined) output += `  Maximum prefixes allowed: ${n.maximumPrefix}\n`;
+    if (n.allowAsIn !== undefined) output += `  Allow AS in: ${n.allowAsIn}\n`;
+    if (n.sendCommunity) output += `  Community attribute sent to this neighbor\n`;
+    if (n.removePrivateAs) output += `  Private AS numbers are removed before sending updates\n`;
+    if (n.asOverride) output += `  AS override enabled\n`;
+    if (n.softReconfiguration) output += `  Inbound soft reconfiguration allowed\n`;
+    if (n.routeMapIn) output += `  Incoming update route-map filter is ${n.routeMapIn}\n`;
+    if (n.routeMapOut) output += `  Outgoing update route-map filter is ${n.routeMapOut}\n`;
+    if (n.weight !== undefined) output += `  BGP weight is ${n.weight}\n`;
+    output += `  Received prefix count: ${learnedByNeighbor.get(n.ip) || 0}\n`;
+    return { success: true, output };
+  }
+
+  let output = `BGP neighbor summary for router ${routerId}, local AS ${localAs}\n\n`;
+  output += `Neighbor        V           AS MsgRcvd MsgSent   TblVer  InQ OutQ Up/Down  State/PfxRcd\n`;
+  neighbors.forEach(n => {
+    const nState = n.state || currentState.bgpNeighborState?.[n.ip] || 'Idle';
+    const received = learnedByNeighbor.get(n.ip) || 0;
+    const stateField = nState === 'Established' ? String(received) : nState;
+    output += `${n.ip.padEnd(15)} 4 ${String(n.as).padEnd(12)} 12      12        1    0    0 00:15:20 ${stateField}\n`;
+  });
 
   return { success: true, output };
 }

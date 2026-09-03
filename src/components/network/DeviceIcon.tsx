@@ -42,7 +42,7 @@ export function DeviceIcon({
     strokeWidth,
     className: cn(
       'transition-all duration-200',
-        active && 'filter drop-shadow-[0_0_1px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_1px_rgba(255,255,255,0.05)]',
+      active && 'filter drop-shadow-[0_0_1px_rgba(0,0,0,0.1)] dark:drop-shadow-[0_0_1px_rgba(255,255,255,0.05)]',
       className
     )
   };
@@ -117,6 +117,36 @@ export function DeviceIcon({
           <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
         </svg>
       );
+    case 'hub':
+      return (
+        <svg {...svgProps}>
+          <rect x="2" y="7" width="20" height="10" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="6" cy="12" r="1" fill="currentColor" />
+          <circle cx="10" cy="12" r="1" fill="currentColor" />
+          <circle cx="14" cy="12" r="1" fill="currentColor" />
+          <circle cx="18" cy="12" r="1" fill="currentColor" />
+        </svg>
+      );
+    case 'cloud':
+      return (
+        <svg {...svgProps}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 0 1 4-4 5 5 0 0 1 9.9-1 4 4 0 0 1 2.1 7.9H7a4 4 0 0 1-4-2.9z" />
+        </svg>
+      );
+    case 'mobile':
+      return (
+        <svg {...svgProps}>
+          <rect x="7" y="2" width="10" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+          <line x1="11" y1="18" x2="13" y2="18" strokeLinecap="round" />
+        </svg>
+      );
+    case 'printer':
+      return (
+        <svg {...svgProps}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+        </svg>
+      );
+
     default:
       return (
         <svg {...svgProps}>

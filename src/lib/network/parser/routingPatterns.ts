@@ -94,6 +94,258 @@ export const routingPatterns: Record<string, CommandPattern> = {
     minArgs: 2,
     maxArgs: 2
   },
+  'neighbor next-hop-self': {
+    pattern: /^neighbor\s+[0-9.]+\s+next-hop-self$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no neighbor next-hop-self': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+next-hop-self$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor ebgp-multihop': {
+    pattern: /^neighbor\s+[0-9.]+\s+ebgp-multihop(?:\s+\d+)?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 2
+  },
+  'no neighbor ebgp-multihop': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+ebgp-multihop$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor update-source': {
+    pattern: /^neighbor\s+[0-9.]+\s+update-source\s+\S+$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no neighbor update-source': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+update-source$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor timers': {
+    pattern: /^neighbor\s+[0-9.]+\s+timers\s+\d+\s+\d+$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no neighbor timers': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+timers$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor password': {
+    pattern: /^neighbor\s+[0-9.]+\s+password\s+\S+$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no neighbor password': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+password$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor description': {
+    pattern: /^neighbor\s+[0-9.]+\s+description\s+.+$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no neighbor description': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+description$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor shutdown': {
+    pattern: /^neighbor\s+[0-9.]+\s+shutdown$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no neighbor shutdown': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+shutdown$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor default-originate': {
+    pattern: /^neighbor\s+[0-9.]+\s+default-originate$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no neighbor default-originate': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+default-originate$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor remove-private-as': {
+    pattern: /^neighbor\s+[0-9.]+\s+remove-private-as$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no neighbor remove-private-as': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+remove-private-as$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor maximum-prefix': {
+    pattern: /^neighbor\s+[0-9.]+\s+maximum-prefix\s+\d+(?:\s+\d+)?$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 3
+  },
+  'no neighbor maximum-prefix': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+maximum-prefix$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor allowas-in': {
+    pattern: /^neighbor\s+[0-9.]+\s+allowas-in(?:\s+\d+)?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 2
+  },
+  'no neighbor allowas-in': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+allowas-in$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor send-community': {
+    pattern: /^neighbor\s+[0-9.]+\s+send-community(?:\s+\w+)?$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 2
+  },
+  'no neighbor send-community': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+send-community$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor route-reflector-client': {
+    pattern: /^neighbor\s+[0-9.]+\s+route-reflector-client$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no neighbor route-reflector-client': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+route-reflector-client$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor as-override': {
+    pattern: /^neighbor\s+[0-9.]+\s+as-override$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no neighbor as-override': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+as-override$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'neighbor soft-reconfiguration': {
+    pattern: /^neighbor\s+[0-9.]+\s+soft-reconfiguration\s+inbound$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no neighbor soft-reconfiguration': {
+    pattern: /^no\s+neighbor\s+[0-9.]+\s+soft-reconfiguration$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'aggregate-address': {
+    pattern: /^aggregate-address\s+[0-9.]+\s+[0-9.]+(?:\s+summary-only)?$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 3
+  },
+  'no aggregate-address': {
+    pattern: /^no\s+aggregate-address\s+[0-9.]+\s+[0-9.]+/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'maximum-paths': {
+    pattern: /^maximum-paths\s+\d+$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no maximum-paths': {
+    pattern: /^no\s+maximum-paths$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'bgp graceful-restart': {
+    pattern: /^bgp\s+graceful-restart$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no bgp graceful-restart': {
+    pattern: /^no\s+bgp\s+graceful-restart$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'bgp cluster-id': {
+    pattern: /^bgp\s+cluster-id\s+[0-9.]+$/i,
+    modes: ['router-config'],
+    minArgs: 1,
+    maxArgs: 1
+  },
+  'no bgp cluster-id': {
+    pattern: /^no\s+bgp\s+cluster-id$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'synchronization': {
+    pattern: /^synchronization$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'no synchronization': {
+    pattern: /^no\s+synchronization$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
+  'timers bgp': {
+    pattern: /^timers\s+bgp\s+\d+\s+\d+$/i,
+    modes: ['router-config'],
+    minArgs: 2,
+    maxArgs: 2
+  },
+  'no timers bgp': {
+    pattern: /^no\s+timers\s+bgp$/i,
+    modes: ['router-config'],
+    minArgs: 0,
+    maxArgs: 0
+  },
   'ipv6 dhcp pool': {
     pattern: /^ipv6\s+dhcp\s+pool\s+(\S+)$/i,
     modes: ['config'],

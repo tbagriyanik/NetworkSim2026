@@ -10,11 +10,12 @@ interface CanvasClipboardProps {
   deleteDevice: (id: string) => void;
   setSelectedDeviceIds: (ids: string[]) => void;
   saveToHistory: () => void;
-  deviceCounterRef: React.MutableRefObject<{ pc: number; iot: number; switch: number; router: number; firewall: number; wlc: number }>;
+  deviceCounterRef: React.MutableRefObject<Record<string, number>>;
   generateUniqueHostname: (base: string, reserved: string[]) => string;
   generateUniqueLinkLocalIp: (reserved: string[]) => string;
   generateUniqueLinkLocalIpv6: (reserved: string[]) => string;
-  getCounterKey: (type: string) => 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc';
+  getCounterKey: (type: string) => string;
+
   setContextMenu: (menu: ContextMenuState | null) => void;
   notesClipboard: CanvasNote[];
   getNextNoteId: () => string;
@@ -91,7 +92,7 @@ export function useCanvasClipboard({
       const hostname = generateUniqueHostname(baseName, reservedHostnames);
       const generatedIp = type === 'pc' || type === 'iot' ? generateUniqueLinkLocalIp(reservedIps) : '';
       const generatedIpv6 = type === 'pc' || type === 'iot' ? generateUniqueLinkLocalIpv6(reservedIpv6s) : '';
-      
+
       const newDeviceMac = generateUniqueMacAddress(reservedMacs);
       reservedMacs.push(newDeviceMac);
 

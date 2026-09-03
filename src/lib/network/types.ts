@@ -436,6 +436,36 @@ export interface DhcpSnoopingBinding {
   type: 'dynamic' | 'static';
 }
 
+/**
+ * Advanced BGP neighbor configuration (BGP router-config mode).
+ * Extends the basic { ip, as } pair with the full feature set: route policies,
+ * peering options, authentication, timers and route-reflector attributes.
+ */
+export interface BgpNeighbor {
+  ip: string;
+  as: string;
+  state?: string;
+  weight?: number;
+  routeMapIn?: string;
+  routeMapOut?: string;
+  nextHopSelf?: boolean;
+  ebgpMultihop?: number;
+  updateSource?: string;
+  timersKeepalive?: number;
+  timersHoldtime?: number;
+  password?: string;
+  description?: string;
+  shutdown?: boolean;
+  defaultOriginate?: boolean;
+  removePrivateAs?: boolean;
+  maximumPrefix?: number;
+  allowAsIn?: number;
+  sendCommunity?: boolean;
+  routeReflectorClient?: boolean;
+  asOverride?: boolean;
+  softReconfiguration?: boolean;
+}
+
 export interface SwitchState {
   hostname: string;
   macAddress: string; // Unique base MAC address for the device
@@ -587,9 +617,16 @@ export interface SwitchState {
   eigrpAs?: string;                // EIGRP AS number
   eigrpNeighbors?: string[];       // EIGRP neighbor IDs/IPs
   bgpAs?: string;                  // BGP AS number
-  bgpNeighbors?: { ip: string; as: string; state?: string }[];  // BGP neighbor configurations
+  bgpNeighbors?: BgpNeighbor[];   // BGP neighbor configurations
   bgpNeighborState?: Record<string, string>; // BGP neighbor dynamic state mapping (e.g. 'Established', 'Idle')
   bgpNetworks?: { network: string; mask: string }[]; // BGP advertised networks (network <ip> mask <mask>)
+  // --- Advanced BGP global settings (router-config mode for BGP) ---
+  bgpMaximumPaths?: number;          // maximum-paths <n> multipath
+  bgpGracefulRestart?: boolean;      // bgp graceful-restart
+  bgpClusterId?: string;             // bgp cluster-id <id> (route-reflector)
+  bgpSynchronization?: boolean;      // synchronization (default false on modern IOS)
+  bgpAggregateAddresses?: { network: string; mask: string; summaryOnly?: boolean }[]; // aggregate-address <ip> <mask>
+  bgpTimers?: { keepalive: number; holdtime: number }; // timers bgp <keepalive> <holdtime>
   passiveInterfaces?: string[];    // Interfaces that should not send updates
   routerId?: string;               // Router identifier (for routing)
   defaultInformation?: string;     // Default route information configuration
@@ -962,16 +999,19 @@ export interface CommandValidationResult {
 }
 
 // Kablo Tipleri
+import type { DeviceType } from '@/components/network/networkTopology.types';
+
 export type CableType = 'straight' | 'crossover' | 'console' | 'wireless' | 'serial' | 'fiber';
 
 export interface CableInfo {
   connected: boolean;
   cableType: CableType;
-  sourceDevice: 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc';
-  targetDevice: 'pc' | 'iot' | 'switchL2' | 'switchL3' | 'router' | 'firewall' | 'wlc';
+  sourceDevice: DeviceType;
+  targetDevice: DeviceType;
   sourcePort?: string;  // Port ID (e.g., 'eth0', 'com1', 'console', 'fa0/1')
   targetPort?: string;  // Port ID
 }
+
 
 // Kablo uyumluluk kuralları
 export const CABLE_COMPATIBILITY: Record<string, CableType[]> = {
@@ -1045,11 +1085,12 @@ export function isCableCompatible(cable: CableInfo): boolean {
 
   // Normal Ethernet bağlantıları için standart kurallar
   const normalize = (t: CableInfo['sourceDevice']): 'pc' | 'switch' | 'router' | 'firewall' | 'wlc' =>
-    t === 'switchL2' || t === 'switchL3'
+    t === 'switchL2' || t === 'switchL3' || t === 'hub'
       ? 'switch'
-      : t === 'iot'
+      : t === 'iot' || t === 'mobile' || t === 'printer' || t === 'cloud'
         ? 'pc'
-        : t;
+        : (t as 'pc' | 'switch' | 'router' | 'firewall' | 'wlc');
+
   const connection = `${normalize(cable.sourceDevice)}-${normalize(cable.targetDevice)}`;
   const allowedTypes = CABLE_COMPATIBILITY[connection];
   return allowedTypes ? allowedTypes.includes(cable.cableType) : false;
@@ -1073,4 +1114,8 @@ export interface Route {
   ospfRouteType?: 'E1' | 'E2' | 'N1' | 'N2';
   code?: string;
   administrativeDistance?: number;
+  asPath?: string;          // For BGP — AS path attribute
+  localPreference?: number; // For BGP — local preference attribute
+  weight?: number;          // For BGP — weight attribute
 }
+

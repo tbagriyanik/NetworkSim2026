@@ -4,7 +4,17 @@ Yeniden eskiye, tarih ve özellik listesi.
 
 ## v4.1.0 — 2026-09-03
 
-**Sürüm Güncellemesi** — Uygulama versiyonu 4.1.0 olarak güncellendi.
+**MSTP Entegrasyonu, IPsec GRE, BGP Politikaları, 802.1X EAPOL & 4 Yeni Cihaz Tipi (`Hub`, `Cloud/WAN`, `Smartphone`, `Printer`)** —
+- **🚀 4 Yeni Cihaz Tipi & Kompakt Toolbar Mimarisi**: Topolojiye Layer-1 Multiport **Hub** (`hub`), Dış İnternet **Cloud/WAN** (`cloud`), Kablosuz **Akıllı Telefon/Tablet** (`mobile`) ve Ağ **Yazıcısı** (`printer`) cihaz tipleri eklendi. Tuval (canvas) üzerinde her cihaz tipi için özel gerçekçi SVG gövde ve ikon çizimleri (`DeviceRenderer.tsx`, `DeviceIcon.tsx`) geliştirildi. Cihaz ekleme araç çubuğu (toolbar) 2 satırlı ultra-kompakt (`h-7 w-7` butonlar, `15px` ikonlar) grid yapısına getirildi.
+- **🌲 MSTP (IEEE 802.1s) Bölge Sınırı İzolasyonu**: `mstp.ts` ve `stp.ts` üzerinde MST bölge adı, revizyon numarası ve VLAN-to-Instance digest denetimi yapan `areSameMstRegion()` sınır izolasyonu entegre edildi. CIST (Instance 0) tekil-ağaç BPDU'ları bölge dışına iletilirken, MSTI (Instance 1..N) BPDU'larının farklı bölgedeki switch'lere taşması engellendi.
+- **🛡️ 802.1X EAPOL & Port Güvenlik Akışı**: EAPOL-Start, EAPOL-Request/Response Identity, EAPOL-Success/Failure paket seviyesinde port erişim kontrolü ve RADIUS kimlik doğrulama simülasyonu sağlandı.
+- **⚡ QoS Token Bucket Police & Shape Engine**: Traffic Policing (`police <rate>`) ve Traffic Shaping (`shape average <rate>`) jeton kovası (Token Bucket) algoritması ile bandwidth limitleme ve paket paket kalıplama simülasyonu eklendi.
+- **🔒 IPsec Site-to-Site GRE over IPsec**: `crypto isakmp policy`, `crypto isakmp key`, `crypto ipsec transform-set`, `crypto map` komutları, ESP tünel şifreleme simülasyonu ve `show crypto isakmp/ipsec sa` komutları tamamlandı.
+- **🌐 BGP Policy & Attributes Deepening**: `neighbor route-map` ve `neighbor weight` komutları ile BGP en iyi yol (best-path) seçim algoritması derinleştirildi.
+- **🧹 DHCP Snooping Rate-Limit & Option 82**: `ip dhcp snooping information option` ve arayüz bazlı `ip dhcp snooping limit rate` CLI komut desteği entegre edildi.
+- **📶 Wireless Client Roaming & RF Parametreleri**: AP kapsama alanı, sinyal seviyesi (RSSI), kanal çakışması denetimi ve AP'ler arası kesintisiz müşteri roaming geçişi desteklendi.
+- **📚 F1 Yardım & Dokümantasyon Entegrasyonu**: Tüm v4.1.0 komutları F1 CLI komut referansı pencerelerine ve dokümantasyon dizinlerine entegre edildi.
+
 
 ## v4.0.0 — 2026-09-02
 

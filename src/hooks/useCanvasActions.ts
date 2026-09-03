@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { CanvasDevice, CanvasNote, CanvasConnection, DeviceType } from '../components/network/networkTopology.types';
 import { generateRandomLinkLocalIpv4, generateRandomLinkLocalIpv6 } from '@/lib/network/linkLocal';
 import { getDeviceWidth, getDeviceHeight } from '../components/network/networkTopology.helpers';
-import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts, generateFirewallPorts } from '../components/network/networkTopology.portGenerators';
+import { generateSwitchPorts, generateL3SwitchPorts, generateRouterPorts, generateWLCPorts, generateFirewallPorts, generateHubPorts } from '../components/network/networkTopology.portGenerators';
 import { generateUniqueMacAddress } from '@/lib/utils';
 import type { SwitchState } from '@/lib/network/types';
 
@@ -252,9 +252,12 @@ export function useCanvasActions({
     return `note-${nextId}`;
   }, [latestNotesRef, noteCounterRef]);
 
-  const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc', layer?: 'L2' | 'L3') => {
+  const addDevice = useCallback((type: 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc' | 'hub' | 'cloud' | 'mobile' | 'printer', layer?: 'L2' | 'L3') => {
     if (isExamActive && !isExamEditorOpen) return;
     saveToHistory();
+    if (!deviceCounterRef.current[type]) {
+      deviceCounterRef.current[type] = 0;
+    }
     deviceCounterRef.current[type]++;
 
     let spawnX = 100 + Math.random() * 30;
@@ -279,8 +282,8 @@ export function useCanvasActions({
         ? `Switch-${deviceCounterRef.current[type]}`
         : `${type.toUpperCase()}-${deviceCounterRef.current[type]}`;
 
-    const initialLinkLocalIp = (type === 'pc' || type === 'iot') ? generateUniqueLinkLocalIp() : '';
-    const initialLinkLocalIpv6 = (type === 'pc' || type === 'iot') ? generateUniqueLinkLocalIpv6() : '';
+    const initialLinkLocalIp = (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? generateUniqueLinkLocalIp() : '';
+    const initialLinkLocalIpv6 = (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? generateUniqueLinkLocalIpv6() : '';
     const allUsedMacs = devices.flatMap(d => [d.macAddress, ...(d.ports || []).map(p => p.macAddress)]).filter(Boolean) as string[];
 
     const newDevice: CanvasDevice = {
@@ -290,20 +293,20 @@ export function useCanvasActions({
       macAddress: generateUniqueMacAddress(allUsedMacs),
       ip: type === 'wlc' ? '192.168.1.1' : initialLinkLocalIp,
       ipv6: initialLinkLocalIpv6,
-      subnet: (type === 'pc' || type === 'iot') ? '255.255.0.0' : type === 'wlc' ? '255.255.255.0' : undefined,
-      gateway: (type === 'pc' || type === 'iot') ? '0.0.0.0' : undefined,
-      dns: (type === 'pc' || type === 'iot') ? '0.0.0.0' : undefined,
-      ipConfigMode: type === 'iot' ? 'dhcp' : undefined,
+      subnet: (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? '255.255.0.0' : type === 'wlc' ? '255.255.255.0' : undefined,
+      gateway: (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? '0.0.0.0' : undefined,
+      dns: (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? '0.0.0.0' : undefined,
+      ipConfigMode: (type === 'iot' || type === 'mobile' || type === 'printer') ? 'dhcp' : undefined,
       x: spawnX,
       y: spawnY,
       status: 'online',
       switchModel: type === 'switch' ? switchModel : type === 'wlc' ? 'AIR-CT2504-K9' as const : undefined,
       ports:
-        type === 'pc' || type === 'iot'
+        type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer'
           ? [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) },
             ...(type === 'pc' ? [{ id: 'console', label: 'Console', status: 'disconnected' as const }] : []),
-            ...(type === 'iot' ? [{
+            ...(type === 'iot' || type === 'mobile' ? [{
               id: 'wlan0',
               label: 'WLAN0',
               status: 'disconnected' as const,
@@ -315,13 +318,21 @@ export function useCanvasActions({
               shutdown: true,
             }]),
           ]
-          : type === 'switch'
-            ? switchLayer === 'L3' ? generateL3SwitchPorts() : generateSwitchPorts()
-            : type === 'firewall'
-              ? generateFirewallPorts()
-              : type === 'wlc'
-                ? generateWLCPorts()
-                : generateRouterPorts(),
+          : type === 'hub'
+            ? generateHubPorts()
+            : type === 'cloud'
+              ? [
+                { id: 'eth0', label: 'Eth0 (WAN)', status: 'disconnected' as const },
+                { id: 'eth1', label: 'Eth1 (LAN)', status: 'disconnected' as const },
+              ]
+              : type === 'switch'
+                ? switchLayer === 'L3' ? generateL3SwitchPorts() : generateSwitchPorts()
+                : type === 'firewall'
+                  ? generateFirewallPorts()
+                  : type === 'wlc'
+                    ? generateWLCPorts()
+                    : generateRouterPorts(),
+
       services: type === 'wlc'
         ? {
           http: { enabled: true, content: '' },

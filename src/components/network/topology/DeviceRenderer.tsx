@@ -98,13 +98,14 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
   void _mousePosRef;
   const isTargetingThisDevice = isDrawingConnection && connectionStart && connectionStart.deviceId !== device.id;
   const isTR = language === 'tr';
-  const isSwitchDevice = (type: string) => type === 'switchL2' || type === 'switchL3';
+  const isSwitchDevice = (type: string) => type === 'switchL2' || type === 'switchL3' || type === 'hub';
 
   // Check if device has any connections
   const deviceConnections = deviceToConnectionsMap.get(device.id) || [];
 
   const isPoweredOff = device.status === 'offline';
-  const isPcLike = device.type === 'pc' || device.type === 'iot';
+  const isPcLike = device.type === 'pc' || device.type === 'iot' || device.type === 'mobile' || device.type === 'printer';
+
 
   const getConnectionForPort = (portId: string) =>
     deviceConnections.find((connection) =>
@@ -124,28 +125,36 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
   };
 
   const deviceFill = isDark
-    ? (device.type === 'iot'
-      ? 'url(#iotGradientDark)'
-      : device.type === 'firewall'
-        ? 'url(#firewallGradientDark)'
-        : device.type === 'wlc'
-          ? 'url(#wlcGradientDark)'
-          : isPcLike
-            ? 'url(#pcGradientDark)'
-            : isSwitchDevice(device.type)
-              ? 'url(#switchGradientDark)'
-              : 'url(#routerGradientDark)')
-    : (device.type === 'iot'
-      ? 'url(#iotGradientLight)'
-      : device.type === 'firewall'
-        ? 'url(#firewallGradientLight)'
-        : device.type === 'wlc'
-          ? 'url(#wlcGradientLight)'
-          : isPcLike
-            ? 'url(#pcGradientLight)'
-            : isSwitchDevice(device.type)
-              ? 'url(#switchGradientLight)'
-              : 'url(#routerGradientLight)');
+    ? (device.type === 'hub'
+      ? 'url(#hubGradientDark)'
+      : device.type === 'cloud'
+        ? 'url(#cloudGradientDark)'
+        : device.type === 'iot'
+          ? 'url(#iotGradientDark)'
+          : device.type === 'firewall'
+            ? 'url(#firewallGradientDark)'
+            : device.type === 'wlc'
+              ? 'url(#wlcGradientDark)'
+              : isPcLike
+                ? 'url(#pcGradientDark)'
+                : isSwitchDevice(device.type)
+                  ? 'url(#switchGradientDark)'
+                  : 'url(#routerGradientDark)')
+    : (device.type === 'hub'
+      ? 'url(#hubGradientLight)'
+      : device.type === 'cloud'
+        ? 'url(#cloudGradientLight)'
+        : device.type === 'iot'
+          ? 'url(#iotGradientLight)'
+          : device.type === 'firewall'
+            ? 'url(#firewallGradientLight)'
+            : device.type === 'wlc'
+              ? 'url(#wlcGradientLight)'
+              : isPcLike
+                ? 'url(#pcGradientLight)'
+                : isSwitchDevice(device.type)
+                  ? 'url(#switchGradientLight)'
+                  : 'url(#routerGradientLight)');
 
   // Calculate device height based on number of ports (8 per row for switch/router)
   const portsPerRow = isPcLike ? 2 : 8;
@@ -386,7 +395,33 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             </svg>
           </g>
         </>
+      ) : device.type === 'cloud' ? (
+        <g>
+          <path
+            d={`M ${deviceWidth * 0.10} ${deviceHeight - 26}
+                Q ${-deviceWidth * 0.01} ${deviceHeight - 26} ${deviceWidth * 0.02} ${deviceHeight - 38}
+                Q ${deviceWidth * 0.03} ${deviceHeight - 52} ${deviceWidth * 0.16} ${deviceHeight - 50}
+                Q ${deviceWidth * 0.17} ${deviceHeight - 66} ${deviceWidth * 0.36} ${deviceHeight - 64}
+                Q ${deviceWidth * 0.50} ${deviceHeight - 74} ${deviceWidth * 0.60} ${deviceHeight - 62}
+                Q ${deviceWidth * 0.75} ${deviceHeight - 66} ${deviceWidth * 0.78} ${deviceHeight - 52}
+                Q ${deviceWidth * 0.93} ${deviceHeight - 52} ${deviceWidth * 0.92} ${deviceHeight - 36}
+                Q ${deviceWidth * 1.05} ${deviceHeight - 34} ${deviceWidth * 0.98} ${deviceHeight - 25}
+                L ${deviceWidth * 0.18} ${deviceHeight - 26}
+                Q ${deviceWidth * 0.13} ${deviceHeight - 26} ${deviceWidth * 0.10} ${deviceHeight - 26} Z`}
+            fill={deviceFill}
+            style={{ stroke: isDark ? 'var(--color-sky-500)' : 'var(--color-secondary-300)' }}
+            strokeWidth={1.5}
+            className={isDragging ? '' : 'transition-all duration-150'}
+            filter="url(#deviceShadow)"
+          />
+          {/* Small interior highlight bumps on the cloud */}
+          <g filter="url(#deviceShadow)" style={{ pointerEvents: 'none' }}>
+            <circle cx={deviceWidth * 0.32} cy={deviceHeight - 48} r={deviceWidth * 0.09} fill={isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.45)'} />
+            <circle cx={deviceWidth * 0.55} cy={deviceHeight - 54} r={deviceWidth * 0.12} fill={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.35)'} />
+          </g>
+        </g>
       ) : device.type === 'router' ? (
+
         <path
           d={`M ${20} 0 L ${deviceWidth - 20} 0 Q ${deviceWidth} 0 ${deviceWidth} 20 L ${deviceWidth} ${deviceHeight} L 0 ${deviceHeight} L 0 20 Q 0 0 20 0`}
           fill={deviceFill}
@@ -395,6 +430,34 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           className={isDragging ? '' : 'transition-all duration-150'}
           filter="url(#deviceShadow)"
         />
+      ) : device.type === 'mobile' ? (
+        <g>
+          <rect
+            width={deviceWidth}
+            height={deviceHeight}
+            rx={12}
+            fill={deviceFill}
+            style={{ stroke: isDark ? 'var(--color-emerald-500)' : 'var(--color-secondary-300)' }}
+            strokeWidth={1.5}
+            className={isDragging ? '' : 'transition-all duration-150'}
+            filter="url(#deviceShadow)"
+          />
+          {/* Smartphone screen inner frame & home bar */}
+          <line x1={deviceWidth / 2 - 10} y1={deviceHeight - 6} x2={deviceWidth / 2 + 10} y2={deviceHeight - 6} stroke={isDark ? 'var(--color-emerald-400)' : 'var(--color-secondary-400)'} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+        </g>
+      ) : device.type === 'printer' ? (
+        <g>
+          <path
+            d={`M 12 0 L ${deviceWidth - 12} 0 Q ${deviceWidth} 0 ${deviceWidth} 10 L ${deviceWidth} ${deviceHeight - 6} Q ${deviceWidth} ${deviceHeight} ${deviceWidth - 6} ${deviceHeight} L 6 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 6} L 0 10 Q 0 0 12 0 Z`}
+            fill={deviceFill}
+            style={{ stroke: isDark ? 'var(--color-amber-500)' : 'var(--color-secondary-300)' }}
+            strokeWidth={1.5}
+            className={isDragging ? '' : 'transition-all duration-150'}
+            filter="url(#deviceShadow)"
+          />
+          {/* Paper tray top slot line */}
+          <path d={`M 16 0 L ${deviceWidth - 16} 0 L ${deviceWidth - 14} 6 L 14 6 Z`} fill={isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(0, 0, 0, 0.06)'} />
+        </g>
       ) : device.type === 'iot' ? (
         <path
           d={`M 0 0 L ${deviceWidth - 8} 0 Q ${deviceWidth} 0 ${deviceWidth} 8 L ${deviceWidth} ${deviceHeight} L 8 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 8} L 0 0 Z`}
@@ -421,7 +484,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           fill={deviceFill}
           style={{
             stroke: isDark
-              ? ((device.type as string) === 'pc' ? 'var(--color-primary-500)' : (device.type as string) === 'iot' ? 'var(--color-secondary-500)' : (device.type as string) === 'firewall' ? 'var(--color-error-500)' : isSwitchDeviceType(device.type) ? 'var(--color-accent-500)' : (device.type as string) === 'wlc' ? 'var(--color-warning-400)' : 'var(--color-warning-500)')
+              ? ((device.type as string) === 'pc' ? 'var(--color-primary-500)' : (device.type as string) === 'iot' ? 'var(--color-secondary-500)' : (device.type as string) === 'mobile' ? 'var(--color-emerald-500)' : (device.type as string) === 'printer' ? 'var(--color-amber-500)' : (device.type as string) === 'firewall' ? 'var(--color-error-500)' : isSwitchDeviceType(device.type) ? 'var(--color-accent-500)' : (device.type as string) === 'wlc' ? 'var(--color-warning-400)' : 'var(--color-warning-500)')
               : 'var(--color-secondary-300)'
           }}
           strokeWidth={1.5}
@@ -429,6 +492,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           filter="url(#deviceShadow)"
         />
       )}
+
 
       {/* Device body highlight for 3D effect in dark mode */}
       {isDark && (
@@ -622,6 +686,29 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-primary-200)' : 'var(--color-primary-700)' }} strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
           </svg>
+        ) : device.type === 'mobile' ? (
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-emerald-200)' : 'var(--color-emerald-700)' }} strokeWidth="1.5">
+            <rect x="7" y="2" width="10" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+            <line x1="11" y1="18" x2="13" y2="18" strokeLinecap="round" />
+            <line x1="10" y1="5" x2="14" y2="5" strokeLinecap="round" />
+          </svg>
+        ) : device.type === 'printer' ? (
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-amber-200)' : 'var(--color-amber-700)' }} strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+            <circle cx="18" cy="12" r="1" fill="currentColor" />
+          </svg>
+        ) : device.type === 'hub' ? (
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-cyan-200)' : 'var(--color-cyan-700)' }} strokeWidth="1.5">
+            <rect x="2" y="7" width="20" height="10" rx="2" />
+            <circle cx="6" cy="12" r="1" fill="currentColor" />
+            <circle cx="10" cy="12" r="1" fill="currentColor" />
+            <circle cx="14" cy="12" r="1" fill="currentColor" />
+            <circle cx="18" cy="12" r="1" fill="currentColor" />
+          </svg>
+        ) : device.type === 'cloud' ? (
+          <svg width="40" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-sky-200)' : 'var(--color-sky-700)' }} strokeWidth="1.5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 0 1 4-4 5 5 0 0 1 9.9-1 4 4 0 0 1 2.1 7.9H7a4 4 0 0 1-4-2.9z" />
+          </svg>
         ) : device.type === 'iot' ? (
           <svg width="32" height="32" viewBox="0 -2 27 27" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-warning-100)' : 'var(--color-warning-800)' }} strokeWidth="1.5">
             <title>{`${device.name || 'IoT'} • ${device.iot?.sensorType || 'sensor'} • ${getIotMeasuredValue(device)}`}</title>
@@ -647,6 +734,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
           </svg>
         ) : null}
+
       </g>
 
       {/* Power Button Overlay */}
@@ -1113,7 +1201,10 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             const isFastEthernet = portId.startsWith('fa');
 
             const portNum = port.label.replace(/\D/g, '');
-            const displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
+            let displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
+            if (device.type === 'cloud') {
+              displayNum = port.id === 'eth0' ? 'W' : port.id === 'eth1' ? 'L' : displayNum;
+            }
 
             const deviceState = deviceStates?.get(device.id);
             const isStartPort = isDrawingConnection && connectionStart?.deviceId === device.id && connectionStart?.portId === port.id;

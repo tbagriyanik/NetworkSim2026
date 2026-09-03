@@ -122,7 +122,7 @@ export function NetworkTopology({
       .filter((connection) => !existing.has(`${connection.sourceDeviceId}:${connection.sourcePort}-${connection.targetDeviceId}:${connection.targetPort}`))
       .map((connection) => {
         // Check if the client device has power disabled, if so set active to false
-        const clientDevice = topologyDevices.find(d => 
+        const clientDevice = topologyDevices.find(d =>
           (d.id === connection.sourceDeviceId && (d.type === 'pc' || d.type === 'iot')) ||
           (d.id === connection.targetDeviceId && (d.type === 'pc' || d.type === 'iot'))
         );
@@ -634,13 +634,12 @@ export function NetworkTopology({
   }, []);
 
   // Refs
-  const deviceCounterRef = useRef<{ pc: number; iot: number; switch: number; router: number; firewall: number; wlc: number }>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0 });
-  const getCounterKey = useCallback((type: DeviceType | string): 'pc' | 'iot' | 'switch' | 'router' | 'firewall' | 'wlc' => {
+  const deviceCounterRef = useRef<Record<string, number>>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0, hub: 0, cloud: 0, mobile: 0, printer: 0 });
+  const getCounterKey = useCallback((type: DeviceType | string): string => {
     if (type === 'switchL2' || type === 'switchL3' || type === 'switch') return 'switch';
-    if (type === 'pc' || type === 'router' || type === 'firewall' || type === 'wlc') return type as 'pc' | 'router' | 'firewall' | 'wlc';
-    if (type === 'iot') return 'iot';
-    return 'pc';
+    return type;
   }, []);
+
   const pingAnimationRef = useRef<number | null>(null);
   const pingCleanupTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pingIsPausedRef = useRef<boolean>(false);
@@ -930,13 +929,13 @@ export function NetworkTopology({
         subnet: '',
         gateway: '',
         ports: device.ports.map((port) => port.id === 'wlan0'
-          ? { 
-              ...port, 
-              status: 'disconnected' as const, 
-              wifi: port.wifi ? { ...port.wifi, ssid: '' } : port.wifi,
-              ipAddress: undefined,
-              subnetMask: undefined
-            }
+          ? {
+            ...port,
+            status: 'disconnected' as const,
+            wifi: port.wifi ? { ...port.wifi, ssid: '' } : port.wifi,
+            ipAddress: undefined,
+            subnetMask: undefined
+          }
           : port)
       };
     }));

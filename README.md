@@ -35,17 +35,18 @@ npm test
 
 ## 🚀 Key Features & Version Highlights (v4.1.0)
 
-- **🌐 Advanced Routing & Policy Engine:** 
-  - **EIGRP for IPv6:** `ipv6 router eigrp <as>`, router-id configuration, interface-based `ipv6 eigrp <as>`, DUAL IPv6 metric calculation, and `show ipv6 eigrp neighbors/topology`.
-  - **IP & IPv6 Prefix-List:** `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` policy engine with prefix matching verification.
-  - **Route-Map Engine:** `route-map <name> {permit|deny} [<seq>]`, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference`, and `show route-map`.
-  - **GLBP (Gateway Load Balancing Protocol):** Active Virtual Gateway (AVG) election, `0007.b400.XXXX` virtual MAC generation, `glbp priority/preempt/weighting`, and `show glbp [brief]`.
-  - **STP Loop Guard:** `spanning-tree loopguard default` (global) and `spanning-tree guard loop` (interface) preventing bridge loops under unidirectional links.
-  - **NetFlow Export Engine:** `ip flow-export destination <ip> <port>`, `ip flow-export version {5|9}`, interface `ip flow ingress/egress`, and live `show ip cache flow` monitoring.
-- **🎓 Guided Lessons & Interactive Quiz Engine:** 19 step-by-step guided tutorials with topic-specific quizzes and real-time score tracking.
-- **📄 High-DPI PDF Certificate Generator:** Canvas 2400x1700 High-DPI renderer with 100% accurate Turkish character support (`Ş`, `İ`, `Ğ`, `Ç`, `Ö`, `Ü`).
-- **🛡️ Security & Switching:** 802.1Q Trunking, VTP, Port Security, DHCP Snooping, Dynamic ARP Inspection (DAI), IP Source Guard, NAT/PAT, GRE Tunnels, PPPoE, and SSH v2.
-- **📊 Packet Capture:** Deep inspection of L2 Ethernet, L3 IP/IPv6, L4 TCP/UDP, ICMP, DHCP, DNS, and ARP frames.
+- **🖥️ Expanded Device Support (11 Device Types):** L1 Multiport Hub (`hub`), External Internet Cloud/WAN (`cloud`), Wireless Smartphone/Tablet (`mobile`), Network Printer (`printer`), PC, IoT, L2/L3 Switches, Routers, Firewalls, and WLC. Includes realistic SVG topology renderings and a 2-row ultra-compact toolbar.
+- **🌲 MSTP Boundary Isolation (IEEE 802.1s):** Region name, revision, and digest equality checks (`areSameMstRegion`) enforcing MSTI isolation across region boundaries while allowing CIST (Instance 0) single-tree BPDUs.
+- **🔒 Security & Advanced Routing:**
+  - **IPsec Site-to-Site & GRE:** ISAKMP Phase 1/2 IKE negotiation, ESP encryption simulation, transform-sets, crypto maps, and `show crypto sa`.
+  - **802.1X EAPOL:** EAPOL-Start, Identity Request/Response, EAPOL-Success/Failure packet inspection and RADIUS authentication.
+  - **QoS Token Bucket:** Bandwidth policing (`police <rate>`) and shaping (`shape average <rate>`) bucket rate limiters.
+  - **BGP Policies & Attributes:** Route-map filtering (`neighbor route-map`) and BGP weight assignment (`neighbor weight`).
+  - **DHCP Snooping Option 82 & Rate-Limit:** Circuit ID injection (`option 82`) and interface rate limiting (`ip dhcp snooping limit rate`).
+  - **EIGRP for IPv6 & GLBP:** Dual IPv6 metric computation, Prefix-Lists, Route-Maps, GLBP AVG election, and STP Loop Guard.
+- **🎓 Guided Lessons & Quiz Engine:** 19 interactive CCNP/CCNA guided tutorials with topic-specific quizzes and real-time scoring.
+- **📄 High-DPI PDF Certificate Generator:** Canvas 2400x1700 High-DPI renderer with 100% accurate Turkish character support.
+
 
 ---
 
