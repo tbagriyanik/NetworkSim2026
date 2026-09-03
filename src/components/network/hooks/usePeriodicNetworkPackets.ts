@@ -10,12 +10,14 @@ interface UsePeriodicNetworkPacketsOptions {
   devices: CanvasDevice[];
   connections: CanvasConnection[];
   deviceStates?: Map<string, SwitchState>;
+  onDeviceStatesChange?: (updater: (previous: Map<string, SwitchState>) => Map<string, SwitchState>) => void;
 }
 
 export function usePeriodicNetworkPackets({
   devices,
   connections,
   deviceStates,
+  onDeviceStatesChange,
 }: UsePeriodicNetworkPacketsOptions) {
   const devicesRef = useRef(devices);
   const connectionsRef = useRef(connections);
@@ -47,6 +49,8 @@ export function usePeriodicNetworkPackets({
         info: string;
       }> = [];
 
+      let updatedStates: Map<string, SwitchState> | undefined;
+
       // IP SLA scheduled operations: emit a synthetic probe and persist its result.
       currentDevices.forEach(device => {
         const state = currentStates?.get(device.id);
@@ -56,11 +60,21 @@ export function usePeriodicNetworkPackets({
           const target = currentDevices.find(d => d.ip === operation.target);
           const reachable = Boolean(target && target.status !== 'offline');
           const updated = runSyntheticIpSlaProbe(operation, { reachable, latency: reachable ? 2 : undefined });
-          state.ipSlaOperations![operation.id] = updated;
+          updatedStates ??= new Map(currentStates);
+          const updatedState = { ...(updatedStates.get(device.id) || state), ipSlaOperations: { ...(updatedStates.get(device.id)?.ipSlaOperations || state.ipSlaOperations), [operation.id]: updated } };
+          updatedStates.set(device.id, updatedState);
           const connection = currentConnections.find(c => c.sourceDeviceId === device.id && (c.targetDeviceId === target?.id || c.targetDeviceId === device.id));
           if (connection) packetsToDispatch.push({ connectionId: connection.id || `${connection.sourceDeviceId}-${connection.targetDeviceId}`, sourceIp: device.ip || device.name, targetIp: operation.target, protocol: 'IP SLA', length: operation.type === 'jitter' ? 128 : 64, info: `IP SLA ${operation.id} ${operation.type} probe` });
         });
       });
+
+      if (updatedStates && onDeviceStatesChange) {
+        onDeviceStatesChange(previous => {
+          const next = new Map(previous);
+          updatedStates!.forEach((updatedState, deviceId) => next.set(deviceId, updatedState));
+          return next;
+        });
+      }
 
       currentConnections.forEach(conn => {
         if (conn.active === false) return;
@@ -201,5 +215,5 @@ export function usePeriodicNetworkPackets({
     }, 10000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [onDeviceStatesChange]);
 }

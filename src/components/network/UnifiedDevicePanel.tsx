@@ -13,6 +13,9 @@ import {
     Layers,
     Cpu,
     Search,
+    Globe,
+    Printer as PrinterIcon,
+    Smartphone,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useGraphicsQuality } from '@/lib/store/appStore';
@@ -31,6 +34,10 @@ const SecurityPanel = dynamic(() => import('./SecurityPanel').then(m => m.Securi
 const MacTablePanel = dynamic(() => import('./MacTablePanel').then(m => m.MacTablePanel), { ssr: false });
 const TaskCard = dynamic(() => import('./TaskCard').then(m => m.TaskCard), { ssr: false });
 const WlcWirelessPanel = dynamic(() => import('./WlcWirelessPanel').then(m => m.WlcWirelessPanel), { ssr: false });
+const PrinterDeviceView = dynamic(() => import('./deviceViews/PrinterDeviceView').then(m => m.PrinterDeviceView), { ssr: false });
+const MobileDeviceView = dynamic(() => import('./deviceViews/MobileDeviceView').then(m => m.MobileDeviceView), { ssr: false });
+const CloudDeviceView = dynamic(() => import('./deviceViews/CloudDeviceView').then(m => m.CloudDeviceView), { ssr: false });
+
 
 interface UnifiedDevicePanelProps {
     isOpen: boolean;
@@ -154,9 +161,16 @@ export function UnifiedDevicePanel({
                     <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as 'console' | 'settings' | 'stp')} className="min-w-0">
                         <TabsList className={cn("h-7 p-0.5", isDark ? "bg-secondary-800" : "bg-secondary-100")}>
                             <TabsTrigger value="console" className="flex items-center gap-1.5 px-2 h-6 text-xs">
-                                {deviceType === 'hub' ? <Layers className="w-3 h-3 text-cyan-400" /> : <TerminalIcon className="w-3 h-3" />}
-                                <span className="hidden sm:inline">{deviceType === 'hub' ? (language === 'tr' ? 'Hub Durumu' : 'Hub Status') : t.cliInterface}</span>
+                                {deviceType === 'hub' ? <Layers className="w-3 h-3 text-cyan-400" /> : deviceType === 'cloud' ? <Globe className="w-3 h-3 text-cyan-400" /> : deviceType === 'printer' ? <PrinterIcon className="w-3 h-3 text-purple-400" /> : deviceType === 'mobile' ? <Smartphone className="w-3 h-3 text-sky-400" /> : <TerminalIcon className="w-3 h-3" />}
+                                <span className="hidden sm:inline">
+                                    {deviceType === 'hub' ? (language === 'tr' ? 'Hub Durumu' : 'Hub Status')
+                                        : deviceType === 'cloud' ? (language === 'tr' ? 'Bulut & WAN' : 'Cloud & WAN')
+                                            : deviceType === 'printer' ? (language === 'tr' ? 'Yazıcı Kontrol' : 'Printer Control')
+                                                : deviceType === 'mobile' ? (language === 'tr' ? 'Mobil Ekran' : 'Mobile Screen')
+                                                    : t.cliInterface}
+                                </span>
                             </TabsTrigger>
+
 
                             <TabsTrigger value="settings" className="flex items-center gap-1.5 px-2 h-6 text-xs">
                                 <Settings className="w-3 h-3" />
@@ -222,7 +236,35 @@ export function UnifiedDevicePanel({
                                     </div>
                                 </div>
                             </div>
+                        ) : deviceType === 'cloud' ? (
+                            <CloudDeviceView
+                                device={topologyDevices.find(d => d.id === deviceId) || { id: deviceId, type: 'cloud', name: deviceName, x: 0, y: 0, ip: '', status: 'online', ports: [] }}
+                                topologyDevices={topologyDevices}
+                                topologyConnections={topologyConnections}
+                                isDark={isDark}
+                                language={language}
+                            />
+                        ) : deviceType === 'printer' ? (
+                            <PrinterDeviceView
+                                device={topologyDevices.find(d => d.id === deviceId) || { id: deviceId, type: 'printer', name: deviceName, x: 0, y: 0, ip: '192.168.1.50', status: 'online', ports: [] }}
+                                topologyDevices={topologyDevices}
+                                topologyConnections={topologyConnections}
+                                deviceStates={deviceStates}
+                                isDark={isDark}
+                                language={language}
+                            />
+                        ) : deviceType === 'mobile' ? (
+                            <MobileDeviceView
+                                device={topologyDevices.find(d => d.id === deviceId) || { id: deviceId, type: 'mobile', name: deviceName, x: 0, y: 0, ip: '192.168.1.105', status: 'online', ports: [] }}
+                                topologyDevices={topologyDevices}
+                                topologyConnections={topologyConnections}
+                                deviceStates={deviceStates}
+                                isDark={isDark}
+                                language={language}
+                            />
                         ) : (
+
+
                             <Terminal
                                 key={`unified-terminal-${deviceId}`}
                                 className="h-full"

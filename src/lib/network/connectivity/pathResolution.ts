@@ -195,7 +195,8 @@ export function checkConnectivity(
     const sourceDevice = deviceMap.get(sourceId);
     let helperIp: string | undefined;
 
-    if (sourceDevice && (sourceDevice.type === 'pc' || sourceDevice.type === 'iot')) {
+    if (sourceDevice && (sourceDevice.type === 'pc' || sourceDevice.type === 'iot' || sourceDevice.type === 'mobile' || sourceDevice.type === 'printer')) {
+
       const sourceGatewayIp = sourceDevice.gateway;
       if (sourceGatewayIp) {
         for (const [deviceId, state] of safeDeviceStates) {
@@ -405,7 +406,8 @@ export function checkConnectivity(
   };
 
   const getDeviceVlan = (device: CanvasDevice, state?: SwitchState): number | null => {
-    if (device.type === 'pc' || device.type === 'iot') {
+    if (device.type === 'pc' || device.type === 'iot' || device.type === 'mobile' || device.type === 'printer') {
+
       // BOLT: Use pre-calculated adjList for O(1) connection lookup
       const neighbors = adjList.get(device.id);
       const connectedConn = neighbors?.[0]?.connection;
@@ -509,7 +511,8 @@ export function checkConnectivity(
     return res;
   };
 
-  if (!isDirectSubnet && sourceGatewayIp && (sourceDeviceForSubnet?.type === 'pc' || sourceDeviceForSubnet?.type === 'iot')) {
+  if (!isDirectSubnet && sourceGatewayIp && (sourceDeviceForSubnet?.type === 'pc' || sourceDeviceForSubnet?.type === 'iot' || sourceDeviceForSubnet?.type === 'mobile' || sourceDeviceForSubnet?.type === 'printer')) {
+
     // Find gateway device ID by gateway IP
     const gatewayDeviceId = ipMap.get(sourceGatewayIp.toLowerCase());
     if (gatewayDeviceId && gatewayDeviceId !== targetDevice.id) {
@@ -792,8 +795,8 @@ export function checkConnectivity(
     routingRequired = !isInSameSubnet;
 
     if (!isInSameSubnet) {
-      // 1. Source host (PC/IoT) needs a configured gateway in its own subnet to reach an outside subnet
-      if (sourceDeviceForSubnet.type === 'pc' || sourceDeviceForSubnet.type === 'iot') {
+      // 1. Source host (PC/IoT/Mobile/Printer) needs a configured gateway in its own subnet to reach an outside subnet
+      if (sourceDeviceForSubnet.type === 'pc' || sourceDeviceForSubnet.type === 'iot' || sourceDeviceForSubnet.type === 'mobile' || sourceDeviceForSubnet.type === 'printer') {
         const sourceGateway = sourceDeviceForSubnet.gateway;
         if (!sourceGateway) {
           return {
@@ -821,8 +824,9 @@ export function checkConnectivity(
         }
       }
 
-      // 2. Target host (PC/IoT) needs a configured gateway in its own subnet to send replies back to an outside subnet
-      if (targetDevice.type === 'pc' || targetDevice.type === 'iot') {
+      // 2. Target host (PC/IoT/Mobile/Printer) needs a configured gateway in its own subnet to send replies back to an outside subnet
+      if (targetDevice.type === 'pc' || targetDevice.type === 'iot' || targetDevice.type === 'mobile' || targetDevice.type === 'printer') {
+
         const targetGateway = targetDevice.gateway;
         const targetIpToCheck = resolvedTargetIp;
         const targetSubnet = targetDevice.subnet || '255.255.255.0';

@@ -1956,6 +1956,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
                     isActive={activeTab === 'topology'}
                     activeDeviceId={activeDeviceId}
                     deviceStates={deviceStates}
+                    onDeviceStatesChange={setDeviceStates}
                     zoom={zoom}
                     onZoomChange={setZoom}
                     pan={pan}

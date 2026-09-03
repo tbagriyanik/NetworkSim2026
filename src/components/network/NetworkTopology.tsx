@@ -76,6 +76,7 @@ export function NetworkTopology({
   isActive = true,
   activeDeviceId,
   deviceStates,
+  onDeviceStatesChange,
   onRefreshNetwork,
   focusDeviceId,
   zoom: zoomProp,
@@ -240,6 +241,7 @@ export function NetworkTopology({
     devices,
     connections,
     deviceStates,
+    onDeviceStatesChange,
   });
 
   const [zoom, setZoom] = useState(zoomProp ?? DEFAULT_ZOOM);

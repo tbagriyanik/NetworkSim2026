@@ -1,4 +1,5 @@
 import type { CableInfo, SwitchState, PortMode, PortStatus, WifiConfig, WifiMode, CableType } from '@/lib/network/types';
+import type { Dispatch, SetStateAction } from 'react';
 
 // Canvas-specific WiFi config that allows partial compatibility with legacy code
 export type CanvasWifiConfig = Partial<WifiConfig> & {
@@ -63,6 +64,7 @@ export interface NetworkTopologyProps {
   isActive?: boolean;
   activeDeviceId?: string | null;
   deviceStates?: Map<string, SwitchState>;
+  onDeviceStatesChange?: Dispatch<SetStateAction<Map<string, SwitchState>>>;
   isFullscreen?: boolean;
   onFullscreenChange?: (isFullscreen: boolean) => void;
   zoom?: number;
