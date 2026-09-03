@@ -179,6 +179,15 @@ examples/            # Feature demo docs
 - ✅ İzlenebilir kilometre taşları ve ödül bildirimleri
 - ✅ Profil ilerleme takibi
 
+### 🆕 v4.1.0 Yeni Özellikler
+- **🖥️ 4 Yeni Cihaz Tipi:** Hub (Layer-1 Multiport), Cloud/WAN (Dış İnternet), Smartphone/Tablet (Mobil), Printer (Ağ Yazıcısı)
+- **🌲 MSTP Bölge İzolasyonu:** IEEE 802.1s ile bölge adı, revizyon ve digest eşleşmesi
+- **🔒 IPsec Site-to-Site & GRE:** ISAKMP, ESP şifreleme, crypto-map
+- **🔐 802.1X EAPOL:** Port erişim kontrolü ve RADIUS kimlik doğrulama
+- **⚡ QoS Token Bucket:** Bandwidth policing (`police`) ve shaping (`shape`)
+- **🧹 DHCP Snooping Option 82:** Circuit ID injection ve rate-limiting
+- **🌐 BGP Politikaları:** Route-map filtering ve weight assignment
+
 ### Gelişmiş Özellikler
 - ✅ Zoom ve pan (fare tekerleği / klavye)
 - ✅ Multi-select (Shift + tık)

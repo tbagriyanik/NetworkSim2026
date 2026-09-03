@@ -224,6 +224,15 @@ Kaynak kodları inceleyin
 ✅ API Hız Sınırlama
 ✅ Kapsamlı CLI Komut Referansı
 
+### 🆕 v4.1.0 Yeni Özellikler (2026-09-03)
+✅ **4 Yeni Cihaz Tipi:** Hub, Cloud/WAN, Smartphone/Tablet, Printer
+✅ **MSTP Bölge İzolasyonu:** IEEE 802.1s ile bölge adı, revizyon ve digest eşleşmesi
+✅ **IPsec Site-to-Site & GRE:** ISAKMP, ESP şifreleme, crypto-map
+✅ **802.1X EAPOL:** Port erişim kontrolü ve RADIUS kimlik doğrulama
+✅ **QoS Token Bucket:** Bandwidth policing (`police`) ve shaping (`shape`)
+✅ **DHCP Snooping Option 82:** Circuit ID injection ve rate-limiting
+✅ **BGP Politikaları:** Route-map filtering ve weight assignment
+
 ---
 
 ## 🔐 Güvenlik

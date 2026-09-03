@@ -282,21 +282,95 @@ export function cmdLoggingTrap(state: SwitchState, input: string, _ctx: CommandC
  */
 export function cmdIpSla(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
-  const schedule = input.match(/^ip\s+sla\s+schedule\s+(\d+)\s+life\s+forever\s+start\s+now/i);
-  if (schedule) return { success: true, output: `IP SLA operation ${schedule[1]} scheduled`, newState: { ipSlaOperations: { ...state.ipSlaOperations, [schedule[1]]: { ...(state.ipSlaOperations?.[schedule[1]] || createIpSlaOperation(schedule[1], 'unknown')), running: true } } } };
+
+  // ip sla schedule <id> life <life> start-time <now|time>
+  const schedule = input.match(/^ip\s+sla\s+schedule\s+(\d+)(?:\s+life\s+(\S+))?(?:\s+start-time\s+(\S+))?/i);
+  if (schedule) {
+    const slaId = schedule[1];
+    const life = schedule[2] || 'forever';
+    const startTime = schedule[3] || 'now';
+
+    const existingOp = state.ipSlaOperations?.[slaId] || createIpSlaOperation(slaId, '127.0.0.1');
+    const updatedOp = {
+      ...existingOp,
+      running: true,
+      startTime,
+      life
+    };
+
+    return {
+      success: true,
+      output: `IP SLA operation ${slaId} scheduled (life=${life}, start-time=${startTime})`,
+      newState: {
+        ipSlaOperations: {
+          ...state.ipSlaOperations,
+          [slaId]: updatedOp
+        }
+      }
+    };
+  }
+
   const match = input.match(/^ip\s+sla\s+(\d+)/i);
   if (!match) return { success: false, error: '% Invalid IP SLA command syntax' };
 
   const slaId = match[1];
-  const detail = input.match(/^ip\s+sla\s+(\d+)\s+(?:icmp-echo|jitter)\s+(\S+)(?:\s+frequency\s+(\d+))?/i);
+  const detail = input.match(/^ip\s+sla\s+(\d+)\s+(?:icmp-echo|jitter)\s+(\S+)(?:\s+frequency\s+(\d+))?(?:\s+timeout\s+(\d+))?/i);
   const operations = { ...state.ipSlaOperations };
-  if (detail) operations[slaId] = createIpSlaOperation(slaId, detail[2], /jitter/i.test(input) ? 'jitter' : 'icmp-echo', detail[3] ? Number(detail[3]) : 60);
+
+  if (detail) {
+    const target = detail[2];
+    const isJitter = /jitter/i.test(input);
+    const freq = detail[3] ? Number(detail[3]) : 60;
+    const timeout = detail[4] ? Number(detail[4]) : 5000;
+    operations[slaId] = createIpSlaOperation(slaId, target, isJitter ? 'jitter' : 'icmp-echo', freq, timeout);
+  } else if (!operations[slaId]) {
+    operations[slaId] = createIpSlaOperation(slaId, '127.0.0.1');
+  }
+
   return {
     success: true,
-    output: `IP SLA responder/operation ${slaId} configured`,
+    output: `IP SLA operation ${slaId} configured`,
     newState: { currentSlaId: slaId, ipSlaOperations: operations }
   };
 }
+
+export function cmdTrack(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (state.currentMode !== 'config') return { success: false, error: iosModeError() };
+
+  // no track <num>
+  const noTrack = input.match(/^no\s+track\s+(\d+)/i);
+  if (noTrack) {
+    const tracks = { ...state.ipSlaTracks };
+    delete tracks[noTrack[1]];
+    return { success: true, output: `Track object ${noTrack[1]} removed`, newState: { ipSlaTracks: tracks } };
+  }
+
+  // track <num> ip sla <slaId> reachability
+  const trackMatch = input.match(/^track\s+(\d+)\s+ip\s+sla\s+(\d+)(?:\s+(reachability|state))?/i);
+  if (!trackMatch) return { success: false, error: '% Invalid track command syntax' };
+
+  const trackId = trackMatch[1];
+  const slaId = trackMatch[2];
+  const slaOp = state.ipSlaOperations?.[slaId];
+  const initialPortState = slaOp?.statistics?.successes ? 'up' : 'down';
+
+  const tracks = {
+    ...state.ipSlaTracks,
+    [trackId]: {
+
+      operationId: slaId,
+      state: initialPortState as 'up' | 'down',
+      lastChange: Date.now()
+    }
+  };
+
+  return {
+    success: true,
+    output: `Track ${trackId} object configured (tracking IP SLA ${slaId})`,
+    newState: { ipSlaTracks: tracks }
+  };
+}
+
 
 export function cmdLldpTlvSelect(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
   if (state.currentMode !== 'config') return { success: false, error: iosModeError() };

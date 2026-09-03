@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
-import { isIpSlaDue, runSyntheticIpSlaProbe } from '@/lib/network/ipSla';
+import { evaluateIpSlaOperations } from '@/lib/network/ipSlaEngine';
+
 
 interface UsePeriodicNetworkPacketsOptions {
   devices: CanvasDevice[];
@@ -51,22 +52,13 @@ export function usePeriodicNetworkPackets({
 
       let updatedStates: Map<string, SwitchState> | undefined;
 
-      // IP SLA scheduled operations: emit a synthetic probe and persist its result.
-      currentDevices.forEach(device => {
-        const state = currentStates?.get(device.id);
-        if (!state?.ipSlaOperations) return;
-        Object.values(state.ipSlaOperations).forEach(operation => {
-          if (!isIpSlaDue(operation)) return;
-          const target = currentDevices.find(d => d.ip === operation.target);
-          const reachable = Boolean(target && target.status !== 'offline');
-          const updated = runSyntheticIpSlaProbe(operation, { reachable, latency: reachable ? 2 : undefined });
-          updatedStates ??= new Map(currentStates);
-          const updatedState = { ...(updatedStates.get(device.id) || state), ipSlaOperations: { ...(updatedStates.get(device.id)?.ipSlaOperations || state.ipSlaOperations), [operation.id]: updated } };
-          updatedStates.set(device.id, updatedState);
-          const connection = currentConnections.find(c => c.sourceDeviceId === device.id && (c.targetDeviceId === target?.id || c.targetDeviceId === device.id));
-          if (connection) packetsToDispatch.push({ connectionId: connection.id || `${connection.sourceDeviceId}-${connection.targetDeviceId}`, sourceIp: device.ip || device.name, targetIp: operation.target, protocol: 'IP SLA', length: operation.type === 'jitter' ? 128 : 64, info: `IP SLA ${operation.id} ${operation.type} probe` });
-        });
-      });
+      // IP SLA scheduled operations: evaluate active probes, reachability, RTT, and Track Objects
+      if (currentStates) {
+        const slaResult = evaluateIpSlaOperations(currentStates, currentDevices, currentConnections);
+        updatedStates = slaResult.updatedStates;
+        packetsToDispatch.push(...slaResult.dispatchedPackets);
+      }
+
 
       if (updatedStates && onDeviceStatesChange) {
         onDeviceStatesChange(previous => {

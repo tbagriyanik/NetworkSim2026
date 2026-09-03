@@ -39,8 +39,10 @@ import {
   cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
   cmdShowPrefixList, cmdShowRouteMap, cmdShowIpv6EigrpNeighbors, cmdShowIpv6EigrpTopology, cmdShowIpv6EigrpInterfaces,
   cmdShowGlbp, cmdShowIpFlowExport, cmdShowIpCacheFlow, cmdShowIpv6Neighbors,
-  cmdShowIpv6DhcpBinding, cmdShowPppoeSession, cmdShowCaller
+  cmdShowIpv6DhcpBinding, cmdShowPppoeSession, cmdShowCaller,
+  cmdShowTrack, cmdShowIpSlaSummary, cmdShowIpSlaConfiguration
 } from './showRoutingDisplay';
+
 
 
 
@@ -160,6 +162,11 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ip nat translations': cmdShowIpNatTranslations,
   'show ip nat statistics': cmdShowIpNatStatistics,
   'show ip sla statistics': cmdShowIpSlaStatistics,
+  'show ip sla summary': cmdShowIpSlaSummary,
+  'show ip sla configuration': cmdShowIpSlaConfiguration,
+  'show ip sla application': cmdShowIpSlaConfiguration,
+  'show track': cmdShowTrack,
+
 
   // New: missing show commands
   'show nameif': cmdShowNameif,

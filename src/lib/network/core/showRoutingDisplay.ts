@@ -853,6 +853,86 @@ export function cmdShowCaller(state: SwitchState, _input: string, _ctx: CommandC
 }
 
 
+export function cmdShowTrack(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+
+  const tracks = state.ipSlaTracks || {};
+  const trackKeys = Object.keys(tracks);
+
+  if (trackKeys.length === 0) {
+    return { success: true, output: '\n% No track objects configured\n' };
+  }
+
+  const match = input.match(/show\s+track\s*(\d+)?/i);
+  const requestedId = match?.[1];
+
+  let output = '\n';
+  const targetKeys = requestedId ? (tracks[requestedId] ? [requestedId] : []) : trackKeys;
+
+  if (requestedId && targetKeys.length === 0) {
+    return { success: false, error: `% Track object ${requestedId} not found` };
+  }
+
+  targetKeys.forEach(id => {
+    const t = tracks[id];
+    const op = state.ipSlaOperations?.[t.operationId];
+    const isUp = t.state === 'up';
+
+    output += `Track ${id}\n`;
+    output += `  IP SLA ${t.operationId} reachability\n`;
+    output += `  Reachability is ${isUp ? 'Up' : 'Down'}\n`;
+    output += `  Latest operation return code: ${op?.statistics?.successes ? 'OK' : 'Timeout'}\n`;
+    output += `  Latest RTT: ${op?.statistics?.last !== undefined ? `${op.statistics.last} ms` : 'N/A'}\n`;
+    output += `  Tracked by:\n`;
+    output += `    Static IP Route 0.0.0.0/0\n\n`;
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowIpSlaSummary(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const ops = state.ipSlaOperations || {};
+  const entries = Object.values(ops);
+
+  if (entries.length === 0) {
+    return { success: true, output: '\nIP SLA: No operations configured\n' };
+  }
+
+  let output = '\nIP SLA Operational Summary\n';
+  output += 'ID       Type        Target          Status      Return Code\n';
+  output += '------------------------------------------------------------\n';
+
+  entries.forEach(op => {
+    const status = op.running ? 'Scheduled' : 'Configured';
+    const returnCode = op.statistics.successes > 0 ? 'OK' : (op.running ? 'Timeout' : 'Pending');
+    output += `${op.id.padEnd(8)} ${op.type.toUpperCase().padEnd(11)} ${op.target.padEnd(15)} ${status.padEnd(11)} ${returnCode}\n`;
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowIpSlaConfiguration(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const ops = state.ipSlaOperations || {};
+  const entries = Object.values(ops);
+
+  if (entries.length === 0) {
+    return { success: true, output: '\n% No IP SLA operations configured\n' };
+  }
+
+  let output = '\n';
+  entries.forEach(op => {
+    output += `IP SLA Operation ${op.id}\n`;
+    output += `  Type: ${op.type}\n`;
+    output += `  Target: ${op.target}\n`;
+    output += `  Frequency: ${op.frequency} seconds\n`;
+    output += `  Timeout: ${op.timeout} ms\n`;
+    output += `  Schedule: Start Time = ${op.startTime || 'Now'}, Life = ${op.life || 'Forever'}, Status = ${op.running ? 'Scheduled' : 'Inactive'}\n\n`;
+  });
+
+  return { success: true, output };
+}
+
+
+
 /**
  * Show IP Verify Source
  */
