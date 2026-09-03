@@ -1,10 +1,9 @@
-'use client';
-
 import React, { useId } from 'react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
     label?: string;
@@ -48,7 +47,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
         return (
             <div className="w-full space-y-2">
                 {label && (
-                    <label
+                    <Label
                         htmlFor={id}
                         className={cn(
                             'text-sm font-medium',
@@ -57,7 +56,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
                         )}
                     >
                         {label}
-                    </label>
+                    </Label>
                 )}
 
                 <div className="relative">
@@ -122,7 +121,7 @@ export const FormInput = React.forwardRef<HTMLInputElement, FormInputProps>(
                 )}
 
                 {hint && !error && (
-                    <p id={hintId} className={cn('text-xs', isDark ? 'text-secondary-500' : 'text-secondary-500')}>
+                    <p id={hintId} className="text-xs text-secondary-500">
                         {hint}
                     </p>
                 )}

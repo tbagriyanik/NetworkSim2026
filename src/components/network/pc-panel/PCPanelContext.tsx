@@ -186,7 +186,7 @@ export interface PCPanelContextValue {
   serviceNtpTime: string;
   setServiceNtpTime: (t: string) => void;
   applyNtpServerTime: any;
-  ntpPanelTime: Date | null;
+  ntpPanelTime: Date;
   ntpSyncState: any;
 
   // Service state: Mail
@@ -239,7 +239,7 @@ export interface PCPanelContextValue {
   setIotDataStore: (d: string) => void;
 
   // Browser
-  openWebPage: (url: string, target?: string) => void;
+  openWebPage: (target?: string, url?: string) => void;
   httpAppContent: string | null;
   setHttpAppContent: (c: string | null) => void;
   httpAppUrl: string;
@@ -254,7 +254,7 @@ export interface PCPanelContextValue {
   showUrlSuggestions: boolean;
   setShowUrlSuggestions: (v: boolean) => void;
   selectedSuggestionIndex: number;
-  setSelectedSuggestionIndex: (i: number) => void;
+  setSelectedSuggestionIndex: React.Dispatch<React.SetStateAction<number>>;
   urlInputRef: RefObject<HTMLInputElement | null>;
   dragStateRef: RefObject<{ startX: number; startY: number; originX: number; originY: number } | null>;
   resizeStateRef: RefObject<{ side: string; startX: number; startY: number; originX: number; originY: number; originW: number; originH: number } | null>;
@@ -277,6 +277,16 @@ export interface PCPanelContextValue {
   // Search
   searchOpen: boolean;
   setSearchOpen: (v: boolean) => void;
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  goToNextMatch: () => void;
+  goToPrevMatch: () => void;
+  searchMatchIndex: number;
+  searchMatchCount: number;
+
+  // Shell helpers
+  formatFullDateTime: (date: Date) => string;
+  handleCopyAll: () => void | Promise<void>;
 
   // Misc
   onClose: () => void;

@@ -2,7 +2,7 @@
 
 import { Suspense, lazy } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { VisuallyHidden } from '@/components/ui/visually-hidden';
 
 const AboutModalComponent = lazy(() =>
     import('./AboutModal').then((m) => ({ default: m.AboutModal }))
