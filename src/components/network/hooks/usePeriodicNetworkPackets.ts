@@ -4,7 +4,8 @@ import { useEffect, useRef } from 'react';
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
-import { evaluateIpSlaOperations } from '@/lib/network/ipSlaEngine';
+import { runNetworkEventPipeline } from '@/lib/network/forwarding/eventPipeline';
+
 
 
 interface UsePeriodicNetworkPacketsOptions {
@@ -52,12 +53,13 @@ export function usePeriodicNetworkPackets({
 
       let updatedStates: Map<string, SwitchState> | undefined;
 
-      // IP SLA scheduled operations: evaluate active probes, reachability, RTT, and Track Objects
+      // Run Unified Network Event Pipeline (STP, ARP, DHCP, OSPF, EIGRP, IP SLA)
       if (currentStates) {
-        const slaResult = evaluateIpSlaOperations(currentStates, currentDevices, currentConnections);
-        updatedStates = slaResult.updatedStates;
-        packetsToDispatch.push(...slaResult.dispatchedPackets);
+        const pipelineRes = runNetworkEventPipeline(currentStates, currentDevices, currentConnections);
+        updatedStates = pipelineRes.updatedStates;
+        packetsToDispatch.push(...pipelineRes.dispatchedPackets);
       }
+
 
 
       if (updatedStates && onDeviceStatesChange) {
