@@ -2,6 +2,10 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v4.1.0 — 2026-09-03
+
+**Sürüm Güncellemesi** — Uygulama versiyonu 4.1.0 olarak güncellendi.
+
 ## v4.0.0 — 2026-09-02
 
 **Kurumsal Ağ & Gelişmiş Protokol Mimarisi** — EIGRP for IPv6, IP/IPv6 Prefix-List, Route-Map politika motoru (`match` & `set`), GLBP (Gateway Load Balancing Protocol sanal router grubu, AVG seçimi), STP Loop Guard ve NetFlow trafik izleme motoru ile tam dokümantasyon ve yardım entegrasyonu tamamlanarak Sürüm 4.0.0 ana yayın seviyesine geçildi.

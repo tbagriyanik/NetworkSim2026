@@ -22,7 +22,7 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu (v4.0.0)
+### Güncel özellik durumu (v4.1.0)
 
 - **EIGRP for IPv6:** `ipv6 router eigrp <as>`, router-id tanımı, arayüz bazlı `ipv6 eigrp <as>` aktifleştirme, DUAL IPv6 metric hesaplaması ve `show ipv6 eigrp neighbors/topology` komutları.
 - **IP & IPv6 Prefix-List:** `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` kural motoru, ön ek eşleme doğrulama ve `show ip/ipv6 prefix-list` raporlaması.
@@ -61,7 +61,7 @@ Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik 
 
 ---
 
-## Latest Updates (v3.7.0)
+## Latest Updates (v4.1.0)
 
 | English | Türkçe |
 | --- | --- |
@@ -99,19 +99,38 @@ Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik 
 
 | English | Türkçe |
 | --- | --- |
-| **Switching**: VLAN, STP (PVST+/Rapid-PVST+), trunk/access ports, MAC learning, switchport security | **Anahtarlama**: VLAN, STP (PVST+/Rapid-PVST+), trunk/access portlar, MAC öğrenmesi, switchport güvenliği |
+| **Switching**: VLAN, STP (PVST+/Rapid-PVST+/MSTP), trunk/access ports, MAC learning, switchport security | **Anahtarlama**: VLAN, STP (PVST+/Rapid-PVST+/MSTP), trunk/access portlar, MAC öğrenmesi, switchport güvenliği |
 | **Trunk Allowed VLAN**: `switchport trunk allowed vlan add/remove/except/all` fine-grained VLAN filtering | **Trunk VLAN Filtreleme**: `add/remove/except/all` sözdizimi ile ayrıntılı VLAN filtreleme |
+| **DTP (Dynamic Trunking Protocol)**: `switchport mode dynamic auto/desirable`, `switchport nonegotiate` | **DTP (Dinamik Trunking Protokolü)**: `switchport mode dynamic auto/desirable`, `switchport nonegotiate` |
+| **Voice VLAN**: IP phone traffic priority with `switchport voice vlan <id>` | **Ses VLAN'ı**: IP telefon trafiği önceliği `switchport voice vlan <id>` ile |
+| **VTP (VLAN Trunking Protocol)**: server/client/transparent modes, domain & password configuration | **VTP (VLAN Trunking Protokolü)**: server/client/transparent modları, domain ve parola yapılandırması |
 | **EtherChannel**: LACP (active/passive), PAgP (desirable/auto), static (on), load-balance | **EtherChannel**: LACP (aktif/pasif), PAgP (arzu edilir/otomatik), statik, yük dengeleme |
+| **STP Loop Guard**: `spanning-tree loopguard default` (global), `spanning-tree guard loop` (interface) | **STP Loop Guard**: `spanning-tree loopguard default` (global), `spanning-tree guard loop` (arayüz) |
+| **MSTP (Multiple Spanning Tree)**: `spanning-tree mode mst`, region name/revision, instance mapping | **MSTP (Çoklu Spanning Tree)**: `spanning-tree mode mst`, bölge adı/revizyon, örnek eşleme |
 | **Routing**: Static, OSPF multi-area (SPF Dijkstra), RIP, EIGRP (DUAL), BGP (basic), inter-VLAN, L3 switch | **Yönlendirme**: Statik, OSPF multi-alan (SPF Dijkstra), RIP, EIGRP (DUAL), BGP (temel), VLAN arası, L3 |
-| **Redundancy**: HSRP (active/standby/preempt), VRRP | **Yedeklilik**: HSRP (active/standby/preempt), VRRP |
-| **IPv6**: OSPFv3, RIPng, DHCPv6 (stateful/stateless), static IPv6 routes | **IPv6**: OSPFv3, RIPng, DHCPv6 (stateful/stateless), statik IPv6 rotalar |
+| **Route Redistribution**: `redistribute <protocol>` between OSPF, RIP, EIGRP, BGP, static, connected | **Rota Yeniden Dağıtımı**: OSPF, RIP, EIGRP, BGP, statik, connected arasında `redistribute <protocol>` |
+| **Route-Map Engine**: `route-map <name> {permit|deny}`, `match ip/ipv6 address prefix-list`, `set` actions | **Route-Map Motoru**: `route-map <name> {permit|deny}`, `match ip/ipv6 address prefix-list`, `set` eylemleri |
+| **Prefix-List**: `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` | **Prefix-List**: `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` |
+| **FHRP (HSRP, VRRP & GLBP)**: Virtual IP/MAC, active/standby/master election, preempt, tracking | **FHRP (HSRP, VRRP & GLBP)**: Sanal IP/MAC, active/standby/master seçimi, preempt, izleme |
+| **NetFlow Export**: `ip flow-export destination`, `ip flow-export version {5|9}`, `show ip cache flow` | **NetFlow İletimi**: `ip flow-export destination`, `ip flow-export version {5|9}`, `show ip cache flow` |
+| **IPv6**: OSPFv3, RIPng, EIGRP IPv6, DHCPv6 (stateful/stateless), static IPv6 routes, SLAAC, EUI-64, NDP | **IPv6**: OSPFv3, RIPng, EIGRP IPv6, DHCPv6 (stateful/stateless), statik IPv6 rotaları, SLAAC, EUI-64, NDP |
 | **Serial / WAN**: HDLC, PPP (PAP/CHAP), clock rate, DCE/DTE detection | **Seri / WAN**: HDLC, PPP (PAP/CHAP), saat hızı, DCE/DTE tespiti |
+| **PPPoE**: `interface Dialer`, PPP encapsulation, CHAP hostname/password | **PPPoE**: `interface Dialer`, PPP kapsülleme, CHAP hostname/password |
+| **GRE Tunnel**: `interface Tunnel`, `tunnel source`, `tunnel destination` | **GRE Tüneli**: `interface Tunnel`, `tunnel source`, `tunnel destination` |
+| **IPsec / Crypto**: IKE Phase 1/2 SA, crypto map, tunnel group, `show crypto isakmp/ipsec sa` | **IPsec / Kripto**: IKE Faz 1/2 SA, crypto map, tunnel grubu, `show crypto isakmp/ipsec sa` |
 | **NAT/PAT**: Static, dynamic, overload/PAT, ip nat inside/outside | **NAT/PAT**: Statik, dinamik, overload/PAT, ip nat inside/outside |
-| **Security**: Standard & Extended ACL, Port Security (sticky MAC), DHCP Snooping, Dynamic ARP Inspection, IP Source Guard, SPAN | **Güvenlik**: Standart & Genişletilmiş ACL, Port Security, DHCP Snooping, Dinamik ARP İnceleme, IP Kaynak Koruma, SPAN |
+| **Security**: Standard & Extended ACL, Named ACL, IPv6 ACL, Port Security (sticky MAC), DHCP Snooping, DAI, IP Source Guard, 802.1X, AAA (RADIUS/TACACS+) | **Güvenlik**: Standart & Genişletilmiş ACL, Adlandırılmış ACL, IPv6 ACL, Port Security, DHCP Snooping, DAI, IP Kaynak Koruma, 802.1X, AAA (RADIUS/TACACS+) |
+| **ErrDisable Recovery**: `errdisable recovery`, `errdisable recovery cause`, `show errdisable` | **ErrDisable Kurtarma**: `errdisable recovery`, `errdisable recovery cause`, `show errdisable` |
+| **UDLD**: Uni-directional Link Detection, `udld`, `udld port`, `show udld` | **UDLD**: Tek Yönlü Bağlantı Tespiti, `udld`, `udld port`, `show udld` |
+| **Proxy ARP**: `ip proxy-arp`, `no ip proxy-arp` | **Proxy ARP**: `ip proxy-arp`, `no ip proxy-arp` |
+| **Directed Broadcast**: `ip directed-broadcast`, `no ip directed-broadcast` | **Directed Broadcast**: `ip directed-broadcast`, `no ip directed-broadcast` |
+| **PoE (Power over Ethernet)**: `power inline`, `power inline consumption` | **PoE (Ethernet Üzerinden Güç)**: `power inline`, `power inline consumption` |
 | **Wireless**: WLC (AIR-CT2504-K9), Lightweight AP, CAPWAP, SSID, WPA/WPA2/WPA3, hidden SSID, MAC filter, signal strength by distance | **Kablosuz**: WLC, Lightweight AP, CAPWAP, SSID, WPA/WPA2/WPA3, gizli SSID, MAC filtre, mesafeye göre sinyal |
 | **IoT**: 5 sensors (temp/humidity/light/motion/sound) + 3 actuators, rule engine, environmental simulation, IoT web panel | **IoT**: 5 sensör + 3 aktüatör, kural motoru, çevresel simülasyon, IoT web paneli |
-| **Services**: DHCP, DNS, HTTP, FTP, NTP, Mail (SMTP/POP3), Firewall rules | **Servisler**: DHCP, DNS, HTTP, FTP, NTP, Mail (SMTP/POP3), güvenlik duvarı kuralları |
+| **Services**: DHCP, DNS, HTTP, FTP, NTP, Mail (SMTP/POP3), Syslog, SNMP, Firewall rules | **Servisler**: DHCP, DNS, HTTP, FTP, NTP, Mail (SMTP/POP3), Syslog, SNMP, güvenlik duvarı kuralları |
 | **SSH / Telnet**: SSH v1/v2 with crypto key generation, Telnet VTY sessions | **SSH / Telnet**: SSH v1/v2 kripto anahtar üretimi ile, Telnet VTY oturumları |
+| **IP SLA**: ICMP-echo/jitter probes, RTT min/avg/max, jitter statistics, tracking | **IP SLA**: ICMP-echo/jitter probları, RTT min/avg/max, jitter istatistikleri, izleme |
+| **SDN / YANG**: YANG module parsing, NETCONF/RESTCONF datastore, REST API Explorer | **SDN / YANG**: YANG modülü ayrıştırma, NETCONF/RESTCONF veri deposu, REST API Gezgini |
 | **ARP & Connectivity**: ARP table management, ping (ICMP), traceroute, extended ping | **ARP & Bağlantı**: ARP tablo yönetimi, ping (ICMP), traceroute, genişletilmiş ping |
 | **Export / Import**: JSON topology export/import, PNG 300 DPI export | **Dışa/İçe Aktarma**: JSON topoloji dışa/içe aktarma, PNG 300 DPI dışa aktarma |
 
@@ -193,7 +212,7 @@ npm install && npm run dev
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 3.7.0 |
+| Version / Sürüm | 4.1.0 |
 | Total Lines / Toplam Satır (src/) | 145,145 |
 | Source Files / Kaynak Dosya | 644 |
 | Documentation Files / Dokümantasyon Dosya | 24 |

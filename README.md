@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-4.0.0-blue)
+![Version](https://img.shields.io/badge/version-4.1.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.3-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -33,7 +33,7 @@ npm run lint
 npm test
 ```
 
-## 🚀 Key Features & Version Highlights (v4.0.0)
+## 🚀 Key Features & Version Highlights (v4.1.0)
 
 - **🌐 Advanced Routing & Policy Engine:** 
   - **EIGRP for IPv6:** `ipv6 router eigrp <as>`, router-id configuration, interface-based `ipv6 eigrp <as>`, DUAL IPv6 metric calculation, and `show ipv6 eigrp neighbors/topology`.
@@ -53,7 +53,7 @@ npm test
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 4.0.0 |
+| Version / Sürüm | 4.1.0 |
 | Total Lines / Toplam Satır (`src/`) | 155,506 |
 | Source Files / Kaynak Dosya | 681 |
 | Documentation Files / Dokümantasyon Dosya | 31 |

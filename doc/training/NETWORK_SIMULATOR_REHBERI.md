@@ -1,6 +1,6 @@
 # Network Simulator — Kapsamlı Uygulama ve Kullanım Rehberi
 
-**Sürüm / Version:** 4.0.0  
+**Sürüm / Version:** 4.1.0  
 **Doküman Tipi:** Kullanım, Mimari, Komut Referansı ve Laboratuvar Kılavuzu  
 **Dil:** Türkçe (Turkish)
 
@@ -41,8 +41,9 @@ Network Simulator; bilgisayar ağları, anahtarlama (switching), yönlendirme (r
 ### 🔄 Anahtarlama (Switching)
 - **VLAN Mimarisi:** Standart ve genişletilmiş VLAN tanımlama (VLAN 1–4094), port erişim (`access`) ve taşıyıcı (`trunk`) modları.
 - **802.1Q Trunking & Native VLAN:** Etiketli paket iletimi ve etiketlenmemiş Native VLAN yönetimi.
+- **DTP (Dynamic Trunking Protocol):** `switchport mode dynamic auto/desirable` ve `switchport nonegotiate` ile otomatik trunk algılama.
 - **VTP (VLAN Trunking Protocol):** VTP Server, Client ve Transparent modları; VTP domain ve parola yapılandırması.
-- **Spanning Tree Protocol (STP / RSTP / MSTP):** 802.1D STP, 802.1w RSTP ve 802.1s MSTP döngü engelleme, root bridge seçimi, BPDU yönetimi, PortFast ve **STP Loop Guard** (`spanning-tree loopguard default` / `spanning-tree guard loop`).
+- **Spanning Tree Protocol (STP / RSTP / MSTP):** 802.1D STP, 802.1w RSTP ve 802.1s MSTP döngü engelleme, root bridge seçimi, BPDU yönetimi, PortFast, BPDU Guard ve **STP Loop Guard** (`spanning-tree loopguard default` / `spanning-tree guard loop`).
 - **EtherChannel (Port Aggregation):** LACP (802.3ad), PAgP ve Static EtherChannel ile çoklu link birleştirme ve bant genişliği artırma.
 - **Port Security:** MAC adresi kısıtlama, `sticky` MAC öğrenme, maksimum cihaz sınırı ve ihlal modları (`shutdown`, `restrict`, `protect`).
 - **Voice VLAN:** IP telefon trafiği için öncelikli ses VLAN yapılandırması.
@@ -51,32 +52,57 @@ Network Simulator; bilgisayar ağları, anahtarlama (switching), yönlendirme (r
 ### 🌐 Yönlendirme & Politika Motoru (Routing & Policy Engine)
 - **Static & Default Routing:** Statik rotalar, varsayılan rotalar (`0.0.0.0 0.0.0.0`), Administrative Distance ve Floating Static yedeği.
 - **RIPv2 & RIPng:** Metrik hesabı (hop count), `no auto-summary`, passive-interface.
-- **OSPFv2 & OSPFv3:** Single-Area ve Multi-Area OSPF yapılandırması, Router ID, wildcard maskeler, DR/BDR seçimi ve cost hesabı.
+- **OSPFv2 & OSPFv3:** Single-Area ve Multi-Area OSPF yapılandırması, Router ID, wildcard maskeler, DR/BDR seçimi ve cost hesabı. OSPF area türleri: stub, NSSA, totally-stub.
 - **EIGRP & EIGRP for IPv6:** IPv4/IPv6 AS numarası, `ipv6 router eigrp <as>`, router-id tanımı, arayüz bazlı `ipv6 eigrp <as>` aktifleştirme, DUAL IPv6 metric hesaplaması ve `show ipv6 eigrp neighbors/topology` raporlaması.
 - **BGP (Border Gateway Protocol):** eBGP ve iBGP komşuluk tanımları, AS path ve prefix duyuruları.
+- **Rota Yeniden Dağıtımı (Route Redistribution):** `redistribute <protocol>` ile OSPF, RIP, EIGRP, BGP, static ve connected rotalar arasında çapraz dağıtım.
 - **IP & IPv6 Prefix-List:** `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` kural motoru, ön ek eşleme doğrulama ve `show ip/ipv6 prefix-list` çıktısı.
 - **Route-Map Politika Motoru:** `route-map <name> {permit|deny} [<seq>]` mod yapılandırması, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference` politikaları ve `show route-map` raporlaması.
 - **GLBP & FHRP Sanal Yönlendirme:** HSRP, VRRP ve **GLBP (Gateway Load Balancing Protocol)** sanal router grupları (`glbp <group> ip <ip>`, `glbp priority/preempt/weighting`), AVG (Active Virtual Gateway) seçimi, `0007.b400.XXXX` sanal MAC üretimi ve `show glbp [brief]` izlemesi.
 - **NetFlow Trafik İletim Motoru:** `ip flow-export destination <ip> <port>`, `ip flow-export version <5|9>`, arayüz `ip flow ingress/egress` ve canlı `show ip cache flow` istatistik izleme ekranı.
 - **Inter-VLAN Routing:** Router-on-a-Stick (Sub-interfaces + `encapsulation dot1q`) ve L3 Switch SVI (`interface vlan`) ile VLAN'lar arası yönlendirme.
 - **GRE Tünelleme:** `interface Tunnel`, IP adresi, `tunnel source` ve `tunnel destination` ile noktadan noktaya mantıksal tünel kurulumu.
+- **IPsec / Crypto:** IKE Phase 1 (ISAKMP SA) ve IKE Phase 2 (IPsec SA), crypto map, tunnel group, `show crypto isakmp sa` / `show crypto ipsec sa`.
 - **PPPoE & Dialer:** `interface Dialer`, PPP kapsülleme, CHAP/PAP kimlik doğrulaması.
 
 ### 🛡️ Ağ Servisleri, Güvenlik ve Kalite (Services, Security & QoS)
 - **DHCP Sunucu & Relay Agent:** Router/Switch üzerinde DHCP havuzu (`ip dhcp pool`), network, default-router, dns-server tanımları ve cross-subnet `ip helper-address` aktarımı.
-- **DNS Sunucu:** Domain adı ve IP eşleştirme kayıtları (A kaydı), dinamik alan adı çözümlemesi.
+- **DNS Sunucu:** Domain adı ve IP eşleştirme kayıtları (A, AAAA, CNAME, MX kayıtları), dinamik alan adı çözümlemesi.
 - **HTTP / HTTPS Web Server:** Html dosyası barındırma ve PC Web Browser üzerinden web sitelerine erişim.
 - **FTP Sunucu:** Dosya yükleme ve indirme işlemleri.
-- **Erişim Kontrol Listeleri (ACL):** Standard ACL (1-99), Extended ACL (100-199) ve Adlandırılmış (Named) ACL'ler; IP, Port, Protokol (TCP/UDP/ICMP) bazlı trafik filtreleme.
+- **Erişim Kontrol Listeleri (ACL):** Standard ACL (1-99), Extended ACL (100-199), Adlandırılmış (Named) ACL'ler ve IPv6 ACL; IP, Port, Protokol (TCP/UDP/ICMP) bazlı trafik filtreleme.
+- **802.1X (dot1x):** Port tabanlı ağ erişim kontrolü, EAPOL simülasyonu, RADIUS kimlik doğrulaması, `dot1x port-control {auto|force-authorized|force-unauthorized}`.
+- **AAA (RADIUS/TACACS+):** `aaa new-model`, `aaa authentication`, RADIUS/TACACS+ sunucu ve anahtar yapılandırması.
 - **NAT / PAT (Network Address Translation):** Static NAT (1-to-1), Dynamic NAT (Pool) ve PAT / Overload (Tek kamu IP'si ile tüm ağı internete çıkarma).
-- **Yüksek Erişilebilirlik (FHRP - HSRP & VRRP):** HSRP v1/v2 ve VRRP ile sanal IP/MAC hesabı ve otomatik aktif/yedek gateway değişimi.
-- **IP SLA & Floating Route:** ICMP probe ve RTT ölçümü ile hat kopmasında otomatik yedek hat rotasına geçiş.
-- **QoS (Quality of Service):** `class-map`, `policy-map`, WFQ, LLQ, CBWFQ trafik sınıflandırma ve önceliklendirme.
+- **Yüksek Erişilebilirlik (FHRP - HSRP, VRRP & GLBP):** HSRP v1/v2, VRRP ve GLBP ile sanal IP/MAC hesabı ve otomatik aktif/yedek/AVG gateway değişimi.
+- **IP SLA & Floating Route:** ICMP-echo/jitter probe ve RTT ölçümü ile hat kopmasında otomatik yedek hat rotasına geçiş.
+- **QoS (Quality of Service):** `mls qos`, `class-map`, `policy-map`, WFQ, LLQ, CBWFQ trafik sınıflandırma, DSCP/CoS işaretleme ve önceliklendirme.
+- **Syslog:** `logging host <ip>`, `logging trap <level>`, `show logging` ile merkezi log yönetimi.
+- **SNMP:** Community string, contact/location, SNMP trap ve `show snmp` ile ağ yönetimi protokolü.
+- **NTP:** `ntp server <ip>`, `clock timezone`, `show clock` ile zaman senkronizasyonu.
+- **ErrDisable Recovery:** `errdisable recovery`, `errdisable recovery cause` ile otomatik kurtarma.
+- **UDLD:** Uni-directional Link Detection, `udld`, `udld port`, `show udld` ile tek yönlü bağlantı tespiti.
+- **Proxy ARP:** `ip proxy-arp`, `no ip proxy-arp` ile ARP.proxy çözümleme.
+- **Directed Broadcast:** `ip directed-broadcast`, `no ip directed-broadcast` ile alt ağ broadcast yönlendirme.
+- **PoE (Power over Ethernet):** `power inline`, `power inline consumption` ile ethernet üzerinden güç dağıtımı.
+- **SPAN/RSPAN:** `monitor session <n>`, `show monitor` ile port kopyalama ve izleme.
+- **Storm Control:** `storm-control broadcast/multicast/unicast level <%>` ile fırtına kontrolü.
+- **SDN / YANG:** YANG modülü ayrıştırma, NETCONF/RESTCONF veri deposu, REST API Explorer ile programlanabilir ağ yönetimi.
 
 ### 📡 Kablosuz Ağlar & IoT (Wireless & IoT)
 - **Wireless Access Point (AP):** 2.4GHz ve 5GHz kablosuz yayın, SSID yapılandırması, WPA2/WPA3 Personal.
 - **Wireless LAN Controller (WLC):** Merkezi AP yönetimi, CAPWAP tünellemesi, WPA2/WPA3 Enterprise & RADIUS entegrasyonu.
-- **IoT Sensörler ve Aktüatörler:** Sıcaklık, nem, hareket sensörleri, akıllı lamba, kapı kilidi, röle ve Web tabanlı IoT Kontrol Paneli.
+- **Dot11 Radio Interface:** `interface Dot11Radio 0`, `dot11 ssid`, `guest-mode`, `channel`, `speed`, `station-role`.
+- **Multi-SSID:** Çoklu WLAN profilleri (Corp-WiFi, Guest-WiFi, IoT-Network).
+- **Wireless MAC Filtering:** SSID bazlı Allow/Deny listeleri.
+- **IoT Sensörler ve Aktüatörler:** Sıcaklık, nem, hareket, ışık, ses sensörleri + akıllı lamba, kapı kilidi, röle ve Web tabanlı IoT Kontrol Paneli.
+
+### 📊 İzleme ve Teşhis (Monitoring & Diagnostics)
+- **CDP / LLDP:** Cisco Discovery Protocol ve Link Layer Discovery Protocol ile komşu keşfi.
+- **ARP / NDP:** ARP tablosu yönetimi ve IPv6 Neighbor Discovery Protocol.
+- **Packet Capture:** OSI katman katman (L2 Ethernet, L3 IP, L4 TCP/UDP/ICMP) derinlemesine analiz, hex dump ve protokol ağacı.
+- **Syslog / SNMP / NTP:** Merkezi log yönetimi, SNMP ile ağ izleme, NTP ile zaman senkronizasyonu.
+- **IP SLA:** ICMP-echo/jitter probları, RTT min/avg/max, jitter istatistikleri ve `show ip sla statistics`.
 
 ---
 
@@ -572,7 +598,7 @@ ISP(config-router)# exit
 
 ## 📌 Özet ve Ek Kaynaklar
 
-Bu rehber dokümanı, **Network Simulator v3.7.0** sürümünün sunduğu tüm kabiliyetleri, arayüz modüllerini, kodlama ortamlarını ve uygulama senaryolarını detaylandırmaktadır. 
+Bu rehber dokümanı, **Network Simulator v4.1.0** sürümünün sunduğu tüm kabiliyetleri, arayüz modüllerini, kodlama ortamlarını ve uygulama senaryolarını detaylandırmaktadır. 
 
 Daha fazla detaylı teknik döküman için projedeki diğer Markdown rehberlerini inceleyebilirsiniz:
 - 📖 [Tam Özellik Envanteri (ProjeOzellikleri.md)](file:///f:/netsim2026/networksim/doc/training/ProjeOzellikleri.md)

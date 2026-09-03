@@ -203,6 +203,11 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['spanning-tree portfast default', isTR ? 'Global PortFast' : 'Global PortFast', '(config)#'],
         ['ipv6 unicast-routing', isTR ? 'IPv6 yönlendirme' : 'Enable IPv6 routing', '(config)#'],
         ['crypto key generate rsa', isTR ? 'RSA anahtarı üret (SSH)' : 'Generate RSA keys', '(config)#'],
+        ['crypto isakmp policy <pri>', isTR ? 'ISAKMP politikası oluştur' : 'Create ISAKMP policy', '(config)#'],
+        ['crypto isakmp key <secret> address <peer>', isTR ? 'ISAKMP pre-share anahtarı tanımla' : 'Define ISAKMP pre-shared key', '(config)#'],
+        ['crypto ipsec transform-set <name> <encr> <auth>', isTR ? 'IPsec dönüştürme kümesi' : 'Define IPsec transform set', '(config)#'],
+        ['crypto map <name> <seq> ipsec-isakmp', isTR ? 'Crypto Map haritası oluştur' : 'Create Crypto Map', '(config)#'],
+        ['ip dhcp snooping information option', isTR ? 'DHCP Snooping Option 82 bilgi eklemeyi aç' : 'Enable DHCP Snooping Option 82', '(config)#'],
         ['snmp-server community <c>', isTR ? 'SNMP topluluğu' : 'Set SNMP community', '(config)#'],
         ['archive', isTR ? 'Arşiv yapılandırması' : 'Archive configuration', '(config)#'],
         ['ip prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]', isTR ? 'IP Prefix List kuralı tanımla' : 'Define IP prefix list rule', '(config)#'],
@@ -215,6 +220,7 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['ip arp inspection vlan <id>', isTR ? 'DAI (ARP Denetimi)' : 'Enable DAI on VLAN', '(config)#'],
       ]
     },
+
     {
       id: 'examples-dhcp',
       icon: Lightbulb,
@@ -689,7 +695,10 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['network <ip> [wildcard]', isTR ? 'Ağ ekle (RIP/EIGRP)' : 'Add network (RIP/EIGRP)', '(config-router)#'],
         ['network <ip> area <id>', isTR ? 'OSPF ağı ekle' : 'Add OSPF network', '(config-router)#'],
         ['neighbor <ip> remote-as <as>', isTR ? 'BGP komşusu ekle' : 'Add BGP neighbor', '(config-router)#'],
+        ['neighbor <ip> route-map <map> {in|out}', isTR ? 'BGP komşusuna Route-Map kuralı bağla' : 'Bind Route-Map policy to BGP neighbor', '(config-router)#'],
+        ['neighbor <ip> weight <value>', isTR ? 'BGP komşu rota ağırlığı (Weight) ata' : 'Set BGP neighbor route weight', '(config-router)#'],
         ['no neighbor <ip> remote-as', isTR ? 'BGP komşusunu sil' : 'Remove BGP neighbor', '(config-router)#'],
+
         ['router-id <ip>', isTR ? 'Router ID ayarla' : 'Set router ID', '(config-router)#'],
         ['passive-interface <int>', isTR ? 'Pasif arayüz' : 'Passive interface', '(config-router)#'],
         ['no passive-interface <int>', isTR ? 'Pasif arayüz kaldır' : 'Remove passive interface', '(config-router)#'],
@@ -756,7 +765,11 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
         ['show spanning-tree', isTR ? 'STP durumu' : 'STP status', '#'],
         ['show port-security', isTR ? 'Port güvenliği' : 'Port security status', '#'],
         ['show ssh', isTR ? 'SSH durumu' : 'SSH status', '#'],
+        ['show crypto isakmp sa', isTR ? 'ISAKMP SA güvenlik durumunu göster' : 'Show ISAKMP SA status', '#'],
+        ['show crypto ipsec sa', isTR ? 'IPsec SA tünel istatistiklerini göster' : 'Show IPsec SA statistics', '#'],
+        ['show crypto map', isTR ? 'Crypto Map haritalarını göster' : 'Show Crypto Map entries', '#'],
         ['show wireless', isTR ? 'Kablosuz durumu' : 'Display wireless status', '#'],
+
         ['show ip dhcp snooping', isTR ? 'DHCP snooping' : 'Display DHCP snooping', '#'],
         ['show ip dhcp pool', isTR ? 'DHCP havuzları' : 'Display DHCP pools', '#'],
         ['show ip dhcp binding', isTR ? 'DHCP atamaları' : 'DHCP bindings', '#'],
