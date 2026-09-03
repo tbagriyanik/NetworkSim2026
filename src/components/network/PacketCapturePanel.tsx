@@ -266,8 +266,8 @@ export const PacketCapturePanel = ({
             <button
               onClick={() => setShowExclude(!showExclude)}
               className={`px-1.5 py-0.5 rounded text-[10px] font-bold border transition-colors ${showExclude || excludeQuery
-                  ? isDark ? 'border-amber-500/60 text-amber-300 bg-amber-500/10' : 'border-amber-500 text-amber-800 bg-amber-50'
-                  : isDark ? 'border-secondary-700 text-secondary-300 opacity-60 hover:opacity-100' : 'border-secondary-300 text-secondary-700 opacity-60 hover:opacity-100'
+                ? isDark ? 'border-amber-500/60 text-amber-300 bg-amber-500/10' : 'border-amber-500 text-amber-800 bg-amber-50'
+                : isDark ? 'border-secondary-700 text-secondary-300 opacity-60 hover:opacity-100' : 'border-secondary-300 text-secondary-700 opacity-60 hover:opacity-100'
                 }`}
               title={language === 'tr' ? 'Dışlama filtresini aç/kapat' : 'Toggle exclude filter'}
             >
@@ -300,7 +300,8 @@ export const PacketCapturePanel = ({
         </div>
 
         {/* 3-Pane Split View */}
-        <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden pr-3.5 pb-2">
+
           {/* Pane 1: Top Packet List */}
           <div className="h-[45%] flex flex-col min-h-0 border-b dark:border-secondary-800 border-secondary-200">
             <div className="custom-scrollbar flex-1 overflow-auto w-full">
@@ -319,8 +320,8 @@ export const PacketCapturePanel = ({
                           key={pkt.id}
                           onClick={() => setSelectedPacket(pkt)}
                           className={`border-b last:border-0 cursor-pointer select-none transition-colors ${isSelected
-                              ? isDark ? 'bg-primary-600/40 text-white font-semibold' : 'bg-primary-500/20 text-slate-900 font-semibold'
-                              : isDark ? 'border-secondary-800/40 hover:bg-secondary-800/35' : 'border-secondary-100/30 hover:bg-secondary-50/40'
+                            ? isDark ? 'bg-primary-600/40 text-white font-semibold' : 'bg-primary-500/20 text-slate-900 font-semibold'
+                            : isDark ? 'border-secondary-800/40 hover:bg-secondary-800/35' : 'border-secondary-100/30 hover:bg-secondary-50/40'
                             }`}
                         >
                           {columnOrder.map(col => {

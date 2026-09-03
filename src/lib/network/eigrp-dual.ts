@@ -206,6 +206,33 @@ export function buildEigrp6TopologyTable(
 
   const topologyTable: EigrpTopologyEntry[] = [];
 
+  // 1. Self-connected IPv6 networks with EIGRPv6 enabled
+  Object.values(state.ports || {}).forEach(port => {
+    if (port.ipv6Address && !port.shutdown && port.ipv6Eigrp?.enabled && port.ipv6Eigrp.as === myAs) {
+      const [addr, lenStr] = port.ipv6Address.split('/');
+      const len = lenStr || '64';
+      const dest = addr;
+      const linkBw = getPortBandwidthKbps(port);
+      const linkDelay = getPortDelayUsec(port);
+      const cd = calculateEigrpMetric(linkBw, linkDelay);
+
+      topologyTable.push({
+        destination: dest,
+        subnetMask: len,
+        neighborId: deviceId,
+        neighborIp: 'Connected',
+        interfaceId: port.id,
+        reportedDistance: 0,
+        computedDistance: cd,
+        feasibleDistance: cd,
+        isSuccessor: true,
+        isFeasibleSuccessor: false,
+        state: 'Passive'
+      });
+    }
+  });
+
+  // 2. Neighbor-advertised IPv6 networks
   deviceStates.forEach((otherState, otherId) => {
     if (otherId === deviceId) return;
     const otherAs = otherState.eigrp6Config?.as;
@@ -215,16 +242,16 @@ export function buildEigrp6TopologyTable(
     let connectedPort: Port | undefined;
     let neighborIp: string | undefined;
 
-    for (const port of Object.values(state.ports)) {
+    for (const port of Object.values(state.ports || {})) {
       if ((!port.ipv6Address && !port.ipv6LinkLocal) || port.shutdown || !port.ipv6Eigrp?.enabled || port.ipv6Eigrp.as !== myAs) continue;
 
-      const neighborPort = Object.values(otherState.ports).find(p =>
+      const neighborPort = Object.values(otherState.ports || {}).find(p =>
         (p.ipv6Address || p.ipv6LinkLocal) && !p.shutdown && p.ipv6Eigrp?.enabled && p.ipv6Eigrp.as === myAs
       );
 
       if (neighborPort) {
         connectedPort = port;
-        neighborIp = neighborPort.ipv6LinkLocal || neighborPort.ipv6Address?.split('/')[0];
+        neighborIp = neighborPort.ipv6LinkLocal || (neighborPort.ipv6Address ? neighborPort.ipv6Address.split('/')[0] : 'FE80::1');
         break;
       }
     }
@@ -233,15 +260,15 @@ export function buildEigrp6TopologyTable(
     const port = connectedPort;
     const nip = neighborIp;
 
-    // 1. Neighbor's connected IPv6 networks
-    Object.values(otherState.ports).forEach(otherPort => {
+    // Neighbor's connected IPv6 networks
+    Object.values(otherState.ports || {}).forEach(otherPort => {
       if (!otherPort.ipv6Address || otherPort.shutdown) return;
 
       const [addr, lenStr] = otherPort.ipv6Address.split('/');
       const len = lenStr || '64';
       const dest = addr;
 
-      const rd = 0;
+      const rd = 256000;
       const linkBw = getPortBandwidthKbps(port);
       const linkDelay = getPortDelayUsec(port);
       const cd = calculateEigrpMetric(linkBw, linkDelay) + rd;
@@ -261,11 +288,11 @@ export function buildEigrp6TopologyTable(
       });
     });
 
-    // 2. IPv6 routes neighbor learned (propagated RD)
+    // IPv6 routes neighbor learned (propagated RD)
     (otherState.ipv6DynamicRoutes || []).forEach(route => {
       const dest = route.destination;
       const len = String(route.prefixLength || 64);
-      const rd = route.metric || 0;
+      const rd = route.metric || 256000;
 
       const linkBw = getPortBandwidthKbps(port);
       const linkDelay = getPortDelayUsec(port);
@@ -289,6 +316,7 @@ export function buildEigrp6TopologyTable(
 
   return runEigrpDual(topologyTable);
 }
+
 
 /**
  * Calculate EIGRPv6 routes for a device

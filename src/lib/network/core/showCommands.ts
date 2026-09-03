@@ -37,9 +37,10 @@ import {
   cmdShowIpEigrpNeighbors, cmdShowIpEigrpInterfaces, cmdShowIpBgpSummary,
   cmdShowIpBgp, cmdShowIpBgpNeighbors, cmdShowIpv6Rip, cmdShowIpv6Ospf,
   cmdShowVrrp, cmdShowVrrpBrief, cmdShowIpv6AccessList,
-  cmdShowPrefixList, cmdShowRouteMap, cmdShowIpv6EigrpNeighbors,
+  cmdShowPrefixList, cmdShowRouteMap, cmdShowIpv6EigrpNeighbors, cmdShowIpv6EigrpTopology, cmdShowIpv6EigrpInterfaces,
   cmdShowGlbp, cmdShowIpFlowExport, cmdShowIpCacheFlow, cmdShowIpv6Neighbors
 } from './showRoutingDisplay';
+
 
 
 import {
@@ -175,7 +176,9 @@ export const showHandlers: Record<string, CommandHandler> = {
   'show ipv6 prefix-list': cmdShowPrefixList,
   'show route-map': cmdShowRouteMap,
   'show ipv6 eigrp neighbors': cmdShowIpv6EigrpNeighbors,
-  'show ipv6 eigrp topology': cmdShowIpv6EigrpNeighbors,
+  'show ipv6 eigrp topology': cmdShowIpv6EigrpTopology,
+  'show ipv6 eigrp interfaces': cmdShowIpv6EigrpInterfaces,
+
   'show glbp': cmdShowGlbp,
   'show glbp brief': cmdShowGlbp,
   'show ip flow export': cmdShowIpFlowExport,

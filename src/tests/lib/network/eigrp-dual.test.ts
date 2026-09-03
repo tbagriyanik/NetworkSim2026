@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SwitchState } from '../../../lib/network/types';
-import { buildEigrpTopologyTable, runEigrpDual } from '../../../lib/network/eigrp-dual';
+import { buildEigrpTopologyTable, runEigrpDual, buildEigrp6TopologyTable, calculateEigrp6Routes } from '../../../lib/network/eigrp-dual';
+
 
 describe('EIGRP DUAL Algorithm', () => {
   let deviceStates: Map<string, SwitchState>;
@@ -156,4 +157,52 @@ describe('EIGRP DUAL Algorithm', () => {
     // RD(8000) > FD(6120), so it should NOT be FS
     expect(rejectedFs?.isFeasibleSuccessor).toBe(false);
   });
+
+  it('should build IPv6 EIGRP topology table and compute IPv6 DUAL routes', () => {
+    const r1 = {
+      id: 'r1',
+      eigrp6Config: { as: '100', shutdown: false },
+      ports: {
+        'gi0/0': {
+          id: 'gi0/0',
+          ipv6Address: '2001:db8:1::1/64',
+          ipv6LinkLocal: 'fe80::1',
+          type: 'gigabitethernet',
+          ipv6Eigrp: { enabled: true, as: '100' }
+        }
+      }
+    } as unknown as SwitchState;
+
+    const r2 = {
+      id: 'r2',
+      eigrp6Config: { as: '100', shutdown: false },
+      ports: {
+        'gi0/0': {
+          id: 'gi0/0',
+          ipv6Address: '2001:db8:1::2/64',
+          ipv6LinkLocal: 'fe80::2',
+          type: 'gigabitethernet',
+          ipv6Eigrp: { enabled: true, as: '100' }
+        },
+        'gi0/1': {
+          id: 'gi0/1',
+          ipv6Address: '2001:db8:2::1/64',
+          ipv6LinkLocal: 'fe80::2',
+          type: 'gigabitethernet',
+          ipv6Eigrp: { enabled: true, as: '100' }
+        }
+      }
+    } as unknown as SwitchState;
+
+    deviceStates.set('r1', r1);
+    deviceStates.set('r2', r2);
+
+    const topoTable = buildEigrp6TopologyTable('r1', deviceStates);
+
+    expect(topoTable.length).toBeGreaterThan(0);
+
+    const routes = calculateEigrp6Routes('r1', deviceStates);
+    expect(routes.some((r: { destination: string }) => r.destination === '2001:db8:2::1')).toBe(true);
+  });
 });
+

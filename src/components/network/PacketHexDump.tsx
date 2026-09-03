@@ -73,9 +73,9 @@ export function PacketHexDump({ packet, isDark }: PacketHexDumpProps) {
   }, [bytes]);
 
   return (
-    <div className={`p-2 font-mono text-[11px] leading-relaxed custom-scrollbar overflow-auto h-full ${
-      isDark ? 'bg-secondary-950 text-emerald-400' : 'bg-slate-900 text-emerald-300'
-    }`}>
+    <div className={`p-2 font-mono text-[11px] leading-relaxed custom-scrollbar overflow-auto h-full pr-2 ${isDark ? 'bg-secondary-950 text-emerald-400' : 'bg-slate-900 text-emerald-300'
+      }`}>
+
       {rows.map((row, rIdx) => (
         <div key={rIdx} className="flex items-center gap-3 hover:bg-white/5 px-1 rounded">
           {/* Offset */}

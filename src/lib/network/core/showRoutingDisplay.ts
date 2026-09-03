@@ -3,6 +3,8 @@ import type { CanvasDevice, CanvasConnection } from '@/components/network/networ
 import type { SwitchState, CommandResult, Route, Port, DhcpSnoopingBinding } from '../types';
 import { buildOSPFLinkStateDatabase } from '../ospf';
 import { recalculateBgpNeighbors, calculateBgpRoutes } from '../routing';
+import { buildEigrp6TopologyTable, EigrpTopologyEntry } from '../eigrp-dual';
+
 import { ensureDeviceStatesMap } from '../networkUtils';
 import {
   getPrefixLength, getNetworkAddress, formatPortName, isIpInNetwork, getSTPCost,
@@ -1331,25 +1333,117 @@ export function cmdShowRouteMap(state: SwitchState, _input: string, _ctx: Comman
   return { success: true, output };
 }
 
-export function cmdShowIpv6EigrpNeighbors(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+export function cmdShowIpv6EigrpNeighbors(state: SwitchState, _input: string, ctx?: CommandContext): CommandResult {
   const as = state.eigrp6Config?.as;
-  if (!as) return { success: true, output: '\n% EIGRPv6 is not configured\n' };
+  if (!as || state.eigrp6Config?.shutdown) return { success: true, output: '\n% EIGRPv6 is not configured\n' };
 
   let output = `\nEIGRP-IPv6 Neighbors for AS(${as})\n`;
   output += 'H   Address                                 Interface       Hold Uptime   SRTT   RTO  Q  Seq\n';
   output += '                                                            (sec)         (ms)        Cnt Num\n';
 
-  let hIdx = 0;
-  Object.values(state.ports || {}).forEach(port => {
-    if (port.ipv6Eigrp?.enabled && !port.shutdown) {
-      const neighborIp = port.ipv6LinkLocal || 'FE80::1';
-      output += `${hIdx.toString().padEnd(4)} ${neighborIp.padEnd(39)} ${port.id.padEnd(15)} 14 00:04:12    1   200  0  5\n`;
-      hIdx++;
+  const neighbors: Array<{ address: string; intf: string }> = [];
+
+  if (ctx?.deviceStates && ctx?.sourceDeviceId) {
+    const myId = ctx.sourceDeviceId;
+    ctx.deviceStates.forEach((otherState, otherId) => {
+      if (otherId === myId) return;
+      if (otherState.eigrp6Config?.as !== as || otherState.eigrp6Config?.shutdown) return;
+
+      Object.values(state.ports || {}).forEach(port => {
+        if (!port.ipv6Eigrp?.enabled || port.ipv6Eigrp.as !== as || port.shutdown) return;
+        const nPort = Object.values(otherState.ports || {}).find(p =>
+          (p.ipv6Address || p.ipv6LinkLocal) && !p.shutdown && p.ipv6Eigrp?.enabled && p.ipv6Eigrp.as === as
+        );
+        if (nPort) {
+          const nIp = nPort.ipv6LinkLocal || (nPort.ipv6Address ? nPort.ipv6Address.split('/')[0] : 'FE80::1');
+          if (!neighbors.some(n => n.address === nIp && n.intf === port.id)) {
+            neighbors.push({ address: nIp, intf: port.id });
+          }
+        }
+      });
+    });
+  }
+
+  if (neighbors.length > 0) {
+    neighbors.forEach((n, idx) => {
+      output += `${idx.toString().padEnd(4)} ${n.address.padEnd(39)} ${n.intf.padEnd(15)} 14 00:04:12    1   200  0  ${idx + 1}\n`;
+    });
+  } else {
+    let hIdx = 0;
+    Object.values(state.ports || {}).forEach(port => {
+      if (port.ipv6Eigrp?.enabled && !port.shutdown) {
+        const neighborIp = port.ipv6LinkLocal || 'FE80::1';
+        output += `${hIdx.toString().padEnd(4)} ${neighborIp.padEnd(39)} ${port.id.padEnd(15)} 14 00:04:12    1   200  0  ${hIdx + 1}\n`;
+        hIdx++;
+      }
+    });
+  }
+
+  return { success: true, output };
+}
+
+export function cmdShowIpv6EigrpTopology(state: SwitchState, _input: string, ctx?: CommandContext): CommandResult {
+  const as = state.eigrp6Config?.as;
+  if (!as || state.eigrp6Config?.shutdown) {
+    return { success: true, output: '\n% EIGRPv6 is not configured on this device\n' };
+  }
+
+  const routerId = state.eigrp6Config?.routerId || state.routerId || '1.1.1.1';
+  let output = `\nEIGRP-IPv6 Topology Table for AS(${as})/ID(${routerId})\n`;
+  output += 'Codes: P - Passive, A - Active, U - Update, Q - Query, R - Reply, r - reply Status, s - sia Status\n\n';
+
+  if (!ctx?.deviceStates || !ctx?.sourceDeviceId) {
+    output += 'P 2001:DB8:1::/64, 1 successors, FD is 281600\n        via Connected, GigabitEthernet1/0/1\n';
+    return { success: true, output };
+  }
+
+  const topoTable = buildEigrp6TopologyTable(ctx.sourceDeviceId, ctx.deviceStates);
+  if (topoTable.length === 0) {
+    output += '% EIGRPv6 topology table is empty\n';
+    return { success: true, output };
+  }
+
+  const grouped = new Map<string, EigrpTopologyEntry[]>();
+  topoTable.forEach(entry => {
+    const key = `${entry.destination}/${entry.subnetMask}`;
+    const list = grouped.get(key) || [];
+    list.push(entry);
+    grouped.set(key, list);
+  });
+
+  grouped.forEach((entries, key) => {
+    const successorCount = entries.filter(e => e.isSuccessor).length;
+    const fd = entries[0]?.feasibleDistance || 0;
+    const stateCode = entries[0]?.state === 'Active' ? 'A' : 'P';
+    output += `${stateCode} ${key}, ${successorCount} successors, FD is ${fd}\n`;
+    entries.forEach(e => {
+      const viaText = e.neighborIp === 'Connected' ? 'Connected' : e.neighborIp;
+      output += `        via ${viaText} (${e.computedDistance}/${e.reportedDistance}), ${e.interfaceId}\n`;
+    });
+  });
+
+  return { success: true, output };
+}
+
+export function cmdShowIpv6EigrpInterfaces(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  const as = state.eigrp6Config?.as;
+  if (!as || state.eigrp6Config?.shutdown) {
+    return { success: true, output: '\n% EIGRPv6 is not configured on this device\n' };
+  }
+
+  let output = `\nEIGRP-IPv6 Interfaces for AS(${as})\n`;
+  output += 'Xmit Queue   PeerQ        Mean SRTT   Pacing Time   Multicast    Pending\n';
+  output += 'Interface              Peers  Un/Reliable  Un/Reliable  (ms)        Un/Reliable   Flow Timer   Routes\n';
+
+  Object.entries(state.ports || {}).forEach(([portId, port]) => {
+    if (port.ipv6Eigrp?.enabled && port.ipv6Eigrp.as === as && !port.shutdown) {
+      output += `${portId.padEnd(23)}1      0/0          0/0          12          0/10          0            0\n`;
     }
   });
 
   return { success: true, output };
 }
+
 
 export function cmdShowGlbp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   let output = '\n';

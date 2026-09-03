@@ -33,9 +33,8 @@ function TreeNode({ title, children, defaultExpanded = true, isDark }: TreeNodeP
     <div className="select-none text-xs font-mono">
       <div
         onClick={() => setExpanded(!expanded)}
-        className={`flex items-center gap-1 px-1 py-0.5 cursor-pointer rounded transition-colors ${
-          isDark ? 'hover:bg-secondary-800 text-slate-200' : 'hover:bg-secondary-100 text-slate-800'
-        }`}
+        className={`flex items-center gap-1 px-1 py-0.5 cursor-pointer rounded transition-colors ${isDark ? 'hover:bg-secondary-800 text-slate-200' : 'hover:bg-secondary-100 text-slate-800'
+          }`}
       >
         {children ? (
           expanded ? (
@@ -76,7 +75,8 @@ export function ProtocolTreeDetails({ packet, isDark, language }: ProtocolTreeDe
   const dstMac = packet.dstMac || '00:5E:4D:3C:2B:1A';
 
   return (
-    <div className="p-2 space-y-1 custom-scrollbar overflow-auto h-full">
+    <div className="p-2 space-y-1 custom-scrollbar overflow-auto h-full pr-2">
+
       {/* Frame Layer */}
       <TreeNode
         title={`Frame: ${pktLen} bytes on wire (${pktLen * 8} bits), ${pktLen} bytes captured`}
