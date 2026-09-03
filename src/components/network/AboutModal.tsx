@@ -284,7 +284,8 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
                       {isTR ? 'Sürüm' : 'Version'}
                     </span>
                     <span className="text-sm font-semibold text-secondary-800 dark:text-secondary-200">
-                      {process.env.NEXT_PUBLIC_APP_VERSION || '2.4'}
+                      {process.env.NEXT_PUBLIC_APP_VERSION || '4.2'}
+
                     </span>
                   </div>
                   <div className="flex flex-col">

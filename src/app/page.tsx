@@ -1141,8 +1141,8 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     } else if (device === 'firewall') {
       setActiveFirewallId(deviceId);
       openDeviceWindow(deviceId, 'firewall', 'console');
-    } else if (device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc') {
-      // Switch, Router, or WLC - set as CLI device and open CLI modal
+    } else if (device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc' || device === 'hub' || device === 'cloud' || device === 'printer' || device === 'mobile') {
+      // Switch, Router, WLC, Hub, Cloud, Printer, or Mobile - set as device panel and open modal
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       const deviceState = getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
       getOrCreateDeviceOutputs(deviceId, deviceState);
@@ -1152,6 +1152,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       setUnifiedDeviceActiveTab('console');
       openDeviceWindow(deviceId, device, 'console');
     }
+
     // Selecting/opening a device always brings its floating window to the
     // front and expands it if it was collapsed.
     restoreWindow(deviceId);

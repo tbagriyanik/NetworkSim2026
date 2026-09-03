@@ -322,7 +322,7 @@ export function useDeviceManager() {
     }
 
     let deviceState = deviceStates.get(deviceId);
-    const defaultName = deviceType === 'router' ? 'Router' : deviceType === 'firewall' ? 'asa' : deviceType === 'iot' ? 'IoT' : deviceType === 'wlc' ? 'WLC' : 'Switch';
+    const defaultName = deviceType === 'router' ? 'Router' : deviceType === 'firewall' ? 'asa' : deviceType === 'iot' ? 'IoT' : deviceType === 'wlc' ? 'WLC' : deviceType === 'hub' ? 'Hub' : deviceType === 'cloud' ? 'Cloud' : deviceType === 'printer' ? 'Printer' : deviceType === 'mobile' ? 'Mobile' : 'Switch';
 
     if (!deviceState) {
       // Use the provided switchModel, default to L2 for switches, L3 for routers, ASA for firewall, or AIR-CT2504-K9 for WLC
@@ -339,10 +339,18 @@ export function useDeviceManager() {
         newState = createInitialState(initialMac, model as 'WS-C2960-24TT-L' | 'WS-C3650-24PS');
       }
 
-      const hostname = initialHostname || defaultName;
+      let hostname = initialHostname || defaultName;
+      if (hostname === 'Switch' && (deviceType === 'hub' || deviceType === 'cloud' || deviceType === 'printer' || deviceType === 'mobile')) {
+        hostname = defaultName;
+      }
       // Map switchL2/switchL3 back to 'switch' if needed or just use as is if types match
       const stateDeviceType = ((deviceType === 'switchL2' || deviceType === 'switchL3') ? 'switch' : deviceType) as SwitchState['deviceType'];
       newState = { ...newState, hostname, deviceType: stateDeviceType };
+      if (deviceType === 'hub' || deviceType === 'cloud' || deviceType === 'printer' || deviceType === 'mobile') {
+        delete (newState as any).switchModel;
+      }
+
+
 
       // IoT devices should be WiFi clients, not AP
       if (deviceType === 'iot' && newState.ports['wlan0']) {

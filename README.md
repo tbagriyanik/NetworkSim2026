@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-4.1.0-blue)
+![Version](https://img.shields.io/badge/version-4.2.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.3-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -54,7 +54,7 @@ npm test
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 4.1.0 |
+| Version / Sürüm | 4.2.0 |
 | Total Lines / Toplam Satır (`src/`) | 159,503 |
 | Source Files / Kaynak Dosya | 689 |
 | Documentation Files / Dokümantasyon Dosya | 31 |

@@ -115,14 +115,21 @@ export function UnifiedDevicePanel({
     const isNarrow = modalSize.width < 1100;
 
     const deviceName = useMemo(() => {
+        const deviceObj = topologyDevices?.find(d => d.id === deviceId);
         const deviceState = deviceStates.get(deviceId);
-        return deviceState?.hostname || deviceId;
-    }, [deviceStates, deviceId]);
+        const rawName = deviceObj?.name || (deviceState?.hostname !== 'Switch' ? deviceState?.hostname : undefined);
+        if (deviceType === 'hub') return rawName || 'Hub';
+        if (deviceType === 'cloud') return rawName || 'Cloud';
+        return rawName || deviceState?.hostname || deviceObj?.name || deviceId;
+    }, [deviceStates, deviceId, deviceType, topologyDevices]);
+
 
     const deviceModel = useMemo(() => {
         if (deviceType === 'router') return 'ISR 4451 X';
-        return state?.switchModel || 'WS-C2960-24TT-L';
+        if (deviceType === 'switchL2' || deviceType === 'switchL3') return state?.switchModel || 'WS-C2960-24TT-L';
+        return '';
     }, [deviceType, state]);
+
 
     const isOffline = useMemo(() => {
         return topologyDevices.some(d => d.id === deviceId && d.status === 'offline');
@@ -172,10 +179,13 @@ export function UnifiedDevicePanel({
                             </TabsTrigger>
 
 
-                            <TabsTrigger value="settings" className="flex items-center gap-1.5 px-2 h-6 text-xs">
-                                <Settings className="w-3 h-3" />
-                                <span className="hidden sm:inline">{t.quickSettingsAndTasks}</span>
-                            </TabsTrigger>
+                            {deviceType !== 'cloud' && deviceType !== 'printer' && deviceType !== 'mobile' && deviceType !== 'hub' && (
+                                <TabsTrigger value="settings" className="flex items-center gap-1.5 px-2 h-6 text-xs">
+                                    <Settings className="w-3 h-3" />
+                                    <span className="hidden sm:inline">{t.quickSettingsAndTasks}</span>
+                                </TabsTrigger>
+                            )}
+
                             {(deviceType === 'switchL2' || deviceType === 'switchL3' || deviceType === 'router') && (
                                 <TabsTrigger value="stp" className="flex items-center gap-1.5 px-2 h-6 text-xs">
                                     <Layers className="w-3 h-3 text-warning-500" />
@@ -190,7 +200,10 @@ export function UnifiedDevicePanel({
                     )}>
                         <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-error-500" : "bg-success-500")} />
                         <span className="truncate">{deviceName}</span>
-                        <span className="opacity-50 text-[9px] uppercase">({deviceType})</span>
+                        {deviceType !== 'hub' && deviceType !== 'cloud' && (
+                            <span className="opacity-50 text-[9px] uppercase">({deviceType})</span>
+                        )}
+
                     </div>
                 </div>
             }
@@ -214,7 +227,8 @@ export function UnifiedDevicePanel({
                                     <Layers className="w-7 h-7" />
                                 </div>
                                 <div className="space-y-1">
-                                    <h3 className="text-sm font-bold">{deviceName} — Layer-1 Multiport Hub</h3>
+                                    <h3 className="text-sm font-bold">Layer-1 Multiport Hub</h3>
+
                                     <p className="text-xs opacity-70 max-w-md leading-relaxed">
                                         {language === 'tr'
                                             ? 'Bu cihaz Katman-1 (fiziksel katman) çoklu port tekrarlayıcıdır. Yapılandırılamaz (unmanaged) yapıda olduğundan VLAN, MAC adresi tablosu veya CLI komut arayüzü bulunmaz. Gelen sinyalleri tüm bağlı aktif portlara aynen iletir.'

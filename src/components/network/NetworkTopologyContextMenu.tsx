@@ -330,8 +330,9 @@ export default function NetworkTopologyContextMenu({
                   label: t.open,
                   shortcut: 'Enter',
                   icon: 'open',
-                  onClick: () => { if (device && device.type !== 'iot') onOpenDevice(device); onClose(); },
-                  disabled: !device || device.type === 'iot'
+                  onClick: () => { if (device) onOpenDevice(device); onClose(); },
+                  disabled: !device
+
                 })}
                 {isRouterOrSwitch && onOpenTasks && renderMenuItem({
                   label: t.tasks,

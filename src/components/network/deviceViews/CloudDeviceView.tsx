@@ -40,8 +40,9 @@ export function CloudDeviceView({
           </div>
           <div>
             <h2 className="text-base font-bold flex items-center gap-2">
-              {device.name} — WAN / Internet Service Provider
+              WAN / Internet Service Provider
               <span className="text-xs px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-normal">
+
                 {isTr ? 'Aktif İnternet Geçidi' : 'Active Internet Gateway'}
               </span>
             </h2>

@@ -125,8 +125,8 @@ export function MultiDeviceWindowManager({
                 type="button"
                 onClick={() => setActiveTabId(win.id)}
                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all shrink-0 ${isActive
-                    ? 'bg-emerald-600 text-white shadow-md border border-emerald-400/30'
-                    : 'bg-secondary-900/60 text-secondary-300 hover:bg-secondary-800 hover:text-white'
+                  ? 'bg-emerald-600 text-white shadow-md border border-emerald-400/30'
+                  : 'bg-secondary-900/60 text-secondary-300 hover:bg-secondary-800 hover:text-white'
                   }`}
               >
                 <span className="truncate max-w-[120px]">{devName}</span>
@@ -311,15 +311,16 @@ export function MultiDeviceWindowManager({
           );
         }
 
-        // Render Switch (L2/L3), Router, WLC Devices
+        const isSwitch = deviceType === 'switchL2' || deviceType === 'switchL3';
         const deviceState = (deviceStates.get(win.id) || {
           hostname: deviceName,
-          switchModel: 'WS-C2960-24TT-L',
+          switchModel: isSwitch ? 'WS-C2960-24TT-L' : undefined,
           ports: {},
           vlanTable: {},
           security: {},
           services: {},
         }) as unknown as SwitchState;
+
 
         const output = deviceOutputs.get(win.id) || [];
         const prompt = (deviceState as unknown as { prompt?: string }).prompt || `${deviceName}>`;

@@ -357,17 +357,9 @@ export function useKeyboardShortcuts({
           e.preventDefault();
           const device = topologyDevices.find(d => d.id === activeDeviceId);
           if (device) {
-            if (device.type === 'router' || device.type === 'switchL2' || device.type === 'switchL3') {
-              const deviceState = getOrCreateDeviceState(device.id, device.type, device.name, device.macAddress, device.switchModel);
-              getOrCreateDeviceOutputs(device.id, deviceState);
-              setActiveDeviceId(device.id);
-              setActiveDeviceType(device.type);
-              setUnifiedDeviceActiveTab('console');
-              setShowUnifiedDeviceModal(true);
-            } else {
-              handleDeviceDoubleClick(device.type, device.id);
-            }
+            handleDeviceDoubleClick(device.type, device.id);
           }
+
         }
       }
     };
