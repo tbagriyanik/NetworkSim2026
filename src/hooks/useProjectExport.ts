@@ -58,7 +58,7 @@ export function useProjectExport({
 
   const getFullProjectData = useCallback(() => {
     const excludedDeviceIds = new Set(
-      topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot').map(d => d.id)
+      topologyDevices.filter(d => d.type === 'pc' || d.type === 'iot' || d.type === 'mobile' || d.type === 'printer' || d.type === 'hub' || d.type === 'cloud').map(d => d.id)
     );
     const iotDeviceIds = new Set(topologyDevices.filter(d => d.type === 'iot').map(d => d.id));
     const topologyDeviceIds = new Set(topologyDevices.map(d => d.id));
@@ -74,7 +74,7 @@ export function useProjectExport({
     });
 
     const syncedDeviceStates = new Map(deviceStates);
-    
+
     // Serialize history as compact deltas (excluding PC/IoT switch states and large derived fields)
     const serializedHistory = encodeHistoryForFile(historyItems, historyIndex, excludedDeviceIds, topologyDeviceIds);
 
@@ -123,7 +123,7 @@ export function useProjectExport({
         devices: topologyDevices
           .filter(d => d.id && d.id.trim() !== '')
           .map(d => {
-            if (d.type === 'pc' || d.type === 'iot') {
+            if (d.type === 'pc' || d.type === 'iot' || d.type === 'mobile' || d.type === 'printer') {
               return {
                 ...d,
                 ports: d.ports.filter(p => p.id === 'eth0' || p.id === 'com1' || p.id === 'wlan0')
@@ -131,6 +131,7 @@ export function useProjectExport({
             }
             return d;
           }),
+
         connections: topologyConnections,
         notes: topologyNotes
       },
@@ -154,7 +155,7 @@ export function useProjectExport({
   const handleSaveProjectInternal = useCallback(() => {
     const projectData = getFullProjectData();
     // In handleSaveProjectInternal, the original code did a bit more trimming, but getFullProjectData does the same now.
-    
+
     const blob = new Blob([safeStringify(projectData)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

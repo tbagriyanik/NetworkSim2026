@@ -17,11 +17,11 @@ describe('useNetworkLogic pure functions', () => {
 
   it('isValidIpv4 should validate IPv4 correctly', () => {
     const { result } = renderHook(() => useNetworkLogic(dummyDeviceStates, dummyConnections, dummyEnvironment));
-    
+
     expect(result.current.isValidIpv4('192.168.1.1')).toBe(true);
     expect(result.current.isValidIpv4('10.0.0.0')).toBe(true);
     expect(result.current.isValidIpv4('255.255.255.255')).toBe(true);
-    
+
     expect(result.current.isValidIpv4('256.0.0.1')).toBe(false);
     expect(result.current.isValidIpv4('192.168.1')).toBe(false);
     expect(result.current.isValidIpv4('192.168.1.1.1')).toBe(false);
@@ -32,18 +32,18 @@ describe('useNetworkLogic pure functions', () => {
 
   it('isSameSubnetByMask should verify subnets correctly', () => {
     const { result } = renderHook(() => useNetworkLogic(dummyDeviceStates, dummyConnections, dummyEnvironment));
-    
+
     // Class C
     expect(result.current.isSameSubnetByMask('192.168.1.10', '192.168.1.20', '255.255.255.0')).toBe(true);
     expect(result.current.isSameSubnetByMask('192.168.1.10', '192.168.2.20', '255.255.255.0')).toBe(false);
-    
+
     // Class B
     expect(result.current.isSameSubnetByMask('172.16.10.10', '172.16.20.20', '255.255.0.0')).toBe(true);
     expect(result.current.isSameSubnetByMask('172.16.10.10', '172.17.20.20', '255.255.0.0')).toBe(false);
-    
+
     // Class A
     expect(result.current.isSameSubnetByMask('10.0.0.1', '10.255.255.254', '255.0.0.0')).toBe(true);
-    
+
     // Invalid inputs
     expect(result.current.isSameSubnetByMask('192.168.1.10', '192.168.1.20', 'invalid.mask')).toBe(false);
     expect(result.current.isSameSubnetByMask(undefined, '192.168.1.20', '255.255.255.0')).toBe(false);
@@ -51,18 +51,23 @@ describe('useNetworkLogic pure functions', () => {
 
   it('normalizeDeviceType should handle valid and invalid types', () => {
     const { result } = renderHook(() => useNetworkLogic(dummyDeviceStates, dummyConnections, dummyEnvironment));
-    
+
     expect(result.current.normalizeDeviceType('switch')).toBe('switchL2');
     expect(result.current.normalizeDeviceType('switchL3')).toBe('switchL3');
     expect(result.current.normalizeDeviceType('pc')).toBe('pc');
     expect(result.current.normalizeDeviceType('router')).toBe('router');
-    
+    expect(result.current.normalizeDeviceType('hub')).toBe('hub');
+    expect(result.current.normalizeDeviceType('cloud')).toBe('cloud');
+    expect(result.current.normalizeDeviceType('mobile')).toBe('mobile');
+    expect(result.current.normalizeDeviceType('printer')).toBe('printer');
+
     expect(() => result.current.normalizeDeviceType('unknown')).toThrowError('Unknown device type: unknown');
   });
 
+
   it('getPortAccessVlan should extract the correct VLAN', () => {
     const { result } = renderHook(() => useNetworkLogic(dummyDeviceStates, dummyConnections, dummyEnvironment));
-    
+
     expect(result.current.getPortAccessVlan({ accessVlan: 10 })).toBe(10);
     expect(result.current.getPortAccessVlan({ accessVlan: '20' })).toBe(20);
     expect(result.current.getPortAccessVlan({ vlan: 30 })).toBe(30);

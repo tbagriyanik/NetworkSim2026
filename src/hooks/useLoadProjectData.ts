@@ -150,6 +150,7 @@ export function useLoadProjectData({
       } else if (safeDevices.length > 0) {
         const newDeviceOutputs = new Map<string, TerminalOutput[]>();
         safeDevices.forEach((item: { id: string; state: SwitchState }) => {
+          if (!item || !item.id) return;
           const deviceId = item.id;
           const state = item.state;
           const isRouter = deviceId.includes('router');
@@ -158,6 +159,7 @@ export function useLoadProjectData({
           const isIoT = deviceId.includes('iot-');
 
           if (isPC || isIoT) return;
+
 
           let bootMessages: TerminalOutput[] = [];
           const suffix = state?.macAddress || deviceId;
@@ -220,12 +222,14 @@ export function useLoadProjectData({
       }
 
       const resolveNoteOverlap = (notes: CanvasNote[], devices: CanvasDevice[]): CanvasNote[] => {
-        const deviceBoxes = devices.map((d) => ({ x: d.x - 50, y: d.y - 35, w: 100, h: 70 }));
+        if (!Array.isArray(notes)) return [];
+        const deviceBoxes = (devices || []).filter(d => d && typeof d === 'object').map((d) => ({ x: (Number(d.x) || 0) - 50, y: (Number(d.y) || 0) - 35, w: 100, h: 70 }));
         const placed: CanvasNote[] = [];
         const overlaps = (a: { x: number; y: number; w: number; h: number }, b: { x: number; y: number; w: number; h: number }) =>
           a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 
         for (const note of notes) {
+          if (!note || typeof note !== 'object') continue;
           const w = Math.max(160, Number(note.width) || 260);
           const h = Math.max(80, Number(note.height) || 120);
           let x = Number(note.x) || 0;
@@ -251,13 +255,15 @@ export function useLoadProjectData({
         return placed;
       };
 
+
       // Load topology
       if (safeTopologyDevices.length > 0 || safeTopologyConnections.length > 0 || safeTopologyNotes.length > 0) {
         const validDevices = safeTopologyDevices.filter(
-          (device: CanvasDevice) => device.id && device.id.trim() !== ''
+          (device: CanvasDevice) => device && typeof device === 'object' && device.id && String(device.id).trim() !== ''
         );
         const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => ({
           ...device,
+          ports: Array.isArray(device.ports) ? device.ports : [],
           type: normalizeDeviceType(device.type),
         })));
         setTopologyDevices(normalizedDevices);
@@ -277,16 +283,17 @@ export function useLoadProjectData({
       if (safeDevices.length > 0 && safeTopologyDevices.length > 0) {
         const newDeviceStates = new Map<string, SwitchState>();
         safeDevices.forEach((item: { id: string; state: SwitchState }) => {
-          if (item.id && item.id.trim() !== '') {
+          if (item && item.id && String(item.id).trim() !== '') {
             newDeviceStates.set(item.id, item.state);
           }
         });
 
         const validDevices = safeTopologyDevices.filter(
-          (device: CanvasDevice) => device.id && device.id.trim() !== ''
+          (device: CanvasDevice) => device && typeof device === 'object' && device.id && String(device.id).trim() !== ''
         );
         const normalizedDevices = applyLinkLocalToUnconfiguredHosts(validDevices.map((device: CanvasDevice) => ({
           ...device,
+          ports: Array.isArray(device.ports) ? device.ports : [],
           type: normalizeDeviceType(device.type),
         })));
 
@@ -294,7 +301,7 @@ export function useLoadProjectData({
           const deviceState = newDeviceStates.get(device.id);
           if (!deviceState || !deviceState.ports) return device;
 
-          const updatedPorts = device.ports.map((port) => {
+          const updatedPorts = (device.ports || []).map((port) => {
             const statePort = deviceState.ports[port.id];
             if (statePort && statePort.spanningTree) {
               return {
@@ -363,9 +370,10 @@ export function useLoadProjectData({
       const newState = {
         topologyDevices: applyLinkLocalToUnconfiguredHosts(
           (safeTopologyDevices || [])
-            .filter((device: CanvasDevice) => device.id && device.id.trim() !== '')
+            .filter((device: CanvasDevice) => device && typeof device === 'object' && device.id && String(device.id).trim() !== '')
             .map((device: CanvasDevice) => ({
               ...device,
+              ports: Array.isArray(device.ports) ? device.ports : [],
               type: normalizeDeviceType(device.type),
             }))
         ),
@@ -373,12 +381,13 @@ export function useLoadProjectData({
         topologyNotes: safeTopologyNotes,
         deviceStates: new Map(
           safeDevices
-            ?.filter((item: { id?: string; state?: SwitchState }) => !!item.id && item.id.trim() !== '')
+            ?.filter((item: { id?: string; state?: SwitchState }) => item && !!item.id && String(item.id).trim() !== '')
             ?.map((item: { id: string; state: SwitchState }) => [item.id, item.state]) || []
         ),
-        deviceOutputs: new Map(safeDeviceOutputs.map((item: { id: string; outputs: TerminalOutput[] }) => [item.id, item.outputs])),
-        pcOutputs: new Map(safePcOutputs.map((item: { id: string; outputs: PCOutputLine[] }) => [item.id, item.outputs])),
-        pcHistories: new Map(safePcHistories.map((item: { id: string; history: string[] }) => [item.id, item.history])),
+        deviceOutputs: new Map(safeDeviceOutputs.filter(item => item && item.id).map((item: { id: string; outputs: TerminalOutput[] }) => [item.id, item.outputs])),
+        pcOutputs: new Map(safePcOutputs.filter(item => item && item.id).map((item: { id: string; outputs: PCOutputLine[] }) => [item.id, item.outputs])),
+        pcHistories: new Map(safePcHistories.filter(item => item && item.id).map((item: { id: string; history: string[] }) => [item.id, item.history])),
+
         cableInfo: safeCableInfo
           ? {
             connected: typeof safeCableInfo.connected === 'boolean' ? safeCableInfo.connected : false,
@@ -417,7 +426,9 @@ export function useLoadProjectData({
 
       return true;
     } catch (error) {
+      logger.error('Failed to load project data:', error);
       errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'loadProjectData', error: String(error) }));
+
       try { localStorage.removeItem('netsim_autosave'); } catch { /* ignore */ }
       toast({
         variant: 'destructive',

@@ -1602,22 +1602,26 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
     let savedData: string | null = null;
     try { savedData = localStorage.getItem('netsim_autosave'); } catch { /* storage unavailable */ }
-    if (savedData) {
+    if (savedData && savedData.trim() !== '' && savedData !== 'undefined' && savedData !== 'null') {
       try {
         const projectData = safeParse<unknown>(savedData);
-        setTimeout(() => loadProjectData(projectData, { keepActiveDevice: true }), 0);
-        // Load last save time from timestamp
-        const parsedProject = (projectData && typeof projectData === 'object') ? projectData as Record<string, unknown> : null;
-        if (parsedProject?.timestamp) {
-          const date = new Date(String(parsedProject.timestamp));
-          setTimeout(() => setLastSaveTime(date.toLocaleTimeString()), 0);
-        } else {
-          setTimeout(() => setLastSaveTime(new Date().toLocaleTimeString()), 0);
+        if (projectData && typeof projectData === 'object') {
+          setTimeout(() => loadProjectData(projectData, { keepActiveDevice: true }), 0);
+          // Load last save time from timestamp
+          const parsedProject = projectData as Record<string, unknown>;
+          if (parsedProject?.timestamp) {
+            const date = new Date(String(parsedProject.timestamp));
+            setTimeout(() => setLastSaveTime(date.toLocaleTimeString()), 0);
+          } else {
+            setTimeout(() => setLastSaveTime(new Date().toLocaleTimeString()), 0);
+          }
         }
       } catch (e) {
         errorHandler.logError(STORAGE_ERRORS.LOAD_FAILED({ operation: 'autosave', error: String(e) }));
+        try { localStorage.removeItem('netsim_autosave'); } catch { /* ignore */ }
       }
     }
+
   }, [loadProjectData]);
 
   const isDark = (effectiveTheme ?? theme) === 'dark';
@@ -1905,7 +1909,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
                 {/* Topology Toolbar */}
                 {activeTab === 'topology' && (
                   <TopologyToolbar
-            isPingPanelOpen={isPingPanelOpen}
+                    isPingPanelOpen={isPingPanelOpen}
                     t={t}
                     isDark={isDark}
                     language={language}

@@ -71,7 +71,7 @@ function cleanState(
   };
 }
 
- 
+
 function serializeState(state: CleanProjectState): any {
   return {
     topologyDevices: state.topologyDevices,
@@ -90,24 +90,42 @@ function serializeState(state: CleanProjectState): any {
   };
 }
 
- 
+
 function deserializeState(serialized: any): ProjectState {
+  if (!serialized || typeof serialized !== 'object') {
+    return {
+      topologyDevices: [],
+      topologyConnections: [],
+      topologyNotes: [],
+      cableInfo: { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
+      activeDeviceId: '',
+      activeDeviceType: 'switchL2',
+      zoom: 1.0,
+      pan: { x: 0, y: 0 },
+      activeTab: 'topology',
+      deviceStates: new Map(),
+      deviceOutputs: new Map(),
+      pcOutputs: new Map(),
+      pcHistories: new Map(),
+    };
+  }
   return {
-    topologyDevices: serialized.topologyDevices || [],
-    topologyConnections: serialized.topologyConnections || [],
-    topologyNotes: serialized.topologyNotes || [],
+    topologyDevices: Array.isArray(serialized.topologyDevices) ? serialized.topologyDevices : [],
+    topologyConnections: Array.isArray(serialized.topologyConnections) ? serialized.topologyConnections : [],
+    topologyNotes: Array.isArray(serialized.topologyNotes) ? serialized.topologyNotes : [],
     cableInfo: serialized.cableInfo || { connected: false, cableType: 'straight', sourceDevice: 'pc', targetDevice: 'switchL2' },
     activeDeviceId: serialized.activeDeviceId || '',
     activeDeviceType: serialized.activeDeviceType || 'switchL2',
     zoom: typeof serialized.zoom === 'number' ? serialized.zoom : 1.0,
     pan: serialized.pan || { x: 0, y: 0 },
     activeTab: serialized.activeTab,
-    deviceStates: new Map(serialized.deviceStates || []),
-    deviceOutputs: new Map(serialized.deviceOutputs || []),
-    pcOutputs: new Map(serialized.pcOutputs || []),
-    pcHistories: new Map(serialized.pcHistories || []),
+    deviceStates: new Map(Array.isArray(serialized.deviceStates) ? serialized.deviceStates : []),
+    deviceOutputs: new Map(Array.isArray(serialized.deviceOutputs) ? serialized.deviceOutputs : []),
+    pcOutputs: new Map(Array.isArray(serialized.pcOutputs) ? serialized.pcOutputs : []),
+    pcHistories: new Map(Array.isArray(serialized.pcHistories) ? serialized.pcHistories : []),
   };
 }
+
 
 function arraysEqual<T>(a: T[], b: T[]): boolean {
   if (a.length !== b.length) return false;

@@ -52,7 +52,8 @@ export function checkConnectivity(
   capturedPackets?: Array<{ connectionId: string; sourceIp: string; targetIp: string; protocol: string; length: number; info: string }>;
 } {
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
-  const isSwitchDeviceType = (type: string): boolean => type === 'switchL2' || type === 'switchL3';
+  const isSwitchDeviceType = (type: string): boolean => type === 'switchL2' || type === 'switchL3' || type === 'hub';
+
 
   // Track port security violations for React state updates
   const portSecurityViolations: Array<{ deviceId: string; portId: string; action: string; mac: string }> = [];
@@ -378,9 +379,11 @@ export function checkConnectivity(
     return Number(port?.accessVlan || port?.vlan || 1);
   };
 
-  const isPortMemberOfVlan = (port: Port | CanvasPort | undefined, vlanId: number): boolean => {
+  const isPortMemberOfVlan = (port: Port | CanvasPort | undefined, vlanId: number, deviceType?: string): boolean => {
     if (!port) return false;
+    if (deviceType === 'hub') return true;
     const mode = (port as Port).mode;
+
     if (mode === 'trunk' || mode === 'dynamic-auto' || mode === 'dynamic-desirable' || mode === 'dot1q-tunnel') {
       const allowed = (port as Port).allowedVlans ?? (port as Port).trunkAllowedVlans;
       if (!allowed || allowed === 'all') return true;
@@ -565,10 +568,11 @@ export function checkConnectivity(
         }
       }
 
-      // MAC Learning on switch (ingress)
-      if (bDevice && isSwitchDeviceType(bDevice.type) && bState && sourceMac) {
+      // MAC Learning on switch (ingress) - Hubs do not learn MAC addresses
+      if (bDevice && isSwitchDeviceType(bDevice.type) && bDevice.type !== 'hub' && bState && sourceMac) {
         learnMacAddress(bId, sourceMac, dstPortId, sourceVlan, safeDeviceStates);
       }
+
 
       // ARP/NDP learning on L3 devices (routers, L3 switches) when packet traverses
       if (aDevice && (aDevice.type === 'router' || aDevice.type === 'switchL3') && sourceMac && sourceIp) {
@@ -597,11 +601,15 @@ export function checkConnectivity(
 
       let packetInfo = options?.protocol === 'icmp' ? 'Echo Request' : 'Data Packet';
 
-      // If current device is a switch, check if it knows where targetMac is (Flooding logic)
-      if (aDevice && isSwitchDeviceType(aDevice.type) && targetMac) {
-        const knownPort = findMacPort(aId, targetMac, sourceVlan, safeDeviceStates);
-        if (!knownPort) {
-          packetInfo += ' (Flooded)';
+      // If current device is a switch or hub, check frame forwarding/flooding logic
+      if (aDevice && isSwitchDeviceType(aDevice.type)) {
+        if (aDevice.type === 'hub') {
+          packetInfo += ' (Hub L1 Signal Repeated)';
+        } else if (targetMac) {
+          const knownPort = findMacPort(aId, targetMac, sourceVlan, safeDeviceStates);
+          if (!knownPort) {
+            packetInfo += ' (Flooded)';
+          }
         }
       }
 
@@ -614,6 +622,23 @@ export function checkConnectivity(
         length: 74,
         info: packetInfo
       });
+
+      // Record Layer-1 signal repetition on all other ports of a Hub
+      if (bDevice && bDevice.type === 'hub') {
+        const neighbors = adjList.get(bId) || [];
+        for (const { connection: hubConn } of neighbors) {
+          if (!hubConn || hubConn.active === false || hubConn.id === conn.id) continue;
+          capturedPackets.push({
+            connectionId: hubConn.id,
+            sourceIp: sourceIp,
+            targetIp: resolvedTargetIp,
+            protocol: options?.protocol?.toUpperCase() || 'ICMP',
+            length: 74,
+            info: `${packetInfo} (Hub L1 Broadcast)`
+          });
+        }
+      }
+
     }
   }
 
@@ -664,7 +689,7 @@ export function checkConnectivity(
         if (conn.id === incomingConn?.id) continue;
         const switchPortId = conn.sourceDeviceId === bId ? conn.sourcePort : conn.targetPort;
         const switchPort = safeDeviceStates.get(bId)?.ports?.[switchPortId];
-        if (!isPortMemberOfVlan(switchPort, sourceVlan)) continue;
+        if (!isPortMemberOfVlan(switchPort, sourceVlan, bDev.type)) continue;
 
         if (arpBroadcast.isIpv6) {
           const parts = arpBroadcast.targetIp.split(':');
@@ -688,13 +713,14 @@ export function checkConnectivity(
           });
         }
 
-        // The neighbor switch learns the broadcast source MAC on its ingress port
+        // The neighbor switch learns the broadcast source MAC on its ingress port (Hubs do not learn MACs)
         const floodNeighborId = conn.sourceDeviceId === bId ? conn.targetDeviceId : conn.sourceDeviceId;
         const floodNeighbor = deviceMap.get(floodNeighborId);
-        if (floodNeighbor && isSwitchDeviceType(floodNeighbor.type) && sourceMac) {
+        if (floodNeighbor && isSwitchDeviceType(floodNeighbor.type) && floodNeighbor.type !== 'hub' && sourceMac) {
           const ingressPort = conn.sourceDeviceId === floodNeighborId ? conn.sourcePort : conn.targetPort;
           learnMacAddress(floodNeighborId, sourceMac, ingressPort, sourceVlan, safeDeviceStates);
         }
+
       }
     }
   }

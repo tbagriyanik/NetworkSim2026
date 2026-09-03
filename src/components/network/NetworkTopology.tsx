@@ -623,6 +623,23 @@ export function NetworkTopology({
     window.addEventListener('network-refresh', handler);
     return () => window.removeEventListener('network-refresh', handler);
   }, []);
+  // Listen for Alt+F (zoomToFit), Alt+M (toggle Minimap), Alt+L (toggle Network Log)
+  useEffect(() => {
+    const handleZoomToFitEvent = () => zoomToFit();
+    const handleToggleMinimapEvent = () => setIsMinimapOpen(prev => !prev);
+    const handleToggleLogEvent = () => setShowLogPanel(prev => !prev);
+
+    window.addEventListener('trigger-topology-zoom-to-fit', handleZoomToFitEvent);
+    window.addEventListener('trigger-topology-toggle-minimap', handleToggleMinimapEvent);
+    window.addEventListener('trigger-topology-toggle-network-log', handleToggleLogEvent);
+
+    return () => {
+      window.removeEventListener('trigger-topology-zoom-to-fit', handleZoomToFitEvent);
+      window.removeEventListener('trigger-topology-toggle-minimap', handleToggleMinimapEvent);
+      window.removeEventListener('trigger-topology-toggle-network-log', handleToggleLogEvent);
+    };
+  }, [zoomToFit]);
+
   // Listen for mobile-back-pressed custom event
   useEffect(() => {
     const handleMobileBack = () => {
@@ -632,6 +649,7 @@ export function NetworkTopology({
     window.addEventListener('mobile-back-pressed', handleMobileBack);
     return () => window.removeEventListener('mobile-back-pressed', handleMobileBack);
   }, []);
+
 
   // Refs
   const deviceCounterRef = useRef<Record<string, number>>({ pc: 0, iot: 0, switch: 0, router: 0, firewall: 0, wlc: 0, hub: 0, cloud: 0, mobile: 0, printer: 0 });

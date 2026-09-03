@@ -47,9 +47,22 @@ export function useNetworkLogic(
 
   const normalizeDeviceType = useCallback((type: string): DeviceType => {
     if (type === 'switch') return 'switchL2';
-    if (type === 'switchL2' || type === 'switchL3' || type === 'pc' || type === 'iot' || type === 'router' || type === 'firewall' || type === 'wlc') return type;
+    if (
+      type === 'switchL2' ||
+      type === 'switchL3' ||
+      type === 'pc' ||
+      type === 'iot' ||
+      type === 'router' ||
+      type === 'firewall' ||
+      type === 'wlc' ||
+      type === 'hub' ||
+      type === 'cloud' ||
+      type === 'mobile' ||
+      type === 'printer'
+    ) return type;
     throw new Error(`Unknown device type: ${type}`);
   }, []);
+
 
   const isValidIpv4 = useCallback((value?: string): boolean => {
     if (!value) return false;
@@ -328,18 +341,21 @@ export function useNetworkLogic(
   }, [isDhcpPoolCompatibleForClient]);
 
   const applyLinkLocalToUnconfiguredHosts = useCallback((devices: CanvasDevice[]): CanvasDevice[] => {
+    if (!Array.isArray(devices)) return [];
     const usedIps = new Set<string>();
     devices.forEach((device) => {
-      if (isValidIpv4(device.ip) && device.ip !== '0.0.0.0') usedIps.add(device.ip);
+      if (device && isValidIpv4(device.ip) && device.ip !== '0.0.0.0') usedIps.add(device.ip);
     });
     return devices.map((device) => {
-      if (device.type !== 'pc' && device.type !== 'iot') return device;
+      if (!device) return device;
+      if (device.type !== 'pc' && device.type !== 'iot' && device.type !== 'mobile' && device.type !== 'printer') return device;
       if (isValidIpv4(device.ip) && device.ip !== '0.0.0.0') return device;
       const linkLocalIp = generateRandomLinkLocalIpv4(usedIps);
       usedIps.add(linkLocalIp);
       return { ...device, ip: linkLocalIp, subnet: device.subnet || '255.255.0.0', gateway: device.gateway || '0.0.0.0', dns: device.dns || '0.0.0.0' };
     });
   }, [isValidIpv4]);
+
 
   const applyIotAutomationPass = useCallback((devices: CanvasDevice[]): CanvasDevice[] => {
     const env = environmentRef.current;

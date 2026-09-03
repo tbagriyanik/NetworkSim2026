@@ -270,8 +270,18 @@ export function useKeyboardShortcuts({
         if (key === 'n') {
           e.preventDefault();
           handleNewProject();
+        } else if (key === 'f') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('trigger-topology-zoom-to-fit'));
+        } else if (key === 'm') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('trigger-topology-toggle-minimap'));
+        } else if (key === 'l') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('trigger-topology-toggle-network-log'));
         }
       }
+
 
       if (!e.ctrlKey && !e.metaKey && !e.altKey) {
         if (isModalOrWindowActive || isEditable) {

@@ -84,6 +84,16 @@ export const PortTooltip: React.FC<PortTooltipProps> = ({
                   </div>
                 );
               }
+              if (dev?.type === 'hub') {
+                return (
+                  <>
+                    {language === 'tr' ? 'VLAN Desteği:' : 'VLAN Support:'}{' '}
+                    <span className="text-cyan-400">
+                      {language === 'tr' ? 'Yok (Katman-1 Tekrarlayıcı)' : 'None (Layer-1 Repeater)'}
+                    </span>
+                  </>
+                );
+              }
               return (
                 <>
                   VLAN:{' '}
@@ -92,6 +102,7 @@ export const PortTooltip: React.FC<PortTooltipProps> = ({
                   </span>
                 </>
               );
+
             })()}
           </div>
           <div className="text-xs font-bold">
@@ -160,7 +171,7 @@ export const PortTooltip: React.FC<PortTooltipProps> = ({
 
           {(() => {
             const dev = deviceMap.get(portTooltip.deviceId);
-                const prt = dev?.ports.find((p: CanvasPort) => p.id === portTooltip.portId);
+            const prt = dev?.ports.find((p: CanvasPort) => p.id === portTooltip.portId);
             if (prt?.ipAddress) {
               return (
                 <div className="text-xs font-bold">

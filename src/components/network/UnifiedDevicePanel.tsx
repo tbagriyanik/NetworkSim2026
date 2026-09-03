@@ -154,9 +154,10 @@ export function UnifiedDevicePanel({
                     <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as 'console' | 'settings' | 'stp')} className="min-w-0">
                         <TabsList className={cn("h-7 p-0.5", isDark ? "bg-secondary-800" : "bg-secondary-100")}>
                             <TabsTrigger value="console" className="flex items-center gap-1.5 px-2 h-6 text-xs">
-                                <TerminalIcon className="w-3 h-3" />
-                                <span className="hidden sm:inline">{t.cliInterface}</span>
+                                {deviceType === 'hub' ? <Layers className="w-3 h-3 text-cyan-400" /> : <TerminalIcon className="w-3 h-3" />}
+                                <span className="hidden sm:inline">{deviceType === 'hub' ? (language === 'tr' ? 'Hub Durumu' : 'Hub Status') : t.cliInterface}</span>
                             </TabsTrigger>
+
                             <TabsTrigger value="settings" className="flex items-center gap-1.5 px-2 h-6 text-xs">
                                 <Settings className="w-3 h-3" />
                                 <span className="hidden sm:inline">{t.quickSettingsAndTasks}</span>
@@ -193,35 +194,65 @@ export function UnifiedDevicePanel({
             <div className="flex-1 overflow-hidden relative">
                 <Tabs value={activeTab} className="h-full">
                     <TabsContent value="console" className="h-full m-0 p-0 overflow-hidden">
-                        <Terminal
-                            key={`unified-terminal-${deviceId}`}
-                            className="h-full"
-                            deviceId={deviceId}
-                            deviceName={deviceName}
-                            prompt={prompt}
-                            state={state}
-                            onCommand={handleCommand}
-                            onClear={handleClearTerminal}
-                            output={output}
-                            isLoading={isExecutingCommand}
-                            isConnectionError={isOffline}
-                            connectionErrorMessage={t.connectionError}
-                            isPoweredOff={isOffline}
-                            showPowerButton={false}
-                            onClose={() => onOpenChange(false)}
-                            onQuickSettings={() => onTabChange('settings')}
-                            t={t}
-                            theme={theme}
-                            language={language}
-                            helpLevel={helpLevel}
-                            onUpdateHistory={handleUpdateHistory}
-                            confirmDialog={confirmDialog}
-                            setConfirmDialog={setConfirmDialog}
-                            device={topologyDevices.find(d => d.id === deviceId)}
-                            devices={topologyDevices}
-                            deviceStates={deviceStates}
-                            onRequestFocus={focusActiveTerminalInput}
-                        />
+                        {deviceType === 'hub' ? (
+                            <div className="h-full overflow-y-auto p-6 flex flex-col items-center justify-center text-center space-y-4">
+                                <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                                    <Layers className="w-7 h-7" />
+                                </div>
+                                <div className="space-y-1">
+                                    <h3 className="text-sm font-bold">{deviceName} — Layer-1 Multiport Hub</h3>
+                                    <p className="text-xs opacity-70 max-w-md leading-relaxed">
+                                        {language === 'tr'
+                                            ? 'Bu cihaz Katman-1 (fiziksel katman) çoklu port tekrarlayıcıdır. Yapılandırılamaz (unmanaged) yapıda olduğundan VLAN, MAC adresi tablosu veya CLI komut arayüzü bulunmaz. Gelen sinyalleri tüm bağlı aktif portlara aynen iletir.'
+                                            : 'This device is an unmanaged Layer-1 multiport repeater. It has no CLI, VLAN support, or MAC address table. It automatically repeats incoming frames out all connected ports.'}
+                                    </p>
+                                </div>
+                                <div className="w-full max-w-md border border-secondary-800/40 rounded-xl p-4 bg-secondary-900/20 text-left space-y-3">
+                                    <div className="flex items-center justify-between text-xs font-semibold">
+                                        <span>{language === 'tr' ? 'Port Durumu (8x FastEthernet)' : 'Port Status (8x FastEthernet)'}</span>
+                                        <span className="text-[10px] text-cyan-400 uppercase font-mono">Unmanaged L1</span>
+                                    </div>
+                                    <div className="grid grid-cols-4 gap-2">
+                                        {(topologyDevices.find(d => d.id === deviceId)?.ports || []).map((port) => (
+                                            <div key={port.id} className="flex items-center gap-1.5 p-2 rounded-lg bg-secondary-800/30 border border-secondary-700/30 text-[11px]">
+                                                <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline || port.status !== 'connected' ? "bg-secondary-500" : "bg-success-500")} />
+                                                <span className="font-mono font-medium">{port.label || port.id}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            <Terminal
+                                key={`unified-terminal-${deviceId}`}
+                                className="h-full"
+                                deviceId={deviceId}
+                                deviceName={deviceName}
+                                prompt={prompt}
+                                state={state}
+                                onCommand={handleCommand}
+                                onClear={handleClearTerminal}
+                                output={output}
+                                isLoading={isExecutingCommand}
+                                isConnectionError={isOffline}
+                                connectionErrorMessage={t.connectionError}
+                                isPoweredOff={isOffline}
+                                showPowerButton={false}
+                                onClose={() => onOpenChange(false)}
+                                onQuickSettings={() => onTabChange('settings')}
+                                t={t}
+                                theme={theme}
+                                language={language}
+                                helpLevel={helpLevel}
+                                onUpdateHistory={handleUpdateHistory}
+                                confirmDialog={confirmDialog}
+                                setConfirmDialog={setConfirmDialog}
+                                device={topologyDevices.find(d => d.id === deviceId)}
+                                devices={topologyDevices}
+                                deviceStates={deviceStates}
+                                onRequestFocus={focusActiveTerminalInput}
+                            />
+                        )}
                     </TabsContent>
                     <TabsContent value="settings" className="h-full m-0 p-0 overflow-y-auto custom-scrollbar">
                         <div className="p-4 sm:p-6">

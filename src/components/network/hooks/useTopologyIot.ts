@@ -127,6 +127,8 @@ export function useTopologyIot({
     const device = deviceMap.get(deviceId);
     const livePort = getLivePort(deviceId, portId);
     if (!device || !livePort) return '1';
+    if (device.type === 'hub') return language === 'tr' ? 'Yok (L1 Tekrarlayıcı)' : 'None (L1 Repeater)';
+
 
     if (device.type === 'pc' || device.type === 'iot') {
       const conn = connections.find(c =>
