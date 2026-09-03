@@ -25,13 +25,11 @@ export function getClientIp(req: NextRequest): string {
     return realIp.trim();
   }
 
-  // 4. X-Forwarded-For fallback
-  const forwarded = req.headers.get('x-forwarded-for');
-  if (forwarded) {
-    const ips = forwarded.split(',').map((ip) => ip.trim()).filter(Boolean);
-    if (ips.length > 0) {
-      return ips[0];
-    }
+  // 4. Standard X-Forwarded-For fallback
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  if (forwardedFor) {
+    const trimmed = forwardedFor.split(',')[0].trim();
+    if (trimmed) return trimmed;
   }
 
   return '127.0.0.1';

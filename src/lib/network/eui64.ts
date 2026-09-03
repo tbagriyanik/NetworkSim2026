@@ -95,3 +95,59 @@ export function evaluateSlaacForDevice(
 
   return null;
 }
+
+/**
+ * Evaluate DHCPv6 address assignment for a PC.
+ * When a connected router interface has 'ipv6 dhcp server <pool>' configured,
+ * the PC gets a global IPv6 address from that pool's prefix.
+ */
+export function evaluateDhcpv6ForDevice(
+  deviceId: string,
+  deviceStates: Map<string, SwitchState>,
+  connections: CanvasConnection[]
+): { ipv6Address?: string; ipv6Prefix?: number; ipv6Gateway?: string } | null {
+  const state = deviceStates.get(deviceId);
+  if (!state) return null;
+
+  const deviceConns = connections.filter(c => c.active && (c.sourceDeviceId === deviceId || c.targetDeviceId === deviceId));
+
+  for (const conn of deviceConns) {
+    const remoteDeviceId = conn.sourceDeviceId === deviceId ? conn.targetDeviceId : conn.sourceDeviceId;
+    const remotePortId = conn.sourceDeviceId === deviceId ? conn.targetPort : conn.sourcePort;
+
+    const remoteState = deviceStates.get(remoteDeviceId);
+    if (!remoteState) continue;
+
+    const remotePort = remoteState.ports[remotePortId];
+    if (!remotePort || remotePort.shutdown) continue;
+
+    // Check if the remote interface has 'ipv6 dhcp server <pool>' configured
+    const poolName = remotePort.ipv6DhcpServerPool || remotePort.ipv6DhcpServer;
+    if (!poolName) continue;
+
+    // Find the pool on the remote router
+    const pool = remoteState.ipv6DhcpPools?.[poolName];
+    if (!pool?.addressPrefix) continue;
+
+    // Generate a client address from the pool prefix using a deterministic host ID based on MAC
+    const mac = state.macAddress || '0050.56a1.b2c3';
+    const cleanMac = mac.replace(/[^0-9a-fA-F]/g, '');
+    // Use last 4 bytes of MAC as host suffix (e.g., ::abcd:efff:1234:5678)
+    const hostId = cleanMac.slice(-8);
+    const prefix = pool.addressPrefix.split('/')[0].replace(/:+$/, '');
+
+    // Format: <prefix>:<hostId with colons>
+    const formattedHost = `${hostId.slice(0, 4)}:${hostId.slice(4)}`;
+    const ipv6Address = `${prefix}:${formattedHost}`;
+
+    const gateway = remotePort.ipv6Address || remotePort.ipv6LinkLocal || 'fe80::1';
+
+    return {
+      ipv6Address,
+      ipv6Prefix: pool.addressPrefix.split('/')[1] ? parseInt(pool.addressPrefix.split('/')[1]) : 64,
+      ipv6Gateway: gateway,
+    };
+  }
+
+  return null;
+}

@@ -1,4 +1,28 @@
-import { clsx, type ClassValue } from "clsx"
+export type ClassValue = string | number | bigint | boolean | undefined | null | { [key: string]: any } | ClassValue[]
+
+export function clsx(...inputs: ClassValue[]): string {
+  let str = ''
+  for (let i = 0; i < inputs.length; i++) {
+    const arg = inputs[i]
+    if (!arg) continue
+    if (typeof arg === 'string' || typeof arg === 'number') {
+      str += (str && ' ') + arg
+    } else if (Array.isArray(arg)) {
+      if (arg.length) {
+        const inner = clsx(...arg)
+        if (inner) str += (str && ' ') + inner
+      }
+    } else if (typeof arg === 'object') {
+      for (const key in arg) {
+        if (arg[key]) {
+          str += (str && ' ') + key
+        }
+      }
+    }
+  }
+  return str
+}
+
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {

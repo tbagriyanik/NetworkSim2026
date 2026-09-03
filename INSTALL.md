@@ -69,16 +69,18 @@ npm run test -- --watch
 
 ### Vercel Environment Variables / Vercel Ortam Değişkenleri
 
-Sınav ve rehberli ders sertifikaları production ortamında skor imzası ve doğrulama kaydı için aşağıdaki değişkenlere ihtiyaç duyar. Vercel Project Settings > Environment Variables bölümünde **Production** için tanımlayın ve yeni deployment başlatın:
+Sınav skor imzaları, doğrulama kaydı ve rehberli ders sertifikaları production ortamında güvenlik ve doğrulama için aşağıdaki değişkenlere ihtiyaç duyar. Vercel Project Settings > Environment Variables bölümünde **Production** için tanımlayın ve yeni deployment başlatın:
 
 ```env
 CERTIFICATE_SECRET=<uzun-rastgele-gizli-deger>
+EXAM_HMAC_KEY=<uzun-rastgele-hmac-anahtari>
+NEXT_PUBLIC_EXAM_HMAC_KEY=<uzun-rastgele-hmac-anahtari>
 KV_REST_API_URL=<upstash-rest-url>
 KV_REST_API_TOKEN=<upstash-rest-token>
 NEXT_PUBLIC_APP_URL=https://yourappUrl
 ```
 
-`CERTIFICATE_SECRET` repoya veya `NEXT_PUBLIC_*` değişkenlerine eklenmemelidir. `KV_REST_API_URL` ve `KV_REST_API_TOKEN` tanımlı değilse PDF indirilebilir ancak sertifika doğrulama kodu kalıcı olarak saklanamaz.
+`CERTIFICATE_SECRET` ve `EXAM_HMAC_KEY` production ortamında mutlaka tanımlanmalıdır (tanımlanmadığı takdirde production startup'ında güvenlik hatası fırlatılır). `KV_REST_API_URL` ve `KV_REST_API_TOKEN` tanımlı değilse PDF indirilebilir ancak sertifika doğrulama kodu kalıcı olarak saklanamaz.
 
 ---
 

@@ -185,6 +185,11 @@ export const colors = {
     600: '#ca8a04',
     700: '#a16207',
   },
+
+  // Syntax highlighting colors
+  syntax: {
+    constant: '#fb7185',
+  },
 } as const;
 
 export type ColorTokenGroup = typeof colors;

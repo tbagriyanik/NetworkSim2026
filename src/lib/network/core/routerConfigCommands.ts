@@ -103,6 +103,10 @@ function cmdRouterNetwork(state: SwitchState, input: string): CommandResult {
                     dynamicRoutes: [
                         ...(state.dynamicRoutes || []),
                         { destination: bgpMatch[1], subnetMask: bgpMatch[2], nextHop: 'directly connected', metric: 1, type: 'dynamic' }
+                    ],
+                    bgpNetworks: [
+                        ...(state.bgpNetworks || []),
+                        { network: bgpMatch[1], mask: bgpMatch[2] }
                     ]
                 }
             };
@@ -170,10 +174,11 @@ function cmdNoRouterNetwork(state: SwitchState, input: string): CommandResult {
     }
 
     const dynamicRoutes = (state.dynamicRoutes || []).filter((r: { destination: string }) => r.destination !== network);
+    const bgpNetworks = (state.bgpNetworks || []).filter((n: { network: string }) => n.network !== network);
 
     return {
         success: true,
-        newState: { dynamicRoutes }
+        newState: { dynamicRoutes, bgpNetworks: bgpNetworks.length > 0 ? bgpNetworks : undefined }
     };
 }
 

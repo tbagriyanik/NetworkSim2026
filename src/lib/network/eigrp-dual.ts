@@ -260,6 +260,31 @@ export function buildEigrp6TopologyTable(
         state: 'Passive'
       });
     });
+
+    // 2. IPv6 routes neighbor learned (propagated RD)
+    (otherState.ipv6DynamicRoutes || []).forEach(route => {
+      const dest = route.destination;
+      const len = String(route.prefixLength || 64);
+      const rd = route.metric || 0;
+
+      const linkBw = getPortBandwidthKbps(port);
+      const linkDelay = getPortDelayUsec(port);
+      const cd = calculateEigrpMetric(linkBw, linkDelay) + rd;
+
+      topologyTable.push({
+        destination: dest,
+        subnetMask: len,
+        neighborId: otherId,
+        neighborIp: nip,
+        interfaceId: port.id,
+        reportedDistance: rd,
+        computedDistance: cd,
+        feasibleDistance: cd,
+        isSuccessor: false,
+        isFeasibleSuccessor: false,
+        state: 'Passive'
+      });
+    });
   });
 
   return runEigrpDual(topologyTable);

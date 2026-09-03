@@ -1,7 +1,7 @@
 import { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import { SwitchState, Port } from './types';
 import { calculateOSPFRoutes } from './ospf';
-import { calculateEigrpRoutes } from './eigrp-dual';
+import { calculateEigrpRoutes, calculateEigrp6Routes } from './eigrp-dual';
 import { validateSviStatus } from './core/L3Validation';
 import { getNetworkAddress } from './core/showHelpers';
 import { isIpInSubnet } from './connectivity.utils';
@@ -143,6 +143,16 @@ function buildRoutingTable(
   if (state.routingProtocol === 'ripng') {
     const ripngRoutes = calculateRipngRoutes(deviceId, deviceStates);
     ripngRoutes.forEach(r => {
+      if (!routes.some(existing => existing.destination === r.destination && (existing.type === 'connected' || existing.type === 'static'))) {
+        routes.push(r);
+      }
+    });
+  }
+
+  // 8. EIGRPv6 DUAL based learning
+  if (state.eigrp6Config?.as) {
+    const eigrp6Routes = calculateEigrp6Routes(deviceId, deviceStates);
+    eigrp6Routes.forEach(r => {
       if (!routes.some(existing => existing.destination === r.destination && (existing.type === 'connected' || existing.type === 'static'))) {
         routes.push(r);
       }

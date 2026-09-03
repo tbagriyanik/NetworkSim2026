@@ -40,15 +40,7 @@ function getAppVersion(): string {
 const FALLBACK_COMMIT_COUNT = 1656;
 
 async function getCommitCount(): Promise<number> {
-  let localCount = 0;
-  try {
-    const countStr = execSync("git rev-list --count HEAD", { stdio: ["pipe", "pipe", "pipe"] }).toString().trim();
-    localCount = parseInt(countStr, 10) || 0;
-  } catch {
-    // Ignore
-  }
-
-  // Query the remote repository when the deployment contains a shallow clone.
+  // 1. Try querying API first for true commit count (avoids shallow clone depth truncation)
   try {
     const res = await fetch("https://api.github.com/repos/tbagriyanik/networksimulator/commits?per_page=1", {
       headers: { "User-Agent": "Mozilla/5.0" },
@@ -67,10 +59,24 @@ async function getCommitCount(): Promise<number> {
       }
     }
   } catch {
-    // Ignore fetch error
+    // Ignore fetch error, fallback to local git
   }
 
-  return localCount > 0 ? localCount : FALLBACK_COMMIT_COUNT;
+  // 2. Query local git rev-list
+  let localCount = 0;
+  try {
+    const countStr = execSync("git rev-list --count HEAD", { stdio: ["pipe", "pipe", "pipe"] }).toString().trim();
+    localCount = parseInt(countStr, 10) || 0;
+  } catch {
+    // Ignore
+  }
+
+  // If local count is substantial (not truncated shallow clone), use it; otherwise fallback
+  if (localCount > 1000) {
+    return localCount;
+  }
+
+  return FALLBACK_COMMIT_COUNT;
 }
 
 const config = async () => {

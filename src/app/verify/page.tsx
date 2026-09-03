@@ -19,7 +19,7 @@ function VerifyContent() {
   const searchParams = useSearchParams();
   const rawCode = searchParams.get('code') || '';
   const initialCode = rawCode.toUpperCase().startsWith('CERT:') ? rawCode.toUpperCase().replace('CERT:', '') : rawCode;
-  
+
   const [inputCode, setInputCode] = useState(initialCode);
   const [status, setStatus] = useState<'idle' | 'loading' | 'found' | 'notfound' | 'error'>('idle');
   const [record, setRecord] = useState<CertificateRecord | null>(null);
@@ -112,7 +112,7 @@ function VerifyContent() {
     new Date(ts).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex flex-col items-center justify-start pt-16 px-4">
+    <div className="min-h-screen w-full overflow-y-auto bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex flex-col items-center justify-start py-12 px-4">
       {/* Language Toggle */}
       <div className="absolute top-4 right-4 flex gap-2">
         <button

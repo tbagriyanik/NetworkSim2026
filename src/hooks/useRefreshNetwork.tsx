@@ -8,7 +8,7 @@ import type { PCOutputLine } from '@/app/page.types';
 import type { RefreshNetworkReport } from '@/hooks/useRefreshReport';
 import { isSwitchDeviceType, isWirelessMatch, validateTopologyConnections, releaseDisconnectedPorts, getEffectiveWifi, hasValidIp, isIpInPoolRange, buildRefreshDeviceSummaries, propagateVtpVlans } from '@/app/refreshNetworkUtils';
 import { recalculateStp } from '@/lib/network/stp';
-import { evaluateSlaacForDevice } from '@/lib/network/eui64';
+import { evaluateSlaacForDevice, evaluateDhcpv6ForDevice } from '@/lib/network/eui64';
 import { recalculateBgpNeighbors } from '@/lib/network/routing';
 import { normalizeMAC } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
@@ -168,6 +168,22 @@ export function useRefreshNetwork({
               finalDevicesForRefresh[idx] = {
                 ...finalDevicesForRefresh[idx],
                 ipv6: slaac.ipv6Address
+              };
+            }
+          }
+        }
+      });
+
+      // Evaluate DHCPv6 for PCs attached to routers with 'ipv6 dhcp server <pool>' configured
+      refreshedDevices.forEach(d => {
+        if (d.type === 'pc' || d.type === 'iot') {
+          const dhcpv6 = evaluateDhcpv6ForDevice(d.id, bgpUpdatedStates, sanitizedConnections);
+          if (dhcpv6?.ipv6Address) {
+            const idx = finalDevicesForRefresh.findIndex(dev => dev.id === d.id);
+            if (idx !== -1) {
+              finalDevicesForRefresh[idx] = {
+                ...finalDevicesForRefresh[idx],
+                ipv6: dhcpv6.ipv6Address
               };
             }
           }

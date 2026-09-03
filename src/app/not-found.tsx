@@ -25,7 +25,7 @@ export default function NotFound() {
   const tx = t[lang];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen w-full overflow-y-auto bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex flex-col items-center justify-center py-12 p-4">
       {/* Language Toggle */}
       <div className="absolute top-4 right-4 flex gap-2">
         <button
@@ -42,7 +42,7 @@ export default function NotFound() {
         </button>
       </div>
 
-      <div className="text-center mb-10 mt-[-10vh]">
+      <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-blue-500/10 border border-blue-400/30 mb-6 backdrop-blur-sm">
           <svg className="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -58,8 +58,8 @@ export default function NotFound() {
             <p className="text-white/40 text-sm mb-1">{tx.pathLabel}</p>
             <p className="text-white/80 font-mono text-sm break-all">{pathname}</p>
           </div>
-          
-          <Link 
+
+          <Link
             href="/"
             className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-blue-500/25"
           >

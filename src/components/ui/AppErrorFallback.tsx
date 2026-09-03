@@ -39,7 +39,7 @@ export function AppErrorFallback({
   const tx = t[lang];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex flex-col items-center justify-center p-4 font-sans text-white">
+    <div className="min-h-screen w-full overflow-y-auto bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 flex flex-col items-center justify-center py-12 p-4 font-sans text-white">
       {/* Language Toggle */}
       <div className="absolute top-4 right-4 flex gap-2">
         <button
@@ -56,7 +56,7 @@ export function AppErrorFallback({
         </button>
       </div>
 
-      <div className="text-center mb-10 mt-[-10vh]">
+      <div className="text-center mb-10">
         <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-red-500/10 border border-red-500/30 mb-6 backdrop-blur-sm">
           <svg className="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -68,16 +68,16 @@ export function AppErrorFallback({
 
       <div className="w-full max-w-md">
         <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl flex flex-col items-center text-center">
-          
+
           <div className="mb-8 w-full p-4 bg-black/20 rounded-xl border border-red-500/20">
             <p className="text-red-400/60 text-sm mb-1">{tx.errorDetail}</p>
             <p className="text-red-300 font-mono text-sm break-all">
               {error?.message || tx.unknownError}
             </p>
           </div>
-          
+
           <div className="w-full flex flex-col gap-3">
-            <button 
+            <button
               onClick={() => reset()}
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-blue-500/25"
             >
@@ -86,8 +86,8 @@ export function AppErrorFallback({
               </svg>
               {tx.retry}
             </button>
-            
-            <Link 
+
+            <Link
               href="/"
               className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium rounded-xl transition-all"
             >

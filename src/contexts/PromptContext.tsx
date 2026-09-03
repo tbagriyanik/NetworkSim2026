@@ -13,6 +13,7 @@ export interface PromptOptions {
   defaultValue?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  maxLength?: number;
 }
 
 export interface PromptResult {
@@ -71,6 +72,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
             type="text"
             autoFocus
             value={value}
+            maxLength={options?.maxLength}
             onChange={(event) => setValue(event.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={options?.placeholder}

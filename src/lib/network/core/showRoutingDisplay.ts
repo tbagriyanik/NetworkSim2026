@@ -975,19 +975,44 @@ export function cmdShowIpBgpSummary(state: SwitchState, _input: string, ctx?: Co
  */
 export function cmdShowIpBgp(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   const routerId = state.routerId || state.defaultGateway || '1.1.1.1';
-  const routes = state.dynamicRoutes || [];
+  const bgpNetworks = state.bgpNetworks || [];
+  const dynamicRoutes = state.dynamicRoutes || [];
+
+  // Merge BGP-advertised networks with dynamic routes, preferring bgpNetworks
+  const entries: Array<{ network: string; prefixLength: number; nextHop: string; metric: number }>
+    = bgpNetworks.map(n => ({
+      network: n.network,
+      prefixLength: getPrefixLength(n.mask),
+      nextHop: '0.0.0.0',
+      metric: 0,
+    }));
+
+  // Also include any BGP dynamic routes not already in bgpNetworks
+  if (state.routingProtocol === 'bgp') {
+    const advertisedNets = new Set(bgpNetworks.map(n => n.network));
+    dynamicRoutes.forEach(r => {
+      if (!advertisedNets.has(r.destination)) {
+        entries.push({
+          network: r.destination,
+          prefixLength: r.prefixLength || getPrefixLength(r.mask || r.subnetMask || '255.255.255.0'),
+          nextHop: r.nextHop || '0.0.0.0',
+          metric: r.metric ?? 0,
+        });
+      }
+    });
+  }
 
   let output = `BGP table version is 1, local router ID ${routerId}\n`;
   output += `Status codes: s suppressed, d damped, h history, * valid, > best, i - internal\n`;
   output += `Origin codes: i - IGP, e - EGP, ? - incomplete\n\n`;
   output += `   Network          Next Hop            Metric LocPrf Weight Path\n`;
 
-  if (routes.length === 0) {
-    output += `*> 10.0.0.0/24      0.0.0.0                  0         32768 i\n`;
+  if (entries.length === 0) {
+    output += `   No BGP prefixes advertised\n`;
   } else {
-    routes.forEach(r => {
-      const netStr = `${r.destination}/${r.prefixLength || 24}`;
-      const nextHop = r.nextHop || '0.0.0.0';
+    entries.forEach(r => {
+      const netStr = `${r.network}/${r.prefixLength}`;
+      const nextHop = r.nextHop;
       const metric = r.metric ?? 0;
       output += `*> ${netStr.padEnd(16)} ${nextHop.padEnd(20)} ${String(metric).padEnd(6)}     0 32768 i\n`;
     });

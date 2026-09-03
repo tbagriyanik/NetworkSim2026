@@ -155,6 +155,7 @@ export interface Port {
   ospfProcessId?: string;
   ospfArea?: string;
   ipv6DhcpServer?: string;
+  ipv6DhcpServerPool?: string; // Pool name for 'ipv6 dhcp server <pool>' on interface
   helperAddresses?: string[];
   lldpTransmit?: boolean;       // default: true when LLDP enabled
   lldpReceive?: boolean;        // default: true when LLDP enabled
@@ -586,6 +587,7 @@ export interface SwitchState {
   bgpAs?: string;                  // BGP AS number
   bgpNeighbors?: { ip: string; as: string; state?: string }[];  // BGP neighbor configurations
   bgpNeighborState?: Record<string, string>; // BGP neighbor dynamic state mapping (e.g. 'Established', 'Idle')
+  bgpNetworks?: { network: string; mask: string }[]; // BGP advertised networks (network <ip> mask <mask>)
   passiveInterfaces?: string[];    // Interfaces that should not send updates
   routerId?: string;               // Router identifier (for routing)
   defaultInformation?: string;     // Default route information configuration

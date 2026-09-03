@@ -276,6 +276,9 @@
   /* Canvas pure colors */
   --color-white: #ffffff;
   --color-black: #000000;
+
+  /* Syntax highlighting */
+  --color-syntax-constant: #fb7185;
 }
 
 :root {
@@ -465,7 +468,7 @@
   }
 
   .py-highlight .py-constant {
-    color: #fb7185;
+    color: var(--color-syntax-constant);
   }
 
   .py-highlight .py-comment {

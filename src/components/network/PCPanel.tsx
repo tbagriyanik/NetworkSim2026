@@ -23,12 +23,12 @@ import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
 import { errorHandler } from '@/lib/errors/errorHandler';
 import { colors } from '@/lib/design-tokens/colors';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
-import { RestApiExplorerWindow } from './pc-panel/RestApiExplorerWindow';
+
 import { PCPanelNavigation } from './pc-panel/PCPanelNavigation';
 import { FtpFileTransferDialog } from './pc-panel/FtpFileTransferDialog';
 import { FileEditorModal } from './pc-panel/FileEditorModal';
 import { loadFs, saveFs, writeFile, readFile, getFtpFilesFromUploadDir, syncMailFilesToFs, syncHttpContentToFs } from './pc-panel/pcFileSystem';
-import { HomeLauncher } from './pc-panel/HomeLauncher';
+
 import { PowerOffOverlay } from './pc-panel/PowerOffOverlay';
 import { secureStorage } from '@/lib/storage/secureStorage';
 import { getPCConfigDefaults } from './pc-panel/pcPanelFiles';
@@ -45,14 +45,10 @@ import { usePCPanelBrowser } from './pc-panel/usePCPanelBrowser';
 import { usePCPanelCommands } from './pc-panel/usePCPanelCommands';
 import { usePCPanelInput } from './pc-panel/usePCPanelInput';
 import { validateIP, validateIPv6, isValidIpAddress, formatMacForArp, highlightText as highlightTextHelper, getInitialPcOutput } from './pc-panel/pcPanelHelpers';
-import type { DhcpPoolConfig, OutputLine, PCActiveTab, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
+import type { DhcpPoolConfig, OutputLine, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
 import { usePCPanelState } from './pc-panel/usePCPanelState';
-import { PCDesktop } from './pc-panel/PCDesktop';
-import { PCTerminal } from './pc-panel/PCTerminal';
-import { PCNetworkSettings } from './pc-panel/PCNetworkSettings';
-import { PCServices } from './pc-panel/PCServices';
-import { PCWifi } from './pc-panel/PCWifi';
-import { PCIotPanel } from './pc-panel/PCIotPanel';
+import { PCPanelContext } from './pc-panel/PCPanelContext';
+import { PCPanelContent } from './pc-panel/PCPanelContent';
 import { PCBrowser } from './pc-panel/PCBrowser';
 import { PCPanelHeader } from './pc-panel/PCPanelHeader';
 import { PCPanelTerminalToolbar } from './pc-panel/PCPanelTerminalToolbar';
@@ -1966,9 +1962,66 @@ export function PCPanel({
     executeCommandRef.current = executeCommand;
   }, [executeCommand]);
 
+  const getNtpNow = useCallback(() => (ntpSyncState ? ntpPanelTime : null), [ntpSyncState, ntpPanelTime]);
+
   if (!isVisible) return null;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const contextValue = {
+    deviceId, isDark, language, t, environment,
+    isMobile, mobileVerticalScrollStyle, fontSize, terminalBg, textColor,
+    activeTab, setActiveTab, navigateToProgram, goHome,
+    isPcPoweredOff, deviceFromTopology, topologyDevices, topologyConnections, deviceStates, deviceOutputs, handleResizeStart,
+    pcIP, setPcIP, pcMAC, setPcMAC, pcSubnet, setPcSubnet, pcGateway, setPcGateway, pcDNS, setPcDNS,
+    pcIPv6, setPcIPv6, pcIPv6Prefix, setPcIPv6Prefix, ipConfigMode, setIpConfigMode,
+    internalPcHostname, setPcHostname, wifiEnabled, setWifiEnabled,
+    wifiSSID, setWifiSSID, wifiBSSID, setWifiBSSID, wifiSecurity, setWifiSecurity,
+    wifiPassword, setWifiPassword, wifiChannel, setWifiChannel, wifiSignalStrength, availableSSIDs,
+    input, setInput, executeCommand, isCmdInputDisabled, currentPath, setCurrentPath,
+    pcOutput, setPcOutput, addLocalOutput, addMultilineOutput,
+    shouldShowAutocomplete, renderAutocompleteSuggestions, autocompleteIndex,
+    completeAutocompleteSelection, handleInputChange, handleKeyDown,
+    inputRef, outputRef, autocompleteRef, showCmdSettings, setShowCmdSettings,
+    handleFontSizeChange, highlightText,
+    ftpSession, pythonSession, editingFile, setEditingFile,
+    isConsoleConnected, setIsConsoleConnected, connectedDeviceId, setConnectedDeviceId,
+    setConsoleConnectionTime, isConsoleInputDisabled, consoleNeedsPassword,
+    consoleConfirmDialog, consoleReloadPending, consoleDevice, handleConnect,
+    onExecuteDeviceCommand, setConsolePasswordAttempted, activeConsoleOutput,
+    serviceDnsEnabled, setServiceDnsEnabled, serviceDnsRecords, setServiceDnsRecords,
+    dnsFormDomain, setDnsFormDomain, dnsFormAddress, setDnsFormAddress,
+    handleAddDnsRecord, getDnsRecordDisplay,
+    serviceHttpEnabled, setServiceHttpEnabled, serviceHttpContent, setServiceHttpContent,
+    serviceFtpEnabled, setServiceFtpEnabled, serviceFtpFiles, setServiceFtpFiles,
+    serviceDhcpEnabled, setServiceDhcpEnabled, serviceDhcpPools, setServiceDhcpPools,
+    dhcpForm, setDhcpForm, editingDhcpIndex, setEditingDhcpIndex,
+    serviceNtpEnabled, setServiceNtpEnabled, serviceNtpServer, setServiceNtpServer,
+    serviceNtpServerError, setServiceNtpServerError, setServiceNtpServerPreset,
+    serviceNtpDate, setServiceNtpDate, serviceNtpTime, setServiceNtpTime,
+    applyNtpServerTime, ntpPanelTime, ntpSyncState,
+    serviceMailEnabled, setServiceMailEnabled, serviceMailDomain, setServiceMailDomain,
+    serviceMailUsername, setServiceMailUsername, serviceMailPassword, setServiceMailPassword,
+    serviceMailInbox, setServiceMailInbox, serviceMailSent, setServiceMailSent,
+    mailPop3Blocked, handleComposeSend, handleViewReplySend, handleDeleteInbox, handleDeleteSent,
+    serviceSyslogEnabled, setServiceSyslogEnabled, serviceSyslogMessages, setServiceSyslogMessages,
+    validateIpField, validateSubnetField, isValidIpAddress, errors, setErrors, dispatchDeviceConfig,
+    iotDevices, selectedIotDeviceId, setSelectedIotDeviceId, selectedIotDevice,
+    iotSensorType, setIotSensorType, iotKind, setIotKind,
+    iotCollaborationEnabled, setIotCollaborationEnabled, iotDataStore, setIotDataStore,
+    openWebPage, httpAppContent, setHttpAppContent, httpAppUrl, setHttpAppUrl,
+    httpAppTitle, setHttpAppTitle, httpAppDeviceId, setHttpAppDeviceId,
+    browserWindow, setBrowserWindow, filteredSuggestions, showUrlSuggestions, setShowUrlSuggestions,
+    selectedSuggestionIndex, setSelectedSuggestionIndex, urlInputRef, dragStateRef, resizeStateRef,
+    routerActiveTabRef, buildArpTableOutput, addPcArpEntry,
+    isFtpFilePickerOpen, setIsFtpFilePickerOpen, executeFtpPut, handleFtpSessionCommand, getNtpNow,
+    launcherApps, searchOpen, setSearchOpen, onClose,
+    canReachTargetIp, resolveDeviceNameTargetCallback,
+    applyDhcpLeaseRef, manualDhcpClickRef, isDnsEditingRef, isDhcpEditingRef,
+    activeServiceTab, setActiveServiceTab,
+  };
+
   return (
+    <PCPanelContext.Provider value={contextValue}>
     <>
       <div
         ref={panelRef}
@@ -2099,303 +2152,8 @@ export function PCPanel({
                       }}
                     />
 
-                    {/* Content Area */}
-                    <div className={cn(
-                      "relative z-10 flex-1 min-h-0 flex flex-col overflow-hidden",
-                      "p-[5px]",
-                      isMobile ? "mx-[10px]" : "" // Add horizontal margin for mobile
-                    )}>
-                      {activeTab === 'home' && !isPcPoweredOff && (
-                        <HomeLauncher
-                          apps={launcherApps}
-                          isDark={isDark}
-                          isPoweredOff={isPcPoweredOff}
-                          mobileVerticalScrollStyle={mobileVerticalScrollStyle}
-                          onNavigate={navigateToProgram}
-                        />
-                      )}
-
-                      {activeTab === 'desktop' && (
-                        <PCDesktop
-                          isDark={isDark}
-                          language={language}
-                          t={t}
-                          fontSize={fontSize}
-                          terminalBg={terminalBg}
-                          textColor={textColor}
-                          isMobile={isMobile}
-                          isPcPoweredOff={isPcPoweredOff}
-                          pcOutput={pcOutput}
-                          setPcOutput={setPcOutput}
-                          input={input}
-                          setInput={setInput}
-                          isCmdInputDisabled={isCmdInputDisabled}
-                          ftpSession={ftpSession}
-                          pythonSession={pythonSession}
-                          internalPcHostname={internalPcHostname}
-                          currentPath={currentPath}
-                          showCmdSettings={showCmdSettings}
-                          handleFontSizeChange={handleFontSizeChange}
-                          executeCommand={executeCommand}
-                          inputRef={inputRef}
-                          outputRef={outputRef}
-                          handleInputChange={handleInputChange}
-                          handleKeyDown={handleKeyDown}
-                          shouldShowAutocomplete={shouldShowAutocomplete}
-                          renderAutocompleteSuggestions={renderAutocompleteSuggestions}
-                          autocompleteIndex={autocompleteIndex}
-                          autocompleteRef={autocompleteRef}
-                          completeAutocompleteSelection={completeAutocompleteSelection}
-                          handleResizeStart={handleResizeStart}
-                          highlightText={highlightText}
-                          mobileVerticalScrollStyle={mobileVerticalScrollStyle}
-                          deviceId={deviceId}
-                          pcIP={pcIP}
-                          setPcIP={setPcIP}
-                          applyDhcpLease={(force) => applyDhcpLeaseRef.current?.(force) ?? null}
-                          pcSubnet={pcSubnet}
-                          pcMAC={pcMAC}
-                          pcGateway={pcGateway}
-                          pcDNS={pcDNS}
-                          pcIPv6={pcIPv6}
-                          wifiEnabled={wifiEnabled}
-                          setCurrentPath={setCurrentPath}
-                          canReachTargetIp={canReachTargetIp}
-                          resolveDeviceNameTargetCallback={resolveDeviceNameTargetCallback}
-                          openWebPage={openWebPage}
-                          setPcHostname={setPcHostname}
-                          setEditingFile={setEditingFile}
-                          buildArpTableOutput={buildArpTableOutput}
-                          getNtpNow={() => (ntpSyncState ? ntpPanelTime : null)}
-                        />
-                      )}
-
-                      {activeTab === 'terminal' && (
-                        <PCTerminal
-                          isDark={isDark}
-                          language={language}
-                          t={t}
-                          fontSize={fontSize}
-                          terminalBg={terminalBg}
-                          textColor={textColor}
-                          isMobile={isMobile}
-                          isPcPoweredOff={isPcPoweredOff}
-                          isConsoleConnected={isConsoleConnected}
-                          connectedDeviceId={connectedDeviceId}
-                          topologyDevices={topologyDevices}
-                          isConsoleInputDisabled={isConsoleInputDisabled}
-                          consoleNeedsPassword={consoleNeedsPassword}
-                          consoleConfirmDialog={consoleConfirmDialog}
-                          consoleReloadPending={consoleReloadPending}
-                          activeConsoleOutput={activeConsoleOutput}
-                          setConsoleConnectionTime={setConsoleConnectionTime}
-                          setIsConsoleConnected={setIsConsoleConnected}
-                          setConnectedDeviceId={setConnectedDeviceId}
-                          handleConnect={handleConnect}
-                          showCmdSettings={showCmdSettings}
-                          executeCommand={executeCommand}
-                          input={input}
-                          handleInputChange={handleInputChange}
-                          handleKeyDown={handleKeyDown}
-                          onExecuteDeviceCommand={onExecuteDeviceCommand}
-                          setConsolePasswordAttempted={setConsolePasswordAttempted}
-                          setInput={setInput}
-                          highlightText={highlightText}
-                          consoleDevice={consoleDevice}
-                          inputRef={inputRef}
-                          outputRef={outputRef}
-                          mobileVerticalScrollStyle={mobileVerticalScrollStyle}
-                        />
-                      )}
-
-                      {activeTab === 'settings' && (
-                        <PCNetworkSettings
-                          isDark={isDark}
-                          fontSize={fontSize}
-                          mobileVerticalScrollStyle={mobileVerticalScrollStyle}
-                          pcIP={pcIP}
-                          setPcIP={setPcIP}
-                          pcMAC={pcMAC}
-                          setPcMAC={setPcMAC}
-                          ipConfigMode={ipConfigMode}
-                          setIpConfigMode={setIpConfigMode}
-                          pcSubnet={pcSubnet}
-                          setPcSubnet={setPcSubnet}
-                          pcGateway={pcGateway}
-                          setPcGateway={setPcGateway}
-                          pcDNS={pcDNS}
-                          setPcDNS={setPcDNS}
-                          pcIPv6={pcIPv6}
-                          setPcIPv6={setPcIPv6}
-                          pcIPv6Prefix={pcIPv6Prefix}
-                          setPcIPv6Prefix={setPcIPv6Prefix}
-                          internalPcHostname={internalPcHostname}
-                          setPcHostname={setPcHostname}
-                          serviceNtpServer={serviceNtpServer}
-                          setServiceNtpServer={setServiceNtpServer}
-                          serviceNtpServerError={serviceNtpServerError}
-                          setServiceNtpServerError={setServiceNtpServerError}
-                          setServiceNtpServerPreset={setServiceNtpServerPreset}
-                          serviceNtpEnabled={serviceNtpEnabled}
-                          serviceNtpDate={serviceNtpDate}
-                          serviceNtpTime={serviceNtpTime}
-                          errors={errors}
-                          setErrors={setErrors}
-                          t={t}
-                          language={language}
-                          dispatchDeviceConfig={dispatchDeviceConfig}
-                          validateIpField={validateIpField}
-                          validateSubnetField={validateSubnetField}
-                          isValidIpAddress={isValidIpAddress}
-                          applyNtpServerTime={applyNtpServerTime}
-                          deviceId={deviceId}
-                          manualDhcpClickRef={manualDhcpClickRef}
-                          applyDhcpLeaseRef={applyDhcpLeaseRef}
-                        />
-                      )}
-
-                      {activeTab === 'services' && (
-                        <PCServices
-                          deviceId={deviceId}
-                          onEditFile={(filePath) => {
-                            const fs = loadFs(deviceId);
-                            const content = readFile(fs, filePath) ?? '';
-                            setEditingFile({ path: filePath, content });
-                          }}
-                          isDark={isDark}
-                          language={language}
-                          t={t}
-                          activeServiceTab={activeServiceTab}
-                          setActiveServiceTab={setActiveServiceTab}
-                          mobileVerticalScrollStyle={mobileVerticalScrollStyle}
-                          dispatchDeviceConfig={dispatchDeviceConfig}
-                          serviceDnsEnabled={serviceDnsEnabled}
-                          setServiceDnsEnabled={setServiceDnsEnabled}
-                          serviceDnsRecords={serviceDnsRecords}
-                          setServiceDnsRecords={setServiceDnsRecords}
-                          dnsFormDomain={dnsFormDomain}
-                          setDnsFormDomain={setDnsFormDomain}
-                          dnsFormAddress={dnsFormAddress}
-                          setDnsFormAddress={setDnsFormAddress}
-                          handleAddDnsRecord={handleAddDnsRecord}
-                          getDnsRecordDisplay={getDnsRecordDisplay}
-                          isDnsEditingRef={isDnsEditingRef}
-                          serviceHttpEnabled={serviceHttpEnabled}
-                          setServiceHttpEnabled={setServiceHttpEnabled}
-                          serviceHttpContent={serviceHttpContent}
-                          setServiceHttpContent={setServiceHttpContent}
-                          serviceFtpEnabled={serviceFtpEnabled}
-                          setServiceFtpEnabled={setServiceFtpEnabled}
-                          serviceFtpFiles={serviceFtpFiles}
-                          setServiceFtpFiles={setServiceFtpFiles}
-                          serviceDhcpEnabled={serviceDhcpEnabled}
-                          setServiceDhcpEnabled={setServiceDhcpEnabled}
-                          serviceDhcpPools={serviceDhcpPools}
-                          setServiceDhcpPools={setServiceDhcpPools}
-                          dhcpForm={dhcpForm}
-                          setDhcpForm={setDhcpForm}
-                          editingDhcpIndex={editingDhcpIndex}
-                          setEditingDhcpIndex={setEditingDhcpIndex}
-                          isDhcpEditingRef={isDhcpEditingRef}
-                          serviceNtpEnabled={serviceNtpEnabled}
-                          setServiceNtpEnabled={setServiceNtpEnabled}
-                          serviceNtpServer={serviceNtpServer}
-                          serviceNtpDate={serviceNtpDate}
-                          setServiceNtpDate={setServiceNtpDate}
-                          serviceNtpTime={serviceNtpTime}
-                          setServiceNtpTime={setServiceNtpTime}
-                          serviceMailEnabled={serviceMailEnabled}
-                          setServiceMailEnabled={setServiceMailEnabled}
-                          serviceMailDomain={serviceMailDomain}
-                          setServiceMailDomain={setServiceMailDomain}
-                          serviceMailUsername={serviceMailUsername}
-                          setServiceMailUsername={setServiceMailUsername}
-                          serviceMailPassword={serviceMailPassword}
-                          setServiceMailPassword={setServiceMailPassword}
-                          serviceMailInbox={serviceMailInbox}
-                          setServiceMailInbox={setServiceMailInbox}
-                          serviceMailSent={serviceMailSent}
-                          setServiceMailSent={setServiceMailSent}
-                          mailPop3Blocked={mailPop3Blocked}
-                          handleComposeSend={handleComposeSend}
-                          handleViewReplySend={handleViewReplySend}
-                          handleDeleteInbox={handleDeleteInbox}
-                          handleDeleteSent={handleDeleteSent}
-                          serviceSyslogEnabled={serviceSyslogEnabled}
-                          setServiceSyslogEnabled={setServiceSyslogEnabled}
-                          serviceSyslogMessages={serviceSyslogMessages}
-                          setServiceSyslogMessages={setServiceSyslogMessages}
-                        />
-                      )}
-
-                      {activeTab === 'iot' && (
-                        <PCIotPanel
-                          isDark={isDark}
-                          language={language}
-                          isMobile={isMobile}
-                          mobileVerticalScrollStyle={mobileVerticalScrollStyle}
-                          iotDevices={iotDevices}
-                          selectedIotDeviceId={selectedIotDeviceId}
-                          setSelectedIotDeviceId={setSelectedIotDeviceId}
-                          selectedIotDevice={selectedIotDevice}
-                          iotSensorType={iotSensorType}
-                          setIotSensorType={setIotSensorType}
-                          iotKind={iotKind}
-                          setIotKind={setIotKind}
-                          iotCollaborationEnabled={iotCollaborationEnabled}
-                          setIotCollaborationEnabled={setIotCollaborationEnabled}
-                          iotDataStore={iotDataStore}
-                          setIotDataStore={setIotDataStore}
-                          topologyDevices={topologyDevices}
-                          deviceStates={deviceStates}
-                          topologyConnections={topologyConnections}
-                          deviceId={deviceId}
-                          wifiSSID={wifiSSID}
-                          navigateToProgram={(program: string) => navigateToProgram(program as PCActiveTab)}
-                          setInput={setInput}
-                          executeCommand={executeCommand}
-                          environment={environment}
-                        />
-                      )}
-
-                      {activeTab === 'wireless' && (
-                        <PCWifi
-                          isDark={isDark}
-                          language={language}
-                          t={t}
-                          wifiEnabled={wifiEnabled}
-                          setWifiEnabled={setWifiEnabled}
-                          wifiSSID={wifiSSID}
-                          setWifiSSID={setWifiSSID}
-                          wifiBSSID={wifiBSSID}
-                          setWifiBSSID={setWifiBSSID}
-                          wifiSecurity={wifiSecurity}
-                          setWifiSecurity={setWifiSecurity}
-                          wifiPassword={wifiPassword}
-                          setWifiPassword={setWifiPassword}
-                          wifiChannel={wifiChannel}
-                          setWifiChannel={setWifiChannel}
-                          availableSSIDs={availableSSIDs}
-                          deviceStates={deviceStates}
-                          topologyDevices={topologyDevices}
-                          deviceId={deviceId}
-                          wifiSignalStrength={wifiSignalStrength}
-                          dispatchDeviceConfig={dispatchDeviceConfig}
-                          navigateToProgram={(program: string) => navigateToProgram(program as PCActiveTab)}
-                          setInput={setInput}
-                          executeCommand={executeCommand}
-                          mobileVerticalScrollStyle={mobileVerticalScrollStyle}
-                        />
-                      )}
-
-                      {activeTab === 'rest-api' && (
-                        <RestApiExplorerWindow
-                          isDark={isDark}
-                          language={language}
-                          topologyDevices={topologyDevices}
-                        />
-                      )}
-                    </div>
+                    {/* Content Area — delegates to PCPanelContent which reads from context */}
+                    <PCPanelContent />
                   </div>
                 </ModernPanel>
               </div>
@@ -2484,5 +2242,6 @@ export function PCPanel({
         onOpenWebPage={openWebPage}
       />
     </>
+    </PCPanelContext.Provider>
   );
 }

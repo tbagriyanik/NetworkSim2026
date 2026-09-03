@@ -283,6 +283,8 @@ async function renderCertificateCanvas(
 
 // ─── Main Generator ──────────────────────────────────────────────────────────
 export const generateCertificate = async (data: CertificateData): Promise<boolean> => {
+  const sanitizedStudentName = (data.studentName || 'Student').trim().slice(0, 50);
+  data = { ...data, studentName: sanitizedStudentName };
   const { score, totalScore, language } = data;
   const isTr = language === 'tr';
 
