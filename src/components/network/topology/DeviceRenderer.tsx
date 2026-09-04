@@ -414,11 +414,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             className={isDragging ? '' : 'transition-all duration-150'}
             filter="url(#deviceShadow)"
           />
-          {/* Small interior highlight bumps on the cloud */}
-          <g filter="url(#deviceShadow)" style={{ pointerEvents: 'none' }}>
-            <circle cx={deviceWidth * 0.32} cy={deviceHeight - 48} r={deviceWidth * 0.09} fill={isDark ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.45)'} />
-            <circle cx={deviceWidth * 0.55} cy={deviceHeight - 54} r={deviceWidth * 0.12} fill={isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.35)'} />
-          </g>
+          {/* Clean outer cloud boundary */}
         </g>
       ) : device.type === 'router' ? (
 
