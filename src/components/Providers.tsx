@@ -13,6 +13,7 @@ import { GlobalDragManager } from '@/hooks/useDrag';
 import { AppErrorBoundary } from '@/components/ui/AppErrorBoundary';
 import { Toaster } from '@/components/ui/toaster';
 import { LangUpdater } from '@/components/LangUpdater';
+import { EnvNotifier } from '@/components/EnvNotifier';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -20,18 +21,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <AppErrorBoundary>
         <LanguageProvider>
           <LangUpdater />
+          <EnvNotifier />
           <LayoutProvider>
             <FeatureFlagProvider>
               <ModeProvider>
                 <RoomProvider>
                   <PromptProvider>
-                  <TooltipProvider delayDuration={0}>
-                    <SidebarProvider>
-                      <GlobalDragManager />
-                      {children}
-                      <Toaster />
-                    </SidebarProvider>
-                  </TooltipProvider>
+                    <TooltipProvider delayDuration={0}>
+                      <SidebarProvider>
+                        <GlobalDragManager />
+                        {children}
+                        <Toaster />
+                      </SidebarProvider>
+                    </TooltipProvider>
                   </PromptProvider>
                 </RoomProvider>
               </ModeProvider>

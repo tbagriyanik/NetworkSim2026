@@ -44,7 +44,7 @@ npm test
   - **BGP Policies & Attributes:** Route-map filtering (`neighbor route-map`) and BGP weight assignment (`neighbor weight`).
   - **DHCP Snooping Option 82 & Rate-Limit:** Circuit ID injection (`option 82`) and interface rate limiting (`ip dhcp snooping limit rate`).
   - **EIGRP for IPv6 & GLBP:** Dual IPv6 metric computation, Prefix-Lists, Route-Maps, GLBP AVG election, and STP Loop Guard.
-- **🎓 Guided Lessons & Quiz Engine:** 19 interactive CCNP/CCNA guided tutorials with topic-specific quizzes and real-time scoring.
+- **🎓 Guided Lessons & Quiz Engine:** 19 interactive guided tutorials with topic-specific quizzes and real-time scoring.
 - **📄 High-DPI PDF Certificate Generator:** Canvas 2400x1700 High-DPI renderer with 100% accurate Turkish character support.
 
 

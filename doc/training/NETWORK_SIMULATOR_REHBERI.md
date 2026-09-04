@@ -98,7 +98,7 @@ Network Simulator; bilgisayar ağları, anahtarlama (switching), yönlendirme (r
 - **IoT Sensörler ve Aktüatörler:** Sıcaklık, nem, hareket, ışık, ses sensörleri + akıllı lamba, kapı kilidi, röle ve Web tabanlı IoT Kontrol Paneli.
 
 ### 📊 İzleme ve Teşhis (Monitoring & Diagnostics)
-- **CDP / LLDP:** Cisco Discovery Protocol ve Link Layer Discovery Protocol ile komşu keşfi.
+- **CDP / LLDP:** Discovery Protocol ve Link Layer Discovery Protocol ile komşu keşfi.
 - **ARP / NDP:** ARP tablosu yönetimi ve IPv6 Neighbor Discovery Protocol.
 - **Packet Capture:** OSI katman katman (L2 Ethernet, L3 IP, L4 TCP/UDP/ICMP) derinlemesine analiz, hex dump ve protokol ağacı.
 - **Syslog / SNMP / NTP:** Merkezi log yönetimi, SNMP ile ağ izleme, NTP ile zaman senkronizasyonu.
