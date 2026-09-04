@@ -152,7 +152,7 @@ export function MobileDeviceView({
             <Smartphone className="w-4 h-4 text-sky-400" />
             {device.name}
           </h2>
-          <p className="text-[10px] text-slate-400">iOS / Android Mobile OS • Dual Wi-Fi & Cellular</p>
+          <p className="text-[10px] text-slate-400">iOS / Android Mobile OS • Wi-Fi Wireless Interface</p>
         </div>
 
         {/* App Navigation Bar */}

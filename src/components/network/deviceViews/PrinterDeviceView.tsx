@@ -122,12 +122,12 @@ export function PrinterDeviceView({
                 {isTr ? 'Hazır / Online' : 'Ready / Online'}
               </span>
             </h2>
-            <p className="text-xs opacity-60">HP LaserJet Enterprise Network Print Server</p>
+            <p className="text-xs opacity-60">Network Print Server (Wi-Fi & Ethernet Dual Interface)</p>
           </div>
         </div>
         <div className="text-right font-mono text-xs opacity-70">
           <div>MAC: {device.macAddress || '0050.56C0.0001'}</div>
-          <div>Port: {device.ports?.[0]?.label || 'Eth0'}</div>
+          <div>Ethernet: Eth0 | Wireless: WLAN0</div>
         </div>
       </div>
 

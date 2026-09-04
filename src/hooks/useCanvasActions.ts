@@ -304,7 +304,7 @@ export function useCanvasActions({
       ports:
         type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer'
           ? [
-            { id: 'eth0', label: 'Eth0', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) },
+            ...(type === 'mobile' ? [] : [{ id: 'eth0', label: 'Eth0', status: 'disconnected' as const, macAddress: generateUniqueMacAddress([...allUsedMacs]) }]),
             ...(type === 'pc' ? [{ id: 'console', label: 'Console', status: 'disconnected' as const }] : []),
             ...(type === 'iot' || type === 'mobile' ? [{
               id: 'wlan0',

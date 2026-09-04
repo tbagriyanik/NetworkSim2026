@@ -56,7 +56,7 @@ describe('Advanced BGP neighbor configuration commands', () => {
     r.currentMode = 'router-config';
     r.bgpNeighbors = [{ ip: '10.0.0.2', as: '65002' }];
 
-    let res = executeCommand(r, 'neighbor 10.0.0.2 password cisco123', 'en');
+    let res = executeCommand(r, 'neighbor 10.0.0.2 password netsim123', 'en');
     expect(res.success).toBe(true);
     r = { ...r, ...res.newState } as SwitchState;
 
@@ -73,7 +73,7 @@ describe('Advanced BGP neighbor configuration commands', () => {
     r = { ...r, ...res.newState } as SwitchState;
 
     const n = r.bgpNeighbors?.find(x => x.ip === '10.0.0.2');
-    expect(n?.password).toBe('cisco123');
+    expect(n?.password).toBe('netsim123');
     expect(n?.description).toBe('ISP-UPLINK');
     expect(n?.shutdown).toBe(true);
     expect(n?.defaultOriginate).toBe(true);
@@ -294,7 +294,7 @@ describe('Advanced BGP show commands', () => {
   test('show ip bgp neighbors <ip> shows detailed advanced attributes', () => {
     const r1 = makeRouter('R1', '65001', '10.0.0.1');
     r1.bgpNeighbors = [{
-      ip: '10.0.0.2', as: '65002', description: 'ISP-UPLINK', password: 'cisco123',
+      ip: '10.0.0.2', as: '65002', description: 'ISP-UPLINK', password: 'netsim123',
       nextHopSelf: true, timersKeepalive: 30, timersHoldtime: 90, ebgpMultihop: 3,
     } as BgpNeighbor];
 
