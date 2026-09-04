@@ -127,7 +127,7 @@ export function PrinterDeviceView({
         </div>
         <div className="text-right font-mono text-xs opacity-70">
           <div>MAC: {device.macAddress || '0050.56C0.0001'}</div>
-          <div>Ethernet: Eth0 | Wireless: WLAN0</div>
+          <div>Web: http://{device.ip || ip}</div>
         </div>
       </div>
 

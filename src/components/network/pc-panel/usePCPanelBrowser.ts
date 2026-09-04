@@ -8,6 +8,7 @@ import { checkConnectivity } from '@/lib/network/connectivity';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { isRouterDevice, generateRouterAdminPage } from '@/components/network/WifiControlPanel';
 import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
+import { generatePrinterWebPanelContent } from '@/lib/network/printerWebPanel';
 import { loadFs, readFile } from './pcFileSystem';
 
 interface ConnectedIoTDevice {
@@ -215,6 +216,14 @@ export function usePCPanelBrowser({
         </main>
       `);
       addLocalOutput('error', `404 Not Found: ${target}`);
+    } else if (httpServer.type === 'printer') {
+      const printerPage = generatePrinterWebPanelContent(httpServer, language);
+      setHttpAppDeviceId(httpServer.id);
+      setHttpAppContent(printerPage);
+      setHttpAppTitle(`${httpServer.name || httpServer.id} - ${language === 'tr' ? 'Yazıcı Yönetimi' : 'Printer Management'}`);
+      addLocalOutput('success', language === 'tr'
+        ? 'Yazıcı web paneli açıldı.'
+        : 'Printer web panel opened.');
     } else if (isRouterDevice(httpServer)) {
       const runtimeState = deviceStates?.get(httpServer.id);
       const connectedIot = getConnectedIotDevices(httpServer.id);

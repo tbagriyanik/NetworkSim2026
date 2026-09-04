@@ -47,17 +47,101 @@ export function MobileDeviceView({
   const [pingResults, setPingResults] = useState<string[]>([]);
   const [isPinging, setIsPinging] = useState(false);
 
-  // Detect available wireless SSIDs from AP / WLC in topology
+  // Detect available active wireless SSIDs exclusively from real topology devices
   const availableSsids = useMemo(() => {
-
-    const ssids = new Set<string>(['Corporate-WiFi', 'Guest-Net', 'Branch-Wireless']);
+    const ssids = new Set<string>();
     topologyDevices.forEach(d => {
-      if (d.type === 'wlc' || d.type === 'iot') {
-        if (d.wifi?.ssid) ssids.add(d.wifi.ssid);
+      // Collect SSIDs from any topology device acting as Access Point or WLC
+      if (d.wifi?.enabled && d.wifi?.mode === 'ap' && d.wifi?.ssid?.trim()) {
+        ssids.add(d.wifi.ssid.trim());
+      } else if (d.type === 'wlc' && d.wifi?.enabled && d.wifi?.ssid?.trim()) {
+        ssids.add(d.wifi.ssid.trim());
       }
     });
+    // If device is already connected to an SSID not in AP list (e.g. initial state), keep it visible
+    if (device.wifi?.ssid?.trim()) {
+      ssids.add(device.wifi.ssid.trim());
+    }
     return Array.from(ssids);
-  }, [topologyDevices]);
+  }, [topologyDevices, device.wifi?.ssid]);
+
+  // Helper to obtain DHCP IP based on connected AP/WLC or default subnet
+  const obtainDhcpIpForSsid = (targetSsid: string) => {
+    const targetAp = topologyDevices.find(d => d.wifi?.ssid === targetSsid && d.wifi?.enabled);
+    let assignedIp = '192.168.1.105';
+    let assignedSubnet = '255.255.255.0';
+    let assignedGateway = '192.168.1.1';
+    let assignedDns = '8.8.8.8';
+
+    if (targetAp) {
+      const baseIp = targetAp.ip || '192.168.1.1';
+      const parts = baseIp.split('.');
+      if (parts.length === 4) {
+        // Simple DHCP simulation in target AP's subnet range
+        const hostNum = Math.floor(Math.random() * 150) + 50;
+        assignedIp = `${parts[0]}.${parts[1]}.${parts[2]}.${hostNum}`;
+        assignedSubnet = targetAp.subnet || '255.255.255.0';
+        assignedGateway = targetAp.gateway || baseIp;
+        assignedDns = targetAp.dns || '8.8.8.8';
+      }
+    }
+
+    return { assignedIp, assignedSubnet, assignedGateway, assignedDns };
+  };
+
+  const handleSelectSsid = (ssid: string) => {
+    setSelectedSsid(ssid);
+    let nextIp = ip;
+    let nextSubnet = subnet;
+    let nextGateway = gateway;
+    let nextDns = dns;
+
+    if (ipMode === 'dhcp') {
+      const dhcpConfig = obtainDhcpIpForSsid(ssid);
+      nextIp = dhcpConfig.assignedIp;
+      nextSubnet = dhcpConfig.assignedSubnet;
+      nextGateway = dhcpConfig.assignedGateway;
+      nextDns = dhcpConfig.assignedDns;
+      setIp(nextIp);
+      setSubnet(nextSubnet);
+      setGateway(nextGateway);
+      setDns(nextDns);
+    }
+
+    setDevices(
+      topologyDevices.map(d => {
+        if (d.id === device.id) {
+          return {
+            ...d,
+            ipConfigMode: ipMode,
+            ip: nextIp,
+            subnet: nextSubnet,
+            gateway: nextGateway,
+            dns: nextDns,
+            wifi: {
+              ssid,
+              security: 'open' as const,
+              channel: '2.4GHz' as const,
+              mode: 'client' as const,
+              enabled: true,
+            }
+          };
+        }
+        return d;
+      })
+    );
+  };
+
+  const handleSetIpMode = (mode: 'dhcp' | 'static') => {
+    setIpMode(mode);
+    if (mode === 'dhcp') {
+      const dhcpConfig = obtainDhcpIpForSsid(selectedSsid);
+      setIp(dhcpConfig.assignedIp);
+      setSubnet(dhcpConfig.assignedSubnet);
+      setGateway(dhcpConfig.assignedGateway);
+      setDns(dhcpConfig.assignedDns);
+    }
+  };
 
   const handleSaveIp = () => {
     setDevices(
@@ -193,34 +277,40 @@ export function MobileDeviceView({
               </div>
 
               <div className="space-y-2">
-                {availableSsids.map((ssid, idx) => {
-                  const isConnected = selectedSsid === ssid;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => setSelectedSsid(ssid)}
-                      className={cn(
-                        "p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-colors",
-                        isConnected ? "bg-sky-950/60 border-sky-500 text-white" : "bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40"
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Wifi className={cn("w-4 h-4", isConnected ? "text-sky-400" : "text-slate-500")} />
-                        <div>
-                          <div className="font-semibold text-xs">{ssid}</div>
-                          <div className="text-[10px] opacity-60">WPA2/WPA3 Enterprise • 5GHz</div>
+                {availableSsids.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/40 text-center text-slate-400 text-xs">
+                    {isTr ? 'Kapsama alanında aktif Wi-Fi ağı bulunamadı' : 'No active Wi-Fi networks found in range'}
+                  </div>
+                ) : (
+                  availableSsids.map((ssid, idx) => {
+                    const isConnected = selectedSsid === ssid;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => handleSelectSsid(ssid)}
+                        className={cn(
+                          "p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-colors",
+                          isConnected ? "bg-sky-950/60 border-sky-500 text-white" : "bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Wifi className={cn("w-4 h-4", isConnected ? "text-sky-400" : "text-slate-500")} />
+                          <div>
+                            <div className="font-semibold text-xs">{ssid}</div>
+                            <div className="text-[10px] opacity-60">WPA2/WPA3 Enterprise • 5GHz</div>
+                          </div>
                         </div>
+                        {isConnected ? (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-medium">
+                            {isTr ? 'Bağlı' : 'Connected'}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500">{isTr ? 'Bağlan' : 'Connect'}</span>
+                        )}
                       </div>
-                      {isConnected ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-medium">
-                          {isTr ? 'Bağlı' : 'Connected'}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] text-slate-500">{isTr ? 'Bağlan' : 'Connect'}</span>
-                      )}
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
 
               <div className="pt-2">
@@ -244,13 +334,13 @@ export function MobileDeviceView({
                 </span>
                 <div className="flex gap-1 bg-slate-950 p-0.5 rounded-lg border border-slate-800 text-[10px]">
                   <button
-                    onClick={() => setIpMode('dhcp')}
+                    onClick={() => handleSetIpMode('dhcp')}
                     className={cn("px-2 py-0.5 rounded font-medium", ipMode === 'dhcp' ? "bg-sky-600 text-white" : "text-slate-400")}
                   >
                     DHCP
                   </button>
                   <button
-                    onClick={() => setIpMode('static')}
+                    onClick={() => handleSetIpMode('static')}
                     className={cn("px-2 py-0.5 rounded font-medium", ipMode === 'static' ? "bg-sky-600 text-white" : "text-slate-400")}
                   >
                     Static

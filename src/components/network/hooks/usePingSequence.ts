@@ -71,9 +71,12 @@ export const buildBroadcastAnimTargets = ({
   deviceStates?: Map<string, import('@/lib/network/types').SwitchState>;
 }): BroadcastAnimTarget[] => {
   const sw = deviceMap.get(switchId);
-  if (!sw || (sw.type !== 'switchL2' && sw.type !== 'switchL3')) return [];
+  // Hub is a Layer-1 device: it floods every incoming signal to ALL other ports.
+  // Switches (L2/L3) use MAC learning and only flood unknown/broadcast frames.
+  const isHub = sw?.type === 'hub';
+  if (!sw || (sw.type !== 'switchL2' && sw.type !== 'switchL3' && !isHub)) return [];
 
-  const switchState = deviceStates?.get(switchId);
+  const switchState = isHub ? undefined : deviceStates?.get(switchId);
   const ingressConn = connections.find(conn =>
     conn.active !== false &&
     ((conn.sourceDeviceId === switchId && conn.targetDeviceId === exceptId) ||
@@ -101,10 +104,15 @@ export const buildBroadcastAnimTargets = ({
     if (conn.active === false) continue;
     const neighbor = deviceMap.get(neighborId);
     if (!neighbor || neighbor.status === 'offline') continue;
-    const simPort = switchState?.ports?.[portId];
-    const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
-    if (isSTPBlocked) continue;
-    if (!isPortMemberOfVlan(simPort, ingressVlan)) continue;
+
+    // Hub: L1 flood — no STP, no VLAN filtering applied
+    if (!isHub) {
+      const simPort = switchState?.ports?.[portId];
+      const isSTPBlocked = simPort?.spanningTree?.state === 'blocking' || simPort?.spanningTree?.role === 'alternate';
+      if (isSTPBlocked) continue;
+      if (!isPortMemberOfVlan(simPort, ingressVlan)) continue;
+    }
+
     result.push({
       targetId: neighborId,
       fromX: sw.x,

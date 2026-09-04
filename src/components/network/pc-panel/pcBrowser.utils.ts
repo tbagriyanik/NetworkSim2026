@@ -191,7 +191,7 @@ export function findHttpServerByTarget({
   }
 
   const routerByIp = topologyDevices.find(
-    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'wlc') && (d.ip === target || d.ipv6?.toLowerCase() === normalizedTarget) && d.services?.http?.enabled
+    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'wlc' || d.type === 'printer') && (d.ip === target || d.ipv6?.toLowerCase() === normalizedTarget)
   );
   if (routerByIp) {
     const targetAddress = routerByIp.ipv6 && normalizedTarget === routerByIp.ipv6.toLowerCase() ? routerByIp.ipv6 : routerByIp.ip;
@@ -226,7 +226,7 @@ export function findHttpServerByTarget({
   if (resolvedPc && canReachTargetIp(dnsResult.address, { protocol: 'tcp', port: '80' })) return resolvedPc;
 
   const resolvedRouter = topologyDevices.find(
-    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'wlc') && (d.ip === dnsResult.address || d.ipv6?.toLowerCase() === dnsResult.address.toLowerCase()) && d.services?.http?.enabled
+    (d) => (d.type === 'router' || d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'wlc' || d.type === 'printer') && (d.ip === dnsResult.address || d.ipv6?.toLowerCase() === dnsResult.address.toLowerCase())
   ) || null;
   if (resolvedRouter && canReachTargetIp(dnsResult.address, { protocol: 'tcp', port: '80' })) return resolvedRouter;
 

@@ -1,0 +1,89 @@
+import type { CanvasDevice } from '@/components/network/networkTopology.types';
+
+export function generatePrinterWebPanelContent(device: CanvasDevice, language: string): string {
+  const isTr = language === 'tr';
+  const name = device.name || 'Network Printer Server';
+  const ip = device.ip || '192.168.1.50';
+  const mac = device.macAddress || '0050.56C0.0001';
+
+  return `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#f8fafc;padding:24px;min-height:100%;box-sizing:border-box;">
+      <div style="max-w:800px;margin:0 auto;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:24px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
+        
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #334155;padding-bottom:16px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:48px;height:48px;border-radius:12px;background:rgba(236,72,153,0.15);border:1px solid rgba(236,72,153,0.3);display:flex;align-items:center;justify-content:center;color:#ec4899;font-size:24px;">
+              🖨️
+            </div>
+            <div>
+              <h1 style="margin:0;font-size:18px;font-weight:700;color:#f8fafc;">${name}</h1>
+              <div style="font-size:12px;color:#94a3b8;margin-top:2px;">Embedded Print Server Web Management</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="display:inline-block;padding:4px 12px;border-radius:9999px;background:rgba(16,185,129,0.2);color:#34d399;font-size:12px;font-weight:600;">
+              ● ${isTr ? 'Çevrimiçi / Hazır' : 'Online / Ready'}
+            </span>
+          </div>
+        </div>
+
+        <!-- Network Info Grid -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;">
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">IP Address</div>
+            <div style="font-family:monospace;font-size:14px;color:#38bdf8;margin-top:4px;font-weight:600;">${ip}</div>
+          </div>
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">MAC Address</div>
+            <div style="font-family:monospace;font-size:14px;color:#cbd5e1;margin-top:4px;">${mac}</div>
+          </div>
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Interface</div>
+            <div style="font-size:14px;color:#cbd5e1;margin-top:4px;">Ethernet / Wi-Fi Dual</div>
+          </div>
+        </div>
+
+        <!-- Supplies Status -->
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:24px;">
+          <h2 style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#e2e8f0;display:flex;align-items:center;gap:8px;">
+            <span>📦</span> ${isTr ? 'Toner & Sarf Malzeme Durumu' : 'Toner & Cartridge Status'}
+          </h2>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;font-family:monospace;font-size:11px;">
+            <div style="background:#1e293b;border:1px solid #475569;border-radius:8px;padding:10px;color:#f8fafc;">
+              <div style="font-weight:700;">BLACK</div>
+              <div style="color:#34d399;margin-top:4px;font-weight:700;">98%</div>
+            </div>
+            <div style="background:#083344;border:1px solid #0891b2;border-radius:8px;padding:10px;color:#67e8f9;">
+              <div style="font-weight:700;">CYAN</div>
+              <div style="color:#22d3ee;margin-top:4px;font-weight:700;">92%</div>
+            </div>
+            <div style="background:#4c0519;border:1px solid #be123c;border-radius:8px;padding:10px;color:#fda4af;">
+              <div style="font-weight:700;">MAGENTA</div>
+              <div style="color:#fb7185;margin-top:4px;font-weight:700;">95%</div>
+            </div>
+            <div style="background:#451a03;border:1px solid #b45309;border-radius:8px;padding:10px;color:#fde68a;">
+              <div style="font-weight:700;">YELLOW</div>
+              <div style="color:#fbbf24;margin-top:4px;font-weight:700;">90%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Print Queue -->
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <h2 style="margin:0;font-size:14px;font-weight:600;color:#e2e8f0;">
+              📑 ${isTr ? 'Yazdırma Kuyruğu' : 'Active Print Queue'}
+            </h2>
+            <span style="font-size:11px;color:#a855f7;font-family:monospace;font-weight:600;">0 Active Jobs</span>
+          </div>
+          <div style="font-size:12px;color:#64748b;font-style:italic;">
+            ${isTr ? 'Kuyrukta bekleyen yazdırma görevi yok. Sistem yazdırmaya hazır.' : 'No active jobs in print spooler. Ready to process network print jobs.'}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+

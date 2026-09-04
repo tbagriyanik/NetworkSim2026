@@ -81,6 +81,33 @@ export function usePeriodicNetworkPackets({
         const stateA = currentStates?.get(devA.id);
         const stateB = currentStates?.get(devB.id);
 
+        // Hub L1 Flood: When a hub is involved in a connection, signal is repeated
+        // on ALL other hub ports. Emit a flood packet on every sibling hub connection.
+        const hubDevice = devA.type === 'hub' ? devA : devB.type === 'hub' ? devB : null;
+        const nonHubDevice = hubDevice === devA ? devB : hubDevice === devB ? devA : null;
+        if (hubDevice && nonHubDevice) {
+          // Find all other connections of this hub (sibling ports)
+          currentConnections.forEach(sibConn => {
+            if (sibConn.active === false) return;
+            if (sibConn.id === connId) return; // Skip the ingress connection itself
+            const sibIsSource = sibConn.sourceDeviceId === hubDevice.id;
+            const sibIsTarget = sibConn.targetDeviceId === hubDevice.id;
+            if (!sibIsSource && !sibIsTarget) return;
+            const sibConnId = sibConn.id || `${sibConn.sourceDeviceId}-${sibConn.targetDeviceId}`;
+            const sibNeighborId = sibIsSource ? sibConn.targetDeviceId : sibConn.sourceDeviceId;
+            const sibNeighbor = currentDevices.find(d => d.id === sibNeighborId);
+            if (!sibNeighbor || sibNeighbor.status === 'offline') return;
+            packetsToDispatch.push({
+              connectionId: sibConnId,
+              sourceIp: nonHubDevice.ip || nonHubDevice.macAddress || nonHubDevice.name,
+              targetIp: 'FF:FF:FF:FF:FF:FF',
+              protocol: 'ETH',
+              length: 64,
+              info: `Hub L1 Flood: Signal from ${nonHubDevice.name} repeated on all ports`,
+            });
+          });
+        }
+
         // 1. CDP / LLDP Periodic Packets (Switch/Router every 10s)
         if (
           (devA.type === 'switchL2' || devA.type === 'switchL3' || devA.type === 'router') &&
