@@ -829,7 +829,7 @@ export function PCPanel({
     return topologyDevices
       .filter(d => {
         if (d.id === routerId) return false;
-        if (d.type !== 'iot' && d.type !== 'pc') return false;
+        if (d.type !== 'iot' && d.type !== 'pc' && d.type !== 'mobile' && d.type !== 'printer') return false;
 
         let isWifiConnected = false;
         const clientWifi = getDeviceWifiConfig(d, deviceStates);

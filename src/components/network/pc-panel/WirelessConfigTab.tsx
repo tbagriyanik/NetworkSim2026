@@ -116,8 +116,8 @@ export function WirelessConfigTab({
                     return true;
                   });
                   const targetIp = apDevice?.ip || '192.168.1.1';
-                  setInput(`curl ${targetIp}`);
-                  void executeCommand(`curl ${targetIp}`);
+                  setInput(`wget ${targetIp}`);
+                  void executeCommand(`wget ${targetIp}`);
                 }, 300);
               }}
             >

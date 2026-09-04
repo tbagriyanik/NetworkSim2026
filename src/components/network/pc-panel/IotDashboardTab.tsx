@@ -96,8 +96,8 @@ export function IotDashboardTab({
                     (d.wifi?.ssid === wifiSSID || d.ports?.some((p: { wifi?: { ssid?: string } }) => p.wifi?.ssid === wifiSSID))
                   );
                   const targetIp = apDevice?.ip || '192.168.1.1';
-                  setInput(`curl ${targetIp}`);
-                  void executeCommand(`curl ${targetIp}`);
+                  setInput(`wget ${targetIp}`);
+                  void executeCommand(`wget ${targetIp}`);
                 }, 300);
               }}
             >

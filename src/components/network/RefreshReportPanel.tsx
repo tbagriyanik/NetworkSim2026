@@ -154,6 +154,30 @@ export function RefreshReportPanel({
                               <span>WLC</span>
                               <span>{liveSummary.deviceCount.wlcs}</span>
                             </div>
+                            {(topologyDevices.filter(d => d.type === 'hub').length > 0) && (
+                              <div className="flex justify-between">
+                                <span>Hub</span>
+                                <span>{topologyDevices.filter(d => d.type === 'hub').length}</span>
+                              </div>
+                            )}
+                            {(topologyDevices.filter(d => d.type === 'cloud').length > 0) && (
+                              <div className="flex justify-between">
+                                <span>Cloud (WAN)</span>
+                                <span>{topologyDevices.filter(d => d.type === 'cloud').length}</span>
+                              </div>
+                            )}
+                            {(topologyDevices.filter(d => d.type === 'mobile').length > 0) && (
+                              <div className="flex justify-between">
+                                <span>{language === 'tr' ? 'Mobil Cihaz' : 'Mobile'}</span>
+                                <span>{topologyDevices.filter(d => d.type === 'mobile').length}</span>
+                              </div>
+                            )}
+                            {(topologyDevices.filter(d => d.type === 'printer').length > 0) && (
+                              <div className="flex justify-between">
+                                <span>{language === 'tr' ? 'Yazıcı' : 'Printer'}</span>
+                                <span>{topologyDevices.filter(d => d.type === 'printer').length}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
 

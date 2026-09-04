@@ -222,7 +222,7 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const state = safeDeviceStates?.get(device.id);
   const wlanState: Port | undefined = state?.ports['wlan0'];
-  const defaultMode: WifiMode = device.type === 'pc' ? 'client' : 'ap';
+  const defaultMode: WifiMode = (device.type === 'pc' || device.type === 'mobile' || device.type === 'printer') ? 'client' : 'ap';
 
   if (wlanState?.wifi?.ssid) {
     const mode = normalizeWifiMode(wlanState.wifi.mode, defaultMode);
@@ -503,7 +503,7 @@ export function getApActiveSsids(
 // Helper functions for wireless connection logic
 function isValidWirelessClient(device: CanvasDevice, deviceStates: Map<string, SwitchState>): boolean {
   const wifi = getDeviceWifiConfig(device, deviceStates);
-  return (device.type === 'pc' || device.type === 'iot') &&
+  return (device.type === 'pc' || device.type === 'iot' || device.type === 'mobile' || device.type === 'printer') &&
     !!wifi &&
     (wifi.enabled ?? true) &&
     !!wifi.ssid &&

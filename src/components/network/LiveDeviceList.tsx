@@ -9,7 +9,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { CanvasDevice, DeviceType } from '@/components/network/networkTopology.types';
 import {
   Terminal,
-  Settings,
   Copy,
   ChevronLeft,
   ChevronRight,
@@ -52,10 +51,9 @@ export const REFRESH_DEVICE_TYPE_LABELS: Record<DeviceType, string> = {
   wlc: 'WLC',
 };
 
-export const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = ['router', 'switchL3', 'switchL2', 'hub', 'cloud', 'mobile', 'printer', 'pc', 'iot', 'firewall', 'wlc'];
-
-
-// ─── Helper Functions for CLI & Settings ──────────────────────────────────────
+export const REFRESH_DEVICE_TYPE_ORDER: DeviceType[] = [
+  'router', 'switchL3', 'switchL2', 'hub', 'cloud', 'mobile', 'printer', 'pc', 'iot', 'firewall', 'wlc'
+];
 
 // ─── Helper Functions for CLI & Settings ──────────────────────────────────────
 
@@ -67,12 +65,11 @@ function getRecommendedCliCommands(
 ): Array<{ cmd: string; desc: string; mode?: string }> {
   const cmds: Array<{ cmd: string; desc: string; mode?: string }> = [];
 
-  // 1. DYNAMIC CONFIGURATION COMMANDS (Gerçek Değişken ve Yapılandırma Bilgileri)
+  // 1. DYNAMIC CONFIGURATION COMMANDS
   if (rawState) {
-    // VLAN tanımları
     if (rawState.vlans) {
       Object.values(rawState.vlans).forEach((vlan) => {
-        if (vlan.id !== 1 && vlan.id < 1002) { // Standart default VLAN 1 dışındaki tanımlı VLAN'lar
+        if (vlan.id !== 1 && vlan.id < 1002) {
           cmds.push({
             cmd: `vlan ${vlan.id}\n name ${vlan.name || `VLAN${vlan.id}`}\n exit`,
             desc: isTR ? `VLAN ${vlan.id} (${vlan.name || `VLAN${vlan.id}`}) Yapılandırması` : `VLAN ${vlan.id} configuration`,
@@ -82,70 +79,58 @@ function getRecommendedCliCommands(
       });
     }
 
-    // Arayüz (Port) IP ve Switchport Yapılandırmaları
     if (rawState.ports) {
       Object.values(rawState.ports).forEach((port) => {
-        // IP tanımlı L3 / Router portları
         if (port.ipAddress && !port.shutdown) {
           cmds.push({
             cmd: `interface ${port.id || port.name}\n ip address ${port.ipAddress} ${port.subnetMask || '255.255.255.0'}\n no shutdown\n exit`,
-            desc: isTR ? `${port.id || port.name} IP ve Durum Yapılandırması` : `${port.id || port.name} IP and status config`,
+            desc: isTR ? `${port.id || port.name} IP Yapılandırması` : `${port.id || port.name} IP config`,
             mode: '(config)#'
           });
-        }
-        // Trunk portlar
-        else if (port.mode === 'trunk' && !port.shutdown) {
+        } else if (port.mode === 'trunk' && !port.shutdown) {
           cmds.push({
             cmd: `interface ${port.id || port.name}\n switchport mode trunk\n exit`,
-            desc: isTR ? `${port.id || port.name} Trunk Port Modu` : `${port.id || port.name} trunk port config`,
+            desc: isTR ? `${port.id || port.name} Trunk Modu` : `${port.id || port.name} trunk config`,
             mode: '(config)#'
           });
-        }
-        // Access portlar (VLAN 1 harici özel VLAN'a atanmışsa)
-        else if (port.mode === 'access' && port.vlan && port.vlan !== 1 && !port.shutdown) {
+        } else if (port.accessVlan && port.accessVlan !== 1 && !port.shutdown) {
           cmds.push({
-            cmd: `interface ${port.id || port.name}\n switchport mode access\n switchport access vlan ${port.vlan}\n exit`,
-            desc: isTR ? `${port.id || port.name} Access VLAN ${port.vlan} Yapılandırması` : `${port.id || port.name} access vlan ${port.vlan}`,
+            cmd: `interface ${port.id || port.name}\n switchport mode access\n switchport access vlan ${port.accessVlan}\n exit`,
+            desc: isTR ? `${port.id || port.name} VLAN ${port.accessVlan} Erişimi` : `${port.id || port.name} Access VLAN ${port.accessVlan}`,
             mode: '(config)#'
           });
         }
       });
     }
 
-    // IP Routing Aktif mi?
-    if (rawState.ipRouting) {
-      cmds.push({
-        cmd: 'ip routing',
-        desc: isTR ? 'L3 IP Yönlendirme (Routing) Etkinleştirme' : 'Enable L3 IP Routing',
-        mode: '(config)#'
-      });
-    }
-
-    // DHCP Havuzları
-    if (rawState.dhcpPools) {
-      Object.entries(rawState.dhcpPools).forEach(([poolName, pool]) => {
-        const poolCmdLines = [`ip dhcp pool ${poolName}`];
-        if (pool.network && pool.subnetMask) poolCmdLines.push(` network ${pool.network} ${pool.subnetMask}`);
-        if (pool.defaultRouter) poolCmdLines.push(` default-router ${pool.defaultRouter}`);
-        if (pool.dnsServer) poolCmdLines.push(` dns-server ${pool.dnsServer}`);
-        poolCmdLines.push(' exit');
-
+    const rawStateAny = rawState as any;
+    if (rawStateAny.ipRoutes && Array.isArray(rawStateAny.ipRoutes) && rawStateAny.ipRoutes.length > 0) {
+      rawStateAny.ipRoutes.forEach((route: any) => {
         cmds.push({
-          cmd: poolCmdLines.join('\n'),
-          desc: isTR ? `DHCP Havuzu (${poolName}) Yapılandırması` : `DHCP Pool (${poolName}) config`,
+          cmd: `ip route ${route.prefix || route.network || '0.0.0.0'} ${route.mask || '0.0.0.0'} ${route.nextHop || route.interface || ''}`,
+          desc: isTR ? 'Statik Yönlendirme Kuralı' : 'Static Route',
           mode: '(config)#'
         });
       });
     }
+
+    if (rawStateAny.ospf?.enabled) {
+      cmds.push({
+        cmd: `router ospf ${rawStateAny.ospf.processId || 1}\n network ${rawStateAny.ospf.networks?.[0]?.network || '192.168.1.0'} 0.0.0.255 area 0`,
+        desc: isTR ? 'OSPF Yönlendirme Yapılandırması' : 'OSPF Routing Config',
+        mode: '(config)#'
+      });
+    }
   }
 
-  // 2. PC / IoT Dinamik Ayar Komutları
-  if ((type === 'pc' || type === 'iot') && rawDevice) {
+  // 2. STATIC IP / GW COMMANDS FOR END DEVICES
+  if (rawDevice) {
     if (rawDevice.ip && rawDevice.ip !== '0.0.0.0') {
       cmds.push({
-        cmd: `ipconfig /all`,
-        desc: isTR ? `Mevcut IP: ${rawDevice.ip} | GW: ${rawDevice.gateway || '0.0.0.0'}` : `Current IP: ${rawDevice.ip}`
+        cmd: `ip ${rawDevice.ip} ${rawDevice.subnet || '255.255.255.0'} ${rawDevice.gateway || '0.0.0.0'}`,
+        desc: isTR ? `IP ve Varsayılan Ağ Geçidi Tanımı (${rawDevice.ip})` : `Set IP & Gateway (${rawDevice.ip})`
       });
+
       if (rawDevice.gateway && rawDevice.gateway !== '0.0.0.0') {
         cmds.push({
           cmd: `ping ${rawDevice.gateway}`,
@@ -155,7 +140,7 @@ function getRecommendedCliCommands(
     }
   }
 
-  // 3. GENEL / ÖNERİLEN SHOW & TROUBLESHOOTING KOMUTLARI
+  // 3. SHOW & TROUBLESHOOTING COMMANDS
   switch (type) {
     case 'router':
       cmds.push(
@@ -196,6 +181,32 @@ function getRecommendedCliCommands(
         { cmd: 'show wlan summary', desc: isTR ? 'WLAN listesi ve SSID özeti' : 'WLAN summary & SSIDs', mode: '#' },
         { cmd: 'show ap summary', desc: isTR ? 'Bağlı Access Pointler' : 'Joined Access Points', mode: '#' },
         { cmd: 'show ap join statistics', desc: isTR ? 'AP bağlantı istatistikleri' : 'AP join stats', mode: '#' }
+      );
+      break;
+    case 'hub':
+      cmds.push(
+        { cmd: 'show hub ports', desc: isTR ? 'Aktif Hub Portları ve Sinyal Çoğaltma' : 'Active Hub ports & L1 signal repeating' },
+        { cmd: 'show mac address-table', desc: isTR ? 'L1 Hub MAC tablosu tutmaz (Tüm portlara flood edilir)' : 'L1 Hub does not maintain MAC table (Floods to all ports)' }
+      );
+      break;
+    case 'cloud':
+      cmds.push(
+        { cmd: 'show ip route', desc: isTR ? 'WAN / Internet Dış Ağ Yönlendirme' : 'WAN / Internet routing table' },
+        { cmd: 'ping 8.8.8.8', desc: isTR ? 'WAN İnternet Erişim Testi' : 'WAN Internet connectivity test' }
+      );
+      break;
+    case 'mobile':
+      cmds.push(
+        { cmd: 'ipconfig /all', desc: isTR ? 'Mobil Wi-Fi IP / MAC ve Ağ Geçidi Yapılandırması' : 'Mobile Wi-Fi IP / MAC & GW config' },
+        { cmd: 'ping <hedef-ip>', desc: isTR ? 'Kablosuz Ağ ICMP Erişilebilirlik Testi' : 'Wireless ICMP connectivity test' },
+        { cmd: 'wget http://<gateway-ip>', desc: isTR ? 'Kablosuz Ağ Yönetim Paneline Erişim' : 'Access Wireless Admin Portal' }
+      );
+      break;
+    case 'printer':
+      cmds.push(
+        { cmd: 'ipconfig /all', desc: isTR ? 'Ağ Yazıcısı IP / MAC Yapılandırması' : 'Network Printer IP & MAC config' },
+        { cmd: 'wget http://<yazıcı-ip>', desc: isTR ? 'Yazıcı Web Yönetici Paneline Erişim' : 'Access Printer Web Management' },
+        { cmd: 'ping <hedef-ip>', desc: isTR ? 'Yazdırıcı Sunucu Ağ Testi' : 'Print Server network ping test' }
       );
       break;
     case 'pc':
@@ -266,17 +277,25 @@ function RefreshDeviceListToast({
     return <div className="text-xs opacity-60 p-2 text-center">{isTR ? 'Listelenecek cihaz yok.' : 'No devices to list.'}</div>;
   }
 
-  const isPcOrIot = selected?.type === 'pc' || selected?.type === 'iot';
+  const isEndDevice = selected?.type === 'pc' || selected?.type === 'iot' || selected?.type === 'mobile' || selected?.type === 'printer';
   const rawDev = selected?.rawDevice;
   const rawState = selected?.rawState;
   const recommendedCmds = selected ? getRecommendedCliCommands(selected.type, isTR, rawState, rawDev) : [];
   const activeCommand = recommendedCmds[commandIndex];
 
-  // PC Active Services Data
+  // Services List
   const servicesList: Array<{ name: string; info: string; active: boolean }> = [];
-  if (isPcOrIot && rawDev) {
-    if (rawDev.services?.http?.enabled) {
-      servicesList.push({ name: 'HTTP Web Server', info: rawDev.services.http.mode === 'iot' ? (isTR ? 'IoT Web Kontrol Paneli' : 'IoT Web Panel') : (isTR ? 'Aktif Web Sayfası' : 'Active Web Page'), active: true });
+  if (isEndDevice && rawDev) {
+    if (rawDev.services?.http?.enabled || rawDev.type === 'printer') {
+      servicesList.push({
+        name: rawDev.type === 'printer' ? 'Print Web Server' : 'HTTP Web Server',
+        info: rawDev.type === 'printer'
+          ? (isTR ? 'Gömülü Yazıcı Web Yönetim Paneli' : 'Embedded Printer Web Admin')
+          : rawDev.services?.http?.mode === 'iot'
+            ? (isTR ? 'IoT Web Kontrol Paneli' : 'IoT Web Panel')
+            : (isTR ? 'Aktif Web Sayfası' : 'Active Web Page'),
+        active: true
+      });
     }
     if (rawDev.services?.dns?.enabled) {
       const count = rawDev.services.dns.records?.length || 0;
@@ -305,9 +324,9 @@ function RefreshDeviceListToast({
     }
   }
 
-  // Switch / Router runtime settings
+  // Switch / Router Summary
   const switchRouterSummary = (() => {
-    if (!selected || isPcOrIot || !rawState) return null;
+    if (!selected || isEndDevice || !rawState) return null;
     const ports = Object.values(rawState.ports || {});
     const upPorts = ports.filter(p => !p.shutdown && p.status === 'connected').length;
     const totalPorts = ports.length;
@@ -327,6 +346,32 @@ function RefreshDeviceListToast({
       activeIps
     };
   })();
+
+  const renderDeviceIcon = (deviceType: DeviceType) => {
+    switch (deviceType) {
+      case 'mobile':
+        return <Radio className="w-3.5 h-3.5 text-sky-400" />;
+      case 'printer':
+        return <Server className="w-3.5 h-3.5 text-pink-400" />;
+      case 'hub':
+        return <Network className="w-3.5 h-3.5 text-amber-500" />;
+      case 'cloud':
+        return <Radio className="w-3.5 h-3.5 text-cyan-400" />;
+      case 'router':
+        return <Network className="w-3.5 h-3.5 text-emerald-500" />;
+      case 'firewall':
+        return <Shield className="w-3.5 h-3.5 text-rose-500" />;
+      case 'wlc':
+        return <Radio className="w-3.5 h-3.5 text-indigo-500" />;
+      case 'switchL2':
+      case 'switchL3':
+        return <Server className="w-3.5 h-3.5 text-purple-500" />;
+      case 'pc':
+      case 'iot':
+      default:
+        return <Monitor className="w-3.5 h-3.5 text-primary-500" />;
+    }
+  };
 
   return (
     <div className="space-y-2.5">
@@ -361,17 +406,7 @@ function RefreshDeviceListToast({
           <div className="overflow-hidden rounded-lg border border-secondary-200 dark:border-secondary-700 bg-secondary-50/50 dark:bg-secondary-900/40">
             <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-secondary-200 dark:border-secondary-700 bg-secondary-100/70 dark:bg-secondary-800/70">
               <div className="flex items-center gap-1.5">
-                {isPcOrIot ? (
-                  <Monitor className="w-3.5 h-3.5 text-primary-500" />
-                ) : selected.type === 'router' ? (
-                  <Network className="w-3.5 h-3.5 text-emerald-500" />
-                ) : selected.type === 'firewall' ? (
-                  <Shield className="w-3.5 h-3.5 text-rose-500" />
-                ) : selected.type === 'wlc' ? (
-                  <Radio className="w-3.5 h-3.5 text-indigo-500" />
-                ) : (
-                  <Server className="w-3.5 h-3.5 text-purple-500" />
-                )}
+                {renderDeviceIcon(selected.type)}
                 <span className="font-bold text-xs">{selected.name}</span>
                 <span className="text-[10px] px-1 py-0.2 rounded font-semibold bg-primary-500/10 text-primary-500 border border-primary-500/20">
                   {REFRESH_DEVICE_TYPE_LABELS[selected.type]}
@@ -419,21 +454,21 @@ function RefreshDeviceListToast({
             </table>
           </div>
 
-          {/* PC Aktif Servis & Ayarlar Detayı */}
-          {isPcOrIot && (
+          {/* End Device Active Services & Settings Detail */}
+          {isEndDevice && (
             <div className="rounded-lg border border-secondary-200 dark:border-secondary-700 overflow-hidden text-xs">
               <button
                 type="button"
                 onClick={() => setOpenSection(openSection === 'services' ? 'details' : 'services')}
                 className="w-full flex items-center justify-between px-2.5 py-1.5 bg-secondary-100/70 dark:bg-secondary-800/70 hover:bg-secondary-200/70 dark:hover:bg-secondary-700/70 transition-colors font-bold text-xs select-none"
               >
-                <div className="flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
-                  <Settings className="w-3.5 h-3.5" />
-                  <span>{isTR ? 'PC Aktif Servis ve Ayarları' : 'PC Active Services & Settings'}</span>
+                <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400">
+                  <Server className="w-3.5 h-3.5" />
+                  <span>{isTR ? 'Aktif Hizmetler ve Arayüzler' : 'Active Services & Interfaces'}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] text-secondary-500 font-normal">
-                    {servicesList.length} {isTR ? 'aktif servis' : 'active'}
+                    {servicesList.length} {isTR ? 'aktif' : 'active'}
                   </span>
                   {openSection === 'services' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </div>
@@ -443,10 +478,13 @@ function RefreshDeviceListToast({
                 <div className="p-2 space-y-1.5 bg-white/50 dark:bg-secondary-900/30">
                   {servicesList.length > 0 ? (
                     <div className="space-y-1">
-                      {servicesList.map((srv, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-[11px] p-1 rounded bg-secondary-100/60 dark:bg-secondary-800/60">
-                          <span className="font-semibold text-primary-600 dark:text-primary-300">{srv.name}</span>
-                          <span className="font-mono text-secondary-600 dark:text-secondary-400 truncate max-w-[170px]">{srv.info}</span>
+                      {servicesList.map((svc, i) => (
+                        <div key={i} className="flex items-center justify-between p-1.5 rounded bg-secondary-100/60 dark:bg-secondary-800/60 text-[11px]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-success-500 animate-pulse" />
+                            <span className="font-bold text-secondary-800 dark:text-secondary-200">{svc.name}</span>
+                          </div>
+                          <span className="text-[10px] opacity-70 font-mono">{svc.info}</span>
                         </div>
                       ))}
                     </div>
@@ -472,8 +510,8 @@ function RefreshDeviceListToast({
             </div>
           )}
 
-          {/* Switch / Router Durum & CLI Komut Özeti */}
-          {showCommandSummary && !isPcOrIot && (
+          {/* Switch / Router / Hub / Cloud Status & CLI Commands Summary */}
+          {showCommandSummary && !isEndDevice && (
             <div className="rounded-lg border border-secondary-200 dark:border-secondary-700 overflow-hidden text-xs">
               <button
                 type="button"
@@ -596,8 +634,8 @@ function RefreshDeviceListToast({
             </div>
           )}
 
-          {/* PC CMD Commands Summary for PCs */}
-          {showCommandSummary && isPcOrIot && (
+          {/* PC / Mobile / Printer CMD Commands Summary */}
+          {showCommandSummary && isEndDevice && (
             <div className="rounded-lg border border-secondary-200 dark:border-secondary-700 overflow-hidden text-xs">
               <button
                 type="button"
@@ -606,7 +644,7 @@ function RefreshDeviceListToast({
               >
                 <div className="flex items-center gap-1.5 text-primary-600 dark:text-primary-400">
                   <Terminal className="w-3.5 h-3.5" />
-                  <span>{isTR ? 'PC Komut Satırı (CMD) Komutları' : 'PC Command Prompt Commands'}</span>
+                  <span>{isTR ? 'Komut Satırı ve Durum Özeti' : 'Command Prompt & Status Summary'}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <span className="text-[10px] text-secondary-500 font-normal">
@@ -675,9 +713,8 @@ function RefreshDeviceListToast({
             </div>
           )}
         </div>
-      )
-      }
-    </div >
+      )}
+    </div>
   );
 }
 
@@ -699,6 +736,7 @@ export function LiveDeviceList({
   const hasValidIp = (ip: string | undefined) => !!ip && ip !== '0.0.0.0' && ip !== '169.254.0.0';
   const firstValue = (...values: Array<string | undefined | null>) =>
     values.find((value) => !!value && value !== '0.0.0.0') || '-';
+
   const normalizeWifiMode = (mode: string | undefined): 'ap' | 'client' | 'disabled' => {
     if (!mode) return 'disabled';
     const normalized = mode.toLowerCase().replace(/^wifi-/, '');
@@ -706,6 +744,7 @@ export function LiveDeviceList({
     if (normalized === 'ap') return 'ap';
     return 'disabled';
   };
+
   const getEffectiveWifi = (device: CanvasDevice): CanvasDevice['wifi'] => {
     const state = deviceStates?.get(device.id);
     const wlan = state?.ports?.['wlan0'];
@@ -713,7 +752,7 @@ export function LiveDeviceList({
     if (!runtimeWifi) return device.wifi;
     const normalizedMode = normalizeWifiMode(runtimeWifi.mode);
     const enabled = !wlan.shutdown && normalizedMode !== 'disabled';
-    const fallbackMode: 'ap' | 'client' = device.type === 'pc' ? 'client' : 'ap';
+    const fallbackMode: 'ap' | 'client' = (device.type === 'pc' || device.type === 'mobile' || device.type === 'printer') ? 'client' : 'ap';
     let resolvedMode: 'ap' | 'client';
     if (normalizedMode === 'client') {
       resolvedMode = 'client';
@@ -732,11 +771,12 @@ export function LiveDeviceList({
       mode: resolvedMode,
     };
   };
+
   const getOpenServices = (device: CanvasDevice, state?: SwitchState) => {
     const services = new Set<string>();
     if (device.services?.dhcp?.enabled || state?.services?.dhcp?.enabled) services.add('DHCP');
     if (device.services?.dns?.enabled || state?.services?.dns?.enabled) services.add('DNS');
-    if (device.services?.http?.enabled || state?.services?.http?.enabled) services.add('HTTP');
+    if (device.services?.http?.enabled || state?.services?.http?.enabled || device.type === 'printer') services.add('HTTP');
     const effectiveWifi = getEffectiveWifi(device);
     if (effectiveWifi?.enabled) services.add(effectiveWifi.mode === 'ap' ? 'WiFi AP' : 'WiFi Client');
     if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'ssh' || input === 'all')) services.add('SSH');
