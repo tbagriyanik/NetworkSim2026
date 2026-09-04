@@ -29,7 +29,7 @@ interface CommandLineTabProps {
   input: string;
   setInput: (val: string) => void;
   shouldShowAutocomplete: boolean;
-  renderAutocompleteSuggestions: string[];
+  renderAutocompleteSuggestions: React.ReactNode;
   autocompleteIndex: number;
   autocompleteRef: React.RefObject<HTMLDivElement | null>;
   completeAutocompleteSelection: (selected: string) => void;
@@ -84,8 +84,6 @@ export function CommandLineTab({
   setInput,
   shouldShowAutocomplete,
   renderAutocompleteSuggestions,
-  autocompleteIndex: externalAutocompleteIndex,
-  completeAutocompleteSelection,
   executeCommand,
   handleInputChange,
   handleKeyDown,
@@ -320,11 +318,9 @@ export function CommandLineTab({
   // Filter Linux suggestions
   const linuxFilteredSuggestions = getLinuxSuggestions(input, currentPath, deviceId);
 
-  const currentSuggestions = activeTerminalTab === 'cmd' ? renderAutocompleteSuggestions : linuxFilteredSuggestions;
   const isAutocompleteVisible = activeTerminalTab === 'cmd'
     ? shouldShowAutocomplete
     : (!isLinuxAutocompleteDismissed && input.trim().length > 0 && linuxFilteredSuggestions.length > 0);
-  const autocompleteIndex = activeTerminalTab === 'cmd' ? externalAutocompleteIndex : linuxAutocompleteIndex;
 
   // Auto-scroll active suggestion into view when navigating with Arrow keys in Linux mode
   useEffect(() => {
@@ -847,34 +843,40 @@ export function CommandLineTab({
                     </span>
                   </div>
                   <div className="max-h-40 overflow-y-auto overflow-x-hidden mobile-scroll custom-scrollbar font-geist-mono">
-                    {currentSuggestions.map((cmd, idx) => (
-                      <button
-                        key={`${cmd}-${idx}`}
-                        type="button"
-                        data-autocomplete-index={idx}
-                        onMouseEnter={() => {
-                          if (activeTerminalTab === 'linux') {
-                            setLinuxAutocompleteIndex(idx);
-                          }
-                        }}
-                        onClick={() => {
-                          if (activeTerminalTab === 'cmd') {
-                            completeAutocompleteSelection(cmd);
-                          } else {
-                            completeLinuxSelection(cmd);
-                          }
-                          inputRef.current?.focus();
-                        }}
-                        className={cn(
-                          "w-full text-left px-2.5 py-1 text-[11px] font-geist-mono transition-colors",
-                          (activeTerminalTab === 'cmd' ? (autocompleteIndex >= 0 && idx === autocompleteIndex) : (linuxAutocompleteIndex >= 0 && idx === linuxAutocompleteIndex))
-                            ? (isDark ? "bg-accent-500/20 text-accent-200" : "bg-accent-50 text-accent-900")
-                            : (isDark ? "text-secondary-300 hover:bg-primary/10" : "text-secondary-700 hover:bg-primary/10")
-                        )}
-                      >
-                        {cmd}
-                      </button>
-                    ))}
+                    {activeTerminalTab === 'cmd' ? (
+                      renderAutocompleteSuggestions
+                    ) : (
+                      linuxFilteredSuggestions.map((cmd, idx) => (
+                        <button
+                          key={`${cmd}-${idx}`}
+                          type="button"
+                          data-autocomplete-index={idx}
+                          onMouseEnter={() => setLinuxAutocompleteIndex(idx)}
+                          onClick={() => {
+                            let completedText = cmd;
+                            if (cmd.includes(' ')) {
+                              const parts = input.trim().split(/\s+/);
+                              parts[parts.length - 1] = cmd;
+                              completedText = parts.join(' ');
+                            }
+                            setInput(completedText + ' ');
+                            setIsLinuxAutocompleteDismissed(true);
+                            setLinuxAutocompleteIndex(-1);
+                          }}
+                          className={cn(
+                            "w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between font-geist-mono",
+                            idx === linuxAutocompleteIndex
+                              ? (isDark ? "bg-accent-500/20 text-accent-300 font-semibold" : "bg-accent-50 text-accent-700 font-semibold")
+                              : (isDark ? "text-secondary-300 hover:bg-secondary-700/50" : "text-secondary-700 hover:bg-secondary-100")
+                          )}
+                        >
+                          <span>{cmd}</span>
+                          {idx === linuxAutocompleteIndex && (
+                            <span className="text-[10px] opacity-75">{language === 'tr' ? 'Seçildi' : 'Selected'}</span>
+                          )}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               </div>

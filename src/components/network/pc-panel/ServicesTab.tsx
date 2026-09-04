@@ -13,6 +13,7 @@ import { SyslogServiceConfig } from './SyslogServiceConfig';
 import { getFtpFilesFromUploadDir, deleteFile, loadFs, saveFs } from './pcFileSystem';
 import type { DhcpPoolConfig, PcFile } from './PCPanel.types';
 import { SyslogMessage } from '@/lib/network/syslog';
+import type { MailInboxItem, MailSentItem, ServiceTabType } from './PCPanelContext';
 
 interface ServicesTabProps {
   deviceId?: string;
@@ -20,8 +21,8 @@ interface ServicesTabProps {
   isDark: boolean;
   language: string;
   t: Record<string, string>;
-  activeServiceTab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp' | 'syslog';
-  setActiveServiceTab: (tab: 'dns' | 'http' | 'dhcp' | 'ftp' | 'mail' | 'ntp' | 'syslog') => void;
+  activeServiceTab: ServiceTabType;
+  setActiveServiceTab: (tab: ServiceTabType) => void;
   mobileVerticalScrollStyle?: React.CSSProperties;
   dispatchDeviceConfig: (config: Record<string, unknown>) => void;
 
@@ -79,10 +80,10 @@ interface ServicesTabProps {
   setServiceMailUsername: (val: string) => void;
   serviceMailPassword: string;
   setServiceMailPassword: (val: string) => void;
-  serviceMailInbox: Array<{ from: string; subject: string; body: string; timestamp?: string }>;
-  setServiceMailInbox: React.Dispatch<React.SetStateAction<Array<{ from: string; subject: string; body: string; timestamp?: string }>>>;
-  serviceMailSent: Array<{ to: string; subject: string; body: string; timestamp?: string }>;
-  setServiceMailSent: React.Dispatch<React.SetStateAction<Array<{ to: string; subject: string; body: string; timestamp?: string }>>>;
+  serviceMailInbox: MailInboxItem[];
+  setServiceMailInbox: React.Dispatch<React.SetStateAction<MailInboxItem[]>>;
+  serviceMailSent: MailSentItem[];
+  setServiceMailSent: React.Dispatch<React.SetStateAction<MailSentItem[]>>;
   mailPop3Blocked: boolean;
   handleComposeSend: (to: string, subject: string, body: string, onError: (err: string) => void, onSuccess: () => void) => void;
   handleViewReplySend: (replyBody: string, msg: { from?: string; to?: string; subject: string; body: string; timestamp?: string }, onError: (err: string) => void, onSuccess: () => void) => void;

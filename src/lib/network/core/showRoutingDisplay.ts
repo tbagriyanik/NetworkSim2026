@@ -1,7 +1,7 @@
 import type { CommandContext } from './commandTypes';
 import type { CanvasDevice, CanvasConnection } from '@/components/network/networkTopology.types';
 import type { SwitchState, CommandResult, Route, Port, DhcpSnoopingBinding } from '../types';
-import { buildOSPFLinkStateDatabase } from '../ospf';
+import { buildOSPFLinkStateDatabase, electOspfDrBdr, type OspfCandidate } from '../ospf';
 import { recalculateBgpNeighbors, calculateBgpRoutes } from '../routing';
 import { buildEigrp6TopologyTable, EigrpTopologyEntry } from '../eigrp-dual';
 
@@ -329,23 +329,34 @@ export function cmdShowIpOspfNeighbor(state: SwitchState, _input: string, _ctx: 
 
   let output = '\nNeighbor ID     Pri   State           Dead Time   Address         Interface\n';
 
-  // Simulate neighbors from dynamic routes
+  // Simulate neighbors from dynamic routes or configured neighbors
   if (state.dynamicRoutes && state.dynamicRoutes.length > 0) {
-    const neighborMap = new Map<string, { address: string; intf: string; routerId: string }>();
-    state.dynamicRoutes.forEach((r) => {
+    const candidateList: OspfCandidate[] = [];
+    const neighborMap = new Map<string, { address: string; intf: string; routerId: string; priority: number }>();
+
+    state.dynamicRoutes.forEach((r, idx) => {
       if (r.nextHop && !neighborMap.has(r.nextHop)) {
-        const routerId = `10.0.0.${Math.floor(Math.random() * 254) + 1}`;
+        const routerId = `10.0.0.${(idx + 1) * 2}`;
         const address = r.nextHop;
         const intf = r.interface || 'FastEthernet0/0';
-        neighborMap.set(r.nextHop, { address, intf, routerId });
+        const priority = 1;
+        neighborMap.set(r.nextHop, { address, intf, routerId, priority });
+        candidateList.push({ routerId, drPriority: priority, ipAddress: address, interfaceName: intf });
       }
     });
 
-    const neighborStates = ['FULL/DR', 'FULL/BDR', 'FULL/DROTHER', '2WAY/DROTHER', 'FULL/  -  ', 'INIT/  -  '];
+    const election = electOspfDrBdr(candidateList);
+
     neighborMap.forEach((neighbor) => {
-      const deadTimer = `00:00:${String(Math.floor(Math.random() * 35) + 2).padStart(2, '0')}`;
-      const stateStr = neighborStates[Math.floor(Math.random() * neighborStates.length)];
-      output += `${neighbor.routerId.padEnd(15)} 1     ${stateStr.padEnd(15)} ${deadTimer}    ${neighbor.address.padEnd(15)} ${neighbor.intf}\n`;
+      const deadTimer = `00:00:35`;
+      let drBdrRole = 'DROTHER';
+      if (election.dr?.routerId === neighbor.routerId) {
+        drBdrRole = 'DR';
+      } else if (election.bdr?.routerId === neighbor.routerId) {
+        drBdrRole = 'BDR';
+      }
+      const stateStr = `FULL/${drBdrRole}`;
+      output += `${neighbor.routerId.padEnd(15)} ${String(neighbor.priority).padEnd(5)} ${stateStr.padEnd(15)} ${deadTimer}    ${neighbor.address.padEnd(15)} ${neighbor.intf}\n`;
     });
   }
 

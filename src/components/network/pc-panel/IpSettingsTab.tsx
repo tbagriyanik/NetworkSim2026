@@ -34,7 +34,7 @@ interface IpSettingsTabProps {
   setServiceNtpServer: (val: string) => void;
   serviceNtpServerError: string;
   setServiceNtpServerError: (val: string) => void;
-  setServiceNtpServerPreset: React.Dispatch<React.SetStateAction<'pool.ntp.org' | 'local-clock' | 'custom'>>;
+  setServiceNtpServerPreset: (preset: 'pool.ntp.org' | 'local-clock' | 'custom') => void;
   serviceNtpEnabled: boolean;
   serviceNtpDate: string;
   serviceNtpTime: string;

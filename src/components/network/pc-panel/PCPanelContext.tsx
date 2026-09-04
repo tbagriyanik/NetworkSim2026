@@ -1,11 +1,46 @@
 'use client';
 
-import { createContext, useContext, type RefObject, type CSSProperties } from 'react';
+import { createContext, useContext, type RefObject, type CSSProperties, type Dispatch, type SetStateAction, type PointerEvent, type KeyboardEvent, type ReactNode } from 'react';
 import type { SwitchState } from '@/lib/network/types';
-import type { CanvasDevice } from '../networkTopology.types';
+import type { CanvasConnection, CanvasDevice } from '../networkTopology.types';
 import type { TerminalOutput } from '../Terminal';
 import type { DhcpPoolConfig, OutputLine, PCActiveTab, PcFile } from './PCPanel.types';
 import type { SyslogMessage } from '@/lib/network/syslog';
+import type { LauncherApp } from './HomeLauncher';
+import type { EnvironmentSettings } from '@/lib/store/appStore';
+
+export interface MailInboxItem {
+  from: string;
+  subject: string;
+  body: string;
+  timestamp?: string;
+}
+
+export interface MailSentItem {
+  to: string;
+  subject: string;
+  body: string;
+  timestamp?: string;
+}
+
+export interface MailItem {
+  from?: string;
+  to?: string;
+  subject: string;
+  body: string;
+  timestamp?: string;
+}
+
+export interface DhcpFormState {
+  poolName: string;
+  defaultGateway: string;
+  dnsServer: string;
+  startIp: string;
+  subnetMask: string;
+  maxUsers: number;
+}
+
+export type ServiceTabType = 'dns' | 'http' | 'ftp' | 'dhcp' | 'mail' | 'ntp' | 'syslog';
 
 /** All state and callbacks shared between PCPanel and its tab components. */
 export interface PCPanelContextValue {
@@ -14,7 +49,7 @@ export interface PCPanelContextValue {
   isDark: boolean;
   language: 'tr' | 'en';
   t: Record<string, string>;
-  environment: any;
+  environment: EnvironmentSettings;
 
   // Layout
   isMobile: boolean;
@@ -33,10 +68,10 @@ export interface PCPanelContextValue {
   isPcPoweredOff: boolean;
   deviceFromTopology: CanvasDevice | undefined;
   topologyDevices: CanvasDevice[];
-  topologyConnections: any;
+  topologyConnections: Array<{ sourceDeviceId: string; sourcePort: string; targetDeviceId: string; targetPort: string; cableType?: string; active?: boolean }> | CanvasConnection[];
   deviceStates: Map<string, SwitchState> | undefined;
   deviceOutputs: Map<string, TerminalOutput[]> | undefined;
-  handleResizeStart: any;
+  handleResizeStart?: (e: PointerEvent, direction: string, id: string) => void;
 
   // PC Network config
   pcIP: string;
@@ -58,13 +93,13 @@ export interface PCPanelContextValue {
   internalPcHostname: string;
   setPcHostname: (name: string) => void;
   wifiEnabled: boolean;
-  setWifiEnabled: any;
+  setWifiEnabled: (v: boolean) => void;
   wifiSSID: string;
   setWifiSSID: (s: string) => void;
   wifiBSSID: string;
   setWifiBSSID: (b: string) => void;
   wifiSecurity: string;
-  setWifiSecurity: any;
+  setWifiSecurity: Dispatch<SetStateAction<'open' | 'wep' | 'wpa' | 'wpa2' | 'wpa3'>> | ((s: string) => void);
   wifiPassword: string;
   setWifiPassword: (p: string) => void;
   wifiChannel: string;
@@ -82,17 +117,17 @@ export interface PCPanelContextValue {
 
   // Output
   pcOutput: OutputLine[];
-  setPcOutput: React.Dispatch<React.SetStateAction<OutputLine[]>>;
+  setPcOutput: Dispatch<SetStateAction<OutputLine[]>>;
   addLocalOutput: (type: OutputLine['type'], content: string, prompt?: string) => void;
   addMultilineOutput: (type: OutputLine['type'], content: string, delayMs?: number) => Promise<void>;
 
   // Autocomplete
-  shouldShowAutocomplete: any;
-  renderAutocompleteSuggestions: any;
+  shouldShowAutocomplete: boolean;
+  renderAutocompleteSuggestions: ReactNode;
   autocompleteIndex: number;
   completeAutocompleteSelection: (word: string) => void;
-  handleInputChange: any;
-  handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  handleInputChange: (v: string) => void;
+  handleKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
 
   // Refs
   inputRef: RefObject<HTMLInputElement | null>;
@@ -101,7 +136,7 @@ export interface PCPanelContextValue {
   showCmdSettings: boolean;
   setShowCmdSettings: (v: boolean) => void;
   handleFontSizeChange: (size: number) => void;
-  highlightText: (text: string) => React.ReactNode;
+  highlightText: (text: string) => ReactNode;
 
   // Sessions
   ftpSession: import('./PCPanel.types').FtpSession | null;
@@ -119,11 +154,11 @@ export interface PCPanelContextValue {
   consoleNeedsPassword: boolean;
   consoleConfirmDialog: { show: boolean; message: string } | null;
   consoleReloadPending: boolean;
-  consoleDevice: any;
+  consoleDevice: CanvasDevice | null;
   handleConnect: () => Promise<void>;
   onExecuteDeviceCommand?: (deviceId: string, command: string) => Promise<unknown>;
   setConsolePasswordAttempted: (v: boolean) => void;
-  activeConsoleOutput: any;
+  activeConsoleOutput: TerminalOutput[];
 
   // Reachability
   canReachTargetIp: (targetIp: string, options?: { protocol?: 'tcp' | 'udp' | 'icmp' | 'any'; port?: string }) => boolean;
@@ -136,8 +171,8 @@ export interface PCPanelContextValue {
   isDhcpEditingRef: RefObject<boolean>;
 
   // Active service sub-tab
-  activeServiceTab: any;
-  setActiveServiceTab: any;
+  activeServiceTab: ServiceTabType;
+  setActiveServiceTab: Dispatch<SetStateAction<ServiceTabType>> | ((tab: ServiceTabType) => void);
 
   // Service state: DNS
   serviceDnsEnabled: boolean;
@@ -168,8 +203,8 @@ export interface PCPanelContextValue {
   setServiceDhcpEnabled: (v: boolean) => void;
   serviceDhcpPools: DhcpPoolConfig[];
   setServiceDhcpPools: (p: DhcpPoolConfig[]) => void;
-  dhcpForm: any;
-  setDhcpForm: any;
+  dhcpForm: DhcpFormState;
+  setDhcpForm: Dispatch<SetStateAction<DhcpFormState>>;
   editingDhcpIndex: number | null;
   setEditingDhcpIndex: (i: number | null) => void;
 
@@ -180,12 +215,12 @@ export interface PCPanelContextValue {
   setServiceNtpServer: (s: string) => void;
   serviceNtpServerError: string;
   setServiceNtpServerError: (e: string) => void;
-  setServiceNtpServerPreset: any;
+  setServiceNtpServerPreset: (preset: 'pool.ntp.org' | 'local-clock' | 'custom') => void;
   serviceNtpDate: string;
   setServiceNtpDate: (d: string) => void;
   serviceNtpTime: string;
   setServiceNtpTime: (t: string) => void;
-  applyNtpServerTime: any;
+  applyNtpServerTime: (serverAddress: string) => { date: string; time: string } | null;
   ntpPanelTime: Date;
   ntpSyncState: any;
 
@@ -198,13 +233,13 @@ export interface PCPanelContextValue {
   setServiceMailUsername: (u: string) => void;
   serviceMailPassword: string;
   setServiceMailPassword: (p: string) => void;
-  serviceMailInbox: any;
-  setServiceMailInbox: any;
-  serviceMailSent: any;
-  setServiceMailSent: any;
+  serviceMailInbox: MailInboxItem[];
+  setServiceMailInbox: Dispatch<SetStateAction<MailInboxItem[]>>;
+  serviceMailSent: MailSentItem[];
+  setServiceMailSent: Dispatch<SetStateAction<MailSentItem[]>>;
   mailPop3Blocked: boolean;
-  handleComposeSend: any;
-  handleViewReplySend: any;
+  handleComposeSend: (to: string, subject: string, body: string, onError: (err: string) => void, onSuccess: () => void) => void;
+  handleViewReplySend: (replyBody: string, msg: MailItem, onError: (err: string) => void, onSuccess: () => void) => void;
   handleDeleteInbox: (index: number) => void;
   handleDeleteSent: (index: number) => void;
 
@@ -215,11 +250,11 @@ export interface PCPanelContextValue {
   setServiceSyslogMessages: (m: SyslogMessage[]) => void;
 
   // Validation
-  validateIpField: any;
-  validateSubnetField: any;
+  validateIpField: (ip: string) => void;
+  validateSubnetField: (subnet: string) => void;
   isValidIpAddress: (ip: string) => boolean;
   errors: Record<string, string>;
-  setErrors: any;
+  setErrors: Dispatch<SetStateAction<Record<string, string>>>;
 
   // Dispatch
   dispatchDeviceConfig: (config: Record<string, unknown>) => void;
@@ -249,12 +284,12 @@ export interface PCPanelContextValue {
   httpAppDeviceId: string | null;
   setHttpAppDeviceId: (id: string | null) => void;
   browserWindow: { x: number; y: number; width: number; height: number };
-  setBrowserWindow: React.Dispatch<React.SetStateAction<{ x: number; y: number; width: number; height: number }>>;
+  setBrowserWindow: Dispatch<SetStateAction<{ x: number; y: number; width: number; height: number }>>;
   filteredSuggestions: string[];
   showUrlSuggestions: boolean;
   setShowUrlSuggestions: (v: boolean) => void;
   selectedSuggestionIndex: number;
-  setSelectedSuggestionIndex: React.Dispatch<React.SetStateAction<number>>;
+  setSelectedSuggestionIndex: Dispatch<SetStateAction<number>>;
   urlInputRef: RefObject<HTMLInputElement | null>;
   dragStateRef: RefObject<{ startX: number; startY: number; originX: number; originY: number } | null>;
   resizeStateRef: RefObject<{ side: string; startX: number; startY: number; originX: number; originY: number; originW: number; originH: number } | null>;
@@ -272,7 +307,7 @@ export interface PCPanelContextValue {
   getNtpNow: () => Date | null;
 
   // Launcher
-  launcherApps: any[];
+  launcherApps: LauncherApp[];
 
   // Search
   searchOpen: boolean;

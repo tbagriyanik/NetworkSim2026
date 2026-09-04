@@ -36,7 +36,7 @@ import { usePCPanelInput } from './pc-panel/usePCPanelInput';
 import { validateIP, validateIPv6, isValidIpAddress, highlightText as highlightTextHelper, getInitialPcOutput } from './pc-panel/pcPanelHelpers';
 import type { DhcpPoolConfig, OutputLine, PCPanelProps, PcFile } from './pc-panel/PCPanel.types';
 import { usePCPanelState } from './pc-panel/usePCPanelState';
-import { PCPanelContext } from './pc-panel/PCPanelContext';
+import { PCPanelContext, type PCPanelContextValue } from './pc-panel/PCPanelContext';
 import { PCPanelShell } from './pc-panel/PCPanelShell';
 import { PCPanelDialogs } from './pc-panel/PCPanelDialogs';
 import {
@@ -1507,8 +1507,7 @@ export function PCPanel({
 
   if (!isVisible) return null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const contextValue = {
+  const contextValue: PCPanelContextValue = {
     deviceId, isDark, language, t, environment,
     isMobile, mobileVerticalScrollStyle, fontSize, terminalBg, textColor,
     activeTab, setActiveTab, navigateToProgram, goHome,

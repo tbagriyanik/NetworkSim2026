@@ -840,3 +840,42 @@ export function calculateOSPFRoutes(
 
   return routes;
 }
+
+export interface OspfCandidate {
+  routerId: string;
+  drPriority: number;
+  ipAddress: string;
+  interfaceName?: string;
+}
+
+export interface DrBdrElectionResult {
+  dr: OspfCandidate | null;
+  bdr: OspfCandidate | null;
+  otherCandidates: OspfCandidate[];
+}
+
+/**
+ * Elect DR and BDR based on OSPF Priority (higher is better, 0 = ineligible)
+ * and Router ID (higher IP/string is tie-breaker).
+ */
+export function electOspfDrBdr(candidates: OspfCandidate[]): DrBdrElectionResult {
+  const eligible = candidates.filter(c => c.drPriority > 0);
+  if (eligible.length === 0) {
+    return { dr: null, bdr: null, otherCandidates: candidates };
+  }
+
+  // Sort eligible candidates by drPriority descending, then routerId descending
+  const sorted = [...eligible].sort((a, b) => {
+    if (b.drPriority !== a.drPriority) {
+      return b.drPriority - a.drPriority;
+    }
+    return b.routerId.localeCompare(a.routerId, undefined, { numeric: true });
+  });
+
+  const dr = sorted[0] || null;
+  const bdr = sorted[1] || null;
+  const otherCandidates = candidates.filter(c => c !== dr && c !== bdr);
+
+  return { dr, bdr, otherCandidates };
+}
+

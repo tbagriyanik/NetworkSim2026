@@ -143,7 +143,7 @@ export interface Port {
   duplex: DuplexMode;
   speed: SpeedMode;
   shutdown: boolean;
-  type: 'fastethernet' | 'gigabitethernet' | 'vlan' | 'serial';
+  type: 'fastethernet' | 'gigabitethernet' | 'vlan' | 'serial' | 'tunnel';
   previousStatus?: PortStatus;  // shutdown öncesi durum (no shutdown için)
   ipAddress?: string;           // For L3 ports or SVI
   subnetMask?: string;
@@ -175,6 +175,7 @@ export interface Port {
   ipv6Address?: string;
   ipv6Prefix?: number;
   ipv6LinkLocal?: string;
+  ipv6Autoconfig?: boolean;
   ipv6Rip?: {
     enabled: boolean;
     processName?: string;

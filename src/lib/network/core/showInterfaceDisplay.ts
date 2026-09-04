@@ -31,7 +31,16 @@ export function cmdShowInterfaces(
 
     output += `${displayName} is ${adminStatus}, line protocol is ${lineProtocol}\n`;
 
-    if (port.type === 'serial') {
+    if ((port.type as string) === 'tunnel' || port.tunnel || portName.toLowerCase().startsWith('tunnel')) {
+      output += `  Hardware is Tunnel\n`;
+      if (port.ipAddress && port.subnetMask) {
+        output += `  Internet address is ${port.ipAddress}/${port.subnetMask}\n`;
+      }
+      output += `  Description: ${description}\n`;
+      output += `  MTU ${port.mtu || 1514} bytes, BW ${port.bandwidth || 9} Kbit/sec\n`;
+      output += `  Tunnel source ${port.tunnel?.source || 'not set'}, destination ${port.tunnel?.destination || 'not set'}\n`;
+      output += `  Tunnel protocol/transport ${port.tunnel?.protocol ? port.tunnel.protocol.toUpperCase() : 'GRE'}/IP\n`;
+    } else if (port.type === 'serial') {
       const serialEncapsulation = (port.serialEncapsulation || 'hdlc').toUpperCase();
       const dceDte = port.dce ? 'DCE' : 'DTE';
       output += `  Hardware is Serial, address is ${port.macAddress || '0000.0000.0000'}\n`;
@@ -215,21 +224,33 @@ export function cmdShowInterface(
   let output = '';
   const ifaceDisplay = formatPortName(requestedInterface);
   output += `${ifaceDisplay} is ${port.shutdown ? 'administratively down' : 'up'}, line protocol is ${port.shutdown ? 'down' : 'up'}\n`;
-  const hardwareType = port.type === 'gigabitethernet' ? 'Gigabit Ethernet' : 'Fast Ethernet';
-  output += `  Hardware is ${hardwareType}, address is ${port.macAddress || '0000.0000.0000'}\n`;
-  if (port.ipAddress && port.subnetMask) {
-    output += `  Internet address is ${port.ipAddress}/${port.subnetMask}\n`;
+  if ((port.type as string) === 'tunnel' || port.tunnel || requestedInterface.toLowerCase().startsWith('tunnel')) {
+    output += `  Hardware is Tunnel\n`;
+    if (port.ipAddress && port.subnetMask) {
+      output += `  Internet address is ${port.ipAddress}/${port.subnetMask}\n`;
+    }
+    output += `  Description: ${description}\n`;
+    output += `  MTU ${port.mtu || 1514} bytes, BW ${port.bandwidth || 9} Kbit/sec\n`;
+    output += `  Tunnel source ${port.tunnel?.source || 'not set'}, destination ${port.tunnel?.destination || 'not set'}\n`;
+    output += `  Tunnel protocol/transport ${port.tunnel?.protocol ? port.tunnel.protocol.toUpperCase() : 'GRE'}/IP\n`;
+  } else {
+    const hardwareType = port.type === 'gigabitethernet' ? 'Gigabit Ethernet' : 'Fast Ethernet';
+    output += `  Hardware is ${hardwareType}, address is ${port.macAddress || '0000.0000.0000'}\n`;
+    if (port.ipAddress && port.subnetMask) {
+      output += `  Internet address is ${port.ipAddress}/${port.subnetMask}\n`;
+    }
+    output += `  Description: ${description}\n`;
+
+    const mtu = port.mtu || 1500;
+    const bandwidth = port.bandwidth || (port.type === 'gigabitethernet' ? 1000000 : 100000);
+    output += `  MTU ${mtu} bytes, BW ${bandwidth} Kbit/sec\n`;
+
+    const actualSpeed = port.speed === 'auto' ? (port.type === 'gigabitethernet' ? '1000' : '100') : port.speed;
+    const duplexMode = port.duplex === 'half' ? 'Half' : 'Full';
+    output += `  ${duplexMode}-duplex, ${actualSpeed}Mb/s\n`;
   }
-  output += `  Description: ${description}\n`;
 
   const stats = port.statistics || {};
-  const mtu = port.mtu || 1500;
-  const bandwidth = port.bandwidth || (port.type === 'gigabitethernet' ? 1000000 : 100000);
-  output += `  MTU ${mtu} bytes, BW ${bandwidth} Kbit/sec\n`;
-
-  const actualSpeed = port.speed === 'auto' ? (port.type === 'gigabitethernet' ? '1000' : '100') : port.speed;
-  const duplexMode = port.duplex === 'half' ? 'Half' : 'Full';
-  output += `  ${duplexMode}-duplex, ${actualSpeed}Mb/s\n`;
 
   if (port.mode === 'trunk' && port.encapsulation) {
     output += `  Encapsulation ${port.encapsulation}\n`;

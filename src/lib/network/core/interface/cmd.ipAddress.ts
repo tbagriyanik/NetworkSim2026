@@ -389,6 +389,30 @@ export function cmdIpv6Address(state: SwitchState, input: string, _ctx: CommandC
 }
 
 /**
+ * Configure IPv6 Address Autoconfig (SLAAC)
+ */
+export function cmdIpv6AddressAutoconfig(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: '% No interface selected' };
+  const updatePort = (port: Port) => {
+    // Generate SLAAC address prefix 2001:db8:1::/64 + EUI-64 derived from MAC or port ID
+    const mac = port.macAddress || state.macAddress || '0011.2233.4455';
+    const slaacIp = calculateEui64(mac, '2001:db8:1::');
+    return {
+      ...port,
+      ipv6Autoconfig: true,
+      ipv6Address: slaacIp,
+      ipv6Prefix: 64,
+    };
+  };
+  const newPorts = applyToSelectedPorts(state, updatePort);
+  return {
+    success: true,
+    output: `IPv6 SLAAC autoconfig enabled on ${state.currentInterface}`,
+    newState: { ports: newPorts }
+  };
+}
+
+/**
  * Configure IPv6 ND Suppress RA
  */
 export function cmdIpv6NdSuppressRa(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
