@@ -98,7 +98,7 @@ function decode(data: string): string {
 
 export const secureStorage = {
   setItem(key: string, value: string): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !window.localStorage) return;
     try {
       const encoded = encode(value);
       window.localStorage.setItem(key, encoded);
@@ -113,7 +113,7 @@ export const secureStorage = {
   },
 
   getItem(key: string): string | null {
-    if (typeof window === 'undefined') return null;
+    if (typeof window === 'undefined' || !window.localStorage) return null;
     try {
       const value = window.localStorage.getItem(key);
       if (value === null) return null;
@@ -125,12 +125,12 @@ export const secureStorage = {
   },
 
   removeItem(key: string): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !window.localStorage) return;
     window.localStorage.removeItem(key);
   },
 
   clear(): void {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !window.localStorage) return;
     window.localStorage.clear();
   }
 };

@@ -35,7 +35,7 @@ export function EnvNotifier() {
           missingParts.push('Sertifika Gizli Anahtarı (CERTIFICATE_SECRET)');
         }
         if (!status.hasExamHmacKey) {
-          missingParts.push('Sınav HMAC Anahtarı (NEXT_PUBLIC_EXAM_HMAC_KEY)');
+          missingParts.push('Sınav HMAC Anahtarı (EXAM_HMAC_KEY)');
         }
 
         if (missingParts.length > 0) {

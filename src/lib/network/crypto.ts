@@ -5,8 +5,7 @@ function checkExamHmacKeyStartup(): void {
     process.env.NODE_ENV === 'production' &&
     process.env.NEXT_PHASE !== 'phase-production-build' &&
     typeof window === 'undefined' &&
-    !process.env.EXAM_HMAC_KEY &&
-    !process.env.NEXT_PUBLIC_EXAM_HMAC_KEY
+    !process.env.EXAM_HMAC_KEY
   ) {
     throw new Error(
       '[SECURITY FATAL] EXAM_HMAC_KEY environment variable is missing in production. Refusing startup with insecure fallback key.'
@@ -19,7 +18,7 @@ checkExamHmacKeyStartup();
 let warned = false;
 
 export function getExamHmacKey(): string {
-  const key = process.env.NEXT_PUBLIC_EXAM_HMAC_KEY || process.env.EXAM_HMAC_KEY;
+  const key = process.env.EXAM_HMAC_KEY || process.env.NEXT_PUBLIC_EXAM_HMAC_KEY;
   if (!key) {
     if (
       process.env.NODE_ENV === 'production' &&

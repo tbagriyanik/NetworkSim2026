@@ -113,7 +113,7 @@ const config = async () => {
     env: {
       NEXT_PUBLIC_GIT_COMMIT_COUNT: String(commitCount),
       NEXT_PUBLIC_LOC: String(loc),
-      NEXT_PUBLIC_APP_VERSION: String(version),
+      APP_VERSION: String(version),
       NEXT_PUBLIC_IS_ROOM_ENABLED: String(!!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)),
       NEXT_PUBLIC_IS_CONTACT_ENABLED: String(!!process.env.GOOGLE_SHEETS_CONTACT_URL),
     },

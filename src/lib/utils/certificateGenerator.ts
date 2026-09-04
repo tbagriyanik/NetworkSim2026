@@ -290,7 +290,7 @@ export const generateCertificate = async (data: CertificateData): Promise<boolea
 
   // Step 1: Register certificate on server and get verify code
   const windowOrigin = typeof window !== 'undefined' ? window.location.origin : '';
-  const PRODUCTION_URL = (process.env.NEXT_PUBLIC_APP_URL || windowOrigin).replace(/\/$/, '');
+  const PRODUCTION_URL = (process.env.APP_URL || windowOrigin).replace(/\/$/, '');
   let verifyCode = '';
   if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
     const array = new Uint32Array(2);
