@@ -57,8 +57,8 @@ export interface HistoryEntry {
   description?: string;
 }
 
-const MAX_HISTORY_ITEMS = 80;
-const MAX_HISTORY_BYTES = 8 * 1024 * 1024;
+const MAX_HISTORY_ITEMS = 40;
+const MAX_HISTORY_BYTES = 3 * 1024 * 1024;
 
 function estimateStateBytes(state: ProjectState): number {
   try {
@@ -211,6 +211,12 @@ export function useHistory(initialState: ProjectState) {
         return;
       }
 
+      // Persist only recent 15 history entries to stay well within localStorage quota limits
+      const maxPersistCount = 15;
+      const startIndex = Math.max(0, state.index - maxPersistCount + 1);
+      const itemsToSave = state.items.slice(startIndex, state.index + 1);
+      const adjustedIndex = state.index - startIndex;
+
       const trySave = (itemsToSave: HistoryEntry[], idx: number) => {
         if (itemsToSave.length <= 1) {
           secureStorage.removeItem('netsim_history');
@@ -230,18 +236,13 @@ export function useHistory(initialState: ProjectState) {
           if (isQuotaError && itemsToSave.length > 2) {
             const cutSize = Math.max(1, Math.floor(itemsToSave.length / 2));
             trySave(itemsToSave.slice(cutSize), Math.max(0, idx - cutSize));
-          } else {
-            // Silently suppress quota full warning after max reduction to prevent console spam
-            if (!isQuotaError) {
-              logger.warn('Could not save history to localStorage', e);
-            }
           }
         }
       };
 
-      trySave(state.items, state.index);
-    } catch (e) {
-      logger.warn('Could not process history save', e);
+      trySave(itemsToSave, adjustedIndex);
+    } catch {
+      // Silently handle persistence errors
     }
   }, [state]);
 

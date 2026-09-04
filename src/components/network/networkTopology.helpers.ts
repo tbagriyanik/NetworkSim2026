@@ -6,7 +6,7 @@ import { isCableCompatible, CABLE_COMPATIBILITY } from '@/lib/network/types';
 // Device dimension constants
 const DEVICE_DIMENSIONS = {
   pc: { width: 90, height: 85 },
-  mobile: { width: 70, height: 85 },
+  mobile: { width: 90, height: 85 },
   iot: { width: 90, height: 85 },
   router: { width: 90, height: 80 },
   switch: { width: 130, height: 80 },

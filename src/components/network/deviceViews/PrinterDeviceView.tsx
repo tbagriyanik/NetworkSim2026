@@ -42,6 +42,76 @@ export function PrinterDeviceView({
   const [pingResults, setPingResults] = useState<string[]>([]);
   const [isPinging, setIsPinging] = useState(false);
 
+  // Helper to obtain DHCP IP based on connected router/DHCP server or subnet
+  const obtainDhcpLeaseForPrinter = () => {
+    // 1. Search topology for active DHCP servers or routers/switches with DHCP pools
+    let serverIp = '192.168.1.1';
+    let assignedSubnet = '255.255.255.0';
+    let assignedGateway = '192.168.1.1';
+    let assignedDns = '8.8.8.8';
+
+    // Find any connected router/switch/server with DHCP enabled or active gateway
+    const dhcpServer = topologyDevices.find(d => 
+      d.id !== device.id && 
+      (
+        (d.services?.dhcp?.enabled && (d.services?.dhcp?.pools?.length || 0) > 0) ||
+        d.type === 'router' ||
+        d.type === 'switchL3'
+      )
+    );
+
+    if (dhcpServer) {
+      const baseIp = dhcpServer.ip || '192.168.1.1';
+      const parts = baseIp.split('.');
+      if (parts.length === 4) {
+        const hostNum = Math.floor(Math.random() * 150) + 50;
+        const assignedIp = `${parts[0]}.${parts[1]}.${parts[2]}.${hostNum}`;
+        assignedSubnet = dhcpServer.subnet || '255.255.255.0';
+        assignedGateway = dhcpServer.gateway || baseIp;
+        assignedDns = dhcpServer.dns || '8.8.8.8';
+        return { assignedIp, assignedSubnet, assignedGateway, assignedDns };
+      }
+    }
+
+    // Default fallback DHCP lease if network gateway exists
+    const anyGateway = topologyDevices.find(d => d.ip && (d.type === 'router' || d.type === 'switchL3'))?.ip || '192.168.1.1';
+    const parts = anyGateway.split('.');
+    const hostNum = Math.floor(Math.random() * 150) + 50;
+    const assignedIp = parts.length === 4 ? `${parts[0]}.${parts[1]}.${parts[2]}.${hostNum}` : '192.168.1.50';
+
+    return { assignedIp, assignedSubnet, assignedGateway: anyGateway, assignedDns };
+  };
+
+  const handleSelectIpMode = (mode: 'dhcp' | 'static') => {
+    setIpMode(mode);
+
+    if (mode === 'dhcp') {
+      const lease = obtainDhcpLeaseForPrinter();
+      setIp(lease.assignedIp);
+      setSubnet(lease.assignedSubnet);
+      setGateway(lease.assignedGateway);
+      setDns(lease.assignedDns);
+
+      setDevices(
+        topologyDevices.map(d => {
+          if (d.id === device.id) {
+            return {
+              ...d,
+              ipConfigMode: 'dhcp',
+              ip: lease.assignedIp,
+              subnet: lease.assignedSubnet,
+              gateway: lease.assignedGateway,
+              dns: lease.assignedDns,
+            };
+          }
+          return d;
+        })
+      );
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    }
+  };
+
   const handleSaveIp = () => {
     setDevices(
       topologyDevices.map(d => {
@@ -144,13 +214,13 @@ export function PrinterDeviceView({
             </h3>
             <div className="flex items-center gap-1 bg-secondary-800/40 p-1 rounded-lg border border-secondary-700/50 text-xs">
               <button
-                onClick={() => setIpMode('dhcp')}
+                onClick={() => handleSelectIpMode('dhcp')}
                 className={cn("px-2 py-0.5 rounded font-medium transition-colors", ipMode === 'dhcp' ? "bg-purple-600 text-white" : "opacity-60 hover:opacity-100")}
               >
                 DHCP
               </button>
               <button
-                onClick={() => setIpMode('static')}
+                onClick={() => handleSelectIpMode('static')}
                 className={cn("px-2 py-0.5 rounded font-medium transition-colors", ipMode === 'static' ? "bg-purple-600 text-white" : "opacity-60 hover:opacity-100")}
               >
                 Static

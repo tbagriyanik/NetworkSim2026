@@ -91,7 +91,7 @@ export function DeviceTooltip({ tooltip, deviceMap, isDark, isTR, isDraggingInte
               </div>
               <div className="flex justify-between items-center gap-4">
                 <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.dnsServer}</span>
-                <span className="text-xs font-mono font-bold opacity-80">{dev.dns || '0.0.0.0'}</span>
+                <span className="text-xs font-mono font-bold opacity-80">{dev.dns || '8.8.8.8'}</span>
               </div>
               <div className="flex justify-between items-center gap-4">
                 <span className="text-[10px] font-bold opacity-50 uppercase tracking-wider">{t.macAddress}</span>

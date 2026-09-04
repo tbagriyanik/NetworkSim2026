@@ -1,6 +1,15 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 4.1.0 · **Son doğrulama / Last verified:** 2026-09-03
+**Sürüm / Version:** 4.2.0 · **Son doğrulama / Last verified:** 2026-09-04
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-09-04 - v4.2.0)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **Mobil Web Tarayıcı** | Akıllı Telefon (`mobile`) cihazına adres çubuğu, yer imi kısayolları (`192.168.1.1`, `8.8.8.8`, `http://iot-panel`) ve `checkConnectivity` TCP port 80 denetimi ile Router/WLC Web Yönetimi, Yazıcı Paneli, IoT Kontrol Paneli, Genel WAN Arama ve PC HTTP Sunucusu web sayfalarını işleyen Web Tarayıcısı eklendi. |
+| **Aktif Bulut / WAN Geçit Cihazı (`cloud`)** | Topolojideki Bulut (`cloud`) cihazı `203.0.113.1` genel WAN IP adresi, `eth0..eth3` portları ve transit köprü yönlendirmesi ile tam fonksiyonel yapıldı. Genel DNS/NTP IP'lerine (`8.8.8.8`, `1.1.1.1`, `pool.ntp.org`) veya dış alan adlarına yapılan ping ve web istekleri topoloji üzerindeki Bulut cihazına yönlendirildi. |
+| **Ağ Özeti & Syslog Sunucusu Desteği** | Ağ Özetinde (Live Device List) PC ve uç cihazlar için Syslog Sunucusu aktiflik durumu ve kayıt sayısı eklendi. Hub cihazı Katman-1 katı tekrarlayıcı mantığı ile gereksiz CLI ve durum özeti alanlarından muaf tutuldu. |
+| **Depolama Kotası & Güvenlik Optimize Edici (`secureStorage`)** | `localStorage` 5 MB kotasını aşmamak için geçmiş kaydı 15 işlem ile sınırlandırıldı ve acil durum temizliği entegre edilerek `QuotaExceededError` uyarısı giderildi. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-09-03 - v4.1.0)
 

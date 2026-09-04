@@ -184,22 +184,20 @@ function getRecommendedCliCommands(
       );
       break;
     case 'hub':
-      cmds.push(
-        { cmd: 'show hub ports', desc: isTR ? 'Aktif Hub Portları ve Sinyal Çoğaltma' : 'Active Hub ports & L1 signal repeating' },
-        { cmd: 'show mac address-table', desc: isTR ? 'L1 Hub MAC tablosu tutmaz (Tüm portlara flood edilir)' : 'L1 Hub does not maintain MAC table (Floods to all ports)' }
-      );
       break;
     case 'cloud':
       cmds.push(
-        { cmd: 'show ip route', desc: isTR ? 'WAN / Internet Dış Ağ Yönlendirme' : 'WAN / Internet routing table' },
-        { cmd: 'ping 8.8.8.8', desc: isTR ? 'WAN İnternet Erişim Testi' : 'WAN Internet connectivity test' }
+        { cmd: 'ping 8.8.8.8', desc: isTR ? 'WAN / İnternet DNS Ping Erişilebilirlik Testi' : 'WAN / Internet DNS Ping Connectivity Test' },
+        { cmd: 'ping 1.1.1.1', desc: isTR ? 'Cloudflare Resolver Ping Testi' : 'Cloudflare Resolver Ping Test' },
+        { cmd: 'tracert 8.8.8.8', desc: isTR ? 'WAN İnternet Rota İzleme (Traceroute)' : 'WAN Internet Route Trace' },
+        { cmd: 'nslookup google.com', desc: isTR ? 'Genel DNS Çözümleme Sorgusu' : 'Public DNS Lookup Query' }
       );
       break;
     case 'mobile':
       cmds.push(
         { cmd: 'ipconfig /all', desc: isTR ? 'Mobil Wi-Fi IP / MAC ve Ağ Geçidi Yapılandırması' : 'Mobile Wi-Fi IP / MAC & GW config' },
-        { cmd: 'ping <hedef-ip>', desc: isTR ? 'Kablosuz Ağ ICMP Erişilebilirlik Testi' : 'Wireless ICMP connectivity test' },
-        { cmd: 'wget http://<gateway-ip>', desc: isTR ? 'Kablosuz Ağ Yönetim Paneline Erişim' : 'Access Wireless Admin Portal' }
+        { cmd: 'http://<gateway-ip>', desc: isTR ? 'Mobil Web Tarayıcı ile Ağ Geçidine ve Servislere Erişim' : 'Mobile Web Browser Gateway & Service Access' },
+        { cmd: 'ping <hedef-ip>', desc: isTR ? 'Kablosuz Ağ ICMP Erişilebilirlik Testi' : 'Wireless ICMP connectivity test' }
       );
       break;
     case 'printer':
@@ -314,6 +312,14 @@ function RefreshDeviceListToast({
     }
     if (rawDev.services?.ntp?.enabled) {
       servicesList.push({ name: 'NTP Server', info: rawDev.services.ntp.server || (isTR ? 'Yerel Saat Sunucusu' : 'Local Clock'), active: true });
+    }
+    if (rawDev.services?.syslog?.enabled) {
+      const msgs = rawDev.services.syslog.messages?.length || 0;
+      servicesList.push({
+        name: 'Syslog Server',
+        info: `${msgs} ${isTR ? 'log kaydı' : 'log entry(ies)'}`,
+        active: true
+      });
     }
     if (rawDev.wifi?.enabled) {
       servicesList.push({
@@ -510,8 +516,8 @@ function RefreshDeviceListToast({
             </div>
           )}
 
-          {/* Switch / Router / Hub / Cloud Status & CLI Commands Summary */}
-          {showCommandSummary && !isEndDevice && (
+          {/* Switch / Router / Cloud Status & CLI Commands Summary */}
+          {showCommandSummary && !isEndDevice && selected?.type !== 'hub' && (
             <div className="rounded-lg border border-secondary-200 dark:border-secondary-700 overflow-hidden text-xs">
               <button
                 type="button"
@@ -773,10 +779,17 @@ export function LiveDeviceList({
   };
 
   const getOpenServices = (device: CanvasDevice, state?: SwitchState) => {
+    if (device.type === 'cloud') {
+      return language === 'tr' ? 'Genel WAN Geçidi, DNS (8.8.8.8), NTP' : 'Public WAN Gateway, DNS (8.8.8.8), NTP';
+    }
     const services = new Set<string>();
     if (device.services?.dhcp?.enabled || state?.services?.dhcp?.enabled) services.add('DHCP');
     if (device.services?.dns?.enabled || state?.services?.dns?.enabled) services.add('DNS');
     if (device.services?.http?.enabled || state?.services?.http?.enabled || device.type === 'printer') services.add('HTTP');
+    if (device.services?.syslog?.enabled || state?.services?.syslog?.enabled) services.add('Syslog');
+    if (device.services?.ftp?.enabled || state?.services?.ftp?.enabled) services.add('FTP');
+    if (device.services?.mail?.enabled || state?.services?.mail?.enabled) services.add('Mail');
+    if (device.services?.ntp?.enabled || state?.services?.ntp?.enabled) services.add('NTP');
     const effectiveWifi = getEffectiveWifi(device);
     if (effectiveWifi?.enabled) services.add(effectiveWifi.mode === 'ap' ? 'WiFi AP' : 'WiFi Client');
     if (state?.security?.vtyLines?.transportInput?.some((input) => input === 'ssh' || input === 'all')) services.add('SSH');

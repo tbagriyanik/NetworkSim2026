@@ -110,7 +110,8 @@ export function checkConnectivity(
   }
 
   // For external domains, simulate successful internet routing
-  if (isExternal) {
+  const hasCloudDevice = devices.some(d => d.type === 'cloud');
+  if (isExternal && !hasCloudDevice) {
     const sourceDevice = deviceMap.get(sourceId);
     if (sourceDevice) {
       // Simulate internet routing path
@@ -140,6 +141,14 @@ export function checkConnectivity(
   for (const d of devices) {
     if (d.ip) ipMap.set(d.ip, d.id);
     if (d.ipv6) ipMap.set(d.ipv6.toLowerCase(), d.id);
+    if (d.type === 'cloud') {
+      ipMap.set('8.8.8.8', d.id);
+      ipMap.set('8.8.4.4', d.id);
+      ipMap.set('1.1.1.1', d.id);
+      ipMap.set('1.0.0.1', d.id);
+      if (d.ip) ipMap.set(d.ip, d.id);
+      else ipMap.set('203.0.113.1', d.id);
+    }
   }
 
   if (deviceStates) {
@@ -303,7 +312,13 @@ export function checkConnectivity(
   }
 
   if (!targetDevice) {
-    return { success: false, hops: [], hopIds: [], error: 'Request timed out.' };
+    const cloudDev = devices.find(d => d.type === 'cloud');
+    if (cloudDev) {
+      targetDeviceId = cloudDev.id;
+      targetDevice = cloudDev;
+    } else {
+      return { success: false, hops: [], hopIds: [], error: 'Request timed out.' };
+    }
   }
 
   // 1.5. Perform ARP/NDP resolution if target is in same subnet

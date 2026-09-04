@@ -2,6 +2,14 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v4.2.0 — 2026-09-04
+
+**Mobil Web Tarayıcı, Aktif Bulut WAN Geçit Cihazı, Syslog Ağ Özeti & Depolama Kota Optimizasyonu** —
+- **📱 Akıllı Telefon (Mobile) Web Tarayıcısı**: Mobil cihaz arayüzüne Adres Çubuğu, Git butonu, Hazır Yer İmleri (`Gateway`, `Google 8.8.8.8`, `IoT Panel`) ve TCP port 80 ağ yolu denetimi ile canlı HTML web sayfalarını (Router/WLC Yönetim, Yazıcı Paneli, IoT Kontrol Paneli, Genel WAN Arama ve PC HTTP Sunucusu) render eden mobil web tarayıcısı uygulandı (`MobileDeviceView.tsx`).
+- **☁️ Fonksiyonel Bulut WAN Geçit Cihazı (`cloud`)**: Topolojideki Bulut cihazı `203.0.113.1` varsayılan IP adresi, `eth0..eth3` portları ve transit köprü ile paket iletimi yapacak şekilde aktifleştirildi (`commonForwardingEngine.ts`, `pathResolution.ts`). Genel DNS (`8.8.8.8`, `1.1.1.1`), NTP (`pool.ntp.org`) ve dış alan adlarına yapılan ping/web istekleri canvas üzerindeki Bulut cihazı üzerinden gerçek zamanlı çözümlenecek şekilde bağlandı.
+- **📊 Ağ Özeti & Syslog Sunucusu Gösterimi**: Cihaz Listesi / Ağ Özeti panelinde PC ve uç cihazlar için Syslog Sunucusu aktiflik durumu ve kayıt sayıları gösterildi; Hub cihazı Katman-1 tekrarlayıcı niteliğinde olduğundan CLI ve durum özeti kartlarından muaf tutuldu (`LiveDeviceList.tsx`).
+- **💾 Depolama Kotası & Kota Aşımı Optimizasyonu**: `localStorage` 5 MB kotasını korumak amacıyla geçmiş kaydı 15 işlem ile sınırlandırıldı, acil durum depolama temizleme mantığı entegre edildi ve `QuotaExceededError` uyarısı giderildi (`secureStorage.ts`, `useHistory.ts`).
+
 ## v4.1.0 — 2026-09-03
 
 **MSTP Entegrasyonu, IPsec GRE, BGP Politikaları, 802.1X EAPOL & 4 Yeni Cihaz Tipi (`Hub`, `Cloud/WAN`, `Smartphone`, `Printer`)** —

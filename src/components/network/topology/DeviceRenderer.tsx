@@ -533,7 +533,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
       {(() => {
         const wlanPort = device.ports.find(p => p.id === 'wlan0');
         const pcWifi = device.wifi;
-        const usesWifiBars = device.type === 'pc' || device.type === 'iot';
+        const usesWifiBars = device.type === 'pc' || device.type === 'iot' || device.type === 'mobile' || device.type === 'printer';
         const isSwitchL3 = device.type === 'switchL3';
         const isRouter = device.type === 'router';
         const isWlc = device.type === 'wlc';
@@ -836,9 +836,9 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
       </text>
 
       {/* Device IP */}
-      {device.type === 'pc' && (
-        <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
-          {device.ip}
+      {(device.type === 'pc' || device.type === 'mobile' || device.type === 'printer') && (
+        <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize={device.type === 'mobile' ? "9" : "10"} textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
+          {device.ip || (device.ipConfigMode === 'dhcp' ? 'DHCP...' : '0.0.0.0')}
         </text>
       )}
 
@@ -1341,6 +1341,8 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
   const isWifiClientDevice =
     prev.device.type === 'pc' ||
     prev.device.type === 'iot' ||
+    prev.device.type === 'mobile' ||
+    prev.device.type === 'printer' ||
     Boolean(prev.device.wifi) ||
     Boolean(prev.device.ports?.some(p => p.id === 'wlan0'));
 

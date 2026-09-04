@@ -71,7 +71,7 @@ export function CloudDeviceView({
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-emerald-400" />
                 <div>
-                  <div className="font-semibold">Google Public DNS</div>
+                  <div className="font-semibold">{isTr ? 'Birincil Genel DNS Servisi' : 'Primary Public DNS Service'}</div>
                   <div className="text-[10px] font-mono text-secondary-400">8.8.8.8 / 8.8.4.4</div>
                 </div>
               </div>
@@ -82,7 +82,7 @@ export function CloudDeviceView({
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-sky-400" />
                 <div>
-                  <div className="font-semibold">Cloudflare Resolver</div>
+                  <div className="font-semibold">{isTr ? 'İkincil Genel DNS Çözümleyici' : 'Secondary Public DNS Resolver'}</div>
                   <div className="text-[10px] font-mono text-secondary-400">1.1.1.1 / 1.0.0.1</div>
                 </div>
               </div>
@@ -93,7 +93,7 @@ export function CloudDeviceView({
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-amber-400" />
                 <div>
-                  <div className="font-semibold">Global NTP Pool</div>
+                  <div className="font-semibold">{isTr ? 'Genel NTP Zaman Sunucusu' : 'Public NTP Time Server'}</div>
                   <div className="text-[10px] font-mono text-secondary-400">pool.ntp.org</div>
                 </div>
               </div>

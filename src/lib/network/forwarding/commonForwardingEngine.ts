@@ -299,6 +299,13 @@ export function forwardPacketFrame(
         egressPorts.push(route.interfaceId || route.nextHop);
       }
     }
+  } else if (device.type === 'cloud') {
+    // Cloud WAN transit bridge forwarding
+    (device.ports || []).forEach(p => {
+      if (p.id !== frame.ingressPortId && p.status === 'connected') {
+        egressPorts.push(p.id);
+      }
+    });
   }
 
   return {

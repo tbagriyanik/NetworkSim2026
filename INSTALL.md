@@ -20,7 +20,7 @@ Tarayıcıda açın: [http://localhost:3000](http://localhost:3000)
 
 - **Node.js**: 20.9 veya üzeri (Next.js 16 gereksinimi)
 - **npm**: 10 veya üzeri (veya pnpm)
-- **Tarayıcı**: Modern tarayıcı (Chrome, Firefox, Safari, Edge)
+- **Tarayıcı**: Modern tarayıcı 
 
 ## 📦 Yüklü Paketler
 

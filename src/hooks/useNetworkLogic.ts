@@ -352,7 +352,7 @@ export function useNetworkLogic(
       if (isValidIpv4(device.ip) && device.ip !== '0.0.0.0') return device;
       const linkLocalIp = generateRandomLinkLocalIpv4(usedIps);
       usedIps.add(linkLocalIp);
-      return { ...device, ip: linkLocalIp, subnet: device.subnet || '255.255.0.0', gateway: device.gateway || '0.0.0.0', dns: device.dns || '0.0.0.0' };
+      return { ...device, ip: linkLocalIp, subnet: device.subnet || '255.255.0.0', gateway: device.gateway || '0.0.0.0', dns: device.dns || '8.8.8.8' };
     });
   }, [isValidIpv4]);
 

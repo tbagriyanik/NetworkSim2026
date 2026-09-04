@@ -104,7 +104,20 @@ export const secureStorage = {
       window.localStorage.setItem(key, encoded);
     } catch (e) {
       if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.code === 22 || e.code === 1014)) {
-        logger.warn(`QuotaExceededError setting secureStorage key ${key}. Storage is full.`);
+        // Attempt emergency cleanup of heavy non-critical storage items
+        try {
+          if (key !== 'netsim_history') {
+            window.localStorage.removeItem('netsim_history');
+          }
+        } catch { /* ignore */ }
+
+        try {
+          const encoded = encode(value);
+          window.localStorage.setItem(key, encoded);
+          return;
+        } catch {
+          // Retry failed - throw so caller can reduce payload size if supported
+        }
       } else {
         logger.error(`Error setting secureStorage key ${key}`, e);
       }

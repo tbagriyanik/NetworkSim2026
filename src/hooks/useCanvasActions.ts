@@ -291,9 +291,9 @@ export function useCanvasActions({
       type: resolvedType,
       name: generateUniqueHostname(baseName),
       macAddress: generateUniqueMacAddress(allUsedMacs),
-      ip: type === 'wlc' ? '192.168.1.1' : initialLinkLocalIp,
+      ip: type === 'wlc' ? '192.168.1.1' : type === 'cloud' ? '203.0.113.1' : initialLinkLocalIp,
       ipv6: initialLinkLocalIpv6,
-      subnet: (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? '255.255.0.0' : type === 'wlc' ? '255.255.255.0' : undefined,
+      subnet: (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? '255.255.0.0' : (type === 'wlc' || type === 'cloud') ? '255.255.255.0' : undefined,
       gateway: (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? '0.0.0.0' : undefined,
       dns: (type === 'pc' || type === 'iot' || type === 'mobile' || type === 'printer') ? '0.0.0.0' : undefined,
       ipConfigMode: (type === 'iot' || type === 'mobile' || type === 'printer') ? 'dhcp' : undefined,
@@ -322,8 +322,10 @@ export function useCanvasActions({
             ? generateHubPorts()
             : type === 'cloud'
               ? [
-                { id: 'eth0', label: 'Eth0 (WAN)', status: 'disconnected' as const },
-                { id: 'eth1', label: 'Eth1 (LAN)', status: 'disconnected' as const },
+                { id: 'eth0', label: 'Eth0 (WAN1)', status: 'disconnected' as const, ipAddress: '203.0.113.1', subnetMask: '255.255.255.0' },
+                { id: 'eth1', label: 'Eth1 (WAN2)', status: 'disconnected' as const, ipAddress: '203.0.113.2', subnetMask: '255.255.255.0' },
+                { id: 'eth2', label: 'Eth2 (WAN3)', status: 'disconnected' as const, ipAddress: '203.0.113.3', subnetMask: '255.255.255.0' },
+                { id: 'eth3', label: 'Eth4 (LAN)', status: 'disconnected' as const },
               ]
               : type === 'switch'
                 ? switchLayer === 'L3' ? generateL3SwitchPorts() : generateSwitchPorts()
