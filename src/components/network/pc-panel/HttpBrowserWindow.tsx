@@ -1,6 +1,9 @@
-import React, { type MutableRefObject } from 'react';
+import React, { useState, type MutableRefObject } from 'react';
+import { Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ResizablePortalWindow, type WindowState } from './ResizablePortalWindow';
+import { useAppStore } from '@/lib/store/appStore';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
 
 type BrowserWindowState = WindowState;
 
@@ -68,6 +71,92 @@ export function HttpBrowserWindow({
   onOpenWebPage,
   onBrowserWindowChange,
 }: HttpBrowserWindowProps) {
+  const [printSuccess, setPrintSuccess] = useState(false);
+  const devices = useAppStore(state => state.topology?.devices || []);
+  const setDevices = useAppStore(state => state.setDevices);
+
+  const handlePrintDocument = () => {
+    // Find printer devices in topology
+    const safeDevices = Array.isArray(devices) ? devices : [];
+    const printerDevices = safeDevices.filter(d => d.type === 'printer' && d.status !== 'offline');
+    if (printerDevices.length === 0) {
+      alert(language === 'tr' ? 'Ağda kullanılabilir aktif bir yazıcı bulunamadı!' : 'No active network printer found on the network!');
+      return;
+    }
+
+    const docTitle = title && title !== 'Web Browser' ? title : (url || 'Web Document');
+    const timestamp = new Date().toLocaleTimeString();
+
+    // Add job to target printer queue and notify topology
+    if (typeof setDevices === 'function') {
+      const updatedDevices = safeDevices.map(d => {
+        if (d.type === 'printer') {
+          const currentJobs = d.printJobs || [];
+          const newJob = {
+            id: `job-${Date.now()}`,
+            documentTitle: docTitle,
+            senderName: language === 'tr' ? 'İstemci Tarayıcı' : 'Client Browser',
+            pages: Math.floor(Math.random() * 3) + 1,
+            timestamp,
+            status: 'completed' as const,
+          };
+          const updatedPrinter = {
+            ...d,
+            printJobs: [newJob, ...currentJobs],
+          };
+
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+              detail: {
+                deviceId: d.id,
+                config: {
+                  printJobs: updatedPrinter.printJobs
+                }
+              }
+            }));
+          }
+
+          return updatedPrinter;
+        }
+        return d;
+      });
+
+      setDevices(updatedDevices);
+    }
+
+    // Dispatch LPD / IPP network print packets to global packet capture panel
+    const connections = useAppStore.getState().topology?.connections || [];
+    const targetPrinter = printerDevices[0];
+    if (targetPrinter) {
+      const activeConn = connections.find(c =>
+        c.active !== false && (c.sourceDeviceId === targetPrinter.id || c.targetDeviceId === targetPrinter.id)
+      );
+      const connId = activeConn ? (activeConn.id || `${activeConn.sourceDeviceId}-${activeConn.targetDeviceId}`) : `print-${targetPrinter.id}`;
+      const printerIp = targetPrinter.ip || '192.168.1.50';
+
+      dispatchCapturedPackets([
+        {
+          connectionId: connId,
+          sourceIp: '192.168.1.100',
+          targetIp: printerIp,
+          protocol: 'LPD/IPP',
+          length: 512,
+          info: `LPD Print Spooler: Send document "${docTitle}" to printer ${targetPrinter.name || printerIp} (Port 515/631)`
+        },
+        {
+          connectionId: connId,
+          sourceIp: printerIp,
+          targetIp: '192.168.1.100',
+          protocol: 'LPD/IPP',
+          length: 128,
+          info: `LPD ACK: Print job ${docTitle} queued successfully by ${targetPrinter.name || printerIp}`
+        }
+      ]);
+    }
+
+    setPrintSuccess(true);
+    setTimeout(() => setPrintSuccess(false), 2000);
+  };
   const headerContent = (
     <form
       onSubmit={(e) => {
@@ -158,6 +247,23 @@ export function HttpBrowserWindow({
         className="shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
       >
         {language === 'tr' ? 'Git' : 'Go'}
+      </Button>
+      <Button
+        size="sm"
+        type="button"
+        variant="outline"
+        onClick={handlePrintDocument}
+        title={language === 'tr' ? 'Sayfayı Yazdır (Ağ Yazıcısına Gönder)' : 'Print Page (Send to Network Printer)'}
+        className={`shrink-0 flex items-center gap-1 text-xs px-2.5 py-1 font-medium transition-all ${
+          printSuccess
+            ? 'bg-emerald-600 text-white border-emerald-500'
+            : isDark
+            ? 'bg-purple-950/60 border-purple-700 text-purple-300 hover:bg-purple-900/80 hover:text-white'
+            : 'bg-purple-50 border-purple-300 text-purple-700 hover:bg-purple-100'
+        }`}
+      >
+        <Printer className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">{printSuccess ? (language === 'tr' ? 'Yazdırıldı!' : 'Sent!') : (language === 'tr' ? 'Yazdır' : 'Print')}</span>
       </Button>
     </form>
   );

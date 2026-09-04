@@ -547,7 +547,8 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
         if (showWifi) {
           if (isWlc) isEnabled = true; // WLC her zaman kablosuz yeteneğe sahiptir, açıksa aktiftir
           else if (wlanPort) isEnabled = !wlanPort.shutdown;
-          else if (pcWifi) isEnabled = Boolean(pcWifi.enabled);
+          else if (pcWifi) isEnabled = pcWifi.enabled !== false;
+          else if (device.type === 'mobile' || device.type === 'printer') isEnabled = true;
         }
 
         // If all wireless connections for this device are inactive (power toggled off on connection handle), treat wifi as disabled/inactive

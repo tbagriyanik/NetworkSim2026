@@ -35,11 +35,12 @@ npm test
 
 ## 🚀 Key Features & Version Highlights (v4.2.0)
 
+- **printer: Ağ Yazıcısı & Gelişmiş Print Server (Web Management, LPD/IPP Packet Capture & Wi-Fi):** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`). Dahili Web Yönetim Paneli üzerinden LPD, IPP, JetDirect, AirPrint, SNMP ve TLS protokol yetkilendirmesi, Wi-Fi SSID katılımı ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi. Web tarayıcılardan (`HttpBrowserWindow`) veya mobil tarayıcıdan "Belgeyi Yazdır" butonu ile canlı paket yakalama (`PacketCapturePanel`) ekranına LPD/IPP paket akışlarının yansıtılması.
 - **📱 Mobile Web Browser:** Smartphone/Mobile device features a built-in Mobile Web Browser app with Address Bar, Quick Bookmarks (`192.168.1.1`, `8.8.8.8`, `http://iot-panel`), and TCP 80 path verification rendering Router/WLC Web Admin, Printer Management, IoT Control Panel, Public WAN Search, and PC HTTP Servers.
 - **☁️ Fully Functional Cloud / WAN Gateway (`cloud`):** Active Cloud device with default IP `203.0.113.1`, multiple WAN ports (`eth0..eth3`), public DNS/NTP simulation (`8.8.8.8`, `1.1.1.1`, `pool.ntp.org`), and real-time topology ICMP ping routing.
 - **📊 Syslog Server & L1 Hub Refinements:** Network Summary (Live Device List) displays Syslog Server status and log counts for PCs; Hub devices enforce Layer-1 unmanaged repeater logic excluding redundant CLI summaries.
 - **💾 Quota-Safe Storage & Persistence:** Optimized `secureStorage` and `useHistory` preventing browser `QuotaExceededError` and console warning spam.
-- **🖥️ Expanded Device Support (11 Device Types):** L1 Multiport Hub (`hub`), External Internet Cloud/WAN (`cloud`), Wireless Smartphone/Tablet (`mobile`), Network Printer (`printer`), PC, IoT, L2/L3 Switches, Routers, Firewalls, and WLC. Includes realistic SVG topology renderings and a 2-row ultra-compact toolbar.
+- **🖥️ Expanded Device Support (11 Device Types):** L1 Multiport Hub (`hub`), External Internet Cloud/WAN (`cloud`), Wireless Smartphone/Tablet (`mobile`), Network Printer (`printer`), PC, IoT, L2/L3 Switches, Routers, Firewalls, and WLC. Includes realistic SVG topology renderings, canvas Wi-Fi signal indicator bars, and a 2-row ultra-compact toolbar.
 - **🌲 MSTP Boundary Isolation (IEEE 802.1s):** Region name, revision, and digest equality checks (`areSameMstRegion`) enforcing MSTI isolation across region boundaries while allowing CIST (Instance 0) single-tree BPDUs.
 - **🔒 Security & Advanced Routing:**
   - **IPsec Site-to-Site & GRE:** ISAKMP Phase 1/2 IKE negotiation, ESP encryption simulation, transform-sets, crypto maps, and `show crypto sa`.

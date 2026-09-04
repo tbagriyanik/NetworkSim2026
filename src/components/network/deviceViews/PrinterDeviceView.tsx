@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Printer, Server, CheckCircle2, RefreshCw, Send, HardDrive } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Printer, Server, CheckCircle2, RefreshCw, Send, HardDrive, Wifi, Radio } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
 import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';
@@ -28,14 +28,33 @@ export function PrinterDeviceView({
 }: PrinterDeviceViewProps) {
   const isTr = language === 'tr';
   const setDevices = useAppStore(state => state.setDevices);
+  // Use live device from topologyDevices so dynamic state updates (like printJobs) trigger re-renders
+  const liveDevice = topologyDevices.find(d => d.id === device.id) || device;
 
-  // Local state for IP editing
+  // Local state for IP & Wi-Fi editing
   const [ipMode, setIpMode] = useState<'dhcp' | 'static'>(device.ipConfigMode === 'dhcp' ? 'dhcp' : 'static');
   const [ip, setIp] = useState(device.ip || '192.168.1.50');
   const [subnet, setSubnet] = useState(device.subnet || '255.255.255.0');
   const [gateway, setGateway] = useState(device.gateway || '192.168.1.1');
   const [dns, setDns] = useState(device.dns || '8.8.8.8');
+  const [selectedSsid, setSelectedSsid] = useState(device.wifi?.ssid || 'Corporate-WiFi');
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Detect available active wireless SSIDs exclusively from real topology devices
+  const availableSsids = useMemo(() => {
+    const ssids = new Set<string>();
+    topologyDevices.forEach(d => {
+      if (d.wifi?.enabled && d.wifi?.mode === 'ap' && d.wifi?.ssid?.trim()) {
+        ssids.add(d.wifi.ssid.trim());
+      } else if (d.type === 'wlc' && d.wifi?.enabled && d.wifi?.ssid?.trim()) {
+        ssids.add(d.wifi.ssid.trim());
+      }
+    });
+    if (device.wifi?.ssid?.trim()) {
+      ssids.add(device.wifi.ssid.trim());
+    }
+    return Array.from(ssids);
+  }, [topologyDevices, device.wifi?.ssid]);
 
   // Diagnostic Ping state
   const [targetPingIp, setTargetPingIp] = useState('192.168.1.1');
@@ -111,6 +130,51 @@ export function PrinterDeviceView({
     }
   };
 
+  const handleSelectSsid = (ssid: string) => {
+    setSelectedSsid(ssid);
+    let nextIp = ip;
+    let nextSubnet = subnet;
+    let nextGateway = gateway;
+    let nextDns = dns;
+
+    if (ipMode === 'dhcp') {
+      const lease = obtainDhcpLeaseForPrinter();
+      nextIp = lease.assignedIp;
+      nextSubnet = lease.assignedSubnet;
+      nextGateway = lease.assignedGateway;
+      nextDns = lease.assignedDns;
+      setIp(nextIp);
+      setSubnet(nextSubnet);
+      setGateway(nextGateway);
+      setDns(nextDns);
+    }
+
+    setDevices(
+      topologyDevices.map(d => {
+        if (d.id === device.id) {
+          return {
+            ...d,
+            ipConfigMode: ipMode,
+            ip: nextIp,
+            subnet: nextSubnet,
+            gateway: nextGateway,
+            dns: nextDns,
+            wifi: {
+              ssid,
+              security: 'open' as const,
+              channel: '2.4GHz' as const,
+              mode: 'client' as const,
+              enabled: true,
+            }
+          };
+        }
+        return d;
+      })
+    );
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2500);
+  };
+
   const handleSaveIp = () => {
     setDevices(
       topologyDevices.map(d => {
@@ -122,6 +186,13 @@ export function PrinterDeviceView({
             subnet,
             gateway,
             dns,
+            wifi: {
+              ssid: selectedSsid,
+              security: 'open' as const,
+              channel: '2.4GHz' as const,
+              mode: 'client' as const,
+              enabled: true,
+            }
           };
         }
         return d;
@@ -191,7 +262,9 @@ export function PrinterDeviceView({
                 {isTr ? 'Hazır / Online' : 'Ready / Online'}
               </span>
             </h2>
-            <p className="text-xs opacity-60">Network Print Server (Wi-Fi & Ethernet Dual Interface)</p>
+            <p className="text-xs opacity-60">
+              {isTr ? 'Ağ Yazıcı Sunucusu (Wi-Fi & Ethernet Çift Arayüzlü)' : 'Network Print Server (Wi-Fi & Ethernet Dual Interface)'}
+            </p>
           </div>
         </div>
         <div className="text-right font-mono text-xs opacity-70">
@@ -284,6 +357,50 @@ export function PrinterDeviceView({
                 )}
               />
             </div>
+
+            {/* Wi-Fi SSID Selection */}
+            <div className="pt-2 border-t border-secondary-700/40 space-y-2">
+              <label className="block font-medium opacity-80 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 text-purple-400">
+                  <Wifi className="w-3.5 h-3.5" />
+                  {isTr ? 'Kablosuz Ağ (Wi-Fi SSID)' : 'Wi-Fi Network (SSID)'}
+                </span>
+                <span className="text-[10px] text-emerald-400 font-mono">802.11n PrintServer</span>
+              </label>
+              {availableSsids.length === 0 ? (
+                <div className="p-2.5 rounded-lg border border-secondary-800 bg-secondary-950/40 text-center text-xs opacity-60">
+                  {isTr ? 'Kapsama alanında aktif Wi-Fi ağı yok' : 'No active Wi-Fi networks found'}
+                </div>
+              ) : (
+                <div className="space-y-1.5 max-h-[120px] overflow-y-auto custom-scrollbar">
+                  {availableSsids.map((ssid, idx) => {
+                    const isConnected = selectedSsid === ssid;
+                    return (
+                      <div
+                        key={idx}
+                        onClick={() => handleSelectSsid(ssid)}
+                        className={cn(
+                          "p-2 rounded-lg border flex items-center justify-between cursor-pointer transition-all text-xs",
+                          isConnected
+                            ? "bg-purple-950/40 border-purple-500/50 text-white"
+                            : isDark ? "bg-secondary-950/40 border-secondary-800 hover:border-secondary-700 text-secondary-300" : "bg-slate-50 border-secondary-200 hover:border-secondary-300 text-slate-800"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Radio className={cn("w-3.5 h-3.5", isConnected ? "text-purple-400" : "opacity-40")} />
+                          <span className="font-semibold">{ssid}</span>
+                        </div>
+                        {isConnected && (
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-mono">
+                            {isTr ? 'Bağlı' : 'Connected'}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="pt-2 flex items-center justify-between">
@@ -348,14 +465,34 @@ export function PrinterDeviceView({
             </div>
 
             {/* Print Queue */}
-            <div className="p-3 rounded-lg bg-secondary-950 border border-secondary-800 space-y-1">
+            <div className="p-3 rounded-lg bg-secondary-950 border border-secondary-800 space-y-2">
               <div className="flex justify-between items-center text-[11px] font-semibold">
-                <span>{isTr ? 'Yazdırma Kuyruğu (Print Queue)' : 'Print Queue'}</span>
-                <span className="text-purple-400 font-mono">0 Jobs</span>
+                <span>{isTr ? 'Yazdırma Kuyruğu & Gelen Belgeler' : 'Print Queue & Incoming Documents'}</span>
+                <span className="text-purple-400 font-mono">{(liveDevice.printJobs || []).length} {isTr ? 'Belge' : 'Jobs'}</span>
               </div>
-              <p className="text-[10px] opacity-60 italic">
-                {isTr ? 'Bekleyen iş yok. Yazıcı hazır konumda.' : 'No active print jobs in queue. Printer ready.'}
-              </p>
+
+              {(!liveDevice.printJobs || liveDevice.printJobs.length === 0) ? (
+                <p className="text-[10px] opacity-60 italic">
+                  {isTr ? 'Bekleyen iş yok. Yazıcı hazır konumda.' : 'No active print jobs in queue. Printer ready.'}
+                </p>
+              ) : (
+                <div className="space-y-1.5 max-h-[140px] overflow-y-auto custom-scrollbar">
+                  {liveDevice.printJobs.map((job, idx) => (
+                    <div key={idx} className="p-2 rounded bg-slate-900 border border-slate-800 text-[11px] flex justify-between items-center">
+                      <div>
+                        <div className="font-semibold text-purple-300 truncate max-w-[160px]">{job.documentTitle}</div>
+                        <div className="text-[9px] opacity-60 font-mono">{job.senderName} • {job.pages} {isTr ? 'sayfa' : 'pg'}</div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono">
+                          {isTr ? 'TAMAMLANDI' : 'COMPLETED'}
+                        </span>
+                        <div className="text-[9px] opacity-40 font-mono mt-0.5">{job.timestamp}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

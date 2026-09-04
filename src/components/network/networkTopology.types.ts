@@ -189,6 +189,14 @@ export interface CanvasDevice {
     value?: number | boolean; // Current value/state of the device
     history?: number[]; // History of values for the sensor
   };
+  printJobs?: Array<{
+    id: string;
+    documentTitle: string;
+    senderName: string;
+    pages: number;
+    timestamp: string;
+    status: 'printing' | 'completed' | 'queued';
+  }>;
   firewallRules?: FirewallRule[];
 }
 

@@ -5,6 +5,11 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
   const name = device.name || 'Network Printer Server';
   const ip = device.ip || '192.168.1.50';
   const mac = device.macAddress || '0050.56C0.0001';
+  const subnet = device.subnet || '255.255.255.0';
+  const gateway = device.gateway || '192.168.1.1';
+  const dns = device.dns || '8.8.8.8';
+  const mode = device.ipConfigMode === 'dhcp' ? 'DHCP' : 'Static';
+  const wifiSsid = device.wifi?.ssid || 'Corporate-WiFi';
 
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#f8fafc;padding:24px;min-height:100%;box-sizing:border-box;">
@@ -29,18 +34,22 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
         </div>
 
         <!-- Network Info Grid -->
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:24px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;">
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">IP Address</div>
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">IP Address (${mode})</div>
             <div style="font-family:monospace;font-size:14px;color:#38bdf8;margin-top:4px;font-weight:600;">${ip}</div>
           </div>
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">MAC Address</div>
-            <div style="font-family:monospace;font-size:14px;color:#cbd5e1;margin-top:4px;">${mac}</div>
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Subnet / Gateway</div>
+            <div style="font-family:monospace;font-size:12px;color:#cbd5e1;margin-top:4px;">${subnet} / ${gateway}</div>
           </div>
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Interface</div>
-            <div style="font-size:14px;color:#cbd5e1;margin-top:4px;">Ethernet / Wi-Fi Dual</div>
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Wi-Fi SSID</div>
+            <div style="font-family:monospace;font-size:14px;color:#a855f7;margin-top:4px;font-weight:600;">📶 ${wifiSsid}</div>
+          </div>
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
+            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">MAC / DNS</div>
+            <div style="font-family:monospace;font-size:12px;color:#cbd5e1;margin-top:4px;">${mac} • ${dns}</div>
           </div>
         </div>
 
@@ -69,17 +78,63 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
           </div>
         </div>
 
+        <!-- Print Server Settings & Configuration -->
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px;margin-bottom:24px;">
+          <h2 style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#e2e8f0;display:flex;align-items:center;gap:8px;">
+            <span>⚙️</span> ${isTr ? 'Yazıcı Sunucusu Yapılandırması & Ayarlar' : 'Print Server Configuration & Settings'}
+          </h2>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;font-size:12px;">
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;">
+              <div style="font-weight:600;color:#94a3b8;margin-bottom:4px;">${isTr ? 'Ağ Protokolleri' : 'Network Protocols'}</div>
+              <div style="display:flex;flex-direction:column;gap:4px;color:#cbd5e1;font-size:11px;">
+                <span>• LPD / LPR Spooler: <strong style="color:#34d399;">Enabled (Port 515)</strong></span>
+                <span>• Raw IP Printing (JetDirect): <strong style="color:#34d399;">Enabled (Port 9100)</strong></span>
+                <span>• IPP / IPPS Protocol: <strong style="color:#34d399;">Enabled (Port 631)</strong></span>
+                <span>• AirPrint / Bonjour Broadcast: <strong style="color:#34d399;">Active</strong></span>
+              </div>
+            </div>
+            <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:12px;">
+              <div style="font-weight:600;color:#94a3b8;margin-bottom:4px;">${isTr ? 'Güvenlik & Yönetim' : 'Security & Management'}</div>
+              <div style="display:flex;flex-direction:column;gap:4px;color:#cbd5e1;font-size:11px;">
+                <span>• SNMP v1/v2c Monitoring: <strong style="color:#38bdf8;">Public Community</strong></span>
+                <span>• HTTPS Web Admin: <strong style="color:#34d399;">TLS v1.3 Encrypted</strong></span>
+                <span>• Wi-Fi Interface: <strong style="color:#a855f7;">${wifiSsid} (WPA2-PSK)</strong></span>
+                <span>• Access Control: <strong style="color:#f59e0b;">Allow All Subnets</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Print Queue -->
         <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
             <h2 style="margin:0;font-size:14px;font-weight:600;color:#e2e8f0;">
-              📑 ${isTr ? 'Yazdırma Kuyruğu' : 'Active Print Queue'}
+              📑 ${isTr ? 'Yazdırma Kuyruğu & Gelen Belgeler' : 'Print Queue & Received Documents'}
             </h2>
-            <span style="font-size:11px;color:#a855f7;font-family:monospace;font-weight:600;">0 Active Jobs</span>
+            <span style="font-size:11px;color:#a855f7;font-family:monospace;font-weight:600;">${(device.printJobs || []).length} ${isTr ? 'Aktif Görev / Belge' : 'Active Jobs'}</span>
           </div>
-          <div style="font-size:12px;color:#64748b;font-style:italic;">
-            ${isTr ? 'Kuyrukta bekleyen yazdırma görevi yok. Sistem yazdırmaya hazır.' : 'No active jobs in print spooler. Ready to process network print jobs.'}
-          </div>
+          ${(!device.printJobs || device.printJobs.length === 0) ? `
+            <div style="font-size:12px;color:#64748b;font-style:italic;">
+              ${isTr ? 'Kuyrukta bekleyen yazdırma görevi yok. Sistem yazdırmaya hazır.' : 'No active jobs in print spooler. Ready to process network print jobs.'}
+            </div>
+          ` : `
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+              ${device.printJobs.map(j => `
+                <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;font-size:12px;">
+                  <div>
+                    <div style="font-weight:700;color:#c084fc;">📄 ${j.documentTitle}</div>
+                    <div style="font-size:10px;color:#94a3b8;font-family:monospace;margin-top:2px;">Sender: ${j.senderName} • ${j.pages} page(s)</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <span style="display:inline-block;padding:2px 8px;border-radius:4px;background:rgba(16,185,129,0.2);color:#34d399;font-size:10px;font-weight:600;font-family:monospace;">
+                      COMPLETED
+                    </span>
+                    <div style="font-size:10px;color:#64748b;font-family:monospace;margin-top:2px;">${j.timestamp}</div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          `}
         </div>
 
       </div>

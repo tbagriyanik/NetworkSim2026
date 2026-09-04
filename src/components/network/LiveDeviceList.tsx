@@ -187,10 +187,10 @@ function getRecommendedCliCommands(
       break;
     case 'cloud':
       cmds.push(
-        { cmd: 'ping 8.8.8.8', desc: isTR ? 'WAN / İnternet DNS Ping Erişilebilirlik Testi' : 'WAN / Internet DNS Ping Connectivity Test' },
-        { cmd: 'ping 1.1.1.1', desc: isTR ? 'Cloudflare Resolver Ping Testi' : 'Cloudflare Resolver Ping Test' },
+        { cmd: 'ping 8.8.8.8', desc: isTR ? 'WAN / İnternet Birincil DNS Ping Testi' : 'WAN / Internet Primary DNS Ping Test' },
+        { cmd: 'ping 1.1.1.1', desc: isTR ? 'WAN / İnternet İkincil DNS Ping Testi' : 'WAN / Internet Secondary DNS Ping Test' },
         { cmd: 'tracert 8.8.8.8', desc: isTR ? 'WAN İnternet Rota İzleme (Traceroute)' : 'WAN Internet Route Trace' },
-        { cmd: 'nslookup google.com', desc: isTR ? 'Genel DNS Çözümleme Sorgusu' : 'Public DNS Lookup Query' }
+        { cmd: 'nslookup 8.8.8.8', desc: isTR ? 'Genel DNS Çözümleme Sorgusu' : 'Public DNS Lookup Query' }
       );
       break;
     case 'mobile':
