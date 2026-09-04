@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
-import { Smartphone, Wifi, Server, CheckCircle2, RefreshCw, Send, Radio, BatteryCharging, Signal, Globe, Bookmark, ExternalLink } from 'lucide-react';
+import { Smartphone, Wifi, Server, CheckCircle2, RefreshCw, Send, Radio, BatteryCharging, Signal, Globe, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
 import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';

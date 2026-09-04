@@ -45,7 +45,6 @@ export function PrinterDeviceView({
   // Helper to obtain DHCP IP based on connected router/DHCP server or subnet
   const obtainDhcpLeaseForPrinter = () => {
     // 1. Search topology for active DHCP servers or routers/switches with DHCP pools
-    let serverIp = '192.168.1.1';
     let assignedSubnet = '255.255.255.0';
     let assignedGateway = '192.168.1.1';
     let assignedDns = '8.8.8.8';
