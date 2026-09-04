@@ -92,9 +92,9 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
         <stop offset="100%" stopColor="var(--color-purple-900)" />
       </linearGradient>
       <linearGradient id="hubGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="var(--color-cyan-400)" />
-        <stop offset="30%" stopColor="var(--color-cyan-600)" />
-        <stop offset="100%" stopColor="var(--color-cyan-800)" />
+        <stop offset="0%" stopColor="#14b8a6" />
+        <stop offset="30%" stopColor="#0f766e" />
+        <stop offset="100%" stopColor="#134e4a" />
       </linearGradient>
       <linearGradient id="cloudGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="var(--color-sky-400)" />
@@ -111,6 +111,16 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
         <stop offset="30%" stopColor="var(--color-warning-600)" />
         <stop offset="100%" stopColor="var(--color-warning-700)" />
       </linearGradient>
+      <linearGradient id="mobileGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="var(--color-sky-500)" />
+        <stop offset="30%" stopColor="var(--color-sky-700)" />
+        <stop offset="100%" stopColor="var(--color-sky-900)" />
+      </linearGradient>
+      <linearGradient id="printerGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#ec4899" />
+        <stop offset="30%" stopColor="#be185d" />
+        <stop offset="100%" stopColor="#831843" />
+      </linearGradient>
       {/* Device 3D Gradients for Light Mode */}
       <linearGradient id="pcGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="var(--color-primary-50)" />
@@ -125,8 +135,8 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
         <stop offset="100%" stopColor="var(--color-purple-100)" />
       </linearGradient>
       <linearGradient id="hubGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="var(--color-cyan-50)" />
-        <stop offset="100%" stopColor="var(--color-cyan-200)" />
+        <stop offset="0%" stopColor="#ccfbf1" />
+        <stop offset="100%" stopColor="#99f6e4" />
       </linearGradient>
       <linearGradient id="cloudGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
         <stop offset="0%" stopColor="var(--color-sky-50)" />
@@ -140,14 +150,22 @@ export const CanvasDefs: React.FC<CanvasDefsProps> = ({
         <stop offset="0%" stopColor="var(--color-warning-50)" />
         <stop offset="100%" stopColor="var(--color-warning-200)" />
       </linearGradient>
+      <linearGradient id="mobileGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="var(--color-sky-50)" />
+        <stop offset="100%" stopColor="var(--color-sky-100)" />
+      </linearGradient>
+      <linearGradient id="printerGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stopColor="#fce7f3" />
+        <stop offset="100%" stopColor="#fbcfe8" />
+      </linearGradient>
       <linearGradient id="wlcGradientDark" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="var(--color-warning-400)" />
-        <stop offset="30%" stopColor="var(--color-warning-600)" />
-        <stop offset="100%" stopColor="var(--color-warning-700)" />
+        <stop offset="0%" stopColor="var(--color-indigo-500)" />
+        <stop offset="30%" stopColor="var(--color-indigo-700)" />
+        <stop offset="100%" stopColor="var(--color-indigo-900)" />
       </linearGradient>
       <linearGradient id="wlcGradientLight" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="var(--color-warning-50)" />
-        <stop offset="100%" stopColor="var(--color-warning-100)" />
+        <stop offset="0%" stopColor="#e0e7ff" />
+        <stop offset="100%" stopColor="#c7d2fe" />
       </linearGradient>
       {/* Note Gradients for Dark Mode */}
       <linearGradient id="noteBlueDark" x1="0%" y1="0%" x2="0%" y2="100%">

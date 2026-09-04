@@ -72,7 +72,7 @@ const TOOLBAR_ITEMS: Array<{ type: DeviceType; labelKey: keyof Translations; col
   { type: 'cloud', labelKey: 'addCloud', colorClass: 'text-sky-500 hover:bg-sky-500/10' },
   { type: 'mobile', labelKey: 'addMobile', colorClass: 'text-emerald-500 hover:bg-emerald-500/10' },
   { type: 'printer', labelKey: 'addPrinter', colorClass: 'text-amber-500 hover:bg-amber-500/10' },
-  { type: 'iot', labelKey: 'addIoT', colorClass: 'text-white hover:bg-white/10' },
+  { type: 'iot', labelKey: 'addIoT', colorClass: 'text-warning-500 hover:bg-warning-500/10' },
 ];
 
 

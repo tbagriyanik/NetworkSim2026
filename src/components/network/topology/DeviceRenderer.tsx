@@ -127,34 +127,42 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
   const deviceFill = isDark
     ? (device.type === 'hub'
       ? 'url(#hubGradientDark)'
-      : device.type === 'cloud'
-        ? 'url(#cloudGradientDark)'
-        : device.type === 'iot'
-          ? 'url(#iotGradientDark)'
-          : device.type === 'firewall'
-            ? 'url(#firewallGradientDark)'
-            : device.type === 'wlc'
-              ? 'url(#wlcGradientDark)'
-              : isPcLike
-                ? 'url(#pcGradientDark)'
-                : isSwitchDevice(device.type)
-                  ? 'url(#switchGradientDark)'
-                  : 'url(#routerGradientDark)')
+      : device.type === 'mobile'
+        ? 'url(#mobileGradientDark)'
+        : device.type === 'printer'
+          ? 'url(#printerGradientDark)'
+          : device.type === 'cloud'
+            ? 'url(#cloudGradientDark)'
+            : device.type === 'iot'
+              ? 'url(#iotGradientDark)'
+              : device.type === 'firewall'
+                ? 'url(#firewallGradientDark)'
+                : device.type === 'wlc'
+                  ? 'url(#wlcGradientDark)'
+                  : isPcLike
+                    ? 'url(#pcGradientDark)'
+                    : isSwitchDevice(device.type)
+                      ? (device.type === 'switchL3' ? 'url(#routerGradientDark)' : 'url(#switchGradientDark)')
+                      : 'url(#routerGradientDark)')
     : (device.type === 'hub'
       ? 'url(#hubGradientLight)'
-      : device.type === 'cloud'
-        ? 'url(#cloudGradientLight)'
-        : device.type === 'iot'
-          ? 'url(#iotGradientLight)'
-          : device.type === 'firewall'
-            ? 'url(#firewallGradientLight)'
-            : device.type === 'wlc'
-              ? 'url(#wlcGradientLight)'
-              : isPcLike
-                ? 'url(#pcGradientLight)'
-                : isSwitchDevice(device.type)
-                  ? 'url(#switchGradientLight)'
-                  : 'url(#routerGradientLight)');
+      : device.type === 'mobile'
+        ? 'url(#mobileGradientLight)'
+        : device.type === 'printer'
+          ? 'url(#printerGradientLight)'
+          : device.type === 'cloud'
+            ? 'url(#cloudGradientLight)'
+            : device.type === 'iot'
+              ? 'url(#iotGradientLight)'
+              : device.type === 'firewall'
+                ? 'url(#firewallGradientLight)'
+                : device.type === 'wlc'
+                  ? 'url(#wlcGradientLight)'
+                  : isPcLike
+                    ? 'url(#pcGradientLight)'
+                    : isSwitchDevice(device.type)
+                      ? (device.type === 'switchL3' ? 'url(#routerGradientLight)' : 'url(#switchGradientLight)')
+                      : 'url(#routerGradientLight)');
 
   // Calculate device height based on number of ports (8 per row for switch/router)
   const portsPerRow = isPcLike ? 2 : 8;
@@ -427,33 +435,25 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           filter="url(#deviceShadow)"
         />
       ) : device.type === 'mobile' ? (
-        <g>
-          <rect
-            width={deviceWidth}
-            height={deviceHeight}
-            rx={12}
-            fill={deviceFill}
-            style={{ stroke: isDark ? 'var(--color-emerald-500)' : 'var(--color-secondary-300)' }}
-            strokeWidth={1.5}
-            className={isDragging ? '' : 'transition-all duration-150'}
-            filter="url(#deviceShadow)"
-          />
-          {/* Smartphone screen inner frame & home bar */}
-          <line x1={deviceWidth / 2 - 10} y1={deviceHeight - 6} x2={deviceWidth / 2 + 10} y2={deviceHeight - 6} stroke={isDark ? 'var(--color-emerald-400)' : 'var(--color-secondary-400)'} strokeWidth="2" strokeLinecap="round" opacity="0.6" />
-        </g>
+        <rect
+          width={deviceWidth}
+          height={deviceHeight}
+          rx={14}
+          fill={deviceFill}
+          style={{ stroke: isDark ? 'var(--color-sky-400)' : 'var(--color-sky-500)' }}
+          strokeWidth={1.5}
+          className={isDragging ? '' : 'transition-all duration-150'}
+          filter="url(#deviceShadow)"
+        />
       ) : device.type === 'printer' ? (
-        <g>
-          <path
-            d={`M 12 0 L ${deviceWidth - 12} 0 Q ${deviceWidth} 0 ${deviceWidth} 10 L ${deviceWidth} ${deviceHeight - 6} Q ${deviceWidth} ${deviceHeight} ${deviceWidth - 6} ${deviceHeight} L 6 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 6} L 0 10 Q 0 0 12 0 Z`}
-            fill={deviceFill}
-            style={{ stroke: isDark ? 'var(--color-amber-500)' : 'var(--color-secondary-300)' }}
-            strokeWidth={1.5}
-            className={isDragging ? '' : 'transition-all duration-150'}
-            filter="url(#deviceShadow)"
-          />
-          {/* Paper tray top slot line */}
-          <path d={`M 16 0 L ${deviceWidth - 16} 0 L ${deviceWidth - 14} 6 L 14 6 Z`} fill={isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(0, 0, 0, 0.06)'} />
-        </g>
+        <path
+          d={`M 12 0 L ${deviceWidth - 12} 0 Q ${deviceWidth} 0 ${deviceWidth} 10 L ${deviceWidth} ${deviceHeight - 6} Q ${deviceWidth} ${deviceHeight} ${deviceWidth - 6} ${deviceHeight} L 6 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 6} L 0 10 Q 0 0 12 0 Z`}
+          fill={deviceFill}
+          style={{ stroke: isDark ? 'var(--color-amber-500)' : 'var(--color-secondary-300)' }}
+          strokeWidth={1.5}
+          className={isDragging ? '' : 'transition-all duration-150'}
+          filter="url(#deviceShadow)"
+        />
       ) : device.type === 'iot' ? (
         <path
           d={`M 0 0 L ${deviceWidth - 8} 0 Q ${deviceWidth} 0 ${deviceWidth} 8 L ${deviceWidth} ${deviceHeight} L 8 ${deviceHeight} Q 0 ${deviceHeight} 0 ${deviceHeight - 8} L 0 0 Z`}
@@ -491,7 +491,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
 
       {/* Device body highlight for 3D effect in dark mode */}
-      {isDark && (
+      {isDark && device.type !== 'mobile' && device.type !== 'printer' && device.type !== 'cloud' && (
         device.type === 'firewall' ? (
           <path
             d={`M 2 5 Q 2 2 5 2 L ${deviceWidth - 5} 2 Q ${deviceWidth - 2} 2 ${deviceWidth - 2} 5 L ${deviceWidth - 2} ${deviceHeight / 3} L 2 ${deviceHeight / 3} Z`}
@@ -683,18 +683,18 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
           </svg>
         ) : device.type === 'mobile' ? (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-emerald-200)' : 'var(--color-emerald-700)' }} strokeWidth="1.5">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-sky-300)' : 'var(--color-sky-600)' }} strokeWidth="1.5">
             <rect x="7" y="2" width="10" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round" />
             <line x1="11" y1="18" x2="13" y2="18" strokeLinecap="round" />
             <line x1="10" y1="5" x2="14" y2="5" strokeLinecap="round" />
           </svg>
         ) : device.type === 'printer' ? (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-amber-200)' : 'var(--color-amber-700)' }} strokeWidth="1.5">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? '#fbcfe8' : '#be185d' }} strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
             <circle cx="18" cy="12" r="1" fill="currentColor" />
           </svg>
         ) : device.type === 'hub' ? (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-cyan-200)' : 'var(--color-cyan-700)' }} strokeWidth="1.5">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? '#99f6e4' : '#0f766e' }} strokeWidth="1.5">
             <rect x="2" y="7" width="20" height="10" rx="2" />
             <circle cx="6" cy="12" r="1" fill="currentColor" />
             <circle cx="10" cy="12" r="1" fill="currentColor" />
@@ -715,7 +715,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             <circle strokeLinecap="round" strokeLinejoin="round" cx="12" cy="12" r="2" />
           </svg>
         ) : isSwitchDeviceType(device.type) ? (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : (device.switchModel === 'WS-C3650-24PS' ? (isDark ? 'var(--color-warning-200)' : 'var(--color-warning-700)') : (isDark ? 'var(--color-accent-200)' : 'var(--color-accent-700)')) }} strokeWidth="1.5">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : (device.type === 'switchL3' || device.switchModel === 'WS-C3650-24PS' ? (isDark ? 'var(--color-purple-200)' : 'var(--color-purple-700)') : (isDark ? 'var(--color-accent-200)' : 'var(--color-accent-700)')) }} strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M5 12a2 2 0 0 1 -2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2M5 12a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4a2 2 0 0 0 -2-2m-2-4h.01M17 16h.01" />
           </svg>
         ) : device.type === 'router' ? (
@@ -724,7 +724,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
           </svg>
         ) : device.type === 'wlc' ? (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-warning-200)' : 'var(--color-warning-800)' }} strokeWidth="1.5">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-indigo-200)' : '#4f46e5' }} strokeWidth="1.5">
             <circle cx="12" cy="12" r="9" />
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14M12 5l-2 2m2-2l2 2m-2 12l-2-2m2 2l2-2M5 12l2-2m-2 2l2 2M19 12l-2-2m2 2l-2 2" />
             <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
