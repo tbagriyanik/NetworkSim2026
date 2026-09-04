@@ -40,16 +40,23 @@ The simulator supports **400+ commands** across multiple configuration modes.
 ### Window & Panel Gestures
 | Shortcut / Gesture | Action |
 |--------------------|--------|
+| `Alt+M` | Toggle Minimap (Harita) display |
+| `Alt+L` | Toggle Network Event Log (Ağ Olay Günlüğü) panel |
+| `Alt+F` | Zoom to fit all topology devices (Fit View) |
+| `Shift+Tab` | Open Task Switcher (Pencere Deştirici) modal |
+| `Ctrl+M` | Minimize active device window |
+| `Side-by-Side` | Arrange open device windows side-by-side (Split View) |
+| `Tabbed View` | Switch open device windows to tabbed layout mode |
 | `Double-click Header` | Toggle collapse / minimize window (PC Window, Router Panel, Packet Analysis, Refresh Report) |
 | `Click Terminal Output / History` | Focus command line input field |
 | `Tab` | Command auto-completion / suggestion completion |
 
 ## Command Overview
 
-### Desktop Computer Commands
+### Desktop Computer & Device Commands
 | Command | Description |
 |---------|-------------|
-| `ipconfig [/all] [/release] [/renew]` | IP configuration |
+| `ipconfig [/all] [/release] [/renew]` | IP configuration and DHCP lease management |
 | `ping [-n count] [-l size] [-w timeout] [-a] [-t] [-4\|-6] <host>` | Test connectivity to host |
 | `tracert [-d] [-h max_hops] [-w timeout] [-4\|-6] <host>` | Trace route to destination |
 | `netstat [-a] [-n] [-o] [-p tcp\|udp] [-r] [-s] [-e]` | Display network statistics / connections |
@@ -58,6 +65,8 @@ The simulator supports **400+ commands** across multiple configuration modes.
 | `telnet <host> [port]` | Connect via Telnet |
 | `ssh -l <username> <host>` | Connect via SSH |
 | `curl` / `wget <url>` | View web page content |
+| `http://<printer-ip>` | Access Network Printer Web Server (LPD/IPP Spooler, Print Jobs, Toner Status) |
+| `http://203.0.113.1` | Access Cloud / Public WAN Internet Gateway Search |
 | `arp [-a] [-g] [-v] [-d [*]] [-s <ip> <mac>]` | Display/manage ARP table |
 | `nbtstat [-n] [-c] [-r] [-R] [-RR] [-S] [-s] [-a name] [-A ip] [-L name]` | NetBIOS status / statistics |
 | `hostname` | Display computer name |

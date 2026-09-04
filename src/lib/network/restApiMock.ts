@@ -101,8 +101,50 @@ export function handleRestApiRequest(
     };
   }
 
-  // RESTCONF / YANG Data Endpoint
+  // RESTCONF / YANG Data Endpoint with GET, POST, PUT, DELETE
   if (pathname.includes('/restconf/data') || pathname.includes('/api/v1/yang')) {
+    if (upperMethod === 'POST') {
+      return {
+        status: 201,
+        statusText: 'Created',
+        headers: { 'Content-Type': 'application/yang-data+json', Location: `${normalizedUrl}/ietf-interfaces:interfaces/interface=GigabitEthernet0/0/1` },
+        data: {
+          'ietf-interfaces:interfaces': {
+            interface: [
+              {
+                name: 'GigabitEthernet0/0/1',
+                description: 'Created via RESTCONF POST automation',
+                type: 'iana-if-type:ethernetCsmacd',
+                enabled: true,
+                'ietf-ip:ipv4': { address: [{ ip: '10.255.255.1', netmask: '255.255.255.0' }] },
+              },
+            ],
+          },
+        },
+        executionTimeMs: Date.now() - startTime,
+      };
+    }
+
+    if (upperMethod === 'PUT') {
+      return {
+        status: 204,
+        statusText: 'No Content (Updated)',
+        headers: { 'Content-Type': 'application/yang-data+json' },
+        data: { message: 'Interface configuration updated via RESTCONF PUT' },
+        executionTimeMs: Date.now() - startTime,
+      };
+    }
+
+    if (upperMethod === 'DELETE') {
+      return {
+        status: 204,
+        statusText: 'No Content (Deleted)',
+        headers: { 'Content-Type': 'application/yang-data+json' },
+        data: { message: 'Interface deleted via RESTCONF DELETE' },
+        executionTimeMs: Date.now() - startTime,
+      };
+    }
+
     return {
       status: 200,
       statusText: 'OK',

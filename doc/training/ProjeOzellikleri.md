@@ -1,11 +1,13 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 4.2.0 · **Son doğrulama / Last verified:** 2026-09-04
+**Sürüm / Version:** 4.3.0 · **Son doğrulama / Last verified:** 2026-09-04
 
-## Son Ağ Simülasyonu Geliştirmeleri (2026-09-04 - v4.2.0)
+## Son Ağ Simülasyonu Geliştirmeleri (2026-09-04 - v4.3.0)
 
 | Özellik | Güncel kapsam ve sınır |
 |---|---|
+| **Akıllı Cihaz Hizalama Araç Çubuğu & Undo/Redo** | Topolojide çoklu cihaz seçildiğinde beliren Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala araç çubuğu ikonları yenilendi; hizalama eylemlerine `saveToHistory()` kancası eklenerek `Ctrl+Z` ve `Ctrl+Y` ile geri alma ve yenileme tam aktif edildi. |
+| **Bulut / WAN Arayüz & Port Listesi** | Bulut (`cloud`) cihazının detay görünümüne ISP Arayüz & Port Listesi eklendi; `Eth0..Eth3` portlarının UP/DOWN bağlantı durumları, IP adresleri ve komşu cihaz çözümlemesi sağlandı. |
 | **Ağ Yazıcısı & Print Server Yönetimi** | Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`) için DHCP IP otomatik kiralama, Wi-Fi SSID seçim arayüzü ve tuval sinyal çubukları eklendi. Dahili Embedded Web Server üzerinden LPD/515, IPP/631, JetDirect/9100, AirPrint, SNMP ve TLS 1.3 protokol anahtarları, güvenlik erişim yetkileri ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi sağlandı. PC ve Mobil Web Tarayıcılarından "Belgeyi Yazdır" butonu ile ağdaki aktif yazıcıya yazdırma isteği gönderme ve Paket Yakalama ekranında LPD/IPP paket akışlarını canlı izleme desteği eklendi. |
 | **Mobil Web Tarayıcı** | Akıllı Telefon (`mobile`) cihazına adres çubuğu, yer imi kısayolları (`192.168.1.1`, `8.8.8.8`, `http://iot-panel`) ve `checkConnectivity` TCP port 80 denetimi ile Router/WLC Web Yönetimi, Yazıcı Paneli, IoT Kontrol Paneli, Genel WAN Arama ve PC HTTP Sunucusu web sayfalarını işleyen Web Tarayıcısı eklendi. |
 | **Aktif Bulut / WAN Geçit Cihazı (`cloud`)** | Topolojideki Bulut (`cloud`) cihazı `203.0.113.1` genel WAN IP adresi, `eth0..eth3` portları ve transit köprü yönlendirmesi ile tam fonksiyonel yapıldı. Genel DNS/NTP IP'lerine (`8.8.8.8`, `1.1.1.1`, `pool.ntp.org`) veya dış alan adlarına yapılan ping ve web istekleri topoloji üzerindeki Bulut cihazına yönlendirildi. |

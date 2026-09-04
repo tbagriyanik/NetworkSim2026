@@ -15,6 +15,7 @@ interface CloudDeviceViewProps {
 
 export function CloudDeviceView({
   device,
+  topologyDevices,
   topologyConnections,
   isDark,
   language,
@@ -138,6 +139,72 @@ export function CloudDeviceView({
               </p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* WAN Ethernet Ports List */}
+      <div className={cn(
+        "p-5 rounded-xl border space-y-4",
+        isDark ? "bg-secondary-900/40 border-secondary-800" : "bg-white border-secondary-200 shadow-sm"
+      )}>
+        <h3 className="text-sm font-bold flex items-center gap-2 border-b pb-3 border-secondary-700/40">
+          <Server className="w-4 h-4 text-cyan-400" />
+          {isTr ? 'ISP Arayüz & Port Listesi (WAN Ethernet Interfaces)' : 'ISP Interface & Port List (WAN Ethernet Interfaces)'}
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          {(device.ports || [
+            { id: 'eth0', label: 'Eth0', status: 'disconnected' },
+            { id: 'eth1', label: 'Eth1', status: 'disconnected' },
+            { id: 'eth2', label: 'Eth2', status: 'disconnected' },
+            { id: 'eth3', label: 'Eth3', status: 'disconnected' },
+          ]).map((port) => {
+            const activeConn = topologyConnections.find(
+              c => (c.sourceDeviceId === device.id && c.sourcePort === port.id) ||
+                   (c.targetDeviceId === device.id && c.targetPort === port.id)
+            );
+            const isConnected = !!activeConn;
+            const peerDeviceId = activeConn
+              ? (activeConn.sourceDeviceId === device.id ? activeConn.targetDeviceId : activeConn.sourceDeviceId)
+              : null;
+            const peerDevice = peerDeviceId && topologyDevices
+              ? topologyDevices.find(d => d.id === peerDeviceId)
+              : null;
+
+            return (
+              <div
+                key={port.id}
+                className={cn(
+                  "p-3 rounded-lg border flex flex-col justify-between space-y-2",
+                  isConnected
+                    ? "bg-cyan-950/30 border-cyan-500/40 text-cyan-200"
+                    : isDark ? "bg-secondary-950/40 border-secondary-800 text-secondary-400" : "bg-slate-50 border-secondary-200 text-slate-600"
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono font-bold text-xs flex items-center gap-1.5">
+                    <span className={cn("w-2 h-2 rounded-full", isConnected ? "bg-emerald-400 animate-pulse" : "bg-slate-500")} />
+                    {port.label || port.id}
+                  </span>
+                  <span className={cn(
+                    "text-[10px] px-2 py-0.5 rounded font-mono font-semibold",
+                    isConnected ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-secondary-800 text-secondary-400"
+                  )}>
+                    {isConnected ? (isTr ? 'BAĞLI / UP' : 'CONNECTED / UP') : (isTr ? 'BOŞTA / DOWN' : 'DISCONNECTED')}
+                  </span>
+                </div>
+
+                <div className="text-[11px] font-mono space-y-0.5 opacity-80">
+                  <div>IP: {port.id === 'eth0' ? (device.ip || '203.0.113.1') : 'DHCP/WAN Bridge'}</div>
+                  {isConnected && peerDevice && (
+                    <div className="text-emerald-400 truncate">
+                      {isTr ? 'Komşu:' : 'Peer:'} {peerDevice.name} ({peerDevice.ip || 'DHCP'})
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

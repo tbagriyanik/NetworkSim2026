@@ -205,7 +205,7 @@ export interface Port {
   tunnel?: {
     source?: string;
     destination?: string;
-    protocol?: 'gre';
+    protocol?: 'gre' | 'ipsec';
   };
   parentInterface?: string;     // Parent interface for subinterfaces
   dot1qVlan?: number;           // Dot1q VLAN for subinterfaces
@@ -592,7 +592,9 @@ export interface SwitchState {
   vtpDomain?: string;
   vtpPassword?: string;
   vtpRevision?: number;
+  savedConfig?: string;
   mlsQosEnabled?: boolean;
+  dhcpSnooping?: { enabled?: boolean; vlans?: number[]; informationOption?: boolean };
   dhcpSnoopingEnabled?: boolean;
   ntpServers?: string[];
   ntpMasterStratum?: number;

@@ -22,8 +22,14 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu (v4.1.0)
+### Güncel özellik durumu (v4.3.0)
 
+- **📐 Akıllı Cihaz Hizalama Araç Çubuğu & Undo/Redo:** Topolojide çoklu cihaz seçildiğinde beliren Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala araç çubuğu ikonları yenilendi; hizalama eylemlerine `saveToHistory()` kancası eklenerek `Ctrl+Z` ve `Ctrl+Y` ile geri alma ve yenileme tam aktif edildi.
+- **🌐 Bulut / WAN Arayüz & Port Listesi:** Bulut (`cloud`) cihazının detay görünümüne ISP Arayüz & Port Listesi eklendi; `Eth0..Eth3` portlarının UP/DOWN bağlantı durumları, IP adresleri ve komşu cihaz çözümlemesi sağlandı.
+- **🖨️ Ağ Yazıcısı & Print Server (Web Management, LPD/IPP Packet Capture & Wi-Fi):** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`). Dahili Web Yönetim Paneli üzerinden LPD/515, IPP/631, JetDirect/9100, AirPrint, SNMP ve TLS 1.3 protokol yetkilendirmesi, Wi-Fi SSID katılımı, tuval sinyal çubukları (`wifiBarRects`) ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi. Web tarayıcılardan (`HttpBrowserWindow`) "Belgeyi Yazdır" butonu ile canlı paket yakalama (`PacketCapturePanel`) ekranına LPD/IPP paket akışlarının yansıtılması.
+- **📱 Akıllı Telefon (Mobile) Web Tarayıcısı:** Mobil cihaz arayüzüne Adres Çubuğu, Git butonu, Hazır Yer İmleri (`Gateway`, `Google 8.8.8.8`, `IoT Panel`) ve TCP port 80 ağ yolu denetimi ile canlı HTML web sayfalarını (Router/WLC Yönetim, Yazıcı Paneli, IoT Kontrol Paneli, Genel WAN Arama ve PC HTTP Sunucusu) render eden mobil web tarayıcısı uygulandı (`MobileDeviceView.tsx`).
+- **☁️ Fonksiyonel Bulut WAN Geçit Cihazı (`cloud`):** Topolojideki Bulut cihazı `203.0.113.1` varsayılan IP adresi, `eth0..eth3` portları ve transit köprü ile paket iletimi yapacak şekilde aktifleştirildi. Genel DNS (`8.8.8.8`, `1.1.1.1`), NTP (`pool.ntp.org`) ve dış alan adlarına yapılan ping/web istekleri canvas üzerindeki Bulut cihazı üzerinden gerçek zamanlı çözümlenecek şekilde bağlandı.
+- **📊 Ağ Özeti & Syslog Sunucusu Gösterimi:** Cihaz Listesi / Ağ Özeti panelinde PC ve uç cihazlar için Syslog Sunucusu aktiflik durumu ve kayıt sayıları gösterildi; Hub cihazı Katman-1 tekrarlayıcı niteliğinde olduğundan CLI ve durum özeti kartlarından muaf tutuldu.
 - **EIGRP for IPv6:** `ipv6 router eigrp <as>`, router-id tanımı, arayüz bazlı `ipv6 eigrp <as>` aktifleştirme, DUAL IPv6 metric hesaplaması ve `show ipv6 eigrp neighbors/topology` komutları.
 - **IP & IPv6 Prefix-List:** `ip/ipv6 prefix-list <name> [seq <n>] {permit|deny} <prefix> [ge <ge>] [le <le>]` kural motoru, ön ek eşleme doğrulama ve `show ip/ipv6 prefix-list` raporlaması.
 - **Route-Map Politika Motoru:** `route-map <name> {permit|deny} [<seq>]` mod yapılandırması, `match ip/ipv6 address prefix-list`, `match interface`, `set metric`, `set ip/ipv6 next-hop`, `set local-preference` alt komutları ve `show route-map` çıktısı.

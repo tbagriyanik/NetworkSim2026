@@ -52,67 +52,107 @@ export const TopologySelectionToolbar: React.FC<TopologySelectionToolbarProps> =
         e.stopPropagation();
       }}
     >
-      <TooltipWrapper title={t.alignLeft || 'Align Left'}>
+      {/* Sola Hizala (Align Left) */}
+      <TooltipWrapper title={t.alignLeft || 'Sola Hizala'}>
         <button
-          aria-label={t.alignLeft || 'Align Left'}
+          aria-label={t.alignLeft || 'Sola Hizala'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             logger.debug('[Toolbar] Align left clicked');
+            saveToHistory();
             handleAlign('left');
           }}
           className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 2v20M8 5h10M8 11h7M8 17h12" />
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="4" y1="2" x2="4" y2="22" />
+            <rect x="8" y="4" width="12" height="6" rx="1" />
+            <rect x="8" y="14" width="8" height="6" rx="1" />
           </svg>
         </button>
       </TooltipWrapper>
-      <TooltipWrapper title={t.alignHCenter || 'Align Horizontal Center'}>
+
+      {/* Yatayda Ortala (Align Horizontal Center) */}
+      <TooltipWrapper title={t.alignHCenter || 'Yatayda Ortala'}>
         <button
-          aria-label={t.alignHCenter || 'Align Horizontal Center'}
+          aria-label={t.alignHCenter || 'Yatayda Ortala'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             logger.debug('[Toolbar] Align horizontal center clicked');
+            saveToHistory();
             handleAlign('h-center');
           }}
           className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2v20M8 6h8M6 12h12M7 18h10" />
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="2" x2="12" y2="22" strokeDasharray="2 2" />
+            <rect x="5" y="4" width="14" height="6" rx="1" />
+            <rect x="7" y="14" width="10" height="6" rx="1" />
           </svg>
         </button>
       </TooltipWrapper>
-      <TooltipWrapper title={t.alignTop || 'Align Top'}>
+
+      {/* Sağa Hizala (Align Right) */}
+      <TooltipWrapper title={t.alignRight || 'Sağa Hizala'}>
         <button
-          aria-label={t.alignTop || 'Align Top'}
+          aria-label={t.alignRight || 'Sağa Hizala'}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            logger.debug('[Toolbar] Align right clicked');
+            saveToHistory();
+            handleAlign('right');
+          }}
+          className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
+        >
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="20" y1="2" x2="20" y2="22" />
+            <rect x="4" y="4" width="12" height="6" rx="1" />
+            <rect x="8" y="14" width="8" height="6" rx="1" />
+          </svg>
+        </button>
+      </TooltipWrapper>
+
+      {/* Üste Hizala (Align Top) */}
+      <TooltipWrapper title={t.alignTop || 'Üste Hizala'}>
+        <button
+          aria-label={t.alignTop || 'Üste Hizala'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             logger.debug('[Toolbar] Align top clicked');
+            saveToHistory();
             handleAlign('top');
           }}
           className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 4h20M5 8v10M11 8v7M17 8v12" />
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="2" y1="4" x2="22" y2="4" />
+            <rect x="4" y="8" width="6" height="12" rx="1" />
+            <rect x="14" y="8" width="6" height="8" rx="1" />
           </svg>
         </button>
       </TooltipWrapper>
-      <TooltipWrapper title={t.alignVCenter || 'Align Vertical Center'}>
+
+      {/* Dikeyde Ortala (Align Vertical Center) */}
+      <TooltipWrapper title={t.alignVCenter || 'Dikeyde Ortala'}>
         <button
-          aria-label={t.alignVCenter || 'Align Vertical Center'}
+          aria-label={t.alignVCenter || 'Dikeyde Ortala'}
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
             logger.debug('[Toolbar] Align vertical center clicked');
+            saveToHistory();
             handleAlign('v-center');
           }}
           className={`p-1.5 rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${isDark ? 'hover:bg-secondary-700 text-secondary-300' : 'hover:bg-secondary-100 text-secondary-600'}`}
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2 12h20M6 8v8M12 6v12M18 7v10" />
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="2" y1="12" x2="22" y2="12" strokeDasharray="2 2" />
+            <rect x="4" y="5" width="6" height="14" rx="1" />
+            <rect x="14" y="7" width="6" height="10" rx="1" />
           </svg>
         </button>
       </TooltipWrapper>

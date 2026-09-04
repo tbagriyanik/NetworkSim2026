@@ -34,11 +34,15 @@
 
 | Device / Cihaz | Panel / How to open / Nasıl açılır |
 |---|---|
-| **PC** | Double-click → CMD, Services (DHCP/DNS/HTTP/FTP/Mail/NTP), WiFi, IoT tabs |
+| **PC** | Double-click → CMD, Services (DHCP/DNS/HTTP/FTP/Mail/NTP/Syslog), WiFi, IoT tabs |
 | **Switch / Router** | Double-click → CLI terminal (full NOS-style) |
 | **L3 Switch** | Same as Switch + `ip routing` for Layer 3 |
 | **Firewall** | Dedicated panel with drag-drop rule builder |
 | **IoT** | Web-based sensor/actuator management panel |
+| **Smartphone / Mobile** | Double-click → Mobile Web Browser (Address bar, Bookmarks, HTTP Render, Printer Integration) & Wi-Fi settings |
+| **Network Printer** | Double-click → IP/DHCP Config, Wi-Fi SSID selector, Web Management Panel (LPD/IPP/JetDirect/AirPrint/SNMP/TLS) & Print Queue |
+| **Cloud / WAN** | Double-click → Active Public Internet Gateway Monitor, Public DNS (8.8.8.8, 1.1.1.1) & NTP status |
+| **Hub** | Layer-1 Multiport Repeater (No CLI configuration required) |
 
 ### CLI Modes / CLI Modları
 | Prompt | Mode / Mod | Description / Açıklama |
@@ -90,10 +94,15 @@
 | `Ctrl + N` / `Alt + N` | New project | Yeni proje |
 | `Ctrl + P` | Print topology | Topolojiyi yazdır |
 | `Ctrl + F` | Toggle fullscreen | Tam ekrana geç / çık |
+| `Alt + M` | Toggle Minimap display | Minimap (Harita) göster / gizle |
+| `Alt + L` | Toggle Network Log panel | Ağ Olay Günlüğü panelini aç / kapat |
+| `Alt + F` | Zoom to fit all devices | Tüm cihazları ekrana sığdır (Fit View) |
 | `Alt + R` | Reset zoom/pan view | Görünümü sıfırla |
 | `Tab` | Focus the next device / window | Sonraki cihazı / pencereyi odakla |
-| `Shift + Tab` | Open the window switcher when device windows are open | Cihaz pencereleri açıkken pencere değiştiriciyi aç |
+| `Shift + Tab` | Open Window Switcher (Görev Yöneticisi) | Cihaz pencereleri açıkken pencere değiştiriciyi aç |
 | `Ctrl + M` | Minimize the active device window | Etkin cihaz penceresini küçült |
+| `Side-by-Side (Böl)` | Arrange windows side-by-side (Split View) | Pencereleri ekranda yan yana / bölünmüş döşe |
+| `Tabbed View (Sekme)` | Switch windows to tabbed layout mode | Açık pencereleri sekme modunda birleştir |
 
 ### Ping Packet Analysis / Ping Paket Analizi
 | Shortcut / Kısayol | EN | TR |

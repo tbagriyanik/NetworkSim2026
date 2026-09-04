@@ -15,9 +15,10 @@ export function cmdShowIpNatTranslations(state: SwitchState, _input: string, _ct
   let output = '\nPro Inside global          Inside local           Outside local          Outside global\n';
 
   staticTranslations.forEach(t => {
-    const proto = (t as any).protocol ? String((t as any).protocol).toLowerCase() : '---';
-    const inGlobal = (t as any).globalPort !== undefined ? `${t.globalIp}:${(t as any).globalPort}` : t.globalIp;
-    const inLocal = (t as any).localPort !== undefined ? `${t.localIp}:${(t as any).localPort}` : t.localIp;
+    const item = t as { protocol?: string; globalPort?: number; globalIp: string; localPort?: number; localIp: string };
+    const proto = item.protocol ? String(item.protocol).toLowerCase() : '---';
+    const inGlobal = item.globalPort !== undefined ? `${item.globalIp}:${item.globalPort}` : item.globalIp;
+    const inLocal = item.localPort !== undefined ? `${item.localIp}:${item.localPort}` : item.localIp;
     output += `${proto.padEnd(4)}${inGlobal.padEnd(23)}${inLocal.padEnd(23)}---                    ---\n`;
   });
 

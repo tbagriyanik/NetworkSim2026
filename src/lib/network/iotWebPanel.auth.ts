@@ -5,6 +5,13 @@
 
 import { sanitizeHTML } from '@/lib/security/sanitizer';
 
+// Extend Window interface for fallback storage
+declare global {
+  interface Window {
+    __iot_storage?: Record<string, string>;
+  }
+}
+
 export class IotPanelAuth {
   private static readonly SESSION_KEY = 'iotPanelAuthenticated';
   private static readonly PASSWORD_KEY = 'iotPanelPassword';
@@ -22,21 +29,21 @@ export class IotPanelAuth {
 
   private static getFallbackStorage() {
     if (typeof window === 'undefined') return {};
-    return (window as any).__iot_storage || {};
+    return window.__iot_storage || {};
   }
 
   private static setFallbackStorage(key: string, value: string) {
     if (typeof window !== 'undefined') {
-      if (!(window as any).__iot_storage) {
-        (window as any).__iot_storage = {};
+      if (!window.__iot_storage) {
+        window.__iot_storage = {};
       }
-      (window as any).__iot_storage[key] = value;
+      window.__iot_storage[key] = value;
     }
   }
 
   private static deleteFallbackStorage(key: string) {
-    if (typeof window !== 'undefined' && (window as any).__iot_storage) {
-      delete (window as any).__iot_storage[key];
+    if (typeof window !== 'undefined' && window.__iot_storage) {
+      delete window.__iot_storage[key];
     }
   }
 

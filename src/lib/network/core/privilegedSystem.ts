@@ -126,7 +126,7 @@ export function cmdMore(state: SwitchState, input: string, _ctx: CommandContext)
         return { success: true, output: '\n' + buildRunningConfig(state) };
     }
     if (arg.includes('startup-config') || arg.includes('nvram:startup-config')) {
-        return { success: true, output: '\n' + ((state as any).savedConfig || buildRunningConfig(state)) };
+        return { success: true, output: '\n' + (state.savedConfig || buildRunningConfig(state)) };
     }
     if (arg.includes('vlan.dat') || arg.includes('flash:vlan.dat')) {
         return { success: true, output: '\nVLAN database file (binary format vlan.dat)\n' };

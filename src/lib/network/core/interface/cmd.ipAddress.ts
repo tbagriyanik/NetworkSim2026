@@ -677,6 +677,26 @@ export function cmdTunnelDestination(state: SwitchState, input: string, _ctx: Co
   return { success: true, newState: { ports: { ...state.ports, [state.currentInterface]: { ...port, tunnel: { ...port?.tunnel, protocol: 'gre', destination: match[1] } } } } };
 }
 
+export function cmdTunnelMode(state: SwitchState, input: string, _ctx: CommandContext): CommandResult {
+  if (!isInInterfaceMode(state) || !state.currentInterface?.startsWith('tunnel')) return { success: false, error: iosModeError() };
+  const match = input.match(/^tunnel\s+mode\s+(gre\s+ip|ipsec\s+ipv4|gre\s+ipv6)$/i);
+  if (!match) return { success: false, error: '% Invalid tunnel mode command. Supported: gre ip, ipsec ipv4' };
+  const modeStr = match[1].toLowerCase().startsWith('gre') ? 'gre' : 'ipsec';
+  const port = state.ports[state.currentInterface];
+  return {
+    success: true,
+    newState: {
+      ports: {
+        ...state.ports,
+        [state.currentInterface]: {
+          ...port,
+          tunnel: { ...port?.tunnel, protocol: modeStr as 'gre' | 'ipsec' }
+        }
+      }
+    }
+  };
+}
+
 export function cmdNoIpDhcpSnoopingTrust(state: SwitchState, _input: string, _ctx: CommandContext): CommandResult {
   if (!isInInterfaceMode(state) || !state.currentInterface) return { success: false, error: iosModeError() };
   const newPorts = applyToSelectedPorts(state, (port: Port) => ({ ...port, dhcpSnoopingTrust: false }));

@@ -2,9 +2,11 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
-## v4.2.0 — 2026-09-04
+## v4.3.0 — 2026-09-04
 
-**Gelişmiş Ağ Yazıcısı & Print Server Yönetimi, Mobil Web Tarayıcı, Aktif Bulut WAN Geçit Cihazı, Syslog Ağ Özeti & Depolama Kota Optimizasyonu** —
+**Akıllı Cihaz Hizalama Araç Çubuğu, Hizalamada Undo/Redo (Ctrl+Z/Ctrl+Y) Desteği, Cloud/WAN Arayüz & Port Monitörü, Ağ Yazıcısı & Print Server Yönetimi** —
+- **📐 Akıllı Hizalama Araç Çubuğu & Undo/Redo**: Topolojide çoklu cihaz seçildiğinde beliren araç çubuğu için Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala eylemlerine grafik SVG ikonları entegre edildi. Her hizalama eyleminde `saveToHistory()` çağrılarak `Ctrl+Z` ve `Ctrl+Y` ile hizalama hareketlerinin geri alınması ve yenilenmesi sağlandı.
+- **🌐 Cloud / WAN Arayüz & Port Monitörü**: Bulut (`cloud`) cihazının detay görünümüne (`CloudDeviceView.tsx`) ISP Arayüz & Port Listesi eklendi. `Eth0..Eth3` portlarının canlı bağlantı durumu (UP/DOWN), kiraladığı/atadığı IP adresleri ve bağlı olduğu komşu ağ cihazının adı/IP çözümlenmesi sağlandı.
 - **🖨️ Ağ Yazıcısı & Web Yönetim / Wi-Fi Entegrasyonu**: Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`) için dinamik DHCP IP edinimi (`obtainDhcpLeaseForPrinter`), Wi-Fi SSID seçim paneli ve tuval üzerinde Wi-Fi sinyal çubukları (`wifiBarRects`) eklendi (`PrinterDeviceView.tsx`, `DeviceRenderer.tsx`).
 - **🌐 Print Server Web Yönetimi & LPD/IPP Paket Yakalama**: Yazıcı cihazlarının dahili web sunucusuna (`printerWebPanel.ts`) Servis & Protokol Yönetimi (LPD/515, IPP/631, JetDirect/9100, AirPrint/IPP-S, SNMP, TLS 1.3), Güvenlik & Yetkilendirme ayarları ve Canlı Yazdırma Kuyruğu (`printJobs`) yönetimi eklendi. PC ve Mobil Web Tarayıcılarından (`HttpBrowserWindow.tsx`) "Belgeyi Yazdır" butonu ile ağdaki aktif yazıcılara belge kuyruklama ve Paket Yakalama Paneline (`dispatchCapturedPackets`) LPD/IPP paket akışı iletimi sağlandı.
 - **📱 Akıllı Telefon (Mobile) Web Tarayıcısı**: Mobil cihaz arayüzüne Adres Çubuğu, Git butonu, Hazır Yer İmleri (`Gateway`, `Google 8.8.8.8`, `IoT Panel`) ve TCP port 80 ağ yolu denetimi ile canlı HTML web sayfalarını (Router/WLC Yönetim, Yazıcı Paneli, IoT Kontrol Paneli, Genel WAN Arama ve PC HTTP Sunucusu) render eden mobil web tarayıcısı uygulandı (`MobileDeviceView.tsx`).

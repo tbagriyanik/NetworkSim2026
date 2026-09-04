@@ -208,6 +208,7 @@ import {
   cmdNoIpv6NdSuppressRa,
   cmdTunnelSource,
   cmdTunnelDestination,
+  cmdTunnelMode,
 } from './interface/cmd.ipAddress';
 
 import {
@@ -380,6 +381,7 @@ export const interfaceHandlers: Record<string, CommandHandler> = {
   'ip dhcp snooping trust': cmdIpDhcpSnoopingTrust,
   'tunnel source': cmdTunnelSource,
   'tunnel destination': cmdTunnelDestination,
+  'tunnel mode': cmdTunnelMode,
   'no ip dhcp snooping trust': cmdNoIpDhcpSnoopingTrust,
   'ip dhcp snooping limit rate': cmdIpDhcpSnoopingLimitRate,
   'no ip dhcp snooping limit rate': cmdIpDhcpSnoopingLimitRate,

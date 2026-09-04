@@ -1,6 +1,6 @@
 {
-  "name": "networksim",
-  "version": "4.2.0",
+  "name": "network-simulator",
+  "version": "4.3.0",
   "private": true,
   "type": "module",
   "scripts": {

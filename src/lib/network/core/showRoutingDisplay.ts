@@ -546,7 +546,8 @@ export function cmdShowIpDhcpSnooping(state: SwitchState, input: string, _ctx: C
   let output = '\nDHCP snooping is ' + (enabled ? 'enabled' : 'disabled') + '\n';
   output += 'DHCP snooping is configured on following VLANs:\n';
   output += vlans.length > 0 ? vlans.join(',') + '\n' : 'none\n';
-  const infoOpt = state.dhcpOption82 !== undefined ? state.dhcpOption82 : ((state as any).dhcpSnooping?.informationOption !== false);
+  const dhcpSnoopingInfo = state.dhcpSnooping as { informationOption?: boolean } | undefined;
+  const infoOpt = state.dhcpOption82 !== undefined ? state.dhcpOption82 : (dhcpSnoopingInfo?.informationOption !== false);
   output += '\nInsertion of option 82 is ' + (infoOpt ? 'enabled' : 'disabled') + '\n';
   output += '\nInterface           Trusted   Rate limit (pps)\n';
   output += '------------------ -------- -----------------\n';
