@@ -85,7 +85,7 @@ export function DraggableWindowWrapper({
     setActiveWindow(id);
   };
 
-  // Handle escape key
+  // Handle escape key and mobile back button
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen && isActive) {
@@ -97,8 +97,18 @@ export function DraggableWindowWrapper({
       }
     };
 
+    const handleMobileBack = () => {
+      if (isOpen && isActive) {
+        onClose();
+      }
+    };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('mobile-back-pressed', handleMobileBack);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('mobile-back-pressed', handleMobileBack);
+    };
   }, [isOpen, isActive, onClose, onEscapeKeyDown]);
 
   useEffect(() => {

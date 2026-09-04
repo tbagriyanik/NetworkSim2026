@@ -132,7 +132,7 @@ export function PacketPopup({ hopIndex, info, language, onClose, isDark, isFocus
       style={{ position: 'fixed', left: pos.x, top: pos.y, zIndex: 9999 }}
       onClick={e => e.stopPropagation()}
     >
-      <div className={`rounded-xl border w-80 backdrop-blur-md ${isDark ? (isFocused ? 'bg-secondary-950/40 border-emerald-400 shadow-[0_0_0_1px_rgba(52,211,153,0.35),0_20px_40px_rgba(0,0,0,0.4)]' : 'bg-secondary-950/40 border-emerald-950/80 shadow-black/40') : (isFocused ? 'bg-white/40 border-emerald-500 shadow-[0_0_0_1px_rgba(34,197,94,0.24),0_20px_40px_rgba(15,23,42,0.12)]' : 'bg-white/40 border-emerald-950/80 shadow-secondary-200/50')}`}>
+      <div className={`rounded-xl border w-80 max-w-[calc(100vw-24px)] backdrop-blur-md ${isDark ? (isFocused ? 'bg-secondary-950/40 border-emerald-400 shadow-[0_0_0_1px_rgba(52,211,153,0.35),0_20px_40px_rgba(0,0,0,0.4)]' : 'bg-secondary-950/40 border-emerald-950/80 shadow-black/40') : (isFocused ? 'bg-white/40 border-emerald-500 shadow-[0_0_0_1px_rgba(34,197,94,0.24),0_20px_40px_rgba(15,23,42,0.12)]' : 'bg-white/40 border-emerald-950/80 shadow-secondary-200/50')}`}>
         <div
           className={`flex items-center justify-between px-3 py-2 border-b cursor-grab active:cursor-grabbing select-none ${isDark ? 'bg-white/5 border-white/10' : 'bg-black/5 border-black/10'}`}
           onPointerDown={handleDragStart}
@@ -141,10 +141,12 @@ export function PacketPopup({ hopIndex, info, language, onClose, isDark, isFocus
             {language === 'tr' ? `Paket İçeriği — Hop ${hopIndex + 1}` : `Packet Contents — Hop ${hopIndex + 1}`}
           </h3>
           <button
-            onClick={onClose}
-            className="w-5 h-5 rounded-md bg-error-500 hover:bg-error-600 cursor-pointer transition-colors inline-flex items-center justify-center shrink-0"
+            onClick={(e) => { e.stopPropagation(); onClose(); }}
+            className="w-6 h-6 rounded-md bg-error-500 hover:bg-error-600 active:scale-95 cursor-pointer transition-all inline-flex items-center justify-center shrink-0 shadow-sm text-white"
+            aria-label="Kapat"
+            title="Kapat"
           >
-            <X className="w-3 h-3 text-white pointer-events-none" />
+            <X className="w-4 h-4 text-white pointer-events-none" />
           </button>
         </div>
         <div className={`px-4 py-3 space-y-2 text-xs font-mono pointer-events-none ${isDark ? 'text-secondary-200' : 'text-secondary-700'}`}>

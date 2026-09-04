@@ -631,7 +631,7 @@ export function buildRunningConfig(state: SwitchState): string[] {
             if (r.type === 'dynamic' && r.subnetMask && !exists) lines.push(`  network ${r.destination} mask ${r.subnetMask}`);
         });
         // Neighbors with their full advanced sub-commands
-        (state.bgpNeighbors || []).forEach((n: any) => {
+        (state.bgpNeighbors || []).forEach((n: import('../types').BgpNeighbor) => {
             lines.push(`  neighbor ${n.ip} remote-as ${n.as}`);
             if (n.description) lines.push(`  neighbor ${n.ip} description ${n.description}`);
             if (n.nextHopSelf) lines.push(`  neighbor ${n.ip} next-hop-self`);

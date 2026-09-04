@@ -219,7 +219,7 @@ export const PacketCapturePanel = ({
       modalSize={dragProps.size}
       handlePointerDown={dragProps.handlePointerDown}
       handleResizeStart={dragProps.handleResizeStart}
-      mobileFullScreen={false}
+      mobileFullScreen={true}
       headerActions={
         <>
           <button

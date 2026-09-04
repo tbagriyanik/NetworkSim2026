@@ -212,6 +212,10 @@ export function useHistory(initialState: ProjectState) {
       }
 
       const trySave = (itemsToSave: HistoryEntry[], idx: number) => {
+        if (itemsToSave.length <= 1) {
+          secureStorage.removeItem('netsim_history');
+          return;
+        }
         const serialized = {
           items: itemsToSave.map(item => ({
             ...item,
@@ -227,7 +231,10 @@ export function useHistory(initialState: ProjectState) {
             const cutSize = Math.max(1, Math.floor(itemsToSave.length / 2));
             trySave(itemsToSave.slice(cutSize), Math.max(0, idx - cutSize));
           } else {
-            logger.warn('Could not save history to localStorage', e);
+            // Silently suppress quota full warning after max reduction to prevent console spam
+            if (!isQuotaError) {
+              logger.warn('Could not save history to localStorage', e);
+            }
           }
         }
       };

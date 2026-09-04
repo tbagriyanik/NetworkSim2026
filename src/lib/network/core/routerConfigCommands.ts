@@ -334,12 +334,12 @@ function cmdNeighborRouteMap(state: SwitchState, input: string): CommandResult {
 
     const [_, neighborIp, mapName, dir] = match;
     const bgpNeighbors = state.bgpNeighbors || [];
-    const existing = bgpNeighbors.find((n: any) => n.ip === neighborIp) || { ip: neighborIp, as: '65000' };
+    const existing = bgpNeighbors.find((n: import('../types').BgpNeighbor) => n.ip === neighborIp) || { ip: neighborIp, as: '65000' };
     const updated = {
         ...existing,
         [dir.toLowerCase() === 'in' ? 'routeMapIn' : 'routeMapOut']: mapName
     };
-    const newNeighbors = [...bgpNeighbors.filter((n: any) => n.ip !== neighborIp), updated];
+    const newNeighbors = [...bgpNeighbors.filter((n: import('../types').BgpNeighbor) => n.ip !== neighborIp), updated];
 
     return {
         success: true,
@@ -356,9 +356,9 @@ function cmdNeighborWeight(state: SwitchState, input: string): CommandResult {
     const [_, neighborIp, weightStr] = match;
     const weight = parseInt(weightStr, 10);
     const bgpNeighbors = state.bgpNeighbors || [];
-    const existing = bgpNeighbors.find((n: any) => n.ip === neighborIp) || { ip: neighborIp, as: '65000' };
+    const existing = bgpNeighbors.find((n: import('../types').BgpNeighbor) => n.ip === neighborIp) || { ip: neighborIp, as: '65000' };
     const updated = { ...existing, weight };
-    const newNeighbors = [...bgpNeighbors.filter((n: any) => n.ip !== neighborIp), updated];
+    const newNeighbors = [...bgpNeighbors.filter((n: import('../types').BgpNeighbor) => n.ip !== neighborIp), updated];
 
     return {
         success: true,
