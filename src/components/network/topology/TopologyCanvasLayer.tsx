@@ -79,6 +79,7 @@ export interface TopologyCanvasLayerProps {
     setPingCursorPos: React.Dispatch<React.SetStateAction<{ x: number; y: number } | null>>;
     setZoom: React.Dispatch<React.SetStateAction<number>>;
     setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+    handleZoomWheel?: (e: React.WheelEvent) => void;
     resetView?: () => void;
     getCanvasDimensions: () => { width: number; height: number };
     renderDevice: (device: CanvasDevice, isDragging?: boolean) => React.ReactNode;
@@ -157,6 +158,7 @@ export function TopologyCanvasLayer({
     setPingCursorPos,
     setZoom,
     setPan,
+    handleZoomWheel,
     resetView,
     getCanvasDimensions,
     renderDevice,
@@ -189,6 +191,7 @@ export function TopologyCanvasLayer({
             role="application"
             aria-label={t.topologyAriaLabel}
             tabIndex={0}
+            onWheel={handleZoomWheel}
             onMouseDown={handleCanvasMouseDown}
             onAuxClick={(e) => { if (e.button === 1) e.preventDefault(); }}
             onTouchStart={handleTouchStart}

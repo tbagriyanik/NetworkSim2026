@@ -545,20 +545,20 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
         let isEnabled = false;
         if (showWifi) {
-          if (isWlc) isEnabled = true; // WLC her zaman kablosuz yeteneğe sahiptir, açıksa aktiftir
+          if (isWlc) isEnabled = true; // WLC her zaman kablosuz yeteneğe sahiptir
           else if (wlanPort) isEnabled = !wlanPort.shutdown;
-          else if (pcWifi) isEnabled = pcWifi.enabled !== false;
-          else if (device.type === 'mobile' || device.type === 'printer') isEnabled = true;
+          else isEnabled = pcWifi?.enabled !== false;
         }
 
-        // If all wireless connections for this device are inactive (power toggled off on connection handle), treat wifi as disabled/inactive
+        // Wireless connection state
         const hasActiveWirelessConn = deviceConnections.some(c => c.cableType === 'wireless' && c.active !== false);
-        if (usesWifiBars && isEnabled && !hasActiveWirelessConn && deviceConnections.some(c => c.cableType === 'wireless')) {
+        const hasWirelessConnLine = deviceConnections.some(c => c.cableType === 'wireless');
+        if (usesWifiBars && isEnabled && !hasActiveWirelessConn && hasWirelessConnLine) {
           isEnabled = false;
         }
 
         const isConnected = wlanState?.status === 'connected' ||
-          (isEnabled && hasActiveWirelessConn);
+          (isEnabled && (hasActiveWirelessConn || !hasWirelessConnLine));
 
         const activeWifiConfig = wlanState?.wifi || pcWifi;
         const isMacBlocked = usesWifiBars && !isConnected && !!pcWifi?.ssid && topologyDevices.some(ap => {
@@ -631,6 +631,11 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
                   />
                 ))}
               </svg>
+              {device.type === 'printer' && (
+                <text x="8" y="15.5" fontSize="4.5" fontWeight="800" fill={strength > 0 ? activeColor : dimColor} textAnchor="middle" style={{ pointerEvents: 'none' }}>
+                  {Math.round((strength / 5) * 100)}%
+                </text>
+              )}
               {is5Ghz && (
                 <text x="0" y="14" fontSize="4.5" fontWeight="900" fill={strength > 0 ? activeColor : dimColor} textAnchor="middle" style={{ pointerEvents: 'none' }}>
                   5
@@ -692,7 +697,6 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
         ) : device.type === 'printer' ? (
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? '#fbcfe8' : '#be185d' }} strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
-            <circle cx="18" cy="12" r="1" fill="currentColor" />
           </svg>
         ) : device.type === 'hub' ? (
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? '#99f6e4' : '#0f766e' }} strokeWidth="1.5">

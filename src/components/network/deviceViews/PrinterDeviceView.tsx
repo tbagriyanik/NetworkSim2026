@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Printer, Server, CheckCircle2, RefreshCw, Send, HardDrive, Wifi, Radio } from 'lucide-react';
+import { Printer, Server, CheckCircle2, RefreshCw, Send, HardDrive, Wifi, Radio, Power, Signal, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
 import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';
+import { getWirelessSignalStrength } from '@/lib/network/connectivity';
 
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
@@ -31,6 +32,43 @@ export function PrinterDeviceView({
   // Use live device from topologyDevices so dynamic state updates (like printJobs) trigger re-renders
   const liveDevice = topologyDevices.find(d => d.id === device.id) || device;
 
+  const isPowerOn = liveDevice.status !== 'offline';
+  const isWifiEnabled = liveDevice.wifi?.enabled !== false;
+
+  // Calculate real Wi-Fi signal strength from topology (0-5 scale)
+  const wifiSignalStrength = useMemo(() => {
+    if (!isPowerOn || !isWifiEnabled) return 0;
+    return getWirelessSignalStrength(liveDevice, topologyDevices, deviceStates);
+  }, [liveDevice, topologyDevices, deviceStates, isPowerOn, isWifiEnabled]);
+
+  const wifiSignalPercent = Math.round((wifiSignalStrength / 5) * 100);
+
+  // Clear Print Queue Jobs
+  const handleClearPrintJobs = () => {
+    setDevices(
+      topologyDevices.map(d => {
+        if (d.id === device.id) {
+          const updatedPrinter = {
+            ...d,
+            printJobs: []
+          };
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+              detail: {
+                deviceId: d.id,
+                config: {
+                  printJobs: []
+                }
+              }
+            }));
+          }
+          return updatedPrinter;
+        }
+        return d;
+      })
+    );
+  };
+
   // Local state for IP & Wi-Fi editing
   const [ipMode, setIpMode] = useState<'dhcp' | 'static'>(device.ipConfigMode === 'dhcp' ? 'dhcp' : 'static');
   const [ip, setIp] = useState(device.ip || '192.168.1.50');
@@ -39,6 +77,36 @@ export function PrinterDeviceView({
   const [dns, setDns] = useState(device.dns || '8.8.8.8');
   const [selectedSsid, setSelectedSsid] = useState(device.wifi?.ssid || 'Corporate-WiFi');
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Toggle Power Status
+  const handleTogglePower = () => {
+    const nextStatus = isPowerOn ? 'offline' : 'online';
+    setDevices(
+      topologyDevices.map(d => (d.id === device.id ? { ...d, status: nextStatus } : d))
+    );
+  };
+
+  // Toggle Wi-Fi Interface
+  const handleToggleWifi = () => {
+    const nextWifiEnabled = !isWifiEnabled;
+    setDevices(
+      topologyDevices.map(d => {
+        if (d.id === device.id) {
+          return {
+            ...d,
+            wifi: {
+              ssid: selectedSsid,
+              security: 'open' as const,
+              channel: '2.4GHz' as const,
+              mode: 'client' as const,
+              enabled: nextWifiEnabled,
+            }
+          };
+        }
+        return d;
+      })
+    );
+  };
 
   // Detect available active wireless SSIDs exclusively from real topology devices
   const availableSsids = useMemo(() => {
@@ -63,12 +131,10 @@ export function PrinterDeviceView({
 
   // Helper to obtain DHCP IP based on connected router/DHCP server or subnet
   const obtainDhcpLeaseForPrinter = () => {
-    // 1. Search topology for active DHCP servers or routers/switches with DHCP pools
     let assignedSubnet = '255.255.255.0';
     let assignedGateway = '192.168.1.1';
     let assignedDns = '8.8.8.8';
 
-    // Find any connected router/switch/server with DHCP enabled or active gateway
     const dhcpServer = topologyDevices.find(d => 
       d.id !== device.id && 
       (
@@ -91,7 +157,6 @@ export function PrinterDeviceView({
       }
     }
 
-    // Default fallback DHCP lease if network gateway exists
     const anyGateway = topologyDevices.find(d => d.ip && (d.type === 'router' || d.type === 'switchL3'))?.ip || '192.168.1.1';
     const parts = anyGateway.split('.');
     const hostNum = Math.floor(Math.random() * 150) + 50;
@@ -164,7 +229,7 @@ export function PrinterDeviceView({
               security: 'open' as const,
               channel: '2.4GHz' as const,
               mode: 'client' as const,
-              enabled: true,
+              enabled: isWifiEnabled,
             }
           };
         }
@@ -191,7 +256,7 @@ export function PrinterDeviceView({
               security: 'open' as const,
               channel: '2.4GHz' as const,
               mode: 'client' as const,
-              enabled: true,
+              enabled: isWifiEnabled,
             }
           };
         }
@@ -209,7 +274,6 @@ export function PrinterDeviceView({
 
     setTimeout(() => {
       const res = checkConnectivity(
-
         device.id,
         targetPingIp.trim(),
         topologyDevices,
@@ -246,20 +310,30 @@ export function PrinterDeviceView({
 
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6 space-y-6 custom-scrollbar">
-      {/* Header Info */}
+      {/* Header Info with Power & Wi-Fi Status Controls */}
       <div className={cn(
-        "p-4 rounded-xl border flex items-center justify-between",
+        "p-4 rounded-xl border flex flex-wrap items-center justify-between gap-4",
         isDark ? "bg-secondary-900/60 border-secondary-800" : "bg-white border-secondary-200 shadow-sm"
       )}>
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
+          <div className={cn(
+            "w-12 h-12 rounded-xl border flex items-center justify-center transition-all",
+            isPowerOn
+              ? "bg-purple-500/10 border-purple-500/30 text-purple-400"
+              : "bg-red-500/10 border-red-500/30 text-red-400"
+          )}>
             <Printer className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-base font-bold flex items-center gap-2">
               {device.name}
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-normal">
-                {isTr ? 'Hazır / Online' : 'Ready / Online'}
+              <span className={cn(
+                "text-xs px-2 py-0.5 rounded-full font-normal",
+                isPowerOn
+                  ? "bg-emerald-500/20 text-emerald-400"
+                  : "bg-red-500/20 text-red-400"
+              )}>
+                {isPowerOn ? (isTr ? 'Açık / Online' : 'Ready / Online') : (isTr ? 'Kapalı / Offline' : 'Powered Off')}
               </span>
             </h2>
             <p className="text-xs opacity-60">
@@ -267,7 +341,40 @@ export function PrinterDeviceView({
             </p>
           </div>
         </div>
-        <div className="text-right font-mono text-xs opacity-70">
+
+        {/* Power & Signal Bars Indicator */}
+        <div className="flex items-center gap-3">
+          {/* Signal bars */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-secondary-700/50 bg-secondary-950/40 text-xs font-mono">
+            <Signal className={cn("w-3.5 h-3.5", wifiSignalStrength > 0 ? "text-emerald-400" : "opacity-30")} />
+            <div className="flex items-end gap-0.5 h-3">
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 1 ? "h-1.5 bg-emerald-400" : "h-1.5 bg-secondary-700")} />
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 2 ? "h-2 bg-emerald-400" : "h-1 bg-secondary-700")} />
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 3 ? "h-2.5 bg-emerald-400" : "h-1 bg-secondary-700")} />
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 4 ? "h-3 bg-emerald-400" : "h-1 bg-secondary-700")} />
+            </div>
+            <span className="text-[10px] text-muted-foreground ml-1">
+              {wifiSignalPercent}%
+            </span>
+          </div>
+
+          {/* Power Button Toggle */}
+          <button
+            onClick={handleTogglePower}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer",
+              isPowerOn
+                ? "bg-emerald-950/40 border-emerald-600/50 text-emerald-400 hover:bg-emerald-900/60"
+                : "bg-red-950/40 border-red-600/50 text-red-400 hover:bg-red-900/60"
+            )}
+            title={isTr ? (isPowerOn ? 'Yazıcıyı Kapat' : 'Yazıcıyı Aç') : (isPowerOn ? 'Power Off Printer' : 'Power On Printer')}
+          >
+            <Power className="w-3.5 h-3.5" />
+            <span>{isPowerOn ? (isTr ? 'Açık' : 'ON') : (isTr ? 'Kapalı' : 'OFF')}</span>
+          </button>
+        </div>
+
+        <div className="text-right font-mono text-xs opacity-70 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-secondary-800">
           <div>MAC: {device.macAddress || '0050.56C0.0001'}</div>
           <div>Web: http://{device.ip || ip}</div>
         </div>
@@ -360,13 +467,24 @@ export function PrinterDeviceView({
 
             {/* Wi-Fi SSID Selection */}
             <div className="pt-2 border-t border-secondary-700/40 space-y-2">
-              <label className="block font-medium opacity-80 flex items-center justify-between">
-                <span className="flex items-center gap-1.5 text-purple-400">
+              <div className="flex items-center justify-between">
+                <label className="font-medium opacity-80 flex items-center gap-1.5 text-purple-400">
                   <Wifi className="w-3.5 h-3.5" />
-                  {isTr ? 'Kablosuz Ağ (Wi-Fi SSID)' : 'Wi-Fi Network (SSID)'}
-                </span>
-                <span className="text-[10px] text-emerald-400 font-mono">802.11n PrintServer</span>
-              </label>
+                  <span>{isTr ? 'Kablosuz Ağ (Wi-Fi SSID)' : 'Wi-Fi Network (SSID)'}</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={handleToggleWifi}
+                  className={cn(
+                    "px-2 py-0.5 rounded text-[10px] font-semibold border transition-all cursor-pointer",
+                    isWifiEnabled
+                      ? "bg-purple-950/50 border-purple-500/50 text-purple-300 hover:bg-purple-900/60"
+                      : "bg-secondary-800 border-secondary-700 text-secondary-400 hover:bg-secondary-700"
+                  )}
+                >
+                  {isWifiEnabled ? (isTr ? 'Wi-Fi: AÇIK' : 'Wi-Fi: ON') : (isTr ? 'Wi-Fi: KAPALI' : 'Wi-Fi: OFF')}
+                </button>
+              </div>
               {availableSsids.length === 0 ? (
                 <div className="p-2.5 rounded-lg border border-secondary-800 bg-secondary-950/40 text-center text-xs opacity-60">
                   {isTr ? 'Kapsama alanında aktif Wi-Fi ağı yok' : 'No active Wi-Fi networks found'}
@@ -468,7 +586,20 @@ export function PrinterDeviceView({
             <div className="p-3 rounded-lg bg-secondary-950 border border-secondary-800 space-y-2">
               <div className="flex justify-between items-center text-[11px] font-semibold">
                 <span>{isTr ? 'Yazdırma Kuyruğu & Gelen Belgeler' : 'Print Queue & Incoming Documents'}</span>
-                <span className="text-purple-400 font-mono">{(liveDevice.printJobs || []).length} {isTr ? 'Belge' : 'Jobs'}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-purple-400 font-mono">{(liveDevice.printJobs || []).length} {isTr ? 'Belge' : 'Jobs'}</span>
+                  {(liveDevice.printJobs || []).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearPrintJobs}
+                      className="flex items-center gap-1 text-[10px] px-2 py-0.5 rounded bg-red-950/60 hover:bg-red-900 border border-red-700/50 text-red-300 transition-colors cursor-pointer"
+                      title={isTr ? 'Yazdırma kuyruğunu temizle' : 'Clear print queue'}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      <span>{isTr ? 'Temizle' : 'Clear'}</span>
+                    </button>
+                  )}
+                </div>
               </div>
 
               {(!liveDevice.printJobs || liveDevice.printJobs.length === 0) ? (

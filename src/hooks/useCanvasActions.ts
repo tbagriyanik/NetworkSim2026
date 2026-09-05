@@ -356,8 +356,8 @@ export function useCanvasActions({
       iot: type === 'iot'
         ? { sensorType: 'temperature', collaborationEnabled: false, dataStore: '' }
         : undefined,
-      wifi: type === 'iot'
-        ? { enabled: true, ssid: '', security: 'open', password: '', channel: '2.4GHz', mode: 'client' }
+      wifi: (type === 'iot' || type === 'mobile' || type === 'printer')
+        ? { enabled: true, ssid: 'Corporate-WiFi', security: 'open', password: '', channel: '2.4GHz', mode: 'client' }
         : type === 'wlc'
           ? { enabled: true, ssid: 'WLC-WiFi', security: 'open', password: '', channel: '2.4GHz', mode: 'ap' }
           : (type === 'router' || (type === 'switch' && switchLayer === 'L3'))

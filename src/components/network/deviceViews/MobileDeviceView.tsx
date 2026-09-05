@@ -626,6 +626,7 @@ export function MobileDeviceView({
         urlInputRef={urlInputRef}
         dragStateRef={dragStateRef}
         resizeStateRef={resizeStateRef}
+        currentDeviceId={device.id}
         onClose={() => setIsBrowserOpen(false)}
         onUrlChange={setBrowserUrl}
         onSetShowSuggestions={setShowSuggestions}

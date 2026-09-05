@@ -108,10 +108,23 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
         <!-- Print Queue -->
         <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:16px;">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-            <h2 style="margin:0;font-size:14px;font-weight:600;color:#e2e8f0;">
-              📑 ${isTr ? 'Yazdırma Kuyruğu & Gelen Belgeler' : 'Print Queue & Received Documents'}
+            <h2 style="margin:0;font-size:14px;font-weight:600;color:#e2e8f0;display:flex;align-items:center;gap:8px;">
+              <span>📑</span> ${isTr ? 'Yazdırma Kuyruğu & Gelen Belgeler' : 'Print Queue & Received Documents'}
             </h2>
-            <span style="font-size:11px;color:#a855f7;font-family:monospace;font-weight:600;">${(device.printJobs || []).length} ${isTr ? 'Aktif Görev / Belge' : 'Active Jobs'}</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:11px;color:#a855f7;font-family:monospace;font-weight:600;">${(device.printJobs || []).length} ${isTr ? 'Aktif Görev / Belge' : 'Active Jobs'}</span>
+              ${(device.printJobs || []).length > 0 ? `
+                <button
+                  type="button"
+                  onclick="if(window.parent) window.parent.postMessage({type:'CLEAR_PRINTER_QUEUE',deviceId:'${device.id}'},'*')"
+                  style="background:rgba(225,29,72,0.2);border:1px solid rgba(225,29,72,0.4);color:#fda4af;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all 0.2s;"
+                  onmouseover="this.style.background='rgba(225,29,72,0.4)'"
+                  onmouseout="this.style.background='rgba(225,29,72,0.2)'"
+                >
+                  🗑️ ${isTr ? 'Kuyruğu Temizle' : 'Clear Queue'}
+                </button>
+              ` : ''}
+            </div>
           </div>
           ${(!device.printJobs || device.printJobs.length === 0) ? `
             <div style="font-size:12px;color:#64748b;font-style:italic;">

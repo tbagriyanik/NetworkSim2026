@@ -114,6 +114,7 @@ export function PCPanelDialogs() {
         selectedSuggestionIndex={selectedSuggestionIndex}
         urlInputRef={urlInputRef}
         dragStateRef={dragStateRef}
+        currentDeviceId={deviceId}
         // Same ref object the orchestrator passed directly before; the
         // context type is readonly, the leaf needs a mutable ref.
         resizeStateRef={ctx.resizeStateRef as unknown as ComponentProps<typeof PCBrowser>['resizeStateRef']}
