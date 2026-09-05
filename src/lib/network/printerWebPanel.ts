@@ -9,7 +9,7 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
   const gateway = device.gateway || '192.168.1.1';
   const dns = device.dns || '8.8.8.8';
   const mode = device.ipConfigMode === 'dhcp' ? 'DHCP' : 'Static';
-  const wifiSsid = device.wifi?.ssid || 'Corporate-WiFi';
+  const wifiSsid = device.wifi?.ssid || '';
 
   return `
     <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#f8fafc;padding:24px;min-height:100%;box-sizing:border-box;">

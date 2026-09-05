@@ -197,6 +197,21 @@ export interface CanvasDevice {
     timestamp: string;
     status: 'printing' | 'completed' | 'queued';
   }>;
+  activeVoipCall?: {
+    callerId: string;
+    callerName: string;
+    callerIp?: string;
+    status: 'ringing' | 'connected';
+  };
+  voipHistory?: Array<{
+    id: string;
+    peerName: string;
+    peerIp?: string;
+    type: 'incoming' | 'outgoing';
+    status: 'answered' | 'missed' | 'rejected';
+    durationSeconds: number;
+    timestamp: string;
+  }>;
   firewallRules?: FirewallRule[];
 }
 

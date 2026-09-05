@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useMemo, useRef } from 'react';
-import { Smartphone, Wifi, Server, CheckCircle2, RefreshCw, Send, Radio, BatteryCharging, Signal, Globe, ExternalLink } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { Smartphone, Wifi, Server, CheckCircle2, RefreshCw, Send, Radio, BatteryCharging, Signal, Globe, ExternalLink, PhoneCall, PhoneOff, Phone, User, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
 import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';
@@ -9,6 +9,8 @@ import { isRouterDevice, generateRouterAdminPage } from '@/components/network/Wi
 import { generatePrinterWebPanelContent } from '@/lib/network/printerWebPanel';
 import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
 import { HttpBrowserWindow } from '@/components/network/pc-panel/HttpBrowserWindow';
+import { dispatchCapturedPackets } from '@/utils/packetCapture';
+import { isSameSubnet } from '@/components/network/pc-panel/pcBrowser.utils';
 
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
@@ -33,7 +35,7 @@ export function MobileDeviceView({
   const isTr = language === 'tr';
   const setDevices = useAppStore(state => state.setDevices);
 
-  const [activeScreen, setActiveScreen] = useState<'wifi' | 'ip' | 'ping'>('wifi');
+  const [activeScreen, setActiveScreen] = useState<'wifi' | 'ip' | 'ping' | 'voip'>('wifi');
 
   // IP Settings
   const [ipMode, setIpMode] = useState<'dhcp' | 'static'>(device.ipConfigMode === 'dhcp' ? 'dhcp' : 'static');
@@ -44,12 +46,20 @@ export function MobileDeviceView({
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Wi-Fi Connection
-  const [selectedSsid, setSelectedSsid] = useState(device.wifi?.ssid || 'Corporate-WiFi');
+  const [selectedSsid, setSelectedSsid] = useState(device.wifi?.ssid || '');
 
   // Diagnostic Ping state
   const [targetPingIp, setTargetPingIp] = useState('192.168.1.1');
   const [pingResults, setPingResults] = useState<string[]>([]);
   const [isPinging, setIsPinging] = useState(false);
+
+  // VoIP / IP Voice Dial Pad State
+  const [dialNumber, setDialNumber] = useState('');
+  const [callState, setCallState] = useState<'idle' | 'calling' | 'connected' | 'failed'>('idle');
+  const [callDuration, setCallDuration] = useState(0);
+  const [callStatusMessage, setCallStatusMessage] = useState('');
+  const [rtpMetrics, setRtpMetrics] = useState<{ rtt: number; jitter: number; loss: number }>({ rtt: 2, jitter: 0.5, loss: 0 });
+  const activeCallTargetRef = useRef<CanvasDevice | null>(null);
 
   // Mobile Web Browser Floating Window State
   const [isBrowserOpen, setIsBrowserOpen] = useState(false);
@@ -64,10 +74,45 @@ export function MobileDeviceView({
     width: 560,
     height: 400,
   });
-
+  
   const urlInputRef = useRef<HTMLInputElement | null>(null);
   const dragStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeStateRef = useRef<{ side: any; startX: number; startY: number; originX: number; originY: number; originW: number; originH: number } | null>(null);
+
+  // Timer for active call duration & RTP metrics
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    if (callState === 'connected') {
+      timer = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+        setRtpMetrics({
+          rtt: Math.floor(Math.random() * 4) + 2,
+          jitter: Number((Math.random() * 0.8 + 0.1).toFixed(1)),
+          loss: 0
+        });
+      }, 1000);
+    } else {
+      setCallDuration(0);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [callState]);
+
+  // Sync call state when incoming call or active call state changes remotely
+  useEffect(() => {
+    if (!device.activeVoipCall) {
+      if (callState !== 'idle') {
+        setCallState('idle');
+        setCallStatusMessage('');
+        activeCallTargetRef.current = null;
+      }
+    } else if (device.activeVoipCall.status === 'connected' && callState !== 'connected') {
+      setCallState('connected');
+      const peerName = device.activeVoipCall.callerName;
+      setCallStatusMessage(isTr ? `Bağlandı: ${peerName}` : `Connected to ${peerName}`);
+    }
+  }, [device.activeVoipCall, callState, isTr]);
 
   // Address bar autocomplete suggestions
   const suggestions = useMemo(() => {
@@ -219,6 +264,10 @@ export function MobileDeviceView({
         { protocol: 'icmp' }
       );
 
+      if (res.capturedPackets && res.capturedPackets.length > 0) {
+        dispatchCapturedPackets(res.capturedPackets);
+      }
+
       if (res.success) {
         setPingResults([
           `PING ${targetPingIp} 56(84) bytes of data.`,
@@ -242,6 +291,198 @@ export function MobileDeviceView({
       }
       setIsPinging(false);
     }, 400);
+  };
+
+  // Track call duration in ref for accurate history saving
+  const callDurationRef = useRef(0);
+  useEffect(() => {
+    callDurationRef.current = callDuration;
+  }, [callDuration]);
+
+  // Initiate VoIP Call
+  const handleInitiateVoipCall = (targetInput?: string) => {
+    const rawTarget = (targetInput || dialNumber).trim();
+    if (!rawTarget) return;
+
+    setCallState('calling');
+    setCallStatusMessage(isTr ? `Aranıyor: ${rawTarget}...` : `Calling ${rawTarget}...`);
+
+    let targetDev = topologyDevices.find(d => d.ip === rawTarget || d.name?.toLowerCase() === rawTarget.toLowerCase() || d.id === rawTarget);
+
+    if (!targetDev && /^\d+$/.test(rawTarget)) {
+      targetDev = topologyDevices.find(d => d.ip?.endsWith(`.${rawTarget}`) || d.ip?.includes(rawTarget));
+    }
+
+    setTimeout(() => {
+      const targetIpToTest = targetDev?.ip || rawTarget;
+      const res = checkConnectivity(
+        device.id,
+        targetIpToTest,
+        topologyDevices,
+        topologyConnections,
+        deviceStates,
+        isTr ? 'tr' : 'en',
+        { protocol: 'udp', port: '5060' }
+      );
+
+      if (res.capturedPackets && res.capturedPackets.length > 0) {
+        dispatchCapturedPackets(res.capturedPackets);
+      } else {
+        dispatchCapturedPackets([{
+          connectionId: topologyConnections[0]?.id || '',
+          sourceIp: device.ip || '0.0.0.0',
+          targetIp: targetIpToTest,
+          protocol: 'SIP/UDP',
+          length: 420,
+          info: `SIP INVITE Call Request (Port 5060) -> ${targetIpToTest}`
+        }]);
+      }
+
+      if (res.success) {
+        activeCallTargetRef.current = targetDev || null;
+        setCallState('connected');
+        const targetName = targetDev ? targetDev.name : targetIpToTest;
+        setCallStatusMessage(isTr ? `Arama Yapılıyor (Çalıyor): ${targetName}` : `Ringing ${targetName}...`);
+
+        setDevices(prev =>
+          prev.map(d => {
+            if (d.id === device.id) {
+              return {
+                ...d,
+                activeVoipCall: {
+                  callerId: device.id,
+                  callerName: targetName,
+                  callerIp: targetIpToTest,
+                  status: 'ringing'
+                }
+              };
+            }
+            if (targetDev && d.id === targetDev.id) {
+              return {
+                ...d,
+                activeVoipCall: {
+                  callerId: device.id,
+                  callerName: device.name,
+                  callerIp: device.ip,
+                  status: 'ringing'
+                }
+              };
+            }
+            return d;
+          })
+        );
+      } else {
+        setCallState('failed');
+        setCallStatusMessage(res.error || (isTr ? 'Arama Başarısız: Hedef Ulaşılamıyor' : 'Call Failed: Target Unreachable'));
+        setTimeout(() => {
+          setCallState('idle');
+          setCallStatusMessage('');
+        }, 3000);
+      }
+    }, 1200);
+  };
+
+  const handleAnswerVoipCall = () => {
+    if (!device.activeVoipCall) return;
+    const callerId = device.activeVoipCall.callerId;
+    setCallState('connected');
+
+    setDevices(prev =>
+      prev.map(d => {
+        if (d.id === device.id || d.id === callerId) {
+          return {
+            ...d,
+            activeVoipCall: {
+              ...(d.activeVoipCall || { callerId, callerName: device.name, callerIp: device.ip }),
+              status: 'connected'
+            }
+          };
+        }
+        return d;
+      })
+    );
+  };
+
+  const handleEndVoipCall = () => {
+    const activeVoip = device.activeVoipCall;
+    const targetDev = activeCallTargetRef.current;
+    
+    // Find remote peer ID whether this device is caller or callee
+    const remotePeerDev = targetDev || topologyDevices.find(d => 
+      d.id !== device.id && (
+        d.id === activeVoip?.callerId || 
+        d.activeVoipCall?.callerId === device.id ||
+        (d.activeVoipCall && activeVoip && d.activeVoipCall.callerId === activeVoip.callerId)
+      )
+    );
+
+    const duration = callDurationRef.current;
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    setDevices(prev =>
+      prev.map(d => {
+        const isThisDev = d.id === device.id;
+        const isRemoteDev = remotePeerDev && d.id === remotePeerDev.id;
+
+        if (isThisDev) {
+          const peerName = remotePeerDev ? remotePeerDev.name : (activeVoip?.callerName || dialNumber || 'VoIP Peer');
+          const peerIp = remotePeerDev ? remotePeerDev.ip : activeVoip?.callerIp;
+          const newHistoryItem = {
+            id: `call-${Date.now()}-${Math.random()}`,
+            peerName,
+            peerIp,
+            type: (targetDev ? 'outgoing' : 'incoming') as 'outgoing' | 'incoming',
+            status: (activeVoip?.status === 'connected' || callState === 'connected' ? 'answered' : 'rejected') as 'answered' | 'rejected',
+            durationSeconds: duration,
+            timestamp: timeStr
+          };
+          return {
+            ...d,
+            activeVoipCall: undefined,
+            voipHistory: [newHistoryItem, ...(d.voipHistory || [])]
+          };
+        }
+
+        if (isRemoteDev) {
+          const newHistoryItem = {
+            id: `call-${Date.now()}-${Math.random()}`,
+            peerName: device.name,
+            peerIp: device.ip,
+            type: (targetDev ? 'incoming' : 'outgoing') as 'outgoing' | 'incoming',
+            status: (activeVoip?.status === 'connected' || callState === 'connected' ? 'answered' : 'rejected') as 'answered' | 'rejected',
+            durationSeconds: duration,
+            timestamp: timeStr
+          };
+          return {
+            ...d,
+            activeVoipCall: undefined,
+            voipHistory: [newHistoryItem, ...(d.voipHistory || [])]
+          };
+        }
+
+        return d;
+      })
+    );
+
+    setCallState('idle');
+    setCallStatusMessage('');
+    activeCallTargetRef.current = null;
+  };
+
+  const handleClearVoipHistory = () => {
+    setDevices(prev =>
+      prev.map(d => (d.id === device.id ? { ...d, voipHistory: [] } : d))
+    );
+  };
+
+  const handleDialKeyPress = (key: string) => {
+    if (callState !== 'idle') return;
+    setDialNumber(prev => prev + key);
+  };
+
+  const handleDialDelete = () => {
+    if (callState !== 'idle') return;
+    setDialNumber(prev => prev.slice(0, -1));
   };
 
   const handleNavigateBrowser = (targetUrl?: string) => {
@@ -354,6 +595,12 @@ export function MobileDeviceView({
     setIsBrowserOpen(true);
   };
 
+  const formatDuration = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6 flex flex-col items-center justify-center custom-scrollbar">
       {/* Smartphone Outer Chassis Frame */}
@@ -378,31 +625,41 @@ export function MobileDeviceView({
             <Smartphone className="w-4 h-4 text-sky-400" />
             {device.name}
           </h2>
-          <p className="text-[10px] text-slate-400">iOS / Android Mobile OS • Wi-Fi & Web</p>
+          <p className="text-[10px] text-slate-400">iOS / Android Mobile OS • Wi-Fi & VoIP</p>
         </div>
 
-        {/* App Navigation Bar (3 Tabs: Wi-Fi, IP Config, Ping) */}
-        <div className="grid grid-cols-3 gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs">
+        {/* App Navigation Bar (4 Tabs: Wi-Fi, IP Config, Ping, VoIP) */}
+        <div className="grid grid-cols-4 gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs">
           <button
             onClick={() => setActiveScreen('wifi')}
-            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors", activeScreen === 'wifi' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'wifi' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
           >
             <Wifi className="w-3 h-3" />
             Wi-Fi
           </button>
           <button
             onClick={() => setActiveScreen('ip')}
-            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors", activeScreen === 'ip' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'ip' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
           >
             <Server className="w-3 h-3" />
-            {isTr ? 'IP Ağ' : 'IP Config'}
+            IP
           </button>
           <button
             onClick={() => setActiveScreen('ping')}
-            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors", activeScreen === 'ping' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'ping' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
           >
             <Send className="w-3 h-3" />
-            Ping App
+            Ping
+          </button>
+          <button
+            onClick={() => setActiveScreen('voip')}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px] relative", activeScreen === 'voip' ? "bg-emerald-600 text-white" : device.activeVoipCall ? "bg-emerald-950 text-emerald-300 border border-emerald-500 animate-pulse font-bold" : "text-slate-400 hover:text-white")}
+          >
+            <PhoneCall className="w-3 h-3" />
+            VoIP
+            {device.activeVoipCall && (
+              <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5 animate-ping" />
+            )}
           </button>
         </div>
 
@@ -602,6 +859,257 @@ export function MobileDeviceView({
                   {pingResults.map((line, idx) => (
                     <div key={idx}>{line}</div>
                   ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeScreen === 'voip' && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between font-bold border-b border-slate-800 pb-2">
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  <PhoneCall className="w-4 h-4" />
+                  {isTr ? 'IP Voice / VoIP Phone' : 'IP Voice / VoIP Phone'}
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">SIP/RTP 802.1Q</span>
+              </div>
+
+              {/* Incoming or Active VoIP Call Screen */}
+              {device.activeVoipCall && device.activeVoipCall.callerId !== device.id && device.activeVoipCall.status === 'ringing' ? (
+                /* Callee (Ringing) View: Answer / Decline */
+                <div className="space-y-4 py-4 text-center">
+                  <div className="w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-emerald-950/60 border-2 border-emerald-500 text-emerald-400 animate-bounce shadow-lg shadow-emerald-500/30">
+                    <PhoneCall className="w-7 h-7" />
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider animate-pulse">
+                      {isTr ? 'Gelen Sesli Çağrı...' : 'Incoming Voice Call...'}
+                    </div>
+                    <div className="font-bold text-base text-white mt-1">
+                      {device.activeVoipCall.callerName}
+                    </div>
+                    <div className="text-xs font-mono text-slate-400">
+                      {device.activeVoipCall.callerIp || 'SIP Client'}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      onClick={handleAnswerVoipCall}
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950"
+                    >
+                      <Phone className="w-4 h-4" />
+                      {isTr ? 'Cevapla' : 'Answer'}
+                    </button>
+                    <button
+                      onClick={handleEndVoipCall}
+                      className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-rose-950"
+                    >
+                      <PhoneOff className="w-4 h-4" />
+                      {isTr ? 'Reddet' : 'Decline'}
+                    </button>
+                  </div>
+                </div>
+              ) : callState === 'idle' && !device.activeVoipCall ? (
+                <div className="space-y-3">
+                  {/* Number Input / Display */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={dialNumber}
+                      onChange={e => setDialNumber(e.target.value)}
+                      placeholder={isTr ? "IP veya Dahili No Girin (192.168.1.50)..." : "Enter IP or Extension (192.168.1.50)..."}
+                      className="w-full pl-3 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 font-mono text-center text-sm text-emerald-400 placeholder:text-slate-600 outline-none"
+                    />
+                    {dialNumber && (
+                      <button
+                        onClick={handleDialDelete}
+                        className="absolute right-2 top-2.5 text-xs text-slate-500 hover:text-rose-400 px-1 font-bold"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dial Pad Grid (3x4) */}
+                  <div className="grid grid-cols-3 gap-1.5 max-w-[200px] mx-auto">
+                    {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map(key => (
+                      <button
+                        key={key}
+                        onClick={() => handleDialKeyPress(key)}
+                        className="h-9 rounded-xl bg-slate-950 border border-slate-800 hover:bg-slate-800 hover:border-slate-700 font-bold text-sm text-slate-200 transition-all active:scale-95 flex items-center justify-center"
+                      >
+                        {key}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => handleInitiateVoipCall()}
+                      disabled={!dialNumber.trim()}
+                      className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950"
+                    >
+                      <Phone className="w-3.5 h-3.5" />
+                      {isTr ? 'Ara' : 'Call'}
+                    </button>
+                  </div>
+
+                  {/* Topology Directory / Quick Contacts */}
+                  <div className="pt-2 border-t border-slate-800/80 space-y-2">
+                    <div>
+                      <div className="text-[10px] font-semibold text-slate-400 mb-1.5 flex items-center gap-1">
+                        <User className="w-3 h-3 text-sky-400" />
+                        {isTr ? 'Ağdaki Cihaz Rehberi' : 'Network Directory'}
+                      </div>
+                      <div className="space-y-1 max-h-[85px] overflow-y-auto pr-1 custom-scrollbar">
+                        {topologyDevices.filter(d => {
+                          if (d.id === device.id || d.type !== 'mobile' || !d.ip || !device.ip) return false;
+                          const devSubnet = device.subnet || '255.255.255.0';
+                          return isSameSubnet(device.ip, d.ip, devSubnet) || Boolean(device.gateway && device.gateway !== '0.0.0.0');
+                        }).length === 0 ? (
+                          <div className="text-[10px] text-slate-500 italic text-center py-1.5">
+                            {isTr ? 'Aynı ağda ulaşılan başka telefon yok' : 'No reachable phones in same network'}
+                          </div>
+                        ) : (
+                          topologyDevices
+                            .filter(d => {
+                              if (d.id === device.id || d.type !== 'mobile' || !d.ip || !device.ip) return false;
+                              const devSubnet = device.subnet || '255.255.255.0';
+                              return isSameSubnet(device.ip, d.ip, devSubnet) || Boolean(device.gateway && device.gateway !== '0.0.0.0');
+                            })
+                            .map((d, i) => (
+                              <div
+                                key={i}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleInitiateVoipCall(d.ip);
+                                }}
+                                className="p-1.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 flex items-center justify-between cursor-pointer transition-colors"
+                              >
+                                <div className="truncate">
+                                  <div className="font-medium text-[11px] text-slate-200 truncate">{d.name}</div>
+                                  <div className="text-[9px] font-mono text-emerald-400/80">{d.ip}</div>
+                                </div>
+                                <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/50 flex items-center gap-1">
+                                  <PhoneCall className="w-2.5 h-2.5" />
+                                  {isTr ? 'Ara' : 'Call'}
+                                </span>
+                              </div>
+                            ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* VoIP Call History Log */}
+                    <div className="pt-2 border-t border-slate-800/60">
+                      <div className="text-[10px] font-semibold text-slate-400 mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1">
+                          <PhoneCall className="w-3 h-3 text-emerald-400" />
+                          {isTr ? 'Arama Geçmişi' : 'Call History'}
+                        </span>
+                        {device.voipHistory && device.voipHistory.length > 0 && (
+                          <button
+                            onClick={handleClearVoipHistory}
+                            className="text-[9px] text-rose-400 hover:text-rose-300 flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-950/40 border border-rose-800/40 transition-colors"
+                            title={isTr ? 'Arama geçmişini temizle' : 'Clear call history'}
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                            {isTr ? 'Temizle' : 'Clear'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-1 max-h-[110px] overflow-y-auto pr-1 custom-scrollbar">
+                        {!device.voipHistory || device.voipHistory.length === 0 ? (
+                          <div className="text-[10px] text-slate-500 italic text-center py-2">
+                            {isTr ? 'Henüz arama kaydı yok' : 'No recent calls'}
+                          </div>
+                        ) : (
+                          device.voipHistory.map((item) => (
+                            <div key={item.id} className="p-1.5 rounded-lg bg-slate-950/40 border border-slate-800/40 flex items-center justify-between text-[10px]">
+                              <div className="truncate">
+                                <div className="font-medium text-slate-200 flex items-center gap-1 truncate">
+                                  <span className={item.type === 'outgoing' ? "text-sky-400 font-bold" : "text-emerald-400 font-bold"}>
+                                    {item.type === 'outgoing' ? '↗' : '↙'}
+                                  </span>
+                                  {item.peerName}
+                                </div>
+                                <div className="text-[9px] text-slate-400 font-mono">
+                                  {item.timestamp} {item.peerIp ? `• ${item.peerIp}` : ''}
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0 font-mono">
+                                <div className={cn(
+                                  "font-semibold text-[9px]",
+                                  item.status === 'answered' ? "text-emerald-400" : "text-rose-400"
+                                )}>
+                                  {item.status === 'answered' ? formatDuration(item.durationSeconds) : (isTr ? 'Cevapsız' : 'Missed')}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Active / In-Progress Call Screen */
+                <div className="space-y-4 py-2 text-center">
+                  <div className="relative inline-block">
+                    <div className={cn(
+                      "w-16 h-16 rounded-full mx-auto flex items-center justify-center border-2 transition-all",
+                      callState === 'calling' ? "bg-amber-950/40 border-amber-500 text-amber-400 animate-pulse" :
+                      callState === 'connected' ? "bg-emerald-950/60 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/20" :
+                      "bg-rose-950/40 border-rose-500 text-rose-400"
+                    )}>
+                      <PhoneCall className="w-7 h-7" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="font-bold text-sm text-white">
+                      {activeCallTargetRef.current ? activeCallTargetRef.current.name : (device.activeVoipCall?.callerName || dialNumber || 'VoIP Peer')}
+                    </div>
+                    <div className="text-[11px] font-mono text-emerald-400 mt-0.5">
+                      {callStatusMessage || (callState === 'connected' ? (isTr ? 'Bağlantı Aktif' : 'Call Connected') : '')}
+                    </div>
+                    {callState === 'connected' && (
+                      <div className="text-xs font-mono font-semibold text-slate-300 mt-1">
+                        {formatDuration(callDuration)}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Real-Time RTP Quality Metrics */}
+                  {callState === 'connected' && (
+                    <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 grid grid-cols-3 gap-2 text-[10px] font-mono">
+                      <div>
+                        <div className="text-slate-500">RTT (Latency)</div>
+                        <div className="text-emerald-400 font-bold">{rtpMetrics.rtt} ms</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500">Jitter</div>
+                        <div className="text-emerald-400 font-bold">{rtpMetrics.jitter} ms</div>
+                      </div>
+                      <div>
+                        <div className="text-slate-500">Loss</div>
+                        <div className="text-emerald-400 font-bold">{rtpMetrics.loss}%</div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* End Call Button */}
+                  <div className="pt-2">
+                    <button
+                      onClick={handleEndVoipCall}
+                      className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-lg shadow-rose-950"
+                    >
+                      <PhoneOff className="w-4 h-4" />
+                      {isTr ? 'Aramayı Sonlandır' : 'End Call'}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

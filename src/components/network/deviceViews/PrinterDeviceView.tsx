@@ -75,7 +75,7 @@ export function PrinterDeviceView({
   const [subnet, setSubnet] = useState(device.subnet || '255.255.255.0');
   const [gateway, setGateway] = useState(device.gateway || '192.168.1.1');
   const [dns, setDns] = useState(device.dns || '8.8.8.8');
-  const [selectedSsid, setSelectedSsid] = useState(device.wifi?.ssid || 'Corporate-WiFi');
+  const [selectedSsid, setSelectedSsid] = useState(device.wifi?.ssid || '');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Toggle Power Status
