@@ -130,7 +130,7 @@ ping 192.168.1.10 -n 10 -l 1024
 
 :: Rota İzleme (Traceroute)
 tracert 192.168.2.10
-tracert www.google.com
+tracert www.samplesite.com
 
 :: DNS Çözümleme Sorgusu
 nslookup www.lab.com

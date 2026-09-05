@@ -93,7 +93,7 @@ export function WirelessConfigTab({
           <div className="flex items-center gap-3 text-purple-500">
             <Network className="w-5 h-5" />
             <h3 className="text-sm font-black tracking-widest ">
-              {language === 'tr' ? 'Wi-Fi (Wireless Fidelity) Bağlantısı' : 'Wi-Fi (Wireless Fidelity) Connection'}
+              {language === 'tr' ? 'Wi-Fi Bağlantısı' : 'Wi-Fi Connection'}
             </h3>
           </div>
           <div className="flex items-center gap-2">

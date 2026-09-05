@@ -284,7 +284,7 @@ PC panelindeki **Linux Terminal** sekmesinde kullanılabilen komutlar, dosya izi
 | `ip route` | Yönlendirme tablosunu gösterir | `ip route` |
 | `ping <host>` | ICMP Echo isteği gönderir | `ping 192.168.1.1` |
 | `traceroute <host>` | Paket geçiş yolunu izler | `traceroute 8.8.8.8` |
-| `nslookup <domain>` | DNS çözümlemesi yapar | `nslookup google.com` |
+| `nslookup <domain>` | DNS çözümlemesi yapar | `nslookup samplesite.com` |
 | `netstat` / `arp` | Ağ istatistikleri ve ARP tablosunu gösterir | `arp` |
 | `ftp <server>` | Uzak FTP sunucusuna bağlanır | `ftp 192.168.1.50` |
 | `ssh <user@host>` | Uzak sunucuya SSH bağlantısı kurar | `ssh admin@192.168.1.1` |

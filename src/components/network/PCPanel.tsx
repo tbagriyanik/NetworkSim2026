@@ -1073,9 +1073,9 @@ export function PCPanel({
     const isIp = !startAddress || isValidIpv4(startAddress) || isValidIpv6(startAddress);
     const recordType = isIp
       ? (isValidIpv6(startAddress)
-        ? (language === 'tr' ? 'AAAA Kaydı (IPv6 Address)' : 'AAAA Record (IPv6 Address)')
-        : (language === 'tr' ? 'A Kaydı (Address Record)' : 'A Record (Address Record)'))
-      : (language === 'tr' ? 'CNAME Kaydı (Canonical Name Record)' : 'CNAME Record (Canonical Name Record)');
+        ? (language === 'tr' ? 'AAAA Kaydı' : 'AAAA Record')
+        : (language === 'tr' ? 'A Kaydı' : 'A Record'))
+      : (language === 'tr' ? 'CNAME Kaydı' : 'CNAME Record');
     if (isIp) {
       return `${recordType}: ${chain.join(' -> ')}`;
     }

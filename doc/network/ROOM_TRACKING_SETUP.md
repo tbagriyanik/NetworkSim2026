@@ -149,5 +149,5 @@ Oturum bilgileri `localStorage`'da saklanır:
 | Tuş/Aksiyon | Etki |
 |---|---|
 | `ESC` | Öğretmen panelini / Katıl dialog'unu kapatır |
-| Mobil back (Android donanım tuşu) | Açık paneli/dialog'u kapatır |
+| Mobil back (donanım tuşu) | Açık paneli/dialog'u kapatır |
 | Kapat (X) butonu (kırmızı) | Paneli kapatır |

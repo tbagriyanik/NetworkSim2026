@@ -47,7 +47,12 @@ export function getConnectionStatusMessage(conn: CanvasConnection, devices: Canv
 
   if (!isCableOk) {
     if (conn.cableType === 'wireless') return language === 'tr' ? 'Bağlantı sorunsuz' : 'Connection OK';
-    const normalize = (t: string) => t === 'switchL2' || t === 'switchL3' ? 'switch' : t === 'iot' ? 'pc' : t;
+    const normalize = (t: string) =>
+      t === 'switchL2' || t === 'switchL3' || t === 'hub'
+        ? 'switch'
+        : t === 'iot' || t === 'mobile' || t === 'printer' || t === 'cloud'
+          ? 'pc'
+          : t;
     const key = `${normalize(sourceDevice.type)}-${normalize(targetDevice.type)}`;
     if (!CABLE_COMPATIBILITY[key]) return language === 'tr' ? 'Bu cihaz çifti desteklenmiyor' : 'Device pair not supported';
     return language === 'tr' ? 'Kablo türü bu cihazlar için uygun değil' : 'Cable type not suitable for these devices';

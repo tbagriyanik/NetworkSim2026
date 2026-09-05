@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Trash2, Eraser, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Trash2, Eraser, Search, ChevronLeft, ChevronRight, ChevronDown, X } from 'lucide-react';
 import { useAppStore } from '@/lib/store/appStore';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { CABLE_COLORS } from './networkTopology.constants';
@@ -43,6 +43,8 @@ export const PacketCapturePanel = ({
   const [excludeQuery, setExcludeQuery] = useState('cdp');
   const [showExclude, setShowExclude] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isTreeExpanded, setIsTreeExpanded] = useState(false);
+  const [isHexExpanded, setIsHexExpanded] = useState(false);
 
   const conn = connections.find(c => c.id === activeCaptureConnectionId);
   let connectionLabel = activeCaptureConnectionId;
@@ -303,7 +305,7 @@ export const PacketCapturePanel = ({
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden pr-3.5 pb-2">
 
           {/* Pane 1: Top Packet List */}
-          <div className="h-[45%] flex flex-col min-h-0 border-b dark:border-secondary-800 border-secondary-200">
+          <div className="flex-1 flex flex-col min-h-0">
             <div className="custom-scrollbar flex-1 overflow-auto w-full">
               <table className="w-full text-[10px] text-left border-collapse">
                 <thead className={`sticky top-0 z-10 ${graphicsQuality === 'low' ? (isDark ? 'bg-secondary-950' : 'bg-secondary-100') : (isDark ? 'bg-secondary-950/90' : 'bg-secondary-100/90')} ${graphicsQuality === 'high' ? 'backdrop-blur-sm' : ''}`}>
@@ -408,32 +410,49 @@ export const PacketCapturePanel = ({
             )}
           </div>
 
-          {/* Pane 2: Middle Protocol Details Tree */}
-          <div className="h-[35%] border-b dark:border-secondary-800 border-secondary-200 overflow-hidden flex flex-col min-h-0">
-            <div className={`px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase border-b ${isDark ? 'bg-secondary-900/90 text-secondary-400 border-secondary-800' : 'bg-secondary-100 text-secondary-600 border-secondary-200'}`}>
-              {language === 'tr' ? '2. Katman / Protokol Ağacı (Packet Details)' : '2. Protocol Details Tree'}
+          {/* Bottom Pinned Collapsible Panes */}
+          <div className="mt-auto shrink-0 flex flex-col">
+            {/* Pane 2: Middle Protocol Details Tree */}
+            <div className={`border-t dark:border-secondary-800 border-secondary-200 overflow-hidden flex flex-col transition-all ${isTreeExpanded ? 'h-[160px]' : 'h-auto'}`}>
+              <button
+                type="button"
+                onClick={() => setIsTreeExpanded(prev => !prev)}
+                className={`w-full px-2 py-1 text-[10px] font-bold tracking-wider uppercase border-b flex items-center justify-between transition-colors select-none ${isDark ? 'bg-secondary-900/90 text-secondary-400 border-secondary-800 hover:bg-secondary-800/80' : 'bg-secondary-100 text-secondary-600 border-secondary-200 hover:bg-secondary-200/80'}`}
+              >
+                <span>{language === 'tr' ? '2. Katman / Protokol Ağacı' : '2. Protocol Details Tree'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isTreeExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isTreeExpanded && (
+                activePacket ? (
+                  <ProtocolTreeDetails packet={activePacket} isDark={isDark} language={language} />
+                ) : (
+                  <div className="p-4 text-center text-xs opacity-40 italic">
+                    {language === 'tr' ? 'Detayları görmek için listeden paket seçin' : 'Select a packet from the list to inspect protocol tree'}
+                  </div>
+                )
+              )}
             </div>
-            {activePacket ? (
-              <ProtocolTreeDetails packet={activePacket} isDark={isDark} language={language} />
-            ) : (
-              <div className="p-4 text-center text-xs opacity-40 italic">
-                {language === 'tr' ? 'Detayları görmek için listeden paket seçin' : 'Select a packet from the list to inspect protocol tree'}
-              </div>
-            )}
-          </div>
 
-          {/* Pane 3: Bottom Hex & ASCII Dump */}
-          <div className="h-[20%] overflow-hidden flex flex-col min-h-0">
-            <div className={`px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase border-b ${isDark ? 'bg-secondary-900/90 text-secondary-400 border-secondary-800' : 'bg-secondary-100 text-secondary-600 border-secondary-200'}`}>
-              {language === 'tr' ? '3. Bayt Dökümü (Packet Bytes - Hex / ASCII)' : '3. Packet Bytes (Hex / ASCII)'}
+            {/* Pane 3: Bottom Hex & ASCII Dump */}
+            <div className={`border-t dark:border-secondary-800 border-secondary-200 overflow-hidden flex flex-col transition-all ${isHexExpanded ? 'h-[130px]' : 'h-auto'}`}>
+              <button
+                type="button"
+                onClick={() => setIsHexExpanded(prev => !prev)}
+                className={`w-full px-2 py-1 text-[10px] font-bold tracking-wider uppercase flex items-center justify-between transition-colors select-none ${isHexExpanded ? 'border-b' : ''} ${isDark ? 'bg-secondary-900/90 text-secondary-400 border-secondary-800 hover:bg-secondary-800/80' : 'bg-secondary-100 text-secondary-600 border-secondary-200 hover:bg-secondary-200/80'}`}
+              >
+                <span>{language === 'tr' ? '3. Bayt Dökümü (Hex / ASCII)' : '3. Packet Bytes (Hex / ASCII)'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isHexExpanded ? 'rotate-180' : ''}`} />
+              </button>
+              {isHexExpanded && (
+                activePacket ? (
+                  <PacketHexDump packet={activePacket} isDark={isDark} />
+                ) : (
+                  <div className="p-4 text-center text-xs opacity-40 italic">
+                    {language === 'tr' ? 'Bayt dökümü için paket seçin' : 'Select a packet to view hex bytes'}
+                  </div>
+                )
+              )}
             </div>
-            {activePacket ? (
-              <PacketHexDump packet={activePacket} isDark={isDark} />
-            ) : (
-              <div className="p-4 text-center text-xs opacity-40 italic">
-                {language === 'tr' ? 'Bayt dökümü için paket seçin' : 'Select a packet to view hex bytes'}
-              </div>
-            )}
           </div>
         </div>
       </div>

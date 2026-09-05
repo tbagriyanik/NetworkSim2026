@@ -135,8 +135,8 @@ export function PrinterDeviceView({
     let assignedGateway = '192.168.1.1';
     let assignedDns = '8.8.8.8';
 
-    const dhcpServer = topologyDevices.find(d => 
-      d.id !== device.id && 
+    const dhcpServer = topologyDevices.find(d =>
+      d.id !== device.id &&
       (
         (d.services?.dhcp?.enabled && (d.services?.dhcp?.pools?.length || 0) > 0) ||
         d.type === 'router' ||
@@ -344,7 +344,7 @@ export function PrinterDeviceView({
 
         {/* Power & Signal Bars Indicator */}
         <div className="flex items-center gap-3">
-          {/* Signal bars */}
+          {/* Signal bars & Percent */}
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-secondary-700/50 bg-secondary-950/40 text-xs font-mono">
             <Signal className={cn("w-3.5 h-3.5", wifiSignalStrength > 0 ? "text-emerald-400" : "opacity-30")} />
             <div className="flex items-end gap-0.5 h-3">
@@ -354,7 +354,7 @@ export function PrinterDeviceView({
               <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 4 ? "h-3 bg-emerald-400" : "h-1 bg-secondary-700")} />
             </div>
             <span className="text-[10px] text-muted-foreground ml-1">
-              {wifiSignalPercent}%
+              %{wifiSignalPercent}
             </span>
           </div>
 

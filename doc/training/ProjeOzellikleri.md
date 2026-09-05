@@ -174,7 +174,7 @@ IP SLA, QoS, parser/CLI, LLDP, MSTP, 802.1X, SDN ve ağ entegrasyonları için o
 - Sanal klavye açıldığında ekran kaymasını önleyen `visualViewport` düzeltmesi.
 - Mobil cihazlar için alt sayfa (bottom sheet) menüsü.
 - Tabletler için split-view bölünmüş ekran desteği (topoloji + terminal yan yana).
-- Android cihazlar için sistem geri tuşu entegrasyonu.
+- Mobil cihazlar için sistem geri tuşu entegrasyonu.
 - PWA desteği (offline önbellekleme, "Ana ekrana ekle" bildirimi).
 
 ### 🛡️ Güvenlik ve Altyapı
@@ -298,7 +298,7 @@ IP SLA, QoS, parser/CLI, LLDP, MSTP, 802.1X, SDN ve ağ entegrasyonları için o
 - `visualViewport` adjustment to prevent layout displacement by virtual keyboards.
 - Bottom sheet menus for mobile device management.
 - Split-view support for tablets (topology canvas and terminal side-by-side).
-- Native Android back button integration.
+- Native Mobile back button integration.
 - Full PWA support (offline caching, "Add to Home Screen" installation prompts).
 
 ### 🛡️ Security & Infrastructure

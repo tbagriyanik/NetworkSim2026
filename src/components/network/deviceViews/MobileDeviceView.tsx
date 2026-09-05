@@ -5,6 +5,7 @@ import { Smartphone, Wifi, Server, CheckCircle2, RefreshCw, Send, Radio, Battery
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
 import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';
+import { getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { isRouterDevice, generateRouterAdminPage } from '@/components/network/WifiControlPanel';
 import { generatePrinterWebPanelContent } from '@/lib/network/printerWebPanel';
 import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
@@ -33,6 +34,16 @@ export function MobileDeviceView({
   language,
 }: MobileDeviceViewProps) {
   const isTr = language === 'tr';
+  const isPowerOn = device.status !== 'offline';
+  const isWifiEnabled = device.wifi?.enabled !== false;
+
+  // Calculate real Wi-Fi signal strength from topology (0-5 scale)
+  const wifiSignalStrength = useMemo(() => {
+    if (!isPowerOn || !isWifiEnabled) return 0;
+    return getWirelessSignalStrength(device, topologyDevices, deviceStates);
+  }, [device, topologyDevices, deviceStates, isPowerOn, isWifiEnabled]);
+
+  const isWifiConnected = wifiSignalStrength > 0 && !!device.wifi?.ssid;
   const setDevices = useAppStore(state => state.setDevices);
 
   const [activeScreen, setActiveScreen] = useState<'wifi' | 'ip' | 'ping' | 'voip'>('wifi');
@@ -74,7 +85,7 @@ export function MobileDeviceView({
     width: 560,
     height: 400,
   });
-  
+
   const urlInputRef = useRef<HTMLInputElement | null>(null);
   const dragStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeStateRef = useRef<{ side: any; startX: number; startY: number; originX: number; originY: number; originW: number; originH: number } | null>(null);
@@ -406,11 +417,11 @@ export function MobileDeviceView({
   const handleEndVoipCall = () => {
     const activeVoip = device.activeVoipCall;
     const targetDev = activeCallTargetRef.current;
-    
+
     // Find remote peer ID whether this device is caller or callee
-    const remotePeerDev = targetDev || topologyDevices.find(d => 
+    const remotePeerDev = targetDev || topologyDevices.find(d =>
       d.id !== device.id && (
-        d.id === activeVoip?.callerId || 
+        d.id === activeVoip?.callerId ||
         d.activeVoipCall?.callerId === device.id ||
         (d.activeVoipCall && activeVoip && d.activeVoipCall.callerId === activeVoip.callerId)
       )
@@ -612,9 +623,9 @@ export function MobileDeviceView({
         <div className="flex justify-between items-center text-[10px] font-mono opacity-80 px-2">
           <span>12:45</span>
           <div className="w-16 h-3 bg-black rounded-full border border-slate-700" />
-          <div className="flex items-center gap-1">
-            <Signal className="w-3 h-3 text-emerald-400" />
-            <Wifi className="w-3 h-3 text-sky-400" />
+          <div className="flex items-center gap-1.5">
+            <Signal className={cn("w-3 h-3 transition-colors", wifiSignalStrength > 0 ? "text-emerald-400" : "text-slate-600 opacity-40")} />
+            <Wifi className={cn("w-3 h-3 transition-colors", isWifiConnected ? "text-sky-400" : "text-slate-600 opacity-40")} />
             <BatteryCharging className="w-3.5 h-3.5 text-emerald-400" />
           </div>
         </div>
@@ -625,7 +636,7 @@ export function MobileDeviceView({
             <Smartphone className="w-4 h-4 text-sky-400" />
             {device.name}
           </h2>
-          <p className="text-[10px] text-slate-400">iOS / Android Mobile OS • Wi-Fi & VoIP</p>
+          <p className="text-[10px] text-slate-400">Mobile OS • Wi-Fi & VoIP</p>
         </div>
 
         {/* App Navigation Bar (4 Tabs: Wi-Fi, IP Config, Ping, VoIP) */}
@@ -1061,8 +1072,8 @@ export function MobileDeviceView({
                     <div className={cn(
                       "w-16 h-16 rounded-full mx-auto flex items-center justify-center border-2 transition-all",
                       callState === 'calling' ? "bg-amber-950/40 border-amber-500 text-amber-400 animate-pulse" :
-                      callState === 'connected' ? "bg-emerald-950/60 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/20" :
-                      "bg-rose-950/40 border-rose-500 text-rose-400"
+                        callState === 'connected' ? "bg-emerald-950/60 border-emerald-500 text-emerald-400 shadow-lg shadow-emerald-500/20" :
+                          "bg-rose-950/40 border-rose-500 text-rose-400"
                     )}>
                       <PhoneCall className="w-7 h-7" />
                     </div>

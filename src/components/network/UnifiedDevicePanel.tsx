@@ -434,7 +434,7 @@ export function UnifiedDevicePanel({
                                             <div>
                                                 <h3 className="text-sm font-semibold flex items-center gap-2 text-primary">
                                                     <Network className="w-4 h-4 text-primary" />
-                                                    {language === 'tr' ? 'Yönlendirme Tablosu (Routing Table)' : 'Routing Table'}
+                                                    {language === 'tr' ? 'Yönlendirme Tablosu' : 'Routing Table'}
                                                 </h3>
                                                 <p className="text-xs text-muted-foreground mt-0.5">
                                                     {language === 'tr' ? 'Cihazın aktif IP rotaları ve ağ yönlendirme bilgileri.' : 'Active IP routes and network forwarding table for this router.'}
@@ -549,7 +549,7 @@ export function UnifiedDevicePanel({
                                             <div>
                                                 <h3 className="text-sm font-semibold flex items-center gap-2 text-primary">
                                                     <Layers className="w-4 h-4 text-warning-500" />
-                                                    {language === 'tr' ? 'Spanning Tree Protokolü (STP)' : 'Spanning Tree Protocol (STP)'}
+                                                    {language === 'tr' ? 'Spanning Tree Protokolü' : 'Spanning Tree Protocol'}
                                                 </h3>
                                                 <p className="text-xs text-muted-foreground mt-0.5">
                                                     {language === 'tr' ? 'Cihazın ve portların Spanning Tree durumlarını inceleyin.' : 'Inspect Spanning Tree states of the device and its ports.'}
@@ -625,9 +625,9 @@ export function UnifiedDevicePanel({
                                                     <thead className={cn("border-b text-[10px] uppercase tracking-wider font-semibold", isDark ? "bg-secondary-950 border-secondary-800 text-secondary-400" : "bg-secondary-100 border-secondary-200 text-secondary-600")}>
                                                         <tr>
                                                             <th className="p-3">{language === 'tr' ? 'Arayüz' : 'Interface'}</th>
-                                                            <th className="p-3">{language === 'tr' ? 'Rol (Role)' : 'Role'}</th>
-                                                            <th className="p-3">{language === 'tr' ? 'Durum (State)' : 'State'}</th>
-                                                            <th className="p-3">{language === 'tr' ? 'Maliyet (Cost)' : 'Cost'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Rol' : 'Role'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Durum' : 'State'}</th>
+                                                            <th className="p-3">{language === 'tr' ? 'Maliyet' : 'Cost'}</th>
                                                             <th className="p-3">{language === 'tr' ? 'Öncelik' : 'Priority'}</th>
                                                         </tr>
                                                     </thead>

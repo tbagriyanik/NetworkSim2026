@@ -95,7 +95,7 @@ export function useRefreshNetwork({
       const releasedDeviceStates = releasedTopology.states;
 
       refreshedDevices = refreshedDevices.map((device) => {
-        if (device.type !== 'pc' && device.type !== 'iot') return device;
+        if (device.type !== 'pc' && device.type !== 'iot' && device.type !== 'mobile' && device.type !== 'printer') return device;
         const clientWifi = device.wifi;
         if (!clientWifi?.enabled || clientWifi.mode !== 'client' || !clientWifi.ssid) return device;
 
@@ -133,7 +133,7 @@ export function useRefreshNetwork({
         let hasClient = false;
 
         refreshedDevices.forEach(pc => {
-          if (pc.type !== 'pc' && pc.type !== 'iot') return;
+          if (pc.type !== 'pc' && pc.type !== 'iot' && pc.type !== 'mobile' && pc.type !== 'printer') return;
           const pcWifi = pc.wifi;
           if (!pcWifi?.enabled || pcWifi.mode !== 'client') return;
           if (pcWifi.bssid !== ap.id) return;

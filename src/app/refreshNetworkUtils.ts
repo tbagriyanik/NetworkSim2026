@@ -155,7 +155,7 @@ export const releaseDisconnectedPorts = (
     device.wifi?.enabled && device.wifi.mode === 'ap' && !!device.wifi.ssid
   );
   devices.forEach((device) => {
-    if (device.type !== 'pc' && device.type !== 'iot') return;
+    if (device.type !== 'pc' && device.type !== 'iot' && device.type !== 'mobile' && device.type !== 'printer') return;
     if (!device.wifi?.enabled || device.wifi.mode !== 'client' || !device.wifi.ssid) return;
     if (!wirelessAccessPoints.some((accessPoint) => isWirelessMatch(device, accessPoint))) return;
     activePortKeys.add(`${device.id}:wlan0`);
