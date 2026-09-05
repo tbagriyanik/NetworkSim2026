@@ -1,6 +1,15 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 4.3.0 · **Son doğrulama / Last verified:** 2026-09-04
+**Sürüm / Version:** 4.4.0 · **Son doğrulama / Last verified:** 2026-09-05
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-09-05 - v4.4.0)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **WAN Bulut ICMP / Ping Desteği** | `1.1.1.1` ve `8.8.8.8` genel kamu DNS/WAN IP adreslerine web tarayıcısının yanında PC komut satırı ve cihaz pencerelerinden `ping` atılabilmesi için Katman-3 Varsayılan Ağ Geçidi (Default Gateway) ve ICMP paket iletim rotaları entegre edildi. |
+| **Sadece Geçerli WAN/Kamu IP Doğrulaması** | Topolojide olmayan yerel veya geçersiz IP adreslerine (`192.168.1.1111` vb.) ping atıldığında yanlışlıkla Bulut cihazına düşüp "ping başarılı" denmesi engellendi; yalnızca doğrulanan kamu DNS IP'leri (`1.1.1.1`, `8.8.8.8`) ve açıkça tanımlı Cloud IP'leri için bulut yönlendirmesi kısıtlanarak hatalı IP'lerde "Request timed out" üretilmesi sağlandı. |
+| **Fare İle Metin Seçince Otomatik Panoya Kopyalama (Auto-Copy)** | PC Komut İstemi (CMD), Linux Terminali, Cihaz Konsol Sekmesi (`CommandLineTab.tsx`, `ConsoleTerminalTab.tsx`) ve Ana CLI Terminal penceresinde (`Terminal.tsx`) komut/çıktı geçmişi alanlarında fare ile sürükleyip metin seçimi tamamlandığında (`onMouseUp`), seçilen metnin otomatik olarak panoya (clipboard) kopyalanması eklendi. |
+| **CMD & CLI Komut Önerileri (Autocomplete) Hizalaması** | Komut tamamlama açılır penceresinde IP önerileri ile komut önerilerinin yan yana bitişik kelimeler halinde kayması engellendi. Öneri listesi `flex flex-col` yapısında dikey butonlar halinde hizalandı. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-09-04 - v4.3.0)
 

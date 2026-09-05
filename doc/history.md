@@ -2,7 +2,7 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
-## v4.3.1 — 2026-09-05
+## v4.4.0 — 2026-09-05
 
 **WAN Bulut ICMP/Ping Desteği, IP Doğrulama Düzeltmeleri, Otomatik Fare Seçim Kopyalama ve UI Düzeltmeleri** —
 - **☁️ WAN Bulut / Public DNS ICMP Ping Desteği**: `1.1.1.1` ve `8.8.8.8` genel kamu DNS/WAN IP adreslerine web tarayıcısının yanında PC komut satırı ve cihaz pencerelerinden `ping` atılabilmesi için Katman-3 Varsayılan Ağ Geçidi (Default Gateway) ve ICMP paket iletim rotaları bağlandı (`pathResolution.ts`, `pingDiagnostics.ts`).

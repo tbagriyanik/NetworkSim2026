@@ -319,7 +319,7 @@ export function checkConnectivity(
       return false;
     };
     const cloudDev = devices.find(d => d.type === 'cloud');
-    if (cloudDev && isPublicCloudIp(resolvedTargetIp, cloudDev)) {
+    if (cloudDev && cloudDev.status !== 'offline' && isPublicCloudIp(resolvedTargetIp, cloudDev)) {
       targetDeviceId = cloudDev.id;
       targetDevice = cloudDev;
     } else {
@@ -542,7 +542,11 @@ export function checkConnectivity(
       if (pathToGateway && pathFromGateway) {
         path = [...pathToGateway, ...pathFromGateway.slice(1)];
       } else if (pathToGateway && targetDevice.type === 'cloud') {
-        path = pathToGateway;
+        // Ensure cloud is physically reachable from gateway (or directly connected)
+        const cloudPathFromGw = findPathBetween(gatewayDeviceId, targetDevice.id);
+        if (cloudPathFromGw) {
+          path = [...pathToGateway, ...cloudPathFromGw.slice(1)];
+        }
       }
     }
   }
@@ -554,7 +558,10 @@ export function checkConnectivity(
         const gwId = ipMap.get(sourceGatewayIp.toLowerCase());
         if (gwId) {
           const gwPath = findPathBetween(sourceId, gwId, sourceVlan);
-          if (gwPath) path = gwPath;
+          const cloudPathFromGw = findPathBetween(gwId, targetDevice.id);
+          if (gwPath && cloudPathFromGw) {
+            path = [...gwPath, ...cloudPathFromGw.slice(1)];
+          }
         }
       }
       if (path.length === 0) {

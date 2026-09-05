@@ -22,8 +22,12 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu (v4.3.0)
+### Güncel özellik durumu (v4.4.0)
 
+- **📋 Fare İle Metin Seçince Otomatik Panoya Kopyalama (Auto-Copy):** PC CMD, Linux Terminali, Cihaz Konsol Sekmesi ve Ana CLI Terminal pencerelerinde komut/çıktı geçmişi alanlarında fare ile sürükleyip metin seçimi tamamlandığında (`onMouseUp`), seçilen metnin otomatik olarak panoya (clipboard) kopyalanması eklendi.
+- **☁️ WAN Bulut ICMP / Ping Desteği:** `1.1.1.1` ve `8.8.8.8` genel kamu DNS/WAN IP adreslerine web tarayıcısının yanında PC komut satırı ve cihaz pencerelerinden `ping` atılabilmesi için Katman-3 Varsayılan Ağ Geçidi (Default Gateway) ve ICMP paket iletim rotaları bağlandı (`pathResolution.ts`, `pingDiagnostics.ts`).
+- **🛡️ Sadece Geçerli WAN/Kamu IP Doğrulaması:** Topolojide olmayan yerel/geçersiz IP adreslerine (`192.168.1.1111` vb.) ping atıldığında yanlışlıkla Bulut cihazına düşüp "ping başarılı" denmesi engellendi; sadece doğrulanan kamu DNS IP'leri (`1.1.1.1`, `8.8.8.8`) ve açıkça tanımlı Cloud IP'leri için bulut yönlendirmesi kısıtlanarak hatalı IP'lerde "Request timed out" üretilmesi sağlandı.
+- **🎨 CMD & CLI Komut Önerileri (Autocomplete) Hizalaması:** Komut tamamlama açılır penceresinde IP önerileri ile komut önerilerinin yan yana bitişik kelimeler halinde kayması engellendi. Öneri listesi `flex flex-col` yapısında dikey butonlar halinde hizalandı.
 - **📐 Akıllı Cihaz Hizalama Araç Çubuğu & Undo/Redo:** Topolojide çoklu cihaz seçildiğinde beliren Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala araç çubuğu ikonları yenilendi; hizalama eylemlerine `saveToHistory()` kancası eklenerek `Ctrl+Z` ve `Ctrl+Y` ile geri alma ve yenileme tam aktif edildi.
 - **🌐 Bulut / WAN Arayüz & Port Listesi:** Bulut (`cloud`) cihazının detay görünümüne ISP Arayüz & Port Listesi eklendi; `Eth0..Eth3` portlarının UP/DOWN bağlantı durumları, IP adresleri ve komşu cihaz çözümlemesi sağlandı.
 - **🖨️ Ağ Yazıcısı & Print Server (Web Management, LPD/IPP Packet Capture & Wi-Fi):** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`). Dahili Web Yönetim Paneli üzerinden LPD/515, IPP/631, JetDirect/9100, AirPrint, SNMP ve TLS 1.3 protokol yetkilendirmesi, Wi-Fi SSID katılımı, tuval sinyal çubukları (`wifiBarRects`) ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi. Web tarayıcılardan (`HttpBrowserWindow`) "Belgeyi Yazdır" butonu ile canlı paket yakalama (`PacketCapturePanel`) ekranına LPD/IPP paket akışlarının yansıtılması.
@@ -387,6 +391,7 @@ Free and open source. See [LICENSE](LICENSE).
 | `Arrow Up / Down` | Command history | Komut geçmişi |
 | `Enter` | Execute command | Komutu çalıştır |
 | `Ctrl + L` | Clear terminal | Terminali temizle |
+| `Mouse Selection` | Auto-Copy selected text on mouse release | CMD & CLI geçmişinden fare ile metin seçince OTOMATİK KOPYALA |
 | `?` | Show available commands | Kullanılabilir komutları göster |
 | `Ctrl + C` | Cancel command (CLI) | Komutu iptal et |
 

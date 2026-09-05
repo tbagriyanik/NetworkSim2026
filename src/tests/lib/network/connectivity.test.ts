@@ -46,6 +46,12 @@ describe('Connectivity Functions', () => {
 
       const resValidPublic = checkConnectivity('pc1', '1.1.1.1', devices, connections);
       expect(resValidPublic.success).toBe(false);
+
+      // Offline Cloud device test
+      const offlineCloudDev = { id: 'cloud1', name: 'Cloud', type: 'cloud', ip: '1.1.1.1', ports: [], x: 0, y: 0, status: 'offline' } as unknown as CanvasDevice;
+      const resOfflineCloud = checkConnectivity('pc1', '1.1.1.1', [sourcePc, offlineCloudDev], connections);
+      expect(resOfflineCloud.success).toBe(false);
+      expect(resOfflineCloud.targetId).toBeUndefined();
     });
   });
 

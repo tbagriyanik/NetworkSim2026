@@ -1,6 +1,6 @@
 # Network Simulator — Kapsamlı Uygulama ve Kullanım Rehberi
 
-**Sürüm / Version:** 4.3.0  
+**Sürüm / Version:** 4.4.0  
 **Doküman Tipi:** Kullanım, Mimari, Komut Referansı ve Laboratuvar Kılavuzu  
 **Dil:** Türkçe (Turkish)
 
@@ -27,9 +27,10 @@ Network Simulator; bilgisayar ağları, anahtarlama (switching), yönlendirme (r
 
 - **%100 İstemci Taraflı (Client-Side) ve Hızlı:** React 19, Next.js 16 ve TypeScript altyapısıyla herhangi bir sunucu kurulumu gerektirmeden tarayıcıda çalışır.
 - **11 Tam Donanımlı Cihaz Tipi:** Router, L2/L3 Switch, Firewall, WLC, AP, PC, IoT, Multiport Hub (`hub`), Aktif Bulut WAN Geçidi (`cloud`), Kablosuz Akıllı Telefon (`mobile`) ve Ağ Yazıcısı (`printer`).
+- **📋 Fare Seçimi İle Otomatik Panoya Kopyalama (Auto-Copy):** PC CMD, Linux Terminali, Cihaz Konsol Sekmesi ve Ana CLI Terminal pencerelerinde komut geçmişinden fare ile metin seçilip bırakıldığı anda (`onMouseUp`) otomatik panoya (clipboard) kopyalama.
+- **☁️ Fonksiyonel Bulut / WAN Geçit Cihazı (`cloud`) & ICMP Ping:** Topolojideki Bulut cihazı `203.0.113.1` genel WAN IP adresi, `eth0..eth3` portları, kamu DNS/WAN IP'leri (`8.8.8.8`, `1.1.1.1`) için hem Web hem de ICMP Ping yönlendirme ve NTP (`pool.ntp.org`) desteği.
 - **📱 Mobil Web Tarayıcı & Web Yönetim:** Akıllı telefon cihazında canlı Adres Çubuğu, Hızlı Yer İmleri (`192.168.1.1`, `8.8.8.8`, `http://iot-panel`) ve TCP port 80 denetimi ile Router/WLC Web Yönetimi, Yazıcı Paneli, IoT Kontrol Paneli ve PC HTTP Sunucusu web sayfalarını render eden Web Tarayıcısı.
 - **🖨️ Ağ Yazıcısı & Print Server (Web Management, LPD/IPP Packet Capture & Wi-Fi):** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı. Dahili Web Yönetim Paneli üzerinden LPD, IPP, JetDirect, AirPrint, SNMP ve TLS protokol yetkilendirmesi, Wi-Fi SSID katılımı, tuval sinyal göstergeleri ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi. Web tarayıcılardan "Belgeyi Yazdır" butonu ile canlı paket yakalama (`PacketCapturePanel`) ekranına LPD/IPP paket akışlarının yansıtılması.
-- **☁️ Fonksiyonel Bulut / WAN Geçit Cihazı (`cloud`):** Topolojideki Bulut cihazı `203.0.113.1` genel WAN IP adresi, `eth0..eth3` portları ve transit köprü yönlendirmesi ile tam fonksiyonel genel DNS (`8.8.8.8`, `1.1.1.1`) ve NTP (`pool.ntp.org`) çözüleme desteği.
 - **Sürükle-Bırak Topoloji Tasarımı:** Cihazları tuval üzerine sürükleyerek saniyeler içinde karmaşık kurumsal ağ topolojileri oluşturabilirsiniz.
 - **Yüksek Performanslı Çizim ve Spatial Partitioning:** 100+ cihaz ve yüzlerce kablo bağlantısı içeren büyük ağlarda bile 60 FPS akıcı performans sağlar.
 - **Gerçekçi CLI Terminali:** Cihazlarda `User EXEC`, `Privileged EXEC`, `Global Configuration`, `Interface`, `VLAN`, `Router`, `DHCP` ve `ACL` modlarında gerçek zamanlı komut çalıştırma.
@@ -351,6 +352,7 @@ Simülatör arayüzü, öğrenme ve çalışma verimliliğini en üst düzeye ç
 | **Delete / Backspace** | Seçili olan cihazı veya kablo bağlantısını siler. |
 | **Ctrl + S** | Mevcut topolojiyi `.json` dosyası olarak bilgisayara indirir. |
 | **Ctrl + L** | Terminal (CLI / Linux) ekranını temizler. |
+| **Mouse Selection (Fare Seçimi)** | CMD, CLI & Konsol geçmişinden fare ile metin seçip bırakıldığı an OTOMATİK PANOLARA KOPYALAR. |
 | **Esc** | Açık olan diyaloğu veya modalı kapatır. |
 
 ---
