@@ -29,7 +29,7 @@ export function getConsoleDevice({
   });
   if (!connection) return null;
   const otherId = connection.sourceDeviceId === deviceId ? connection.targetDeviceId : connection.sourceDeviceId;
-  return topologyDevices.find(d => d.id === otherId && ((d.type === 'switchL2' || d.type === 'switchL3') || d.type === 'router')) || null;
+  return topologyDevices.find(d => d.id === otherId && (d.type === 'switchL2' || d.type === 'switchL3' || d.type === 'router' || d.type === 'wlc' || d.type === 'firewall')) || null;
 }
 
 export function getAutocompleteSuggestions({

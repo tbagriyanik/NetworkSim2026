@@ -160,15 +160,16 @@ export function WlcWirelessPanel({
                         <div>
                             <label className="text-[11px] font-medium block mb-1">{tr('Security & Key Mgmt', 'Güvenlik & Anahtar Yönetimi')}</label>
                             <select
-                                className={`flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors ${isDark ? 'bg-secondary-800 text-white border-secondary-700' : 'bg-white text-secondary-900 border-secondary-300'}`}
+                                role="combobox"
+                                className={`flex h-9 w-full rounded-md border px-3 py-1 text-xs font-medium shadow-sm transition-colors outline-none cursor-pointer ${isDark ? 'bg-secondary-800 text-secondary-100 border-secondary-700 focus:border-primary-500' : 'bg-white text-secondary-900 border-secondary-300 focus:border-primary-500'}`}
                                 value={wlanSecurity}
                                 onChange={(e) => setWlanSecurity(e.target.value as 'open' | 'wpa2' | 'wpa3' | '802.1x')}
                                 disabled={isDevicePoweredOff || busy}
                             >
-                                <option value="open">{tr('Open (None)', 'Açık (Şifresiz)')}</option>
-                                <option value="wpa2">{tr('WPA2-PSK (AES)', 'WPA2-PSK (AES)')}</option>
-                                <option value="wpa3">{tr('WPA3-SAE (Personal)', 'WPA3-SAE (Kişisel)')}</option>
-                                <option value="802.1x">{tr('WPA2/WPA3 Enterprise (802.1X)', 'WPA2/WPA3 Kurumsal (802.1X)')}</option>
+                                <option value="open" className={isDark ? 'bg-secondary-800 text-secondary-100' : 'bg-white text-secondary-900'}>{tr('Open (None)', 'Açık (Şifresiz)')}</option>
+                                <option value="wpa2" className={isDark ? 'bg-secondary-800 text-secondary-100' : 'bg-white text-secondary-900'}>{tr('WPA2-PSK (AES)', 'WPA2-PSK (AES)')}</option>
+                                <option value="wpa3" className={isDark ? 'bg-secondary-800 text-secondary-100' : 'bg-white text-secondary-900'}>{tr('WPA3-SAE (Personal)', 'WPA3-SAE (Kişisel)')}</option>
+                                <option value="802.1x" className={isDark ? 'bg-secondary-800 text-secondary-100' : 'bg-white text-secondary-900'}>{tr('WPA2/WPA3 Enterprise (802.1X)', 'WPA2/WPA3 Kurumsal (802.1X)')}</option>
                             </select>
                         </div>
                         <div>

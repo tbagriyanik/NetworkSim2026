@@ -1487,3 +1487,25 @@ html body.graphics-low [data-portal-overlay="true"] {
 .dark * {
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
+
+/* Global Select & Option Typography Rules */
+select {
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+select option {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.875rem;
+  padding: 6px 12px;
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.dark select option,
+:is(.dark *) select option {
+  background-color: #1e293b;
+  color: #f8fafc;
+}
+

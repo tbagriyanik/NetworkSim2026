@@ -128,11 +128,37 @@ export function SyslogServiceConfig({
     });
   };
 
+  const [exportSuccess, setExportSuccess] = useState(false);
+
   const handleExport = () => {
+    if (serviceSyslogMessages.length === 0) return;
+
     const text = serviceSyslogMessages.map(m =>
-      `[${new Date(m.timestamp).toISOString()}] ${m.sourceIp} ${m.sourceName} %${m.facility}-${m.severity}-${m.mnemonic}: ${m.message}`
+      `[${new Date(m.timestamp).toISOString()}] ${m.sourceIp} (${m.sourceName}) %${m.facility}-${m.severity}-${m.mnemonic}: ${m.message}`
     ).join('\n');
-    navigator.clipboard.writeText(text);
+
+    // 1. Copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    }
+
+    // 2. Trigger file download (.log file)
+    try {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `syslog-export-${new Date().toISOString().slice(0, 10)}.log`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch {
+      // Fallback if Blob fails
+    }
+
+    setExportSuccess(true);
+    setTimeout(() => setExportSuccess(false), 3000);
   };
 
   return (
@@ -186,6 +212,7 @@ export function SyslogServiceConfig({
         <div className="flex gap-3">
           <div className="flex-1">
             <select
+              role="combobox"
               value={filterSeverity}
               onChange={(e) => setFilterSeverity(e.target.value)}
               className={`w-full text-xs rounded-md border p-1.5 ${isDark ? 'bg-secondary-800 border-secondary-700 text-white' : 'bg-white border-secondary-300'}`}
@@ -213,9 +240,14 @@ export function SyslogServiceConfig({
           </button>
           <button
             onClick={handleExport}
-            className={`px-3 py-1 text-xs rounded border ${isDark ? 'border-secondary-700 hover:bg-secondary-800 text-secondary-300' : 'border-secondary-300 hover:bg-secondary-100 text-secondary-600'}`}
+            disabled={serviceSyslogMessages.length === 0}
+            className={`px-3 py-1 text-xs rounded border flex items-center gap-1.5 transition-all ${
+              exportSuccess
+                ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/50 font-bold'
+                : (isDark ? 'border-secondary-700 hover:bg-secondary-800 text-secondary-300 disabled:opacity-40' : 'border-secondary-300 hover:bg-secondary-100 text-secondary-600 disabled:opacity-40')
+            }`}
           >
-            {language === 'tr' ? 'Dışa Aktar' : 'Export'}
+            <span>{exportSuccess ? (language === 'tr' ? '✓ Aktarıldı & İndirildi' : '✓ Exported & Downloaded') : (language === 'tr' ? 'Dışa Aktar (.log)' : 'Export (.log)')}</span>
           </button>
         </div>
       </div>
