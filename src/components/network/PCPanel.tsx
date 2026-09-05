@@ -685,7 +685,7 @@ export function PCPanel({
       setPcOutput([{
         id: '1',
         type: 'output',
-        content: 'NOS [Version 3.2]\nNOS Network Operation System\n'
+        content: 'NOS Network Operation System\n'
       }]);
     }
   }, [deviceId]);

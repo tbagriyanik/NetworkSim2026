@@ -242,7 +242,7 @@ export function MultiDeviceWindowManager({
               collapsible
               restoreRequest={windowRestoreRequests[win.id]}
             >
-              <div className="flex-1 overflow-hidden relative rounded-b-2xl">
+              <div className="flex-1 overflow-hidden relative rounded-b-xl">
                 <PCPanel
                   key={`pc-panel-${win.id}`}
                   className="h-full min-h-0 !border-none"
@@ -286,7 +286,7 @@ export function MultiDeviceWindowManager({
               collapsible
               restoreRequest={windowRestoreRequests[win.id]}
             >
-              <div className="flex-1 overflow-y-auto rounded-b-2xl p-4 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto rounded-b-xl p-4 custom-scrollbar">
                 <FirewallPanel
                   device={(deviceObj || { id: win.id, name: deviceName, type: 'firewall', x: 0, y: 0, ports: [] }) as unknown as CanvasDevice}
                   t={t as any}

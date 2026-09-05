@@ -34,6 +34,21 @@ describe('Connectivity Functions', () => {
     return { reachable: false, path: [], latency: Infinity };
   }
 
+  describe('Invalid or Non-existent IP ping handling', () => {
+    it('should return false for invalid IP address format or unmapped non-cloud IP', () => {
+      const sourcePc = { id: 'pc1', name: 'PC1', type: 'pc', ip: '192.168.1.10', subnet: '255.255.255.0', ports: [], x: 0, y: 0, status: 'online' } as unknown as CanvasDevice;
+      const cloudDev = { id: 'cloud1', name: 'Cloud', type: 'cloud', ip: '1.1.1.1', ports: [], x: 0, y: 0, status: 'online' } as unknown as CanvasDevice;
+      const devices = [sourcePc, cloudDev];
+      const connections: CanvasConnection[] = [];
+
+      const resInvalid = checkConnectivity('pc1', '192.168.1.1111', devices, connections);
+      expect(resInvalid.success).toBe(false);
+
+      const resValidPublic = checkConnectivity('pc1', '1.1.1.1', devices, connections);
+      expect(resValidPublic.success).toBe(false);
+    });
+  });
+
   const pc1: CanvasDevice = {
     id: 'PC1', name: 'PC1', type: 'pc',
     ip: '192.168.1.10', vlan: 10,

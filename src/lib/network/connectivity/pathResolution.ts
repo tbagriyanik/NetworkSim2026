@@ -312,8 +312,14 @@ export function checkConnectivity(
   }
 
   if (!targetDevice) {
+    const isPublicCloudIp = (ip: string, cDev?: CanvasDevice) => {
+      const lower = ip.toLowerCase();
+      if (['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1'].includes(lower)) return true;
+      if (cDev?.ip && cDev.ip.toLowerCase() === lower) return true;
+      return false;
+    };
     const cloudDev = devices.find(d => d.type === 'cloud');
-    if (cloudDev) {
+    if (cloudDev && isPublicCloudIp(resolvedTargetIp, cloudDev)) {
       targetDeviceId = cloudDev.id;
       targetDevice = cloudDev;
     } else {
@@ -535,6 +541,8 @@ export function checkConnectivity(
       const pathFromGateway = findPathBetween(gatewayDeviceId, targetDevice.id);
       if (pathToGateway && pathFromGateway) {
         path = [...pathToGateway, ...pathFromGateway.slice(1)];
+      } else if (pathToGateway && targetDevice.type === 'cloud') {
+        path = pathToGateway;
       }
     }
   }
@@ -542,9 +550,19 @@ export function checkConnectivity(
   if (path.length === 0) {
     const directPath = findPathBetween(sourceId, targetDevice.id, sourceVlan);
     if (!directPath) {
-      return { success: false, hops: [], hopIds: [], error: 'Destination host unreachable.' };
+      if (targetDevice.type === 'cloud' && sourceGatewayIp) {
+        const gwId = ipMap.get(sourceGatewayIp.toLowerCase());
+        if (gwId) {
+          const gwPath = findPathBetween(sourceId, gwId, sourceVlan);
+          if (gwPath) path = gwPath;
+        }
+      }
+      if (path.length === 0) {
+        return { success: false, hops: [], hopIds: [], error: 'Destination host unreachable.' };
+      }
+    } else {
+      path = directPath;
     }
-    path = directPath;
   }
 
   // BOLT: Pre-calculate path-related connections for O(1) lookup in later stages
@@ -881,7 +899,7 @@ export function checkConnectivity(
           // Check if this router has a route to the destination network
           const routingTable = getRoutingTable(deviceId, safeDeviceStates, devices, connections);
           const route = findRoute(resolvedTargetIp, routingTable);
-          if (route) {
+          if (route || targetDevice.type === 'cloud') {
             hasL3Gateway = true;
             break;
           } else {
@@ -910,7 +928,7 @@ export function checkConnectivity(
             // Check if router has a route to destination
             const routingTable = getRoutingTable(router.id, safeDeviceStates, devices, connections);
             const route = findRoute(resolvedTargetIp, routingTable);
-            if (!route) continue; // Skip routers without proper route
+            if (!route && targetDevice.type !== 'cloud') continue; // Skip routers without proper route
 
             // Check if router is connected to any device in the path
             for (const pathDeviceId of path) {
@@ -931,7 +949,7 @@ export function checkConnectivity(
         }
       }
 
-      if (!hasL3Gateway) {
+      if (!hasL3Gateway && targetDevice.type !== 'cloud') {
         return {
           success: false,
           hops: hopNames,
@@ -1231,25 +1249,29 @@ export function checkConnectivity(
     }
 
     if (!l3ConnectivityPossible) {
-      // Check if there's a router in the path that can route between VLANs
-      for (const deviceId of path) {
-        // BOLT: Use pre-resolved safeDeviceStates
-        const state = safeDeviceStates.get(deviceId);
-        const device = deviceMap.get(deviceId);
-        const hasRouting = isTargetIpv6 ? (state?.ipv6Enabled || state?.ipRouting) : state?.ipRouting;
-
-        if (hasRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
-          // Router in path - check if it has routes to both source and target networks
+      if (targetDevice.type === 'cloud') {
+        l3ConnectivityPossible = true;
+      } else {
+        // Check if there's a router in the path that can route between VLANs
+        for (const deviceId of path) {
           // BOLT: Use pre-resolved safeDeviceStates
-          const routes = getRoutingTable(deviceId, safeDeviceStates, devices, connections);
-          // Get source IP from device data
-          const srcIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isTargetIpv6);
-          const sourceRoute = findRoute(srcIp, routes);
-          const targetRoute = findRoute(resolvedTargetIp, routes);
+          const state = safeDeviceStates.get(deviceId);
+          const device = deviceMap.get(deviceId);
+          const hasRouting = isTargetIpv6 ? (state?.ipv6Enabled || state?.ipRouting) : state?.ipRouting;
 
-          if (sourceRoute && targetRoute) {
-            l3ConnectivityPossible = true;
-            break;
+          if (hasRouting && (device?.type === 'router' || device?.type === 'switchL3')) {
+            // Router in path - check if it has routes to both source and target networks
+            // BOLT: Use pre-resolved safeDeviceStates
+            const routes = getRoutingTable(deviceId, safeDeviceStates, devices, connections);
+            // Get source IP from device data
+            const srcIp = getPrimaryDeviceIp(sourceId, devices, safeDeviceStates, isTargetIpv6);
+            const sourceRoute = findRoute(srcIp, routes);
+            const targetRoute = findRoute(resolvedTargetIp, routes);
+
+            if (sourceRoute && (targetRoute || (targetDevice.type as string) === 'cloud')) {
+              l3ConnectivityPossible = true;
+              break;
+            }
           }
         }
       }

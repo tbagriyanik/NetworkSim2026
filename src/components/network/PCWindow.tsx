@@ -73,7 +73,7 @@ export function PCWindow({
       collapsible
       className={cn(focusedOverlay === 'pc-info' ? "border-emerald-400 shadow-[0_0_0_1px_rgba(52,211,153,0.35)]" : "border-emerald-950/80")}
     >
-      <div className="flex-1 overflow-hidden relative rounded-b-2xl">
+      <div className="flex-1 overflow-hidden relative rounded-b-xl">
         <PCPanel
           key="pc-panel"
           className="h-full min-h-0 !border-none"

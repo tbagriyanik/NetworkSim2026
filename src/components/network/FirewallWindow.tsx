@@ -77,7 +77,7 @@ export function FirewallWindow({
         setFirewallActiveTab('console');
       }}
     >
-      <div className="flex-1 overflow-y-auto rounded-b-2xl p-4 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto rounded-b-xl p-4 custom-scrollbar">
         {activeFirewallId && (
           <FirewallPanel
             device={topologyDevices.find(d => d.id === activeFirewallId) as CanvasDevice}

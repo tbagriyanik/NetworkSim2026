@@ -129,9 +129,9 @@ export function getAutocompleteSuggestions({
       ...batSuggestions,
       ...DESKTOP_COMMANDS.filter((cmd) => cmd !== '?' && cmd.startsWith(currentWord))
     ])).slice(0, 8);
-    if (!expectsIpArg) return base;
     const ipSuggestions = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(currentWord));
-    return Array.from(new Set([...ipSuggestions, ...base])).slice(0, 8);
+    if (expectsIpArg && ipSuggestions.length > 0) return ipSuggestions.slice(0, 8);
+    return base;
   }
 
   const mode = getCommandMode();
@@ -139,8 +139,8 @@ export function getAutocompleteSuggestions({
   const suggestions = candidates.filter(
     (opt: string) => opt !== '?' && opt.toLowerCase().startsWith(ctxCurrentWord)
   );
-  if (!expectsIpArg) return suggestions.slice(0, 8);
   const ipSuggestions = collectKnownIps().filter((ip) => ip.toLowerCase().startsWith(ctxCurrentWord || currentWord));
-  return Array.from(new Set([...ipSuggestions, ...suggestions])).slice(0, 8);
+  if (expectsIpArg && ipSuggestions.length > 0) return ipSuggestions.slice(0, 8);
+  return suggestions.slice(0, 8);
 }
 

@@ -84,6 +84,8 @@ export function CommandLineTab({
   setInput,
   shouldShowAutocomplete,
   renderAutocompleteSuggestions,
+  autocompleteIndex = 0,
+  completeAutocompleteSelection = () => {},
   executeCommand,
   handleInputChange,
   handleKeyDown,
@@ -520,6 +522,12 @@ export function CommandLineTab({
         role="log"
         aria-live="polite"
         onClick={handleContainerClick}
+        onMouseUp={() => {
+          const selectedText = window.getSelection()?.toString();
+          if (selectedText && selectedText.trim().length > 0) {
+            navigator.clipboard?.writeText(selectedText)?.catch?.(() => {});
+          }
+        }}
         onWheel={(event) => {
           event.stopPropagation();
           event.currentTarget.scrollTop += event.deltaY;
@@ -842,9 +850,34 @@ export function CommandLineTab({
                       ↑↓ {language === 'tr' ? 'Seç' : 'Navigate'} | Tab ↹ {t.completeWithTab}
                     </span>
                   </div>
-                  <div className="max-h-40 overflow-y-auto overflow-x-hidden mobile-scroll custom-scrollbar font-geist-mono">
+                  <div className="max-h-40 overflow-y-auto overflow-x-hidden mobile-scroll custom-scrollbar font-geist-mono flex flex-col">
                     {activeTerminalTab === 'cmd' ? (
-                      renderAutocompleteSuggestions
+                      Array.isArray(renderAutocompleteSuggestions) ? (
+                        (renderAutocompleteSuggestions as string[]).map((cmd, idx) => (
+                          <button
+                            key={`${cmd}-${idx}`}
+                            type="button"
+                            data-autocomplete-index={idx}
+                            onClick={() => {
+                              completeAutocompleteSelection(cmd);
+                              inputRef.current?.focus();
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between font-geist-mono",
+                              idx === autocompleteIndex
+                                ? (isDark ? "bg-accent-500/20 text-accent-300 font-semibold" : "bg-accent-50 text-accent-700 font-semibold")
+                                : (isDark ? "text-secondary-300 hover:bg-secondary-700/50" : "text-secondary-700 hover:bg-secondary-100")
+                            )}
+                          >
+                            <span>{cmd}</span>
+                            {idx === autocompleteIndex && (
+                              <span className="text-[10px] opacity-75">{language === 'tr' ? 'Seçildi' : 'Selected'}</span>
+                            )}
+                          </button>
+                        ))
+                      ) : (
+                        renderAutocompleteSuggestions
+                      )
                     ) : (
                       linuxFilteredSuggestions.map((cmd, idx) => (
                         <button

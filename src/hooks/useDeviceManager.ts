@@ -519,7 +519,7 @@ export function useDeviceManager() {
     if (!outputs) {
       const device = topologyDevices?.find(d => d.id === deviceId);
       outputs = [
-        { id: '0', type: 'output', content: 'NOS [Version 3.2]\nNOS Network Operation System\n' },
+        { id: '0', type: 'output', content: 'NOS Network Operation System\n' },
         { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (device?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (device?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (device?.gateway || '0.0.0.0') + '\n' }
       ];
       // Defer state update to avoid setState during render
@@ -1019,7 +1019,7 @@ export function useDeviceManager() {
     setDeviceStates(new Map([['switch-1', createInitialState()]]));
     setDeviceOutputs(new Map());
     setPcOutputs(new Map([['pc-1', [
-      { id: '0', type: 'output', content: 'NOS [Version 3.2]\nNOS Network Operation System\n' },
+      { id: '0', type: 'output', content: 'NOS Network Operation System\n' },
       { id: '1', type: 'output', content: '\nEthernet adapter Ethernet connection:\n   IPv4 Address. . . . . . . . . . . : ' + (pc1Device?.ip || '0.0.0.0') + '\n   Subnet Mask . . . . . . . . . . : ' + (pc1Device?.subnet || '255.255.255.0') + '\n   Default Gateway . . . . . . . . . : ' + (pc1Device?.gateway || '0.0.0.0') + '\n' }
     ]]]));
   };

@@ -334,7 +334,7 @@ export function MobileDeviceView({
           `Request timeout for icmp_seq 3`,
           `Request timeout for icmp_seq 4`,
           `--- ${targetPingIp} ping statistics ---`,
-          `4 packets transmitted, 0 received, 100% packet loss`
+          `4 packets transmitted, 0 received, 100% packet loss${res.error ? ` (${res.error})` : ''}`
         ]);
       }
       setIsPinging(false);
@@ -905,6 +905,12 @@ export function MobileDeviceView({
                   type="text"
                   value={targetPingIp}
                   onChange={e => setTargetPingIp(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleSendPing();
+                    }
+                  }}
                   placeholder={isTr ? "Hedef IP (192.168.1.1)" : "Target IP (192.168.1.1)"}
                   className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-white outline-none text-xs"
                 />
@@ -982,6 +988,14 @@ export function MobileDeviceView({
                       type="text"
                       value={dialNumber}
                       onChange={e => setDialNumber(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          if (dialNumber.trim()) {
+                            handleInitiateVoipCall();
+                          }
+                        }
+                      }}
                       placeholder={isTr ? "IP veya Dahili No Girin (192.168.1.50)..." : "Enter IP or Extension (192.168.1.50)..."}
                       className="w-full pl-3 pr-8 py-2 rounded-xl bg-slate-950 border border-slate-800 font-mono text-center text-sm text-emerald-400 placeholder:text-slate-600 outline-none"
                     />

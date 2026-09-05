@@ -161,6 +161,12 @@ export function ConsoleTerminalTab({
         role="log"
         aria-live="polite"
         onClick={handleContainerClick}
+        onMouseUp={() => {
+          const selectedText = window.getSelection()?.toString();
+          if (selectedText && selectedText.trim().length > 0) {
+            navigator.clipboard?.writeText(selectedText)?.catch?.(() => {});
+          }
+        }}
         onWheel={(event) => {
           event.stopPropagation();
           event.currentTarget.scrollTop += event.deltaY;
@@ -301,7 +307,7 @@ export function ConsoleTerminalTab({
                       Tab ↹ {t.completeWithTab}
                     </span>
                   </div>
-                  <div className="max-h-40 overflow-y-auto overflow-x-hidden mobile-scroll custom-scrollbar font-geist-mono">
+                  <div className="max-h-40 overflow-y-auto overflow-x-hidden mobile-scroll custom-scrollbar font-geist-mono flex flex-col">
                     {renderAutocompleteSuggestions?.map((cmd, idx) => (
                       <button
                         key={`${cmd}-${idx}`}

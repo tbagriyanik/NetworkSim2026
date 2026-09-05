@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-4.3.0-blue)
+![Version](https://img.shields.io/badge/version-4.3.1-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.3-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -33,8 +33,12 @@ npm run lint
 npm test
 ```
 
-## 🚀 Key Features & Version Highlights (v4.3.0)
+## 🚀 Key Features & Version Highlights (v4.3.1)
 
+- **📋 Auto-Copy on Mouse Selection:** Automatic clipboard copying upon completing mouse text selection (`onMouseUp`) across PC CMD, Linux Terminal, Console Tab, and Main CLI Terminal output containers.
+- **☁️ WAN / Public DNS ICMP Routing:** Seamless ICMP ping routing for public WAN addresses (`1.1.1.1`, `8.8.8.8`) via default gateways alongside HTTP web browsing.
+- **🛡️ Strict Invalid IP Guard:** Prevents non-existent local IP addresses from erroneously falling back to the cloud gateway, correctly returning "Request timed out".
+- **🎨 Autocomplete UI Alignment:** Formatted IP and command autocomplete suggestion dropdowns into clean vertical single-column button stacks (`flex flex-col`).
 - **📐 Akıllı Hizalama Araç Çubuğu & Undo/Redo:** Seçili cihazlar için grafiksel olarak yenilenmiş Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala ikonları, kılavuz çizgileri ve `Ctrl+Z` / `Ctrl+Y` geçmiş desteği.
 - **🌐 Cloud / WAN Arayüz & Port Monitörü:** Bulut (`cloud`) cihazında aktif WAN portları (`Eth0..Eth3`), canlı IP/Bağlantı durumu ve komşu cihaz çözümleme kartları.
 - **printer: Ağ Yazıcısı & Gelişmiş Print Server (Web Management, LPD/IPP Packet Capture & Wi-Fi):** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`). Dahili Web Yönetim Paneli üzerinden LPD, IPP, JetDirect, AirPrint, SNMP ve TLS protokol yetkilendirmesi, Wi-Fi SSID katılımı ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi. Web tarayıcılardan (`HttpBrowserWindow`) veya mobil tarayıcıdan "Belgeyi Yazdır" butonu ile canlı paket yakalama (`PacketCapturePanel`) ekranına LPD/IPP paket akışlarının yansıtılması.

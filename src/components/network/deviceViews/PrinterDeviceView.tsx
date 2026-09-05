@@ -301,7 +301,7 @@ export function PrinterDeviceView({
           `Request timeout for icmp_seq 3`,
           `Request timeout for icmp_seq 4`,
           `--- ${targetPingIp} ping statistics ---`,
-          `4 packets transmitted, 0 received, 100% packet loss`
+          `4 packets transmitted, 0 received, 100% packet loss${res.error ? ` (${res.error})` : ''}`
         ]);
       }
       setIsPinging(false);
@@ -646,6 +646,12 @@ export function PrinterDeviceView({
             type="text"
             value={targetPingIp}
             onChange={e => setTargetPingIp(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleSendPing();
+              }
+            }}
             placeholder={isTr ? 'Hedef IP (örn: 192.168.1.1)' : 'Target IP (e.g. 192.168.1.1)'}
             className={cn(
               "flex-1 px-3 py-1.5 rounded-lg border font-mono text-xs outline-none",

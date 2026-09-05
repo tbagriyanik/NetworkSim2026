@@ -175,7 +175,7 @@ export function DraggableWindowWrapper({
       style={wrapperStyle}
       className={cn(
         'flex flex-col overflow-hidden shadow-2xl transition-shadow',
-        isMobileFullScreen ? 'rounded-none' : 'rounded-lg border',
+        isMobileFullScreen ? 'rounded-none' : 'rounded-xl border',
         isDark ? 'bg-secondary-900' : 'bg-white',
         // Green border when active (on desktop or floating on mobile)
         isActive && (!isMobile || !isMobileFullScreen)

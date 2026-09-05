@@ -116,7 +116,7 @@ export function getPingDiagnostics(
 
   const isTargetIpv6 = resolvedTargetIp.includes(':');
   const targetDeviceId = ipMap.get(resolvedTargetIp.toLowerCase());
-  const targetDevice = targetDeviceId ? deviceMap.get(targetDeviceId) : undefined;
+  const initialTargetDevice = targetDeviceId ? deviceMap.get(targetDeviceId) : undefined;
 
   // 1. Check source device exists and is powered on
   if (!sourceDevice) {
@@ -148,9 +148,15 @@ export function getPingDiagnostics(
   }
 
   // 3. Check target device exists
+  let targetDevice = initialTargetDevice;
   if (!targetDevice) {
-    reasons.push('Hedef IP adresi bulunamadı');
-    return { success: false, reasons };
+    const cloudDev = devices.find(d => d.type === 'cloud');
+    if (cloudDev && (resolvedTargetIp === '8.8.8.8' || resolvedTargetIp === '8.8.4.4' || resolvedTargetIp === '1.1.1.1' || resolvedTargetIp === '1.0.0.1')) {
+      targetDevice = cloudDev;
+    } else {
+      reasons.push('Hedef IP adresi bulunamadı');
+      return { success: false, reasons };
+    }
   }
 
   if (targetDevice.status === 'offline') {
@@ -167,7 +173,7 @@ export function getPingDiagnostics(
   // 5. Check subnet compatibility (IPv4 only — IPv6 routing handled separately)
   let isSourceInSameSubnet = true;
   let isTargetInSameSubnet = true;
-  if (!isTargetIpv6) {
+  if (!isTargetIpv6 && targetDevice.type !== 'cloud') {
     const sourceSubnet = sourceDevice.subnet || '255.255.255.0';
     const targetSubnet = targetDevice.subnet || '255.255.255.0';
     isSourceInSameSubnet = isIpInSubnet(sourceIp, resolvedTargetIp, sourceSubnet);

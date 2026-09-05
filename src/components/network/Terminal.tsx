@@ -1509,6 +1509,12 @@ export function Terminal({
           aria-live="polite"
           aria-label={t.typeCommand}
           onClick={() => inputRef.current?.focus()}
+          onMouseUp={() => {
+            const selectedText = window.getSelection()?.toString();
+            if (selectedText && selectedText.trim().length > 0) {
+              navigator.clipboard?.writeText(selectedText)?.catch?.(() => {});
+            }
+          }}
           onWheel={(event) => {
             event.stopPropagation();
             event.currentTarget.scrollTop += event.deltaY;
@@ -1752,7 +1758,7 @@ export function Terminal({
                   "rounded-lg border shadow-xl overflow-hidden",
                   isDark ? "bg-secondary-800 border-secondary-700" : "bg-white border-secondary-200"
                 )}>
-                  <div className="max-h-40 overflow-y-auto overflow-x-hidden font-geist-mono">
+                  <div className="max-h-40 overflow-y-auto overflow-x-hidden font-geist-mono flex flex-col">
                     {renderAutocompleteSuggestions.map((cmd, idx) => (
                       <button
                         key={idx}

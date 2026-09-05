@@ -2,6 +2,14 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v4.3.1 — 2026-09-05
+
+**WAN Bulut ICMP/Ping Desteği, IP Doğrulama Düzeltmeleri, Otomatik Fare Seçim Kopyalama ve UI Düzeltmeleri** —
+- **☁️ WAN Bulut / Public DNS ICMP Ping Desteği**: `1.1.1.1` ve `8.8.8.8` genel kamu DNS/WAN IP adreslerine web tarayıcısının yanında PC komut satırı ve cihaz pencerelerinden `ping` atılabilmesi için Katman-3 Varsayılan Ağ Geçidi (Default Gateway) ve ICMP paket iletim rotaları bağlandı (`pathResolution.ts`, `pingDiagnostics.ts`).
+- **🛡️ Sadece Geçerli WAN/Kamu IP Doğrulaması**: Topolojide olmayan yerel/geçersiz IP adreslerine (`192.168.1.1111` vb.) ping atıldığında yanlışlıkla Bulut cihazına düşüp "ping başarılı" denmesi engellendi; sadece doğrulanan kamu DNS IP'leri (`1.1.1.1`, `8.8.8.8`, vb.) ve açıkça tanımlı Cloud IP'leri için bulut yönlendirmesi kısıtlanarak hatalı IP'lerde "Request timed out" üretilmesi sağlandı (`pathResolution.ts`).
+- **📋 Fare İle Metin Seçince Otomatik Panoya Kopyalama (Auto-Copy)**: PC Komut İstemi (CMD), Linux Terminali, Cihaz Konsol Sekmesi (`CommandLineTab.tsx`, `ConsoleTerminalTab.tsx`) ve Ana CLI Terminal penceresinde (`Terminal.tsx`) komut/çıktı geçmişi alanlarında fare ile sürükleyip metin seçimi tamamlandığında (`onMouseUp`), seçilen metnin otomatik olarak panoya (clipboard) kopyalanması sağlandı.
+- **🎨 CMD & CLI Komut Önerileri (Autocomplete) Düzenleme**: Komut tamamlama açılır penceresinde IP önerileri ile komut önerilerinin yan yana bitişik Türkçe/İngilizce kelimeler halinde kayması engellendi. Öneri listesi `flex flex-col` yapısında dikey butonlar halinde hizalandı.
+
 ## v4.3.0 — 2026-09-04
 
 **Akıllı Cihaz Hizalama Araç Çubuğu, Hizalamada Undo/Redo (Ctrl+Z/Ctrl+Y) Desteği, Cloud/WAN Arayüz & Port Monitörü, Ağ Yazıcısı & Print Server Yönetimi** —
