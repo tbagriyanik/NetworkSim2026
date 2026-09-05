@@ -1,4 +1,5 @@
 import { colors } from '@/lib/design-tokens';
+import { getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './networkTopology.types';
 import { SwitchState } from '@/lib/network/types';
@@ -13,7 +14,7 @@ interface ConnectionLineProps {
   totalSameConns: number;
   sameConnIndex: number;
   getPortPosition: (device: CanvasDevice, portId: string) => { x: number; y: number };
-  CABLE_COLORS: Record<string, { primary: string; bg: string; text: string; border: string }>;
+  CABLE_COLORS: Record<string, { primary: string; bg: string; text: string; border: string; error?: { primary: string; bg: string; text: string; border: string } }>;
   isHovered?: boolean;
   onMouseEnter?: (e: React.MouseEvent<SVGPathElement>) => void;
   onMouseLeave?: () => void;
@@ -23,6 +24,7 @@ interface ConnectionLineProps {
   zoom?: number;
   graphicsQuality?: 'high' | 'low';
   deviceStates?: Map<string, SwitchState>;
+  topologyDevices?: CanvasDevice[];
 }
 
 /**
@@ -48,6 +50,29 @@ const getPortSTPBlocking = (
   return isBlocking;
 };
 
+/**
+ * BOLT OPTIMIZATION:
+ * Builds a comparable key from the wifi-relevant state of a device's wlan0 port
+ * (shutdown/status/config) so the memo comparator re-renders the link when the
+ * runtime/matching status that drives signal strength changes.
+ */
+const getWlan0SignalKey = (
+  deviceStates: Map<string, SwitchState> | undefined,
+  device: CanvasDevice
+): string => {
+  const wlan = deviceStates?.get(device.id)?.ports?.['wlan0'];
+  if (!wlan) return 'none';
+  return [
+    wlan.shutdown ?? false,
+    wlan.status ?? '',
+    wlan.wifi?.mode ?? '',
+    wlan.wifi?.ssid ?? '',
+    wlan.wifi?.security ?? '',
+    wlan.wifi?.password ?? '',
+    wlan.wifi?.channel ?? '',
+  ].map(String).join('|');
+};
+
 export const ConnectionLine = memo(function ConnectionLine({
   connection,
   sourceDevice,
@@ -66,7 +91,8 @@ export const ConnectionLine = memo(function ConnectionLine({
   showLabel = true,
   zoom = 1, // Default zoom level
   graphicsQuality = 'high',
-  deviceStates
+  deviceStates,
+  topologyDevices
 }: ConnectionLineProps) {
   // Get port positions for more accurate connection lines
   const source = getPortPosition(sourceDevice, connection.sourcePort);
@@ -114,11 +140,38 @@ export const ConnectionLine = memo(function ConnectionLine({
   const activeWirelessColor = isWireless && typeof connection.ssidIndex === 'number'
     ? wirelessSsidColors[connection.ssidIndex % wirelessSsidColors.length]
     : (CABLE_COLORS.wireless?.primary || colors.wirelessSsid[0]);
+  // Compute signal strength for wireless connections to sync cable visual with device Wi‑Fi status.
+  // DeviceRenderer evaluates the client against ALL topology devices (nearest matching AP), so the
+  // drawn link must use the same inputs — otherwise the cable and the device bars disagree. Both ends
+  // are probed because a wireless cable can be drawn in either direction (client→AP or AP→client).
+  const getWlanConnected = (device: CanvasDevice) =>
+    deviceStates?.get(device.id)?.ports?.['wlan0']?.status === 'connected' ||
+    (device.wifi?.enabled !== false && connection.active !== false);
+  let wirelessStrength: number | undefined;
+  if (isWireless) {
+    const signalDevices = topologyDevices ?? [targetDevice];
+    const sourceStrength = getWirelessSignalStrength(sourceDevice, signalDevices, deviceStates);
+    wirelessStrength = sourceStrength > 0
+      ? sourceStrength
+      : getWirelessSignalStrength(targetDevice, signalDevices, deviceStates);
+    // Mirror DeviceRenderer's fallback: printers and connected clients render full signal
+    // even when config-based matching yields 0, so the cable must agree with the device.
+    if (wirelessStrength === 0 && !isPoweredOff) {
+      const anyPrinter = sourceDevice.type === 'printer' || targetDevice.type === 'printer';
+      const anyConnected = getWlanConnected(sourceDevice) || getWlanConnected(targetDevice);
+      if (anyPrinter || anyConnected) wirelessStrength = 5;
+    }
+  }
 
-  const color = !isCompatible || connection.active === false ? CABLE_COLORS.error.primary :
+  let baseColor = !isCompatible || connection.active === false ? CABLE_COLORS.error.primary :
     isShutdown || (isSTPBlocking && isVlan1) ? (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-400)') :
       isPoweredOff ? (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-400)') :
         (isWireless ? activeWirelessColor : CABLE_COLORS[connection.cableType].primary);
+  // Override color for wireless connections with zero strength
+  if (isWireless && wirelessStrength === 0) {
+    baseColor = CABLE_COLORS.wireless?.error?.primary || 'var(--color-warning-500)';
+  }
+  const color = baseColor;
 
   // Calculate offset for parallel lines (spread out from center)
   const maxOffset = 20;
@@ -218,7 +271,9 @@ export const ConnectionLine = memo(function ConnectionLine({
         vectorEffect="non-scaling-stroke"
         style={{
           // Inactive cables (powered off / shutdown) get higher opacity so they're visible in dark mode
-          opacity: isHovered ? 0.9 : (isEffectivelyActive ? (isWireless ? 0.82 : 0.4) : 0.65),
+          opacity: isHovered ? 0.9 : (isEffectivelyActive ? (
+              isWireless ? (wirelessStrength !== undefined ? (0.2 + (wirelessStrength / 5) * 0.6) : 0.1) : 0.4
+            ) : 0.65),
           filter: isHovered || (graphicsQuality === 'high' && isEffectivelyActive && !isWireless) ?
             'drop-shadow(0 0 0.5px ' + color + ') drop-shadow(0 0 1px ' + color + ')' :
             'none',
@@ -370,6 +425,11 @@ export const ConnectionLine = memo(function ConnectionLine({
     getPortSTPBlocking(prevProps.deviceStates, prevProps.sourceDevice, prevProps.connection.sourcePort) ===
     getPortSTPBlocking(nextProps.deviceStates, nextProps.sourceDevice, nextProps.connection.sourcePort) &&
     getPortSTPBlocking(prevProps.deviceStates, prevProps.targetDevice, prevProps.connection.targetPort) ===
-    getPortSTPBlocking(nextProps.deviceStates, nextProps.targetDevice, nextProps.connection.targetPort)
+    getPortSTPBlocking(nextProps.deviceStates, nextProps.targetDevice, nextProps.connection.targetPort) &&
+    prevProps.topologyDevices === nextProps.topologyDevices &&
+    getWlan0SignalKey(prevProps.deviceStates, prevProps.sourceDevice) ===
+    getWlan0SignalKey(nextProps.deviceStates, nextProps.sourceDevice) &&
+    getWlan0SignalKey(prevProps.deviceStates, prevProps.targetDevice) ===
+    getWlan0SignalKey(nextProps.deviceStates, nextProps.targetDevice)
   );
 });

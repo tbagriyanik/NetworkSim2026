@@ -360,6 +360,7 @@ export function TopologyCanvasLayer({
                                         onMouseLeave={handleConnectionMouseLeave}
                                         onClick={(e: React.MouseEvent) => handleConnectionClick(e, conn.id)}
                                         deviceStates={deviceStates}
+                                        topologyDevices={devices}
                                     />
                                     <ConnectionHandle
                                         connection={conn}

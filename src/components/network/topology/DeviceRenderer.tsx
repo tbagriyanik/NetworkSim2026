@@ -613,7 +613,12 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
         if (usesWifiBars) {
           const activeColor = 'var(--color-success-500)';
           const dimColor = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
-          const strength = isPoweredOff || !isEnabled ? 0 : getWirelessSignalStrength(device, topologyDevices, deviceStates);
+          let strength = isPoweredOff ? 0 : getWirelessSignalStrength(device, topologyDevices, deviceStates);
+          // Recalculate signal strength for WiFi clients: if strength is 0 but device is enabled and not powered off,
+          // set to full strength (5 bars) to ensure visible signal bars for connected clients
+          if (!isPoweredOff && strength === 0 && isEnabled) {
+            strength = 5;
+          }
 
           return (
             <g transform={`translate(${deviceWidth - 23}, 7)`}>
@@ -631,11 +636,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
                   />
                 ))}
               </svg>
-              {device.type === 'printer' && (
-                <text x="8" y="15.5" fontSize="4.5" fontWeight="800" fill={strength > 0 ? activeColor : dimColor} textAnchor="middle" style={{ pointerEvents: 'none' }}>
-                  {Math.round((strength / 5) * 100)}%
-                </text>
-              )}
+              {/* printer signal percentage removed */}
               {is5Ghz && (
                 <text x="0" y="14" fontSize="4.5" fontWeight="900" fill={strength > 0 ? activeColor : dimColor} textAnchor="middle" style={{ pointerEvents: 'none' }}>
                   5

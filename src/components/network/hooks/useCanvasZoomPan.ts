@@ -91,14 +91,25 @@ export function useCanvasZoomPan({
 
   const handleZoomWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
-    // Use refs for fresh values (pan state may be stale during direct DOM pan writes)
     const currentZoom = zoomRef.current;
     const currentPan = panRef.current;
-    const zoomDelta = e.deltaY * -0.001; // Reverse direction and adjust sensitivity
-    let newZoom = currentZoom + zoomDelta;
+
+    // Normalize wheel delta across browsers and hardware (deltaMode 0: pixels, 1: lines, 2: pages)
+    let delta = e.deltaY;
+    if (e.deltaMode === 1) delta *= 16;
+    else if (e.deltaMode === 2) delta *= 800;
+
+    // Limit maximum step jump per wheel event tick for extra smoothness
+    delta = Math.max(-100, Math.min(100, delta));
+
+    // Exponential scaling factor: scale per notch is smooth and scale-independent
+    const factor = Math.pow(0.9985, delta);
+    let newZoom = currentZoom * factor;
 
     // Clamp to min/max zoom
     newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+
+    if (Math.abs(newZoom - currentZoom) < 0.0001) return;
 
     if (!canvasRef.current) {
       setZoom(newZoom);
@@ -119,8 +130,6 @@ export function useCanvasZoomPan({
     };
 
     // PERFORMANCE: Write transform directly to DOM for immediate visual feedback.
-    // Defer React state sync until wheel activity stops (debounce) to avoid
-    // React re-renders overwriting the DOM transform on every wheel tick.
     const g = svgContentGroupRef.current;
     if (g) {
       g.style.transform = `translate3d(${newPan.x}px, ${newPan.y}px, 0px) scale(${newZoom})`;

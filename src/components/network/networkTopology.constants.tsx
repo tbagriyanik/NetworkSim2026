@@ -107,11 +107,17 @@ export const DEVICE_ICONS = {
   ),
 };
 
-export const CABLE_COLORS: Record<CableType | 'error', { primary: string; bg: string; text: string; border: string }> = {
+export const CABLE_COLORS: Record<CableType | 'error', { primary: string; bg: string; text: string; border: string; error?: { primary: string; bg: string; text: string; border: string } }> = {
   straight: { primary: 'var(--color-primary-500)', bg: 'bg-primary-500', text: 'text-primary-400', border: 'border-primary-500/30' },
   crossover: { primary: 'var(--color-warning-500)', bg: 'bg-warning-500', text: 'text-warning-400', border: 'border-warning-500/30' },
   console: { primary: 'var(--color-accent-500)', bg: 'bg-accent-500', text: 'text-accent-400', border: 'border-accent-500/30' },
-  wireless: { primary: 'var(--color-warning-400)', bg: 'bg-purple-500', text: 'text-purple-400', border: 'border-purple-500/30' },
+  wireless: {
+    primary: 'var(--color-warning-400)',
+    bg: 'bg-purple-500',
+    text: 'text-purple-400',
+    border: 'border-purple-500/30',
+    error: { primary: 'var(--color-warning-500)', bg: 'bg-warning-500', text: 'text-warning-400', border: 'border-warning-500/30' },
+  },
   serial: { primary: 'var(--color-success-500)', bg: 'bg-success-500', text: 'text-success-400', border: 'border-success-500/30' },
   fiber: { primary: 'var(--color-primary-500)', bg: 'bg-primary-500', text: 'text-primary-400', border: 'border-primary-500/30' },
   error: { primary: 'var(--color-error-500)', bg: 'bg-error-500', text: 'text-error-400', border: 'border-error-500/30' },

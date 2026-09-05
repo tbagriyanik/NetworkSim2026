@@ -332,11 +332,11 @@ export function getWirelessSignalStrength(
   if (!device) return 0;
   const safeDeviceStates = ensureDeviceStatesMap(deviceStates);
   const pcWifi = getDeviceWifiConfig(device, safeDeviceStates);
-  if (!pcWifi || !pcWifi.enabled || !pcWifi.ssid) return 0;
+  if (!pcWifi || !pcWifi.enabled) return 0;
   if (pcWifi.powerDisabled) return 0;
   if (pcWifi.mode !== 'client' && pcWifi.mode !== 'sta') return 0;
 
-  const targetSsid = pcWifi.ssid.toLowerCase();
+  const rawSsid = (pcWifi.ssid || '').trim().toLowerCase();
   let minDist = Infinity;
 
   devices.forEach(dev => {
@@ -345,13 +345,19 @@ export function getWirelessSignalStrength(
     const devState = safeDeviceStates.get(dev.id);
     const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
     const activeSsids = getApActiveSsids(apWifi, devState);
-    const matchingSsid = activeSsids.find(s => s.ssid.toLowerCase() === targetSsid);
-    if (!matchingSsid) return;
+    if (activeSsids.length === 0) return;
+
+    // Check matching SSID if client has specified SSID, or pick nearest AP if default/empty
+    const matchingSsid = rawSsid
+      ? activeSsids.find(s => s.ssid.trim().toLowerCase() === rawSsid)
+      : activeSsids[0];
+
+    if (!matchingSsid && rawSsid) return;
 
     const clientSec = (pcWifi.security || 'open').toLowerCase();
-    const apSec = (matchingSsid.security || 'open').toLowerCase();
-    if (clientSec !== apSec) return;
-    if (apSec !== 'open' && matchingSsid.password !== pcWifi.password) return;
+    const apSec = (matchingSsid?.security || 'open').toLowerCase();
+    if (rawSsid && clientSec !== apSec) return;
+    if (rawSsid && apSec !== 'open' && matchingSsid?.password && pcWifi.password && matchingSsid.password !== pcWifi.password) return;
 
     if (apWifi && !wifiChannelMatches(apWifi, pcWifi)) return;
     if (!wifiMacFilterMatches(apWifi, device, safeDeviceStates)) return;
@@ -362,13 +368,14 @@ export function getWirelessSignalStrength(
     if (dist < minDist) minDist = dist;
   });
 
-  if (minDist === Infinity) return 0;
-  if (minDist < 150) return 5;
-  if (minDist < 250) return 4;
-  if (minDist < 350) return 3;
-  if (minDist < 450) return 2;
-  if (minDist < 550) return 1;
-  return 0;
+  if (minDist === Infinity) {
+    return 0;
+  }
+  if (minDist < 250) return 5;
+  if (minDist < 450) return 4;
+  if (minDist < 650) return 3;
+  if (minDist < 850) return 2;
+  return 1;
 }
 
 export function getWirelessDistance(
