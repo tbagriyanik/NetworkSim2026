@@ -269,7 +269,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     <div class="header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;">
       <div>
         <h1>🔧 ${safeDeviceName}</h1>
-        <div class="subtitle">${isTurkish ? 'Kablosuz Ağ Yönetimi & Çoklu SSID Portalı' : 'Wireless Network Administration & Multi-SSID Portal'}</div>
+        <div class="subtitle">${isTurkish ? 'Kablosuz Ağ Yönetimi & Çoklu SSID Kapısı' : 'Wireless Network Administration & Multi-SSID Portal'}</div>
         <div class="device-info">
           <span>📍 IP: ${safeDeviceIp}</span>
           <span>📡 WLAN Interface: wlan0</span>
@@ -292,7 +292,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     <div id="wireless-tab" class="content" style="display:${activeTab === 'wireless' ? 'block' : 'none'};">
       <div class="toggle-switch">
         <div>
-          <h3>${isTurkish ? 'Kablosuz Radyo (Master Switch)' : 'Wireless Radio (Master Switch)'}</h3>
+          <h3>${isTurkish ? 'Kablosuz Radyo (Ana Anahtar)' : 'Wireless Radio (Master Switch)'}</h3>
           <p>${isTurkish ? 'Kablosuz erişim noktasını genel olarak etkinleştirin veya devre dışı bırakın' : 'Enable or disable the wireless access point globally'}</p>
         </div>
         <label class="switch">
@@ -309,11 +309,11 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
         <span class="status-badge">${wifi.enabled ? (isTurkish ? '● Çevrimiçi' : '● Online') : (isTurkish ? '○ Çevrimdışı' : '○ Offline')}</span>
       </div>
       
-      <h2 class="panel-title">${isTurkish ? 'Temel Kablosuz Ayarları (Ana SSID)' : 'Basic Wireless Settings (Primary SSID)'}</h2>
+      <h2 class="panel-title">${isTurkish ? 'Temel Kablosuz Ayarları' : 'Basic Wireless Settings (Primary SSID)'}</h2>
       
       <form id="wifi-form" onsubmit="handleSavePrimarySettings(event)">
         <div class="form-group">
-          <label for="wifi-ssid">${isTurkish ? 'Ana Ağ Adı (Primary SSID)' : 'Primary Network Name (SSID)'}</label>
+          <label for="wifi-ssid">${isTurkish ? 'Ana Ağ Adı' : 'Primary Network Name (SSID)'}</label>
           <input type="text" id="wifi-ssid" name="ssid" value="${safeSsid}" placeholder="${isTurkish ? 'WiFi ağ adınızı girin' : 'Enter your WiFi network name'}" maxlength="32" aria-describedby="wifi-ssid-hint">
           <span class="hint" id="wifi-ssid-hint">${isTurkish ? 'Bu ad ana kablosuz yayın olarak görülecektir' : 'This name will be visible as primary wireless broadcast'}</span>
         </div>
@@ -394,8 +394,8 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           <div class="form-group" style="margin-bottom:0;">
             <label for="profile-security">${isTurkish ? 'Güvenlik Türü' : 'Security Type'}</label>
             <select id="profile-security" onchange="var pWrap = document.getElementById('profile-password-wrap'); if(pWrap) pWrap.style.display = this.value === 'open' ? 'none' : 'block';">
-              <option value="wpa2">WPA2-PSK (Kişisel / Personal)</option>
-              <option value="wpa3">WPA3-SAE (Yüksek Güvenlik)</option>
+              <option value="wpa2">${isTurkish ? 'WPA2-PSK (Kişisel)' : 'WPA2-PSK (Personal)'}</option>
+              <option value="wpa3">${isTurkish ? 'WPA3-SAE (Yüksek Güvenlik)' : 'WPA3-SAE (High Security)'}</option>
               <option value="open">${isTurkish ? 'Açık (Şifresiz)' : 'Open (No password)'}</option>
               <option value="wep">WEP</option>
             </select>

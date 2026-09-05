@@ -114,6 +114,40 @@ export function HttpBrowserWindow({
             onOpenWebPage(url);
           }
         }
+      } else if (event.data?.type === 'TOGGLE_PRINTER_WIFI' && event.data?.deviceId) {
+        const targetId = event.data.deviceId;
+        if (typeof setDevices === 'function') {
+          const currentDevices = useAppStore.getState().topology?.devices || [];
+          const updatedDevices = currentDevices.map(d => {
+            if (d.id === targetId && d.type === 'printer') {
+              const currentEnabled = d.wifi?.enabled !== false;
+              const currentWifi = d.wifi || { ssid: '', mode: 'client' as const };
+              const updatedPrinter = {
+                ...d,
+                wifi: {
+                  ...currentWifi,
+                  ssid: currentEnabled ? '' : (currentWifi.ssid || ''),
+                  mode: currentWifi.mode || 'client' as const,
+                  enabled: !currentEnabled,
+                }
+              };
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                  detail: {
+                    deviceId: d.id,
+                    config: { wifi: updatedPrinter.wifi }
+                  }
+                }));
+              }
+              return updatedPrinter;
+            }
+            return d;
+          });
+          setDevices(updatedDevices);
+          if (url) {
+            onOpenWebPage(url);
+          }
+        }
       }
     };
 

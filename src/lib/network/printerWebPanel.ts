@@ -26,10 +26,19 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
               <div style="font-size:12px;color:#94a3b8;margin-top:2px;">Embedded Print Server Web Management</div>
             </div>
           </div>
-          <div style="text-align:right;">
-            <span style="display:inline-block;padding:4px 12px;border-radius:9999px;background:rgba(16,185,129,0.2);color:#34d399;font-size:12px;font-weight:600;">
-              ● ${isTr ? 'Çevrimiçi / Hazır' : 'Online / Ready'}
+          <div style="text-align:right;display:flex;align-items:center;gap:10px;">
+            <span style="display:inline-block;padding:4px 12px;border-radius:9999px;background:${device.status === 'offline' ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'};color:${device.status === 'offline' ? '#f87171' : '#34d399'};font-size:12px;font-weight:600;">
+              ● ${device.status === 'offline' ? (isTr ? 'Çevrimdışı / Kapalı' : 'Offline / Disabled') : (isTr ? 'Çevrimiçi / Hazır' : 'Online / Ready')}
             </span>
+            <button type="button"
+              onclick="if(window.parent) window.parent.postMessage({type:'TOGGLE_PRINTER_WIFI',deviceId:'${device.id}'},'*')"
+              style="background:${device.wifi?.enabled !== false ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'};border:1px solid ${device.wifi?.enabled !== false ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)'};color:${device.wifi?.enabled !== false ? '#f87171' : '#34d399'};padding:6px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;"
+              onmouseover="this.style.opacity='0.8'"
+              onmouseout="this.style.opacity='1'"
+            >
+              <span>${device.wifi?.enabled !== false ? '🔌' : '⚡'}</span>
+              ${isTr ? (device.wifi?.enabled !== false ? 'Bağlantıyı Kapat' : 'Bağlantıyı Aç') : (device.wifi?.enabled !== false ? 'Disconnect Network' : 'Connect Network')}
+            </button>
           </div>
         </div>
 
@@ -43,9 +52,21 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
             <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Subnet / Gateway</div>
             <div style="font-family:monospace;font-size:12px;color:#cbd5e1;margin-top:4px;">${subnet} / ${gateway}</div>
           </div>
-          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
-            <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Wi-Fi SSID</div>
-            <div style="font-family:monospace;font-size:14px;color:#a855f7;margin-top:4px;font-weight:600;">📶 ${wifiSsid}</div>
+          <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;">
+            <div>
+              <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Wi‑Fi Network (SSID)</div>
+              <div style="font-family:monospace;font-size:14px;color:${device.wifi?.enabled !== false ? '#a855f7' : '#94a3b8'};margin-top:4px;font-weight:600;">
+                📶 ${wifiSsid || (isTr ? '(Devre Dışı)' : '(Disabled)')}
+              </div>
+            </div>
+            <button type="button"
+              onclick="if(window.parent) window.parent.postMessage({type:'TOGGLE_PRINTER_WIFI',deviceId:'${device.id}'},'*')"
+              style="margin-top:8px;background:${device.wifi?.enabled !== false ? 'rgba(239,68,68,0.2)' : 'rgba(16,185,129,0.2)'};border:1px solid ${device.wifi?.enabled !== false ? 'rgba(239,68,68,0.4)' : 'rgba(16,185,129,0.4)'};color:${device.wifi?.enabled !== false ? '#f87171' : '#34d399'};padding:5px 10px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;width:100%;text-align:center;"
+              onmouseover="this.style.opacity='0.8'"
+              onmouseout="this.style.opacity='1'"
+            >
+              ${isTr ? (device.wifi?.enabled !== false ? '❌ Wi‑Fi (SSID) Kapat' : '✅ Wi‑Fi (SSID) Aç') : (device.wifi?.enabled !== false ? '❌ Disable Wi‑Fi SSID' : '✅ Enable Wi‑Fi SSID')}
+            </button>
           </div>
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
             <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">MAC / DNS</div>

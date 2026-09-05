@@ -476,13 +476,15 @@ export function PrinterDeviceView({
                   type="button"
                   onClick={handleToggleWifi}
                   className={cn(
-                    "px-2 py-0.5 rounded text-[10px] font-semibold border transition-all cursor-pointer",
+                    "px-2.5 py-1 rounded-md text-[11px] font-bold border transition-all cursor-pointer flex items-center gap-1",
                     isWifiEnabled
-                      ? "bg-purple-950/50 border-purple-500/50 text-purple-300 hover:bg-purple-900/60"
-                      : "bg-secondary-800 border-secondary-700 text-secondary-400 hover:bg-secondary-700"
+                      ? "bg-red-950/60 border-red-600/60 text-red-300 hover:bg-red-900/80"
+                      : "bg-emerald-950/60 border-emerald-600/60 text-emerald-300 hover:bg-emerald-900/80"
                   )}
+                  title={isTr ? (isWifiEnabled ? 'Wi-Fi bağlantısını kapat' : 'Wi-Fi bağlantısını aç') : (isWifiEnabled ? 'Disconnect Wi-Fi' : 'Connect Wi-Fi')}
                 >
-                  {isWifiEnabled ? (isTr ? 'Wi-Fi: AÇIK' : 'Wi-Fi: ON') : (isTr ? 'Wi-Fi: KAPALI' : 'Wi-Fi: OFF')}
+                  <span>{isWifiEnabled ? '❌' : '✅'}</span>
+                  <span>{isWifiEnabled ? (isTr ? 'Wi-Fi Kapat' : 'Disable Wi-Fi') : (isTr ? 'Wi-Fi Aç' : 'Enable Wi-Fi')}</span>
                 </button>
               </div>
               {availableSsids.length === 0 ? (
@@ -552,7 +554,7 @@ export function PrinterDeviceView({
             <div>
               <div className="flex justify-between mb-1 font-medium">
                 <span>{isTr ? 'Kağıt Kasedi (Tray 1 - A4)' : 'Paper Tray 1 (A4)'}</span>
-                <span className="text-emerald-400 font-mono">100% (Dolu)</span>
+                <span className="text-emerald-400 font-mono">100%</span>
               </div>
               <div className="w-full bg-secondary-800 rounded-full h-2 overflow-hidden">
                 <div className="bg-emerald-500 h-full w-[100%]" />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { Smartphone, Wifi, Server, CheckCircle2, RefreshCw, Send, Radio, BatteryCharging, Signal, Globe, ExternalLink, PhoneCall, PhoneOff, Phone, User, Trash2 } from 'lucide-react';
+import { Smartphone, Wifi, Server, CheckCircle2, RefreshCw, Send, Radio, BatteryCharging, Signal, Globe, PhoneCall, PhoneOff, Phone, User, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store/appStore';
 import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';
@@ -47,6 +47,21 @@ export function MobileDeviceView({
   const setDevices = useAppStore(state => state.setDevices);
 
   const [activeScreen, setActiveScreen] = useState<'wifi' | 'ip' | 'ping' | 'voip'>('wifi');
+
+  // Current local time formatted as HH:mm
+  const [currentTime, setCurrentTime] = useState(() => {
+    const d = new Date();
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  });
+
+  useEffect(() => {
+    const updateClock = () => {
+      const d = new Date();
+      setCurrentTime(`${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`);
+    };
+    const timer = setInterval(updateClock, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // IP Settings
   const [ipMode, setIpMode] = useState<'dhcp' | 'static'>(device.ipConfigMode === 'dhcp' ? 'dhcp' : 'static');
@@ -176,6 +191,28 @@ export function MobileDeviceView({
     }
 
     return { assignedIp, assignedSubnet, assignedGateway, assignedDns };
+  };
+
+  const handleDisconnectWifi = () => {
+    setSelectedSsid('');
+    setDevices(
+      topologyDevices.map(d => {
+        if (d.id === device.id) {
+          return {
+            ...d,
+            wifi: {
+              ...d.wifi,
+              ssid: '',
+              enabled: false,
+              security: d.wifi?.security || ('open' as const),
+              channel: d.wifi?.channel || ('2.4GHz' as const),
+              mode: d.wifi?.mode || ('client' as const),
+            }
+          };
+        }
+        return d;
+      })
+    );
   };
 
   const handleSelectSsid = (ssid: string) => {
@@ -562,10 +599,10 @@ export function MobileDeviceView({
     }
     // 3. Public WAN / Cloud Internet Services (8.8.8.8, 1.1.1.1)
     else if (hostOrIp === '8.8.8.8' || hostOrIp === '8.8.4.4' || hostOrIp === '1.1.1.1' || targetDev?.type === 'cloud') {
-      setBrowserTitle(isTr ? 'Genel Arama Portalı - WAN' : 'Public Search Portal - WAN');
+      setBrowserTitle(isTr ? 'Genel Arama Kapısı - WAN' : 'Public Search Portal - WAN');
       setBrowserContent(`
         <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
-          <div style="font-size:36px;font-weight:bold;color:#3b82f6;margin-bottom:8px;">🌐 ${isTr ? 'Arama Portalı' : 'Web Portal'}</div>
+          <div style="font-size:36px;font-weight:bold;color:#3b82f6;margin-bottom:8px;">🌐 ${isTr ? 'Arama Kapısı' : 'Web Portal'}</div>
           <p style="font-size:14px;color:#64748b;margin-bottom:20px;">${isTr ? 'Genel WAN İnternet Geçidi (8.8.8.8)' : 'Public WAN Internet Gateway (8.8.8.8)'}</p>
           <div style="border:1px solid #cbd5e1;border-radius:24px;padding:10px 20px;max-width:320px;margin:0 auto 20px;font-size:13px;color:#475569;">🔍 ${isTr ? 'Arama yapın veya URL girin' : 'Search or type URL'}</div>
           <div style="background:#f1f5f9;padding:16px;border-radius:12px;font-size:12px;color:#334155;text-align:left;max-width:400px;margin:0 auto;">
@@ -621,7 +658,7 @@ export function MobileDeviceView({
       )}>
         {/* Status Bar */}
         <div className="flex justify-between items-center text-[10px] font-mono opacity-80 px-2">
-          <span>12:45</span>
+          <span>{currentTime}</span>
           <div className="w-16 h-3 bg-black rounded-full border border-slate-700" />
           <div className="flex items-center gap-1.5">
             <Signal className={cn("w-3 h-3 transition-colors", wifiSignalStrength > 0 ? "text-emerald-400" : "text-slate-600 opacity-40")} />
@@ -639,8 +676,8 @@ export function MobileDeviceView({
           <p className="text-[10px] text-slate-400">Mobile OS • Wi-Fi & VoIP</p>
         </div>
 
-        {/* App Navigation Bar (4 Tabs: Wi-Fi, IP Config, Ping, VoIP) */}
-        <div className="grid grid-cols-4 gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs">
+        {/* App Navigation Bar (5 Tabs: Wi-Fi, IP Config, Ping, VoIP, Web Browser) */}
+        <div className="grid grid-cols-5 gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs">
           <button
             onClick={() => setActiveScreen('wifi')}
             className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'wifi' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
@@ -672,27 +709,17 @@ export function MobileDeviceView({
               <span className="w-2 h-2 rounded-full bg-emerald-400 absolute -top-0.5 -right-0.5 animate-ping" />
             )}
           </button>
+          <button
+            onClick={() => handleOpenBrowserWindow()}
+            className="py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px] bg-gradient-to-r from-sky-600 to-blue-600 text-white hover:from-sky-500 hover:to-blue-500 shadow-sm"
+            title={isTr ? 'Mobil Web Tarayıcısı' : 'Mobile Web Browser'}
+          >
+            <Globe className="w-3 h-3" />
+            {isTr ? 'Tarayıcı' : 'Browser'}
+          </button>
         </div>
 
-        {/* Web Browser App Launcher Banner Button */}
-        <button
-          onClick={() => handleOpenBrowserWindow()}
-          className="w-full py-2.5 px-3.5 rounded-xl bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-500 hover:to-blue-500 text-white font-semibold text-xs transition-all flex items-center justify-between shadow-lg shadow-sky-600/20 active:scale-[0.99] group border border-sky-400/30"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
-              <Globe className="w-3.5 h-3.5 text-cyan-200" />
-            </div>
-            <div className="text-left">
-              <div className="font-bold text-xs">{isTr ? 'Mobil Web Tarayıcısı' : 'Mobile Web Browser'}</div>
-              <div className="text-[9px] opacity-70 font-mono">{browserUrl || 'http://192.168.1.1'}</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 text-[10px] bg-black/30 px-2 py-1 rounded-lg font-mono">
-            <span>{isTr ? 'Pencerede Aç' : 'Open Window'}</span>
-            <ExternalLink className="w-3 h-3" />
-          </div>
-        </button>
+
 
         {/* Screen Content */}
         <div className="min-h-[280px] flex-1 bg-slate-900 rounded-2xl p-4 border border-slate-800 text-xs space-y-4">
@@ -703,7 +730,13 @@ export function MobileDeviceView({
                   <Radio className="w-4 h-4" />
                   {isTr ? 'Kablosuz Ağlar (Wi-Fi)' : 'Available Wi-Fi SSIDs'}
                 </span>
-                <span className="text-[10px] text-emerald-400">802.11ax Ready</span>
+                {isWifiConnected ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">
+                    {isTr ? 'Ağ Aktif' : 'Link Active'}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-slate-500">802.11ax Ready</span>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -713,29 +746,40 @@ export function MobileDeviceView({
                   </div>
                 ) : (
                   availableSsids.map((ssid, idx) => {
-                    const isConnected = selectedSsid === ssid;
+                    const isConnected = selectedSsid === ssid && isWifiConnected;
                     return (
                       <div
                         key={idx}
-                        onClick={() => handleSelectSsid(ssid)}
+                        onClick={() => {
+                          if (isConnected) {
+                            handleDisconnectWifi();
+                          } else {
+                            handleSelectSsid(ssid);
+                          }
+                        }}
                         className={cn(
-                          "p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-colors",
-                          isConnected ? "bg-sky-950/60 border-sky-500 text-white" : "bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40"
+                          "p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all",
+                          isConnected ? "bg-sky-950/60 border-sky-500 text-white shadow-sm shadow-sky-900/30" : "bg-slate-950/40 border-slate-800 text-slate-300 hover:bg-slate-800/40"
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <Wifi className={cn("w-4 h-4", isConnected ? "text-sky-400" : "text-slate-500")} />
+                          <Wifi className={cn("w-4 h-4", isConnected ? "text-sky-400 animate-pulse" : "text-slate-500")} />
                           <div>
                             <div className="font-semibold text-xs">{ssid}</div>
                             <div className="text-[10px] opacity-60">WPA2/WPA3 Enterprise • 5GHz</div>
                           </div>
                         </div>
                         {isConnected ? (
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-medium">
-                            {isTr ? 'Bağlı' : 'Connected'}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-medium border border-sky-500/30">
+                              {isTr ? 'Bağlı' : 'Connected'}
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-lg bg-rose-950/80 text-rose-300 border border-rose-800 hover:bg-rose-900 font-medium">
+                              {isTr ? 'Kapat' : 'Disconnect'}
+                            </span>
+                          </div>
                         ) : (
-                          <span className="text-[10px] text-slate-500">{isTr ? 'Bağlan' : 'Connect'}</span>
+                          <span className="text-[10px] text-sky-400 hover:text-sky-300 font-medium">{isTr ? 'Bağlan' : 'Connect'}</span>
                         )}
                       </div>
                     );
@@ -743,10 +787,19 @@ export function MobileDeviceView({
                 )}
               </div>
 
-              <div className="pt-2">
+              <div className="pt-2 flex gap-2">
+                {isWifiConnected && (
+                  <button
+                    onClick={handleDisconnectWifi}
+                    className="flex-1 py-2 rounded-xl bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800/60 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    <Radio className="w-3.5 h-3.5" />
+                    {isTr ? 'Bağlantıyı Kopar' : 'Disconnect Wi-Fi'}
+                  </button>
+                )}
                 <button
                   onClick={handleSaveIp}
-                  className="w-full py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   {isTr ? 'Ağı Güncelle' : 'Update Wireless Link'}
@@ -773,7 +826,7 @@ export function MobileDeviceView({
                     onClick={() => handleSetIpMode('static')}
                     className={cn("px-2 py-0.5 rounded font-medium", ipMode === 'static' ? "bg-sky-600 text-white" : "text-slate-400")}
                   >
-                    Static
+                    {isTr ? 'Statik' : 'Static'}
                   </button>
                 </div>
               </div>
@@ -810,7 +863,7 @@ export function MobileDeviceView({
                   />
                 </div>
                 <div>
-                  <label className="block mb-1 font-medium opacity-80">DNS Server</label>
+                  <label className="block mb-1 font-medium opacity-80">{isTr ? 'DNS Sunucusu' : 'DNS Server'}</label>
                   <input
                     type="text"
                     disabled={ipMode === 'dhcp'}
@@ -852,7 +905,7 @@ export function MobileDeviceView({
                   type="text"
                   value={targetPingIp}
                   onChange={e => setTargetPingIp(e.target.value)}
-                  placeholder="Target IP (192.168.1.1)"
+                  placeholder={isTr ? "Hedef IP (192.168.1.1)" : "Target IP (192.168.1.1)"}
                   className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-white outline-none text-xs"
                 />
                 <button
@@ -990,25 +1043,60 @@ export function MobileDeviceView({
                               const devSubnet = device.subnet || '255.255.255.0';
                               return isSameSubnet(device.ip, d.ip, devSubnet) || Boolean(device.gateway && device.gateway !== '0.0.0.0');
                             })
-                            .map((d, i) => (
-                              <div
-                                key={i}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleInitiateVoipCall(d.ip);
-                                }}
-                                className="p-1.5 rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800/60 flex items-center justify-between cursor-pointer transition-colors"
-                              >
-                                <div className="truncate">
-                                  <div className="font-medium text-[11px] text-slate-200 truncate">{d.name}</div>
-                                  <div className="text-[9px] font-mono text-emerald-400/80">{d.ip}</div>
+                            .map((d, i) => {
+                              const check = checkConnectivity(
+                                device.id,
+                                d.ip!,
+                                topologyDevices,
+                                topologyConnections,
+                                deviceStates,
+                                isTr ? 'tr' : 'en',
+                                { protocol: 'udp', port: '5060' }
+                              );
+                              const isTargetPoweredOn = d.status !== 'offline';
+                              const isReachOk = check.success && isTargetPoweredOn;
+
+                              return (
+                                <div
+                                  key={i}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleInitiateVoipCall(d.ip);
+                                  }}
+                                  className={cn(
+                                    "p-1.5 rounded-lg border flex items-center justify-between cursor-pointer transition-colors",
+                                    isReachOk
+                                      ? "bg-slate-950/60 hover:bg-slate-800 border-slate-800/60"
+                                      : "bg-rose-950/30 hover:bg-rose-900/40 border-rose-800/40"
+                                  )}
+                                >
+                                  <div className="truncate flex-1 mr-2">
+                                    <div className="font-medium text-[11px] text-slate-200 truncate flex items-center gap-1.5">
+                                      <span>{d.name}</span>
+                                      {!isReachOk && (
+                                        <span className="text-[9px] px-1.5 py-0.2 rounded bg-rose-500/20 text-rose-300 font-normal">
+                                          {!isTargetPoweredOn
+                                            ? (isTr ? 'Cihaz Kapalı' : 'Powered Off')
+                                            : (check.error || (isTr ? 'Ağ Sorunu' : 'Network Issue'))}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className={cn("text-[9px] font-mono", isReachOk ? "text-emerald-400/80" : "text-rose-400/80")}>
+                                      {d.ip}
+                                    </div>
+                                  </div>
+                                  <span className={cn(
+                                    "text-[10px] px-2 py-0.5 rounded-md border flex items-center gap-1 shrink-0 font-medium",
+                                    isReachOk
+                                      ? "text-emerald-400 bg-emerald-950/60 border-emerald-800/50"
+                                      : "text-rose-300 bg-rose-950/60 border-rose-800/50"
+                                  )}>
+                                    <PhoneCall className="w-2.5 h-2.5" />
+                                    {isReachOk ? (isTr ? 'Ara' : 'Call') : (isTr ? 'Ağ Sorunlu' : 'Issue')}
+                                  </span>
                                 </div>
-                                <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/50 flex items-center gap-1">
-                                  <PhoneCall className="w-2.5 h-2.5" />
-                                  {isTr ? 'Ara' : 'Call'}
-                                </span>
-                              </div>
-                            ))
+                              );
+                            })
                         )}
                       </div>
                     </div>

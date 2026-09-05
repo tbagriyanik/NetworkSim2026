@@ -208,10 +208,10 @@ export function usePCPanelBrowser({
 
     if (resolvedTargetIp === '1.1.1.1' || resolvedTargetIp === '1.0.0.1' || resolvedTargetIp === '8.8.8.8' || resolvedTargetIp === '8.8.4.4' || (cloudTarget && connectivityResult.success && !httpServer)) {
       setHttpAppDeviceId(cloudTarget?.id || null);
-      setHttpAppTitle(language === 'tr' ? 'Genel Arama Portalı - WAN' : 'Public Search Portal - WAN');
+      setHttpAppTitle(language === 'tr' ? 'Genel Arama Kapısı - WAN' : 'Public Search Portal - WAN');
       setHttpAppContent(`
         <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
-          <div style="font-size:36px;font-weight:bold;color:#3b82f6;margin-bottom:8px;">🌐 ${language === 'tr' ? 'Arama Portalı' : 'Web Portal'}</div>
+          <div style="font-size:36px;font-weight:bold;color:#3b82f6;margin-bottom:8px;">🌐 ${language === 'tr' ? 'Arama Kapısı' : 'Web Portal'}</div>
           <p style="font-size:14px;color:#64748b;margin-bottom:20px;">${language === 'tr' ? 'Genel WAN İnternet Geçidi (1.1.1.1)' : 'Public WAN Internet Gateway (1.1.1.1)'}</p>
           <div style="border:1px solid #cbd5e1;border-radius:24px;padding:10px 20px;max-width:320px;margin:0 auto 20px;font-size:13px;color:#475569;">🔍 ${language === 'tr' ? 'Arama yapın veya URL girin' : 'Search or type URL'}</div>
           <div style="background:#f1f5f9;padding:16px;border-radius:12px;font-size:12px;color:#334155;text-align:left;max-width:400px;margin:0 auto;">
@@ -220,7 +220,7 @@ export function usePCPanelBrowser({
           </div>
         </main>
       `);
-      addLocalOutput('success', language === 'tr' ? 'Genel WAN Web Portalı açıldı.' : 'Public WAN Web Portal opened.');
+      addLocalOutput('success', language === 'tr' ? 'Genel WAN Web Kapısı açıldı.' : 'Public WAN Web Portal opened.');
     } else if (!httpServer) {
       setHttpAppDeviceId(null);
       setHttpAppTitle('404 Not Found');
