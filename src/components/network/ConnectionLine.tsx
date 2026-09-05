@@ -144,9 +144,6 @@ export const ConnectionLine = memo(function ConnectionLine({
   // DeviceRenderer evaluates the client against ALL topology devices (nearest matching AP), so the
   // drawn link must use the same inputs — otherwise the cable and the device bars disagree. Both ends
   // are probed because a wireless cable can be drawn in either direction (client→AP or AP→client).
-  const getWlanConnected = (device: CanvasDevice) =>
-    deviceStates?.get(device.id)?.ports?.['wlan0']?.status === 'connected' ||
-    (device.wifi?.enabled !== false && connection.active !== false);
   let wirelessStrength: number | undefined;
   if (isWireless) {
     const signalDevices = topologyDevices ?? [targetDevice];
@@ -154,13 +151,6 @@ export const ConnectionLine = memo(function ConnectionLine({
     wirelessStrength = sourceStrength > 0
       ? sourceStrength
       : getWirelessSignalStrength(targetDevice, signalDevices, deviceStates);
-    // Mirror DeviceRenderer's fallback: printers and connected clients render full signal
-    // even when config-based matching yields 0, so the cable must agree with the device.
-    if (wirelessStrength === 0 && !isPoweredOff) {
-      const anyPrinter = sourceDevice.type === 'printer' || targetDevice.type === 'printer';
-      const anyConnected = getWlanConnected(sourceDevice) || getWlanConnected(targetDevice);
-      if (anyPrinter || anyConnected) wirelessStrength = 5;
-    }
   }
 
   let baseColor = !isCompatible || connection.active === false ? CABLE_COLORS.error.primary :
@@ -272,8 +262,8 @@ export const ConnectionLine = memo(function ConnectionLine({
         style={{
           // Inactive cables (powered off / shutdown) get higher opacity so they're visible in dark mode
           opacity: isHovered ? 0.9 : (isEffectivelyActive ? (
-              isWireless ? (wirelessStrength !== undefined ? (0.2 + (wirelessStrength / 5) * 0.6) : 0.1) : 0.4
-            ) : 0.65),
+            isWireless ? (wirelessStrength !== undefined ? (0.2 + (wirelessStrength / 5) * 0.6) : 0.1) : 0.4
+          ) : 0.65),
           filter: isHovered || (graphicsQuality === 'high' && isEffectivelyActive && !isWireless) ?
             'drop-shadow(0 0 0.5px ' + color + ') drop-shadow(0 0 1px ' + color + ')' :
             'none',

@@ -89,6 +89,19 @@ export function useCanvasZoomPan({
     }
   }, [pan, onPanChange]);
 
+  // RAF throttling for wheel zoom: high-frequency trackpads emit many wheel
+  // events per second, so batching the direct DOM writes to one per animation
+  // frame keeps the zoom buttery smooth and prevents the compositor from
+  // stuttering under load.
+  const wheelRafRef = useRef<number | null>(null);
+
+  // Cancel any pending wheel RAF on unmount.
+  useEffect(() => {
+    return () => {
+      if (wheelRafRef.current) cancelAnimationFrame(wheelRafRef.current);
+    };
+  }, []);
+
   const handleZoomWheel = useCallback((e: React.WheelEvent) => {
     e.preventDefault();
     const currentZoom = zoomRef.current;
@@ -102,8 +115,10 @@ export function useCanvasZoomPan({
     // Limit maximum step jump per wheel event tick for extra smoothness
     delta = Math.max(-100, Math.min(100, delta));
 
-    // Exponential scaling factor: scale per notch is smooth and scale-independent
-    const factor = Math.pow(0.9985, delta);
+    // Gentle exponential scaling factor: a smaller base produces finer, more
+    // fluid zoom steps (~7-10% per notch instead of the old ~14-16%), and it
+    // stays scale-independent for a consistent feel at any zoom level.
+    const factor = Math.pow(0.999, delta);
     let newZoom = currentZoom * factor;
 
     // Clamp to min/max zoom
@@ -129,15 +144,23 @@ export function useCanvasZoomPan({
       y: cursorY - canvasCursorY * newZoom
     };
 
-    // PERFORMANCE: Write transform directly to DOM for immediate visual feedback.
-    const g = svgContentGroupRef.current;
-    if (g) {
-      g.style.transform = `translate3d(${newPan.x}px, ${newPan.y}px, 0px) scale(${newZoom})`;
-    }
     pendingPanRef.current = newPan;
     pendingZoomRef.current = newZoom;
     panRef.current = newPan;
     zoomRef.current = newZoom;
+
+    // PERFORMANCE: Write transform directly to DOM for immediate visual feedback,
+    // but batch the writes to one per animation frame so fast trackpad scrolling
+    // doesn't overload the compositor and cause jank.
+    if (wheelRafRef.current) cancelAnimationFrame(wheelRafRef.current);
+    wheelRafRef.current = requestAnimationFrame(() => {
+      wheelRafRef.current = null;
+      const g = svgContentGroupRef.current;
+      if (!g) return;
+      const finalPan = pendingPanRef.current ?? newPan;
+      const finalZoom = pendingZoomRef.current ?? newZoom;
+      g.style.transform = `translate3d(${finalPan.x}px, ${finalPan.y}px, 0px) scale(${finalZoom})`;
+    });
 
     // Debounced state sync: commit to React state 80ms after last wheel tick
     if (wheelSyncTimerRef.current) clearTimeout(wheelSyncTimerRef.current);

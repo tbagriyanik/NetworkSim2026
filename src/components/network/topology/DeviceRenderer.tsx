@@ -613,12 +613,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
         if (usesWifiBars) {
           const activeColor = 'var(--color-success-500)';
           const dimColor = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
-          let strength = isPoweredOff ? 0 : getWirelessSignalStrength(device, topologyDevices, deviceStates);
-          // Recalculate signal strength for WiFi clients: if strength is 0 but device is enabled and not powered off,
-          // set to full strength (5 bars) to ensure visible signal bars for connected clients
-          if (!isPoweredOff && strength === 0 && isEnabled) {
-            strength = 5;
-          }
+          const strength = (isPoweredOff || !isConnected) ? 0 : getWirelessSignalStrength(device, topologyDevices, deviceStates);
 
           return (
             <g transform={`translate(${deviceWidth - 23}, 7)`}>

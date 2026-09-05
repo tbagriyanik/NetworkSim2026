@@ -342,9 +342,13 @@ export function getWirelessSignalStrength(
   devices.forEach(dev => {
     if (dev.id === device.id) return;
     if (dev.status === 'offline') return;
+    // If the client is bound to a specific AP (BSSID), only the signal from
+    // that AP is meaningful. Ignoring this made a bound client report the
+    // distance/signal of a different AP that happened to share the SSID.
+    if (pcWifi.bssid && pcWifi.bssid !== dev.id) return;
     const devState = safeDeviceStates.get(dev.id);
     const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
-    const activeSsids = getApActiveSsids(apWifi, devState);
+    const activeSsids = getApActiveSsids(apWifi, devState, safeDeviceStates);
     if (activeSsids.length === 0) return;
 
     // Check matching SSID if client has specified SSID, or pick nearest AP if default/empty
@@ -368,13 +372,13 @@ export function getWirelessSignalStrength(
     if (dist < minDist) minDist = dist;
   });
 
-  if (minDist === Infinity) {
+  if (minDist === Infinity || minDist >= 600) {
     return 0;
   }
-  if (minDist < 250) return 5;
-  if (minDist < 450) return 4;
-  if (minDist < 650) return 3;
-  if (minDist < 850) return 2;
+  if (minDist < 150) return 5;
+  if (minDist < 280) return 4;
+  if (minDist < 400) return 3;
+  if (minDist < 500) return 2;
   return 1;
 }
 
@@ -394,9 +398,13 @@ export function getWirelessDistance(
 
   devices.forEach(dev => {
     if (dev.id === device.id) return;
+    // If the client is bound to a specific AP (BSSID), only measure the
+    // distance to that AP. This prevents reporting the distance of another
+    // AP that shares the same SSID.
+    if (pcWifi.bssid && pcWifi.bssid !== dev.id) return;
     const devState = safeDeviceStates.get(dev.id);
     const apWifi = getDeviceWifiConfig(dev, safeDeviceStates);
-    const activeSsids = getApActiveSsids(apWifi, devState);
+    const activeSsids = getApActiveSsids(apWifi, devState, safeDeviceStates);
     const matchingSsid = activeSsids.find(s => s.ssid.toLowerCase() === targetSsid);
     if (!matchingSsid) return;
 
@@ -605,7 +613,7 @@ function findWirelessCandidates(
       if (!wifiMacFilterMatches(apWifi, client, deviceStates)) continue;
 
       const dist = calculateDistance(client, ap);
-      if (dist >= 550) continue;
+      if (dist >= 600) continue;
 
       const txPower = apWifi?.txPowerDbm ?? 20;
       const rssi = calculateRssiDbm(txPower, dist);
