@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-4.5.0-blue)
+![Version](https://img.shields.io/badge/version-4.6.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.4-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -32,20 +32,18 @@ npx tsc --noEmit
 npm run check
 ```
 
-## 🚀 Key Features & Version Highlights (v4.5.0)
+## 🚀 Key Features & Version Highlights (v4.6.0)
 
-- **📞 Çift Yönlü Otomatik VoIP Arama Kapanma Guard:** Telefon araması esnasında ağ bağlantısı koptuğunda, kablo söküldüğünde veya karşı taraf kapandığında her iki cihazdaki aktif aramayı eş zamanlı sonlandıran canlı ağ denetim mekanizması.
-- **☁️ Bulut Cihazı SVG Port Düzeni (1-4):** Bulut (`cloud`) cihazının altında yer alan WAN port simgelerinin numaralandırması (1, 2, 3, 4) ve hizalaması optimize edildi.
-- **⌨️ Birleştirilmiş Fare & Klavye Kısayolları Paneli:** F1 Yardım penceresindeki tüm klavye kısayolları ve fare kullanım hareketleri (tıklama, sürükleme, zoom, pan, otomatik kopyalama) tek ve düzenli bir panel altında birleştirildi.
-- **📋 Auto-Copy on Mouse Selection:** Automatic clipboard copying upon completing mouse text selection (`onMouseUp`) across PC CMD, Linux Terminal, Console Tab, and Main CLI Terminal output containers.
-- **☁️ WAN / Public DNS ICMP Routing:** Seamless ICMP ping routing for public WAN addresses (`1.1.1.1`, `8.8.8.8`) via default gateways alongside HTTP web browsing.
-- **📐 Akıllı Hizalama Araç Çubuğu & Undo/Redo:** Seçili cihazlar için yenilenmiş Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala ikonları, kılavuz çizgileri ve `Ctrl+Z` / `Ctrl+Y` geçmiş desteği.
-- **🖨️ Ağ Yazıcısı & Print Server:** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`), Web Yönetim Paneli, LPD/IPP Paket Yakalama ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi.
-- **📱 Mobile Web Browser & VoIP:** Smartphone/Mobile device features a built-in Mobile Web Browser app alongside IP Voice / VoIP Dial Pad & Call History.
-- **☁️ Fully Functional Cloud / WAN Gateway (`cloud`):** Active Cloud device with default IP `203.0.113.1`, multiple WAN ports (`eth0..eth3`), public DNS/NTP simulation (`8.8.8.8`, `1.1.1.1`, `pool.ntp.org`), and real-time topology ICMP ping routing.
-- **📊 Syslog Server & L1 Hub Refinements:** Network Summary (Live Device List) displays Syslog Server status and log counts for PCs; Hub devices enforce Layer-1 unmanaged repeater logic excluding redundant CLI summaries.
-- **💾 Quota-Safe Storage & Persistence:** Optimized `secureStorage` and `useHistory` preventing browser `QuotaExceededError` and console warning spam.
-- **🖥️ Expanded Device Support (11 Device Types):** L1 Multiport Hub (`hub`), External Internet Cloud/WAN (`cloud`), Wireless Smartphone/Tablet (`mobile`), Network Printer (`printer`), PC, IoT, L2/L3 Switches, Routers, Firewalls, and WLC. Includes realistic SVG topology renderings, canvas Wi-Fi signal indicator bars, and a 2-row ultra-compact toolbar.
+- **🔍 Canlı Paket Trace UI Inspector (`PacketTraceInspector.tsx`):** Paketin tuval ve düğümler üzerindeki hop, stage (`L1`, `Port Security`, `STP`, `VLAN`, `ACL`, `Routing/MAC Lookup`, `QoS`, `Capture`), eylem (`pass`, `drop`, `forward`, `flood`, `trap`) kararlarını, gerekçe açıklamalarını ve frame snapshot'larını canlı gösteren interaktif paket analiz paneli.
+- **✉️ RFC Standartlarında ICMP Hata Kodları & Paket Üretimi (`icmpUtils.ts`):** RFC 792 ve RFC 4443 standartlarına uygun ICMP Type 3 (Destination Unreachable: Code 0 Net Unreachable, Code 1 Host Unreachable, Code 3 Port Unreachable, Code 13 Admin Prohibited) ve Type 11 (Time Exceeded: Code 0 TTL Exceeded) hata paket üretimi.
+- **⏳ Standartlaştırılmış Katman-3 TTL Decrementing (`packetPipeline.ts`):** Tüm Router, L3 Switch ve Firewall yönlendirme yollarında TTL'nin 1 eksiltilmesi ve TTL 0'a ulaştığında paketin düşürülüp göndericiye ICMP Time Exceeded yanıtı dönülmesi.
+- **⏱️ Gerçek Zamanlı ARP ve MAC Aging Motoru (`agingEngine.ts`):** MAC adresi dinamik kayıtları (300sn) ve ARP önbelleği (120sn) için canlı arka plan yaşlanma ve temizleme mekanizması.
+- **📊 ACL Paket Sayacı & Trace Entegrasyonu (`acl.ts`):** Erişim kontrol listelerindeki (ACL) her kural için canlı paket ve bayt eşleşme sayaçlarının tutulması, `show access-lists` çıktısına yansıtılması ve ACL engelinde ICMP Code 13 üretimi.
+- **🔌 VLAN & Trunk Uyumsuzluk Teşhisleri (`vlanDiagnostics.ts`):** Bağlı trunk ve access switch portlarındaki Native VLAN uyuşmazlığı, Allowed VLAN farkları ve Access VLAN uyumsuzluklarını otomatik tespit eden teşhis tarayıcısı.
+- **🎯 Detaylı Routing Karar Açıklamaları (`routing.ts`):** Rota seçiminde Longest-Prefix Match (LPM) (örn. `10.0.0.0/24`), Administrative Distance (AD) (Connected: 0, Static: 1, EIGRP: 90, OSPF: 110, RIP: 120) ve Metric değerlerini analiz edip gerekçelendiren `findRouteDetailed` motoru.
+- **🪵 MAC Yaşam Döngüsü Olay Günlüğü (`macLearning.ts`):** MAC adresi öğrenme (`LEARN`), portlar arası geçiş/flapping (`MOVE`), zaman aşımıyla silinme (`AGE`) ve unicast miss durumında taşma (`FLOOD`) olaylarını yayınlayan log altyapısı.
+- **📈 Canlı Arayüz Trafik İstatistikleri (`packetPipeline.ts`):** Arayüzlerden paket geçtikçe ve düştükçe `rxPackets`, `rxBytes`, `txPackets`, `txBytes`, `rxDrops`, `txDrops` istatistiklerinin gerçek zamanlı hesaplanması ve `show interfaces` komutuna yansıtılması.
+- **🛑 Paket Düşürme Nedeni Standartlaştırması (`dropReasons.ts`):** Tüm Katman-1, Katman-2, Katman-3, ACL, STP ve Güvenlik paket düşürme gerekçelerinin standart `DropReasonCode` enum'ları ve düzeltme önerileri ile sınıflandırılması.
 
 ---
 
@@ -53,7 +51,7 @@ npm run check
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 4.5.0 |
+| Version / Sürüm | 4.6.0 |
 | Total Lines / Toplam Satır (`src/`) | 167,963 |
 | Source Files / Kaynak Dosya | 717 |
 | Documentation Files / Dokümantasyon Dosya | 32 |

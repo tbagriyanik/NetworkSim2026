@@ -5,7 +5,7 @@
  * - OSPF Neighbor (RFC 2328 §10.3)
  * - STP Port (IEEE 802.1D / 802.1W RSTP)
  * - DHCP Client (RFC 2131 §4.4)
- * - EIGRP Neighbor (Cisco proprietary)
+ * - EIGRP Neighbor (proprietary)
  * - LACP Port (IEEE 802.3ad)
  *
  * All state machines are PURE FUNCTIONS: given current state + event,

@@ -22,8 +22,18 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu (v4.5.0)
+### Güncel özellik durumu (v4.6.0)
 
+- **🔍 Canlı Paket Trace UI Inspector:** Paketin tuval ve düğümler üzerindeki hop, aşama (`L1`, `Port Security`, `STP`, `VLAN`, `ACL`, `Routing/MAC Lookup`, `QoS`, `Capture`), eylem (`pass`, `drop`, `forward`, `flood`, `trap`) kararlarını, gerekçe açıklamalarını ve frame snapshot'larını canlı gösteren interaktif paket analiz paneli (`PacketTraceInspector.tsx`).
+- **✉️ RFC Standartlarında ICMP Hata Kodları & Paket Üretimi:** RFC 792 ve RFC 4443 standartlarına uygun ICMP Type 3 (Destination Unreachable: Code 0 Net Unreachable, Code 1 Host Unreachable, Code 3 Port Unreachable, Code 13 Admin Prohibited) ve Type 11 (Time Exceeded: Code 0 TTL Exceeded) hata paket üretimi (`icmpUtils.ts`).
+- **⏳ Standartlaştırılmış Katman-3 TTL Decrementing:** Tüm Router, L3 Switch ve Firewall yönlendirme yollarında TTL'nin 1 eksiltilmesi ve TTL 0'a ulaştığında paketin düşürülüp göndericiye ICMP Time Exceeded yanıtı dönülmesi (`packetPipeline.ts`).
+- **⏱️ Gerçek Zamanlı ARP ve MAC Aging Motoru:** MAC adresi dinamik kayıtları (300sn) ve ARP önbelleği (120sn) için canlı arka plan yaşlanma ve temizleme mekanizması (`agingEngine.ts`).
+- **📊 ACL Paket Sayacı & Trace Entegrasyonu:** Erişim kontrol listelerindeki (ACL) her kural için canlı paket ve bayt eşleşme sayaçlarının tutulması, `show access-lists` çıktısına yansıtılması ve ACL engelinde ICMP Code 13 üretimi (`acl.ts`).
+- **🔌 VLAN & Trunk Uyumsuzluk Teşhisleri:** Bağlı trunk ve access switch portlarındaki Native VLAN uyuşmazlığı, Allowed VLAN farkları ve Access VLAN uyumsuzluklarını otomatik tespit eden teşhis tarayıcısı (`vlanDiagnostics.ts`).
+- **🎯 Detaylı Routing Karar Açıklamaları:** Rota seçiminde Longest-Prefix Match (LPM) (örn. `10.0.0.0/24`), Administrative Distance (AD) (Connected: 0, Static: 1, EIGRP: 90, OSPF: 110, RIP: 120) ve Metric değerlerini analiz edip gerekçelendiren `findRouteDetailed` motoru (`routing.ts`).
+- **🪵 MAC Yaşam Döngüsü Olay Günlüğü:** MAC adresi öğrenme (`LEARN`), portlar arası geçiş/flapping (`MOVE`), zaman aşımıyla silinme (`AGE`) ve unicast miss durumunda taşma (`FLOOD`) olaylarını yayınlayan log altyapısı (`macLearning.ts`).
+- **📈 Canlı Arayüz Trafik İstatistikleri:** Arayüzlerden paket geçtikçe ve düştükçe `rxPackets`, `rxBytes`, `txPackets`, `txBytes`, `rxDrops`, `txDrops` istatistiklerinin gerçek zamanlı hesaplanması ve `show interfaces` komutuna yansıtılması (`packetPipeline.ts`).
+- **🛑 Paket Düşürme Nedeni Standartlaştırması:** Tüm Katman-1, Katman-2, Katman-3, ACL, STP ve Güvenlik paket düşürme gerekçelerinin standart `DropReasonCode` enum'ları ve düzeltme önerileri ile sınıflandırılması (`dropReasons.ts`).
 - **📞 Çift Yönlü Otomatik VoIP Arama Kapanma Guard:** Telefon araması esnasında ağ bağlantısı koptuğunda, kablo söküldüğünde veya karşı taraf kapandığında her iki cihazdaki aktif aramayı eş zamanlı sonlandıran canlı ağ denetim mekanizması (`usePeriodicNetworkPackets.ts`, `MobileDeviceView.tsx`).
 - **☁️ Bulut Cihazı SVG Port Düzeni ve Numaralandırması (1-4):** Bulut (`cloud`) cihazının altındaki portların konumlandırması sağa hizalandı ve port isimleri (`W`, `L`) standartlaşarak `1`, `2`, `3`, `4` rakamlarına çevrildi (`DeviceRenderer.tsx`).
 - **⌨️ Birleştirilmiş Fare & Klavye Kısayolları Paneli:** F1 Yardım ve Komut Referansı modalında Klavye Kısayolları kategorisi, tüm klavye tuş kombinasyonları ve fare etkileşimlerini (Sol Tık, Çift Tık, Sağ Tık, Scroll Zoom, Pan, Otomatik Kopyalama) kapsayacak şekilde **"Fare & Klavye Kısayolları"** tek birleştirilmiş başlık altında yeniden düzenlendi (`networkTopology.commands.ts`).

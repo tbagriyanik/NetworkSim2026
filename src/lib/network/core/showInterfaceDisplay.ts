@@ -451,7 +451,7 @@ export function cmdShowIpInterfaceBrief(
     }
   });
 
-  // Add summary lines for better Cisco compatibility
+  // Add summary lines for better compatibility
   const totalInterfaces = Object.keys(state.ports || {}).length;
   const upInterfaces = Object.values(state.ports || {}).filter(p => !p.shutdown).length;
   output += `   ${totalInterfaces} total, ${upInterfaces} ${upInterfaces === 1 ? 'up' : 'up'}, ${totalInterfaces - upInterfaces} ${totalInterfaces - upInterfaces === 1 ? 'down' : 'down'}\n`;
