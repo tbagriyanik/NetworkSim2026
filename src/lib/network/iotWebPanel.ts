@@ -109,18 +109,6 @@ export const generateIotWebPanelContent = (
         <title>${isTurkish ? 'IoT Web Paneli' : 'IoT Web Panel'}</title>
         <style>
           ${generateIotPanelStyles()}
-          body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: ${colors.neutral['100']};
-            color: ${colors.neutral.dark};
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            touch-action: manipulation;
-          }
           .container {
             background-color: ${colors.common.white};
             border-radius: 8px;
@@ -578,15 +566,23 @@ export const generateIotDevicePageContent = (
             --color-warning-100: ${colors.amber['100']};
             --color-warning-700: ${colors.amber['700']};
           }
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+            overflow-y: auto;
+            overflow-x: auto;
+          }
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: ${colors.neutral['100']};
             color: ${colors.neutral.dark};
-            margin: 0;
             padding: 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
+            box-sizing: border-box;
           }
           .device-panel {
             background-color: ${colors.common.white};

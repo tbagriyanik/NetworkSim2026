@@ -8,7 +8,7 @@ import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';
 import { getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { isRouterDevice, generateRouterAdminPage } from '@/components/network/WifiControlPanel';
 import { generatePrinterWebPanelContent } from '@/lib/network/printerWebPanel';
-import { generateIotWebPanelContent } from '@/lib/network/iotWebPanel';
+import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
 import { HttpBrowserWindow } from '@/components/network/pc-panel/HttpBrowserWindow';
 import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { isSameSubnet } from '@/components/network/pc-panel/pcBrowser.utils';
@@ -561,6 +561,25 @@ export function MobileDeviceView({
       return;
     }
 
+    // Handle IoT device detail URL
+    if (rawUrl.startsWith('iot://iot-device/')) {
+      const targetDeviceId = rawUrl.split('iot://iot-device/')[1];
+      const targetDevice = topologyDevices.find(d => d.id === targetDeviceId);
+      if (targetDevice && targetDevice.type === 'iot') {
+        const iotDevices = topologyDevices.filter(d => d.type === 'iot');
+        const isActive = targetDevice.iot?.collaborationEnabled ?? true;
+        const isPoweredOff = targetDevice.status === 'offline';
+        const kind = targetDevice.iot?.kind || 'sensor';
+        const rules = targetDevice.iot?.rules || [];
+        const sensorType = targetDevice.iot?.sensorType || 'temperature';
+        const dataFlowDirection = targetDevice.iot?.dataFlowDirection || (kind === 'sensor' ? 'input' : 'output');
+        const iotDevicePage = generateIotDevicePageContent(targetDevice.id, targetDevice.name || targetDevice.id, language, isActive, isPoweredOff, kind, rules, sensorType, iotDevices, dataFlowDirection, topologyDevices);
+        setBrowserTitle(`${targetDevice.name || targetDevice.id} ${isTr ? 'Cihaz Yönetimi' : 'Device Management'}`);
+        setBrowserContent(iotDevicePage);
+        return;
+      }
+    }
+
     // Check target device by IP or hostname
     let targetDev = topologyDevices.find(d => d.ip === hostOrIp || d.name?.toLowerCase() === hostOrIp.toLowerCase() || d.id === hostOrIp);
 
@@ -645,6 +664,25 @@ export function MobileDeviceView({
       `);
     }
   };
+
+  useEffect(() => {
+    const handleMobilePanelMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin && event.origin !== 'null') {
+        return;
+      }
+      const data = event.data;
+      if (!data) return;
+
+      if (data.type === 'open-iot-device' && data.deviceId) {
+        handleNavigateBrowser(`iot://iot-device/${data.deviceId}`);
+      } else if (data.type === 'back-to-iot-list') {
+        handleNavigateBrowser('http://iot-panel');
+      }
+    };
+
+    window.addEventListener('message', handleMobilePanelMessage);
+    return () => window.removeEventListener('message', handleMobilePanelMessage);
+  }, [topologyDevices, language, isTr]);
 
   const handleOpenBrowserWindow = (targetUrl?: string) => {
     const defaultUrl = (device.gateway && device.gateway !== '0.0.0.0') ? device.gateway : '192.168.1.1';
@@ -1020,7 +1058,13 @@ export function MobileDeviceView({
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          if (dialNumber.trim()) {
+                          const val = dialNumber.trim();
+                          const isValidTarget = val && (
+                            /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(val) ||
+                            /^[0-9*#]+$/.test(val) ||
+                            topologyDevices.some(d => d.name?.toLowerCase() === val.toLowerCase() || d.id === val)
+                          );
+                          if (isValidTarget) {
                             handleInitiateVoipCall();
                           }
                         }
@@ -1055,8 +1099,15 @@ export function MobileDeviceView({
                   <div className="flex gap-2 pt-1">
                     <button
                       onClick={() => handleInitiateVoipCall()}
-                      disabled={!dialNumber.trim()}
-                      className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950"
+                      disabled={(() => {
+                        const val = dialNumber.trim();
+                        if (!val) return true;
+                        const isIp = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(val);
+                        const isExtensionDigits = /^[0-9*#]+$/.test(val);
+                        const isKnownDeviceName = topologyDevices.some(d => d.name?.toLowerCase() === val.toLowerCase() || d.id === val);
+                        return !(isIp || isExtensionDigits || isKnownDeviceName);
+                      })()}
+                      className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 disabled:cursor-not-allowed text-white font-semibold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950"
                     >
                       <Phone className="w-3.5 h-3.5" />
                       {isTr ? 'Ara' : 'Call'}

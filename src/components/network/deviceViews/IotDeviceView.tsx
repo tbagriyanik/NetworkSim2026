@@ -327,16 +327,6 @@ export function IotDeviceView({
     setBrowserTitle(isTr ? 'IoT Kontrol Paneli' : 'IoT Web Panel');
     setBrowserContent(content);
     setIsBrowserOpen(true);
-
-    const pcDevice = topologyDevices.find(d => d.type === 'pc');
-    if (pcDevice) {
-      window.dispatchEvent(new CustomEvent('pc-select-iot-device', {
-        detail: { deviceId: liveDevice.id }
-      }));
-      window.dispatchEvent(new CustomEvent('trigger-open-pc-panel', {
-        detail: { deviceId: pcDevice.id, program: 'desktop', targetUrl: 'http://iot-panel' }
-      }));
-    }
   };
 
   useEffect(() => {

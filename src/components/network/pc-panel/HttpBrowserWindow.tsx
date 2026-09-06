@@ -445,14 +445,14 @@ export function HttpBrowserWindow({
       headerBgClass={isDark ? 'border-success-500/30 bg-secondary-950 text-secondary-100' : 'border-success-500/50 bg-secondary-50 text-secondary-900'}
     >
       <div
-        className="flex-1 overflow-hidden bg-gradient-to-b from-transparent to-secondary-50 dark:to-secondary-900"
+        className="flex-1 overflow-auto custom-scrollbar p-1 bg-gradient-to-b from-transparent to-secondary-50 dark:to-secondary-900"
         style={{ contain: 'layout style paint' }}
       >
         <iframe
           title={title}
           srcDoc={srcDoc}
           sandbox="allow-forms allow-scripts allow-modals"
-          className="h-full w-full border-0 bg-white"
+          className="h-full w-full border-0 bg-white rounded-sm overflow-auto custom-scrollbar"
           style={{ display: 'block', touchAction: 'manipulation' }}
         />
       </div>

@@ -160,6 +160,13 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      overflow-y: auto;
+      overflow-x: auto;
+    }
+    
     body {
       font-family: system-ui, sans-serif;
       background: ${colors.topology.deviceText};
@@ -235,7 +242,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     input:checked + .slider { background-color: var(--color-success-500); }
     input:checked + .slider:before { transform: translateX(20px); }
     
-    .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; box-sizing: border-box; }
     .login-card { background: ${colors.common.white}; border-radius: 12px; width: 100%; max-width: 400px; padding: 32px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
     .login-header { text-align: center; margin-bottom: 24px; }
     .login-icon { font-size: 40px; margin-bottom: 8px; }

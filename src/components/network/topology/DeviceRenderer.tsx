@@ -1321,7 +1321,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
     Boolean(prev.device.ports?.some(p => p.id === 'wlan0'));
 
   const wifiContextChanged = isWifiClientDevice
-    ? prev.topologyDevices !== next.topologyDevices
+    ? prev.topologyDevices !== next.topologyDevices || prev.deviceStates !== next.deviceStates
     : false;
   return prev.device === next.device &&
     prev.isDragging === next.isDragging &&
