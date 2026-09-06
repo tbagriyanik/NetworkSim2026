@@ -56,12 +56,16 @@ const config: Config = {
         'note-blue': 'hsl(var(--note-blue))',
         'note-green': 'hsl(var(--note-green))'
   		},
-  		borderRadius: {
-  			lg: 'var(--radius)',
-  			md: 'calc(var(--radius) - 2px)',
-  			sm: 'calc(var(--radius) - 4px)'
-  		}
-  	}
+borderRadius: {
+   			lg: 'var(--radius)',
+   			md: 'calc(var(--radius) - 2px)',
+   			sm: 'calc(var(--radius) - 4px)'
+   		},
+   		fontFamily: {
+   			sans: ['var(--font-inria-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+   			mono: ['var(--font-geist-mono)', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'monospace']
+   		}
+   	}
   },
   plugins: [tailwindcssAnimate],
 };

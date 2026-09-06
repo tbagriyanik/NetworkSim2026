@@ -277,8 +277,8 @@ export const IoTSensorDisplay = ({
                         <line x1={margin.left} y1={margin.top} x2={width - margin.right} y2={margin.top} stroke={isDark ? 'var(--color-secondary-700)' : 'var(--color-secondary-300)'} strokeWidth="1" strokeDasharray="4 4" />
                         <line x1={margin.left} y1={margin.top + gHeight / 2} x2={width - margin.right} y2={margin.top + gHeight / 2} stroke={isDark ? 'var(--color-secondary-700)' : 'var(--color-secondary-300)'} strokeWidth="1" strokeDasharray="4 4" />
                         <line x1={margin.left} y1={margin.top + gHeight} x2={width - margin.right} y2={margin.top + gHeight} stroke={isDark ? 'var(--color-secondary-700)' : 'var(--color-secondary-300)'} strokeWidth="1" strokeDasharray="4 4" />
-                        <text x={0} y={margin.top + 3} fill={isDark ? 'var(--color-secondary-500)' : 'var(--color-secondary-400)'} fontSize="8" fontFamily="monospace">{max.toFixed(1)}</text>
-                        <text x={0} y={margin.top + gHeight + 3} fill={isDark ? 'var(--color-secondary-500)' : 'var(--color-secondary-400)'} fontSize="8" fontFamily="monospace">{min.toFixed(1)}</text>
+                        <text x={0} y={margin.top + 3} fill={isDark ? 'var(--color-secondary-500)' : 'var(--color-secondary-400)'} fontSize="8" fontFamily="var(--font-geist-mono)">{max.toFixed(1)}</text>
+                        <text x={0} y={margin.top + gHeight + 3} fill={isDark ? 'var(--color-secondary-500)' : 'var(--color-secondary-400)'} fontSize="8" fontFamily="var(--font-geist-mono)">{min.toFixed(1)}</text>
                         <polyline
                             fill="none"
                             stroke="url(#lineGradHistory)"

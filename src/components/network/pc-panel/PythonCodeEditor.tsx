@@ -320,7 +320,6 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
           tabSize: 4,
           fontSize,
           lineHeight: String(Math.round(fontSize * 1.5)) + 'px',
-          fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
         }}
         dangerouslySetInnerHTML={{ __html: highlighted }}
       />
@@ -351,7 +350,7 @@ export function PythonCodeEditor({ value, onChange, onKeyDown, isDark, placehold
         wrap={wordWrap ? 'soft' : 'off'}
         placeholder={placeholder}
         spellCheck={false}
-        style={{ tabSize: 4, fontSize, lineHeight: String(Math.round(fontSize * 1.5)) + 'px', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace', color: 'transparent', WebkitTextFillColor: 'transparent' }}
+        style={{ tabSize: 4, fontSize, lineHeight: String(Math.round(fontSize * 1.5)) + 'px', fontFamily: 'var(--font-geist-mono)', color: 'transparent', WebkitTextFillColor: 'transparent' }}
         className={`relative z-10 h-full w-full resize-none bg-transparent p-4 pl-16 font-mono text-xs leading-relaxed caret-primary-400 outline-none sm:text-sm ${isDark
             ? 'text-transparent placeholder:text-secondary-600 selection:bg-primary-800/50'
             : 'text-transparent placeholder:text-secondary-400 selection:bg-primary-200/60'

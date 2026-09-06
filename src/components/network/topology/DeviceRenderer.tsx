@@ -823,19 +823,19 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
       {/* Device IP */}
       {(device.type === 'pc' || device.type === 'mobile' || device.type === 'printer') && (
-        <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize={device.type === 'mobile' ? "9" : "10"} textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
+        <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize={device.type === 'mobile' ? "9" : "10"} textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none">
           {device.ip || (device.ipConfigMode === 'dhcp' ? 'DHCP' : '0.0.0.0')}
         </text>
       )}
 
       {/* Device VLAN / IoT Measured Value / Printer Job Count */}
       {device.type === 'pc' && (
-        <text x={deviceWidth / 2} y={81} style={{ fill: isDark ? 'var(--color-accent-400)' : 'var(--color-accent-700)' }} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
+        <text x={deviceWidth / 2} y={81} style={{ fill: isDark ? 'var(--color-accent-400)' : 'var(--color-accent-700)' }} fontSize="9" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none">
           VLAN {String(getLiveDeviceVlan(device))}
         </text>
       )}
       {device.type === 'printer' && (
-        <text x={deviceWidth / 2} y={81} style={{ fill: isDark ? '#f472b6' : '#be185d' }} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
+        <text x={deviceWidth / 2} y={81} style={{ fill: isDark ? '#f472b6' : '#be185d' }} fontSize="9" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none">
           {(() => {
             const completedCount = (device.printJobs || []).filter(j => j.status === 'completed').length;
             const activeCount = (device.printJobs || []).filter(j => j.status === 'printing' || j.status === 'queued').length;
@@ -872,14 +872,14 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           const isPassive = device.iot?.collaborationEnabled === false;
           if (isPoweredOff) {
             return (
-              <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+              <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                 <tspan x={deviceWidth / 2} dy="6">{isTR ? 'Kapalı' : 'Off'}</tspan>
               </text>
             );
           }
           if (isPassive) {
             return (
-              <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+              <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                 <tspan x={deviceWidth / 2} dy="6">{t.passive}</tspan>
               </text>
             );
@@ -894,7 +894,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             const isActive = device.iot?.value ?? false;
             const statusColor = isActive ? (isDark ? 'var(--color-warning-400)' : 'var(--color-warning-500)') : (isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)');
             return (
-              <text x={deviceWidth / 2} y={70} style={{ fill: statusColor }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+              <text x={deviceWidth / 2} y={70} style={{ fill: statusColor }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                 <tspan x={deviceWidth / 2} dy="6">{value}</tspan>
               </text>
             );
@@ -903,42 +903,42 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
           switch (sensorType) {
             case 'temperature':
               return (
-                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-success-400)' : 'var(--color-success-600)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-success-400)' : 'var(--color-success-600)' }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   <tspan x={deviceWidth / 2} dy="0">{t.temperature}:</tspan>
                   <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                 </text>
               );
             case 'humidity':
               return (
-                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-primary-500)' : 'var(--color-primary-600)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-primary-500)' : 'var(--color-primary-600)' }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   <tspan x={deviceWidth / 2} dy="0">{t.humidity}:</tspan>
                   <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                 </text>
               );
             case 'light':
               return (
-                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-warning-400)' : 'var(--color-warning-500)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-warning-400)' : 'var(--color-warning-500)' }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   <tspan x={deviceWidth / 2} dy="0">{t.lightLevel}:</tspan>
                   <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                 </text>
               );
             case 'sound':
               return (
-                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-warning-600)' : 'var(--color-warning-600)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-warning-600)' : 'var(--color-warning-600)' }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   <tspan x={deviceWidth / 2} dy="0">{t.sensorSound}:</tspan>
                   <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                 </text>
               );
             case 'motion':
               return (
-                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-600)' }} fontSize="10" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-600)' }} fontSize="10" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   <tspan x={deviceWidth / 2} dy="0">{t.sensorMotion}:</tspan>
                   <tspan x={deviceWidth / 2} dy="12">{value}</tspan>
                 </text>
               );
             default:
               return (
-                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-600)' }} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
+                <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-600)' }} fontSize="9" textAnchor="middle" fontFamily="var(--font-geist-mono)" className="select-none pointer-events-none" filter="drop-shadow(0px 0px 1px rgba(0,0,0,1))">
                   {value}
                 </text>
               );

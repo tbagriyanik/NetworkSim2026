@@ -3,6 +3,7 @@ import type { SwitchState, Port } from '@/lib/network/types';
 import type { NetworkPacketFrame } from './packetFrame';
 import { getRoutingTable, findRoute, Route } from '@/lib/network/routing';
 import { learnMacAddress } from '@/lib/network/macLearning';
+import { generateIcmpUnreachable } from './icmpUtils';
 
 export interface ForwardingEngineResult {
   accepted: boolean;
@@ -238,6 +239,26 @@ export function forwardPacketFrame(
       actionReason: sanity.reason
     };
   }
+
+  // TTL handling: Check incoming TTL
+  let ttl = frame.ttl;
+  if (ttl === undefined) ttl = 255; // Default TTL if not set
+
+  // If TTL is 0, drop the packet and send ICMP Time Exceeded
+  if (ttl <= 0) {
+    const icmpMsg = generateIcmpUnreachable(frame, 'time-exceeded', 'ttl-zero');
+    return {
+      accepted: false,
+      trapToControlPlane: true,
+      egressPorts: [],
+      actionReason: 'Packet dropped due to TTL zero',
+      responseFrame: icmpMsg
+    };
+  }
+
+  // Decrement TTL for this hop
+  ttl--;
+  frame.ttl = ttl; // Update frame TTL for propagation
 
   // Stage 2: Control plane traps
   const controlRes = processControlPlaneProtocols(frame, device, state);

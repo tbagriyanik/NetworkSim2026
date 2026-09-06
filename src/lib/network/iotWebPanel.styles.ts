@@ -4,9 +4,11 @@
  */
 
 import { colors } from '@/lib/design-tokens/colors';
+import { IFRAME_FONT_FACES_CSS, INRIA_SANS_STACK, GEIST_MONO_STACK } from '@/lib/design-tokens/iframeFonts';
 
 export function generateIotPanelStyles(): string {
   return `
+    ${IFRAME_FONT_FACES_CSS}
     :root {
       --color-primary-500: ${colors.status.info};
       --color-primary-700: ${colors.blue['700']};
@@ -30,7 +32,7 @@ export function generateIotPanelStyles(): string {
       overflow-x: auto;
     }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: ${INRIA_SANS_STACK};
       background-color: ${colors.neutral['100']};
       color: ${colors.neutral.dark};
       padding: 20px;
@@ -169,7 +171,7 @@ export function generateIotPanelStyles(): string {
     .device-mac {
       font-size: 12px;
       color: var(--color-muted-foreground);
-      font-family: 'Courier New', monospace;
+      font-family: ${GEIST_MONO_STACK};
     }
     .device-rules,
     .device-rule-count {

@@ -11,13 +11,48 @@ import { colors } from '@/lib/design-tokens/colors';
 const inriaSans = localFont({
   src: [
     {
+      path: "../../public/fonts/InriaSans-LatinExt-Light.woff2",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/InriaSans-Light.woff2",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/InriaSans-LatinExt-LightItalic.woff2",
+      weight: "300",
+      style: "italic",
+    },
+    {
+      path: "../../public/fonts/InriaSans-LightItalic.woff2",
+      weight: "300",
+      style: "italic",
+    },
+    {
+      path: "../../public/fonts/InriaSans-LatinExt-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
       path: "../../public/fonts/InriaSans-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/fonts/InriaSans-LatinExt-Regular.woff2",
+      path: "../../public/fonts/InriaSans-LatinExt-RegularItalic.woff2",
       weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../../public/fonts/InriaSans-RegularItalic.woff2",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../../public/fonts/InriaSans-LatinExt-Bold.woff2",
+      weight: "700",
       style: "normal",
     },
     {
@@ -26,9 +61,14 @@ const inriaSans = localFont({
       style: "normal",
     },
     {
-      path: "../../public/fonts/InriaSans-LatinExt-Bold.woff2",
+      path: "../../public/fonts/InriaSans-LatinExt-BoldItalic.woff2",
       weight: "700",
-      style: "normal",
+      style: "italic",
+    },
+    {
+      path: "../../public/fonts/InriaSans-BoldItalic.woff2",
+      weight: "700",
+      style: "italic",
     },
   ],
   variable: "--font-inria-sans",
@@ -39,13 +79,53 @@ const inriaSans = localFont({
 const geistMono = localFont({
   src: [
     {
+      path: "../../public/fonts/GeistMono-LatinExt-Light.woff2",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-Light.woff2",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-LatinExt-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
       path: "../../public/fonts/GeistMono-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/fonts/GeistMono-LatinExt.woff2",
-      weight: "400",
+      path: "../../public/fonts/GeistMono-LatinExt-Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-LatinExt-SemiBold.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-SemiBold.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-LatinExt-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/GeistMono-Bold.woff2",
+      weight: "700",
       style: "normal",
     },
   ],

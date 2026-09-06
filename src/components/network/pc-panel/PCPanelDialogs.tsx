@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, type ComponentProps } from 'react';
+import { IFRAME_FONT_FACES_CSS, INRIA_SANS_STACK, GEIST_MONO_STACK } from '@/lib/design-tokens/iframeFonts';
 import { usePCPanel } from './PCPanelContext';
 import { FtpFileTransferDialog } from './FtpFileTransferDialog';
 import { FileEditorModal } from './FileEditorModal';
@@ -37,8 +38,10 @@ export function PCPanelDialogs() {
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
+      ${IFRAME_FONT_FACES_CSS}
       html, body { margin: 0; padding: 0; }
-      body { font-family: system-ui, sans-serif; }
+      body { font-family: ${INRIA_SANS_STACK}; }
+      pre, code, kbd, samp { font-family: ${GEIST_MONO_STACK}; }
     </style>
   </head>
   <body>${httpAppContent}</body>

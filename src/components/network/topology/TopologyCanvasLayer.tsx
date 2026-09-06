@@ -405,7 +405,7 @@ export function TopologyCanvasLayer({
                     </g>
 
                     <rect data-export-hide="true" x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill="none" stroke={isDark ? 'var(--color-primary-600)' : 'var(--color-primary-700)'} strokeWidth={2 / zoom} strokeDasharray={`${6 / zoom},${4 / zoom}`} opacity={0.7} />
-                    <text data-export-hide="true" x={canvasSize.width - 80} y={canvasSize.height - 10} style={{ fill: 'var(--color-secondary-500)' }} fontSize={12 / zoom} fontFamily="monospace">
+                    <text data-export-hide="true" x={canvasSize.width - 80} y={canvasSize.height - 10} style={{ fill: 'var(--color-secondary-500)', fontFamily: 'var(--font-geist-mono)' }} fontSize={12 / zoom}>
                         {canvasSize.width} × {canvasSize.height}
                     </text>
                 </g>

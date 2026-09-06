@@ -5,6 +5,7 @@ import { colors } from '@/lib/design-tokens/colors';
 import { IotRule } from './iotWebPanel.types';
 import { generateIotPanelStyles } from './iotWebPanel.styles';
 import { generateIotPanelScript } from './iotWebPanel.script';
+import { IFRAME_FONT_FACES_CSS, INRIA_SANS_STACK, GEIST_MONO_STACK } from '@/lib/design-tokens/iframeFonts';
 
 // Re-export IotRule for backward compatibility
 export type { IotRule };
@@ -108,6 +109,7 @@ export const generateIotWebPanelContent = (
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>${isTurkish ? 'IoT Web Paneli' : 'IoT Web Panel'}</title>
         <style>
+          ${IFRAME_FONT_FACES_CSS}
           ${generateIotPanelStyles()}
           .container {
             background-color: ${colors.common.white};
@@ -237,7 +239,7 @@ export const generateIotWebPanelContent = (
           .device-mac {
             font-size: 12px;
             color: var(--color-muted-foreground);
-            font-family: 'Courier New', monospace;
+            font-family: ${GEIST_MONO_STACK};
           }
           .device-rules,
           .device-rule-count {
@@ -552,6 +554,7 @@ export const generateIotDevicePageContent = (
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>${isTurkish ? 'IoT Cihaz Yönetimi' : 'IoT Device Management'}: ${safeName}</title>
         <style>
+          ${IFRAME_FONT_FACES_CSS}
           :root {
             --color-primary-500: ${colors.status.info};
             --color-primary-700: ${colors.blue['700']};
@@ -575,7 +578,7 @@ export const generateIotDevicePageContent = (
             overflow-x: auto;
           }
           body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: ${INRIA_SANS_STACK};
             background-color: ${colors.neutral['100']};
             color: ${colors.neutral.dark};
             padding: 20px;

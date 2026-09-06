@@ -486,6 +486,7 @@
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    font-family: var(--font-inria-sans), sans-serif;
     font-size: 1rem;
   }
 
@@ -512,8 +513,12 @@
 }
 
 @layer utilities {
+  .font-inria {
+    font-family: var(--font-inria-sans);
+  }
+
   .font-geist-mono {
-    font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-family: var(--font-geist-mono), "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   }
 }
 
@@ -1496,7 +1501,7 @@ select {
 }
 
 select option {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-inria-sans), sans-serif;
   font-size: 0.875rem;
   padding: 6px 12px;
   background-color: #ffffff;
@@ -1508,4 +1513,3 @@ select option {
   background-color: #1e293b;
   color: #f8fafc;
 }
-

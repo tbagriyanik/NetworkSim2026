@@ -12,6 +12,11 @@ function generateNonce(): string {
  * Uses `unsafe-inline` to allow inline scripts in srcdoc iframe content
  * (IoT web panel, router admin page, etc.).
  */
+// Content hash of Next.js/Turbopack's internally injected inline script
+// (dev bootstrap). It is created at runtime without a nonce, so CSP must
+// whitelist it by hash. Stable for a given Next.js version.
+const NEXT_DEV_INLINE_SCRIPT_HASHES = "'sha256-h09xGrgXSXqNe+hPe6yJWX9EXQ3ZZV3YkFiHDhOaFd4='";
+
 export function middleware(request: NextRequest) {
   // Generate a random nonce for this request
   const nonce = generateNonce();
@@ -21,7 +26,7 @@ export function middleware(request: NextRequest) {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "object-src 'none'",
-    `script-src 'self' blob: 'nonce-${nonce}'`,
+    `script-src 'self' blob: 'nonce-${nonce}' ${NEXT_DEV_INLINE_SCRIPT_HASHES}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
@@ -38,7 +43,7 @@ export function middleware(request: NextRequest) {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "object-src 'none'",
-    `script-src 'self' blob: 'nonce-${nonce}'`,
+    `script-src 'self' blob: 'nonce-${nonce}' ${NEXT_DEV_INLINE_SCRIPT_HASHES}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",

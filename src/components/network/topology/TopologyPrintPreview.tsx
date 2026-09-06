@@ -89,7 +89,7 @@ export const TopologyPrintPreview: React.FC<TopologyPrintPreviewProps> = ({
                   textAnchor="middle"
                   fill={isDark ? "white" : "black"}
                   fontSize={12}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-geist-mono)"
                 >
                   {device.name}
                 </text>

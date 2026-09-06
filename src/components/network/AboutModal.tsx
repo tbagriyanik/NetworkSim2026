@@ -263,7 +263,7 @@ export function AboutModal({ isOpen, onClose, onStartTour, isExamActive = false 
                 <p className="text-sm">{t.termsText}</p>
                 <div className="p-3 bg-accent-500/5 rounded-lg border border-accent-500/20">
                   <p className="mt-2 text-xs text-secondary-500 dark:text-secondary-400">{t.openSourceInfo}</p>
-                  <span className="text-sm text-primary-500">{t.gitAddressLabel}</span>
+                  <span className="text-sm text-primary-500"><a href="http://yunus.sf.net">{t.gitAddressLabel}</a></span>
                 </div>
                 <div className="text-center">
                   <a

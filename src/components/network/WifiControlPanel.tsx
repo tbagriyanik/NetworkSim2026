@@ -10,6 +10,7 @@ import { renderWifiAdminAccountTemplate } from './wifiAdminAccountTemplate';
 import { renderWifiConfigFieldTemplates } from './wifiAdminConfigTemplate';
 import { sanitizeHTML, safeJSONForHTML } from '@/lib/security/sanitizer';
 import { colors } from '@/lib/design-tokens/colors';
+import { IFRAME_FONT_FACES_CSS, INRIA_SANS_STACK, GEIST_MONO_STACK } from '@/lib/design-tokens/iframeFonts';
 import {
   WIRELESS_CHANNELS_2_4GHZ,
   WIRELESS_CHANNELS_5GHZ,
@@ -137,6 +138,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${safeDeviceName} - ${isTurkish ? 'Kablosuz Ayarları' : 'Wireless Settings'}</title>
   <style>
+    ${IFRAME_FONT_FACES_CSS}
     :root {
       --color-primary-500: ${colors.status.info};
       --color-primary-600: ${colors.blue['600']};
@@ -168,7 +170,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     }
     
     body {
-      font-family: system-ui, sans-serif;
+      font-family: ${INRIA_SANS_STACK};
       background: ${colors.topology.deviceText};
       color: var(--color-secondary-900);
       line-height: 1.5;
@@ -213,10 +215,10 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .form-group { margin-bottom: 18px; }
     .form-group label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 13px; }
     .form-group input[type="text"], .form-group input[type="password"], .form-group input[type="number"], .form-group select {
-      width: 100%; padding: 10px 12px; border: 1px solid var(--color-secondary-300); border-radius: 6px; font-size: 13px; font-family: system-ui, -apple-system, sans-serif; transition: border-color 0.2s; background-color: var(--color-common-white, #fff); color: var(--color-secondary-900);
+      width: 100%; padding: 10px 12px; border: 1px solid var(--color-secondary-300); border-radius: 6px; font-size: 13px; font-family: ${INRIA_SANS_STACK}; transition: border-color 0.2s; background-color: var(--color-common-white, #fff); color: var(--color-secondary-900);
     }
     .form-group select option {
-      font-size: 13px; font-family: system-ui, -apple-system, sans-serif; padding: 6px; background-color: #ffffff; color: #0f172a;
+      font-size: 13px; font-family: ${INRIA_SANS_STACK}; padding: 6px; background-color: #ffffff; color: #0f172a;
     }
     .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--color-primary-500); box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
     .hint { display: block; font-size: 11px; color: var(--color-secondary-500); margin-top: 4px; }
@@ -255,7 +257,8 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
     .client-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--color-primary-100); display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--color-primary-600); shrink: 0; }
     .client-details { display: flex; flex-direction: column; min-width: 0; }
     .client-title { font-weight: 600; color: var(--color-secondary-900); font-size: 13px; display: flex; align-items: center; gap: 8px; }
-    .client-sub { font-size: 11px; color: var(--color-secondary-500); font-family: monospace; }
+    .client-sub { font-size: 11px; color: var(--color-secondary-500); font-family: ${GEIST_MONO_STACK}; }
+    .mono { font-family: ${GEIST_MONO_STACK}; }
     .client-badges { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; background: var(--color-secondary-100); color: var(--color-secondary-700); }
     .badge-primary { background: ${colors.blue['100']}; color: ${colors.blue['700']}; }
@@ -523,7 +526,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           <div style="margin-bottom:16px;">
             <label style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">${isTurkish ? 'MAC Adresi Ekle:' : 'Add MAC Address:'}</label>
             <div style="display:flex;gap:8px;">
-              <input type="text" id="manual-mac-input" placeholder="00:11:22:33:44:55" style="font-family:monospace;">
+              <input type="text" id="manual-mac-input" placeholder="00:11:22:33:44:55" style="font-family:${GEIST_MONO_STACK}">
               <button type="button" class="btn btn-secondary" onclick="addManualMac()">➕ ${isTurkish ? 'Ekle' : 'Add'}</button>
             </div>
           </div>
@@ -554,33 +557,33 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
           <div class="grid-2" style="margin-bottom:12px;">
             <div class="form-group">
               <label for="dhcp-start-ip">${isTurkish ? 'Başlangıç IP Adresi' : 'Start IP Address'}</label>
-              <input type="text" id="dhcp-start-ip" value="${safeStartIp}" placeholder="192.168.1.100" style="font-family:monospace;">
+              <input type="text" id="dhcp-start-ip" value="${safeStartIp}" placeholder="192.168.1.100" style="font-family:${GEIST_MONO_STACK};">
             </div>
             <div class="form-group">
               <label for="dhcp-end-ip">${isTurkish ? 'Bitiş IP Adresi' : 'End IP Address'}</label>
-              <input type="text" id="dhcp-end-ip" value="${safeEndIp}" placeholder="192.168.1.200" style="font-family:monospace;">
+              <input type="text" id="dhcp-end-ip" value="${safeEndIp}" placeholder="192.168.1.200" style="font-family:${GEIST_MONO_STACK};">
             </div>
           </div>
 
           <div class="grid-2" style="margin-bottom:12px;">
             <div class="form-group">
               <label for="dhcp-gateway">${isTurkish ? 'Varsayılan Ağ Geçidi' : 'Default Gateway'}</label>
-              <input type="text" id="dhcp-gateway" value="${safeGateway}" placeholder="192.168.1.1" style="font-family:monospace;">
+              <input type="text" id="dhcp-gateway" value="${safeGateway}" placeholder="192.168.1.1" style="font-family:${GEIST_MONO_STACK};">
             </div>
             <div class="form-group">
               <label for="dhcp-subnet">${isTurkish ? 'Alt Ağ Maskesi' : 'Subnet Mask'}</label>
-              <input type="text" id="dhcp-subnet" value="${safeSubnet}" placeholder="255.255.255.0" style="font-family:monospace;">
+              <input type="text" id="dhcp-subnet" value="${safeSubnet}" placeholder="255.255.255.0" style="font-family:${GEIST_MONO_STACK};">
             </div>
           </div>
 
           <div class="grid-2" style="margin-bottom:12px;">
             <div class="form-group">
               <label for="dhcp-dns">${isTurkish ? 'Birincil DNS Sunucusu' : 'Primary DNS Server'}</label>
-              <input type="text" id="dhcp-dns" value="${safeDns}" placeholder="192.168.1.1" style="font-family:monospace;">
+              <input type="text" id="dhcp-dns" value="${safeDns}" placeholder="192.168.1.1" style="font-family:${GEIST_MONO_STACK};">
             </div>
             <div class="form-group">
               <label for="dhcp-lease">${isTurkish ? 'Kiralama Süresi (Saat)' : 'Lease Time (Hours)'}</label>
-              <input type="number" id="dhcp-lease" value="${safeLeaseTime}" min="1" max="720" style="font-family:monospace;">
+              <input type="number" id="dhcp-lease" value="${safeLeaseTime}" min="1" max="720" style="font-family:${GEIST_MONO_STACK};">
             </div>
           </div>
         </div>
@@ -629,7 +632,7 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
 
       container.innerHTML = list.map(function(mac, idx) {
         var safeMac = String(mac).replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-        return '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:${colors.common.white};border:1px solid var(--color-secondary-200);border-radius:6px;margin-bottom:6px;font-family:monospace;font-size:13px;color:var(--color-secondary-800);">' +
+        return '<div class="mono" style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:${colors.common.white};border:1px solid var(--color-secondary-200);border-radius:6px;margin-bottom:6px;font-size:13px;color:var(--color-secondary-800);">' +
           '<span>🛡️ ' + safeMac + '</span>' +
           '<button type="button" class="btn btn-danger" style="padding:2px 8px;font-size:11px;" onclick="removeMacFromFilter(' + idx + ')" title="' + (isTurkish ? 'Sil' : 'Remove') + '">🗑️</button>' +
         '</div>';

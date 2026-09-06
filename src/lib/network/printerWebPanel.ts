@@ -12,7 +12,7 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
   const wifiSsid = device.wifi?.ssid || '';
 
   return `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background:#0f172a;color:#f8fafc;padding:24px;min-height:100%;box-sizing:border-box;">
+    <div style="font-family:'Inria Sans',sans-serif;background:#0f172a;color:#f8fafc;padding:24px;min-height:100%;box-sizing:border-box;">
       <div style="max-w:800px;margin:0 auto;background:#1e293b;border:1px solid #334155;border-radius:16px;padding:24px;box-shadow:0 20px 25px -5px rgba(0,0,0,0.5);">
         
         <!-- Header -->
@@ -46,16 +46,16 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px;">
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
             <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">IP Address (${mode})</div>
-            <div style="font-family:monospace;font-size:14px;color:#38bdf8;margin-top:4px;font-weight:600;">${ip}</div>
+            <div style="font-family:'Geist Mono','Courier New',monospace;font-size:14px;color:#38bdf8;margin-top:4px;font-weight:600;">${ip}</div>
           </div>
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
             <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Subnet / Gateway</div>
-            <div style="font-family:monospace;font-size:12px;color:#cbd5e1;margin-top:4px;">${subnet} / ${gateway}</div>
+            <div style="font-family:'Geist Mono','Courier New',monospace;font-size:12px;color:#cbd5e1;margin-top:4px;">${subnet} / ${gateway}</div>
           </div>
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;">
             <div>
               <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">Wi‑Fi Network (SSID)</div>
-              <div style="font-family:monospace;font-size:14px;color:${device.wifi?.enabled !== false ? '#a855f7' : '#94a3b8'};margin-top:4px;font-weight:600;">
+              <div style="font-family:'Geist Mono','Courier New',monospace;font-size:14px;color:${device.wifi?.enabled !== false ? '#a855f7' : '#94a3b8'};margin-top:4px;font-weight:600;">
                 📶 ${wifiSsid || (isTr ? '(Devre Dışı)' : '(Disabled)')}
               </div>
             </div>
@@ -70,7 +70,7 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
           </div>
           <div style="background:#0f172a;border:1px solid #334155;border-radius:10px;padding:12px;">
             <div style="font-size:11px;color:#64748b;text-transform:uppercase;font-weight:600;">MAC / DNS</div>
-            <div style="font-family:monospace;font-size:12px;color:#cbd5e1;margin-top:4px;">${mac} • ${dns}</div>
+            <div style="font-family:'Geist Mono','Courier New',monospace;font-size:12px;color:#cbd5e1;margin-top:4px;">${mac} • ${dns}</div>
           </div>
         </div>
 
@@ -79,7 +79,7 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
           <h2 style="margin:0 0 12px 0;font-size:14px;font-weight:600;color:#e2e8f0;display:flex;align-items:center;gap:8px;">
             <span>📦</span> ${isTr ? 'Toner & Sarf Malzeme Durumu' : 'Toner & Cartridge Status'}
           </h2>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;font-family:monospace;font-size:11px;">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;text-align:center;font-family:'Geist Mono','Courier New',monospace;font-size:11px;">
             <div style="background:#1e293b;border:1px solid #475569;border-radius:8px;padding:10px;color:#f8fafc;">
               <div style="font-weight:700;">BLACK</div>
               <div style="color:#34d399;margin-top:4px;font-weight:700;">98%</div>
@@ -133,7 +133,7 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
               <span>📑</span> ${isTr ? 'Yazdırma Kuyruğu & Gelen Belgeler' : 'Print Queue & Received Documents'}
             </h2>
             <div style="display:flex;align-items:center;gap:8px;">
-              <span style="font-size:11px;color:#a855f7;font-family:monospace;font-weight:600;">${(device.printJobs || []).length} ${isTr ? 'Aktif Görev / Belge' : 'Active Jobs'}</span>
+              <span style="font-size:11px;color:#a855f7;font-family:'Geist Mono','Courier New',monospace;font-weight:600;">${(device.printJobs || []).length} ${isTr ? 'Aktif Görev / Belge' : 'Active Jobs'}</span>
               ${(device.printJobs || []).length > 0 ? `
                 <button
                   type="button"
@@ -157,13 +157,13 @@ export function generatePrinterWebPanelContent(device: CanvasDevice, language: s
                 <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px;display:flex;justify-content:space-between;align-items:center;font-size:12px;">
                   <div>
                     <div style="font-weight:700;color:#c084fc;">📄 ${j.documentTitle}</div>
-                    <div style="font-size:10px;color:#94a3b8;font-family:monospace;margin-top:2px;">Sender: ${j.senderName} • ${j.pages} page(s)</div>
+                    <div style="font-size:10px;color:#94a3b8;font-family:'Geist Mono','Courier New',monospace;margin-top:2px;">Sender: ${j.senderName} • ${j.pages} page(s)</div>
                   </div>
                   <div style="text-align:right;">
-                    <span style="display:inline-block;padding:2px 8px;border-radius:4px;background:rgba(16,185,129,0.2);color:#34d399;font-size:10px;font-weight:600;font-family:monospace;">
+                    <span style="display:inline-block;padding:2px 8px;border-radius:4px;background:rgba(16,185,129,0.2);color:#34d399;font-size:10px;font-weight:600;font-family:'Geist Mono','Courier New',monospace;">
                       COMPLETED
                     </span>
-                    <div style="font-size:10px;color:#64748b;font-family:monospace;margin-top:2px;">${j.timestamp}</div>
+                    <div style="font-size:10px;color:#64748b;font-family:'Geist Mono','Courier New',monospace;margin-top:2px;">${j.timestamp}</div>
                   </div>
                 </div>
               `).join('')}

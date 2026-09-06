@@ -169,7 +169,7 @@ export const PingAnimationOverlay: React.FC<PingAnimationOverlayProps> = ({
               fill="var(--color-warning-500)"
               fontSize="10"
               fontWeight="bold"
-              fontFamily="monospace"
+              fontFamily="var(--font-geist-mono)"
               style={{ userSelect: 'none', pointerEvents: 'none' }}
             >
               {t.arpBroadcast || 'ARP Broadcast'} — ff:ff:ff:ff:ff:ff

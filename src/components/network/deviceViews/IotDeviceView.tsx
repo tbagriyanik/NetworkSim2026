@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { generateIotWebPanelContent, generateIotDevicePageContent } from '@/lib/network/iotWebPanel';
+import { wrapIframeContent } from '@/lib/design-tokens/iframeFonts';
 import { HttpBrowserWindow } from '@/components/network/pc-panel/HttpBrowserWindow';
 
 import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
@@ -669,7 +670,7 @@ export function IotDeviceView({
         onBrowserWindowChange={setBrowserWindow}
         title={browserTitle}
         url={browserUrl || ''}
-        srcDoc={browserContent}
+        srcDoc={wrapIframeContent(browserContent)}
         suggestions={suggestions}
         showSuggestions={showSuggestions}
         selectedSuggestionIndex={selectedSuggestionIndex}
