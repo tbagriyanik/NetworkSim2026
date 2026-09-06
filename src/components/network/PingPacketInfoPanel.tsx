@@ -105,6 +105,8 @@ const tr = {
     ttlLabel: 'TTL',
     timeLabel: 'süre',
     requestTimeout: 'İstek zaman aşımına uğradı',
+    traceDetails: 'İzleme Detayı',
+    traceDetailsTooltip: 'Aşama bazlı detaylı paket analizi (Paket İzleme)',
 };
 
 const en = {
@@ -155,6 +157,8 @@ const en = {
     ttlLabel: 'TTL',
     timeLabel: 'time',
     requestTimeout: 'Request timed out',
+    traceDetails: 'Trace Details',
+    traceDetailsTooltip: 'Stage-by-stage detailed packet analysis (Packet Trace)',
 };
 
 function getCableLabel(cableType: string, t: typeof tr) {
@@ -614,10 +618,10 @@ export function PingPacketInfoPanel({
                             <button
                                 onClick={() => setIsTraceModalOpen(true)}
                                 className="p-1 rounded bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center gap-1 px-2 py-1 text-xs shadow-sm"
-                                title="Aşama bazlı detaylı paket analizi (Packet Trace)"
+                                title={t.traceDetailsTooltip}
                             >
                                 <Activity className="w-3.5 h-3.5" />
-                                <span>Trace Detayı</span>
+                                <span>{t.traceDetails}</span>
                             </button>
                         </div>
 

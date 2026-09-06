@@ -479,14 +479,14 @@ export function getCommandCategories(isTR: boolean): CommandDefinition[] {
     {
       id: 'packet_trace_diagnostics',
       icon: Eye,
-      title: isTR ? 'Paket Trace & Ağ Teşhis Araçları' : 'Packet Trace & Diagnostics Tools',
+      title: isTR ? 'Paket İzleme & Ağ Teşhis Araçları' : 'Packet Trace & Diagnostics Tools',
       type: 'info',
       cmds: [
-        [isTR ? 'Paket Trace Inspector' : 'Packet Trace Inspector', isTR ? 'Paket simülasyonu esnasında "Trace Detayı" butonuna basarak Katman 1-7 aşamalarını, kararlarını ve frame snapshotlarını canlı inceleyebilirsiniz.' : 'Click "Trace Detayı" during packet simulation to inspect Layer 1-7 pipeline stages, actions, and frame snapshots.'],
+        [isTR ? 'Paket İzleme Aracı' : 'Packet Trace Inspector', isTR ? 'Paket simülasyonu esnasında "İzleme Detayı" butonuna basarak Katman 1-7 aşamalarını, kararlarını ve çerçeve anlık görüntülerini (frame snapshot) canlı inceleyebilirsiniz.' : 'Click "Trace Details" during packet simulation to inspect Layer 1-7 pipeline stages, decisions, and frame snapshots.'],
         [isTR ? 'ICMP Hata Kodları' : 'ICMP Error Codes', isTR ? 'ACL engellerinde Code 13 (Admin Prohibited), TTL 0 olduğunda Code 0 (Time Exceeded), rotasız paketlerde Code 0 (Unreachable) ICMP yanıtları üretilir.' : 'Generates ICMP Code 13 for ACL drops, Code 0 for TTL exceeded, and Code 0 for network unreachable.'],
-        [isTR ? 'Katman-3 TTL Decrementing' : 'Layer-3 TTL Decrementing', isTR ? 'Tüm Router ve L3 Switch yönlendirme yollarında paket TTL değeri 1 eksiltilir; 0 olan paketler düşürülür.' : 'Decrements packet TTL by 1 at every L3 hop; drops packets when TTL reaches 0.'],
+        [isTR ? 'Katman-3 TTL Azaltımı' : 'Layer-3 TTL Decrementing', isTR ? 'Tüm Router ve L3 Switch yönlendirme yollarında paket TTL değeri 1 eksiltilir; 0 olan paketler düşürülür.' : 'Decrements packet TTL by 1 at every L3 hop; drops packets when TTL reaches 0.'],
         [isTR ? 'VLAN & Trunk Teşhisleri' : 'VLAN & Trunk Diagnostics', isTR ? 'Topolojideki bağlı trunk portlar arasındaki Native VLAN uyuşmazlıkları ve Allowed-VLAN farkları otomatik tespit edilir.' : 'Automatically diagnoses Native VLAN and Allowed VLAN mismatches on trunk links.'],
-        [isTR ? 'LPM Routing Rasyoneli' : 'LPM Routing Rationale', isTR ? 'Yönlendirme kararları Longest-Prefix Match (LPM), Administrative Distance (AD) ve Metric öncelikleri analiz edilerek gerekçelendirilip trace üzerinde gösterilir.' : 'Explains routing decisions based on Longest-Prefix Match (LPM), Administrative Distance (AD), and Metric.'],
+        [isTR ? 'LPM Routing Rasyoneli' : 'LPM Routing Rationale', isTR ? 'Yönlendirme kararları En Uzun Önek Eşleşmesi (LPM), Yönetimsel Mesafe (AD) ve Metrik öncelikleri analiz edilerek gerekçelendirilir ve izleme panelinde gösterilir.' : 'Explains routing decisions based on Longest-Prefix Match (LPM), Administrative Distance (AD), and Metric.'],
       ]
     },
     {
