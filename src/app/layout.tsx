@@ -11,18 +11,13 @@ import { colors } from '@/lib/design-tokens/colors';
 const inriaSans = localFont({
   src: [
     {
-      path: "../../public/fonts/InriaSans-LatinExt-Regular.woff2",
-      weight: "400",
-      style: "normal",
-    },
-    {
       path: "../../public/fonts/InriaSans-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/fonts/InriaSans-LatinExt-Bold.woff2",
-      weight: "700",
+      path: "../../public/fonts/InriaSans-LatinExt-Regular.woff2",
+      weight: "400",
       style: "normal",
     },
     {
@@ -31,33 +26,32 @@ const inriaSans = localFont({
       style: "normal",
     },
     {
-      path: "../../public/fonts/InriaSans-Regular.woff",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../../public/fonts/InriaSans-Bold.woff",
+      path: "../../public/fonts/InriaSans-LatinExt-Bold.woff2",
       weight: "700",
       style: "normal",
     },
   ],
   variable: "--font-inria-sans",
+  display: "swap",
+  preload: false,
 });
 
 const geistMono = localFont({
   src: [
     {
-      path: "../../public/fonts/GeistMono-LatinExt.woff2",
+      path: "../../public/fonts/GeistMono-Regular.woff2",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../../public/fonts/GeistMono-Regular.woff2",
+      path: "../../public/fonts/GeistMono-LatinExt.woff2",
       weight: "400",
       style: "normal",
     },
   ],
   variable: "--font-geist-mono",
+  display: "swap",
+  preload: false,
 });
 
 const siteUrl = process.env.APP_URL || 'http://localhost:3000';
