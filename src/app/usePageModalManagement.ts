@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface PageModalManagementOptions {
   hasUnsavedChanges: boolean;
@@ -29,10 +29,11 @@ export function usePageModalManagement(options: PageModalManagementOptions): voi
   const {
     hasUnsavedChanges, modalHistoryPushedRef, showMobileMenu, confirmDialog, saveDialog,
     showPCPanel, showFirewallPanel, showRouterPanel, showUnifiedDeviceModal, showAboutModal,
-    showProjectPicker, showOnboarding, setShowMobileMenu, setConfirmDialog, setSaveDialog,
-    setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal,
-    setShowProjectPicker, setShowOnboarding, setShowBasarilarim,
+    showProjectPicker, showOnboarding,
   } = options;
+
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -44,15 +45,22 @@ export function usePageModalManagement(options: PageModalManagementOptions): voi
 
   useEffect(() => {
     const handlePopState = () => {
-      setShowMobileMenu(false); setConfirmDialog(null); setSaveDialog(null);
-      if (!showPCPanel) setShowPCPanel(false);
-      setShowRouterPanel(false); setShowUnifiedDeviceModal(false); setShowAboutModal(false);
-      setShowProjectPicker(false); setShowOnboarding(false); setShowBasarilarim(false);
+      const opts = optionsRef.current;
+      opts.setShowMobileMenu(false);
+      opts.setConfirmDialog(null);
+      opts.setSaveDialog(null);
+      if (!opts.showPCPanel) opts.setShowPCPanel(false);
+      opts.setShowRouterPanel(false);
+      opts.setShowUnifiedDeviceModal(false);
+      opts.setShowAboutModal(false);
+      opts.setShowProjectPicker(false);
+      opts.setShowOnboarding(false);
+      opts.setShowBasarilarim(false);
       window.dispatchEvent(new CustomEvent('close-menus-broadcast', { detail: { source: 'back' } }));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [showPCPanel, setShowMobileMenu, setConfirmDialog, setSaveDialog, setShowPCPanel, setShowRouterPanel, setShowUnifiedDeviceModal, setShowAboutModal, setShowProjectPicker, setShowOnboarding, setShowBasarilarim]);
+  }, []);
 
   useEffect(() => {
     const anyModalOpen = showMobileMenu || !!confirmDialog || !!saveDialog || showPCPanel || showFirewallPanel || showRouterPanel || showUnifiedDeviceModal || showAboutModal || showProjectPicker || showOnboarding;

@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 export function useMobileBack() {
   const hasPushedStateRef = useRef(false);
+  const rafIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -13,31 +14,29 @@ export function useMobileBack() {
       const overlays = document.querySelectorAll(
         '[role="dialog"][data-state="open"], [role="menu"], [data-state="open"][data-radix-popper-content-wrapper]'
       );
-      
+
       let overlayOpen = overlays.length > 0;
-      
+
       // Check for custom panels that might not have the attributes above
       if (!overlayOpen) {
-          const panels = document.querySelectorAll('.fixed');
-          for (let i = 0; i < panels.length; i++) {
-              const panel = panels[i] as HTMLElement;
-              // Skip small floating popups (role="dialog" without Radix data-state) and
-              // live regions (toast/status notifications) so closing them does not trigger
-              // a history.back() that closes an unrelated window
-              if (panel.getAttribute('role') === 'dialog' || panel.getAttribute('aria-live')) continue;
-              const classes = panel.className || '';
-              if (
-                  (classes.includes('z-') || classes.includes('z-[')) &&
-                  panel.getBoundingClientRect().height > 100 &&
-                  panel.tagName !== 'HEADER' &&
-                  panel.tagName !== 'NAV' &&
-                  panel.tagName !== 'FOOTER' &&
-                  !classes.includes('pointer-events-none')
-              ) {
-                  overlayOpen = true;
-                  break;
-              }
+        const panels = document.querySelectorAll('.fixed');
+        for (let i = 0; i < panels.length; i++) {
+          const panel = panels[i] as HTMLElement;
+          if (panel.offsetParent === null) continue; // Quick check for hidden/unrendered elements
+          if (panel.getAttribute('role') === 'dialog' || panel.getAttribute('aria-live')) continue;
+          const classes = panel.className || '';
+          if (
+            (classes.includes('z-') || classes.includes('z-[')) &&
+            panel.offsetHeight > 100 &&
+            panel.tagName !== 'HEADER' &&
+            panel.tagName !== 'NAV' &&
+            panel.tagName !== 'FOOTER' &&
+            !classes.includes('pointer-events-none')
+          ) {
+            overlayOpen = true;
+            break;
           }
+        }
       }
 
       if (overlayOpen && !hasPushedStateRef.current) {
@@ -51,8 +50,16 @@ export function useMobileBack() {
       }
     };
 
+    const scheduleCheck = () => {
+      if (rafIdRef.current !== null) return;
+      rafIdRef.current = requestAnimationFrame(() => {
+        rafIdRef.current = null;
+        checkForOpenOverlays();
+      });
+    };
+
     const observer = new MutationObserver(() => {
-      checkForOpenOverlays();
+      scheduleCheck();
     });
 
     observer.observe(document.body, {
@@ -63,13 +70,12 @@ export function useMobileBack() {
     });
 
     // Initial check
-    checkForOpenOverlays();
+    scheduleCheck();
 
     const handlePopState = (_e: PopStateEvent) => {
       if (hasPushedStateRef.current) {
         hasPushedStateRef.current = false;
-        
-        // Dispatch Escape key for standard Radix components
+
         const event = new KeyboardEvent('keydown', {
           key: 'Escape',
           code: 'Escape',
@@ -79,8 +85,7 @@ export function useMobileBack() {
           cancelable: true
         });
         document.dispatchEvent(event);
-        
-        // Dispatch custom event for our custom panels
+
         const closeEvent = new CustomEvent('mobile-back-pressed');
         window.dispatchEvent(closeEvent);
       }
@@ -89,6 +94,9 @@ export function useMobileBack() {
     window.addEventListener('popstate', handlePopState);
 
     return () => {
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+      }
       observer.disconnect();
       window.removeEventListener('popstate', handlePopState);
     };
