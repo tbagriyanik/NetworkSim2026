@@ -1,6 +1,14 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 4.4.0 · **Son doğrulama / Last verified:** 2026-09-05
+**Sürüm / Version:** 4.5.0 · **Son doğrulama / Last verified:** 2026-09-06
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-09-06 - v4.5.0)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **Çift Yönlü Otomatik VoIP Arama Kapanma Guard** | Telefon araması esnasında kablo sökülmesi, kablosuz bağlantı kopması, IP değişikliği veya karşı cihazın kapanması durumunda her iki tarafın aktif aramasını eş zamanlı sonlandıran ve ekran pencerelerine *"Arama Sonlandırıldı: Bağlantı koptu!"* bildirimi yansıtan otomatik ağ denetim mekanizması uygulandı. |
+| **Bulut Cihazı SVG Port Düzeni ve Numaralandırması (1-4)** | Bulut (`cloud`) cihazının altındaki portların konumlandırması sağa hizalandı ve port isimleri (`W`, `L`) standartlaşarak `1`, `2`, `3`, `4` rakamlarına çevrildi. |
+| **Birleştirilmiş Fare & Klavye Kısayolları Paneli** | F1 Yardım ve Komut Referansı modalında Klavye Kısayolları kategorisi, tüm klavye tuş kombinasyonları ve fare etkileşimlerini (Sol Tık, Çift Tık, Sağ Tık, Scroll Zoom, Pan, Otomatik Kopyalama) kapsayacak şekilde **"Fare & Klavye Kısayolları"** tek birleştirilmiş başlık altında yeniden düzenlendi. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-09-05 - v4.4.0)
 

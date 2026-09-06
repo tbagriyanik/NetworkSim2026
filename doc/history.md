@@ -2,6 +2,13 @@
 
 Yeniden eskiye, tarih ve özellik listesi.
 
+## v4.5.0 — 2026-09-06
+
+**Çift Yönlü Otomatik VoIP Arama Kapanma Guard, Bulut Cihazı SVG Port Numaralandırması (1-4) ve Birleştirilmiş Fare/Klavye Kısayolları** —
+- **📞 Çift Yönlü Otomatik VoIP Arama Kapanma Guard**: Telefon araması esnasında kablo sökülmesi, kablosuz bağlantı kopması, IP değişikliği veya karşı cihazın kapanması durumunda her iki tarafın aktif aramasını eş zamanlı sonlandıran ve ekran pencerelerine *"Arama Sonlandırıldı: Bağlantı koptu!"* bildirimi yansıtan otomatik ağ denetim mekanizması uygulandı (`usePeriodicNetworkPackets.ts`, `MobileDeviceView.tsx`).
+- **☁️ Bulut Cihazı SVG Port Düzeni ve Numaralandırması**: Bulut (`cloud`) cihazının altındaki portların konumlandırması sağa hizalandı ve port isimleri (`W`, `L`) standartlaşarak `1`, `2`, `3`, `4` rakamlarına çevrildi (`DeviceRenderer.tsx`).
+- **⌨️ Birleştirilmiş Fare & Klavye Kısayolları Paneli**: F1 Yardım ve Komut Referansı modalında Klavye Kısayolları kategorisi, tüm klavye tuş kombinasyonları ve fare etkileşimlerini (Sol Tık, Çift Tık, Sağ Tık, Scroll Zoom, Pan, Otomatik Kopyalama) kapsayacak şekilde **"Fare & Klavye Kısayolları"** tek birleştirilmiş başlık altında yeniden düzenlendi (`networkTopology.commands.ts`).
+
 ## v4.4.0 — 2026-09-05
 
 **WAN Bulut ICMP/Ping Desteği, IP Doğrulama Düzeltmeleri, Otomatik Fare Seçim Kopyalama ve UI Düzeltmeleri** —

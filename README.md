@@ -1,12 +1,12 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-4.4.0-blue)
-![Next.js](https://img.shields.io/badge/Next.js-16.3.3-black?logo=next.js)
+![Version](https://img.shields.io/badge/version-4.5.0-blue)
+![Next.js](https://img.shields.io/badge/Next.js-16.3.4-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-163,786-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-165,120-lightgrey)
 
 A comprehensive, client-side, browser-based network simulator for learning switching, routing, wireless, security, IoT, CLI terminal workflows.
 
@@ -29,35 +29,23 @@ npm run dev
 
 # Tip kontrolü, lint ve testleri çalıştırın
 npx tsc --noEmit
-npm run lint
-npm test
+npm run check
 ```
 
-## 🚀 Key Features & Version Highlights (v4.4.0)
+## 🚀 Key Features & Version Highlights (v4.5.0)
 
+- **📞 Çift Yönlü Otomatik VoIP Arama Kapanma Guard:** Telefon araması esnasında ağ bağlantısı koptuğunda, kablo söküldüğünde veya karşı taraf kapandığında her iki cihazdaki aktif aramayı eş zamanlı sonlandıran canlı ağ denetim mekanizması.
+- **☁️ Bulut Cihazı SVG Port Düzeni (1-4):** Bulut (`cloud`) cihazının altında yer alan WAN port simgelerinin numaralandırması (1, 2, 3, 4) ve hizalaması optimize edildi.
+- **⌨️ Birleştirilmiş Fare & Klavye Kısayolları Paneli:** F1 Yardım penceresindeki tüm klavye kısayolları ve fare kullanım hareketleri (tıklama, sürükleme, zoom, pan, otomatik kopyalama) tek ve düzenli bir panel altında birleştirildi.
 - **📋 Auto-Copy on Mouse Selection:** Automatic clipboard copying upon completing mouse text selection (`onMouseUp`) across PC CMD, Linux Terminal, Console Tab, and Main CLI Terminal output containers.
 - **☁️ WAN / Public DNS ICMP Routing:** Seamless ICMP ping routing for public WAN addresses (`1.1.1.1`, `8.8.8.8`) via default gateways alongside HTTP web browsing.
-- **🛡️ Strict Invalid IP Guard:** Prevents non-existent local IP addresses from erroneously falling back to the cloud gateway, correctly returning "Request timed out".
-- **🎨 Autocomplete UI Alignment:** Formatted IP and command autocomplete suggestion dropdowns into clean vertical single-column button stacks (`flex flex-col`).
-- **📐 Akıllı Hizalama Araç Çubuğu & Undo/Redo:** Seçili cihazlar için grafiksel olarak yenilenmiş Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala ikonları, kılavuz çizgileri ve `Ctrl+Z` / `Ctrl+Y` geçmiş desteği.
-- **🌐 Cloud / WAN Arayüz & Port Monitörü:** Bulut (`cloud`) cihazında aktif WAN portları (`Eth0..Eth3`), canlı IP/Bağlantı durumu ve komşu cihaz çözümleme kartları.
-- **printer: Ağ Yazıcısı & Gelişmiş Print Server (Web Management, LPD/IPP Packet Capture & Wi-Fi):** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`). Dahili Web Yönetim Paneli üzerinden LPD, IPP, JetDirect, AirPrint, SNMP ve TLS protokol yetkilendirmesi, Wi-Fi SSID katılımı ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi. Web tarayıcılardan (`HttpBrowserWindow`) veya mobil tarayıcıdan "Belgeyi Yazdır" butonu ile canlı paket yakalama (`PacketCapturePanel`) ekranına LPD/IPP paket akışlarının yansıtılması.
-- **📱 Mobile Web Browser:** Smartphone/Mobile device features a built-in Mobile Web Browser app with Address Bar, Quick Bookmarks (`192.168.1.1`, `8.8.8.8`, `http://iot-panel`), and TCP 80 path verification rendering Router/WLC Web Admin, Printer Management, IoT Control Panel, Public WAN Search, and PC HTTP Servers.
+- **📐 Akıllı Hizalama Araç Çubuğu & Undo/Redo:** Seçili cihazlar için yenilenmiş Sola, Sağa, Üste, Yatayda Ortala ve Dikeyde Ortala ikonları, kılavuz çizgileri ve `Ctrl+Z` / `Ctrl+Y` geçmiş desteği.
+- **🖨️ Ağ Yazıcısı & Print Server:** Dual-interface Ethernet/Wi-Fi destekli Ağ Yazıcısı (`printer`), Web Yönetim Paneli, LPD/IPP Paket Yakalama ve canlı Yazdırma Kuyruğu (`printJobs`) yönetimi.
+- **📱 Mobile Web Browser & VoIP:** Smartphone/Mobile device features a built-in Mobile Web Browser app alongside IP Voice / VoIP Dial Pad & Call History.
 - **☁️ Fully Functional Cloud / WAN Gateway (`cloud`):** Active Cloud device with default IP `203.0.113.1`, multiple WAN ports (`eth0..eth3`), public DNS/NTP simulation (`8.8.8.8`, `1.1.1.1`, `pool.ntp.org`), and real-time topology ICMP ping routing.
 - **📊 Syslog Server & L1 Hub Refinements:** Network Summary (Live Device List) displays Syslog Server status and log counts for PCs; Hub devices enforce Layer-1 unmanaged repeater logic excluding redundant CLI summaries.
 - **💾 Quota-Safe Storage & Persistence:** Optimized `secureStorage` and `useHistory` preventing browser `QuotaExceededError` and console warning spam.
 - **🖥️ Expanded Device Support (11 Device Types):** L1 Multiport Hub (`hub`), External Internet Cloud/WAN (`cloud`), Wireless Smartphone/Tablet (`mobile`), Network Printer (`printer`), PC, IoT, L2/L3 Switches, Routers, Firewalls, and WLC. Includes realistic SVG topology renderings, canvas Wi-Fi signal indicator bars, and a 2-row ultra-compact toolbar.
-- **🌲 MSTP Boundary Isolation (IEEE 802.1s):** Region name, revision, and digest equality checks (`areSameMstRegion`) enforcing MSTI isolation across region boundaries while allowing CIST (Instance 0) single-tree BPDUs.
-- **🔒 Security & Advanced Routing:**
-  - **IPsec Site-to-Site & GRE:** ISAKMP Phase 1/2 IKE negotiation, ESP encryption simulation, transform-sets, crypto maps, and `show crypto sa`.
-  - **802.1X EAPOL:** EAPOL-Start, Identity Request/Response, EAPOL-Success/Failure packet inspection and RADIUS authentication.
-  - **QoS Token Bucket:** Bandwidth policing (`police <rate>`) and shaping (`shape average <rate>`) bucket rate limiters.
-  - **BGP Policies & Attributes:** Route-map filtering (`neighbor route-map`) and BGP weight assignment (`neighbor weight`).
-  - **DHCP Snooping Option 82 & Rate-Limit:** Circuit ID injection (`option 82`) and interface rate limiting (`ip dhcp snooping limit rate`).
-  - **EIGRP for IPv6 & GLBP:** Dual IPv6 metric computation, Prefix-Lists, Route-Maps, GLBP AVG election, and STP Loop Guard.
-- **🎓 Guided Lessons & Quiz Engine:** 19 interactive guided tutorials with topic-specific quizzes and real-time scoring.
-- **📄 High-DPI PDF Certificate Generator:** Canvas 2400x1700 High-DPI renderer with 100% accurate Turkish character support.
-
 
 ---
 
@@ -65,10 +53,10 @@ npm test
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 4.4.0 |
+| Version / Sürüm | 4.5.0 |
 | Total Lines / Toplam Satır (`src/`) | 163,786 |
 | Source Files / Kaynak Dosya | 697 |
-| Documentation Files / Dokümantasyon Dosya | 31 |
+| Documentation Files / Dokümantasyon Dosya | 32 |
 | Example Projects / Örnek Proje | 46 |
 | Guided Lessons / Rehberli Ders | 19 |
 | Exams / Sınavlar | 6 |
