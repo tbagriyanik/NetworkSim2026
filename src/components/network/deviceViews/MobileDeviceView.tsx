@@ -600,7 +600,7 @@ export function MobileDeviceView({
       { protocol: 'tcp', port: '80' }
     );
 
-    if (!connRes.success && !hostOrIp.includes('8.8.8.8') && !hostOrIp.includes('1.1.1.1')) {
+    if (!connRes.success) {
       setBrowserTitle(isTr ? 'Bağlantı Hatası' : 'Connection Error');
       setBrowserContent(`
         <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
@@ -612,6 +612,8 @@ export function MobileDeviceView({
       `);
       return;
     }
+
+    const cloudDevice = topologyDevices.find(d => d.type === 'cloud');
 
     // 1. Router / WLC Admin Panel
     if (targetDev && (isRouterDevice(targetDev) || targetDev.type === 'router' || targetDev.type === 'wlc')) {
@@ -628,6 +630,30 @@ export function MobileDeviceView({
     }
     // 3. Public WAN / Cloud Internet Services (8.8.8.8, 1.1.1.1)
     else if (hostOrIp === '8.8.8.8' || hostOrIp === '8.8.4.4' || hostOrIp === '1.1.1.1' || targetDev?.type === 'cloud') {
+      if (!cloudDevice) {
+        setBrowserTitle(isTr ? 'Cihaz Bulunamadı' : 'Device Not Found');
+        setBrowserContent(`
+          <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
+            <div style="font-size:48px;margin-bottom:12px;">🌐⚡</div>
+            <h1 style="margin:0 0 8px;font-size:22px;color:#ef4444;">${isTr ? 'Bulut (WAN) Cihazı Bulunamadı' : 'Cloud (WAN) Device Not Found'}</h1>
+            <p style="margin:0 0 12px;font-size:14px;color:#64748b;">${isTr ? 'Ağda bağlı bir Bulut (Cloud/WAN) cihazı bulunmuyor!' : 'No Cloud (WAN) device exists on the network!'}</p>
+            <code style="display:inline-block;padding:6px 12px;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;">${displayUrl}</code>
+          </main>
+        `);
+        return;
+      }
+      if (cloudDevice.status === 'offline') {
+        setBrowserTitle(isTr ? 'Bulut Kapalı' : 'Cloud Offline');
+        setBrowserContent(`
+          <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
+            <div style="font-size:48px;margin-bottom:12px;">☁️⚡</div>
+            <h1 style="margin:0 0 8px;font-size:22px;color:#ef4444;">${isTr ? 'Bulut Hizmeti Kapalı' : 'Cloud Service Offline'}</h1>
+            <p style="margin:0 0 12px;font-size:14px;color:#64748b;">${isTr ? 'Hedef Bulut (WAN) cihazının gücü kapalı (Power Off) durumda!' : 'Target Cloud (WAN) device is powered off!'}</p>
+            <code style="display:inline-block;padding:6px 12px;border-radius:8px;background:#fee2e2;color:#991b1b;font-size:12px;">${displayUrl}</code>
+          </main>
+        `);
+        return;
+      }
       setBrowserTitle(isTr ? 'Genel Arama Kapısı - WAN' : 'Public Search Portal - WAN');
       setBrowserContent(`
         <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">

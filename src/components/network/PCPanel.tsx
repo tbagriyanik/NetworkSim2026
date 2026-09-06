@@ -1028,7 +1028,18 @@ export function PCPanel({
     });
   }, [deviceFromTopology, deviceStates, topologyConnections, isValidIpv4]);
 
-  const isLoopbackTarget = useCallback((target: string) => target.trim() === '127.0.0.1', []);
+  const deviceName = deviceFromTopology?.name;
+  const isLoopbackTarget = useCallback((target: string): boolean => {
+    const trimmed = target.trim().toLowerCase();
+    return Boolean(
+      trimmed === '127.0.0.1' ||
+      trimmed === 'localhost' ||
+      (deviceId && trimmed === deviceId.toLowerCase()) ||
+      (deviceName && trimmed === deviceName.toLowerCase()) ||
+      (internalPcHostname && trimmed === internalPcHostname.toLowerCase()) ||
+      (pcIP && trimmed === pcIP.toLowerCase())
+    );
+  }, [deviceId, deviceName, internalPcHostname, pcIP]);
 
   const hasGatewayForTargetCallback = useCallback((targetIp: string) => {
     return hasGatewayForTarget({

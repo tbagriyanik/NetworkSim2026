@@ -196,7 +196,42 @@ export function useRefreshNetwork({
 
       if (dhcpClients.length > 0) {
         dhcpClients.forEach(pc => {
-          const lease = assignDhcpLeaseForPc(pc, finalDevicesForRefresh, stpUpdatedStates, sanitizedConnections) || buildLinkLocalLease(pc, finalDevicesForRefresh);
+          // Preserve existing valid DHCP leases — only reassign if the device
+          // has no IP, a link-local (169.254.x.x) fallback, or its current IP
+          // falls outside every available DHCP pool (e.g. pool was resized/removed).
+          const currentIp = pc.ip;
+          const isLinkLocal = currentIp?.startsWith('169.254.') ?? false;
+          const hasLease = currentIp && currentIp !== '0.0.0.0' && !isLinkLocal;
+          const ipInPool = hasLease && (() => {
+            for (const dev of finalDevicesForRefresh) {
+              if (dev.id === pc.id) continue;
+              // Topology DHCP pools (PC-type servers)
+              if (dev.type === 'pc' && dev.services?.dhcp?.enabled) {
+                for (const pool of (dev.services?.dhcp?.pools || [])) {
+                  if (pool.startIp && pool.maxUsers && isIpInPoolRange(currentIp, { startIp: pool.startIp, maxUsers: pool.maxUsers })) return true;
+                }
+              }
+              // CLI-configured DHCP pools (router/switch)
+              const state = stpUpdatedStates.get(dev.id);
+              if (state && (dev.type === 'router' || dev.type === 'switchL2' || dev.type === 'switchL3' || dev.type === 'wlc')) {
+                for (const poolName in (state.dhcpPools || {})) {
+                  const pool = state.dhcpPools![poolName];
+                  if (pool.network && pool.subnetMask) {
+                    if (isIpInPoolRange(currentIp, { startIp: `${pool.network.replace(/\.\d+$/, '')}.100`, maxUsers: 154 })) return true;
+                  }
+                }
+                for (const pool of (state.services?.dhcp?.pools || [])) {
+                  if (pool.startIp && pool.maxUsers && isIpInPoolRange(currentIp, { startIp: pool.startIp, maxUsers: pool.maxUsers })) return true;
+                }
+              }
+            }
+            return false;
+          })();
+
+          if (ipInPool) return; // already has a valid DHCP lease in a pool — skip reassignment
+
+          const validDhcpLease = assignDhcpLeaseForPc(pc, finalDevicesForRefresh, stpUpdatedStates, sanitizedConnections);
+          const lease = validDhcpLease || buildLinkLocalLease(pc, finalDevicesForRefresh);
           if (lease) {
             const idx = finalDevicesForRefresh.findIndex(d => d.id === pc.id);
             if (idx !== -1) {

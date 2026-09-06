@@ -171,7 +171,11 @@ export function usePCPanelBrowser({
       }
     }
 
-    const connectivityResult = checkConnectivity(deviceId, resolvedTargetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
+    const isSelfTarget = isLoopbackTarget(target) || isLoopbackTarget(resolvedTargetIp);
+    const connectivityResult = isSelfTarget
+      ? { success: true, targetId: deviceId, capturedPackets: [], error: undefined }
+      : checkConnectivity(deviceId, resolvedTargetIp, topologyDevices, topologyConnections as unknown as CanvasConnection[], deviceStates || new Map(), language as 'tr' | 'en', { protocol: 'tcp', port: '80' });
+
     const httpPackets = (connectivityResult.capturedPackets || []).map(p => ({
       ...p,
       protocol: 'HTTP',
@@ -206,7 +210,36 @@ export function usePCPanelBrowser({
     const cloudTarget = topologyDevices.find(d => d.type === 'cloud');
     setHttpAppUrl(displayUrl);
 
-    if (resolvedTargetIp === '1.1.1.1' || resolvedTargetIp === '1.0.0.1' || resolvedTargetIp === '8.8.8.8' || resolvedTargetIp === '8.8.4.4' || (cloudTarget && connectivityResult.success && !httpServer)) {
+    if (!connectivityResult.success) {
+      setHttpAppDeviceId(null);
+      setHttpAppTitle('Connection Error');
+      setHttpAppContent(`
+        <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
+          <div style="font-size:48px;margin-bottom:12px;">🚫</div>
+          <h1 style="margin:0 0 8px;font-size:22px;color:var(--color-error-500);">${language === 'tr' ? 'Sunucuya Ulaşılamıyor' : 'Server Unreachable'}</h1>
+          <p style="margin:0 0 12px;font-size:14px;color:var(--color-muted-foreground);">${connectivityResult.error || (language === 'tr' ? 'Ağ geçidi veya sunucu yanıt vermiyor.' : 'Gateway or server not responding.')}</p>
+          <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:var(--color-error-100);color:var(--color-error-800);font-size:12px;">${displayUrl}</code>
+        </main>
+      `);
+      addLocalOutput('error', connectivityResult.error || (language === 'tr' ? 'Sunucuya ulaşılamıyor.' : 'Server unreachable.'));
+      return;
+    }
+
+    if (resolvedTargetIp === '1.1.1.1' || resolvedTargetIp === '1.0.0.1' || resolvedTargetIp === '8.8.8.8' || resolvedTargetIp === '8.8.4.4' || (cloudTarget && !httpServer)) {
+      if (!cloudTarget) {
+        setHttpAppDeviceId(null);
+        setHttpAppTitle('404 Not Found');
+        setHttpAppContent(`
+          <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
+            <div style="font-size:48px;margin-bottom:12px;">🌐⚡</div>
+            <h1 style="margin:0 0 8px;font-size:22px;color:var(--color-error-500);">${language === 'tr' ? 'Bulut (WAN) Cihazı Bulunamadı' : 'Cloud (WAN) Device Not Found'}</h1>
+            <p style="margin:0 0 12px;font-size:14px;color:var(--color-muted-foreground);">${language === 'tr' ? 'Ağda bağlı bir Bulut (Cloud/WAN) cihazı bulunmuyor!' : 'No Cloud (WAN) device exists on the network!'}</p>
+            <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:var(--color-error-100);color:var(--color-error-800);font-size:12px;">${displayUrl}</code>
+          </main>
+        `);
+        addLocalOutput('error', language === 'tr' ? 'Bulut (Cloud) cihazı ağda mevcut değil.' : 'Cloud device not found on network.');
+        return;
+      }
       if (cloudTarget && cloudTarget.status === 'offline') {
         setHttpAppDeviceId(null);
         setHttpAppTitle(language === 'tr' ? 'Bulut Kapalı' : 'Cloud Offline');
