@@ -562,7 +562,7 @@ function createInitialWLCPorts(baseMac?: string): Record<string, Port> {
       type: 'gigabitethernet',
       macAddress: portMac,
       isRoutedPort: true,
-      ipAddress: i === 0 ? '192.168.1.1' : undefined,
+      ipAddress: i === 0 ? '192.168.1.254' : undefined,
       subnetMask: i === 0 ? '255.255.255.0' : undefined,
     };
   }
@@ -640,7 +640,7 @@ export function createInitialWLCState(
       'hostname WLC',
       '!',
       'interface GigabitEthernet0/0',
-      ' ip address 192.168.1.1 255.255.255.0',
+      ' ip address 192.168.1.254 255.255.255.0',
       ' no shutdown',
       '!',
       'interface GigabitEthernet0/1',

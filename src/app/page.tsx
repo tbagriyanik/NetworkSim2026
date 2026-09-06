@@ -511,6 +511,24 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     graphicsQuality,
   });
 
+  useEffect(() => {
+    const handleOpenPcPanelEvent = (e: Event) => {
+      const customEv = e as CustomEvent<{ deviceId?: string; program?: string; targetUrl?: string }>;
+      const targetPcId = customEv.detail?.deviceId || topologyDevices.find(d => d.type === 'pc')?.id || 'pc-1';
+      if (targetPcId) {
+        setShowPCDeviceId(targetPcId);
+        getOrCreatePCOutputs(targetPcId, topologyDevices);
+        setPcPanelInitialTab('desktop');
+        useMultiWindowStore.getState().openDeviceWindow(targetPcId, 'pc', 'desktop');
+        useMultiWindowStore.getState().restoreWindow(targetPcId);
+        useWindowStore.getState().setActiveWindow(targetPcId);
+      }
+    };
+
+    window.addEventListener('trigger-open-pc-panel', handleOpenPcPanelEvent);
+    return () => window.removeEventListener('trigger-open-pc-panel', handleOpenPcPanelEvent);
+  }, [topologyDevices, getOrCreatePCOutputs, setShowPCDeviceId, setPcPanelInitialTab]);
+
   const {
     isTroubleshootingMinimized,
     setIsTroubleshootingMinimized,

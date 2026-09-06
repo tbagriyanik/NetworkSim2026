@@ -109,8 +109,8 @@ export function IotDashboardTab({
               onClick={() => {
                 navigateToProgram('desktop');
                 setTimeout(() => {
-                  setInput('curl http://iot-panel');
-                  void executeCommand('curl http://iot-panel');
+                  setInput('wget http://iot-panel');
+                  void executeCommand('wget http://iot-panel');
                 }, 300);
               }}
             >

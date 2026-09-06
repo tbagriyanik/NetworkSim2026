@@ -5,33 +5,45 @@
 
 export function generateIotPanelScript(): string {
   return `
-    // Safe storage wrapper with fallback
+    // Safe storage wrapper with fallback (prefers localStorage for persistent login)
     const safeStorage = {
       getItem: function(key) {
         try {
-          return (typeof window !== 'undefined' && window.sessionStorage) ? window.sessionStorage.getItem(key) : (window['__iot_' + key] || null);
+          if (typeof window !== 'undefined' && window.localStorage) {
+            const val = window.localStorage.getItem(key);
+            if (val !== null) return val;
+          }
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            const val = window.sessionStorage.getItem(key);
+            if (val !== null) return val;
+          }
+          return window['__iot_' + key] || null;
         } catch (e) {
           return window['__iot_' + key] || null;
         }
       },
       setItem: function(key, value) {
         try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem(key, value);
+          }
           if (typeof window !== 'undefined' && window.sessionStorage) {
             window.sessionStorage.setItem(key, value);
-          } else {
-            window['__iot_' + key] = value;
           }
+          window['__iot_' + key] = value;
         } catch (e) {
           window['__iot_' + key] = value;
         }
       },
       removeItem: function(key) {
         try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.removeItem(key);
+          }
           if (typeof window !== 'undefined' && window.sessionStorage) {
             window.sessionStorage.removeItem(key);
-          } else {
-            delete window['__iot_' + key];
           }
+          delete window['__iot_' + key];
         } catch (e) {
           delete window['__iot_' + key];
         }
