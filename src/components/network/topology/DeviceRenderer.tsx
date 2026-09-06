@@ -404,23 +404,17 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
       ) : device.type === 'cloud' ? (
         <g>
           <path
-            d={`M ${deviceWidth * 0.10} ${deviceHeight - 26}
-                Q ${-deviceWidth * 0.01} ${deviceHeight - 26} ${deviceWidth * 0.02} ${deviceHeight - 38}
-                Q ${deviceWidth * 0.03} ${deviceHeight - 52} ${deviceWidth * 0.16} ${deviceHeight - 50}
-                Q ${deviceWidth * 0.17} ${deviceHeight - 66} ${deviceWidth * 0.36} ${deviceHeight - 64}
-                Q ${deviceWidth * 0.50} ${deviceHeight - 74} ${deviceWidth * 0.60} ${deviceHeight - 62}
-                Q ${deviceWidth * 0.75} ${deviceHeight - 66} ${deviceWidth * 0.78} ${deviceHeight - 52}
-                Q ${deviceWidth * 0.93} ${deviceHeight - 52} ${deviceWidth * 0.92} ${deviceHeight - 36}
-                Q ${deviceWidth * 1.05} ${deviceHeight - 34} ${deviceWidth * 0.98} ${deviceHeight - 25}
-                L ${deviceWidth * 0.18} ${deviceHeight - 26}
-                Q ${deviceWidth * 0.13} ${deviceHeight - 26} ${deviceWidth * 0.10} ${deviceHeight - 26} Z`}
+            d={`M ${deviceWidth * 0.15} ${deviceHeight - 22}
+                A 16 16 0 0 1 ${deviceWidth * 0.30} ${deviceHeight * 0.36}
+                A 26 24 0 0 1 ${deviceWidth * 0.82} ${deviceHeight * 0.44}
+                A 13 13 0 0 1 ${deviceWidth * 0.85} ${deviceHeight - 22}
+                Z`}
             fill={deviceFill}
             style={{ stroke: isDark ? 'var(--color-sky-500)' : 'var(--color-secondary-300)' }}
             strokeWidth={1.5}
             className={isDragging ? '' : 'transition-all duration-150'}
             filter="url(#deviceShadow)"
           />
-          {/* Clean outer cloud boundary */}
         </g>
       ) : device.type === 'router' ? (
 
@@ -683,11 +677,33 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 0 0 2-2V5a2 2 0 0 0 -2-2H5a2 2 0 0 0 -2 2v10a2 2 0 0 0 2 2z" />
           </svg>
         ) : device.type === 'mobile' ? (
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-sky-300)' : 'var(--color-sky-600)' }} strokeWidth="1.5">
-            <rect x="7" y="2" width="10" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round" />
-            <line x1="11" y1="18" x2="13" y2="18" strokeLinecap="round" />
-            <line x1="10" y1="5" x2="14" y2="5" strokeLinecap="round" />
-          </svg>
+          <g>
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : (device.activeVoipCall ? (device.activeVoipCall.status === 'ringing' ? 'var(--color-warning-500)' : 'var(--color-success-500)') : (isDark ? 'var(--color-sky-300)' : 'var(--color-sky-600)')) }} strokeWidth="1.5">
+              <rect x="7" y="2" width="10" height="20" rx="2" strokeLinecap="round" strokeLinejoin="round" />
+              <line x1="11" y1="18" x2="13" y2="18" strokeLinecap="round" />
+              <line x1="10" y1="5" x2="14" y2="5" strokeLinecap="round" />
+            </svg>
+            {device.activeVoipCall && (
+              (() => {
+                const isCaller = device.activeVoipCall.callerId === device.id;
+                const isRinging = device.activeVoipCall.status === 'ringing';
+                const badgeBg = isRinging ? 'var(--color-amber-500)' : 'var(--color-emerald-500)';
+                return (
+                  <g transform="translate(-10, -6)">
+                    <circle cx="8" cy="8" r="9" fill={badgeBg} />
+                    {/* Handset shifted 1.5px to the left */}
+                    <path d="M3.5 3.5C3.5 3.22 3.72 3 4 3H5.3C5.54 3 5.74 3.17 5.79 3.41L6.18 5.37C6.22 5.59 6.14 5.81 5.97 5.95L5.11 6.67C5.77 8.01 6.87 9.1 8.21 9.77L8.93 8.91C9.07 8.74 9.29 8.66 9.51 8.7L11.47 9.09C11.71 9.14 11.88 9.34 11.88 9.58V10.88C11.88 11.16 11.66 11.38 11.38 11.38C7.03 11.38 3.5 7.85 3.5 3.5Z" fill="white" />
+                    {/* Direction arrow: outgoing = green (#22c55e), incoming = red (#ef4444) */}
+                    {isCaller ? (
+                      <path d="M11 1L16 1L16 6M16 1L11 6" stroke="#22c55e" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                    ) : (
+                      <path d="M16 6L11 6L11 1M11 6L16 1" stroke="#ef4444" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                    )}
+                  </g>
+                );
+              })()
+            )}
+          </g>
         ) : device.type === 'printer' ? (
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? '#fbcfe8' : '#be185d' }} strokeWidth="1.5">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
@@ -700,11 +716,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             <circle cx="14" cy="12" r="1" fill="currentColor" />
             <circle cx="18" cy="12" r="1" fill="currentColor" />
           </svg>
-        ) : device.type === 'cloud' ? (
-          <svg width="40" height="32" viewBox="0 0 24 24" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-sky-200)' : 'var(--color-sky-700)' }} strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 0 1 4-4 5 5 0 0 1 9.9-1 4 4 0 0 1 2.1 7.9H7a4 4 0 0 1-4-2.9z" />
-          </svg>
-        ) : device.type === 'iot' ? (
+        ) : device.type === 'cloud' ? null : device.type === 'iot' ? (
           <svg width="32" height="32" viewBox="0 -2 27 27" fill="none" style={{ stroke: isPoweredOff ? STATUS_COLORS.offline : isDark ? 'var(--color-warning-100)' : 'var(--color-warning-800)' }} strokeWidth="1.5">
             <title>{`${device.name || 'IoT'} • ${device.iot?.sensorType || 'sensor'} • ${getIotMeasuredValue(device)}`}</title>
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.247 7.761a6 6 0 0 1 0 8.478" />
@@ -812,14 +824,25 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
       {/* Device IP */}
       {(device.type === 'pc' || device.type === 'mobile' || device.type === 'printer') && (
         <text x={deviceWidth / 2} y={70} style={{ fill: isDark ? 'var(--color-secondary-400)' : 'var(--color-secondary-500)' }} fontSize={device.type === 'mobile' ? "9" : "10"} textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
-          {device.ip || (device.ipConfigMode === 'dhcp' ? 'DHCP...' : '0.0.0.0')}
+          {device.ip || (device.ipConfigMode === 'dhcp' ? 'DHCP' : '0.0.0.0')}
         </text>
       )}
 
-      {/* Device VLAN / IoT Measured Value */}
+      {/* Device VLAN / IoT Measured Value / Printer Job Count */}
       {device.type === 'pc' && (
         <text x={deviceWidth / 2} y={81} style={{ fill: isDark ? 'var(--color-accent-400)' : 'var(--color-accent-700)' }} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
           VLAN {String(getLiveDeviceVlan(device))}
+        </text>
+      )}
+      {device.type === 'printer' && (
+        <text x={deviceWidth / 2} y={81} style={{ fill: isDark ? '#f472b6' : '#be185d' }} fontSize="9" textAnchor="middle" fontFamily="monospace" className="select-none pointer-events-none">
+          {(() => {
+            const completedCount = (device.printJobs || []).filter(j => j.status === 'completed').length;
+            const activeCount = (device.printJobs || []).filter(j => j.status === 'printing' || j.status === 'queued').length;
+            return isTR
+              ? `${completedCount} Görev Tamamlandı${activeCount > 0 ? ` (${activeCount} Yazdırılıyor)` : ''}`
+              : `${completedCount} Jobs Completed${activeCount > 0 ? ` (${activeCount} Printing)` : ''}`;
+          })()}
         </text>
       )}
       {device.type === 'iot' && (
@@ -1151,159 +1174,161 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
             );
           })()
         ) : (
-          device.ports.filter(p => !p.id.startsWith('vlan') && p.id !== 'wlan0').map((port, idx) => {
-            const portsPerRow = 8;
-            const col = idx % portsPerRow;
-            const row = Math.floor(idx / portsPerRow);
-            const portSpacing = 14;
-            const rowSpacing = 14;
-            const startX = 14;
-            const startY = 80;
-            const portX = startX + col * portSpacing;
-            const portY = startY + row * rowSpacing;
-            const isConnected = port.status === 'connected';
-            const isShutdown = port.shutdown;
-            const isDeviceOffline = device.status === 'offline';
+          device.ports
+            .filter(p => !p.id.startsWith('vlan') && p.id !== 'wlan0')
+            .map((port, idx) => {
+              const portsPerRow = 8;
+              const col = idx % portsPerRow;
+              const row = Math.floor(idx / portsPerRow);
+              const portSpacing = 14;
+              const rowSpacing = 14;
+              const startX = device.type === 'cloud' ? 44 : 14;
+              const startY = 80;
+              const portX = startX + col * portSpacing;
+              const portY = startY + row * rowSpacing;
+              const isConnected = port.status === 'connected';
+              const isShutdown = port.shutdown;
+              const isDeviceOffline = device.status === 'offline';
 
-            const portId = port.id.toLowerCase();
-            const isConsole = portId === 'console';
-            const isGigabit = isGigabitPort(port.id);
-            const isFastEthernet = portId.startsWith('fa');
+              const portId = port.id.toLowerCase();
+              const isConsole = portId === 'console';
+              const isGigabit = isGigabitPort(port.id);
+              const isFastEthernet = portId.startsWith('fa');
 
-            const portNum = port.label.replace(/\D/g, '');
-            let displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
-            if (device.type === 'cloud') {
-              displayNum = port.id === 'eth0' ? 'W' : port.id === 'eth1' ? 'L' : displayNum;
-            }
-
-            const deviceState = deviceStates?.get(device.id);
-            const isStartPort = isDrawingConnection && connectionStart?.deviceId === device.id && connectionStart?.portId === port.id;
-            const simulatorPort = deviceState?.ports?.[port.id];
-            const isSTPBlocked = simulatorPort?.spanningTree?.state === 'blocking' || simulatorPort?.spanningTree?.role === 'alternate';
-            const isTargetPort = isTargetingThisDevice && !isConnected;
-            const hasProblem = isShutdown || isDeviceOffline || isSTPBlocked || (isConnected && !isPortConnectionHealthy(port.id));
-
-            let portFill: string;
-            let portStroke: string;
-
-            if (isStartPort) {
-              portFill = 'var(--color-success-500)';
-              portStroke = 'var(--color-success-400)';
-            } else if (isTargetPort) {
-              portFill = 'var(--color-warning-500)';
-              portStroke = 'var(--color-warning-400)';
-            } else if (isShutdown || isDeviceOffline) {
-              portFill = 'var(--color-error-500)';
-              portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
-            } else if (isSTPBlocked) {
-              portFill = PORT_STP_BLOCKED;
-              portStroke = PORT_STP_BLOCKED_STROKE;
-            } else if (isConnected) {
-              if (isConsole) {
-                portFill = 'var(--color-accent-500)';
-                portStroke = isDark ? 'var(--color-accent-400)' : 'var(--color-accent-400)';
-              } else if (isGigabit) {
-                portFill = PORT_GIGABIT_UP;
-                portStroke = PORT_GIGABIT_UP_STROKE;
-              } else if (isFastEthernet) {
-                portFill = 'var(--color-primary-500)';
-                portStroke = isDark ? 'var(--color-primary-400)' : 'var(--color-primary-400)';
-              } else {
-                portFill = 'var(--color-primary-500)';
-                portStroke = isDark ? 'var(--color-primary-400)' : 'var(--color-primary-400)';
+              const portNum = port.label.replace(/\D/g, '');
+              let displayNum = isConsole ? 'C' : (portNum ? parseInt(portNum, 10).toString() : 'C');
+              if (device.type === 'cloud') {
+                displayNum = port.id === 'eth0' ? '1' : port.id === 'eth1' ? '2' : port.id === 'eth2' ? '3' : port.id === 'eth3' ? '4' : (idx + 1).toString();
               }
-            } else {
-              if (isConsole) {
-                portFill = 'var(--color-accent-500)';
+
+              const deviceState = deviceStates?.get(device.id);
+              const isStartPort = isDrawingConnection && connectionStart?.deviceId === device.id && connectionStart?.portId === port.id;
+              const simulatorPort = deviceState?.ports?.[port.id];
+              const isSTPBlocked = simulatorPort?.spanningTree?.state === 'blocking' || simulatorPort?.spanningTree?.role === 'alternate';
+              const isTargetPort = isTargetingThisDevice && !isConnected;
+              const hasProblem = isShutdown || isDeviceOffline || isSTPBlocked || (isConnected && !isPortConnectionHealthy(port.id));
+
+              let portFill: string;
+              let portStroke: string;
+
+              if (isStartPort) {
+                portFill = 'var(--color-success-500)';
+                portStroke = 'var(--color-success-400)';
+              } else if (isTargetPort) {
+                portFill = 'var(--color-warning-500)';
+                portStroke = 'var(--color-warning-400)';
+              } else if (isShutdown || isDeviceOffline) {
+                portFill = 'var(--color-error-500)';
                 portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
-              } else if (isGigabit) {
-                portFill = 'var(--color-secondary-500)';
-                portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
-              } else if (isFastEthernet) {
-                portFill = 'var(--color-primary-500)';
-                portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
+              } else if (isSTPBlocked) {
+                portFill = PORT_STP_BLOCKED;
+                portStroke = PORT_STP_BLOCKED_STROKE;
+              } else if (isConnected) {
+                if (isConsole) {
+                  portFill = 'var(--color-accent-500)';
+                  portStroke = isDark ? 'var(--color-accent-400)' : 'var(--color-accent-400)';
+                } else if (isGigabit) {
+                  portFill = PORT_GIGABIT_UP;
+                  portStroke = PORT_GIGABIT_UP_STROKE;
+                } else if (isFastEthernet) {
+                  portFill = 'var(--color-primary-500)';
+                  portStroke = isDark ? 'var(--color-primary-400)' : 'var(--color-primary-400)';
+                } else {
+                  portFill = 'var(--color-primary-500)';
+                  portStroke = isDark ? 'var(--color-primary-400)' : 'var(--color-primary-400)';
+                }
               } else {
-                portFill = 'var(--color-primary-500)';
-                portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
+                if (isConsole) {
+                  portFill = 'var(--color-accent-500)';
+                  portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
+                } else if (isGigabit) {
+                  portFill = 'var(--color-secondary-500)';
+                  portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
+                } else if (isFastEthernet) {
+                  portFill = 'var(--color-primary-500)';
+                  portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
+                } else {
+                  portFill = 'var(--color-primary-500)';
+                  portStroke = isDark ? 'var(--color-secondary-600)' : 'var(--color-secondary-400)';
+                }
               }
-            }
 
-            const hasStpInfo = isSwitchDeviceType(device.type) && simulatorPort?.spanningTree;
-            const stpRole = simulatorPort?.spanningTree?.role;
-            const roleAbbr = stpRole === 'root' ? 'RP' : stpRole === 'alternate' ? 'AP' : stpRole === 'backup' ? 'BP' : '';
+              const hasStpInfo = isSwitchDeviceType(device.type) && simulatorPort?.spanningTree;
+              const stpRole = simulatorPort?.spanningTree?.role;
+              const roleAbbr = stpRole === 'root' ? 'RP' : stpRole === 'alternate' ? 'AP' : stpRole === 'backup' ? 'BP' : '';
 
-            return (
-              <g
-                key={port.id}
-                transform={`translate(${portX}, ${portY})`}
-                style={{ cursor: isDraggingInteractionDisabled ? 'default' : 'pointer', pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all' }}
-                onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
-                onMouseLeave={handlePortMouseLeave}
-              >
-                {isTargetPort && (
-                  <circle
-                    r={10}
-                    className="animate-pulse"
-                    style={{ fill: 'var(--color-warning-500)', opacity: 0.3 }}
-                  />
-                )}
-                <circle
-                  r={7} // Adjusted to prevent overlap (spacing is 14)
-                  fill="transparent"
-                  style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    handlePortClick(e, device.id, port.id);
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                />
-                <circle
-                  r={6}
-                  fill={portFill}
-                  stroke={isSTPBlocked || isTargetPort ? portStroke : getPortFrameColor(port.id, hasProblem, isConnected)}
-                  strokeWidth={isShutdown || isDeviceOffline || isConnected || isTargetPort ? 2 : 1}
-                  opacity={hasProblem && !isSTPBlocked && !isTargetPort ? 0.45 : 1}
-                  style={{ pointerEvents: 'none' }}
-                />
-                <text y={1} style={{ fill: 'var(--color-background)', userSelect: 'none', pointerEvents: 'none' }} fontSize="6" textAnchor="middle" dominantBaseline="middle">
-                  {displayNum}
-                </text>
-                {hasStpInfo && roleAbbr && (
-                  <g transform={`translate(0, ${row === 0 ? -11 : 11})`}>
-                    <rect
-                      x="-7"
-                      y="-5"
-                      width="14"
-                      height="9"
-                      rx="2"
-                      fill={
-                        stpRole === 'root'
-                          ? 'var(--color-primary-500)'
-                          : stpRole === 'designated'
-                            ? 'var(--color-success-500)'
-                            : 'var(--color-warning-500)'
-                      }
-                      stroke={isDark ? 'var(--color-secondary-950)' : 'var(--color-secondary-50)'}
-                      strokeWidth="0.5"
+              return (
+                <g
+                  key={port.id}
+                  transform={`translate(${portX}, ${portY})`}
+                  style={{ cursor: isDraggingInteractionDisabled ? 'default' : 'pointer', pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all' }}
+                  onMouseEnter={(e) => handlePortHover(e, device.id, port.id)}
+                  onMouseLeave={handlePortMouseLeave}
+                >
+                  {isTargetPort && (
+                    <circle
+                      r={10}
+                      className="animate-pulse"
+                      style={{ fill: 'var(--color-warning-500)', opacity: 0.3 }}
                     />
-                    <text
-                      y="-0.5"
-                      fill="white"
-                      fontSize="5"
-                      fontWeight="bold"
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      style={{ userSelect: 'none', pointerEvents: 'none' }}
-                    >
-                      {roleAbbr}
-                    </text>
-                  </g>
-                )}
-              </g>
-            );
-          })
+                  )}
+                  <circle
+                    r={7} // Adjusted to prevent overlap (spacing is 14)
+                    fill="transparent"
+                    style={{ pointerEvents: isDraggingInteractionDisabled ? 'none' : 'all', cursor: isDraggingInteractionDisabled ? 'default' : 'pointer' }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      handlePortClick(e, device.id, port.id);
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  />
+                  <circle
+                    r={6}
+                    fill={portFill}
+                    stroke={isSTPBlocked || isTargetPort ? portStroke : getPortFrameColor(port.id, hasProblem, isConnected)}
+                    strokeWidth={isShutdown || isDeviceOffline || isConnected || isTargetPort ? 2 : 1}
+                    opacity={hasProblem && !isSTPBlocked && !isTargetPort ? 0.45 : 1}
+                    style={{ pointerEvents: 'none' }}
+                  />
+                  <text y={1} style={{ fill: 'var(--color-background)', userSelect: 'none', pointerEvents: 'none' }} fontSize="6" textAnchor="middle" dominantBaseline="middle">
+                    {displayNum}
+                  </text>
+                  {hasStpInfo && roleAbbr && (
+                    <g transform={`translate(0, ${row === 0 ? -11 : 11})`}>
+                      <rect
+                        x="-7"
+                        y="-5"
+                        width="14"
+                        height="9"
+                        rx="2"
+                        fill={
+                          stpRole === 'root'
+                            ? 'var(--color-primary-500)'
+                            : stpRole === 'designated'
+                              ? 'var(--color-success-500)'
+                              : 'var(--color-warning-500)'
+                        }
+                        stroke={isDark ? 'var(--color-secondary-950)' : 'var(--color-secondary-50)'}
+                        strokeWidth="0.5"
+                      />
+                      <text
+                        y="-0.5"
+                        fill="white"
+                        fontSize="5"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        style={{ userSelect: 'none', pointerEvents: 'none' }}
+                      >
+                        {roleAbbr}
+                      </text>
+                    </g>
+                  )}
+                </g>
+              );
+            })
         )
       )}
     </g>

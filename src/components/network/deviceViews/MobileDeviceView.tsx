@@ -105,17 +105,54 @@ export function MobileDeviceView({
   const dragStateRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const resizeStateRef = useRef<{ side: any; startX: number; startY: number; originX: number; originY: number; originW: number; originH: number } | null>(null);
 
-  // Timer for active call duration & RTP metrics
+  // Timer for active call duration, RTP metrics & connectivity loss monitoring
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
-    if (callState === 'connected') {
+    if (callState === 'connected' || callState === 'calling') {
       timer = setInterval(() => {
-        setCallDuration(prev => prev + 1);
-        setRtpMetrics({
-          rtt: Math.floor(Math.random() * 4) + 2,
-          jitter: Number((Math.random() * 0.8 + 0.1).toFixed(1)),
-          loss: 0
-        });
+        if (callState === 'connected') {
+          setCallDuration(prev => prev + 1);
+          setRtpMetrics({
+            rtt: Math.floor(Math.random() * 4) + 2,
+            jitter: Number((Math.random() * 0.8 + 0.1).toFixed(1)),
+            loss: 0
+          });
+        }
+
+        // Check if connection to remote peer is still alive
+        const activeVoip = device.activeVoipCall;
+        const targetDev = activeCallTargetRef.current || topologyDevices.find(d =>
+          d.id !== device.id && (
+            d.id === activeVoip?.callerId ||
+            d.activeVoipCall?.callerId === device.id ||
+            (d.activeVoipCall && activeVoip && d.activeVoipCall.callerId === activeVoip.callerId)
+          )
+        );
+
+        if (targetDev) {
+          const targetIp = targetDev.ip || activeVoip?.callerIp || dialNumber;
+          if (targetIp) {
+            const res = checkConnectivity(
+              device.id,
+              targetIp,
+              topologyDevices,
+              topologyConnections,
+              deviceStates,
+              isTr ? 'tr' : 'en',
+              { protocol: 'udp', port: '5060' }
+            );
+
+            if (!res.success || targetDev.status === 'offline') {
+              handleEndVoipCall();
+              setCallState('failed');
+              setCallStatusMessage(isTr ? 'Arama Sonlandırıldı: Bağlantı koptu!' : 'Call Ended: Connection lost!');
+              setTimeout(() => {
+                setCallState('idle');
+                setCallStatusMessage('');
+              }, 3000);
+            }
+          }
+        }
       }, 1000);
     } else {
       setCallDuration(0);
@@ -123,12 +160,12 @@ export function MobileDeviceView({
     return () => {
       if (timer) clearInterval(timer);
     };
-  }, [callState]);
+  }, [callState, device, topologyDevices, topologyConnections, deviceStates, isTr, dialNumber]);
 
   // Sync call state when incoming call or active call state changes remotely
   useEffect(() => {
     if (!device.activeVoipCall) {
-      if (callState !== 'idle') {
+      if (callState !== 'idle' && callState !== 'failed') {
         setCallState('idle');
         setCallStatusMessage('');
         activeCallTargetRef.current = null;
@@ -583,8 +620,8 @@ export function MobileDeviceView({
     // Check target device by IP or hostname
     let targetDev = topologyDevices.find(d => d.ip === hostOrIp || d.name?.toLowerCase() === hostOrIp.toLowerCase() || d.id === hostOrIp);
 
-    // If host is gateway, resolve device.gateway
-    if (!targetDev && (hostOrIp === 'gateway' || hostOrIp === '192.168.1.1' || hostOrIp === device.gateway)) {
+    // If host is explicitly 'gateway' or targetDev is not found and matches device.gateway
+    if (!targetDev && (hostOrIp === 'gateway' || (device.gateway && hostOrIp === device.gateway))) {
       const gwIp = device.gateway || '192.168.1.1';
       targetDev = topologyDevices.find(d => d.ip === gwIp) || topologyDevices.find(d => d.type === 'router' || d.type === 'wlc' || d.type === 'firewall');
       if (targetDev) hostOrIp = targetDev.ip || gwIp;

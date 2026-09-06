@@ -127,7 +127,9 @@ export const DeviceNode = memo(function DeviceNode({
     prevProps.device.y !== nextProps.device.y ||
     prevProps.device.name !== nextProps.device.name ||
     prevProps.device.status !== nextProps.device.status ||
-    prevProps.device.ip !== nextProps.device.ip
+    prevProps.device.ip !== nextProps.device.ip ||
+    prevProps.device.activeVoipCall !== nextProps.device.activeVoipCall ||
+    prevProps.device.printJobs !== nextProps.device.printJobs
   ) {
     return false; // Re-render et
   }

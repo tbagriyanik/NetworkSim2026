@@ -5,8 +5,8 @@ import type { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import type { SwitchState } from '@/lib/network/types';
 import { dispatchCapturedPackets } from '../../../utils/packetCapture';
 import { runNetworkEventPipeline } from '@/lib/network/forwarding/eventPipeline';
-
-
+import { checkConnectivity } from '@/lib/network/connectivity/pathResolution';
+import { useAppStore } from '@/lib/store/appStore';
 
 interface UsePeriodicNetworkPacketsOptions {
   devices: CanvasDevice[];
@@ -34,13 +34,66 @@ export function usePeriodicNetworkPackets({
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    // Periodic timer every 10 seconds for background control protocols (CDP, OSPF, Routing, WLAN)
+    // Periodic timer every 2 seconds for active VoIP call connectivity validation and 10 seconds for protocols
     const interval = setInterval(() => {
       const currentDevices = devicesRef.current;
       const currentConnections = connectionsRef.current;
       const currentStates = deviceStatesRef.current;
 
       if (!currentDevices.length) return;
+
+      // 1. Audit all activeVoipCalls across topology devices: if network connectivity is broken, clear activeVoipCall on BOTH sides
+      const devicesToDisconnect = new Set<string>();
+      currentDevices.forEach(dev => {
+        if (dev.activeVoipCall) {
+          const activeVoip = dev.activeVoipCall;
+          const callerId = activeVoip.callerId;
+          const peerDev = currentDevices.find(d =>
+            d.id !== dev.id && (
+              d.id === callerId ||
+              d.activeVoipCall?.callerId === dev.id ||
+              (d.activeVoipCall && d.activeVoipCall.callerId === callerId)
+            )
+          );
+
+          if (!peerDev || dev.status === 'offline' || peerDev.status === 'offline') {
+            devicesToDisconnect.add(dev.id);
+            if (peerDev) devicesToDisconnect.add(peerDev.id);
+          } else {
+            const targetIp = peerDev.ip || activeVoip.callerIp;
+            if (targetIp) {
+              const res = checkConnectivity(
+                dev.id,
+                targetIp,
+                currentDevices,
+                currentConnections,
+                currentStates,
+                'tr',
+                { protocol: 'udp', port: '5060' }
+              );
+              if (!res.success) {
+                devicesToDisconnect.add(dev.id);
+                devicesToDisconnect.add(peerDev.id);
+              }
+            }
+          }
+        }
+      });
+
+      if (devicesToDisconnect.size > 0) {
+        const setDevices = useAppStore.getState().setDevices;
+        setDevices(
+          currentDevices.map(d => {
+            if (devicesToDisconnect.has(d.id)) {
+              return {
+                ...d,
+                activeVoipCall: undefined
+              };
+            }
+            return d;
+          })
+        );
+      }
 
       const packetsToDispatch: Array<{
         connectionId: string;
