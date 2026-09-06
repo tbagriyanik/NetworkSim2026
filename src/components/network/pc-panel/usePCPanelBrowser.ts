@@ -207,6 +207,20 @@ export function usePCPanelBrowser({
     setHttpAppUrl(displayUrl);
 
     if (resolvedTargetIp === '1.1.1.1' || resolvedTargetIp === '1.0.0.1' || resolvedTargetIp === '8.8.8.8' || resolvedTargetIp === '8.8.4.4' || (cloudTarget && connectivityResult.success && !httpServer)) {
+      if (cloudTarget && cloudTarget.status === 'offline') {
+        setHttpAppDeviceId(null);
+        setHttpAppTitle(language === 'tr' ? 'Bulut Kapalı' : 'Cloud Offline');
+        setHttpAppContent(`
+          <main style="padding:32px;font-family:system-ui,sans-serif;text-align:center;">
+            <div style="font-size:64px;margin-bottom:16px;">☁️⚡</div>
+            <h1 style="margin:0 0 8px;font-size:24px;color:var(--color-error-500);">${language === 'tr' ? 'Bulut Hizmeti Kapalı' : 'Cloud Service Offline'}</h1>
+            <p style="margin:0 0 12px;font-size:16px;color:var(--color-muted-foreground);">${language === 'tr' ? 'Hedef Bulut (WAN) cihazının gücü kapalı (Power Off) durumda!' : 'Target Cloud (WAN) device is powered off!'}</p>
+            <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:var(--color-error-100);color:var(--color-error-800);font-size:13px;">${displayUrl}</code>
+          </main>
+        `);
+        addLocalOutput('error', language === 'tr' ? 'Bulut cihazı kapalı.' : 'Cloud device is powered off.');
+        return;
+      }
       setHttpAppDeviceId(cloudTarget?.id || null);
       setHttpAppTitle(language === 'tr' ? 'Genel Arama Kapısı - WAN' : 'Public Search Portal - WAN');
       setHttpAppContent(`

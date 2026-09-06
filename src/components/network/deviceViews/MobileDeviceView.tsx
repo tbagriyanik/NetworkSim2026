@@ -386,6 +386,16 @@ export function MobileDeviceView({
         }]);
       }
 
+      if (targetDev && targetDev.status === 'offline') {
+        setCallState('failed');
+        setCallStatusMessage(isTr ? `Arama Başarısız: "${targetDev.name}" kapalı (Power Off)!` : `Call Failed: "${targetDev.name}" is powered off!`);
+        setTimeout(() => {
+          setCallState('idle');
+          setCallStatusMessage('');
+        }, 3500);
+        return;
+      }
+
       if (res.success) {
         activeCallTargetRef.current = targetDev || null;
         setCallState('connected');

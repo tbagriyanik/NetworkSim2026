@@ -162,8 +162,24 @@ export function IotDashboardTab({
                 value={`${iotKind}:${iotSensorType}`}
                 onValueChange={(v) => {
                   const [kind, sensor] = v.split(':');
-                  setIotKind(kind as 'cooler' | 'lamp' | 'heater' | 'sensor');
-                  setIotSensorType(sensor as 'temperature' | 'sound' | 'motion' | 'humidity' | 'light');
+                  const newKind = kind as 'cooler' | 'lamp' | 'heater' | 'sensor';
+                  const newSensor = sensor as 'temperature' | 'sound' | 'motion' | 'humidity' | 'light';
+                  setIotKind(newKind);
+                  setIotSensorType(newSensor);
+                  if (selectedIotDeviceId) {
+                    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                      detail: {
+                        deviceId: selectedIotDeviceId,
+                        config: {
+                          iot: {
+                            ...selectedIotDevice?.iot,
+                            kind: newKind,
+                            sensorType: newSensor,
+                          }
+                        }
+                      }
+                    }));
+                  }
                 }}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -182,7 +198,7 @@ export function IotDashboardTab({
 
             <div className="flex items-center gap-4">
               <label className="text-xs font-bold text-secondary-500 shrink-0">
-                {language === 'tr' ? 'Cihaz Durumu (Aktif/Pasif)' : 'Device Status (Active/Passive)'}
+                {language === 'tr' ? 'Cihaz Durumu' : 'Device Status'}
               </label>
               <span className={`text-[9px] font-bold ${!iotCollaborationEnabled ? 'text-error-500' : 'text-secondary-200'}`}>
                 {language === 'tr' ? 'PASİF' : 'PASSIVE'}
@@ -191,7 +207,23 @@ export function IotDashboardTab({
                 type="button"
                 role="switch"
                 aria-checked={iotCollaborationEnabled}
-                onClick={() => setIotCollaborationEnabled((prev) => !prev)}
+                onClick={() => {
+                  const nextValue = !iotCollaborationEnabled;
+                  setIotCollaborationEnabled(nextValue);
+                  if (selectedIotDeviceId) {
+                    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                      detail: {
+                        deviceId: selectedIotDeviceId,
+                        config: {
+                          iot: {
+                            ...selectedIotDevice?.iot,
+                            collaborationEnabled: nextValue
+                          }
+                        }
+                      }
+                    }));
+                  }
+                }}
                 className={cn(
                   "relative inline-flex h-7 w-14 items-center rounded-full border transition-all duration-300 shrink-0",
                   iotCollaborationEnabled ? 'bg-accent-500 border-accent-400 shadow-[0_0_3px_rgba(6,182,212,0.15)]' : (isDark ? 'bg-secondary-800 border-secondary-700' : 'bg-secondary-200 border-secondary-300')
@@ -206,7 +238,7 @@ export function IotDashboardTab({
 
             <div className="flex items-center gap-4">
               <label className="text-xs font-bold text-secondary-500 shrink-0">
-                {language === 'tr' ? 'Güç Durumu (Açık/Kapalı)' : 'Power Status (On/Off)'}
+                {language === 'tr' ? 'Güç Durumu' : 'Power Status'}
               </label>
               <span className={`text-[9px] font-bold ${selectedIotDevice?.status === 'offline' ? 'text-error-500' : 'text-secondary-200'}`}>
                 {language === 'tr' ? 'KAPALI' : 'OFF'}

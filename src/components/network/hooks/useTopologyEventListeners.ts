@@ -174,7 +174,11 @@ export function useTopologyEventListeners({
       setDevices((prev) =>
         prev.map((d) => {
           if (d.id !== deviceId) return d;
-          const updatedDevice = { ...d, ...config };
+          const updatedDevice = {
+            ...d,
+            ...config,
+            iot: config.iot ? { ...d.iot, ...config.iot } : d.iot,
+          };
           if (config.wifi && updatedDevice.ports) {
             updatedDevice.ports = updatedDevice.ports.map(p => {
               if (p.id !== 'wlan0') return p;

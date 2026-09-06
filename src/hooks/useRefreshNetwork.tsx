@@ -101,7 +101,7 @@ export function useRefreshNetwork({
 
         const matchedAp = refreshedDevices.find((ap) =>
           ap.id !== device.id &&
-          (ap.type === 'router' || isSwitchDeviceType(ap.type)) &&
+          (ap.type === 'router' || ap.type === 'wlc' || isSwitchDeviceType(ap.type)) &&
           isWirelessMatch(device, ap)
         );
 
@@ -126,7 +126,7 @@ export function useRefreshNetwork({
         };
       });
 
-      refreshedDevices.filter(d => d.type === 'router' || isSwitchDeviceType(d.type)).forEach(ap => {
+      refreshedDevices.filter(d => d.type === 'router' || d.type === 'wlc' || isSwitchDeviceType(d.type)).forEach(ap => {
         const apWifi = ap.wifi;
         if (!apWifi || apWifi.mode !== 'ap' || !apWifi.ssid) return;
 
@@ -157,7 +157,7 @@ export function useRefreshNetwork({
         return d && (d.type === 'switchL2' || d.type === 'switchL3');
       }).length;
 
-      const dhcpClients = refreshedDevices.filter(d => (d.type === 'pc' || d.type === 'iot') && d.ipConfigMode === 'dhcp');
+      const dhcpClients = refreshedDevices.filter(d => (d.type === 'pc' || d.type === 'iot' || d.type === 'mobile' || d.type === 'printer') && d.ipConfigMode === 'dhcp');
       const dhcpAssignments: Array<{ name: string, ip: string }> = [];
       const finalDevicesForRefresh = [...refreshedDevices];
 
@@ -384,7 +384,7 @@ export function useRefreshNetwork({
       });
 
       iotProcessedDevices.forEach((device) => {
-        if (device.type !== 'pc' && device.type !== 'iot' || device.ipConfigMode !== 'dhcp') return;
+        if ((device.type !== 'pc' && device.type !== 'iot' && device.type !== 'mobile' && device.type !== 'printer') || device.ipConfigMode !== 'dhcp') return;
         const state = portSecurityUpdatedStates.get(device.id);
         const runtimeIp = state?.ports?.['eth0']?.ipAddress || state?.ports?.['wlan0']?.ipAddress || '';
         const candidateIp = hasValidIp(device.ip) ? device.ip : runtimeIp;

@@ -421,9 +421,6 @@ export function CommandLineTab({
             >
               <TerminalIcon className="w-3.5 h-3.5" />
               <span>Command Prompt</span>
-              {activeTerminalTab === 'cmd' && (
-                <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse ml-0.5" />
-              )}
             </button>
 
             {/* Pin Toggle Button */}
@@ -456,9 +453,6 @@ export function CommandLineTab({
             >
               <TerminalIcon className="w-3.5 h-3.5" />
               <span>{language === 'tr' ? 'Linux Terminali' : 'Linux Terminal'}</span>
-              {activeTerminalTab === 'linux' && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse ml-0.5" />
-              )}
             </button>
 
             {/* Pin Toggle Button */}

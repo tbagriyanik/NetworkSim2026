@@ -210,7 +210,7 @@ export function useNetworkLogic(
           if (apWifi?.enabled && apWifi.mode === 'ap' && apWifi.ssid === pcWifi.ssid) {
             if ((apWifi.security || 'open') === (pcWifi.security || 'open') &&
               (apWifi.security === 'open' || apWifi.password === pcWifi.password)) {
-              activeConnections.push({
+              const wConn = {
                 id: `wireless-dhcp-${pc.id}-${ap.id}`,
                 sourceDeviceId: pc.id,
                 sourcePort: 'wlan0',
@@ -218,7 +218,12 @@ export function useNetworkLogic(
                 targetPort: 'wlan0',
                 cableType: 'wireless',
                 active: true
-              } as CanvasConnection);
+              } as CanvasConnection;
+              activeConnections.push(wConn);
+              for (const id of [wConn.sourceDeviceId, wConn.targetDeviceId]) {
+                const list = adjacency.get(id);
+                if (list) list.push(wConn); else adjacency.set(id, [wConn]);
+              }
             }
           }
         });

@@ -33,6 +33,17 @@ export function usePCPanelIotConfig({ iotDevices, language, t }: UsePCPanelIotCo
   const [iotDataStore, setIotDataStore] = useState('');
 
   useEffect(() => {
+    const handleSelectIotEvent = (e: Event) => {
+      const customEv = e as CustomEvent<{ deviceId: string }>;
+      if (customEv.detail?.deviceId) {
+        setSelectedIotDeviceId(customEv.detail.deviceId);
+      }
+    };
+    window.addEventListener('pc-select-iot-device', handleSelectIotEvent);
+    return () => window.removeEventListener('pc-select-iot-device', handleSelectIotEvent);
+  }, []);
+
+  useEffect(() => {
     if (!iotDevices.length) {
       setTimeout(() => setSelectedIotDeviceId(''), 0);
       return;

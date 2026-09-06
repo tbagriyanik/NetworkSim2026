@@ -164,6 +164,15 @@ export function HttpBrowserWindow({
   const sendPrintJob = (targetPrinter: CanvasDevice) => {
     if (!targetPrinter) return;
 
+    if (targetPrinter.status === 'offline') {
+      alert(
+        language === 'tr'
+          ? `Yazdırma Başarısız: Seçilen yazıcı (${targetPrinter.name || targetPrinter.id}) kapalı (Power Off)!`
+          : `Print Failed: Selected printer (${targetPrinter.name || targetPrinter.id}) is powered off!`
+      );
+      return;
+    }
+
     // Check same subnet if currentDeviceId or IP details are available
     if (currentDeviceId) {
       const sourceDevice = safeDevices.find(d => d.id === currentDeviceId);

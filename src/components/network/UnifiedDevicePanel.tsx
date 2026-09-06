@@ -38,6 +38,7 @@ const WlcWirelessPanel = dynamic(() => import('./WlcWirelessPanel').then(m => m.
 const PrinterDeviceView = dynamic(() => import('./deviceViews/PrinterDeviceView').then(m => m.PrinterDeviceView), { ssr: false });
 const MobileDeviceView = dynamic(() => import('./deviceViews/MobileDeviceView').then(m => m.MobileDeviceView), { ssr: false });
 const CloudDeviceView = dynamic(() => import('./deviceViews/CloudDeviceView').then(m => m.CloudDeviceView), { ssr: false });
+const IotDeviceView = dynamic(() => import('./deviceViews/IotDeviceView').then(m => m.IotDeviceView), { ssr: false });
 
 
 interface UnifiedDevicePanelProps {
@@ -165,47 +166,60 @@ export function UnifiedDevicePanel({
             id={deviceId || "deviceUnified"}
             className={`${graphicsQuality === 'high' ? `liquid-glass-light ${isDark ? '!bg-secondary-950/40 border-emerald-950/80 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)]' : '!bg-white/60 border-emerald-950/80 shadow-[0_8px_28px_rgba(15,23,42,0.12)]'}` : (isDark ? '!bg-secondary-950 !border-secondary-800' : '!bg-white !border-secondary-200')} ${className || ''}`}
             title={
-                <div className="flex items-center gap-2 px-2">
-                    <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as 'console' | 'settings' | 'stp')} className="min-w-0">
-                        <TabsList className={cn("h-7 p-0.5", isDark ? "bg-secondary-800" : "bg-secondary-100")}>
-                            <TabsTrigger value="console" className="flex items-center gap-1.5 px-2 h-6 text-xs">
-                                {deviceType === 'hub' ? <DeviceIcon type="hub" size={14} color="#14b8a6" /> : deviceType === 'cloud' ? <Globe className="w-3 h-3 text-cyan-400" /> : deviceType === 'printer' ? <PrinterIcon className="w-3 h-3 text-purple-400" /> : deviceType === 'mobile' ? <Smartphone className="w-3 h-3 text-sky-400" /> : <TerminalIcon className="w-3 h-3" />}
-                                <span className="hidden sm:inline">
-                                    {deviceType === 'hub' ? (language === 'tr' ? 'Hub Durumu' : 'Hub Status')
-                                        : deviceType === 'cloud' ? (language === 'tr' ? 'Bulut & WAN' : 'Cloud & WAN')
-                                            : deviceType === 'printer' ? (language === 'tr' ? 'Yazıcı Kontrol' : 'Printer Control')
-                                                : deviceType === 'mobile' ? (language === 'tr' ? 'Mobil Ekran' : 'Mobile Screen')
-                                                    : t.cliInterface}
-                                </span>
-                            </TabsTrigger>
-
-                            {deviceType !== 'cloud' && deviceType !== 'printer' && deviceType !== 'mobile' && deviceType !== 'hub' && (
-                                <TabsTrigger value="settings" className="flex items-center gap-1.5 px-2 h-6 text-xs">
-                                    <Settings className="w-3 h-3" />
-                                    <span className="hidden sm:inline">{t.quickSettingsAndTasks}</span>
-                                </TabsTrigger>
-                            )}
-
-                            {(deviceType === 'switchL2' || deviceType === 'switchL3' || deviceType === 'router') && (
-                                <TabsTrigger value="stp" className="flex items-center gap-1.5 px-2 h-6 text-xs">
-                                    <Layers className="w-3 h-3 text-warning-500" />
-                                    <span className="hidden sm:inline">{deviceType === 'router' ? (language === 'tr' ? 'Ağ & Detaylar' : 'Network & Details') : t.stpTab}</span>
-                                </TabsTrigger>
-                            )}
-                        </TabsList>
-                    </Tabs>
-                    <div className={cn(
-                        "flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium ml-2",
-                        isDark ? "bg-secondary-800/50 border-secondary-700 text-secondary-300" : "bg-secondary-100 border-secondary-200 text-secondary-600"
-                    )}>
-                        <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-error-500" : "bg-success-500")} />
-                        <span className="truncate">{deviceName}</span>
-                        {deviceType !== 'hub' && deviceType !== 'cloud' && (
-                            <span className="opacity-50 text-[9px] uppercase">({deviceType})</span>
-                        )}
-
+                deviceType === 'iot' ? (
+                    <div className="flex items-center gap-2 px-2">
+                        <div className={cn(
+                            "flex items-center gap-2 px-3 py-1 rounded-lg text-xs font-bold border shadow-sm",
+                            isDark ? "bg-cyan-950/60 border-cyan-800 text-cyan-300" : "bg-cyan-50 border-cyan-200 text-cyan-700"
+                        )}>
+                            <Cpu className="w-4 h-4 text-cyan-400" />
+                            <span>{deviceName}</span>
+                            <span className="opacity-60 text-[10px] uppercase">({deviceType})</span>
+                        </div>
                     </div>
-                </div>
+                ) : (
+                    <div className="flex items-center gap-2 px-2">
+                        <Tabs value={activeTab} onValueChange={(v: string) => onTabChange(v as 'console' | 'settings' | 'stp')} className="min-w-0">
+                            <TabsList className={cn("h-7 p-0.5", isDark ? "bg-secondary-800" : "bg-secondary-100")}>
+                                <TabsTrigger value="console" className="flex items-center gap-1.5 px-2 h-6 text-xs">
+                                    {deviceType === 'hub' ? <DeviceIcon type="hub" size={14} color="#14b8a6" /> : deviceType === 'cloud' ? <Globe className="w-3 h-3 text-cyan-400" /> : deviceType === 'printer' ? <PrinterIcon className="w-3 h-3 text-purple-400" /> : deviceType === 'mobile' ? <Smartphone className="w-3 h-3 text-sky-400" /> : <TerminalIcon className="w-3 h-3" />}
+                                    <span className="hidden sm:inline">
+                                        {deviceType === 'hub' ? (language === 'tr' ? 'Hub Durumu' : 'Hub Status')
+                                            : deviceType === 'cloud' ? (language === 'tr' ? 'Bulut & WAN' : 'Cloud & WAN')
+                                                : deviceType === 'printer' ? (language === 'tr' ? 'Yazıcı Kontrol' : 'Printer Control')
+                                                    : deviceType === 'mobile' ? (language === 'tr' ? 'Mobil Ekran' : 'Mobile Screen')
+                                                        : t.cliInterface}
+                                    </span>
+                                </TabsTrigger>
+
+                                {deviceType !== 'cloud' && deviceType !== 'printer' && deviceType !== 'mobile' && deviceType !== 'hub' && (
+                                    <TabsTrigger value="settings" className="flex items-center gap-1.5 px-2 h-6 text-xs">
+                                        <Settings className="w-3 h-3" />
+                                        <span className="hidden sm:inline">{t.quickSettingsAndTasks}</span>
+                                    </TabsTrigger>
+                                )}
+
+                                {(deviceType === 'switchL2' || deviceType === 'switchL3' || deviceType === 'router') && (
+                                    <TabsTrigger value="stp" className="flex items-center gap-1.5 px-2 h-6 text-xs">
+                                        <Layers className="w-3 h-3 text-warning-500" />
+                                        <span className="hidden sm:inline">{deviceType === 'router' ? (language === 'tr' ? 'Ağ & Detaylar' : 'Network & Details') : t.stpTab}</span>
+                                    </TabsTrigger>
+                                )}
+                            </TabsList>
+                        </Tabs>
+                        <div className={cn(
+                            "flex items-center gap-1.5 px-2 py-0.5 rounded-full border text-[10px] font-medium ml-2",
+                            isDark ? "bg-secondary-800/50 border-secondary-700 text-secondary-300" : "bg-secondary-100 border-secondary-200 text-secondary-600"
+                        )}>
+                            <div className={cn("w-2 h-2 rounded-full shrink-0", isOffline ? "bg-error-500" : "bg-success-500")} />
+                            <span className="truncate">{deviceName}</span>
+                            {deviceType !== 'hub' && deviceType !== 'cloud' && (
+                                <span className="opacity-50 text-[9px] uppercase">({deviceType})</span>
+                            )}
+
+                        </div>
+                    </div>
+                )
             }
             isOpen={isOpen}
             onClose={() => onOpenChange(false)}
@@ -270,6 +284,15 @@ export function UnifiedDevicePanel({
                         ) : deviceType === 'mobile' ? (
                             <MobileDeviceView
                                 device={topologyDevices.find(d => d.id === deviceId) || { id: deviceId, type: 'mobile', name: deviceName, x: 0, y: 0, ip: '192.168.1.105', status: 'online', ports: [] }}
+                                topologyDevices={topologyDevices}
+                                topologyConnections={topologyConnections}
+                                deviceStates={deviceStates}
+                                isDark={isDark}
+                                language={language}
+                            />
+                        ) : deviceType === 'iot' ? (
+                            <IotDeviceView
+                                device={topologyDevices.find(d => d.id === deviceId) || { id: deviceId, type: 'iot', name: deviceName, x: 0, y: 0, ip: '192.168.1.100', status: 'online', ports: [] }}
                                 topologyDevices={topologyDevices}
                                 topologyConnections={topologyConnections}
                                 deviceStates={deviceStates}

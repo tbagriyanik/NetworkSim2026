@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { CanvasConnection, CanvasDevice } from './networkTopology.types';
 import { isCableCompatible, CableInfo } from '@/lib/network/types';
-import { Trash2, Unplug, PlugZap } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 const STUB_BG = 'var(--color-secondary-50)';
 const STUB_BG_DARK = 'var(--color-secondary-950)';
@@ -15,7 +15,6 @@ interface ConnectionHandleProps {
   totalSameConns: number;
   getPortPosition: (device: CanvasDevice, portId: string) => { x: number; y: number };
   onDelete: (connId: string) => void;
-  onToggleActive?: (connId: string) => void;
 }
 
 const ConnectionHandle = memo(function ConnectionHandle({
@@ -27,7 +26,6 @@ const ConnectionHandle = memo(function ConnectionHandle({
   totalSameConns,
   getPortPosition,
   onDelete,
-  onToggleActive,
 }: ConnectionHandleProps) {
   const source = getPortPosition(sourceDevice, connection.sourcePort);
   const target = getPortPosition(targetDevice, connection.targetPort);
@@ -78,7 +76,7 @@ const ConnectionHandle = memo(function ConnectionHandle({
 
   return (
     <g key={`handle-${connection.id}`} data-connection-handle-id={connection.id} data-export-hide="true">
-      {isCompatible && (
+      {isCompatible && connection.cableType !== 'wireless' && (
         <g transform={`translate(${trashX}, ${trashY})`} data-handle-inner="true">
           {/* Delete Button */}
           <g
@@ -89,55 +87,20 @@ const ConnectionHandle = memo(function ConnectionHandle({
             }}
           >
             <circle
-              cx="-10.5"
-              cy="-0.5"
-              r="9"
+              cx="0"
+              cy="0"
+              r="10"
               fill={isDark ? STUB_BG_DARK : STUB_BG}
-              opacity="0.72"
-              className="drop-shadow-sm group-hover:fill-error-500/10 transition-colors"
+              opacity="0.85"
+              className="drop-shadow-sm group-hover:fill-error-500/20 transition-colors"
             />
             <Trash2
-              className="w-3 h-3 text-error-500"
-              width={15}
-              height={15}
-              style={{ transform: 'translate(-18px, -8px)' }}
+              className="w-3.5 h-3.5 text-error-500"
+              width={14}
+              height={14}
+              style={{ transform: 'translate(-7px, -7px)' }}
             />
           </g>
-
-          {/* Break/Fix Button - only for wired connections, not wireless */}
-          {connection.cableType !== 'wireless' && (
-            <g
-              className="cursor-pointer group"
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleActive?.(connection.id);
-              }}
-            >
-              <circle
-                cx="9.5"
-                cy="-0.5"
-                r="9"
-                fill={isDark ? STUB_BG_DARK : STUB_BG}
-                opacity="0.72"
-                className="drop-shadow-sm group-hover:fill-warning-500/10 transition-colors"
-              />
-              {connection.active ? (
-                <Unplug
-                  className="w-3 h-3 text-warning-500"
-                  width={15}
-                  height={15}
-                  style={{ transform: 'translate(2px, -8px)' }}
-                />
-              ) : (
-                <PlugZap
-                  className="w-3 h-3 text-success-500"
-                  width={15}
-                  height={15}
-                  style={{ transform: 'translate(2px, -8px)' }}
-                />
-              )}
-            </g>
-          )}
         </g>
       )}
       {!isCompatible && (
@@ -167,8 +130,7 @@ const ConnectionHandle = memo(function ConnectionHandle({
     prevProps.sourceDevice.y === nextProps.sourceDevice.y &&
     prevProps.targetDevice.x === nextProps.targetDevice.x &&
     prevProps.targetDevice.y === nextProps.targetDevice.y &&
-    prevProps.connection.active === nextProps.connection.active &&
-    prevProps.onToggleActive === nextProps.onToggleActive
+    prevProps.connection.active === nextProps.connection.active
   );
 });
 

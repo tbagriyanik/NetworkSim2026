@@ -2,8 +2,6 @@
 
 import React from 'react';
 
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
 import { CanvasDevice, CanvasConnection } from '../networkTopology.types';
 import { SwitchState, Port } from '@/lib/network/types';
 import { getWirelessSignalStrength } from '@/lib/network/connectivity';
@@ -734,32 +732,7 @@ export const DeviceRenderer = React.memo(function DeviceRenderer({
 
       </g>
 
-      {/* Power Button Overlay */}
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <g
-            transform={`translate(6, 6)`}
-            style={{ cursor: 'pointer', pointerEvents: 'all' }}
-            onMouseDown={(e) => e.stopPropagation()}
-            onClick={(e) => {
-              e.stopPropagation();
-              window.dispatchEvent(
-                new CustomEvent('trigger-topology-toggle-power', {
-                  detail: { deviceId: device.id, nextStatus: isPoweredOff ? 'online' : 'offline' },
-                })
-              );
-            }}
-          >
-            <circle cx="8" cy="8" r="8" fill={isPoweredOff ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)'} />
-            <circle cx="8" cy="8" r="5" fill={isPoweredOff ? 'var(--color-error-500)' : 'var(--color-success-500)'} />
-          </g>
-        </TooltipTrigger>
-        {!isDraggingInteractionDisabled && (
-          <TooltipContent side="top" className="text-xs font-semibold">
-            {isPoweredOff ? t.powerOn : t.powerOff}
-          </TooltipContent>
-        )}
-      </Tooltip>
+
 
       {/* STP Overlay Bridge Badges */}
       {isSwitchDeviceType(device.type) && (() => {

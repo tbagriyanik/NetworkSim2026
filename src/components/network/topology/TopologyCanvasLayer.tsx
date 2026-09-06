@@ -166,7 +166,6 @@ export function TopologyCanvasLayer({
     handleConnectionMouseLeave,
     handleConnectionClick,
     onDeleteConnection,
-    onToggleConnectionActive,
     pingAnimation,
     handleEnvelopeClick,
     isDarkForPing,
@@ -371,7 +370,6 @@ export function TopologyCanvasLayer({
                                         totalSameConns={totalSameConns}
                                         getPortPosition={getPortPosition}
                                         onDelete={onDeleteConnection}
-                                        onToggleActive={onToggleConnectionActive}
                                     />
                                 </React.Fragment>
                             );

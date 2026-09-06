@@ -151,7 +151,7 @@ export const releaseDisconnectedPorts = (
   // refresh, otherwise every Wi-Fi client (including IoT devices) is treated
   // as disconnected before the wireless matching pass runs.
   const wirelessAccessPoints = devices.filter((device) =>
-    (device.type === 'router' || isSwitchDeviceType(device.type)) &&
+    (device.type === 'router' || device.type === 'wlc' || isSwitchDeviceType(device.type)) &&
     device.wifi?.enabled && device.wifi.mode === 'ap' && !!device.wifi.ssid
   );
   devices.forEach((device) => {

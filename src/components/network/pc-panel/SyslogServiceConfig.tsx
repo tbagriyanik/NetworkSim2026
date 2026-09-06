@@ -172,12 +172,6 @@ export function SyslogServiceConfig({
                 {language === 'tr' ? 'Ağ cihazlarından gelen günlük mesajlarını topla.' : 'Collect log messages from network devices.'}
               </p>
             </div>
-            {serviceSyslogEnabled && (
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-full ${serviceSyslogEnabled ? 'bg-primary-500/15 text-primary-600 border border-primary-500/30' : 'bg-secondary-200 text-secondary-500 border border-secondary-300'}`}>

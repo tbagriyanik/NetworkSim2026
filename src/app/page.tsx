@@ -1138,11 +1138,8 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       getOrCreatePCOutputs(deviceId, topologyDevices);
       setPcPanelInitialTab('home');
       openDeviceWindow(deviceId, 'pc', 'home');
-    } else if (device === 'firewall') {
-      setActiveFirewallId(deviceId);
-      openDeviceWindow(deviceId, 'firewall', 'console');
-    } else if (device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc' || device === 'hub' || device === 'cloud' || device === 'printer' || device === 'mobile') {
-      // Switch, Router, WLC, Hub, Cloud, Printer, or Mobile - set as device panel and open modal
+    } else if (device === 'iot' || device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc' || device === 'hub' || device === 'cloud' || device === 'printer' || device === 'mobile') {
+      // IoT, Switch, Router, WLC, Hub, Cloud, Printer, or Mobile - open device panel window
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       const deviceState = getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
       getOrCreateDeviceOutputs(deviceId, deviceState);
