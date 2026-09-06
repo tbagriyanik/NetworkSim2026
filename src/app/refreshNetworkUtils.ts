@@ -221,7 +221,8 @@ export const getEffectiveWifi = (device: CanvasDevice, deviceStates: Map<string,
 
   const normalizedMode = normalizeWifiMode(runtimeWifi.mode);
   const enabled = !wlan.shutdown && normalizedMode !== 'disabled';
-  const fallbackMode: 'ap' | 'client' = device.type === 'pc' ? 'client' : 'ap';
+  const isClientDeviceType = device.type === 'pc' || device.type === 'printer' || device.type === 'iot' || device.type === 'mobile';
+  const fallbackMode: 'ap' | 'client' = isClientDeviceType ? 'client' : 'ap';
   const resolvedMode: 'ap' | 'client' = normalizedMode === 'client' ? 'client' : (normalizedMode === 'ap' ? 'ap' : fallbackMode);
   return {
     ...device.wifi,

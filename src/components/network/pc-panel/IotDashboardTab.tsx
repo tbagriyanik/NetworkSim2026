@@ -274,7 +274,23 @@ export function IotDashboardTab({
               <label className="text-xs font-bold text-secondary-500">{language === 'tr' ? 'Veri Saklama (not/json/metin)' : 'Data Storage (note/json/text)'}</label>
               <textarea
                 value={iotDataStore}
-                onChange={(e) => setIotDataStore(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setIotDataStore(val);
+                  if (selectedIotDeviceId) {
+                    window.dispatchEvent(new CustomEvent('update-topology-device-config', {
+                      detail: {
+                        deviceId: selectedIotDeviceId,
+                        config: {
+                          iot: {
+                            ...selectedIotDevice?.iot,
+                            dataStore: val,
+                          }
+                        }
+                      }
+                    }));
+                  }
+                }}
                 rows={5}
                 className={`w-full rounded-md border px-3 py-2 text-sm ${isDark ? 'bg-secondary-950 border-secondary-800 text-secondary-100' : 'bg-white border-secondary-300 text-secondary-900'}`}
                 placeholder={language === 'tr' ? 'Sensör verisi veya notlar...' : 'Sensor data or notes...'}

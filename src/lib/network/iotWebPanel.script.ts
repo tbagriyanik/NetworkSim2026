@@ -246,5 +246,14 @@ export function generateIotPanelScript(): string {
         console.warn('IoT panel: failed to attach event listeners', err);
       }
     });
+
+    // Run authentication check immediately if DOM is already ready (e.g. in srcdoc iframe)
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      try { window.checkAuthentication(); } catch (_) {}
+    } else {
+      window.addEventListener('load', function() {
+        try { window.checkAuthentication(); } catch (_) {}
+      });
+    }
   `;
 }

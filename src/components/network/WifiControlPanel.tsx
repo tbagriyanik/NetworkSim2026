@@ -1159,21 +1159,31 @@ function generateWifiControlPanelHTML(config: RouterWebConfig, activeTab: string
       } catch(err) {}
     }
 
+    function checkRouterAuth() {
+      try {
+        var localAuth = localStorage.getItem('router_admin_auth_' + ${jsDeviceId});
+        var sessionAuth = sessionStorage.getItem('router_admin_auth_' + ${jsDeviceId});
+        if (localAuth === 'true' || sessionAuth === 'true') {
+          var loginForm = document.getElementById('login-form');
+          var mainContent = document.getElementById('main-content');
+          if (loginForm) loginForm.style.display = 'none';
+          if (mainContent) mainContent.style.display = 'block';
+        }
+      } catch(err) {}
+    }
+
     // Initialize lists & session state on document ready
     renderSsidList();
     renderConnectedWirelessClients();
     renderMacFilterList();
+    checkRouterAuth();
 
-    try {
-      var localAuth = localStorage.getItem('router_admin_auth_' + ${jsDeviceId});
-      var sessionAuth = sessionStorage.getItem('router_admin_auth_' + ${jsDeviceId});
-      if (localAuth === 'true' || sessionAuth === 'true') {
-        var loginForm = document.getElementById('login-form');
-        var mainContent = document.getElementById('main-content');
-        if (loginForm) loginForm.style.display = 'none';
-        if (mainContent) mainContent.style.display = 'block';
-      }
-    } catch(err) {}
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      checkRouterAuth();
+    } else {
+      window.addEventListener('load', checkRouterAuth);
+      document.addEventListener('DOMContentLoaded', checkRouterAuth);
+    }
   </script>
 </body>
 </html>

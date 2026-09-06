@@ -345,13 +345,13 @@ export function PrinterDeviceView({
         {/* Power & Signal Bars Indicator */}
         <div className="flex items-center gap-3">
           {/* Signal bars & Percent */}
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-secondary-700/50 bg-secondary-950/40 text-xs font-mono">
-            <Signal className={cn("w-3.5 h-3.5", wifiSignalStrength > 0 ? "text-emerald-400" : "opacity-30")} />
+          <div className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-mono", isDark ? "border-secondary-700/50 bg-secondary-950/40" : "border-slate-300 bg-slate-50")}>
+            <Signal className={cn("w-3.5 h-3.5", wifiSignalStrength > 0 ? "text-emerald-500" : "opacity-30")} />
             <div className="flex items-end gap-0.5 h-3">
-              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 1 ? "h-1.5 bg-emerald-400" : "h-1.5 bg-secondary-700")} />
-              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 2 ? "h-2 bg-emerald-400" : "h-1 bg-secondary-700")} />
-              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 3 ? "h-2.5 bg-emerald-400" : "h-1 bg-secondary-700")} />
-              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 4 ? "h-3 bg-emerald-400" : "h-1 bg-secondary-700")} />
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 1 ? "h-1.5 bg-emerald-500" : (isDark ? "h-1.5 bg-secondary-700" : "h-1.5 bg-slate-300"))} />
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 2 ? "h-2 bg-emerald-500" : (isDark ? "h-1 bg-secondary-700" : "h-1 bg-slate-300"))} />
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 3 ? "h-2.5 bg-emerald-500" : (isDark ? "h-1 bg-secondary-700" : "h-1 bg-slate-300"))} />
+              <span className={cn("w-1 rounded-xs transition-all", wifiSignalStrength >= 4 ? "h-3 bg-emerald-500" : (isDark ? "h-1 bg-secondary-700" : "h-1 bg-slate-300"))} />
             </div>
             <span className="text-[10px] text-muted-foreground ml-1">
               %{wifiSignalPercent}
@@ -364,8 +364,8 @@ export function PrinterDeviceView({
             className={cn(
               "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer",
               isPowerOn
-                ? "bg-emerald-950/40 border-emerald-600/50 text-emerald-400 hover:bg-emerald-900/60"
-                : "bg-red-950/40 border-red-600/50 text-red-400 hover:bg-red-900/60"
+                ? "bg-emerald-500/15 border-emerald-600/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25"
+                : "bg-red-500/15 border-red-600/40 text-red-600 dark:text-red-400 hover:bg-red-500/25"
             )}
             title={isTr ? (isPowerOn ? 'Yazıcıyı Kapat' : 'Yazıcıyı Aç') : (isPowerOn ? 'Power Off Printer' : 'Power On Printer')}
           >
@@ -374,7 +374,7 @@ export function PrinterDeviceView({
           </button>
         </div>
 
-        <div className="text-right font-mono text-xs opacity-70 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-secondary-800">
+        <div className={cn("text-right font-mono text-xs opacity-70 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0", isDark ? "border-secondary-800" : "border-slate-200")}>
           <div>MAC: {device.macAddress || '0050.56C0.0001'}</div>
           <div>Web: http://{device.ip || ip}</div>
         </div>

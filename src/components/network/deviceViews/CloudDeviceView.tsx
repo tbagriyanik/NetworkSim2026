@@ -68,37 +68,37 @@ export function CloudDeviceView({
           </h3>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3 rounded-lg bg-secondary-950 border border-secondary-800 flex items-center justify-between">
+            <div className={cn("p-3 rounded-lg border flex items-center justify-between", isDark ? "bg-secondary-950 border-secondary-800" : "bg-slate-50 border-slate-200")}>
               <div className="flex items-center gap-2">
                 <Globe className="w-4 h-4 text-emerald-400" />
                 <div>
                   <div className="font-semibold">{isTr ? 'Birincil Genel DNS Servisi' : 'Primary Public DNS Service'}</div>
-                  <div className="text-[10px] font-mono text-secondary-400">8.8.8.8 / 8.8.4.4</div>
+                  <div className={cn("text-[10px] font-mono", isDark ? "text-secondary-400" : "text-slate-500")}>8.8.8.8 / 8.8.4.4</div>
                 </div>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">ONLINE</span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-mono font-semibold">ONLINE</span>
             </div>
 
-            <div className="p-3 rounded-lg bg-secondary-950 border border-secondary-800 flex items-center justify-between">
+            <div className={cn("p-3 rounded-lg border flex items-center justify-between", isDark ? "bg-secondary-950 border-secondary-800" : "bg-slate-50 border-slate-200")}>
               <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-sky-400" />
                 <div>
                   <div className="font-semibold">{isTr ? 'İkincil Genel DNS Çözümleyici' : 'Secondary Public DNS Resolver'}</div>
-                  <div className="text-[10px] font-mono text-secondary-400">1.1.1.1 / 1.0.0.1</div>
+                  <div className={cn("text-[10px] font-mono", isDark ? "text-secondary-400" : "text-slate-500")}>1.1.1.1 / 1.0.0.1</div>
                 </div>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">ONLINE</span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-mono font-semibold">ONLINE</span>
             </div>
 
-            <div className="p-3 rounded-lg bg-secondary-950 border border-secondary-800 flex items-center justify-between">
+            <div className={cn("p-3 rounded-lg border flex items-center justify-between", isDark ? "bg-secondary-950 border-secondary-800" : "bg-slate-50 border-slate-200")}>
               <div className="flex items-center gap-2">
                 <Radio className="w-4 h-4 text-amber-400" />
                 <div>
                   <div className="font-semibold">{isTr ? 'Genel NTP Zaman Sunucusu' : 'Public NTP Time Server'}</div>
-                  <div className="text-[10px] font-mono text-secondary-400">pool.ntp.org</div>
+                  <div className={cn("text-[10px] font-mono", isDark ? "text-secondary-400" : "text-slate-500")}>pool.ntp.org</div>
                 </div>
               </div>
-              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono">SYNCHRONIZED</span>
+              <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 font-mono font-semibold">SYNCHRONIZED</span>
             </div>
           </div>
         </div>
@@ -106,33 +106,33 @@ export function CloudDeviceView({
         {/* Right Column: WAN Link Statistics */}
         <div className={cn(
           "p-5 rounded-xl border space-y-4",
-          isDark ? "bg-secondary-900/40 border-secondary-800" : "bg-white border-secondary-200 shadow-sm"
+          isDark ? "bg-secondary-900/40 border-secondary-800" : "bg-white border-secondary-200 shadow-sm text-slate-800"
         )}>
-          <h3 className="text-sm font-bold flex items-center gap-2 border-b pb-3 border-secondary-700/40">
+          <h3 className={cn("text-sm font-bold flex items-center gap-2 border-b pb-3", isDark ? "border-secondary-700/40" : "border-slate-200")}>
             <Activity className="w-4 h-4 text-cyan-400" />
             {isTr ? 'WAN Bağlantı & Trafik Monitörü' : 'WAN Link & Traffic Monitor'}
           </h3>
 
           <div className="space-y-4 text-xs">
-            <div className="flex justify-between items-center p-3 rounded-lg bg-secondary-950 border border-secondary-800">
+            <div className={cn("flex justify-between items-center p-3 rounded-lg border", isDark ? "bg-secondary-950 border-secondary-800" : "bg-slate-50 border-slate-200")}>
               <span>{isTr ? 'Simüle Edilen Gecikme (WAN Latency)' : 'Simulated WAN Latency'}</span>
-              <span className="font-mono text-cyan-400 font-bold">12 ms</span>
+              <span className="font-mono text-cyan-600 dark:text-cyan-400 font-bold">12 ms</span>
             </div>
 
-            <div className="flex justify-between items-center p-3 rounded-lg bg-secondary-950 border border-secondary-800">
+            <div className={cn("flex justify-between items-center p-3 rounded-lg border", isDark ? "bg-secondary-950 border-secondary-800" : "bg-slate-50 border-slate-200")}>
               <span>{isTr ? 'Aktif WAN Bağlantıları (Customer Links)' : 'Active Customer WAN Links'}</span>
-              <span className="font-mono text-emerald-400 font-bold">{connectedLinks.length} Connections</span>
+              <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{connectedLinks.length} Connections</span>
             </div>
 
-            <div className="p-3 rounded-lg bg-secondary-950 border border-secondary-800 space-y-2">
+            <div className={cn("p-3 rounded-lg border space-y-2", isDark ? "bg-secondary-950 border-secondary-800" : "bg-slate-50 border-slate-200")}>
               <div className="flex items-center justify-between text-[11px] font-semibold">
                 <span className="flex items-center gap-1.5">
                   <ArrowRightLeft className="w-3.5 h-3.5 text-cyan-400" />
                   {isTr ? 'Ağ Geçidi İletim Modu' : 'Gateway Forwarding Mode'}
                 </span>
-                <span className="text-cyan-400 font-mono">NAT / Transit Bridge</span>
+                <span className="text-cyan-600 dark:text-cyan-400 font-mono">NAT / Transit Bridge</span>
               </div>
-              <p className="text-[10px] opacity-70 leading-relaxed">
+              <p className={cn("text-[10px] leading-relaxed", isDark ? "opacity-70" : "text-slate-600")}>
                 {isTr
                   ? 'Bulut (Cloud) nesnesi dış internet hatlarını ve servis sağlayıcı (ISP) omurgasını temsil eder. Yerel ağınızdaki cihazlar dış dünyadaki IP adreslerine veya alan adlarına eriştiğinde paketler Bulut geçidi üzerinden başarıyla iletilir.'
                   : 'The Cloud device simulates external ISP WAN connectivity. Any internal network devices reaching external IP addresses or domain names are automatically routed and bridged through the Cloud gateway.'}

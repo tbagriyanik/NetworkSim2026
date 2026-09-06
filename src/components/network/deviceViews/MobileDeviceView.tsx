@@ -664,54 +664,54 @@ export function MobileDeviceView({
       {/* Smartphone Outer Chassis Frame */}
       <div className={cn(
         "w-full max-w-sm rounded-[32px] border-4 p-4 shadow-2xl flex flex-col space-y-4",
-        isDark ? "bg-slate-950 border-slate-700 shadow-cyan-950/20" : "bg-slate-900 border-slate-800 text-white"
+        isDark ? "bg-slate-950 border-slate-700 shadow-cyan-950/20 text-white" : "bg-white border-slate-300 text-slate-900 shadow-slate-300/50"
       )}>
         {/* Status Bar */}
         <div className="flex justify-between items-center text-[10px] font-mono opacity-80 px-2">
           <span>{currentTime}</span>
-          <div className="w-16 h-3 bg-black rounded-full border border-slate-700" />
+          <div className={cn("w-16 h-3 rounded-full border", isDark ? "bg-black border-slate-700" : "bg-slate-200 border-slate-400")} />
           <div className="flex items-center gap-1.5">
-            <Signal className={cn("w-3 h-3 transition-colors", wifiSignalStrength > 0 ? "text-emerald-400" : "text-slate-600 opacity-40")} />
-            <Wifi className={cn("w-3 h-3 transition-colors", isWifiConnected ? "text-sky-400" : "text-slate-600 opacity-40")} />
-            <BatteryCharging className="w-3.5 h-3.5 text-emerald-400" />
+            <Signal className={cn("w-3 h-3 transition-colors", wifiSignalStrength > 0 ? "text-emerald-500" : "opacity-40")} />
+            <Wifi className={cn("w-3 h-3 transition-colors", isWifiConnected ? "text-sky-500" : "opacity-40")} />
+            <BatteryCharging className="w-3.5 h-3.5 text-emerald-500" />
           </div>
         </div>
 
         {/* Screen Header */}
-        <div className="text-center pb-2 border-b border-slate-800">
+        <div className={cn("text-center pb-2 border-b", isDark ? "border-slate-800" : "border-slate-200")}>
           <h2 className="text-sm font-bold flex items-center justify-center gap-1.5">
-            <Smartphone className="w-4 h-4 text-sky-400" />
+            <Smartphone className="w-4 h-4 text-sky-500" />
             {device.name}
           </h2>
-          <p className="text-[10px] text-slate-400">Mobile OS • Wi-Fi & VoIP</p>
+          <p className={cn("text-[10px]", isDark ? "text-slate-400" : "text-slate-500")}>Mobile OS • Wi-Fi & VoIP</p>
         </div>
 
         {/* App Navigation Bar (5 Tabs: Wi-Fi, IP Config, Ping, VoIP, Web Browser) */}
-        <div className="grid grid-cols-5 gap-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs">
+        <div className={cn("grid grid-cols-5 gap-1 p-1 rounded-xl border text-xs", isDark ? "bg-slate-900/80 border-slate-800" : "bg-slate-100 border-slate-300")}>
           <button
             onClick={() => setActiveScreen('wifi')}
-            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'wifi' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'wifi' ? "bg-sky-600 text-white" : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"))}
           >
             <Wifi className="w-3 h-3" />
             Wi-Fi
           </button>
           <button
             onClick={() => setActiveScreen('ip')}
-            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'ip' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'ip' ? "bg-sky-600 text-white" : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"))}
           >
             <Server className="w-3 h-3" />
             IP
           </button>
           <button
             onClick={() => setActiveScreen('ping')}
-            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'ping' ? "bg-sky-600 text-white" : "text-slate-400 hover:text-white")}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px]", activeScreen === 'ping' ? "bg-sky-600 text-white" : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"))}
           >
             <Send className="w-3 h-3" />
             Ping
           </button>
           <button
             onClick={() => setActiveScreen('voip')}
-            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px] relative", activeScreen === 'voip' ? "bg-emerald-600 text-white" : device.activeVoipCall ? "bg-emerald-950 text-emerald-300 border border-emerald-500 animate-pulse font-bold" : "text-slate-400 hover:text-white")}
+            className={cn("py-1.5 rounded-lg font-medium flex items-center justify-center gap-1 transition-colors text-[10px] relative", activeScreen === 'voip' ? "bg-emerald-600 text-white" : device.activeVoipCall ? "bg-emerald-950 text-emerald-300 border border-emerald-500 animate-pulse font-bold" : (isDark ? "text-slate-400 hover:text-white" : "text-slate-600 hover:text-slate-900"))}
           >
             <PhoneCall className="w-3 h-3" />
             VoIP
@@ -732,7 +732,7 @@ export function MobileDeviceView({
 
 
         {/* Screen Content */}
-        <div className="min-h-[280px] flex-1 bg-slate-900 rounded-2xl p-4 border border-slate-800 text-xs space-y-4">
+        <div className={cn("min-h-[280px] flex-1 rounded-2xl p-4 border text-xs space-y-4", isDark ? "bg-slate-900 border-slate-800 text-white" : "bg-slate-50 border-slate-200 text-slate-900")}>
           {activeScreen === 'wifi' && (
             <div className="space-y-3">
               <div className="flex items-center justify-between font-bold border-b border-slate-800 pb-2">
@@ -849,7 +849,11 @@ export function MobileDeviceView({
                     disabled={ipMode === 'dhcp'}
                     value={ip}
                     onChange={e => setIp(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-white outline-none"
+                    className={cn(
+                      "w-full px-2.5 py-1.5 rounded-lg border font-mono outline-none transition-colors",
+                      isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-white border-slate-300 text-slate-900",
+                      ipMode === 'dhcp' && "opacity-50 cursor-not-allowed"
+                    )}
                   />
                 </div>
                 <div>
@@ -859,7 +863,11 @@ export function MobileDeviceView({
                     disabled={ipMode === 'dhcp'}
                     value={subnet}
                     onChange={e => setSubnet(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-white outline-none"
+                    className={cn(
+                      "w-full px-2.5 py-1.5 rounded-lg border font-mono outline-none transition-colors",
+                      isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-white border-slate-300 text-slate-900",
+                      ipMode === 'dhcp' && "opacity-50 cursor-not-allowed"
+                    )}
                   />
                 </div>
                 <div>
@@ -869,7 +877,11 @@ export function MobileDeviceView({
                     disabled={ipMode === 'dhcp'}
                     value={gateway}
                     onChange={e => setGateway(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-white outline-none"
+                    className={cn(
+                      "w-full px-2.5 py-1.5 rounded-lg border font-mono outline-none transition-colors",
+                      isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-white border-slate-300 text-slate-900",
+                      ipMode === 'dhcp' && "opacity-50 cursor-not-allowed"
+                    )}
                   />
                 </div>
                 <div>
@@ -879,7 +891,11 @@ export function MobileDeviceView({
                     disabled={ipMode === 'dhcp'}
                     value={dns}
                     onChange={e => setDns(e.target.value)}
-                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-white outline-none"
+                    className={cn(
+                      "w-full px-2.5 py-1.5 rounded-lg border font-mono outline-none transition-colors",
+                      isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-white border-slate-300 text-slate-900",
+                      ipMode === 'dhcp' && "opacity-50 cursor-not-allowed"
+                    )}
                   />
                 </div>
               </div>
@@ -894,7 +910,7 @@ export function MobileDeviceView({
                 </button>
               </div>
               {saveSuccess && (
-                <div className="text-[10px] text-emerald-400 text-center font-medium animate-pulse">
+                <div className="text-[10px] text-emerald-500 text-center font-medium animate-pulse">
                   {isTr ? 'Ağ ayarları güncellendi!' : 'Network settings saved!'}
                 </div>
               )}
@@ -922,7 +938,10 @@ export function MobileDeviceView({
                     }
                   }}
                   placeholder={isTr ? "Hedef IP (192.168.1.1)" : "Target IP (192.168.1.1)"}
-                  className="flex-1 px-2.5 py-1.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-white outline-none text-xs"
+                  className={cn(
+                    "flex-1 px-2.5 py-1.5 rounded-lg border font-mono outline-none text-xs transition-colors",
+                    isDark ? "bg-slate-950 border-slate-800 text-white" : "bg-white border-slate-300 text-slate-900"
+                  )}
                 />
                 <button
                   onClick={handleSendPing}
