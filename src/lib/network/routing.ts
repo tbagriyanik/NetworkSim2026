@@ -244,45 +244,115 @@ function applyRouteRedistribution(
 }
 
 
-/**
- * Find best route to destination IP
- */
-export function findRoute(destinationIp: string, routingTable: Route[]): Route | null {
-  if (!destinationIp) {
-    return null;
+export interface RouteDecisionDetails {
+  route: Route;
+  destinationIp: string;
+  matchedPrefix: string;
+  prefixLength: number;
+  administrativeDistance: number;
+  metric: number;
+  type: string;
+  explanation: string;
+}
+
+export function getAdministrativeDistance(route: Route): number {
+  if (route.administrativeDistance !== undefined) return route.administrativeDistance;
+  switch (route.type) {
+    case 'connected': return 0;
+    case 'static': return 1;
+    case 'dynamic':
+      if (route.code?.startsWith('D') || route.code === 'EX') return 90; // EIGRP
+      if (route.code?.startsWith('O') || route.ospfRouteType) return 110; // OSPF
+      if (route.code === 'R') return 120; // RIP
+      if (route.code === 'B') return 20;  // BGP
+      return 110;
+    default:
+      return 110;
   }
+}
+
+/**
+ * Find best route to destination IP with full decision details (LPM, AD, Metric)
+ */
+export function findRouteDetailed(destinationIp: string, routingTable: Route[]): RouteDecisionDetails | null {
+  if (!destinationIp) return null;
+
   let bestRoute: Route | null = null;
   let bestPrefixLength = -1;
+  let bestAd = 999;
+  let bestMetric = Infinity;
 
   const isTargetIpv6 = isIpv6(destinationIp);
 
   for (const route of routingTable) {
-    if (!route.destination) {
-      continue;
-    }
+    if (!route.destination) continue;
 
     const isRouteIpv6 = isIpv6(route.destination);
     if (isTargetIpv6 !== isRouteIpv6) continue;
 
+    let prefixLen = -1;
+    let matches = false;
+
     if (isTargetIpv6) {
-      if (route.prefixLength !== undefined && isIpv6InNetwork(destinationIp, route.destination, route.prefixLength)) {
-        if (route.prefixLength > bestPrefixLength) {
-          bestPrefixLength = route.prefixLength;
-          bestRoute = route;
-        }
-      }
+      prefixLen = route.prefixLength ?? 0;
+      matches = isIpv6InNetwork(destinationIp, route.destination, prefixLen);
     } else {
-      if (route.subnetMask && isIpInNetwork(destinationIp, route.destination, route.subnetMask)) {
-        const prefixLength = getPrefixLength(route.subnetMask);
-        if (prefixLength > bestPrefixLength) {
-          bestPrefixLength = prefixLength;
-          bestRoute = route;
-        }
+      if (route.subnetMask) {
+        prefixLen = getPrefixLength(route.subnetMask);
+        matches = isIpInNetwork(destinationIp, route.destination, route.subnetMask);
+      }
+    }
+
+    if (!matches) continue;
+
+    const ad = getAdministrativeDistance(route);
+    const metric = route.metric ?? 0;
+
+    // Selection rules:
+    // 1. Longest Prefix Match (higher prefix length)
+    // 2. Lower Administrative Distance (AD)
+    // 3. Lower Metric
+    if (prefixLen > bestPrefixLength) {
+      bestPrefixLength = prefixLen;
+      bestAd = ad;
+      bestMetric = metric;
+      bestRoute = route;
+    } else if (prefixLen === bestPrefixLength) {
+      if (ad < bestAd) {
+        bestAd = ad;
+        bestMetric = metric;
+        bestRoute = route;
+      } else if (ad === bestAd && metric < bestMetric) {
+        bestMetric = metric;
+        bestRoute = route;
       }
     }
   }
 
-  return bestRoute;
+  if (!bestRoute) return null;
+
+  const matchedPrefix = isTargetIpv6
+    ? `${bestRoute.destination}/${bestPrefixLength}`
+    : `${bestRoute.destination}/${bestPrefixLength}`;
+
+  return {
+    route: bestRoute,
+    destinationIp,
+    matchedPrefix,
+    prefixLength: bestPrefixLength,
+    administrativeDistance: bestAd,
+    metric: bestMetric,
+    type: bestRoute.type,
+    explanation: `LPM ${matchedPrefix} [AD:${bestAd}/Metric:${bestMetric}] via ${bestRoute.interfaceId || bestRoute.nextHop}`,
+  };
+}
+
+/**
+ * Find best route to destination IP
+ */
+export function findRoute(destinationIp: string, routingTable: Route[]): Route | null {
+  const detailed = findRouteDetailed(destinationIp, routingTable);
+  return detailed ? detailed.route : null;
 }
 
 /**

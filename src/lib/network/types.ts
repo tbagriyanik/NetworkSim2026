@@ -136,11 +136,23 @@ export type DuplexMode = 'half' | 'full' | 'auto';
 export type SpeedMode = '10' | '100' | '1000' | '10000' | 'auto';
 export type EtherChannelMode = 'on' | 'active' | 'passive' | 'desirable' | 'auto';
 
+export interface PortStats {
+  rxPackets?: number;
+  rxBytes?: number;
+  txPackets?: number;
+  txBytes?: number;
+  rxDrops?: number;
+  txDrops?: number;
+  rxErrors?: number;
+  txErrors?: number;
+}
+
 export interface Port {
   id: string;              // fa0/1, gi0/1 etc.
   name: string;            // description
   description?: string;    // interface description (CLI: description <text>)
   status: PortStatus;
+  stats?: PortStats;
   vlan: number;
   accessVlan?: number | string;
   nativeVlan?: number;       // Native VLAN for trunk ports

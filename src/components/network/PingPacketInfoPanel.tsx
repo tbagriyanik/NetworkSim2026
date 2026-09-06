@@ -1,8 +1,9 @@
-import React from 'react';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, ChevronUp, Activity } from 'lucide-react';
 import { CanvasDevice, CanvasConnection } from './networkTopology.types';
 import { type BroadcastAnimTarget } from './hooks/usePingSequence';
 import { cn } from '@/lib/utils';
+import { PacketTraceInspector } from './PacketTraceInspector';
 
 import { CABLE_COLORS } from './networkTopology.constants';
 import { colors } from '@/lib/design-tokens/colors';
@@ -380,6 +381,7 @@ export function PingPacketInfoPanel({
     broadcastProgress,
 }: PingPacketInfoPanelProps) {
     const t = language === 'tr' ? tr : en;
+    const [isTraceModalOpen, setIsTraceModalOpen] = useState(false);
 
     const dragProps = useDrag({
         storageKey: 'pingPacketInfoPanel',
@@ -542,6 +544,7 @@ export function PingPacketInfoPanel({
     );
 
     return (
+        <>
         <DraggableWindowWrapper
             id="pingPacketInfoPanel"
             title={titleContent}
@@ -608,6 +611,14 @@ export function PingPacketInfoPanel({
                                     </button>
                                 </div>
                             )}
+                            <button
+                                onClick={() => setIsTraceModalOpen(true)}
+                                className="p-1 rounded bg-sky-600 hover:bg-sky-500 text-white transition-colors flex items-center gap-1 px-2 py-1 text-xs shadow-sm"
+                                title="Aşama bazlı detaylı paket analizi (Packet Trace)"
+                            >
+                                <Activity className="w-3.5 h-3.5" />
+                                <span>Trace Detayı</span>
+                            </button>
                         </div>
 
                         {isPaused && currentInfo?.actionDescription && !isDone && (
@@ -795,6 +806,123 @@ export function PingPacketInfoPanel({
                 </div>
             )}
         </DraggableWindowWrapper>
+        <PacketTraceInspector
+            isOpen={isTraceModalOpen}
+            onClose={() => setIsTraceModalOpen(false)}
+            pipelineResult={{
+                success: success !== false,
+                dropReason: errorMessage || (success === false ? 'Packet delivery failed' : undefined),
+                capturedOnLinks: [],
+                allTraces: hopPacketInfos.flatMap((hop, idx) => [
+                    {
+                        hopIndex: idx,
+                        deviceId: hop.fromDevice.name,
+                        deviceName: hop.fromDevice.name,
+                        portId: 'Fa0/1',
+                        stage: 'ingress-l1',
+                        action: 'pass',
+                        reason: `Physical link check OK (${hop.cableType})`,
+                        frameSnapshot: {
+                            id: `frame-${idx}-1`,
+                            timestamp: Date.now(),
+                            etherType: '0x0800',
+                            srcMac: hop.srcMac,
+                            dstMac: hop.dstMac,
+                            srcIp: hop.srcIp,
+                            dstIp: hop.dstIp,
+                            protocol: (hop.protocol || 'ICMP') as any,
+                            length: 64,
+                            ttl: hop.ttl,
+                            ingressPortId: 'Fa0/1',
+                            vlanId: 1,
+                            info: `${hop.protocol} Echo Request seq ${hop.icmpSeq}`,
+                        },
+                    },
+                    {
+                        hopIndex: idx,
+                        deviceId: hop.fromDevice.name,
+                        deviceName: hop.fromDevice.name,
+                        portId: 'Fa0/1',
+                        stage: hop.fromDevice.type.includes('router') ? 'route-lookup' : 'mac-lookup',
+                        action: 'forward',
+                        reason: hop.actionDescription || `Forwarding frame from ${hop.fromDevice.name} to ${hop.toDevice.name}`,
+                        frameSnapshot: {
+                            id: `frame-${idx}-2`,
+                            timestamp: Date.now(),
+                            etherType: '0x0800',
+                            srcMac: hop.srcMac,
+                            dstMac: hop.dstMac,
+                            srcIp: hop.srcIp,
+                            dstIp: hop.dstIp,
+                            protocol: (hop.protocol || 'ICMP') as any,
+                            length: 64,
+                            ttl: hop.ttl,
+                            ingressPortId: 'Fa0/1',
+                            vlanId: 1,
+                            info: `${hop.protocol} forwarding`,
+                        },
+                    },
+                ]),
+                hopResults: hopPacketInfos.map((hop, idx) => ({
+                    deviceId: hop.fromDevice.name,
+                    accepted: true,
+                    trapToControlPlane: false,
+                    egressPorts: ['Fa0/1'],
+                    nextDeviceId: hop.toDevice.name,
+                    traces: [
+                        {
+                            hopIndex: idx,
+                            deviceId: hop.fromDevice.name,
+                            deviceName: hop.fromDevice.name,
+                            portId: 'Fa0/1',
+                            stage: 'ingress-l1',
+                            action: 'pass',
+                            reason: `Physical link check OK (${hop.cableType})`,
+                            frameSnapshot: {
+                                id: `frame-${idx}-1`,
+                                timestamp: Date.now(),
+                                etherType: '0x0800',
+                                srcMac: hop.srcMac,
+                                dstMac: hop.dstMac,
+                                srcIp: hop.srcIp,
+                                dstIp: hop.dstIp,
+                                protocol: (hop.protocol || 'ICMP') as any,
+                                length: 64,
+                                ttl: hop.ttl,
+                                ingressPortId: 'Fa0/1',
+                                vlanId: 1,
+                                info: `${hop.protocol} Echo Request seq ${hop.icmpSeq}`,
+                            },
+                        },
+                        {
+                            hopIndex: idx,
+                            deviceId: hop.fromDevice.name,
+                            deviceName: hop.fromDevice.name,
+                            portId: 'Fa0/1',
+                            stage: hop.fromDevice.type.includes('router') ? 'route-lookup' : 'mac-lookup',
+                            action: 'forward',
+                            reason: hop.actionDescription || `Forwarding frame from ${hop.fromDevice.name} to ${hop.toDevice.name}`,
+                            frameSnapshot: {
+                                id: `frame-${idx}-2`,
+                                timestamp: Date.now(),
+                                etherType: '0x0800',
+                                srcMac: hop.srcMac,
+                                dstMac: hop.dstMac,
+                                srcIp: hop.srcIp,
+                                dstIp: hop.dstIp,
+                                protocol: (hop.protocol || 'ICMP') as any,
+                                length: 64,
+                                ttl: hop.ttl,
+                                ingressPortId: 'Fa0/1',
+                                vlanId: 1,
+                                info: `${hop.protocol} forwarding`,
+                            },
+                        },
+                    ],
+                })),
+            }}
+        />
+        </>
     );
 }
 export function buildHopPacketInfos(

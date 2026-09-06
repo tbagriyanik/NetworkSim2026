@@ -12,6 +12,37 @@ export interface MacTableEntry {
 
 const MAC_AGING_TIME = 300000; // 5 minutes in milliseconds 
 
+export type MacLifecycleEventType = 'LEARN' | 'MOVE' | 'AGE' | 'FLOOD';
+
+export interface MacLifecycleEvent {
+  type: MacLifecycleEventType;
+  deviceId: string;
+  mac: string;
+  vlan: number;
+  oldPort?: string;
+  newPort?: string;
+  timestamp: number;
+  message: string;
+}
+
+type MacEventListener = (event: MacLifecycleEvent) => void;
+const macEventListeners: Set<MacEventListener> = new Set();
+
+export function onMacLifecycleEvent(listener: MacEventListener): () => void {
+  macEventListeners.add(listener);
+  return () => macEventListeners.delete(listener);
+}
+
+export function emitMacLifecycleEvent(event: MacLifecycleEvent): void {
+  macEventListeners.forEach(listener => {
+    try {
+      listener(event);
+    } catch {
+      // Ignore listener errors
+    }
+  });
+}
+
 /**
  * Learn MAC address on a switch port
  * Called when a frame is received on a port
@@ -31,28 +62,50 @@ export function learnMacAddress(
     state.macAddressTable = [];
   }
 
-  // Check if MAC already exists in table
-  const existingIndex = state.macAddressTable.findIndex(
-    entry => entry.mac.toLowerCase() === mac.toLowerCase() && entry.vlan === vlan
+  const cleanMac = mac.toLowerCase();
+  const existing = state.macAddressTable.find(
+    entry => entry.mac.toLowerCase() === cleanMac && entry.vlan === vlan
   );
 
-  if (existingIndex !== -1) {
-    // Update existing entry (move to new port if changed, refresh timestamp)
-    state.macAddressTable[existingIndex] = {
-      mac,
-      vlan,
-      port: portId,
-      type,
-      timestamp: Date.now()
-    };
+  const now = Date.now();
+
+  if (existing) {
+    if (existing.port !== portId) {
+      const oldPort = existing.port;
+      existing.port = portId;
+      existing.type = type;
+      existing.timestamp = now;
+
+      emitMacLifecycleEvent({
+        type: 'MOVE',
+        deviceId,
+        mac: cleanMac,
+        vlan,
+        oldPort,
+        newPort: portId,
+        timestamp: now,
+        message: `[MAC MOVE] MAC ${cleanMac} moved from ${oldPort} to ${portId} on VLAN ${vlan}`,
+      });
+    } else {
+      existing.timestamp = now;
+    }
   } else {
-    // Add new entry
     state.macAddressTable.push({
-      mac,
+      mac: cleanMac,
       vlan,
       port: portId,
       type,
-      timestamp: Date.now()
+      timestamp: now
+    });
+
+    emitMacLifecycleEvent({
+      type: 'LEARN',
+      deviceId,
+      mac: cleanMac,
+      vlan,
+      newPort: portId,
+      timestamp: now,
+      message: `[MAC LEARN] Learned MAC ${cleanMac} on port ${portId} (VLAN ${vlan})`,
     });
   }
 }
@@ -61,20 +114,33 @@ export function learnMacAddress(
  * Clean expired MAC entries (older than MAC_AGING_TIME)
  * Only affects dynamic entries, static entries are permanent
  */
-export function cleanExpiredMacEntries(state: SwitchState): void {
-  if (!state.macAddressTable || state.macAddressTable.length === 0) return;
+export function cleanExpiredMacEntries(state: SwitchState, deviceId?: string): MacLifecycleEvent[] {
+  if (!state.macAddressTable || state.macAddressTable.length === 0) return [];
 
   const now = Date.now();
-  const hasExpired = state.macAddressTable.some(entry => entry.type !== 'STATIC' && entry.timestamp && (now - entry.timestamp) >= MAC_AGING_TIME);
-  if (!hasExpired) return;
+  const agedEvents: MacLifecycleEvent[] = [];
 
   state.macAddressTable = state.macAddressTable.filter(entry => {
-    // Static entries never expire
     if (entry.type === 'STATIC') return true;
-    // Dynamic entries expire after aging time (only if timestamp exists)
-    if (!entry.timestamp) return true; // Keep entries without timestamp (backward compatibility)
-    return (now - entry.timestamp) < MAC_AGING_TIME;
+    if (!entry.timestamp) return true;
+    const isExpired = (now - entry.timestamp) >= MAC_AGING_TIME;
+    if (isExpired) {
+      const evt: MacLifecycleEvent = {
+        type: 'AGE',
+        deviceId: deviceId || 'switch',
+        mac: entry.mac,
+        vlan: entry.vlan,
+        oldPort: entry.port,
+        timestamp: now,
+        message: `[MAC AGE] MAC entry ${entry.mac} aged out from port ${entry.port} (VLAN ${entry.vlan})`,
+      };
+      agedEvents.push(evt);
+      emitMacLifecycleEvent(evt);
+    }
+    return !isExpired;
   });
+
+  return agedEvents;
 }
 
 /**

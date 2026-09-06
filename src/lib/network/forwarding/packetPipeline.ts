@@ -32,9 +32,11 @@ import type { NetworkPacketFrame } from './packetFrame';
 import { checkIngressSanity, processControlPlaneProtocols } from './commonForwardingEngine';
 import { evaluateAcl } from '@/lib/network/connectivity/acl';
 import { learnMacAddress } from '@/lib/network/macLearning';
-import { getRoutingTable, findRoute } from '@/lib/network/routing';
+import { getRoutingTable, findRouteDetailed } from '@/lib/network/routing';
 import { dispatchCapturedPackets } from '@/utils/packetCapture';
 import { buildConnectionIndex } from '@/lib/network/connectionIndex';
+import { generateIcmpUnreachable } from './icmpUtils';
+import { DropReasonCode, formatDropReason } from './dropReasons';
 
 // ─────────────────────────────────────────────
 // Pipeline Trace Types
@@ -148,9 +150,26 @@ function checkVlan(port: Port, frame: NetworkPacketFrame): { allowed: boolean; r
   };
 }
 
+function updatePortStats(port: Port | undefined, type: 'rx' | 'tx' | 'drop', bytes: number = 64): void {
+  if (!port) return;
+  if (!port.stats) {
+    port.stats = { rxPackets: 0, rxBytes: 0, txPackets: 0, txBytes: 0, rxDrops: 0, txDrops: 0, rxErrors: 0, txErrors: 0 };
+  }
+  const s = port.stats;
+  if (type === 'rx') {
+    s.rxPackets = (s.rxPackets ?? 0) + 1;
+    s.rxBytes = (s.rxBytes ?? 0) + bytes;
+  } else if (type === 'tx') {
+    s.txPackets = (s.txPackets ?? 0) + 1;
+    s.txBytes = (s.txBytes ?? 0) + bytes;
+  } else if (type === 'drop') {
+    s.rxDrops = (s.rxDrops ?? 0) + 1;
+  }
+}
+
 /**
  * Determine egress ports for a frame on a device.
- * Returns port IDs and optionally the next-hop device ID.
+ * Returns port IDs, next-hop device ID, and route decision details if applicable.
  */
 function resolveEgress(
   frame: NetworkPacketFrame,
@@ -158,9 +177,10 @@ function resolveEgress(
   state: SwitchState,
   connections: CanvasConnection[],
   deviceMap: Map<string, CanvasDevice>
-): { egressPorts: string[]; nextDeviceId?: string } {
+): { egressPorts: string[]; nextDeviceId?: string; routeDecision?: string } {
   const egressPorts: string[] = [];
   let nextDeviceId: string | undefined;
+  let routeDecision: string | undefined;
   const connectionIndex = buildConnectionIndex(connections);
 
   if (device.type === 'switchL2' || device.type === 'switchL3' || device.type === 'hub') {
@@ -171,11 +191,12 @@ function resolveEgress(
           egressPorts.push(p.id);
         }
       });
+      routeDecision = 'L2 Broadcast/Multicast — Flooding frame to all active ports';
     } else {
-      const match = state.macAddressTable?.find(m => m.mac === frame.dstMac);
+      const match = state.macAddressTable?.find(m => m.mac.toLowerCase() === frame.dstMac?.toLowerCase());
       if (match?.port && match.port !== frame.ingressPortId) {
         egressPorts.push(match.port);
-        // Find next device via connection index
+        routeDecision = `L2 Unicast match: MAC ${frame.dstMac} learned on port ${match.port} (VLAN ${match.vlan})`;
         const conn = connectionIndex.byPort.get(`${device.id}:${match.port}`);
         if (conn) {
           nextDeviceId = conn.sourceDeviceId === device.id ? conn.targetDeviceId : conn.sourceDeviceId;
@@ -187,16 +208,18 @@ function resolveEgress(
             egressPorts.push(p.id);
           }
         });
+        routeDecision = `L2 Unicast miss for MAC ${frame.dstMac} — Flooding frame across VLAN ${frame.vlanId || 1}`;
       }
     }
   } else if (device.type === 'router' || device.type === 'firewall') {
     if (frame.dstIp) {
       const deviceMap2 = new Map<string, SwitchState>([[device.id, state]]);
       const table = getRoutingTable(device.id, deviceMap2);
-      const route = findRoute(frame.dstIp, table);
-      if (route && (route.interfaceId || route.nextHop)) {
-        const portId = route.interfaceId || route.nextHop;
+      const detailed = findRouteDetailed(frame.dstIp, table);
+      if (detailed && (detailed.route.interfaceId || detailed.route.nextHop)) {
+        const portId = detailed.route.interfaceId || detailed.route.nextHop;
         egressPorts.push(portId);
+        routeDecision = detailed.explanation;
         const conn = connectionIndex.byPort.get(`${device.id}:${portId}`);
         if (conn) {
           nextDeviceId = conn.sourceDeviceId === device.id ? conn.targetDeviceId : conn.sourceDeviceId;
@@ -213,9 +236,10 @@ function resolveEgress(
         egressPorts.push(p.id);
       }
     });
+    routeDecision = 'Cloud hub forwarding to attached interfaces';
   }
 
-  return { egressPorts, nextDeviceId };
+  return { egressPorts, nextDeviceId, routeDecision };
 }
 
 // ─────────────────────────────────────────────
@@ -247,20 +271,39 @@ export function runHopPipeline(
   const ingressPort: Port | undefined = state?.ports?.[ingressPortId];
   const deviceMap = new Map<string, CanvasDevice>(devices.map(d => [d.id, d]));
 
-  const drop = (stage: PipelineStage, reason: string): HopResult => {
+  // Count ingress packet
+  if (ingressPort) updatePortStats(ingressPort, 'rx', frame.length || 64);
+
+  const drop = (stage: PipelineStage, reason: string, icmpCode?: number, isUnreachable = true): HopResult => {
+    if (ingressPort) updatePortStats(ingressPort, 'drop');
     traces.push(makeTrace(hopIndex, device, ingressPortId, stage, 'drop', reason, frame));
-    return { deviceId: device.id, accepted: false, trapToControlPlane: false, egressPorts: [], traces };
+
+    let responseFrame: NetworkPacketFrame | undefined;
+    if (frame.srcIp && frame.protocol !== 'ICMP') {
+      const type = isUnreachable ? 'destination-unreachable' : 'time-exceeded';
+      const reportingIp = ingressPort?.ipAddress || state?.ports?.['Fa0/0']?.ipAddress || state?.ports?.['Gi0/0']?.ipAddress;
+      responseFrame = generateIcmpUnreachable(frame, type, reason, icmpCode ?? 0, reportingIp);
+    }
+
+    return {
+      deviceId: device.id,
+      accepted: false,
+      trapToControlPlane: false,
+      egressPorts: [],
+      responseFrame,
+      traces
+    };
   };
 
   // ── Stage 1: L1 Physical / Ingress Sanity ─────────────────────────────
   const l1 = checkIngressSanity(frame, device, state, ingressPort);
-  if (!l1.allowed) return drop('ingress-l1', l1.reason);
+  if (!l1.allowed) return drop('ingress-l1', formatDropReason(DropReasonCode.L1_PORT_SHUTDOWN, l1.reason));
   traces.push(makeTrace(hopIndex, device, ingressPortId, 'ingress-l1', 'pass', l1.reason, frame));
 
   // ── Stage 2: Port Security ─────────────────────────────────────────────
   if (ingressPort?.portSecurity?.enabled && ingressPort.portSecurity.macAddress) {
     if (ingressPort.portSecurity.macAddress !== frame.srcMac) {
-      return drop('port-security', `Port security violation: unexpected MAC ${frame.srcMac}`);
+      return drop('port-security', formatDropReason(DropReasonCode.L2_PORT_SECURITY_VIOLATION, `unexpected MAC ${frame.srcMac}`));
     }
   }
   traces.push(makeTrace(hopIndex, device, ingressPortId, 'port-security', 'pass', 'Port security OK', frame));
@@ -270,17 +313,16 @@ export function runHopPipeline(
     const isDhcpServer = frame.protocol === 'DHCP' && frame.dhcpPayload &&
       (frame.dhcpPayload.messageType === 'offer' || frame.dhcpPayload.messageType === 'ack');
     if (isDhcpServer) {
-      return drop('dhcp-snooping', `DHCP Snooping: server packet dropped on untrusted port ${ingressPortId}`);
+      return drop('dhcp-snooping', formatDropReason(DropReasonCode.DHCP_SNOOPING_UNTRUSTED_SERVER, `on port ${ingressPortId}`));
     }
   }
   traces.push(makeTrace(hopIndex, device, ingressPortId, 'dhcp-snooping', 'pass', 'DHCP snooping OK', frame));
 
   // ── Stage 4: STP Port State ────────────────────────────────────────────
-  // BPDUs always pass; data frames blocked on Blocking/Listening ports
   if (frame.protocol !== 'STP') {
     const stpState = ingressPort?.spanningTree?.state;
     if (stpState === 'blocking' || stpState === 'listening') {
-      return drop('stp-state', `STP: port ${ingressPortId} in ${stpState} state — data frame dropped`);
+      return drop('stp-state', formatDropReason(DropReasonCode.L2_STP_BLOCKED, `port ${ingressPortId} in ${stpState} state`));
     }
   }
   traces.push(makeTrace(hopIndex, device, ingressPortId, 'stp-state', 'pass', 'STP port forwarding/disabled for STP frames', frame));
@@ -288,7 +330,7 @@ export function runHopPipeline(
   // ── Stage 5: VLAN Check ────────────────────────────────────────────────
   if (ingressPort && (device.type === 'switchL2' || device.type === 'switchL3')) {
     const vlanCheck = checkVlan(ingressPort, frame);
-    if (!vlanCheck.allowed) return drop('vlan-check', vlanCheck.reason);
+    if (!vlanCheck.allowed) return drop('vlan-check', formatDropReason(DropReasonCode.L2_VLAN_MISMATCH, vlanCheck.reason));
     traces.push(makeTrace(hopIndex, device, ingressPortId, 'vlan-check', 'pass', vlanCheck.reason, frame));
   } else {
     traces.push(makeTrace(hopIndex, device, ingressPortId, 'vlan-check', 'skip', 'Not a switch — VLAN check skipped', frame));
@@ -302,7 +344,7 @@ export function runHopPipeline(
       frame.ipProtocol === 6 ? 'tcp' : frame.ipProtocol === 17 ? 'udp' : 'icmp'
     );
     if (aclResult === 'deny') {
-      return drop('acl-ingress', `ACL ${ingressPort.accessGroupIn} (in) denied ${frame.srcIp}→${frame.dstIp}`);
+      return drop('acl-ingress', formatDropReason(DropReasonCode.ACL_DENY_INGRESS, `ACL ${ingressPort.accessGroupIn} denied ${frame.srcIp}→${frame.dstIp}`), 13);
     }
     traces.push(makeTrace(hopIndex, device, ingressPortId, 'acl-ingress', 'pass',
       `ACL ${ingressPort.accessGroupIn} (in) ${aclResult === 'none' ? 'implicit permit' : 'permit'}`, frame));
@@ -333,16 +375,18 @@ export function runHopPipeline(
   }
 
   // ── Stage 9: MAC Lookup / Route Lookup ──────────────────────────────
-  const { egressPorts, nextDeviceId } = resolveEgress(frame, device, state!, connections, deviceMap);
+  const { egressPorts, nextDeviceId, routeDecision } = resolveEgress(frame, device, state!, connections, deviceMap);
 
   if (egressPorts.length === 0) {
-    return drop('mac-lookup', `No egress path found for dst ${frame.dstMac || frame.dstIp}`);
+    const isRouter = (device.type === 'router' || device.type === 'firewall');
+    const code = isRouter ? DropReasonCode.L3_NO_ROUTE : DropReasonCode.L2_UNKNOWN_MAC_NO_EGRESS;
+    return drop(isRouter ? 'route-lookup' : 'mac-lookup', formatDropReason(code, `No path for dst ${frame.dstIp || frame.dstMac}`), 0);
   }
 
   const forwardStage: PipelineStage = (device.type === 'router' || device.type === 'firewall') ? 'route-lookup' : 'mac-lookup';
   const forwardAction: PipelineAction = egressPorts.length > 1 ? 'flood' : 'forward';
-  traces.push(makeTrace(hopIndex, device, ingressPortId, forwardStage, forwardAction,
-    `${forwardAction === 'flood' ? 'Flooding' : 'Forwarding'} to ${egressPorts.join(', ')}`, frame));
+  const reasonText = routeDecision || `${forwardAction === 'flood' ? 'Flooding' : 'Forwarding'} to ${egressPorts.join(', ')}`;
+  traces.push(makeTrace(hopIndex, device, ingressPortId, forwardStage, forwardAction, reasonText, frame));
 
   // ── Stage 10: ACL Egress ─────────────────────────────────────────────
   for (const egressPortId of egressPorts) {
@@ -354,7 +398,7 @@ export function runHopPipeline(
         frame.ipProtocol === 6 ? 'tcp' : frame.ipProtocol === 17 ? 'udp' : 'icmp'
       );
       if (aclResult === 'deny') {
-        return drop('acl-egress', `ACL ${egressPort.accessGroupOut} (out) denied ${frame.srcIp}→${frame.dstIp}`);
+        return drop('acl-egress', formatDropReason(DropReasonCode.ACL_DENY_EGRESS, `ACL ${egressPort.accessGroupOut} denied ${frame.srcIp}→${frame.dstIp}`), 13);
       }
       traces.push(makeTrace(hopIndex, device, egressPortId, 'acl-egress', 'pass',
         `ACL ${egressPort.accessGroupOut} (out) permit`, frame));
@@ -366,10 +410,12 @@ export function runHopPipeline(
   const connectionIndex = buildConnectionIndex(connections);
 
   for (const egressPortId of egressPorts) {
+    const egressPort: Port | undefined = state?.ports?.[egressPortId];
+    if (egressPort) updatePortStats(egressPort, 'tx', frame.length || 64);
+
     const conn = connectionIndex.byPort.get(`${device.id}:${egressPortId}`);
     if (conn) {
       capturedOnLinks.push(conn.id);
-      // Record to packet capture system
       dispatchCapturedPackets([{
         connectionId: conn.id,
         sourceIp: frame.srcIp || '',
@@ -395,21 +441,9 @@ export function runHopPipeline(
   };
 }
 
-// ─────────────────────────────────────────────
-// Full Multi-Hop Pipeline
-// ─────────────────────────────────────────────
-
 /**
  * Run the packet pipeline across multiple hops until the destination
  * is reached, a packet is dropped, or we've exceeded the TTL.
- *
- * @param frame     Initial frame at the source device
- * @param sourceDeviceId  Device ID where the frame originates
- * @param devices   All topology devices
- * @param deviceStates  All device states
- * @param connections   All topology connections
- * @param maxHops   Safety limit (default 30)
- * @param now       Current timestamp
  */
 export function runFullPacketPipeline(
   frame: NetworkPacketFrame,
@@ -426,7 +460,7 @@ export function runFullPacketPipeline(
   const deviceMap = new Map<string, CanvasDevice>(devices.map(d => [d.id, d]));
 
   let currentDeviceId = sourceDeviceId;
-  let currentFrame = { ...frame };
+  let currentFrame = { ...frame, ttl: frame.ttl ?? 64 };
   let hopIndex = 0;
 
   const connectionIndex = buildConnectionIndex(connections);
@@ -441,7 +475,7 @@ export function runFullPacketPipeline(
         hopResults,
         allTraces,
         capturedOnLinks,
-        dropReason: `Device ${currentDeviceId} not found in topology`
+        dropReason: formatDropReason(DropReasonCode.DEVICE_NOT_FOUND, `Device ${currentDeviceId} not found in topology`)
       };
     }
 
@@ -457,12 +491,11 @@ export function runFullPacketPipeline(
         allTraces,
         capturedOnLinks,
         dropReason: `Dropped at ${device.name}: ${dropTrace.reason}`,
-        finalFrame: currentFrame,
+        finalFrame: hopResult.responseFrame || currentFrame,
       };
     }
 
     if (hopResult.trapToControlPlane) {
-      // Frame consumed by control plane; if there's a response, the caller should re-inject it
       return {
         success: true,
         hopResults,
@@ -474,30 +507,37 @@ export function runFullPacketPipeline(
 
     // Move to next hop
     if (hopResult.nextDeviceId) {
-      // Find egress connection to determine next hop's ingress port
       const egressPortId = hopResult.egressPorts[0];
       const conn = connectionIndex.byPort.get(`${currentDeviceId}:${egressPortId}`);
       if (conn) {
         capturedOnLinks.push(conn.id);
         const nextPortId = conn.sourceDeviceId === currentDeviceId ? conn.targetPort : conn.sourcePort;
+
         // Decrement TTL for routed hops
-        if (device.type === 'router' || device.type === 'firewall') {
-          currentFrame = { ...currentFrame, ttl: Math.max(0, (currentFrame.ttl ?? 64) - 1) };
-          if (currentFrame.ttl === 0) {
+        if (device.type === 'router' || device.type === 'firewall' || device.type === 'switchL3') {
+          const newTtl = (currentFrame.ttl ?? 64) - 1;
+          currentFrame = { ...currentFrame, ttl: newTtl };
+          if (newTtl <= 0) {
+            const ttlReason = formatDropReason(DropReasonCode.L3_TTL_EXCEEDED, `TTL reached 0 at ${device.name}`);
+            const reportingIp = state?.ports?.[egressPortId]?.ipAddress || '127.0.0.1';
+            const icmpErr = generateIcmpUnreachable(currentFrame, 'time-exceeded', ttlReason, 0, reportingIp);
             return {
-              success: false, hopResults, allTraces, capturedOnLinks,
-              dropReason: `TTL exceeded at ${device.name}`, finalFrame: currentFrame
+              success: false,
+              hopResults,
+              allTraces,
+              capturedOnLinks,
+              dropReason: ttlReason,
+              finalFrame: icmpErr
             };
           }
         }
+
         currentFrame = { ...currentFrame, ingressDeviceId: hopResult.nextDeviceId, ingressPortId: nextPortId };
         currentDeviceId = hopResult.nextDeviceId;
       } else {
-        // No connection found — destination reached (e.g., end host)
         return { success: true, hopResults, allTraces, capturedOnLinks, finalFrame: currentFrame };
       }
     } else {
-      // No further next-hop — packet delivered
       return { success: true, hopResults, allTraces, capturedOnLinks, finalFrame: currentFrame };
     }
 
@@ -509,6 +549,6 @@ export function runFullPacketPipeline(
     hopResults,
     allTraces,
     capturedOnLinks,
-    dropReason: `Maximum hop count (${maxHops}) exceeded — possible routing loop`
+    dropReason: formatDropReason(DropReasonCode.MAX_HOPS_EXCEEDED, `Maximum hop count (${maxHops}) exceeded — possible routing loop`)
   };
 }
