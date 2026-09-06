@@ -2,6 +2,12 @@
 
 import type { SwitchModel } from './switchModels';
 import type { DeviceWifiSsidProfile } from './wireless';
+import type {
+  OspfNeighborRecord,
+  EigrpNeighborRecord,
+  DhcpClientRecord,
+  LacpPortRecord,
+} from './protocols/protocolStateMachines';
 
 // ============================================
 // CENTRALIZED TYPE DEFINITIONS
@@ -933,6 +939,34 @@ export interface SwitchState {
   tacacsServers?: Array<{ host: string; key?: string }>;
   radiusKey?: string;
   tacacsKey?: string;
+
+  // ── Stateful Protocol State Machine Records ────────────────────────────
+  // These replace the legacy flat arrays (ospfNeighbors, eigrpNeighbors)
+  // with full RFC-compliant FSM records. Optional so old projects still load.
+
+  /**
+   * OSPF neighbor FSM records keyed by neighbor Router-ID.
+   * OspfNeighborRecord holds state (Down→Full), dead timers, DD seq, etc.
+   */
+  ospfNeighborStates?: Record<string, OspfNeighborRecord>;
+
+  /**
+   * EIGRP neighbor FSM records keyed by neighbor IP.
+   * EigrpNeighborRecord holds hold-timer, K-values, AS number, state.
+   */
+  eigrpNeighborStates?: Record<string, EigrpNeighborRecord>;
+
+  /**
+   * DHCP client FSM records keyed by interface ID (e.g. 'gi0/0').
+   * Tracks INIT → SELECTING → REQUESTING → BOUND → RENEWING → REBINDING.
+   */
+  dhcpClientStates?: Record<string, DhcpClientRecord>;
+
+  /**
+   * LACP port FSM records keyed by port ID.
+   * Tracks Detached → Waiting → Attached → Collecting → Distributing.
+   */
+  lacpPortStates?: Record<string, LacpPortRecord>;
 }
 
 export interface IpSlaSample { success: boolean; rtt?: number; timestamp: number; }

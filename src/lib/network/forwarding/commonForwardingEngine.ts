@@ -43,13 +43,6 @@ export function checkIngressSanity(
     return { allowed: false, reason: `Port status is ${ingressPort.status}` };
   }
 
-  // Port Security Violation Check
-  if (ingressPort.portSecurity?.enabled && ingressPort.portSecurity.macAddress) {
-    if (ingressPort.portSecurity.macAddress !== frame.srcMac) {
-      return { allowed: false, reason: `Port security violation on ${ingressPort.id}` };
-    }
-  }
-
   return { allowed: true, reason: 'Ingress checks passed' };
 }
 
