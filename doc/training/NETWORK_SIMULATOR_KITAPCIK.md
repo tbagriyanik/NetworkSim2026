@@ -24,6 +24,7 @@ Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik 
 
 ### Güncel özellik durumu (v4.6.0)
 
+- **📱 Sekmeli Paket Analizi & Mobil Geri Tuşu Uyumlu Pencere Mimarisi:** Paket Analizi penceresi içinde entegre sekmeli (Paket Akışı / İzleme Detayları) görünüm (`PingPacketInfoPanel.tsx`), mobil tam ekran responsive yerleşim ve tüm sürüklenebilir/modal pencerelerin mobil tarayıcı/donanım Geri düğmesi (`mobile-back-pressed` / `popstate`) ve `Escape` tuşu ile sorunsuz kapatılma altyapısı (`useMobileBack.ts`, `DraggableWindowWrapper.tsx`, `ModernPanel.tsx`, `ResizablePortalWindow.tsx`).
 - **🔍 Canlı Paket İzleme UI Inspector:** Paketin tuval ve düğümler üzerindeki hop, aşama (`L1`, `Port Security`, `STP`, `VLAN`, `ACL`, `Routing/MAC Lookup`, `QoS`, `Capture`), eylem (`pass`, `drop`, `forward`, `flood`, `trap`) kararlarını, gerekçe açıklamalarını ve frame snapshot'larını canlı gösteren interaktif paket analiz paneli (`PacketTraceInspector.tsx`).
 - **✉️ RFC Standartlarında ICMP Hata Kodları & Paket Üretimi:** RFC 792 ve RFC 4443 standartlarına uygun ICMP Type 3 (Destination Unreachable: Code 0 Net Unreachable, Code 1 Host Unreachable, Code 3 Port Unreachable, Code 13 Admin Prohibited) ve Type 11 (Time Exceeded: Code 0 TTL Exceeded) hata paket üretimi (`icmpUtils.ts`).
 - **⏳ Standartlaştırılmış Katman-3 TTL Decrementing:** Tüm Router, L3 Switch ve Firewall yönlendirme yollarında TTL'nin 1 eksiltilmesi ve TTL 0'a ulaştığında paketin düşürülüp göndericiye ICMP Time Exceeded yanıtı dönülmesi (`packetPipeline.ts`).

@@ -10,9 +10,9 @@ export function useMobileBack() {
     if (typeof window === 'undefined') return;
 
     const checkForOpenOverlays = () => {
-      // Check for common Radix UI / shadcn overlays and custom panels
+      // Check for common Radix UI / shadcn overlays, DraggableWindowWrapper, and custom panels
       const overlays = document.querySelectorAll(
-        '[role="dialog"][data-state="open"], [role="menu"], [data-state="open"][data-radix-popper-content-wrapper]'
+        '[role="dialog"][data-state="open"], [role="dialog"], [role="menu"], [data-state="open"][data-radix-popper-content-wrapper], [data-modal-content="true"], [data-modal-id], .modal'
       );
 
       let overlayOpen = overlays.length > 0;
@@ -23,11 +23,11 @@ export function useMobileBack() {
         for (let i = 0; i < panels.length; i++) {
           const panel = panels[i] as HTMLElement;
           if (panel.offsetParent === null) continue; // Quick check for hidden/unrendered elements
-          if (panel.getAttribute('role') === 'dialog' || panel.getAttribute('aria-live')) continue;
+          if (panel.getAttribute('aria-live')) continue;
           const classes = panel.className || '';
           if (
             (classes.includes('z-') || classes.includes('z-[')) &&
-            panel.offsetHeight > 100 &&
+            panel.offsetHeight > 80 &&
             panel.tagName !== 'HEADER' &&
             panel.tagName !== 'NAV' &&
             panel.tagName !== 'FOOTER' &&

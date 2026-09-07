@@ -139,6 +139,25 @@ export function ResizablePortalWindow({
     }
   }, [isOpen]);
 
+  // Handle mobile back button and escape key
+  useEffect(() => {
+    if (!isOpen || !onClose) return;
+    const handleMobileBack = () => {
+      onClose();
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('mobile-back-pressed', handleMobileBack);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('mobile-back-pressed', handleMobileBack);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   useEffect(() => {
     const handleMove = (e: PointerEvent) => {
       if (localDragRef.current) {

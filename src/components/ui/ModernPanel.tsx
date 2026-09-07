@@ -78,6 +78,25 @@ export function ModernPanel({
         };
     }, []);
 
+    // Handle mobile back button and escape key
+    useEffect(() => {
+        if (!onClose) return;
+        const handleMobileBack = () => {
+            onClose();
+        };
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                onClose();
+            }
+        };
+        window.addEventListener('mobile-back-pressed', handleMobileBack);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('mobile-back-pressed', handleMobileBack);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [onClose]);
+
     // Use ref for resize to avoid React re-renders during resize
     const panelRef = useRef<HTMLDivElement>(null);
     const isResizingRef = useRef(false);

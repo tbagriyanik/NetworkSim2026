@@ -6,7 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.3.3-06B6D4?logo=tailwindcss&logoColor=white)
 ![FOSS](https://img.shields.io/badge/FOSS-Free%20Open%20Source-brightgreen)
-![Total Lines](https://img.shields.io/badge/total--lines-167,980-lightgrey)
+![Total Lines](https://img.shields.io/badge/total--lines-168,119-lightgrey)
 
 A comprehensive, client-side, browser-based network simulator for learning switching, routing, wireless, security, IoT, CLI terminal workflows.
 
@@ -34,6 +34,7 @@ npm run check
 
 ## 🚀 Key Features & Version Highlights (v4.6.0)
 
+- **📱 Sekmeli Paket Analizi & Mobil Geri Tuşu Uyumlu Pencere Mimarisi:** Paket Analizi penceresi içinde entegre sekmeli (Paket Akışı / İzleme Detayları) görünüm (`PingPacketInfoPanel.tsx`), mobil tam ekran responsive yerleşim ve tüm sürüklenebilir/modal pencerelerin mobil tarayıcı/donanım Geri düğmesi (`mobile-back-pressed` / `popstate`) ve `Escape` tuşu ile sorunsuz kapatılma altyapısı (`useMobileBack.ts`, `DraggableWindowWrapper.tsx`, `ModernPanel.tsx`, `ResizablePortalWindow.tsx`).
 - **🔍 Canlı Paket İzleme UI Inspector (`PacketTraceInspector.tsx`):** Paketin tuval ve düğümler üzerindeki hop, stage (`L1`, `Port Security`, `STP`, `VLAN`, `ACL`, `Routing/MAC Lookup`, `QoS`, `Capture`), eylem (`pass`, `drop`, `forward`, `flood`, `trap`) kararlarını, gerekçe açıklamalarını ve frame snapshot'larını canlı gösteren interaktif paket analiz paneli.
 - **✉️ RFC Standartlarında ICMP Hata Kodları & Paket Üretimi (`icmpUtils.ts`):** RFC 792 ve RFC 4443 standartlarına uygun ICMP Type 3 (Destination Unreachable: Code 0 Net Unreachable, Code 1 Host Unreachable, Code 3 Port Unreachable, Code 13 Admin Prohibited) ve Type 11 (Time Exceeded: Code 0 TTL Exceeded) hata paket üretimi.
 - **⏳ Standartlaştırılmış Katman-3 TTL Decrementing (`packetPipeline.ts`):** Tüm Router, L3 Switch ve Firewall yönlendirme yollarında TTL'nin 1 eksiltilmesi ve TTL 0'a ulaştığında paketin düşürülüp göndericiye ICMP Time Exceeded yanıtı dönülmesi.
@@ -52,7 +53,7 @@ npm run check
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
 | Version / Sürüm | 4.6.0 |
-| Total Lines / Toplam Satır (`src/`) | 167,980 |
+| Total Lines / Toplam Satır (`src/`) | 168,119 |
 | Source Files / Kaynak Dosya | 717 |
 | Documentation Files / Dokümantasyon Dosya | 32 |
 | Example Projects / Örnek Proje | 46 |

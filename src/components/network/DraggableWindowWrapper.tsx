@@ -88,7 +88,7 @@ export function DraggableWindowWrapper({
   // Handle escape key and mobile back button
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen && isActive) {
+      if (e.key === 'Escape' && isOpen) {
         if (onEscapeKeyDown) {
           onEscapeKeyDown();
         } else {
@@ -98,7 +98,7 @@ export function DraggableWindowWrapper({
     };
 
     const handleMobileBack = () => {
-      if (isOpen && isActive) {
+      if (isOpen) {
         onClose();
       }
     };
@@ -109,7 +109,7 @@ export function DraggableWindowWrapper({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('mobile-back-pressed', handleMobileBack);
     };
-  }, [isOpen, isActive, onClose, onEscapeKeyDown]);
+  }, [isOpen, onClose, onEscapeKeyDown]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -155,13 +155,17 @@ export function DraggableWindowWrapper({
       inset: 0,
       width: '100vw',
       height: '100vh',
+      maxWidth: '100vw',
+      maxHeight: '100vh',
       zIndex,
     }
     : {
       position: 'fixed',
-      left: modalPosition.x,
-      top: modalPosition.y,
-      width: modalSize.width,
+      left: isMobile ? Math.max(8, Math.min(modalPosition.x, (typeof window !== 'undefined' ? window.innerWidth : 360) - 300)) : modalPosition.x,
+      top: isMobile ? Math.max(8, Math.min(modalPosition.y, (typeof window !== 'undefined' ? window.innerHeight : 600) - 200)) : modalPosition.y,
+      width: isMobile ? 'calc(100vw - 16px)' : modalSize.width,
+      maxWidth: '100vw',
+      maxHeight: '100vh',
       height: isCollapsed ? 'auto' : modalSize.height,
       zIndex,
       touchAction: 'none',

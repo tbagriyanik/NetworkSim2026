@@ -1,6 +1,6 @@
 # Network Simulator — Kapsamlı Uygulama ve Kullanım Rehberi
 
-**Sürüm / Version:** 4.5.0  
+**Sürüm / Version:** 4.6.0  
 **Doküman Tipi:** Kullanım, Mimari, Komut Referansı ve Laboratuvar Kılavuzu  
 **Dil:** Türkçe (Turkish)
 
@@ -27,6 +27,7 @@ Network Simulator; bilgisayar ağları, anahtarlama (switching), yönlendirme (r
 
 - **%100 İstemci Taraflı (Client-Side) ve Hızlı:** React 19, Next.js 16 ve TypeScript altyapısıyla herhangi bir sunucu kurulumu gerektirmeden tarayıcıda çalışır.
 - **11 Tam Donanımlı Cihaz Tipi:** Router, L2/L3 Switch, Firewall, WLC, AP, PC, IoT, Multiport Hub (`hub`), Aktif Bulut WAN Geçidi (`cloud`), Kablosuz Akıllı Telefon (`mobile`) ve Ağ Yazıcısı (`printer`).
+- **📱 Sekmeli Paket Analizi & Mobil Geri Tuşu Uyumlu Pencere Mimarisi:** Paket Analizi penceresi içinde entegre sekmeli (Paket Akışı / İzleme Detayları) görünüm, mobil tam ekran responsive düzen ve tüm sürüklenebilir/modal pencerelerin mobil tarayıcı/donanım Geri düğmesi (`mobile-back-pressed` / `popstate`) ve `Escape` tuşu ile sorunsuz kapatılma altyapısı.
 - **📋 Fare Seçimi İle Otomatik Panoya Kopyalama (Auto-Copy):** PC CMD, Linux Terminali, Cihaz Konsol Sekmesi ve Ana CLI Terminal pencerelerinde komut geçmişinden fare ile metin seçilip bırakıldığı anda (`onMouseUp`) otomatik panoya (clipboard) kopyalama.
 - **☁️ Fonksiyonel Bulut / WAN Geçit Cihazı (`cloud`) & ICMP Ping:** Topolojideki Bulut cihazı `203.0.113.1` genel WAN IP adresi, `eth0..eth3` portları, kamu DNS/WAN IP'leri (`8.8.8.8`, `1.1.1.1`) için hem Web hem de ICMP Ping yönlendirme ve NTP (`pool.ntp.org`) desteği.
 - **📱 Mobil Web Tarayıcı & Web Yönetim:** Akıllı telefon cihazında canlı Adres Çubuğu, Hızlı Yer İmleri (`192.168.1.1`, `8.8.8.8`, `http://iot-panel`) ve TCP port 80 denetimi ile Router/WLC Web Yönetimi, Yazıcı Paneli, IoT Kontrol Paneli ve PC HTTP Sunucusu web sayfalarını render eden Web Tarayıcısı.
