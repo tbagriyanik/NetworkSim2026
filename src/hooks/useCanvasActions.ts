@@ -33,12 +33,29 @@ function getConnectedPortsForDevice(deviceId: string, connections: CanvasConnect
 
 function getActiveServicesForDevice(device: CanvasDevice, state?: SwitchState): string[] {
   const serviceList: string[] = [];
+  
+  // Physical Layer 1 Hubs and WAN Cloud bridges do not host application server services
+  if (device.type === 'hub' || device.type === 'cloud') {
+    return serviceList;
+  }
+
   const services = device.services || state?.services;
 
   if (services?.http?.enabled) {
-    const httpObj = services.http as { enabled: boolean; mode?: string };
-    const mode = httpObj.mode || 'simple';
-    serviceList.push(`HTTP (Mod: ${mode})`);
+    // HTTP service is hosted on PCs, WLCs, IoTs, Printers, Firewalls, Routers
+    const isWebCapableDevice = 
+      device.type === 'pc' || 
+      device.type === 'wlc' || 
+      device.type === 'iot' || 
+      device.type === 'printer' || 
+      device.type === 'router' || 
+      device.type === 'firewall';
+
+    if (isWebCapableDevice) {
+      const httpObj = services.http as { enabled: boolean; mode?: string };
+      const mode = httpObj.mode || 'simple';
+      serviceList.push(`HTTP (Mod: ${mode})`);
+    }
   }
   if (services?.dns?.enabled) {
     const recordCount = services.dns.records?.length || 0;
@@ -61,8 +78,11 @@ function getActiveServicesForDevice(device: CanvasDevice, state?: SwitchState): 
   return serviceList;
 }
 
-function getCliCommandsForDevice(state?: SwitchState): string[] {
+function getCliCommandsForDevice(device: CanvasDevice, state?: SwitchState): string[] {
   if (!state) return [];
+  const cliCapableTypes: DeviceType[] = ['router', 'switchL2', 'switchL3', 'firewall', 'wlc'];
+  if (!cliCapableTypes.includes(device.type)) return [];
+
   const commands: string[] = [];
 
   if (state.hostname) {
@@ -122,7 +142,7 @@ function getCliCommandsForDevice(state?: SwitchState): string[] {
     });
   }
 
-  if (state.ipRouting) {
+  if (state.ipRouting && device.type !== 'firewall') {
     if (!commands.includes('configure terminal')) {
       commands.push('enable');
       commands.push('configure terminal');
@@ -527,7 +547,7 @@ export function useCanvasActions({
             summaryText += `  ${isTr ? 'Servisler' : 'Services'}: ${activeServices.join(', ')}\n`;
           }
 
-          const cliCmds = getCliCommandsForDevice(deviceState);
+          const cliCmds = getCliCommandsForDevice(d, deviceState);
           if (cliCmds.length > 0) {
             summaryText += `  CLI: ${cliCmds.join('; ')}\n`;
           }

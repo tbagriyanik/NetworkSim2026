@@ -246,7 +246,7 @@ export function createInitialState(
     security: createInitialSecurity(),
     services: {
       http: {
-        enabled: true,
+        enabled: false,
         content: '<h1>Merhaba Dünya! / Hello World!</h1>\n<p>This page is served from C:\\www\\index.html</p>',
         fontSize: 16
       },

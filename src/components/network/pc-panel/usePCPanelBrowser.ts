@@ -240,6 +240,23 @@ export function usePCPanelBrowser({
         addLocalOutput('error', language === 'tr' ? 'Bulut (Cloud) cihazı ağda mevcut değil.' : 'Cloud device not found on network.');
         return;
       }
+      const isCloudConnected = cloudTarget && topologyConnections.some(
+        c => (c.sourceDeviceId === cloudTarget.id || c.targetDeviceId === cloudTarget.id) && c.active !== false
+      );
+      if (cloudTarget && !isCloudConnected) {
+        setHttpAppDeviceId(null);
+        setHttpAppTitle(language === 'tr' ? 'Bulut Bağlantısız' : 'Cloud Disconnected');
+        setHttpAppContent(`
+          <main style="padding:32px;font-family:'Inria Sans',sans-serif;text-align:center;">
+            <div style="font-size:64px;margin-bottom:16px;">☁️🔌</div>
+            <h1 style="margin:0 0 8px;font-size:24px;color:var(--color-error-500);">${language === 'tr' ? 'Bulut Cihazı Bağlı Değil' : 'Cloud Device Not Connected'}</h1>
+            <p style="margin:0 0 12px;font-size:16px;color:var(--color-muted-foreground);">${language === 'tr' ? 'Topolojideki Bulut (Cloud/WAN) cihazına bağlı bir kablo bulunmuyor!' : 'The Cloud (WAN) device on the topology is not connected with any cable!'}</p>
+            <code style="display:inline-block;padding:6px 10px;border-radius:8px;background:var(--color-error-100);color:var(--color-error-800);font-size:13px;">${displayUrl}</code>
+          </main>
+        `);
+        addLocalOutput('error', language === 'tr' ? 'Bulut (Cloud) cihazı ağa bağlı değil.' : 'Cloud device is not connected to the network.');
+        return;
+      }
       if (cloudTarget && cloudTarget.status === 'offline') {
         setHttpAppDeviceId(null);
         setHttpAppTitle(language === 'tr' ? 'Bulut Kapalı' : 'Cloud Offline');

@@ -320,6 +320,16 @@ export function checkConnectivity(
     };
     const cloudDev = devices.find(d => d.type === 'cloud');
     if (cloudDev && cloudDev.status !== 'offline' && isPublicCloudIp(resolvedTargetIp, cloudDev)) {
+      const isCloudConn = connections.some(c => (c.sourceDeviceId === cloudDev.id || c.targetDeviceId === cloudDev.id) && c.active !== false);
+      if (!isCloudConn) {
+        return {
+          success: false,
+          hops: [],
+          hopIds: [],
+          targetId: cloudDev.id,
+          error: language === 'tr' ? 'Bulut (Cloud) cihazı ağa bağlı değil.' : 'Cloud device is not connected to the network.'
+        };
+      }
       targetDeviceId = cloudDev.id;
       targetDevice = cloudDev;
     } else {

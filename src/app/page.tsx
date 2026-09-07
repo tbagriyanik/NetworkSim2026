@@ -709,7 +709,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       getOrCreatePCOutputs(deviceId, topologyDevices);
       setPcPanelInitialTab('home');
       openDeviceWindow(deviceId, 'pc', 'home');
-    } else if (device === 'iot' || device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc' || device === 'hub' || device === 'cloud' || device === 'printer' || device === 'mobile') {
+    } else if (device === 'iot' || device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc' || device === 'hub' || device === 'cloud' || device === 'printer' || device === 'mobile' || device === 'firewall') {
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       const deviceState = getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
       getOrCreateDeviceOutputs(deviceId, deviceState);
@@ -722,7 +722,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
 
     restoreWindow(deviceId);
     useWindowStore.getState().setActiveWindow(deviceId);
-  }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setShowPCDeviceId, setActiveDeviceId, setActiveDeviceType, setPcPanelInitialTab, setUnifiedDeviceActiveTab]);
+  }, [getOrCreateDeviceState, getOrCreateDeviceOutputs, topologyDevices, setShowPCDeviceId, setActiveDeviceId, setActiveDeviceType, setPcPanelInitialTab, setUnifiedDeviceActiveTab, setActiveFirewallId, setShowFirewallPanel]);
 
   const handleDeviceDelete = useDeviceDelete({
     showPCDeviceId, showRouterDeviceId, activeDeviceId, selectedDevice, setShowPCPanel, setShowPCDeviceId, setShowRouterPanel,
