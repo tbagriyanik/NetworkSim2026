@@ -1,6 +1,24 @@
 # NetworkSimulator — Tam Özellik Envanteri / Full Feature Inventory
 
-**Sürüm / Version:** 4.6.0 · **Son doğrulama / Last verified:** 2026-09-06
+**Sürüm / Version:** 4.7.0 · **Son doğrulama / Last verified:** 2026-09-07
+
+## Son Ağ Simülasyonu Geliştirmeleri (2026-09-07 - v4.7.0)
+
+| Özellik | Güncel kapsam ve sınır |
+|---|---|
+| **WLC Wi-Fi SSID & Güvenlik Yansıması** | WLC'de tanımlı ve aktif (`status: enabled`) WLAN'ların SSID, parola ve güvenlik modu bilgisi, `getDeviceWifiConfig` üzerinden kablosuz ağ yapılandırmasına (AP modu) otomatik yansıtılıyor (`wireless.ts`). |
+| **WLC Varsayılan Yönetim IP Düzeltmesi** | WLC GigabitEthernet0/1 varsayılan IP adresi ağ geçidiyle uyumlu olması için `192.168.1.254` yerine `192.168.1.1` yapıldı (`initialState.ts`). |
+| **PC/IoT/Yazıcı/WLC Cihazlarında HTTP Varsayılan Açık** | Araç çubuğundan eklenen PC, IoT, Yazıcı ve WLC cihazlarında HTTP servisi varsayılan `enabled: true` ile oluşturuluyor; PC'ler için `Welcome to <cihaz adı> Web Server` içerik şablonu, WLC'ler için `WLC-DHCP-POOL` (gw `192.168.1.1`, DNS `8.8.8.8`) tanımlanıyor (`useCanvasActions.ts`). |
+| **İlk PC'de HTTP Varsayılan Açık** | Boş proje, senaryo üretici ve örnek projelerde tüm PC'lere `services.http.enabled: true` uygulanıyor; PC'ler ilk eklendiğinde HTTP "açık" başlıyor (`useProjectReset.ts`, `scenarioGenerators.ts`, `exampleProjects/helpers.ts`). |
+| **PC HTTP Aç/Kapa Toggle Stabilizasyonu** | HTTP düğmesine basıldığında durumun anında geri dönmesi giderildi; `update-topology-device-config` `services.http`'i runtime `SwitchState`'e de yansıtıyor ve `ip http server` satırıyla senkron tutuyor; `getOrCreateDeviceState` canvas `services` bilgisiyle başlıyor (`usePageNetworkLogic.ts`, `useDeviceManager.ts`). |
+| **Cihaz Bilgi Popover Servis Rozetleri** | PC bilgi popover'larındaki HTTP/DNS/DHCP/FTP/MAIL/NTP/SYSLOG rozetleri canvas `services` + runtime cihaz durumunu birlikte değerlendiriyor (`DeviceInfoPopovers.tsx`). |
+| **Terminal UX Modülarizasyonu (8 Claude Önerisi)** | `Terminal.tsx` bölümlendi; `BootProgressBar.tsx`, `TerminalHeaderActions.tsx`, `useTerminalTabCompletion.ts`, `PythonInputModal.tsx`, `PCPanelDialogs.tsx` + `PCPanelContext.tsx` eklendi. |
+| **Firewall Tip Güvenliği & `same-security-traffic`** | ASA `same-security-traffic` komutu tip güvenli `SwitchState.sameSecurityTraffic` alanını kullanıyor; `as unknown as Partial<SwitchState>` cast'leri temizlendi (`firewallCommands.ts`, `types.ts`). |
+| **Deterministik Ping Gecikmesi (PRNG)** | Kablosuz uzaklığa göre ping gecikmesi ve hop sürelerinde tekrarlanabilir çıktı için tohumlanabilir deterministik PRNG kullanıldı (`privilegedConnectivity.ts`). |
+| **Bulut Bağlantısız Durum Denetimi** | Cloud/WAN cihazı topolojide yok veya kablosuz bağlı değilken kamu DNS adreslerine gidiş "Bulut (Cloud) cihazı ağa bağlı değil." hatası ve "Bulut Bağlantısız" ekranı ile açıklanıyor (`usePCPanelBrowser.ts`, `pathResolution.ts`). |
+| **Silinen Cihaz Geçmişi Temizleme** | Geçmiş kopyalamada artık bulunmayan cihazların `deviceOutputs`/`pcOutputs`/`pcHistories` verileri temizleniyor (`historySerialization.ts`). |
+| **HTML Entity Çözme (`decodeHTMLEntities`)** | Sanitize edilmiş metinlerdeki HTML entity'lerin orijinal karakterlere güvenli dönüşümü sağlandı (`sanitizer.ts`). |
+| **Connectivity `resolvePathTraffic` Ayıklaması** | QoS/IPsec trafik çözümleme fonksiyonu bağımsız `resolvePathTraffic.ts` modülüne taşındı; döngüsel bağımlılık azaltıldı. |
 
 ## Son Ağ Simülasyonu Geliştirmeleri (2026-09-06 - v4.6.0)
 

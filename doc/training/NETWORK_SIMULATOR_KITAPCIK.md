@@ -22,7 +22,16 @@ A browser-based network simulator for learning switching, routing, wireless, IoT
 
 Bu kitapçık projenin tüm kullanıcı, CLI, protokol, laboratuvar ve özellik bilgilerinin birincil kaynağıdır. Diğer Markdown dosyaları yalnızca kısa başvuru, kurulum veya geliştirici ayrıntısı içerir; aynı bilginin güncel sürümü burada tutulmalıdır.
 
-### Güncel özellik durumu (v4.6.0)
+### Güncel özellik durumu (v4.7.0)
+
+- **📶 WLC Wi-Fi SSID & Güvenlik Yansıması:** WLC'de tanımlı ve aktif WLAN'ların SSID, parola ve güvenlik modu bilgisi kablosuz ağ yapılandırmasına (AP) otomatik yansıtılıyor; WLC varsayılan yönetim IP'si `192.168.1.1` olarak düzeltildi (`wireless.ts`, `initialState.ts`).
+- **🖥️ PC HTTP Servisi — Varsayılan Açık & Kararlı Toggle:** İlk eklenen PC'lerde HTTP servisi varsayılan `enabled: true` geliyor; PC panelindeki HTTP Aç/Kapa düğmesinin anında geri kapanmasını engelleyen runtime (SwitchState)–topoloji senkronizasyon hatası giderildi. Araç çubuğu, boş proje, senaryo üretici ve örnek projelerde tüm PC'lerde HTTP varsayılan açıktır (`useProjectReset.ts`, `usePageNetworkLogic.ts`, `useDeviceManager.ts`, `useCanvasActions.ts`).
+- **⌨️ Terminal UX Modülarizasyonu (8 Claude Önerisi):** `Terminal.tsx` monoliti bölümlendi; `BootProgressBar.tsx` (önyükleme animasyonu), `TerminalHeaderActions.tsx` (kopyala/temizle/indir/yazı boyutu), `useTerminalTabCompletion.ts` (Tab ile bağlama duyarlı komut tamamlama), `PythonInputModal.tsx`, `PCPanelDialogs.tsx` + `PCPanelContext.tsx` eklendi.
+- **🛡️ Firewall Tip Güvenliği & Güvenlik Düzeltmeleri:** ASA `same-security-traffic` komutu tip güvenli `SwitchState.sameSecurityTraffic` alanını kullanıyor; `as unknown as Partial<SwitchState>` cast'leri temizlendi; sanitize edilen HTTP içeriklerde HTML entity çözümü (`decodeHTMLEntities`) eklendi (`firewallCommands.ts`, `sanitizer.ts`).
+- **🪄 Deterministik Simülasyon Rastgeleliği:** Kablosuz ping gecikmesi ve hop sürelerinde tekrarlanabilir çıktı için tohumlanabilir PRNG (`deterministicRandom`) kullanıldı; test kararlılığı artırıldı (`privilegedConnectivity.ts`).
+- **🌩️ Bulut Bağlantısız Durum Denetimi:** Cloud/WAN cihazına kablo bağlı değilken kamu DNS adreslerine tarayıcı/ping trafiği "Bulut (Cloud) cihazı ağa bağlı değil." hatası ve özel "Bulut Bağlantısız" ekranı ile açıklanıyor (`usePCPanelBrowser.ts`, `pathResolution.ts`).
+- **🧹 Silinen Cihaz Geçmişi Temizleme:** Proje geçmişine kopyalama sırasında topolojide artık olmayan cihazların konsol çıktıları ve komut geçmişleri artık taşınmıyor (`historySerialization.ts`).
+- **🔀 Connectivity Ayıklaması:** QoS/IPsec trafik çözümleme (`resolvePathTraffic`) bağımsız modüle taşındı, döngüsel bağımlılık riski azaltıldı.
 
 - **📱 Sekmeli Paket Analizi & Mobil Geri Tuşu Uyumlu Pencere Mimarisi:** Paket Analizi penceresi içinde entegre sekmeli (Paket Akışı / İzleme Detayları) görünüm (`PingPacketInfoPanel.tsx`), mobil tam ekran responsive yerleşim ve tüm sürüklenebilir/modal pencerelerin mobil tarayıcı/donanım Geri düğmesi (`mobile-back-pressed` / `popstate`) ve `Escape` tuşu ile sorunsuz kapatılma altyapısı (`useMobileBack.ts`, `DraggableWindowWrapper.tsx`, `ModernPanel.tsx`, `ResizablePortalWindow.tsx`).
 - **🔍 Canlı Paket İzleme UI Inspector:** Paketin tuval ve düğümler üzerindeki hop, aşama (`L1`, `Port Security`, `STP`, `VLAN`, `ACL`, `Routing/MAC Lookup`, `QoS`, `Capture`), eylem (`pass`, `drop`, `forward`, `flood`, `trap`) kararlarını, gerekçe açıklamalarını ve frame snapshot'larını canlı gösteren interaktif paket analiz paneli (`PacketTraceInspector.tsx`).

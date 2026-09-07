@@ -1,6 +1,6 @@
 # Network Simulator
 
-![Version](https://img.shields.io/badge/version-4.6.0-blue)
+![Version](https://img.shields.io/badge/version-4.7.0-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-16.3.4-black?logo=next.js)
 ![React](https://img.shields.io/badge/React-19.2.8-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-7.0.2-3178C6?logo=typescript&logoColor=white)
@@ -32,19 +32,16 @@ npx tsc --noEmit
 npm run check
 ```
 
-## 🚀 Key Features & Version Highlights (v4.6.0)
+## 🚀 Key Features & Version Highlights (v4.7.0)
 
-- **📱 Sekmeli Paket Analizi & Mobil Geri Tuşu Uyumlu Pencere Mimarisi:** Paket Analizi penceresi içinde entegre sekmeli (Paket Akışı / İzleme Detayları) görünüm (`PingPacketInfoPanel.tsx`), mobil tam ekran responsive yerleşim ve tüm sürüklenebilir/modal pencerelerin mobil tarayıcı/donanım Geri düğmesi (`mobile-back-pressed` / `popstate`) ve `Escape` tuşu ile sorunsuz kapatılma altyapısı (`useMobileBack.ts`, `DraggableWindowWrapper.tsx`, `ModernPanel.tsx`, `ResizablePortalWindow.tsx`).
-- **🔍 Canlı Paket İzleme UI Inspector (`PacketTraceInspector.tsx`):** Paketin tuval ve düğümler üzerindeki hop, stage (`L1`, `Port Security`, `STP`, `VLAN`, `ACL`, `Routing/MAC Lookup`, `QoS`, `Capture`), eylem (`pass`, `drop`, `forward`, `flood`, `trap`) kararlarını, gerekçe açıklamalarını ve frame snapshot'larını canlı gösteren interaktif paket analiz paneli.
-- **✉️ RFC Standartlarında ICMP Hata Kodları & Paket Üretimi (`icmpUtils.ts`):** RFC 792 ve RFC 4443 standartlarına uygun ICMP Type 3 (Destination Unreachable: Code 0 Net Unreachable, Code 1 Host Unreachable, Code 3 Port Unreachable, Code 13 Admin Prohibited) ve Type 11 (Time Exceeded: Code 0 TTL Exceeded) hata paket üretimi.
-- **⏳ Standartlaştırılmış Katman-3 TTL Decrementing (`packetPipeline.ts`):** Tüm Router, L3 Switch ve Firewall yönlendirme yollarında TTL'nin 1 eksiltilmesi ve TTL 0'a ulaştığında paketin düşürülüp göndericiye ICMP Time Exceeded yanıtı dönülmesi.
-- **⏱️ Gerçek Zamanlı ARP ve MAC Aging Motoru (`agingEngine.ts`):** MAC adresi dinamik kayıtları (300sn) ve ARP önbelleği (120sn) için canlı arka plan yaşlanma ve temizleme mekanizması.
-- **📊 ACL Paket Sayacı & İzleme Yöntemi (`acl.ts`):** Erişim kontrol listelerindeki (ACL) her kural için canlı paket ve bayt eşleşme sayaçlarının tutulması, `show access-lists` çıktısına yansıtılması ve ACL engelinde ICMP Code 13 üretimi.
-- **🔌 VLAN & Trunk Uyumsuzluk Teşhisleri (`vlanDiagnostics.ts`):** Bağlı trunk ve access switch portlarındaki Native VLAN uyuşmazlığı, Allowed VLAN farkları ve Access VLAN uyumsuzluklarını otomatik tespit eden teşhis tarayıcısı.
-- **🎯 Detaylı Routing Karar Açıklamaları (`routing.ts`):** Rota seçiminde Longest-Prefix Match (LPM) (örn. `10.0.0.0/24`), Administrative Distance (AD) (Connected: 0, Static: 1, EIGRP: 90, OSPF: 110, RIP: 120) ve Metric değerlerini analiz edip gerekçelendiren `findRouteDetailed` motoru.
-- **🪵 MAC Yaşam Döngüsü Olay Günlüğü (`macLearning.ts`):** MAC adresi öğrenme (`LEARN`), portlar arası geçiş/flapping (`MOVE`), zaman aşımıyla silinme (`AGE`) ve unicast miss durumında taşma (`FLOOD`) olaylarını yayınlayan log altyapısı.
-- **📈 Canlı Arayüz Trafik İstatistikleri (`packetPipeline.ts`):** Arayüzlerden paket geçtikçe ve düştükçe `rxPackets`, `rxBytes`, `txPackets`, `txBytes`, `rxDrops`, `txDrops` istatistiklerinin gerçek zamanlı hesaplanması ve `show interfaces` komutuna yansıtılması.
-- **🛑 Paket Düşürme Nedeni Standartlaştırması (`dropReasons.ts`):** Tüm Katman-1, Katman-2, Katman-3, ACL, STP ve Güvenlik paket düşürme gerekçelerinin standart `DropReasonCode` enum'ları ve düzeltme önerileri ile sınıflandırılması.
+- **📶 WLC Wi-Fi SSID & Güvenlik Yansıması:** WLC'de tanımlı ve aktif WLAN'ların SSID, parola ve güvenlik modu bilgisi kablosuz ağ yapılandırmasına (AP) otomatik yansıtılıyor; WLC varsayılan yönetim IP'si `192.168.1.1` olarak düzeltildi (`wireless.ts`, `initialState.ts`).
+- **🖥️ PC HTTP Servisi — Varsayılan Açık & Kararlı Toggle:** İlk eklenen PC'lerde HTTP servisi varsayılan `enabled: true` geliyor; PC panelindeki HTTP Aç/Kapa düğmesinin anında geri kapanmasını engelleyen runtime (SwitchState)–topoloji senkronizasyon hatası giderildi. Araç çubuğu, boş proje, senaryo üretici ve örnek projelerde tüm PC'lerde HTTP varsayılan açıktır (`useProjectReset.ts`, `usePageNetworkLogic.ts`, `useDeviceManager.ts`, `useCanvasActions.ts`).
+- **⌨️ Terminal UX Modülarizasyonu (8 Claude Önerisi):** `Terminal.tsx` monoliti bölümlendi; `BootProgressBar.tsx` (önyükleme animasyonu), `TerminalHeaderActions.tsx` (kopyala/temizle/indir/yazı boyutu), `useTerminalTabCompletion.ts` (Tab ile bağlama duyarlı komut tamamlama), `PythonInputModal.tsx`, `PCPanelDialogs.tsx` + `PCPanelContext.tsx` eklendi.
+- **🛡️ Firewall Tip Güvenliği & Güvenlik Düzeltmeleri:** ASA `same-security-traffic` komutu tip güvenli `SwitchState.sameSecurityTraffic` alanını kullanıyor; `as unknown as Partial<SwitchState>` cast'leri temizlendi; sanitize edilen HTTP içeriklerde HTML entity çözümü (`decodeHTMLEntities`) eklendi (`firewallCommands.ts`, `sanitizer.ts`).
+- **🪄 Deterministik Simülasyon Rastgeleliği:** Kablosuz ping gecikmesi ve hop sürelerinde tekrarlanabilir çıktı için tohumlanabilir PRNG (`deterministicRandom`) kullanıldı; test kararlılığı artırıldı (`privilegedConnectivity.ts`).
+- **🌩️ Bulut Bağlantısız Durum Denetimi:** Cloud/WAN cihazına kablo bağlı değilken kamu DNS adreslerine tarayıcı/ping trafiği "Bulut (Cloud) cihazı ağa bağlı değil." hatası ve özel "Bulut Bağlantısız" ekranı ile açıklanıyor (`usePCPanelBrowser.ts`, `pathResolution.ts`).
+- **🧹 Silinen Cihaz Geçmişi Temizleme:** Proje geçmişine kopyalama sırasında topolojide artık olmayan cihazların konsol çıktıları ve komut geçmişleri artık taşınmıyor (`historySerialization.ts`).
+- **🔀 Connectivity Ayıklaması:** QoS/IPsec trafik çözümleme (`resolvePathTraffic`) bağımsız modüle taşındı, döngüsel bağımlılık riski azaltıldı.
 
 ---
 
@@ -52,7 +49,7 @@ npm run check
 
 | Metric / Metrik | Value / Değer |
 | --- | ---: |
-| Version / Sürüm | 4.6.0 |
+| Version / Sürüm | 4.7.0 |
 | Total Lines / Toplam Satır (`src/`) | 168,563 |
 | Source Files / Kaynak Dosya | 722 |
 | Documentation Files / Dokümantasyon Dosya | 32 |
