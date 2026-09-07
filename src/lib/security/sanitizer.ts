@@ -26,6 +26,17 @@ export function sanitizeHTML(input: string): string {
     return safe;
 }
 
+export function decodeHTMLEntities(input: string): string {
+    if (!input) return '';
+    return input
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#039;/g, "'")
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, '&');
+}
+
 /**
  * Sanitize HTML content for HTTP service content using DOMPurify.
  * Allows basic formatting and layout tags while preventing XSS.

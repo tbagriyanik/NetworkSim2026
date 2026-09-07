@@ -93,14 +93,14 @@ export const firewallHandlers: Record<string, CommandHandler> = {
     return {
       success: true,
       output: '\n% Same-security traffic permitted between interfaces with the same security level.\n',
-      newState: { sameSecurityTraffic: true } as unknown as Partial<SwitchState>
+      newState: { sameSecurityTraffic: true }
     };
   },
   'no same-security-traffic': (_state, _input) => {
     return {
       success: true,
       output: '\n% Same-security traffic denied between interfaces with the same security level.\n',
-      newState: { sameSecurityTraffic: false } as unknown as Partial<SwitchState>
+      newState: { sameSecurityTraffic: false }
     };
   },
 };
@@ -138,7 +138,7 @@ function cmdAccessGroup(state: SwitchState, input: string): CommandResult {
 
   return {
     success: true,
-    newState: { ports: updatedPorts } as unknown as Partial<SwitchState>,
+    newState: { ports: updatedPorts },
   };
 }
 
@@ -168,7 +168,7 @@ function cmdNoAccessGroup(state: SwitchState, input: string): CommandResult {
 
   return {
     success: true,
-    newState: { ports: updatedPorts } as unknown as Partial<SwitchState>,
+    newState: { ports: updatedPorts },
   };
 }
 
@@ -196,7 +196,7 @@ function cmdObjectNetwork(state: SwitchState, input: string): CommandResult {
     newState: {
       firewallObjects: objects,
       currentFirewallObject: objName,
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }
 
@@ -216,7 +216,7 @@ function cmdNoObjectNetwork(state: SwitchState, input: string): CommandResult {
   delete objects[objName];
   return {
     success: true,
-    newState: { firewallObjects: objects } as unknown as Partial<SwitchState>,
+    newState: { firewallObjects: objects },
   };
 }
 
@@ -238,7 +238,7 @@ function cmdNat(state: SwitchState, input: string): CommandResult {
       output: `Static NAT applied: (${srcZone},${dstZone}) -> ${mappedIp}`,
       newState: {
         natRules: [...(state.natRules || []), { type: 'static', srcZone, dstZone, mappedIp }],
-      } as unknown as Partial<SwitchState>,
+      },
     };
   }
   // nat (inside,outside) source dynamic <pool> interface
@@ -253,7 +253,7 @@ function cmdNat(state: SwitchState, input: string): CommandResult {
       output: `Dynamic NAT applied: (${srcZone},${dstZone}) source ${pool} ${target}`,
       newState: {
         natRules: [...(state.natRules || []), { type: 'dynamic', srcZone, dstZone, pool, target }],
-      } as unknown as Partial<SwitchState>,
+      },
     };
   }
   // Inside object: host <ip>
@@ -265,7 +265,7 @@ function cmdNat(state: SwitchState, input: string): CommandResult {
       obj.host = hostMatch[1];
       return {
         success: true,
-        newState: { firewallObjects: objects } as unknown as Partial<SwitchState>,
+        newState: { firewallObjects: objects },
       };
     }
   }
@@ -278,7 +278,7 @@ function cmdNat(state: SwitchState, input: string): CommandResult {
       obj.subnet = { ip: subnetMatch[1], mask: subnetMatch[2] };
       return {
         success: true,
-        newState: { firewallObjects: objects } as unknown as Partial<SwitchState>,
+        newState: { firewallObjects: objects },
       };
     }
   }
@@ -319,7 +319,7 @@ function cmdRoute(state: SwitchState, input: string): CommandResult {
           interface: ifName,
         },
       ],
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }
 
@@ -340,7 +340,7 @@ function cmdNoRoute(state: SwitchState, input: string): CommandResult {
   );
   return {
     success: true,
-    newState: { staticRoutes: filtered } as unknown as Partial<SwitchState>,
+    newState: { staticRoutes: filtered },
   };
 }
 
@@ -361,7 +361,7 @@ function cmdTimeout(state: SwitchState, input: string): CommandResult {
     success: true,
     newState: {
       firewallTimeouts: { ...state.firewallTimeouts, [proto]: value },
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }
 
@@ -383,7 +383,7 @@ function cmdPasswd(state: SwitchState, input: string): CommandResult {
         ...state.security,
         enablePassword: match[1],
       },
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }
 
@@ -401,7 +401,7 @@ function cmdHttpServerEnable(state: SwitchState, _input: string): CommandResult 
         ...state.services,
         http: { enabled: true, content: '', fontSize: 14 },
       },
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }
 
@@ -419,7 +419,7 @@ function cmdNoHttpServerEnable(state: SwitchState, _input: string): CommandResul
         ...state.services,
         http: { enabled: false, content: '', fontSize: 14 },
       },
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }
 
@@ -484,7 +484,7 @@ function cmdLoggingEnable(state: SwitchState, _input: string): CommandResult {
     success: true,
     newState: {
       loggingEnabled: true,
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }
 
@@ -499,6 +499,6 @@ function cmdNoLoggingEnable(state: SwitchState, _input: string): CommandResult {
     success: true,
     newState: {
       loggingEnabled: false,
-    } as unknown as Partial<SwitchState>,
+    },
   };
 }

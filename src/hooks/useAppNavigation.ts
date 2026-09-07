@@ -16,7 +16,7 @@ interface UseAppNavigationOptions {
   setPan: (pan: { x: number; y: number }) => void;
   topologyDevices: CanvasDevice[];
   getOrCreatePCOutputs: (deviceId: string, devices: CanvasDevice[]) => void;
-  getOrCreateDeviceState: (deviceId: string, type: DeviceType, name?: string, mac?: string, model?: string) => SwitchState;
+  getOrCreateDeviceState: (deviceId: string, type: DeviceType, name?: string, mac?: string, model?: string, services?: CanvasDevice['services']) => SwitchState;
   getOrCreateDeviceOutputs: (deviceId: string, state: SwitchState) => TerminalOutput[];
 }
 
@@ -168,8 +168,8 @@ export function useAppNavigation(options: UseAppNavigationOptions) {
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
       const modelToUse = switchModel || deviceObj?.switchModel;
       const initialHostname = deviceObj?.name || deviceName;
-      getOrCreateDeviceState(deviceId, device, initialHostname, deviceObj?.macAddress, modelToUse);
-      getOrCreateDeviceOutputs(deviceId, getOrCreateDeviceState(deviceId, device, initialHostname, deviceObj?.macAddress, modelToUse));
+      getOrCreateDeviceState(deviceId, device, initialHostname, deviceObj?.macAddress, modelToUse, deviceObj?.services);
+      getOrCreateDeviceOutputs(deviceId, getOrCreateDeviceState(deviceId, device, initialHostname, deviceObj?.macAddress, modelToUse, deviceObj?.services));
     }
 
     queueMicrotask(() => {
@@ -215,7 +215,7 @@ export function useAppNavigation(options: UseAppNavigationOptions) {
 
     if (tabId === 'terminal') {
       if (deviceObj && (deviceObj.type === 'router' || deviceObj.type === 'switchL2' || deviceObj.type === 'switchL3' || deviceObj.type === 'wlc')) {
-        const deviceState = getOrCreateDeviceState(activeDeviceId, deviceObj.type, deviceObj.name, deviceObj.macAddress, deviceObj.switchModel);
+        const deviceState = getOrCreateDeviceState(activeDeviceId, deviceObj.type, deviceObj.name, deviceObj.macAddress, deviceObj.switchModel, deviceObj.services);
         getOrCreateDeviceOutputs(activeDeviceId, deviceState);
       }
       return;

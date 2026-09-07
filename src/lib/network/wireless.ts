@@ -224,6 +224,20 @@ export function getDeviceWifiConfig(device: CanvasDevice | undefined, deviceStat
   const wlanState: Port | undefined = state?.ports['wlan0'];
   const defaultMode: WifiMode = (device.type === 'pc' || device.type === 'mobile' || device.type === 'printer') ? 'client' : 'ap';
 
+  if (state?.wlcWlans && Object.keys(state.wlcWlans).length > 0) {
+    const activeWlan = Object.values(state.wlcWlans).find(w => w.status === 'enabled') || Object.values(state.wlcWlans)[0];
+    if (activeWlan && activeWlan.ssid) {
+      return {
+        enabled: activeWlan.status === 'enabled',
+        ssid: activeWlan.ssid,
+        password: activeWlan.password,
+        security: normalizeSecurity(activeWlan.security),
+        channel: '2.4GHz',
+        mode: 'ap',
+      };
+    }
+  }
+
   if (wlanState?.wifi?.ssid) {
     const mode = normalizeWifiMode(wlanState.wifi.mode, defaultMode);
     const enabled = mode !== 'disabled' && !(wlanState.shutdown ?? false);

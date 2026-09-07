@@ -124,6 +124,9 @@ function addPcToSwitch(
     ip, subnet: '255.255.255.0', gateway, dns,
     ipConfigMode: 'static', x, y, status: 'online',
     ports: pcPorts,
+    services: {
+      http: { enabled: true, mode: 'simple', content: `<h1>Welcome to PC-${pcIndex} Web Server</h1>` }
+    },
     ...extras,
   };
   ctx.devices.push(pc);

@@ -355,22 +355,24 @@ export function useCanvasActions({
                     ? generateWLCPorts()
                     : generateRouterPorts(),
 
-      services: type === 'wlc'
+      services: (type === 'pc' || type === 'iot' || type === 'printer' || type === 'wlc')
         ? {
-          http: { enabled: true, content: '' },
-          dhcp: {
-            enabled: true,
-            pools: [
-              {
-                poolName: 'WLC-DHCP-POOL',
-                defaultGateway: '192.168.1.1',
-                dnsServer: '8.8.8.8',
-                startIp: '192.168.1.100',
-                subnetMask: '255.255.255.0',
-                maxUsers: 50
-              }
-            ]
-          }
+          http: { enabled: true, mode: 'simple', content: type === 'pc' ? `<h1>Welcome to ${name} Web Server</h1>` : '' },
+          ...(type === 'wlc' ? {
+            dhcp: {
+              enabled: true,
+              pools: [
+                {
+                  poolName: 'WLC-DHCP-POOL',
+                  defaultGateway: '192.168.1.1',
+                  dnsServer: '8.8.8.8',
+                  startIp: '192.168.1.100',
+                  subnetMask: '255.255.255.0',
+                  maxUsers: 50
+                }
+              ]
+            }
+          } : {})
         }
         : undefined,
       iot: type === 'iot'

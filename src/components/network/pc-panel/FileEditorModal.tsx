@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { PythonCodeEditor } from './PythonCodeEditor';
 import { ResizablePortalWindow } from './ResizablePortalWindow';
+import { decodeHTMLEntities } from '@/lib/security/sanitizer';
 
 interface FileEditorModalProps {
   open: boolean;
@@ -41,8 +42,9 @@ export function FileEditorModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setContent(initialContent);
-    setHistory([initialContent]);
+    const raw = decodeHTMLEntities(initialContent);
+    setContent(raw);
+    setHistory([raw]);
     setHistoryIndex(0);
     historyReady.current = true;
   }, [initialContent, open]);

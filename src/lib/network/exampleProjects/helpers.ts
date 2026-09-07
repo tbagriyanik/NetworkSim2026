@@ -120,6 +120,9 @@ const createPcDevice = (id: string, name: string, x: number, y: number, ip: stri
   ipv6: ipv6 || deterministicIpv6(id, vlan),
   macAddress: deterministicMac(id),
   status: 'online',
+  services: {
+    http: { enabled: true, mode: 'simple', content: `<h1>Welcome to ${name} Web Server</h1>` }
+  },
   ports: [
     { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
     { id: 'com1', label: 'COM1', status: 'disconnected' as const }

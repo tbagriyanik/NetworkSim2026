@@ -7,6 +7,12 @@ import type { SwitchState, CommandResult } from '../types';
 import { getL3Hops } from '../routing';
 import { isValidIPv4Format } from '../dns';
 
+let _seed = 42;
+function deterministicRandom(): number {
+    _seed = (_seed * 1103515245 + 12345) & 0x7fffffff;
+    return _seed / 0x7fffffff;
+}
+
 /**
  * Generate ping latencies proportional to WiFi distance.
  * Uses exponential curve: close = very fast, far = much slower (realistic WiFi behavior).
@@ -14,7 +20,7 @@ import { isValidIPv4Format } from '../dns';
  */
 function generatePingLatencies(distance: number): { min: number; avg: number; max: number } {
     const jitter = (base: number, pct: number) =>
-        Math.max(1, Math.round(base * (1 + (Math.random() * 2 - 1) * pct)));
+        Math.max(1, Math.round(base * (1 + (deterministicRandom() * 2 - 1) * pct)));
 
     // Exponential: base = e^(distance/130) scaled to 1ms at 0px, ~210ms at 549px
     const basePing = Math.exp(distance / 130);
@@ -34,8 +40,8 @@ function generatePingLatencies(distance: number): { min: number; avg: number; ma
 function formatHopTimes(base: number): string {
     const fmt = (ms: number) => ms <= 1 ? '<1' : String(ms);
     const t1 = Math.max(1, base);
-    const t2 = Math.max(1, base + (Math.random() > 0.5 ? 1 : 0));
-    const t3 = Math.max(1, base + (Math.random() > 0.5 ? 1 : 0));
+    const t2 = Math.max(1, base + (deterministicRandom() > 0.5 ? 1 : 0));
+    const t3 = Math.max(1, base + (deterministicRandom() > 0.5 ? 1 : 0));
     return `${fmt(t1)} msec ${fmt(t2)} msec ${fmt(t3)} msec`;
 }
 

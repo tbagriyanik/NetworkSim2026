@@ -219,7 +219,7 @@ export function PCPanel({
     setTimeout(() => { isDnsEditingRef.current = false; }, 1000);
   }, [dnsFormDomain, dnsFormAddress, serviceDnsRecords, deviceId, serviceDnsEnabled]);
 
-  const [serviceHttpEnabled, setServiceHttpEnabled] = useState(deviceFromTopology?.services?.http?.enabled ?? false);
+  const [serviceHttpEnabled, setServiceHttpEnabled] = useState(deviceFromTopology?.services?.http?.enabled ?? true);
   const [serviceHttpContent, setServiceHttpContent] = useState(() => {
     const fs = loadFs(deviceId);
     const wwwIndex = readFile(fs, 'C:\\www\\index.html') || readFile(fs, 'www/index.html');
@@ -497,6 +497,7 @@ export function PCPanel({
     setIpConfigMode,
     setServiceDnsEnabled,
     setServiceDnsRecords,
+    setServiceHttpEnabled,
     setServiceHttpContent,
     setServiceFtpEnabled,
     setServiceFtpFiles,
@@ -1534,7 +1535,7 @@ export function PCPanel({
     completeAutocompleteSelection, handleInputChange, handleKeyDown,
     inputRef, outputRef, autocompleteRef, showCmdSettings, setShowCmdSettings,
     handleFontSizeChange, highlightText,
-    ftpSession, pythonSession, editingFile, setEditingFile,
+    ftpSession, pythonSession, setPythonSession, editingFile, setEditingFile,
     isConsoleConnected, setIsConsoleConnected, connectedDeviceId, setConnectedDeviceId,
     setConsoleConnectionTime, isConsoleInputDisabled, consoleNeedsPassword,
     consoleConfirmDialog, consoleReloadPending, consoleDevice, handleConnect,

@@ -905,6 +905,7 @@ export interface SwitchState {
   cryptoIsakmpKeys?: Record<string, string>;
   stpState?: Record<number, StpVlanState>;
 
+  sameSecurityTraffic?: boolean;
   // Firewall ASA-specific state
   firewallObjects?: Record<string, {
     name: string;

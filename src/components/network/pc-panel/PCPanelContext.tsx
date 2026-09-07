@@ -141,6 +141,7 @@ export interface PCPanelContextValue {
   // Sessions
   ftpSession: import('./PCPanel.types').FtpSession | null;
   pythonSession: import('./PCPanel.types').PythonSession | null;
+  setPythonSession: React.Dispatch<React.SetStateAction<import('./PCPanel.types').PythonSession | null>>;
   editingFile: { path: string; content: string } | null;
   setEditingFile: (f: { path: string; content: string } | null) => void;
 

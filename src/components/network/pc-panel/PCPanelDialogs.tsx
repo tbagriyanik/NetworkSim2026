@@ -6,6 +6,7 @@ import { usePCPanel } from './PCPanelContext';
 import { FtpFileTransferDialog } from './FtpFileTransferDialog';
 import { FileEditorModal } from './FileEditorModal';
 import { PCBrowser } from './PCBrowser';
+import { PythonInputModal } from './PythonInputModal';
 import { loadFs, saveFs, writeFile, readFile, getFtpFilesFromUploadDir } from './pcFileSystem';
 
 /**
@@ -24,6 +25,7 @@ export function PCPanelDialogs() {
     browserWindow, setBrowserWindow, filteredSuggestions, showUrlSuggestions,
     setShowUrlSuggestions, selectedSuggestionIndex, setSelectedSuggestionIndex,
     urlInputRef, dragStateRef, openWebPage,
+    pythonSession, setPythonSession,
   } = ctx;
 
   const httpAppSrcDoc = useMemo(() => {
@@ -131,6 +133,22 @@ export function PCPanelDialogs() {
         onSetShowSuggestions={setShowUrlSuggestions}
         onSetSelectedSuggestionIndex={setSelectedSuggestionIndex}
         onOpenWebPage={openWebPage}
+      />
+
+      <PythonInputModal
+        session={pythonSession}
+        isDark={isDark}
+        isMobile={isMobile}
+        language={language}
+        onSubmit={(input) => {
+          if (pythonSession) {
+            executeCommand(input);
+          }
+        }}
+        onCancel={() => {
+          setPythonSession(null);
+          inputRef.current?.focus();
+        }}
       />
     </>
   );

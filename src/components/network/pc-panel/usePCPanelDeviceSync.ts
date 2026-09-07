@@ -22,6 +22,7 @@ interface UsePCPanelDeviceSyncOptions {
   setIpConfigMode: React.Dispatch<React.SetStateAction<'static' | 'dhcp'>>;
   setServiceDnsEnabled: (v: boolean) => void;
   setServiceDnsRecords: (r: Array<{ domain: string; address: string }>) => void;
+  setServiceHttpEnabled: (v: boolean) => void;
   setServiceHttpContent: (c: string) => void;
   setServiceFtpEnabled: (v: boolean) => void;
   setServiceFtpFiles: (f: PcFile[]) => void;
@@ -76,6 +77,7 @@ export function usePCPanelDeviceSync({
   setIpConfigMode,
   setServiceDnsEnabled,
   setServiceDnsRecords,
+  setServiceHttpEnabled,
   setServiceHttpContent,
   setServiceFtpEnabled,
   setServiceFtpFiles,
@@ -148,6 +150,7 @@ export function usePCPanelDeviceSync({
       setIpConfigMode(deviceFromTopology?.ipConfigMode || 'static');
       setServiceDnsEnabled(deviceFromTopology?.services?.dns?.enabled ?? false);
       setServiceDnsRecords(deviceFromTopology?.services?.dns?.records || []);
+      setServiceHttpEnabled(deviceFromTopology?.services?.http?.enabled ?? true);
       const fs = loadFs(deviceId);
       const wwwIndex = readFile(fs, 'C:\\www\\index.html') || readFile(fs, 'www/index.html');
       setServiceHttpContent(wwwIndex || deviceFromTopology?.services?.http?.content || helloWorld);

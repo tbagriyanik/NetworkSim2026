@@ -2,7 +2,7 @@
 
 import { useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileCode } from 'lucide-react';
+import { FileCode, Image as ImageIcon, Link as LinkIcon } from 'lucide-react';
 import { sanitizeHTTPContent } from '@/lib/security/sanitizer';
 import { syncHttpContentToFs } from './pcFileSystem';
 
@@ -62,14 +62,21 @@ export function HttpServiceConfig({
     }
   };
 
-  const applyHttpFormatting = (tag: 'b' | 'i' | 'u') => {
+  const applyHttpFormatting = (tag: 'b' | 'i' | 'u' | 'a' | 'img') => {
     const el = httpContentRef.current;
     if (!el) return;
     const start = el.selectionStart;
     const end = el.selectionEnd;
     const text = el.value;
     const selected = text.substring(start, end);
-    const formatted = `<${tag}>${selected}</${tag}>`;
+    let formatted = '';
+    if (tag === 'img') {
+      formatted = selected ? `<img src="${selected}" alt="image" />` : `<img src="https://via.placeholder.com/150" alt="image" />`;
+    } else if (tag === 'a') {
+      formatted = `<a href="${selected || 'http://'}">${selected || 'Link'}</a>`;
+    } else {
+      formatted = `<${tag}>${selected}</${tag}>`;
+    }
     const nextValue = text.substring(0, start) + formatted + text.substring(end);
     updateContent(nextValue);
     dispatchDeviceConfig({
@@ -154,9 +161,11 @@ export function HttpServiceConfig({
           </div>
           <div className="flex items-center gap-2">
             <div className="flex gap-1">
-              <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black" onClick={() => applyHttpFormatting('b')}>B</Button>
-              <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black italic" onClick={() => applyHttpFormatting('i')}>I</Button>
-              <Button type="button" size="icon" variant="outline" className="h-8 w-8 text-xs font-black underline" onClick={() => applyHttpFormatting('u')}>U</Button>
+              <Button type="button" size="icon" variant="outline" title="Kalın (<b>)" className="h-8 w-8 text-xs font-black" onClick={() => applyHttpFormatting('b')}>B</Button>
+              <Button type="button" size="icon" variant="outline" title="İtalik (<i>)" className="h-8 w-8 text-xs font-black italic" onClick={() => applyHttpFormatting('i')}>I</Button>
+              <Button type="button" size="icon" variant="outline" title="Altı Çizili (<u>)" className="h-8 w-8 text-xs font-black underline" onClick={() => applyHttpFormatting('u')}>U</Button>
+              <Button type="button" size="icon" variant="outline" title="Bağlantı (<a>)" className="h-8 w-8 text-xs font-semibold gap-1" onClick={() => applyHttpFormatting('a')}><LinkIcon className="w-3.5 h-3.5" /></Button>
+              <Button type="button" size="icon" variant="outline" title="Resim (<img>)" className="h-8 w-8 text-xs font-semibold gap-1" onClick={() => applyHttpFormatting('img')}><ImageIcon className="w-3.5 h-3.5" /></Button>
             </div>
             <span className="text-[10px] text-secondary-500">{language === 'tr' ? 'Seçili metni biçimlendir' : 'Format selected text'}</span>
           </div>

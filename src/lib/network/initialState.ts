@@ -562,7 +562,7 @@ function createInitialWLCPorts(baseMac?: string): Record<string, Port> {
       type: 'gigabitethernet',
       macAddress: portMac,
       isRoutedPort: true,
-      ipAddress: i === 0 ? '192.168.1.254' : undefined,
+      ipAddress: i === 0 ? '192.168.1.1' : undefined,
       subnetMask: i === 0 ? '255.255.255.0' : undefined,
     };
   }

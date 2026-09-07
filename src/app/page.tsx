@@ -557,7 +557,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
     }
     const activeDevice = (topologyDevices || []).find(d => d.id === activeDeviceId);
     const resolvedType = activeDevice?.type ?? activeDeviceType;
-    return getOrCreateDeviceState(activeDeviceId, resolvedType, activeDevice?.name, activeDevice?.macAddress, activeDevice?.switchModel);
+    return getOrCreateDeviceState(activeDeviceId, resolvedType, activeDevice?.name, activeDevice?.macAddress, activeDevice?.switchModel, activeDevice?.services);
   }, [activeDeviceId, activeDeviceType, topologyDevices, deviceStates, getOrCreateDeviceState]);
 
   const output = useMemo(() => {
@@ -711,7 +711,7 @@ export default function Home({ initialProjectId }: { initialProjectId?: string }
       openDeviceWindow(deviceId, 'pc', 'home');
     } else if (device === 'iot' || device === 'router' || device === 'switchL2' || device === 'switchL3' || device === 'wlc' || device === 'hub' || device === 'cloud' || device === 'printer' || device === 'mobile' || device === 'firewall') {
       const deviceObj = topologyDevices?.find(d => d.id === deviceId);
-      const deviceState = getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel);
+      const deviceState = getOrCreateDeviceState(deviceId, device, deviceObj?.name, deviceObj?.macAddress, deviceObj?.switchModel, deviceObj?.services);
       getOrCreateDeviceOutputs(deviceId, deviceState);
 
       setActiveDeviceId(deviceId);

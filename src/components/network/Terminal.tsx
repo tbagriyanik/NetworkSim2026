@@ -6,10 +6,8 @@ import { getModePrompt } from '@/lib/network/initialState';
 import { Translations } from '@/contexts/LanguageContext';
 import { getDeviceWifiConfig, getWirelessSignalStrength } from '@/lib/network/connectivity';
 import { Button } from '@/components/ui/button';
-import { Laptop, X, CornerDownLeft, Search, Copy, Trash2, Download, Settings, Wifi, Type } from 'lucide-react';
+import { Laptop, CornerDownLeft, Trash2, X } from 'lucide-react';
 import { SearchOutputDialog } from './pc-panel/SearchOutputDialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { TooltipWrapper } from '@/components/ui/TooltipWrapper';
 import { ShortcutBadge } from '@/components/ui/ShortcutBadge';
 import { toast } from "@/hooks/use-toast";
 import { useOutputSearch } from '@/hooks/useOutputSearch';
@@ -21,6 +19,10 @@ import { useIsMobile } from '@/hooks/use-breakpoint';
 import type { CanvasDevice } from './networkTopology.types';
 import { RouterIcon, SwitchIcon, WlcIcon } from './PCPanelWidgets';
 
+import { BootProgressBar, completedBootIds, BOOT_PROGRESS_MARKER } from './terminal/BootProgressBar';
+import { useTerminalTabCompletion } from './terminal/useTerminalTabCompletion';
+import { TerminalHeaderActions } from './terminal/TerminalHeaderActions';
+
 export interface TerminalOutput {
   id: string;
   type: 'command' | 'output' | 'error' | 'success' | 'password-prompt';
@@ -31,7 +33,7 @@ export interface TerminalOutput {
   timestamp?: number;
 }
 
-export const BOOT_PROGRESS_MARKER = '\x00BOOT_PROGRESS\x00';
+export { BOOT_PROGRESS_MARKER };
 
 const QUICK_COMMANDS: Record<string, string[]> = {
   user: ['enable', 'show ip int brief', 'show version', 'ping '],
@@ -48,40 +50,6 @@ const QUICK_COMMANDS: Record<string, string[]> = {
   pc: ['ipconfig', 'ping ', 'tracert ', 'nslookup ', 'telnet ', 'ssh ', 'help', 'cls'],
   iot: ['help', 'cls']
 };
-
-// Global set — animasyon tamamlanan boot id'lerini tutar, tab değişiminde sıfırlanmaz
-const completedBootIds = new Set<string>();
-
-function BootProgressBar({ id, isDark, onDone, readyText = "Ready!" }: { id: string; isDark: boolean; onDone: (id: string) => void; readyText?: string }) {
-  const [filled, setFilled] = useState(0);
-  const [done, setDone] = useState(false);
-  const total = 10;
-  const onDoneRef = useRef(onDone);
-  useEffect(() => { onDoneRef.current = onDone; }, [onDone]);
-
-  useEffect(() => {
-    if (filled < total) {
-      const timer = setTimeout(() => setFilled(f => f + 1), 180);
-      return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => {
-        setDone(true);
-        onDoneRef.current(id);
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [filled, id]);
-
-  return (
-    <span className={`font-mono ${isDark ? 'text-success-400' : 'text-success-600'}`}>
-      {done ? (
-        <span className="font-bold">{'#'.repeat(total)} {readyText}</span>
-      ) : (
-        <span className="inline-block min-w-[12ch]">{'#'.repeat(filled)}<span className="opacity-30">{'#'.repeat(total - filled)}</span></span>
-      )}
-    </span>
-  );
-}
 
 interface TerminalProps {
   deviceId: string;
@@ -798,29 +766,10 @@ export function Terminal({
     void processCommandQueue();
   }, [processCommandQueue, queueCommands]);
 
-  const getAutocompleteContext = useCallback((value: string) => {
-    const mode = state.currentMode;
-    const base = expandCommandContext(mode, value);
-    const helpTree = commandHelp[mode] || commandHelp.user || {};
-    const contextKey = base.contextTokens.join(' ').toLowerCase();
-
-    let candidates = base.candidates;
-    if (helpTree[contextKey]) {
-      candidates = helpTree[contextKey];
-    }
-
-    const isInterfaceContext = base.contextTokens.some(t => ['interface', 'int'].includes(t.toLowerCase()));
-    if (isInterfaceContext) {
-      const ifaceNames = state.ports ? Object.keys(state.ports) : ['GigabitEthernet0/0', 'GigabitEthernet0/1', 'FastEthernet0/1', 'Vlan1', 'Loopback0'];
-      candidates = Array.from(new Set([...candidates, ...ifaceNames]));
-    }
-
-    return {
-      ...base,
-      candidates,
-      allCandidates: candidates,
-    };
-  }, [state.currentMode, state.ports, expandCommandContext]);
+  const { getAutocompleteContext } = useTerminalTabCompletion({
+    state,
+    expandCommandContext,
+  });
 
   const handleTabComplete = useCallback(() => {
     const value = input;
@@ -1309,150 +1258,30 @@ export function Terminal({
     return null;
   }, [device, devices, deviceStates]);
 
-  const getSignalIcon = (strength: number) => {
-    if (strength === 0) return null;
-    return (
-      <div className="flex items-center gap-1">
-        <Wifi className={cn(
-          "w-4 h-4",
-          strength >= 4 ? "text-success-500" :
-            strength >= 3 ? "text-yellow-500" :
-              strength >= 2 ? "text-warning-500" :
-                "text-error-500"
-        )} />
-        <span className={cn(
-          "text-[10px] font-black tracking-wider",
-          strength >= 4 ? "text-success-500" :
-            strength >= 3 ? "text-yellow-500" :
-              strength >= 2 ? "text-warning-500" :
-                "text-error-500"
-        )}>
-          {strength === 5 ? "100%" :
-            strength === 4 ? "75%" :
-              strength === 3 ? "50%" :
-                strength === 2 ? "25%" :
-                  "1%"}
-        </span>
-      </div>
-    );
-  };
-
   const headerAction = (
-    <div className="flex items-center gap-1">
-      {wifiSignalStrength !== null && wifiSignalStrength > 0 && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="h-8 px-2 flex items-center rounded-lg">
-              {getSignalIcon(wifiSignalStrength)}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            {t.wifiSignal}
-          </TooltipContent>
-        </Tooltip>
-      )}
-      {wifiSignalStrength !== null && wifiSignalStrength > 0 && (
-        <div className={cn("w-px h-4 mx-1", isDark ? "bg-secondary-600" : "bg-border")} />
-      )}
-      <TooltipWrapper
-        ariaLabel={t.search}
-        title={
-          <div className="flex items-center gap-2">
-            {t.search}
-            {!isMobile && <ShortcutBadge shortcut="Ctrl+F" variant="primary" />}
-          </div>
-        }>
-        <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900", isDark && "text-secondary-300 hover:text-secondary-100")} aria-controls="search-dialog">
-          <Search className="w-4 h-4" aria-hidden="true" />
-        </Button>
-      </TooltipWrapper>
-      <TooltipWrapper title={t.copy}>
-        <Button variant="ghost" size="icon" onClick={handleCopyAll} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900", isDark && "text-secondary-300 hover:text-secondary-100")}>
-          <Copy className="w-4 h-4" aria-hidden="true" />
-        </Button>
-      </TooltipWrapper>
-      <TooltipWrapper title={t.exportLabel}>
-        <Button variant="ghost" size="icon" onClick={exportTerminal} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900", isDark && "text-secondary-300 hover:text-secondary-100")}>
-          <Download className="w-4 h-4" aria-hidden="true" />
-        </Button>
-      </TooltipWrapper>
-      <TooltipWrapper title={t.clearTerminalBtn || 'Clear'}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={clearTerminalView}
-          className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-error-500 hover:text-error-600 hover:bg-error-500/10")}
-          aria-label={t.clearTerminalBtn}
-        >
-          <Trash2 className="w-4 h-4" aria-hidden="true" />
-        </Button>
-      </TooltipWrapper>
-      <TooltipWrapper title={language === 'tr' ? 'Yazı Boyutunu Küçült (A-)' : 'Decrease Font Size (A-)'}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            const next = Math.max(10, fontSize - 1);
-            setFontSize(next);
-            try { localStorage.setItem('terminal-font-size', String(next)); } catch { }
-          }}
-          className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900 font-bold text-xs select-none", isDark && "text-secondary-300 hover:text-secondary-100")}
-          aria-label="A-"
-        >
-          A-
-        </Button>
-      </TooltipWrapper>
-      <TooltipWrapper title={language === 'tr' ? 'Yazı Boyutunu Büyüt (A+)' : 'Increase Font Size (A+)'}>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => {
-            const next = Math.min(20, fontSize + 1);
-            setFontSize(next);
-            try { localStorage.setItem('terminal-font-size', String(next)); } catch { }
-          }}
-          className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900 font-bold text-xs select-none", isDark && "text-secondary-300 hover:text-secondary-100")}
-          aria-label="A+"
-        >
-          A+
-        </Button>
-      </TooltipWrapper>
-      <TooltipWrapper title={t.fontLabel}>
-        <Button variant="ghost" size="icon" onClick={() => setShowSettings(!showSettings)} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg text-secondary-600 hover:text-secondary-900", showSettings && "bg-accent", isDark && "text-secondary-300 hover:text-secondary-100")}>
-          <Type className="w-4 h-4" aria-hidden="true" />
-        </Button>
-      </TooltipWrapper>
-      {showPowerButton && (
-        <>
-          <div className={cn("w-px h-4 mx-1", isDark ? "bg-secondary-600" : "bg-border")} />
-          <TooltipWrapper title={t.power}>
-            <Button variant="ghost" size="icon" onClick={() => onTogglePower?.(deviceId)} className={cn("h-9 w-9 md:h-8 md:w-8 rounded-lg", isPoweredOff ? "text-error-500" : "text-success-500")}>
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v10" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636a9 9 0 1 1-12.728 0" />
-              </svg>
-            </Button>
-          </TooltipWrapper>
-        </>
-      )}
-      {isMobile && onQuickSettings && (
-        <TooltipWrapper title={t.quickSettingsAndTasks}>
-          <Button variant="ghost" size="icon" onClick={(e) => {
-            e.stopPropagation();
-            onQuickSettings();
-          }} className={cn("h-9 w-9 rounded-lg text-secondary-600 hover:text-secondary-900", isDark && "text-secondary-300 hover:text-secondary-100")}>
-            <Settings className="w-4 h-4" aria-hidden="true" />
-          </Button>
-        </TooltipWrapper>
-      )}
-      {isMobile && (device?.type === 'firewall' || device?.type === 'pc' || device?.type === 'iot') && onClose && (
-        <TooltipWrapper title={t.close || 'Close'}>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-9 w-9 rounded-lg hover:bg-error-500 hover:text-white dark:hover:bg-error-600">
-            <X className="w-4 h-4" aria-hidden="true" />
-          </Button>
-        </TooltipWrapper>
-      )}
-    </div>
+    <TerminalHeaderActions
+      isDark={isDark}
+      isMobile={isMobile}
+      language={language}
+      t={t}
+      fontSize={fontSize}
+      setFontSize={setFontSize}
+      showSettings={showSettings}
+      setShowSettings={setShowSettings}
+      searchOpen={searchOpen}
+      setSearchOpen={setSearchOpen}
+      handleCopyAll={handleCopyAll}
+      exportTerminal={exportTerminal}
+      clearTerminalView={clearTerminalView}
+      wifiSignalStrength={wifiSignalStrength}
+      showPowerButton={showPowerButton}
+      isPoweredOff={isPoweredOff}
+      onTogglePower={onTogglePower}
+      deviceId={deviceId}
+      onQuickSettings={onQuickSettings}
+      onClose={onClose}
+      device={device}
+    />
   );
 
   return (

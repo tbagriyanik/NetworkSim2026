@@ -70,7 +70,7 @@ export function useKeyboardShortcuts({
   handleDeviceDoubleClick: (type: DeviceType, id: string) => void;
   handleRefreshNetwork: () => void;
   closeEscLikeWindows: () => void;
-  getOrCreateDeviceState: (deviceId: string, deviceType: DeviceType, initialHostname?: string, initialMac?: string, switchModel?: string) => SwitchState;
+  getOrCreateDeviceState: (deviceId: string, deviceType: DeviceType, initialHostname?: string, initialMac?: string, switchModel?: string, initialServices?: CanvasDevice['services']) => SwitchState;
   getOrCreateDeviceOutputs: (deviceId: string, deviceStateArg?: SwitchState) => TerminalOutput[];
   setShowMobileMenu: Dispatch<SetStateAction<boolean>>;
   setShowPCPanel: Dispatch<SetStateAction<boolean>>;

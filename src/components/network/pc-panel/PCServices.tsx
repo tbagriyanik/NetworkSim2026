@@ -5,6 +5,8 @@ import { ServicesTab } from './ServicesTab';
 import { usePCPanel } from './PCPanelContext';
 import { loadFs, readFile } from './pcFileSystem';
 
+import { decodeHTMLEntities } from '@/lib/security/sanitizer';
+
 export type PCServicesProps = object;
 
 /** Context-connected wrapper: maps PCPanelContext to ServicesTab props. */
@@ -16,8 +18,12 @@ export const PCServices: React.FC<PCServicesProps> = () => {
       deviceId={deviceId}
       onEditFile={(filePath) => {
         const fs = loadFs(deviceId);
-        const content = readFile(fs, filePath) ?? '';
-        ctx.setEditingFile({ path: filePath, content });
+        let content = readFile(fs, filePath);
+        if ((content === null || content === undefined || content.trim() === '') && filePath.replace(/\\/g, '/').toLowerCase().includes('www/index.html')) {
+          content = ctx.serviceHttpContent || ctx.t.helloWorld;
+        }
+        const decodedContent = decodeHTMLEntities(content ?? '');
+        ctx.setEditingFile({ path: filePath, content: decodedContent });
       }}
       isDark={ctx.isDark}
       language={ctx.language}

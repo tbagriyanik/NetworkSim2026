@@ -314,7 +314,7 @@ export function useDeviceManager() {
     return () => window.removeEventListener('trigger-topology-toggle-power', handlePowerToggle as EventListener);
   }, [deviceStates, getBootMessage]);
 
-  const getOrCreateDeviceState = useCallback((deviceId: string, deviceType: DeviceType, initialHostname?: string, initialMac?: string, switchModel?: string): SwitchState => {
+  const getOrCreateDeviceState = useCallback((deviceId: string, deviceType: DeviceType, initialHostname?: string, initialMac?: string, switchModel?: string, initialServices?: CanvasDevice['services']): SwitchState => {
     // Prevent creating state for empty/invalid device IDs
     if (!deviceId || deviceId.trim() === '') {
       logger.warn('Attempted to create device state with empty ID');
@@ -348,6 +348,23 @@ export function useDeviceManager() {
       newState = { ...newState, hostname, deviceType: stateDeviceType };
       if (deviceType === 'hub' || deviceType === 'cloud' || deviceType === 'printer' || deviceType === 'mobile') {
         delete (newState as any).switchModel;
+      }
+
+      // A freshly-hosted HTTP-capable end device (PC, IoT, Printer, WLC) must
+      // "boot" with the same HTTP service state that its canvas device carries,
+      // otherwise the runtime default (http disabled) would fight the panel's
+      // enabled-by-default toggle and the UI would snap back to OFF.
+      if (initialServices?.http && stateDeviceType === 'pc') {
+        newState = {
+          ...newState,
+          services: {
+            ...newState.services,
+            http: {
+              ...newState.services?.http,
+              ...initialServices.http,
+            },
+          },
+        };
       }
 
 
@@ -971,7 +988,7 @@ export function useDeviceManager() {
           if (targetDevice && targetDevice.type !== 'pc') {
             newOutputs.push({ id: `${now}-telnet`, type: 'output', content: ` Open\n\n**** Connected to ${targetDevice.name} (${telnetTarget.host}) via VTY ****\n`, timestamp: now });
             const targetType = targetDevice.type;
-            getOrCreateDeviceState(targetDevice.id, targetType, targetDevice.name);
+            getOrCreateDeviceState(targetDevice.id, targetType, targetDevice.name, targetDevice.macAddress, targetDevice.switchModel, targetDevice.services);
             getOrCreateDeviceOutputs(targetDevice.id);
             setActiveDeviceId(targetDevice.id);
             setActiveDeviceType(targetType);

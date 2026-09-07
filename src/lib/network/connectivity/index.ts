@@ -1,6 +1,7 @@
 export type { CanvasDevice, CanvasConnection, CanvasPort } from '@/components/network/networkTopology.types';
 
 export * from './pathResolution';
+export * from './resolvePathTraffic';
 export * from './vlanAndSwitching';
 export * from './security';
 export * from './pingDiagnostics';

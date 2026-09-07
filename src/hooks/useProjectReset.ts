@@ -106,6 +106,9 @@ export function useProjectReset({
         dns: '0.0.0.0',
         macAddress: '00-e0-f7-01-a1-b1',
         status: 'online',
+        services: {
+          http: { enabled: true, mode: 'simple', content: '<h1>Welcome to PC-1 Web Server</h1>' }
+        },
         ports: [
           { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
           { id: 'com1', label: 'COM1', status: 'disconnected' as const }
@@ -123,6 +126,9 @@ export function useProjectReset({
         dns: '0.0.0.0',
         macAddress: '00-e0-f7-01-a1-b2',
         status: 'online',
+        services: {
+          http: { enabled: true, mode: 'simple', content: '<h1>Welcome to PC-2 Web Server</h1>' }
+        },
         ports: [
           { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
           { id: 'com1', label: 'COM1', status: 'disconnected' as const }
@@ -197,6 +203,9 @@ export function useProjectReset({
           dns: '0.0.0.0',
           macAddress: '00-e0-f7-01-a1-b1',
           status: 'online',
+          services: {
+            http: { enabled: true, mode: 'simple', content: '<h1>Welcome to PC-1 Web Server</h1>' }
+          },
           ports: [
             { id: 'eth0', label: 'Eth0', status: 'disconnected' as const },
             { id: 'com1', label: 'COM1', status: 'disconnected' as const }

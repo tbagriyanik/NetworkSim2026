@@ -202,6 +202,24 @@ export function usePageNetworkLogic({
         return updatedState;
       }));
     }
+
+    if (c.services?.http) {
+      setDeviceStates((prev) => updateDeviceState(prev, deviceId, (state) => {
+        const updatedState = {
+          ...state,
+          services: {
+            ...state.services,
+            http: {
+              ...state.services?.http,
+              ...(c.services as CanvasDevice['services'])?.http,
+              enabled: (c.services as CanvasDevice['services'])?.http?.enabled ?? state.services?.http?.enabled ?? false,
+            },
+          },
+        };
+        updatedState.runningConfig = buildRunningConfig(updatedState);
+        return updatedState;
+      }));
+    }
   }, [setTopologyDevices, setDeviceStates, updateDeviceState]);
 
   // Listen for device config updates from PCPanel

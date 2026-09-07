@@ -54,6 +54,19 @@ function cleanState(
     if (excludedDeviceIds.has(id) || !topologyDeviceIds.has(id)) continue;
     deviceStates.set(id, stripLargeDerivedFields(st));
   }
+  const deviceOutputs = new Map<string, TerminalOutput[]>();
+  for (const [id, out] of state.deviceOutputs) {
+    if (topologyDeviceIds.has(id)) deviceOutputs.set(id, out);
+  }
+  const pcOutputs = new Map<string, PCOutputLine[]>();
+  for (const [id, out] of state.pcOutputs) {
+    if (topologyDeviceIds.has(id)) pcOutputs.set(id, out);
+  }
+  const pcHistories = new Map<string, string[]>();
+  for (const [id, hist] of state.pcHistories) {
+    if (topologyDeviceIds.has(id)) pcHistories.set(id, hist);
+  }
+
   return {
     topologyDevices: state.topologyDevices,
     topologyConnections: state.topologyConnections,
@@ -65,9 +78,9 @@ function cleanState(
     pan: state.pan,
     activeTab: state.activeTab,
     deviceStates,
-    deviceOutputs: state.deviceOutputs,
-    pcOutputs: state.pcOutputs,
-    pcHistories: state.pcHistories,
+    deviceOutputs,
+    pcOutputs,
+    pcHistories,
   };
 }
 

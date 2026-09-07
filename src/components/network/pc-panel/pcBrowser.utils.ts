@@ -183,11 +183,16 @@ export function findHttpServerByTarget({
   }
 
   const pcByIp = topologyDevices.find(
-    (d) => (d.ip === target || d.ipv6?.toLowerCase() === normalizedTarget) && d.services?.http?.enabled
+    (d) =>
+      (d.ip === target ||
+       d.ipv6?.toLowerCase() === normalizedTarget ||
+       d.name?.toLowerCase() === normalizedTarget ||
+       d.id?.toLowerCase() === normalizedTarget) &&
+      (d.services?.http?.enabled ?? (d.type === 'pc'))
   );
   if (pcByIp) {
-    const targetAddress = pcByIp.ipv6 && normalizedTarget === pcByIp.ipv6.toLowerCase() ? pcByIp.ipv6 : pcByIp.ip;
-    if (targetAddress && canReachTargetIp(targetAddress, { protocol: 'tcp', port: '80' })) return pcByIp;
+    const targetAddress = pcByIp.ipv6 && normalizedTarget === pcByIp.ipv6.toLowerCase() ? pcByIp.ipv6 : (pcByIp.ip || pcByIp.name || pcByIp.id);
+    if (pcByIp.id === deviceId || (targetAddress && canReachTargetIp(targetAddress, { protocol: 'tcp', port: '80' }))) return pcByIp;
   }
 
   const routerByIp = topologyDevices.find(
@@ -221,7 +226,7 @@ export function findHttpServerByTarget({
   if (!dnsResult) return null;
 
   const resolvedPc = topologyDevices.find(
-    (d) => (d.ip === dnsResult.address || d.ipv6?.toLowerCase() === dnsResult.address.toLowerCase()) && d.services?.http?.enabled
+    (d) => (d.ip === dnsResult.address || d.ipv6?.toLowerCase() === dnsResult.address.toLowerCase()) && (d.services?.http?.enabled ?? (d.type === 'pc'))
   ) || null;
   if (resolvedPc && canReachTargetIp(dnsResult.address, { protocol: 'tcp', port: '80' })) return resolvedPc;
 

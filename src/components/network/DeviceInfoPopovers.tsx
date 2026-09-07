@@ -198,44 +198,55 @@ export function PCInfoPopover({ pc, t, language, isDark, onClose, onFocus, zInde
                   </CollapsibleContent>
                 </Collapsible>
               )}
-              {pc?.services && (
-                <Collapsible open={!collapsedSections.services} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, services: !open }))}>
-                  <CollapsibleTrigger asChild>
-                    <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
-                      <span className="opacity-50">{t.services}</span>
-                      {collapsedSections.services ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
-                    </div>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <div className="flex flex-wrap gap-0.5">
-                      {pc?.services?.http?.enabled && (
-                        <span className="px-1 py-0.5 rounded bg-warning-500/20 text-warning-500 text-xs font-bold border border-warning-500/20">HTTP</span>
-                      )}
-                      {pc?.services?.dns?.enabled && (
-                        <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">DNS</span>
-                      )}
-                      {pc?.services?.dhcp?.enabled && (
-                        <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-xs font-bold border border-purple-500/20">DHCP</span>
-                      )}
-                      {pc?.services?.ftp?.enabled && (
-                        <span className="px-1 py-0.5 rounded bg-accent-500/20 text-accent-500 text-xs font-bold border border-accent-500/20">FTP</span>
-                      )}
-                      {pc?.services?.mail?.enabled && (
-                        <span className="px-1 py-0.5 rounded bg-error-500/20 text-error-500 text-xs font-bold border border-error-500/20">MAIL</span>
-                      )}
-                      {pc?.services?.ntp?.enabled && (
-                        <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">NTP</span>
-                      )}
-                      {pc?.services?.syslog?.enabled && (
-                        <span className="px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-500 text-xs font-bold border border-emerald-500/20">SYSLOG</span>
-                      )}
-                      {!pc?.services?.http?.enabled && !pc?.services?.dns?.enabled && !pc?.services?.dhcp?.enabled && !pc?.services?.ftp?.enabled && !pc?.services?.mail?.enabled && !pc?.services?.ntp?.enabled && !pc?.services?.syslog?.enabled && (
-                        <span className="text-xs opacity-40 italic">{t.none}</span>
-                      )}
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              )}
+              {(() => {
+                const runtimeState = deviceStates?.get(pc.id);
+                const services = pc?.services || runtimeState?.services;
+                const hasHttp = services?.http?.enabled ?? true;
+                const hasDns = !!services?.dns?.enabled;
+                const hasDhcp = !!services?.dhcp?.enabled;
+                const hasFtp = !!services?.ftp?.enabled;
+                const hasMail = !!services?.mail?.enabled;
+                const hasNtp = !!services?.ntp?.enabled;
+                const hasSyslog = !!services?.syslog?.enabled;
+                return (
+                  <Collapsible open={!collapsedSections.services} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, services: !open }))}>
+                    <CollapsibleTrigger asChild>
+                      <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
+                        <span className="opacity-50">{t.services}</span>
+                        {collapsedSections.services ? <ChevronDown className="w-3 h-3 opacity-50" /> : <ChevronUp className="w-3 h-3 opacity-50" />}
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="flex flex-wrap gap-0.5">
+                        {hasHttp && (
+                          <span className="px-1 py-0.5 rounded bg-warning-500/20 text-warning-500 text-xs font-bold border border-warning-500/20">HTTP</span>
+                        )}
+                        {hasDns && (
+                          <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">DNS</span>
+                        )}
+                        {hasDhcp && (
+                          <span className="px-1 py-0.5 rounded bg-purple-500/20 text-purple-500 text-xs font-bold border border-purple-500/20">DHCP</span>
+                        )}
+                        {hasFtp && (
+                          <span className="px-1 py-0.5 rounded bg-accent-500/20 text-accent-500 text-xs font-bold border border-accent-500/20">FTP</span>
+                        )}
+                        {hasMail && (
+                          <span className="px-1 py-0.5 rounded bg-error-500/20 text-error-500 text-xs font-bold border border-error-500/20">MAIL</span>
+                        )}
+                        {hasNtp && (
+                          <span className="px-1 py-0.5 rounded bg-primary-500/20 text-primary-500 text-xs font-bold border border-primary-500/20">NTP</span>
+                        )}
+                        {hasSyslog && (
+                          <span className="px-1 py-0.5 rounded bg-emerald-500/20 text-emerald-500 text-xs font-bold border border-emerald-500/20">SYSLOG</span>
+                        )}
+                        {!hasHttp && !hasDns && !hasDhcp && !hasFtp && !hasMail && !hasNtp && !hasSyslog && (
+                          <span className="text-xs opacity-40 italic">{t.none}</span>
+                        )}
+                      </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })()}
               <Collapsible open={!collapsedSections.ipMode} onOpenChange={(open) => setCollapsedSections(prev => ({ ...prev, ipMode: !open }))}>
                 <CollapsibleTrigger asChild>
                   <div className="pt-1 border-t border-secondary-500/20 flex items-center justify-between cursor-pointer select-none">
